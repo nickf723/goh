@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3 uid="uid://ctxsxojjb17jw"]
+
+[ext_resource type="PackedScene" uid="uid://bvxqbu4br22ea" path="res://scenes/abilities/space_blink.tscn" id="1_wvict"]
+[ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="2_ndf3y"]
+
+[resource]
+script = ExtResource("2_ndf3y")
+display_name = "Space Blink"
+description = "Teleport a short distance"
+element = "space"
+category = 1
+ability_scene = ExtResource("1_wvict")

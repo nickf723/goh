@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3 uid="uid://4dondlt2odjj"]
+
+[ext_resource type="Script" uid="uid://cajn6gipe7r2o" path="res://scripts/combat/damage_payload.gd" id="1_eqg4t"]
+
+[resource]
+script = ExtResource("1_eqg4t")
+source_name = "Gremlin Bite"
+hit_type = "melee"
+tags = Array[String](["physical", "melee", "bite", "enemy_attack"])
+metadata/_custom_type_script = "uid://cajn6gipe7r2o"

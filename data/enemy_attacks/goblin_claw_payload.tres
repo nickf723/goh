@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3 uid="uid://cx24xit8qes2g"]
+
+[ext_resource type="Script" uid="uid://cajn6gipe7r2o" path="res://scripts/combat/damage_payload.gd" id="1_cht03"]
+
+[resource]
+script = ExtResource("1_cht03")
+source_name = "Goblin Claw"
+hit_type = "melee"
+tags = Array[String](["physical", "melee", "claw", "enemy_attack"])
+metadata/_custom_type_script = "uid://cajn6gipe7r2o"

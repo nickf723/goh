@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3 uid="uid://b5e0vkj5itdd0"]
+
+[ext_resource type="Script" uid="uid://cajn6gipe7r2o" path="res://scripts/combat/damage_payload.gd" id="1_jpcdm"]
+
+[resource]
+script = ExtResource("1_jpcdm")
+stance_damage = 3
+element = "ice"
+source_name = "Ice Lance"
+hit_type = "projectile"
+status_effect = "chill"
+status_duration = 3.0
+status_strength = 0.5
+tags = Array[String](["ice", "magic", "projectile", "control"])
+metadata/_custom_type_script = "uid://cajn6gipe7r2o"

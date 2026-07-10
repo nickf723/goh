@@ -1,0 +1,59 @@
+[gd_scene format=3 uid="uid://dgprwdbmbpuqk"]
+
+[ext_resource type="Script" uid="uid://cnnwoca53mvx8" path="res://scripts/enemies/enemy_actor.gd" id="1_8heeq"]
+[ext_resource type="Script" uid="uid://bmu7g8680htm1" path="res://scripts/combat/hit_receiver.gd" id="2_quje4"]
+[ext_resource type="Script" uid="uid://dfd618a4fsswa" path="res://scripts/combat/status_receiver.gd" id="3_quje4"]
+[ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="4_gw7qh"]
+[ext_resource type="Script" uid="uid://dl7cjack4ydjg" path="res://scripts/combat/payload_receiver.gd" id="5_e3vcl"]
+[ext_resource type="Script" uid="uid://c2xu2guuvxg5l" path="res://scripts/combat/force_receiver.gd" id="6_p5olj"]
+[ext_resource type="Script" uid="uid://yxe8eoiplh8i" path="res://scripts/enemies/enemy_brain.gd" id="7_tbb3o"]
+[ext_resource type="Resource" uid="uid://j4y75vgrs3br" path="res://data/enemies/golbin_definition.tres" id="8_dbc34"]
+[ext_resource type="Resource" uid="uid://bq4of4nkti5iu" path="res://data/enemy_attacks/goblin_claw_attack.tres" id="9_bo45w"]
+[ext_resource type="Script" uid="uid://qt8ipxix0ltk" path="res://scripts/enemies/enemy_telegraph.gd" id="10_dbc34"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_gw7qh"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_e3vcl"]
+
+[node name="GoblinDrone" type="CharacterBody3D" unique_id=436581859 groups=["enemy"]]
+script = ExtResource("1_8heeq")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=516912949]
+shape = SubResource("SphereShape3D_gw7qh")
+
+[node name="HitReceiver" type="Node" parent="." unique_id=2030666286]
+script = ExtResource("2_quje4")
+target_name = "Goblin Drone"
+hit_mode = 2
+max_health = 10
+current_health = 10
+disappears_when_defeated = true
+weak_elements = Array[String](["fire"])
+
+[node name="StatusReceiver" type="Node" parent="." unique_id=1037968967]
+script = ExtResource("3_quje4")
+
+[node name="TagComponent" type="Node" parent="." unique_id=1005229510]
+script = ExtResource("4_gw7qh")
+tags = Array[String](["enemy", "organic", "goblin"])
+
+[node name="PayloadReceiver" type="Node" parent="." unique_id=1307253262]
+script = ExtResource("5_e3vcl")
+
+[node name="ForceReceiver" type="Node" parent="." unique_id=1903512505]
+script = ExtResource("6_p5olj")
+metadata/_custom_type_script = "uid://c2xu2guuvxg5l"
+
+[node name="EnemyBrain" type="Node" parent="." unique_id=1445189114]
+script = ExtResource("7_tbb3o")
+enemy_definition = ExtResource("8_dbc34")
+default_attack = ExtResource("9_bo45w")
+metadata/_custom_type_script = "uid://yxe8eoiplh8i"
+
+[node name="EnemyTelegraph" type="Node" parent="." unique_id=1890575995]
+script = ExtResource("10_dbc34")
+visual_root_path = NodePath("../MeshInstance3D")
+metadata/_custom_type_script = "uid://qt8ipxix0ltk"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=114131425]
+mesh = SubResource("SphereMesh_e3vcl")

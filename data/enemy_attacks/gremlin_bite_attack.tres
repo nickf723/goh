@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyAttackDefinition" format=3 uid="uid://dkvtfch44sst7"]
+
+[ext_resource type="Resource" uid="uid://4dondlt2odjj" path="res://data/enemy_attacks/gremlin_bite_payload.tres" id="1_0rscj"]
+[ext_resource type="Script" uid="uid://bwx0laq8guo7b" path="res://scripts/enemies/enemy_attack_definition.gd" id="1_ejpyx"]
+
+[resource]
+script = ExtResource("1_ejpyx")
+display_name = "Gemlin Bite"
+payload = ExtResource("1_0rscj")
+range = 1.25
+cone_angle_degrees = 125.0
+windup_time = 0.22
+recovery_time = 0.35
+cooldown = 0.85
+metadata/_custom_type_script = "uid://bwx0laq8guo7b"

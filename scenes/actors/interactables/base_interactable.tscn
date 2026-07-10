@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://d3vjgbonj5oer"]
+
+[ext_resource type="Script" uid="uid://qqquy3sat2t3" path="res://scripts/interaction/interactable.gd" id="1_5vfiu"]
+[ext_resource type="Script" uid="uid://bmu7g8680htm1" path="res://scripts/combat/hit_receiver.gd" id="2_ovbt0"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_5vfiu"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7utts"]
+
+[node name="BaseInspectable" type="Area3D" unique_id=947878376]
+script = ExtResource("1_5vfiu")
+inspect_text = "This object has not been customized yet.	"
+objective_after = "Keep testing the sandbox."
+
+[node name="PlaceholderMesh" type="MeshInstance3D" parent="." unique_id=1730191182]
+mesh = SubResource("BoxMesh_5vfiu")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=307500620]
+shape = SubResource("BoxShape3D_7utts")
+
+[node name="HitReceiver" type="Node" parent="." unique_id=578342512]
+script = ExtResource("2_ovbt0")
+target_name = "Object"
+hit_mode = 0

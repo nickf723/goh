@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://bup2h2qs8rrul"]
+
+[ext_resource type="PackedScene" uid="uid://6raaty2e36ko" path="res://scenes/actors/player/player.tscn" id="1_p0y0n"]
+[ext_resource type="PackedScene" uid="uid://j44g36yeu58k" path="res://ui/game_ui.tscn" id="2_4pr55"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tepo3"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1o6wq"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_xoyw4"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_eqeqc"]
+
+[node name="ChurchHqPlaceholder" type="Node3D" unique_id=755259527]
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=1007869719]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=544840908]
+shape = SubResource("BoxShape3D_tepo3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1267704960]
+mesh = SubResource("BoxMesh_1o6wq")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=723394286]
+transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, 0, 0, 0)
+
+[node name="Player" parent="." unique_id=439123255 instance=ExtResource("1_p0y0n")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="GameUI" parent="." unique_id=1997845998 instance=ExtResource("2_4pr55")]
+
+[node name="Bishop" type="Area3D" parent="." unique_id=1158269103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, 5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Bishop" unique_id=1762789331]
+shape = SubResource("CapsuleShape3D_xoyw4")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Bishop" unique_id=340750960]
+mesh = SubResource("CapsuleMesh_eqeqc")

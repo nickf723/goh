@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3 uid="uid://bbwloguh30ok4"]
+
+[ext_resource type="PackedScene" uid="uid://tj563cjynma8" path="res://scenes/actions/generic_projectile.tscn" id="1_blcr8"]
+[ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="2_blcr8"]
+[ext_resource type="Resource" uid="uid://btmw4r7ihn7hk" path="res://data/damage_payloads/lightning_spark_payload.tres" id="2_padcn"]
+
+[resource]
+script = ExtResource("2_blcr8")
+display_name = "Lightning Spark"
+description = "Bazinga"
+element = "lightning"
+ability_scene = ExtResource("1_blcr8")
+action_payload = ExtResource("2_padcn")

@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://dohf5bh7tkyr1"]
+
+[ext_resource type="Script" uid="uid://tfg2g3u1s15e" path="res://scripts/actions/generic_pulse.gd" id="1_3aa8f"]
+[ext_resource type="Material" uid="uid://bl1qj81jc1m7n" path="res://art/materials/unshaded.tres" id="2_t61r6"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_hsdkt"]
+
+[node name="GenericPulse" type="Node3D" unique_id=724862682]
+script = ExtResource("1_3aa8f")
+
+[node name="PulseVisual" type="MeshInstance3D" parent="." unique_id=1182087438]
+visible = false
+material_override = ExtResource("2_t61r6")
+mesh = SubResource("SphereMesh_hsdkt")

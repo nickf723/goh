@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3 uid="uid://0uovq6rtxhio"]
+
+[ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="1_joub7"]
+[ext_resource type="PackedScene" uid="uid://dohf5bh7tkyr1" path="res://scenes/actions/generic_pulse.tscn" id="1_w4k2i"]
+[ext_resource type="Resource" uid="uid://dnqou6nghv5ad" path="res://data/detection_payloads/sound_pulse_payload.tres" id="2_qsh5n"]
+
+[resource]
+script = ExtResource("1_joub7")
+display_name = "Sound Pulse"
+description = "Emit a sound wave"
+element = "sound"
+category = 4
+ability_scene = ExtResource("1_w4k2i")
+action_payload = ExtResource("2_qsh5n")
+metadata/_custom_type_script = "uid://cyp8hkceavuj4"

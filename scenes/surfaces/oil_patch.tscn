@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://c7ggpkgrksqox"]
+
+[ext_resource type="Script" uid="uid://dmvne28s0m5qe" path="res://scripts/surfaces/status_surface.gd" id="1_dwolr"]
+[ext_resource type="Material" uid="uid://b4wc0ridsgmc8" path="res://art/materials/enemy_debug.tres" id="2_o6qhy"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_o6qhy"]
+size = Vector3(4, 0.2, 4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_g87l5"]
+size = Vector3(4, 0.2, 4)
+
+[node name="OilPatch" type="Area3D" unique_id=462673935]
+script = ExtResource("1_dwolr")
+surface_name = "Oil"
+status_effect = "oily"
+status_source = "oil_patch"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1961384559]
+shape = SubResource("BoxShape3D_o6qhy")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1910554811]
+material_override = ExtResource("2_o6qhy")
+mesh = SubResource("BoxMesh_g87l5")

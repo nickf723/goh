@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="DetectionPayload" format=3 uid="uid://dnqou6nghv5ad"]
+
+[ext_resource type="Script" uid="uid://c8ci407a2omuu" path="res://scripts/detection/detection_payload.gd" id="1_36pf7"]
+
+[resource]
+script = ExtResource("1_36pf7")
+metadata/_custom_type_script = "uid://c8ci407a2omuu"

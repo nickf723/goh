@@ -1,0 +1,62 @@
+[gd_scene format=3 uid="uid://dw6mih3hc1hq1"]
+
+[ext_resource type="Script" uid="uid://cnnwoca53mvx8" path="res://scripts/enemies/enemy_actor.gd" id="1_6vf88"]
+[ext_resource type="Script" uid="uid://bmu7g8680htm1" path="res://scripts/combat/hit_receiver.gd" id="2_fu54f"]
+[ext_resource type="Script" uid="uid://dfd618a4fsswa" path="res://scripts/combat/status_receiver.gd" id="3_4uftc"]
+[ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="4_aomjw"]
+[ext_resource type="Script" uid="uid://dl7cjack4ydjg" path="res://scripts/combat/payload_receiver.gd" id="5_gkn5l"]
+[ext_resource type="Script" uid="uid://c2xu2guuvxg5l" path="res://scripts/combat/force_receiver.gd" id="6_pqsi1"]
+[ext_resource type="Script" uid="uid://yxe8eoiplh8i" path="res://scripts/enemies/enemy_brain.gd" id="7_f6t4f"]
+[ext_resource type="Resource" uid="uid://podpgujkw8qg" path="res://data/enemies/gremlin_definition.tres" id="8_6vf88"]
+[ext_resource type="Resource" uid="uid://dkvtfch44sst7" path="res://data/enemy_attacks/gremlin_bite_attack.tres" id="9_fu54f"]
+[ext_resource type="Script" uid="uid://qt8ipxix0ltk" path="res://scripts/enemies/enemy_telegraph.gd" id="10_a3vpn"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_gw7qh"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_e3vcl"]
+
+[node name="GremlinDrone" type="CharacterBody3D" unique_id=436581859 groups=["enemy"]]
+transform = Transform3D(0.75, 0, 0, 0, 0.75, 0, 0, 0, 0.75, 0, 0, 0)
+script = ExtResource("1_6vf88")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=516912949]
+shape = SubResource("SphereShape3D_gw7qh")
+
+[node name="HitReceiver" type="Node" parent="." unique_id=2030666286]
+script = ExtResource("2_fu54f")
+target_name = "Gremlin"
+hit_mode = 2
+max_health = 3
+current_health = 3
+max_stance = 2
+current_stance = 2
+disappears_when_defeated = true
+weak_elements = Array[String](["fire"])
+
+[node name="StatusReceiver" type="Node" parent="." unique_id=1037968967]
+script = ExtResource("3_4uftc")
+
+[node name="TagComponent" type="Node" parent="." unique_id=1005229510]
+script = ExtResource("4_aomjw")
+tags = Array[String](["enemy", "monster", "gremlin", "organic", "living", "small", "skittish"])
+
+[node name="PayloadReceiver" type="Node" parent="." unique_id=1307253262]
+script = ExtResource("5_gkn5l")
+
+[node name="ForceReceiver" type="Node" parent="." unique_id=1903512505]
+script = ExtResource("6_pqsi1")
+metadata/_custom_type_script = "uid://c2xu2guuvxg5l"
+
+[node name="EnemyBrain" type="Node" parent="." unique_id=1445189114]
+script = ExtResource("7_f6t4f")
+enemy_definition = ExtResource("8_6vf88")
+default_attack = ExtResource("9_fu54f")
+metadata/_custom_type_script = "uid://yxe8eoiplh8i"
+
+[node name="EnemyTelegraph" type="Node" parent="." unique_id=1890575995]
+script = ExtResource("10_a3vpn")
+visual_root_path = NodePath("../MeshInstance3D")
+metadata/_custom_type_script = "uid://qt8ipxix0ltk"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=114131425]
+mesh = SubResource("SphereMesh_e3vcl")

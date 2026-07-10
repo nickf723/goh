@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://dhqdveft2hriw"]
+
+[ext_resource type="Material" uid="uid://rs14pkxwvlbj" path="res://art/materials/gate_debug.tres" id="1_q8r1s"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_202da"]
+size = Vector3(1, 5, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_e3q73"]
+size = Vector3(1, 5, 2)
+
+[node name="MagicBarrier" type="StaticBody3D" unique_id=1872534432]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=971461174]
+shape = SubResource("BoxShape3D_202da")
+
+[node name="VisualRoot" type="Node" parent="." unique_id=523455596]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="VisualRoot" unique_id=1616221318]
+material_override = ExtResource("1_q8r1s")
+mesh = SubResource("BoxMesh_e3q73")

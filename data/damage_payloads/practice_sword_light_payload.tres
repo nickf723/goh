@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3 uid="uid://c83brihsgbiko"]
+
+[ext_resource type="Script" uid="uid://cajn6gipe7r2o" path="res://scripts/combat/damage_payload.gd" id="1_xqvur"]
+
+[resource]
+script = ExtResource("1_xqvur")
+source_name = "Practice Sword"
+hit_type = "melee"
+status_effect = "staggered"
+status_duration = 0.25
+tags = Array[String](["physical", "melee", "slash", "weapon"])
+knockback_strength = 3.0
+metadata/_custom_type_script = "uid://cajn6gipe7r2o"

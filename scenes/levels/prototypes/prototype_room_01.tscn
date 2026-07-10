@@ -1,0 +1,65 @@
+[gd_scene format=3 uid="uid://b6861tys8wspm"]
+
+[ext_resource type="PackedScene" uid="uid://dgprwdbmbpuqk" path="res://scenes/actors/enemies/goblin_drone.tscn" id="1_sqmq4"]
+[ext_resource type="PackedScene" uid="uid://cfkh0cdjlqg7o" path="res://scenes/actors/interactables/magic_gate.tscn" id="2_o2b2s"]
+[ext_resource type="PackedScene" uid="uid://dexf0bt5d7hdk" path="res://scenes/actors/interactables/level_exit.tscn" id="3_61rta"]
+[ext_resource type="Script" uid="uid://yqmg6dwfue8d" path="res://scripts/systems/encounter_manager.gd" id="4_22oyu"]
+[ext_resource type="PackedScene" uid="uid://b0ww2555qq4si" path="res://scenes/actors/interactables/cracked_crystal.tscn" id="4_gv4c1"]
+[ext_resource type="Script" uid="uid://d4c66lkqs3ac6" path="res://scripts/systems/focus_time.gd" id="5_rubrg"]
+[ext_resource type="PackedScene" uid="uid://j44g36yeu58k" path="res://scenes/ui/game_ui.tscn" id="6_mc6q8"]
+[ext_resource type="PackedScene" uid="uid://6raaty2e36ko" path="res://scenes/actors/player/player.tscn" id="8_catnd"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_kktw3"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="BoxMesh" id="BoxMesh_lnkx0"]
+size = Vector3(20, 1, 20)
+
+[node name="PrototypeRoom01" type="Node3D" unique_id=1064560808]
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=79377459]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=383005094]
+shape = SubResource("BoxShape3D_kktw3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1399253034]
+mesh = SubResource("BoxMesh_lnkx0")
+
+[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=1340136466]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.885942, 0, 8.126187)
+
+[node name="EnemyContainer" type="Node3D" parent="." unique_id=1048024781]
+
+[node name="GoblineDrone" parent="EnemyContainer" unique_id=436581859 instance=ExtResource("1_sqmq4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5771787, 0)
+
+[node name="RewardContainer" type="Node3D" parent="." unique_id=85725633]
+
+[node name="MagicGate" parent="RewardContainer" unique_id=1933992514 instance=ExtResource("2_o2b2s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7503905, 0.5052669, -4.7780914)
+
+[node name="ExitContainer" type="Node3D" parent="." unique_id=1231529638]
+
+[node name="LevelExit" parent="ExitContainer" unique_id=250091203 instance=ExtResource("3_61rta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.538658, 1, -7.5681677)
+prompt_text = ""
+completion_message = "Room 1 Clear"
+objective_after = "Continue Deeper"
+
+[node name="CrackedCrystal" parent="ExitContainer" unique_id=947878376 instance=ExtResource("4_gv4c1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.8405724, 0.5, -5.3448925)
+
+[node name="EncounterManager" type="Node" parent="." unique_id=304962937]
+script = ExtResource("4_22oyu")
+
+[node name="FocusTime" type="Node" parent="." unique_id=1573419306]
+script = ExtResource("5_rubrg")
+
+[node name="GameUI" parent="." unique_id=1997845998 instance=ExtResource("6_mc6q8")]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=455173496]
+transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, 0, 0, 0)
+
+[node name="Player" parent="." unique_id=439123255 groups=["player"] instance=ExtResource("8_catnd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.776371, 1.0000005, 8.108967)

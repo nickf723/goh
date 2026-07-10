@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3 uid="uid://d0tlr8wx54co0"]
+
+[ext_resource type="Script" uid="uid://cajn6gipe7r2o" path="res://scripts/combat/damage_payload.gd" id="1_sgisn"]
+
+[resource]
+script = ExtResource("1_sgisn")
+element = "fire"
+source_name = "Firebolt"
+hit_type = "projectile"
+tags = Array[String](["fire", "magic", "projectile"])
+metadata/_custom_type_script = "uid://cajn6gipe7r2o"

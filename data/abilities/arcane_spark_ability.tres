@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3 uid="uid://ds4sq4b5bywg8"]
+
+[ext_resource type="PackedScene" uid="uid://tj563cjynma8" path="res://scenes/actions/generic_projectile.tscn" id="1_egnuw"]
+[ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="2_egnuw"]
+[ext_resource type="Resource" uid="uid://c6alih0g16ufw" path="res://data/damage_payloads/arcane_spark_payload.tres" id="2_u5poo"]
+
+[resource]
+script = ExtResource("2_egnuw")
+display_name = "Arcane Spark"
+description = "Simple magic projectlle."
+ability_scene = ExtResource("1_egnuw")
+action_payload = ExtResource("2_u5poo")

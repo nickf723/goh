@@ -1,0 +1,81 @@
+[gd_scene format=3 uid="uid://io3fxm1jphty"]
+
+[ext_resource type="PackedScene" uid="uid://ke547jyi5w0l" path="res://scenes/actors/interactables/mana_shrine.tscn" id="1_8hu8t"]
+[ext_resource type="PackedScene" uid="uid://6raaty2e36ko" path="res://scenes/actors/player/player.tscn" id="1_acbrb"]
+[ext_resource type="PackedScene" uid="uid://j44g36yeu58k" path="res://scenes/ui/game_ui.tscn" id="2_ny60l"]
+[ext_resource type="PackedScene" uid="uid://cyr612xwyxxeu" path="res://scenes/actors/npcs/church_finder.tscn" id="5_8hu8t"]
+[ext_resource type="PackedScene" uid="uid://b0ww2555qq4si" path="res://scenes/actors/interactables/cracked_crystal.tscn" id="6_1ltt4"]
+[ext_resource type="PackedScene" uid="uid://cu7itariw232c" path="res://scenes/actors/interactables/training_dummy.tscn" id="6_mi5e6"]
+[ext_resource type="Script" uid="uid://d4c66lkqs3ac6" path="res://scripts/systems/focus_time.gd" id="7_1ltt4"]
+[ext_resource type="PackedScene" uid="uid://dgprwdbmbpuqk" path="res://scenes/actors/enemies/goblin_drone.tscn" id="8_xaa0i"]
+[ext_resource type="Script" uid="uid://yqmg6dwfue8d" path="res://scripts/systems/encounter_manager.gd" id="9_og14o"]
+[ext_resource type="PackedScene" uid="uid://cfkh0cdjlqg7o" path="res://scenes/actors/interactables/magic_gate.tscn" id="10_0qkt0"]
+[ext_resource type="PackedScene" uid="uid://dexf0bt5d7hdk" path="res://scenes/actors/interactables/level_exit.tscn" id="11_fshx4"]
+[ext_resource type="Script" uid="uid://d0phdkt41uxbr" path="res://scripts/systems/dev_vision.gd" id="12_jlmo8"]
+[ext_resource type="PackedScene" uid="uid://c7ggpkgrksqox" path="res://scenes/surfaces/oil_patch.tscn" id="13_ii37y"]
+[ext_resource type="PackedScene" uid="uid://dq6m8gaf1u2b7" path="res://scenes/surfaces/water_patch.tscn" id="14_eqklq"]
+[ext_resource type="PackedScene" uid="uid://dw6mih3hc1hq1" path="res://scenes/actors/enemies/gremlin_drone.tscn" id="15_ijhmh"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3s6yi"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="BoxMesh" id="BoxMesh_05kv6"]
+size = Vector3(20, 1, 20)
+
+[node name="DevInteractionSandbox" type="Node3D" unique_id=1978803885]
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=273793794]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=155788525]
+shape = SubResource("BoxShape3D_3s6yi")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1655437352]
+mesh = SubResource("BoxMesh_05kv6")
+
+[node name="GameUI" parent="." unique_id=1997845998 instance=ExtResource("2_ny60l")]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1965604816]
+transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, 0, 0, 0)
+
+[node name="TrainingDummy" parent="." unique_id=1060897074 instance=ExtResource("6_mi5e6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.7846866, 0.5, -4.5636425)
+
+[node name="ChurchFinder" parent="." unique_id=296350881 instance=ExtResource("5_8hu8t")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.042152, 0.9, -1.0778942)
+
+[node name="ManaShrine" parent="." unique_id=947878376 instance=ExtResource("1_8hu8t")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09392023, 1.0000005, 8.038979)
+
+[node name="CrackedCrystal" parent="." unique_id=303540902 instance=ExtResource("6_1ltt4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.927042, 0.5, 3.8659992)
+
+[node name="FocusTime" type="Node" parent="." unique_id=1536230861]
+script = ExtResource("7_1ltt4")
+
+[node name="Player" parent="." unique_id=439123255 groups=["player"] instance=ExtResource("1_acbrb")]
+transform = Transform3D(0.9999595, 0.006816955, -0.005871776, -0.0068315915, 0.99997365, -0.0024776196, 0.0058547403, 0.0025176115, 0.99997973, -8.181036, 1.0000005, -6.6629486)
+
+[node name="EncounterManager" type="Node" parent="." unique_id=164138163]
+script = ExtResource("9_og14o")
+
+[node name="MagicGate" parent="." unique_id=1933992514 instance=ExtResource("10_0qkt0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.358184, 0.46734166, -0.48679113)
+
+[node name="LevelExit" parent="." unique_id=250091203 instance=ExtResource("11_fshx4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.897373, 1, -0.42191124)
+
+[node name="DevVision" type="Node" parent="." unique_id=1851925974]
+script = ExtResource("12_jlmo8")
+
+[node name="OilPatch" parent="." unique_id=462673935 instance=ExtResource("13_ii37y")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.030038834, 0.1, 3.8186522)
+
+[node name="WaterPatch" parent="." unique_id=225190358 instance=ExtResource("14_eqklq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.340233, 0.0970999, 3.8572702)
+
+[node name="GoblineDrone" parent="." unique_id=436581859 instance=ExtResource("8_xaa0i")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.948832, 1.127285, 4.736601)
+
+[node name="GremlinDrone" parent="." unique_id=1856768869 instance=ExtResource("15_ijhmh")]
+transform = Transform3D(0.75, 0, 0, 0, 0.75, 0, 0, 0, 0.75, 1.4946527, 0.375, -5.274763)

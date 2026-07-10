@@ -1,0 +1,78 @@
+[gd_scene format=3 uid="uid://6raaty2e36ko"]
+
+[ext_resource type="Script" uid="uid://bbylksf6bxvx5" path="res://scripts/player/player_controller.gd" id="1_3vyb7"]
+[ext_resource type="Material" uid="uid://bxrl6afl3gijr" path="res://art/materials/player_debug.tres" id="2_mpktj"]
+[ext_resource type="Script" uid="uid://did8gv2j4epru" path="res://scripts/abilities/ability_caster.gd" id="2_oj104"]
+[ext_resource type="Resource" uid="uid://bg485tlykg7uk" path="res://data/loadouts/grace_starting_loadout.tres" id="3_oj104"]
+[ext_resource type="Script" uid="uid://dl8yw5cwab03v" path="res://scripts/weapons/weapon_controller.gd" id="5_qdyt2"]
+[ext_resource type="Resource" uid="uid://dgcmpqkn3b3a4" path="res://data/weapons/practice_sword.tres" id="6_g2g7f"]
+[ext_resource type="Script" uid="uid://yxbkrqi8ju8j" path="res://scripts/player/player_action_state.gd" id="7_g2g7f"]
+[ext_resource type="Script" uid="uid://dmp5o1qjlca1n" path="res://scripts/player/player_dodge_controller.gd" id="8_fp13k"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_qhqgy"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_3vyb7"]
+radius = 2.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_qdyt2"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_qdyt2"]
+
+[node name="Player" type="CharacterBody3D" unique_id=439123255]
+script = ExtResource("1_3vyb7")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=309120136]
+shape = SubResource("CapsuleShape3D_g2els")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=871190334]
+material_override = ExtResource("2_mpktj")
+mesh = SubResource("CapsuleMesh_qhqgy")
+
+[node name="CameraPivot" type="Node3D" parent="." unique_id=1528540765]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot" unique_id=1805100342]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, 0.25881904, 0, -0.25881904, 0.9659258, 0, 0, 0)
+spring_length = 6.0
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D" unique_id=1002768703]
+current = true
+
+[node name="InteractionArea" type="Area3D" parent="." unique_id=1074188311]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea" unique_id=1784624174]
+shape = SubResource("SphereShape3D_3vyb7")
+
+[node name="AbilityCaster" type="Node3D" parent="." unique_id=16910546]
+script = ExtResource("2_oj104")
+loadout = ExtResource("3_oj104")
+
+[node name="WeaponController" type="Node3D" parent="." unique_id=1363003010]
+script = ExtResource("5_qdyt2")
+equipped_weapon = ExtResource("6_g2g7f")
+print_attack_debug = true
+metadata/_custom_type_script = "uid://dl8yw5cwab03v"
+
+[node name="HandAnchor" type="Node3D" parent="WeaponController" unique_id=984196414]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0, -0.15)
+
+[node name="WeaponVisualPivot" type="Node3D" parent="WeaponController/HandAnchor" unique_id=1406066353]
+
+[node name="SwordMesh" type="MeshInstance3D" parent="WeaponController/HandAnchor/WeaponVisualPivot" unique_id=1447703097]
+transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.65, 0.15, 0, -0.45)
+mesh = SubResource("BoxMesh_qdyt2")
+
+[node name="SlashTrail" type="MeshInstance3D" parent="WeaponController/HandAnchor/WeaponVisualPivot" unique_id=21744106]
+transform = Transform3D(-2.4041263e-08, 0, 1, 0, 1.1, 0, -0.55, 0, -4.371139e-08, 0.2, 0, -0.55)
+visible = false
+mesh = SubResource("PlaneMesh_qdyt2")
+
+[node name="PlayerActionState" type="Node" parent="." unique_id=449087462]
+script = ExtResource("7_g2g7f")
+metadata/_custom_type_script = "uid://yxbkrqi8ju8j"
+
+[node name="PlayerDodgeController" type="Node" parent="." unique_id=1337799175]
+script = ExtResource("8_fp13k")
+metadata/_custom_type_script = "uid://dmp5o1qjlca1n"

@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://tj563cjynma8"]
+
+[ext_resource type="Script" uid="uid://doex2q7uraf81" path="res://scripts/actions/generic_projectile.gd" id="1_y6qbd"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_upsal"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_ydmg5"]
+radius = 0.25
+
+[node name="GenericProjectile" type="Node3D" unique_id=1700535539]
+script = ExtResource("1_y6qbd")
+
+[node name="ProjectileVisual" type="MeshInstance3D" parent="." unique_id=90256857]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, 0)
+mesh = SubResource("SphereMesh_upsal")
+
+[node name="HitArea" type="Area3D" parent="." unique_id=959555728]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HitArea" unique_id=1202761400]
+shape = SubResource("SphereShape3D_ydmg5")

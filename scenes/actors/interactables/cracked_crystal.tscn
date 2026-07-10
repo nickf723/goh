@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://b0ww2555qq4si"]
+
+[ext_resource type="Script" uid="uid://qqquy3sat2t3" path="res://scripts/interaction/interactable.gd" id="1_va3yv"]
+[ext_resource type="Material" uid="uid://44e2xlx4d7i4" path="res://art/materials/crystal_debug.tres" id="2_d57lp"]
+[ext_resource type="Script" uid="uid://bmu7g8680htm1" path="res://scripts/combat/hit_receiver.gd" id="2_kscrn"]
+[ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="3_kscrn"]
+[ext_resource type="Script" uid="uid://dfd618a4fsswa" path="res://scripts/combat/status_receiver.gd" id="5_dl10o"]
+[ext_resource type="Script" uid="uid://dl7cjack4ydjg" path="res://scripts/combat/payload_receiver.gd" id="6_qfh2c"]
+[ext_resource type="Script" uid="uid://p3xc1kfrtt3t" path="res://scripts/detection/revealable_receiver.gd" id="7_qfh2c"]
+
+[sub_resource type="PrismMesh" id="PrismMesh_va3yv"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_kscrn"]
+
+[node name="CrackedCrystal" type="Area3D" unique_id=947878376]
+script = ExtResource("1_va3yv")
+inspect_text = "This object has not been customized yet.	"
+objective_after = "Keep testing the sandbox."
+
+[node name="PlaceholderMesh" type="MeshInstance3D" parent="." unique_id=1730191182]
+material_override = ExtResource("2_d57lp")
+mesh = SubResource("PrismMesh_va3yv")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=307500620]
+shape = SubResource("SphereShape3D_kscrn")
+
+[node name="HitReceiver" type="Node" parent="." unique_id=578342512]
+script = ExtResource("2_kscrn")
+target_name = "Object"
+hit_mode = 2
+max_health = 2
+current_health = 2
+disappears_when_defeated = true
+restores_mana_when_defeated = 1
+
+[node name="TagComponent" type="Node" parent="." unique_id=2118162504]
+script = ExtResource("3_kscrn")
+tags = Array[String](["crystal", "fragile", "magic", "breakable"])
+
+[node name="StatusReceiver" type="Node" parent="." unique_id=1902193565]
+script = ExtResource("5_dl10o")
+
+[node name="PayloadReceiver" type="Node" parent="." unique_id=157066900]
+script = ExtResource("6_qfh2c")
+
+[node name="RevealableReceiver" type="Node" parent="." unique_id=1178285613]
+script = ExtResource("7_qfh2c")
+reveal_message = "Crystal revealed"
+metadata/_custom_type_script = "uid://p3xc1kfrtt3t"

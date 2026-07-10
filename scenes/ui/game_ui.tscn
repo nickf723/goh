@@ -1,0 +1,83 @@
+[gd_scene format=3 uid="uid://j44g36yeu58k"]
+
+[ext_resource type="Script" uid="uid://dvkvtltrjyvhd" path="res://scripts/ui/game_ui.gd" id="1_dcmab"]
+
+[node name="GameUI" type="CanvasLayer" unique_id=1997845998]
+script = ExtResource("1_dcmab")
+
+[node name="ObjectiveLabel" type="Label" parent="." unique_id=787688870]
+offset_left = 687.0
+offset_top = 41.0
+offset_right = 871.0
+offset_bottom = 64.0
+text = "Objective: Look around."
+
+[node name="PromptLabel" type="Label" parent="." unique_id=1710626007]
+visible = false
+offset_left = 24.0
+offset_top = 640.0
+offset_right = 98.0
+offset_bottom = 663.0
+text = "E: Inspect"
+
+[node name="MessagePanel" type="PanelContainer" parent="." unique_id=1249080477]
+visible = false
+offset_left = 280.0
+offset_top = 560.0
+offset_right = 1000.0
+offset_bottom = 680.0
+
+[node name="MessageLabel" type="Label" parent="MessagePanel" unique_id=1547000342]
+layout_mode = 2
+text = "Message text."
+
+[node name="ChoicePanel" type="PanelContainer" parent="." unique_id=116615469]
+visible = false
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ChoiceBox" type="VBoxContainer" parent="ChoicePanel" unique_id=2004590404]
+layout_mode = 2
+
+[node name="ChoiceLabel" type="Label" parent="ChoicePanel/ChoiceBox" unique_id=1021322793]
+layout_mode = 2
+text = "What happened before you arrived?"
+
+[node name="PlayPrologueButton" type="Button" parent="ChoicePanel/ChoiceBox" unique_id=1795438170]
+layout_mode = 2
+text = "Play Prologue"
+
+[node name="SkipPrologueButton" type="Button" parent="ChoicePanel/ChoiceBox" unique_id=618647225]
+layout_mode = 2
+text = "Skip Prologue"
+
+[node name="DebugStatsLabel" type="Label" parent="." unique_id=1569013951]
+offset_left = 3.0
+offset_top = 37.0
+offset_right = 116.0
+offset_bottom = 138.0
+text = "Health: 1 / 1
+Stamina: 1 / 1
+Mana: 3 / 3
+Stance: 1 / 1"
+autowrap_mode = 3
+
+[node name="FocusLabel" type="Label" parent="." unique_id=1029778591]
+offset_right = 40.0
+offset_bottom = 23.0
+text = "Focus: Ready"
+
+[node name="SpellMenuLabel" type="Label" parent="." unique_id=170057078]
+visible = false
+offset_left = 181.0
+offset_top = 239.0
+offset_right = 267.0
+offset_bottom = 262.0
+text = "Spell Menu"
+
+[node name="DevVisionLabel" type="Label" parent="." unique_id=18161658]
+offset_left = 10.0
+offset_top = 152.0
+offset_right = 760.0
+offset_bottom = 175.0
+text = "Dev Vision"

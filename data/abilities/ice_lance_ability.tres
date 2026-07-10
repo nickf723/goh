@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3 uid="uid://cl15qdk8no6o3"]
+
+[ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="1_fjtgo"]
+[ext_resource type="PackedScene" uid="uid://tj563cjynma8" path="res://scenes/actions/generic_projectile.tscn" id="1_suwse"]
+[ext_resource type="Resource" uid="uid://b5e0vkj5itdd0" path="res://data/damage_payloads/ice_lance_payload.tres" id="2_suwse"]
+
+[resource]
+script = ExtResource("1_fjtgo")
+display_name = "Ice Lance"
+description = "Pierce with ice"
+element = "ice"
+ability_scene = ExtResource("1_suwse")
+action_payload = ExtResource("2_suwse")
+metadata/_custom_type_script = "uid://cyp8hkceavuj4"

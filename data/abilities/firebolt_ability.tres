@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3 uid="uid://vthwkbu3qqi"]
+
+[ext_resource type="PackedScene" uid="uid://tj563cjynma8" path="res://scenes/actions/generic_projectile.tscn" id="1_fcptf"]
+[ext_resource type="Resource" uid="uid://d0tlr8wx54co0" path="res://data/damage_payloads/firebolt_payload.tres" id="2_4nb7g"]
+[ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="2_fcptf"]
+
+[resource]
+script = ExtResource("2_fcptf")
+display_name = "Firebolt"
+description = "Fire projectile"
+element = "fire"
+ability_scene = ExtResource("1_fcptf")
+action_payload = ExtResource("2_4nb7g")

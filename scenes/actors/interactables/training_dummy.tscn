@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://cu7itariw232c"]
+
+[ext_resource type="Script" uid="uid://h3palyoqome6" path="res://scripts/interaction/training_dummy.gd" id="1_kumxu"]
+[ext_resource type="Script" uid="uid://bmu7g8680htm1" path="res://scripts/combat/hit_receiver.gd" id="2_ma18x"]
+[ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="3_jgksw"]
+[ext_resource type="Script" uid="uid://dfd618a4fsswa" path="res://scripts/combat/status_receiver.gd" id="4_0fkvd"]
+[ext_resource type="Script" uid="uid://dl7cjack4ydjg" path="res://scripts/combat/payload_receiver.gd" id="5_t38md"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_5vfiu"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7utts"]
+
+[node name="TrainingDummy" type="Area3D" unique_id=947878376]
+script = ExtResource("1_kumxu")
+prompt_text = "Inspect"
+
+[node name="PlaceholderMesh" type="MeshInstance3D" parent="." unique_id=1730191182]
+mesh = SubResource("BoxMesh_5vfiu")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=307500620]
+shape = SubResource("BoxShape3D_7utts")
+
+[node name="HitReceiver" type="Node" parent="." unique_id=1060547353]
+script = ExtResource("2_ma18x")
+target_name = "Training Dummy"
+
+[node name="TagComponent" type="Node" parent="." unique_id=104079011]
+script = ExtResource("3_jgksw")
+tags = Array[String](["training", "fragile", "wooden"])
+
+[node name="StatusReceiver" type="Node" parent="." unique_id=244702037]
+script = ExtResource("4_0fkvd")
+
+[node name="PayloadReceiver" type="Node" parent="." unique_id=1595465577]
+script = ExtResource("5_t38md")

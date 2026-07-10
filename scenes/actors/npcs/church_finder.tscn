@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://cyr612xwyxxeu"]
+
+[ext_resource type="PackedScene" uid="uid://b1n88gfucuoh4" path="res://scenes/actors/npcs/base_npc.tscn" id="1_lah7f"]
+[ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="2_ah5y3"]
+
+[node name="ChurchFinder" unique_id=296350881 instance=ExtResource("1_lah7f")]
+speaker_name = "Acolyte"
+
+[node name="HitReceiver" parent="." index="2" unique_id=1395467963]
+target_name = "Acolyte"
+hit_mode = 0
+
+[node name="TagComponent" type="Node" parent="." index="3" unique_id=613581226]
+script = ExtResource("2_ah5y3")
+tags = Array[String](["npc", "human", "story"])

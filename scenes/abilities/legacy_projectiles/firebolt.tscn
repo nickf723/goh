@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://divavbl1exb2x"]
+
+[ext_resource type="Script" uid="uid://88nk6no1wtlv" path="res://scripts/abilities/arcane_spark.gd" id="1_ovpfi"]
+[ext_resource type="Resource" uid="uid://d0tlr8wx54co0" path="res://data/damage_payloads/firebolt_payload.tres" id="2_6x76u"]
+[ext_resource type="Material" uid="uid://rs14pkxwvlbj" path="res://art/materials/gate_debug.tres" id="3_mw6dm"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_6n1nv"]
+radius = 0.2
+
+[sub_resource type="SphereMesh" id="SphereMesh_02uyq"]
+radius = 0.2
+height = 0.4
+
+[node name="Firebolt" type="Area3D" unique_id=1962244853]
+script = ExtResource("1_ovpfi")
+speed = 14.0
+hit_power = 2
+damage_payload = ExtResource("2_6x76u")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1139169510]
+shape = SubResource("SphereShape3D_6n1nv")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=195292620]
+material_override = ExtResource("3_mw6dm")
+mesh = SubResource("SphereMesh_02uyq")

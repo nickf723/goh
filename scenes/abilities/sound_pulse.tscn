@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://c3y8rsggqhpwc"]
+
+[ext_resource type="Script" uid="uid://c477rv33dolg6" path="res://scripts/abilities/sound_pulse.gd" id="1_s4a2w"]
+[ext_resource type="Resource" uid="uid://dnqou6nghv5ad" path="res://data/detection_payloads/sound_pulse_payload.tres" id="2_3lg77"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_q3u38"]
+
+[node name="SoundPulse" type="Node3D" unique_id=629232943]
+script = ExtResource("1_s4a2w")
+detection_payload = ExtResource("2_3lg77")
+
+[node name="PulseVisual" type="MeshInstance3D" parent="." unique_id=634254398]
+visible = false
+mesh = SubResource("SphereMesh_q3u38")

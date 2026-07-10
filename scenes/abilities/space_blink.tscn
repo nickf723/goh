@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bvxqbu4br22ea"]
+
+[ext_resource type="Script" uid="uid://c8dubg5jew6n2" path="res://scripts/abilities/space_blink.gd" id="1_yfndk"]
+
+[node name="SpaceBlink" type="Node3D" unique_id=267726871]
+script = ExtResource("1_yfndk")

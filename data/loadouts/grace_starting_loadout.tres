@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityLoadout" format=3 uid="uid://bg485tlykg7uk"]
+
+[ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="1_vpdcl"]
+[ext_resource type="Resource" uid="uid://ds4sq4b5bywg8" path="res://data/abilities/arcane_spark_ability.tres" id="2_kjjk6"]
+[ext_resource type="Script" uid="uid://d12bk5qmiywr3" path="res://scripts/abilities/ability_loadout.gd" id="2_lfgcu"]
+[ext_resource type="Resource" uid="uid://ctxsxojjb17jw" path="res://data/abilities/space_blink_ability.tres" id="3_hbxob"]
+[ext_resource type="Resource" uid="uid://vthwkbu3qqi" path="res://data/abilities/firebolt_ability.tres" id="4_hbxob"]
+[ext_resource type="Resource" uid="uid://cl15qdk8no6o3" path="res://data/abilities/ice_lance_ability.tres" id="5_yyfdk"]
+[ext_resource type="Resource" uid="uid://bbwloguh30ok4" path="res://data/abilities/lightning_spark_ability.tres" id="6_ysnck"]
+[ext_resource type="Resource" uid="uid://0uovq6rtxhio" path="res://data/abilities/sound_pulse_ability.tres" id="7_cel76"]
+
+[resource]
+script = ExtResource("2_lfgcu")
+learned_abilities = Array[ExtResource("1_vpdcl")]([ExtResource("2_kjjk6"), ExtResource("3_hbxob"), ExtResource("4_hbxob"), ExtResource("5_yyfdk"), ExtResource("6_ysnck"), ExtResource("7_cel76")])
+equipped_abilities = Array[ExtResource("1_vpdcl")]([ExtResource("2_kjjk6"), ExtResource("3_hbxob"), ExtResource("4_hbxob"), ExtResource("5_yyfdk"), ExtResource("6_ysnck"), ExtResource("7_cel76")])
+metadata/_custom_type_script = "uid://d12bk5qmiywr3"

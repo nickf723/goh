@@ -1,0 +1,207 @@
+extends Node
+
+var active_statuses: Dictionary = {}
+
+func _ready() -> void:
+	add_to_group("debuggable")
+
+func apply_status(status_name: String, duration: float, strength: float = 1.0, source: String = "unknown") -> void:
+	if status_name == "" or duration <= 0.0:
+		return
+
+	resolve_status_conflicts(status_name)
+
+	active_statuses[status_name] = {
+		"duration": duration,
+		"strength": strength,
+		"tick_timer": 1.0,
+		"source": source,
+	}
+
+	print("Applied status: ", status_name, " from ", source, " for ", duration, " seconds.")
+
+func _process(delta: float) -> void:
+	var expired_statuses: Array[String] = []
+
+	for status_name: String in active_statuses.keys():
+		active_statuses[status_name]["duration"] -= delta
+
+		if status_name == "burning":
+			process_burning(delta, status_name)
+
+		if active_statuses[status_name]["duration"] <= 0.0:
+			expired_statuses.append(status_name)
+
+	for status_name: String in expired_statuses:
+		active_statuses.erase(status_name)
+		print("Status expired: ", status_name)
+
+func process_burning(delta: float, status_name: String) -> void:
+	active_statuses[status_name]["tick_timer"] -= delta
+
+	if active_statuses[status_name]["tick_timer"] > 0.0:
+		return
+
+	active_statuses[status_name]["tick_timer"] = 1.0
+
+	var burn_damage: int = max(1, roundi(active_statuses[status_name]["strength"]))
+
+	var hit_receiver: Node = get_parent().get_node_or_null("HitReceiver")
+
+	if hit_receiver == null:
+		return
+
+	if not hit_receiver.has_method("receive_payload"):
+		return
+
+	var burn_payload: DamagePayload = DamagePayload.new()
+	burn_payload.amount = burn_damage
+	burn_payload.stance_damage = 0
+	burn_payload.element = "fire"
+	burn_payload.source_name = "Burning"
+	burn_payload.hit_type = "status"
+
+	var result: Dictionary = hit_receiver.receive_payload(burn_payload)
+	show_status_result(result)
+
+func show_status_result(result: Dictionary) -> void:
+	var ui: Node = get_tree().get_first_node_in_group("game_ui")
+
+	if ui == null:
+		return
+
+	if result.has("message") and result["message"] != "":
+		ui.show_message(result["message"])
+
+	if result.has("objective") and result["objective"] != "":
+		ui.set_objective(result["objective"])
+
+func has_status(status_name: String) -> bool:
+	return active_statuses.has(status_name)
+
+func remove_status(status_name: String) -> void:
+	if active_statuses.has(status_name):
+		active_statuses.erase(status_name)
+		print("Status removed: ", status_name)
+
+func get_status_strength(status_name: String) -> float:
+	if not active_statuses.has(status_name):
+		return 1.0
+
+	return active_statuses[status_name]["strength"]
+
+func get_movement_multiplier() -> float:
+	if has_status("stunned"):
+		return 0.0
+	if has_status("frozen"):
+		return 0.0		
+	if has_status("staggered"):
+		return 0.0
+	if has_status("chill"):
+		return get_status_strength("chill")
+	return 1.0
+
+func get_debug_data() -> Dictionary:
+	var status_summary: Array[String] = []
+
+	for status_name: String in active_statuses.keys():
+		var duration: float = active_statuses[status_name]["duration"]
+		var strength: float = active_statuses[status_name]["strength"]
+		var source: String = "unknown"
+
+		if active_statuses[status_name].has("source"):
+			source = active_statuses[status_name]["source"]
+
+		status_summary.append(
+			status_name
+			+ "("
+			+ str(snapped(duration, 0.1))
+			+ "s, "
+			+ str(strength)
+			+ ", "
+			+ source
+			+ ")"
+		)
+
+	var statuses: String = "none"
+
+	if status_summary.size() > 0:
+		statuses = ", ".join(status_summary)
+
+	return {
+		"statuses": statuses,
+		"move": get_movement_multiplier(),
+	}
+
+	for status_name: String in active_statuses.keys():
+		var duration: float = active_statuses[status_name]["duration"]
+		var strength: float = active_statuses[status_name]["strength"]
+
+		status_summary.append(
+			status_name
+			+ "("
+			+ str(snapped(duration, 0.1))
+			+ "s, "
+			+ str(strength)
+			+ ")"
+		)
+
+	if status_summary.size() > 0:
+		statuses = ", ".join(status_summary)
+
+	return {
+		"type": "StatusReceiver",
+		"statuses": statuses,
+		"move_mult": get_movement_multiplier(),
+	}
+	return {
+		"type": "StatusReceiver",
+		"active_statuses": active_statuses,
+		"movement_multiplier": get_movement_multiplier(),
+	}
+
+func sustain_status(status_name: String, duration: float, strength: float = 1.0, source: String = "unknown") -> void:
+	if status_name == "" or duration <= 0.0:
+		return
+
+	resolve_status_conflicts(status_name)
+	
+	if not active_statuses.has(status_name):
+		apply_status(status_name, duration, strength, source)
+		return
+
+	active_statuses[status_name]["duration"] = max(
+		float(active_statuses[status_name]["duration"]),
+		duration
+	)
+
+	active_statuses[status_name]["strength"] = strength
+	active_statuses[status_name]["source"] = source
+
+	if not active_statuses[status_name].has("tick_timer"):
+		active_statuses[status_name]["tick_timer"] = 1.0
+
+func resolve_status_conflicts(new_status: String) -> void:
+	match new_status:
+		"wet":
+			remove_status("oily")
+			remove_status("burning")
+
+		"burning":
+			remove_status("frozen")
+			remove_status("chill")
+
+		"frozen":
+			remove_status("burning")
+
+func blocks_actions() -> bool:
+	if has_status("stunned"):
+		return true
+
+	if has_status("frozen"):
+		return true
+
+	if has_status("staggered"):
+		return true
+
+	return false

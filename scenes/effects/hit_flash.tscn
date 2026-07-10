@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://1cmt2x64k1ca"]
+
+[ext_resource type="Script" uid="uid://iv0hbfbknq1q" path="res://scripts/hit_flash.gd" id="1_i2avi"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_knw68"]
+
+[node name="HitFlash" type="Node3D" unique_id=1124698292]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=501724491]
+transform = Transform3D(0.35, 0, 0, 0, 0.35, 0, 0, 0, 0.35, 0, 0, 0)
+mesh = SubResource("SphereMesh_knw68")
+script = ExtResource("1_i2avi")

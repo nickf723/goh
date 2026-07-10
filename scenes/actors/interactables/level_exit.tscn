@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://dexf0bt5d7hdk"]
+
+[ext_resource type="Script" uid="uid://ca84tjboujkfc" path="res://scripts/interaction/level_exit.gd" id="1_3ytuh"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_uly1h"]
+size = Vector3(2, 2, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3ytuh"]
+size = Vector3(2, 2, 2)
+
+[node name="LevelExit" type="Area3D" unique_id=250091203]
+script = ExtResource("1_3ytuh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=812455403]
+shape = SubResource("BoxShape3D_uly1h")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1888766931]
+mesh = SubResource("BoxMesh_3ytuh")

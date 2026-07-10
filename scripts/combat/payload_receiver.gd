@@ -1,0 +1,171 @@
+extends Node
+class_name PayloadReceiver
+
+const ReactionResolverScript = preload("res://scripts/systems/reaction_resolver.gd")
+
+var last_payload_summary: String = "none"
+var last_reaction_summary: String = "none"
+
+
+func _ready() -> void:
+	add_to_group("debuggable")
+
+func receive_payload(payload: DamagePayload) -> Dictionary:
+	if payload == null:
+		return {
+			"message": get_target_node().name + " receives an empty payload.",
+			"objective": ""
+		}
+
+	var target: Node = get_target_node()
+
+	remember_payload(payload)
+	apply_direct_status(target, payload)
+	apply_force(target, payload)
+
+	var reaction_messages: Array[String] = resolve_reactions(target, payload)
+	var result: Dictionary = apply_hit(target, payload)
+
+	return combine_messages(result, reaction_messages)
+
+func get_target_node() -> Node:
+	var parent: Node = get_parent()
+
+	if parent != null:
+		return parent
+
+	return self
+
+func remember_payload(payload: DamagePayload) -> void:
+	last_payload_summary = (
+		payload.source_name
+		+ " | "
+		+ payload.element
+		+ " | "
+		+ str(payload.tags)
+	)
+
+func apply_direct_status(target: Node, payload: DamagePayload) -> void:
+	if payload.status_effect == "":
+		return
+
+	if payload.status_duration <= 0.0:
+		return
+
+	var status_receiver: Node = get_component(target, "StatusReceiver")
+
+	if status_receiver == null:
+		return
+
+	if not status_receiver.has_method("apply_status"):
+		return
+
+	status_receiver.apply_status(
+		payload.status_effect,
+		payload.status_duration,
+		payload.status_strength,
+		payload.source_name
+	)
+
+func resolve_reactions(target: Node, payload: DamagePayload) -> Array[String]:
+	var reaction_messages: Array[String] = []
+	var reaction_names: Array[String] = []
+
+	var reactions: Array[Dictionary] = ReactionResolverScript.resolve_payload_reactions(target, payload)
+
+	for reaction: Dictionary in reactions:
+		if reaction.has("reaction"):
+			reaction_names.append(str(reaction["reaction"]))
+
+		if reaction.has("message"):
+			reaction_messages.append(str(reaction["message"]))
+
+	if reaction_names.size() > 0:
+		last_reaction_summary = ", ".join(reaction_names)
+	else:
+		last_reaction_summary = "none"
+
+	return reaction_messages
+
+func apply_hit(target: Node, payload: DamagePayload) -> Dictionary:
+	var hit_receiver: Node = get_component(target, "HitReceiver")
+
+	if hit_receiver != null:
+		if hit_receiver.has_method("receive_payload"):
+			return hit_receiver.receive_payload(payload)
+
+		if hit_receiver.has_method("receive_hit"):
+			return hit_receiver.receive_hit(payload.amount)
+
+	return {
+		"message": payload.source_name + " hits " + target.name + ", but nothing receives the hit.",
+		"objective": ""
+	}
+
+func combine_messages(result: Dictionary, reaction_messages: Array[String]) -> Dictionary:
+	if reaction_messages.size() == 0:
+		return result
+
+	var combined_message: String = "\n".join(reaction_messages)
+
+	if result.has("message") and result["message"] != "":
+		combined_message += "\n" + str(result["message"])
+
+	result["message"] = combined_message
+
+	return result
+
+func get_component(target: Node, component_name: String) -> Node:
+	if target == null:
+		return null
+
+	return target.get_node_or_null(component_name)
+
+func get_debug_data() -> Dictionary:
+	return {
+		"last": last_payload_summary,
+		"rx": last_reaction_summary,
+	}
+
+func apply_force(target: Node, payload: DamagePayload) -> void:
+	
+	if payload.knockback_strength <= 0.0 and payload.knockback_up_strength <= 0.0:
+		return
+
+	var force_receiver: Node = get_component(target, "ForceReceiver")
+
+	if force_receiver == null:
+		return
+
+	if not force_receiver.has_method("apply_impulse"):
+		return
+
+	var source_position: Vector3 = get_payload_source_position(payload)
+	var target_position: Vector3 = get_target_position(target)
+	var direction: Vector3 = target_position - source_position
+
+	force_receiver.apply_impulse(
+		direction,
+		payload.knockback_strength,
+		payload.knockback_up_strength,
+		payload.source_name
+	)
+
+func get_payload_source_position(_payload: DamagePayload) -> Vector3:
+	var player: Node3D = get_tree().get_first_node_in_group("player")
+
+	if player != null:
+		return player.global_position
+
+	return Vector3.ZERO
+
+func get_target_position(target: Node) -> Vector3:
+	if target is Node3D:
+		return target.global_position
+
+	var parent: Node = target.get_parent()
+
+	if parent is Node3D:
+		return parent.global_position
+
+	return Vector3.ZERO

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3 uid="uid://j4y75vgrs3br"]
+
+[ext_resource type="Script" uid="uid://c8102s34rjwhu" path="res://scripts/enemies/enemy_definition.gd" id="1_wmf7l"]
+
+[resource]
+script = ExtResource("1_wmf7l")
+display_name = "Goblin"
+species_id = "goblin"
+tags = Array[String](["enemy", "monster", "goblin", "organic", "living", "small"])
+metadata/_custom_type_script = "uid://c8102s34rjwhu"

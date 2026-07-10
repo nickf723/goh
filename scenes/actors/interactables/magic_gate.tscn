@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://cfkh0cdjlqg7o"]
+
+[ext_resource type="Script" uid="uid://btgunjjuj0yr2" path="res://scripts/interaction/magic_gate.gd" id="1_8bjkp"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cyn6o"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_8ndqi"]
+
+[node name="MagicGate" type="StaticBody3D" unique_id=1933992514 groups=["encounter_reward"]]
+script = ExtResource("1_8bjkp")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1969517129]
+shape = SubResource("BoxShape3D_cyn6o")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=12425718]
+mesh = SubResource("BoxMesh_8ndqi")

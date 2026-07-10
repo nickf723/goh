@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://dnjpl2l5rllx8"]
+
+[ext_resource type="PackedScene" uid="uid://cy6kom6garl0d" path="res://scenes/environment/wall_segment.tscn" id="1_1dsgl"]
+[ext_resource type="PackedScene" uid="uid://dhqdveft2hriw" path="res://scenes/environment/magic_barrier.tscn" id="1_mpaf8"]
+
+[node name="MagicGate" type="StaticBody3D" unique_id=553479181]
+
+[node name="MagicBarrier" parent="." unique_id=1872534432 instance=ExtResource("1_mpaf8")]
+
+[node name="WallSegment" parent="." unique_id=596574844 instance=ExtResource("1_1dsgl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.5561275)

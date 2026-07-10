@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://d1x4oveset0q2"]
+
+[ext_resource type="PackedScene" uid="uid://cfkh0cdjlqg7o" path="res://scenes/actors/interactables/magic_gate.tscn" id="2_0guvx"]
+[ext_resource type="PackedScene" uid="uid://dexf0bt5d7hdk" path="res://scenes/actors/interactables/level_exit.tscn" id="3_4lvgc"]
+[ext_resource type="Script" uid="uid://yqmg6dwfue8d" path="res://scripts/systems/encounter_manager.gd" id="4_u2cvg"]
+[ext_resource type="Script" uid="uid://d4c66lkqs3ac6" path="res://scripts/systems/focus_time.gd" id="5_yn6p3"]
+[ext_resource type="PackedScene" uid="uid://j44g36yeu58k" path="res://scenes/ui/game_ui.tscn" id="6_bipr1"]
+[ext_resource type="PackedScene" uid="uid://6raaty2e36ko" path="res://scenes/actors/player/player.tscn" id="7_0guvx"]
+[ext_resource type="PackedScene" uid="uid://d3vjgbonj5oer" path="res://scenes/actors/interactables/base_interactable.tscn" id="7_4lvgc"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_kktw3"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="BoxMesh" id="BoxMesh_lnkx0"]
+size = Vector3(20, 1, 20)
+
+[node name="PrototypeRoom02" type="Node3D" unique_id=1064560808]
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=79377459]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=383005094]
+shape = SubResource("BoxShape3D_kktw3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1399253034]
+mesh = SubResource("BoxMesh_lnkx0")
+
+[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=1340136466]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.577286, 0, 0)
+
+[node name="RewardContainer" type="Node3D" parent="." unique_id=85725633]
+
+[node name="MagicGate" parent="RewardContainer" unique_id=1933992514 instance=ExtResource("2_0guvx")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7503905, 0.5052669, 0)
+
+[node name="ExitContainer" type="Node3D" parent="." unique_id=1231529638]
+
+[node name="LevelExit" parent="ExitContainer" unique_id=250091203 instance=ExtResource("3_4lvgc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.538658, 1, -0.14554596)
+
+[node name="EncounterManager" type="Node" parent="." unique_id=304962937]
+script = ExtResource("4_u2cvg")
+
+[node name="FocusTime" type="Node" parent="." unique_id=1573419306]
+script = ExtResource("5_yn6p3")
+
+[node name="GameUI" parent="." unique_id=1997845998 instance=ExtResource("6_bipr1")]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=455173496]
+transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, 0, 0, 0)
+
+[node name="Ground2" type="StaticBody3D" parent="." unique_id=1128027750]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.939014, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground2" unique_id=974483598]
+shape = SubResource("BoxShape3D_kktw3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground2" unique_id=404987181]
+mesh = SubResource("BoxMesh_lnkx0")
+
+[node name="Player" parent="." unique_id=439123255 groups=["player"] instance=ExtResource("7_0guvx")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.563892, 1.0000005, 8.108967)
+
+[node name="BaseInspectable" parent="." unique_id=947878376 instance=ExtResource("7_4lvgc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.736904, 0.5, -2.9035053)
+prompt_text = "Read"
+inspect_text = "Focus, blink, cross"
+objective_after = "Equip space blink and cross"

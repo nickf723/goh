@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://b1n88gfucuoh4"]
+
+[ext_resource type="Script" uid="uid://biad4uil2jigt" path="res://scripts/interaction/npc_interactable.gd" id="1_nblun"]
+[ext_resource type="Script" uid="uid://bmu7g8680htm1" path="res://scripts/combat/hit_receiver.gd" id="2_bui0d"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bui0d"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_s8qxq"]
+radius = 0.4
+height = 1.8
+
+[node name="BaseNpc" type="Area3D" unique_id=296350881]
+script = ExtResource("1_nblun")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1980442907]
+shape = SubResource("CapsuleShape3D_bui0d")
+
+[node name="PlaceholderMesh" type="MeshInstance3D" parent="." unique_id=1663060320]
+mesh = SubResource("CapsuleMesh_s8qxq")
+
+[node name="HitReceiver" type="Node" parent="." unique_id=1395467963]
+script = ExtResource("2_bui0d")

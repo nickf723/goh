@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3 uid="uid://c6alih0g16ufw"]
+
+[ext_resource type="Script" uid="uid://cajn6gipe7r2o" path="res://scripts/combat/damage_payload.gd" id="1_0v444"]
+
+[resource]
+script = ExtResource("1_0v444")
+source_name = "Arcane Spark"
+hit_type = "projectile"
+tags = Array[String](["arcane", "magic", "projectile", "force"])
+metadata/_custom_type_script = "uid://cajn6gipe7r2o"

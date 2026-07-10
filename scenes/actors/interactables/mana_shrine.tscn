@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://ke547jyi5w0l"]
+
+[ext_resource type="PackedScene" uid="uid://d3vjgbonj5oer" path="res://scenes/actors/interactables/base_interactable.tscn" id="1_5lisa"]
+[ext_resource type="Script" uid="uid://x3vgw8s5rjdj" path="res://scripts/interaction/mana_shrine.gd" id="2_kfnnh"]
+[ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="3_hmt2c"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hmt2c"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_1j2mm"]
+
+[node name="ManaShrine" unique_id=947878376 instance=ExtResource("1_5lisa")]
+script = ExtResource("2_kfnnh")
+mana_cost = 1
+restores_after_failed_use = true
+
+[node name="PlaceholderMesh" parent="." index="0" unique_id=1730191182]
+mesh = SubResource("CylinderMesh_hmt2c")
+
+[node name="CollisionShape3D" parent="." index="1" unique_id=307500620]
+shape = SubResource("CylinderShape3D_1j2mm")
+
+[node name="TagComponent" type="Node" parent="." index="3" unique_id=1341007152]
+script = ExtResource("3_hmt2c")
+tags = Array[String](["shrine", "magic", "mana"])

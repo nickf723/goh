@@ -20,7 +20,11 @@ extends CharacterBody3D
 @export var lock_on_camera_pitch_strength: float = 4.0
 @export var lock_on_switch_deadzone: float = 0.72
 @export var lock_on_switch_cooldown: float = 0.34
-@export var lock_on_aim_height: float = 1.2
+@export var lock_on_default_aim_height: float = 0.78
+@export var lock_on_aim_height_ratio: float = 0.48
+@export var lock_on_min_aim_height: float = 0.55
+@export var lock_on_max_aim_height: float = 1.05
+@export var lock_on_cast_origin_height: float = 1.05
 
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var interaction_area: Area3D = $InteractionArea
@@ -522,7 +526,62 @@ func is_target_defeated(target: Node) -> bool:
 
 
 func get_target_aim_point(target: Node3D) -> Vector3:
-	return target.global_position + Vector3.UP * lock_on_aim_height
+	if target == null:
+		return global_position
+
+	return target.global_position + Vector3.UP * get_target_center_mass_height(target)
+
+
+func get_target_center_mass_height(target: Node3D) -> float:
+	var body_height: float = get_target_collision_height(target)
+
+	if body_height > 0.01:
+		return clamp(
+			body_height * lock_on_aim_height_ratio,
+			lock_on_min_aim_height,
+			lock_on_max_aim_height
+		)
+
+	return lock_on_default_aim_height
+
+
+func get_target_collision_height(node: Node) -> float:
+	if node == null:
+		return 0.0
+
+	var best_height: float = 0.0
+
+	if node is CollisionShape3D:
+		var collision_shape: CollisionShape3D = node as CollisionShape3D
+		best_height = max(best_height, get_shape_height(collision_shape.shape))
+
+	for child: Node in node.get_children():
+		best_height = max(best_height, get_target_collision_height(child))
+
+	return best_height
+
+
+func get_shape_height(shape: Shape3D) -> float:
+	if shape == null:
+		return 0.0
+
+	if shape is CapsuleShape3D:
+		var capsule: CapsuleShape3D = shape as CapsuleShape3D
+		return max(capsule.height, capsule.radius * 2.0)
+
+	if shape is BoxShape3D:
+		var box: BoxShape3D = shape as BoxShape3D
+		return box.size.y
+
+	if shape is SphereShape3D:
+		var sphere: SphereShape3D = shape as SphereShape3D
+		return sphere.radius * 2.0
+
+	if shape is CylinderShape3D:
+		var cylinder: CylinderShape3D = shape as CylinderShape3D
+		return cylinder.height
+
+	return 0.0
 
 
 func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
@@ -532,7 +591,7 @@ func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
 	var origin: Vector3 = cast_origin
 
 	if origin == Vector3.ZERO:
-		origin = global_position + Vector3.UP * lock_on_aim_height
+		origin = global_position + Vector3.UP * lock_on_cast_origin_height
 
 	var direction: Vector3 = get_target_aim_point(lock_on_target) - origin
 

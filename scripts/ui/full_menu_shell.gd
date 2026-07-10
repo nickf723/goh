@@ -215,7 +215,7 @@ func build_layout() -> void:
 	content_root.add_child(scroll)
 
 	content_box = VBoxContainer.new()
-	content_box.add_theme_constant_override("separation", 8)
+	content_box.add_theme_constant_override("separation", 6)
 	content_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(content_box)
 
@@ -288,27 +288,24 @@ func rebuild_content() -> void:
 func render_equipment() -> void:
 	var summary: Dictionary = menu_data.get("loadout_summary", {})
 	var summary_lines: Array[String] = []
-	summary_lines.append("Spell hotkey slots: " + str(summary.get("quick_slots", 0)))
-	summary_lines.append("Known spells in Spellbook: " + str(summary.get("learned_count", 0)))
-	summary_lines.append("Active prototype ring: " + str(summary.get("active_ring_count", 0)))
-	add_text_card(
-		"Ready Equipment",
-		"This tab is the belt: weapons, spell hotkeys, item hotkeys, and gadget slots. The Spellbook and Inventory are separate source menus now.\n" + "\n".join(summary_lines)
-	)
+	summary_lines.append("Spell hotkeys: " + str(summary.get("quick_slots", 0)))
+	summary_lines.append("Known spells: " + str(summary.get("learned_count", 0)))
+	summary_lines.append("Prototype ring: " + str(summary.get("active_ring_count", 0)))
+	add_text_card("Ready Equipment", "The belt: weapon, spell hotkeys, item hotkeys, and gadget slots. " + "  |  ".join(summary_lines))
 
 	var weapon: Dictionary = menu_data.get("weapon", {})
 
 	if not weapon.is_empty():
 		render_weapon_card(weapon)
 	else:
-		add_text_card("Weapon Slot", "No equipped weapon found yet.", false, "Weapon")
+		add_compact_card("Weapon  ·  Empty", false, "Weapon")
 
 	var equipped_slots: Array = menu_data.get("equipped_spell_slots", [])
 
 	if equipped_slots.size() <= 0:
 		add_text_card("Spell Hotkeys", "No spell hotkey slots found yet.")
 	else:
-		add_text_card("Spell Hotkeys", "Future flow: click a hotkey slot, then choose a learned spell from the Spellbook. For now these are display-only shelves.")
+		add_text_card("Spell Hotkeys", "Format: slot · spell · element · cost · scaling · role. Assignment comes next.")
 
 		for slot_variant in equipped_slots:
 			if slot_variant is Dictionary:
@@ -319,10 +316,7 @@ func render_equipment() -> void:
 
 
 func render_spellbook() -> void:
-	add_text_card(
-		"Spellbook",
-		"This is what Grace knows, not what she has equipped. Later, choosing a spell here can assign it to a spell hotkey or inspect augments."
-	)
+	add_text_card("Spellbook", "Known spells grouped by element. Rows stay compact now; a future inspector can hold the lore-scroll details.")
 
 	var library_sections: Array = menu_data.get("learned_spell_sections", [])
 
@@ -336,134 +330,183 @@ func render_spellbook() -> void:
 
 
 func render_inventory() -> void:
-	add_text_card(
-		"Inventory",
-		"This will be the bag: items, potions, crafting materials, quest objects, and usable tools. Equipment decides what gets hotkeyed."
-	)
-	add_text_card("Item Hotkey Source", "Later flow: pick an item here, then assign it to an item hotkey in Equipment.")
-	add_text_card("Consumables", "No item database yet. Potions, food, bombs, remedies, and other use-items will live here.")
-	add_text_card("Materials", "No crafting material database yet. Ores, herbs, monster parts, and relic scraps will live here.")
-	add_text_card("Key Items", "No key-item database yet. Story objects and dungeon tools will live here.")
+	add_text_card("Inventory", "The bag: items, potions, crafting materials, quest objects, and usable tools. Equipment decides what gets hotkeyed.")
+	add_compact_card("Item Source  ·  choose item later  ·  assign to Equipment hotkey", false, "Items")
+	add_compact_card("Consumables  ·  no item database yet  ·  potions / food / bombs / remedies", false, "Items")
+	add_compact_card("Materials  ·  no material database yet  ·  ores / herbs / monster parts / relic scraps", false, "Materials")
+	add_compact_card("Key Items  ·  no key-item database yet  ·  story objects / dungeon tools", false, "Key Items")
 
 
 func render_item_hotkey_placeholders() -> void:
-	add_text_card("Item Hotkeys", "Slot 1: Empty\nSlot 2: Empty\nSlot 3: Empty\nSlot 4: Empty", false, "Items")
+	add_compact_card("Item Hotkeys  ·  1 Empty  ·  2 Empty  ·  3 Empty  ·  4 Empty", false, "Items")
 
 
 func render_gadget_slot_placeholders() -> void:
-	add_text_card("Gadget Slots", "Gadget slot: Empty\nVehicle/tool slot: Empty\nSummon slot: Empty", false, "Tools")
+	add_compact_card("Tools  ·  Gadget Empty  ·  Vehicle/Tool Empty  ·  Summon Empty", false, "Tools")
 
 
 func render_equipped_slot_card(spell: Dictionary) -> void:
-	var slot_index: int = int(spell.get("slot", 0))
-	var title: String = "Spell Hotkey " + str(slot_index + 1) + ": " + str(spell.get("name", "Empty Slot"))
-
 	if bool(spell.get("is_empty", false)):
-		add_text_card(title, "Empty combat slot. Later, learned spells can be assigned here.", false, "Empty")
+		var empty_slot_index: int = int(spell.get("slot", 0))
+		add_compact_card("Spell Hotkey " + str(empty_slot_index + 1) + "  ·  Empty  ·  assign later", false, "Empty")
 		return
 
-	add_text_card(title, "\n".join(get_spell_detail_lines(spell, true)), bool(spell.get("is_current", false)), get_spell_subtitle(spell))
+	add_compact_card(get_spell_compact_line(spell, "Spell Hotkey " + str(int(spell.get("slot", 0)) + 1)), bool(spell.get("is_current", false)), "Spell")
 
 
 func render_spell_card(spell: Dictionary) -> void:
-	var slot_index: int = int(spell.get("slot", 0))
-	var title: String = "Slot " + str(slot_index + 1) + ": " + str(spell.get("name", "Empty Slot"))
-	add_text_card(title, "\n".join(get_spell_detail_lines(spell, true)), bool(spell.get("is_current", false)), get_spell_subtitle(spell))
-
-
-func get_spell_subtitle(spell: Dictionary) -> String:
-	var subtitle: String = str(spell.get("element", "neutral")).capitalize()
-	subtitle += " | " + str(spell.get("delivery", "delivery"))
-	subtitle += " | " + str(spell.get("targeting", "targeting"))
-	return subtitle
-
-
-func get_spell_detail_lines(spell: Dictionary, include_notes: bool = false) -> Array[String]:
-	var lines: Array[String] = []
-	var description: String = str(spell.get("description", ""))
-
-	if description != "":
-		lines.append(description)
-
-	lines.append("Profile: " + str(spell.get("profile", "none")))
-	lines.append("Cost: mana " + str(spell.get("mana_cost", 0)) + " / stamina " + str(spell.get("stamina_cost", 0)) + " / focus " + str(spell.get("focus_cost", 0)))
-	lines.append("Scaling: " + join_values(spell.get("scaling_stats", [])))
-	lines.append("Roles: " + join_values(spell.get("roles", [])))
-	lines.append("Combos: " + join_values(spell.get("combo_tags", [])))
-	lines.append("Status: " + join_values(spell.get("status_tags", [])))
-
-	var scaling_note: String = str(spell.get("scaling_note", ""))
-	if scaling_note != "":
-		lines.append("Scaling note: " + scaling_note)
-
-	if include_notes:
-		var notes: String = str(spell.get("notes", ""))
-		if notes != "":
-			lines.append("Notes: " + notes)
-
-	return lines
+	add_compact_card(get_spell_compact_line(spell, "Slot " + str(int(spell.get("slot", 0)) + 1)), bool(spell.get("is_current", false)), "Spell")
 
 
 func render_library_section(section: Dictionary) -> void:
 	var element_title: String = str(section.get("title", "Element"))
 	var spells: Array = section.get("spells", [])
-	var lines: Array[String] = []
 
 	if spells.size() <= 0:
-		lines.append("No learned spells yet.")
-	else:
-		for spell_variant in spells:
-			if spell_variant is Dictionary:
-				lines.append(get_library_spell_line(spell_variant as Dictionary))
+		add_compact_card(element_title + "  ·  No learned spells yet", false, "Spellbook")
+		return
 
-	add_text_card(element_title + " Spells", "\n".join(lines), false, "Spellbook")
+	add_section_header(element_title + " Spells")
+
+	for spell_variant in spells:
+		if spell_variant is Dictionary:
+			var spell: Dictionary = spell_variant as Dictionary
+			add_compact_card(get_spell_compact_line(spell, "Known"), bool(spell.get("is_current", false)), get_spell_equipped_subtitle(spell))
 
 
-func get_library_spell_line(spell: Dictionary) -> String:
-	var equipped_suffix: String = ""
+func get_spell_compact_line(spell: Dictionary, prefix: String = "Spell") -> String:
+	var parts: Array[String] = []
+	parts.append(prefix)
+	parts.append(str(spell.get("name", "Spell")))
+	parts.append(get_spell_element_label(spell))
+	parts.append(get_spell_cost_label(spell))
+	parts.append(get_scaling_label(spell.get("scaling_stats", [])))
+	parts.append(get_short_list_label(spell.get("roles", []), 2, "role"))
+	return "  ·  ".join(parts)
 
+
+func get_spell_equipped_subtitle(spell: Dictionary) -> String:
 	if bool(spell.get("is_equipped", false)):
 		var slot_index: int = int(spell.get("equipped_slot", -1))
 		if slot_index >= 0:
-			equipped_suffix = " [hotkey " + str(slot_index + 1) + "]"
-		else:
-			equipped_suffix = " [equipped]"
+			return "Hotkey " + str(slot_index + 1)
+		return "Equipped"
 
-	return (
-		str(spell.get("name", "Spell"))
-		+ equipped_suffix
-		+ " | "
-		+ join_values(spell.get("scaling_stats", []))
-		+ " | "
-		+ join_values(spell.get("roles", []))
-	)
+	return "Spellbook"
+
+
+func get_spell_element_label(spell: Dictionary) -> String:
+	var element: String = str(spell.get("element", "neutral"))
+	if element == "":
+		return "Neutral"
+	return element.capitalize()
+
+
+func get_spell_cost_label(spell: Dictionary) -> String:
+	var costs: Array[String] = []
+	var mana_cost: int = int(spell.get("mana_cost", 0))
+	var stamina_cost: int = int(spell.get("stamina_cost", 0))
+	var focus_cost: int = int(spell.get("focus_cost", 0))
+
+	if mana_cost > 0:
+		costs.append("M" + str(mana_cost))
+
+	if stamina_cost > 0:
+		costs.append("S" + str(stamina_cost))
+
+	if focus_cost > 0:
+		costs.append("F" + str(focus_cost))
+
+	if costs.size() <= 0:
+		return "Free"
+
+	return "/".join(costs)
+
+
+func get_scaling_label(values: Variant) -> String:
+	if not (values is Array):
+		return str(values)
+
+	var array_values: Array = values as Array
+	if array_values.size() <= 0:
+		return "No scaling"
+
+	var labels: Array[String] = []
+	for value in array_values:
+		labels.append(abbreviate_stat_name(str(value)))
+
+	return "/".join(labels)
+
+
+func abbreviate_stat_name(value: String) -> String:
+	match value.to_lower():
+		"power":
+			return "Pow"
+		"dexterity":
+			return "Dex"
+		"arcana":
+			return "Arc"
+		"intelligence":
+			return "Int"
+		"defense":
+			return "Def"
+		"resilience":
+			return "Res"
+		"constitution":
+			return "Con"
+		"evasion":
+			return "Eva"
+		"focus":
+			return "Foc"
+		"charisma":
+			return "Cha"
+		"skill":
+			return "Skl"
+		"luck":
+			return "Lck"
+		"lightning":
+			return "Lgt"
+		"dreams", "dream":
+			return "Drm"
+		"darkness":
+			return "Dark"
+		_:
+			if value.length() <= 4:
+				return value.capitalize()
+			return value.substr(0, 4).capitalize()
+
+
+func get_short_list_label(values: Variant, max_count: int = 2, fallback: String = "tag") -> String:
+	if not (values is Array):
+		return str(values)
+
+	var array_values: Array = values as Array
+	if array_values.size() <= 0:
+		return "no " + fallback
+
+	var labels: Array[String] = []
+	var limit: int = min(max_count, array_values.size())
+
+	for i: int in range(limit):
+		labels.append(str(array_values[i]))
+
+	if array_values.size() > max_count:
+		labels.append("+" + str(array_values.size() - max_count))
+
+	return "/".join(labels)
 
 
 func render_weapon_card(weapon: Dictionary) -> void:
-	var lines: Array[String] = []
-	var description: String = str(weapon.get("description", ""))
-
-	if description != "":
-		lines.append(description)
-
-	lines.append("Class: " + str(weapon.get("class", "unknown")))
-	lines.append("Damage: " + str(weapon.get("damage", 0)) + " / stance " + str(weapon.get("stance_damage", 0)))
-	lines.append("Range: " + str(weapon.get("range", 0.0)) + " / cooldown " + str(weapon.get("cooldown", 0.0)))
-	lines.append("Stamina cost: " + str(weapon.get("stamina_cost", 0)))
-	lines.append("Scaling: " + join_values(weapon.get("scaling_stats", [])))
-
-	var scaling_note: String = str(weapon.get("scaling_note", ""))
-	if scaling_note != "":
-		lines.append("Scaling note: " + scaling_note)
-
-	add_text_card("Weapon Slot: " + str(weapon.get("name", "Weapon")), "\n".join(lines), false, "Weapon")
+	var line: String = "Weapon"
+	line += "  ·  " + str(weapon.get("name", "Weapon"))
+	line += "  ·  " + str(weapon.get("class", "unknown")).capitalize()
+	line += "  ·  dmg " + str(weapon.get("damage", 0)) + " / stance " + str(weapon.get("stance_damage", 0))
+	line += "  ·  " + get_scaling_label(weapon.get("scaling_stats", []))
+	add_compact_card(line, false, "Weapon")
 
 
 func render_stats() -> void:
-	add_text_card(
-		"Base Stats Structure",
-		"These are Grace's base stats plus elemental affinity hooks. This is still structure only: formulas, leveling, equipment scaling, and proc math can attach later."
-	)
+	add_text_card("Base Stats", "Grace's current spread and elemental affinity hooks. Formulas, leveling, and equipment scaling can attach later.")
 
 	var sections: Array = menu_data.get("stat_sections", [])
 
@@ -478,13 +521,8 @@ func render_stats() -> void:
 
 func render_stat_section(section: Dictionary) -> void:
 	var title: String = str(section.get("title", "Stats"))
-	var lines: Array[String] = []
-	var description: String = str(section.get("description", ""))
-
-	if description != "":
-		lines.append(description)
-
 	var stats: Array = section.get("stats", [])
+	var lines: Array[String] = []
 
 	for stat_variant in stats:
 		if not (stat_variant is Dictionary):
@@ -493,18 +531,9 @@ func render_stat_section(section: Dictionary) -> void:
 		var stat: Dictionary = stat_variant as Dictionary
 		var stat_name: String = str(stat.get("name", stat.get("id", "Stat")))
 		var stat_value: String = str(stat.get("value", "0"))
-		var summary: String = str(stat.get("summary", ""))
-		var use_text: String = str(stat.get("use", ""))
-
 		lines.append(stat_name + ": " + stat_value)
 
-		if summary != "":
-			lines.append("  " + summary)
-
-		if use_text != "":
-			lines.append("  Use: " + use_text)
-
-	add_text_card(title, "\n".join(lines))
+	add_text_card(title, "  |  ".join(lines))
 
 
 func render_journal() -> void:
@@ -518,22 +547,70 @@ func render_journal() -> void:
 func render_codex() -> void:
 	add_text_card("Reaction Codex", "Data rows from ComboRuleRegistry. This is the first in-game window into the magic grammar.")
 
-	var rows: Array[Dictionary] = ComboRuleRegistryScript.get_debug_matrix_rows()
+	var rows: Array = ComboRuleRegistryScript.get_debug_matrix_rows()
 
-	for row: Dictionary in rows:
-		var title: String = str(row.get("reaction", "reaction"))
-		var body: String = "Incoming: " + join_values(row.get("incoming", []))
-		body += "\nTarget tags: " + join_values(row.get("target_tags", []))
-		body += "\nTarget statuses: " + join_values(row.get("target_statuses", []))
-		body += "\nTarget method: " + str(row.get("target_method", ""))
-		body += "\nRule: " + str(row.get("rule", "combo_rule"))
-		add_text_card(title, body)
+	for row_variant in rows:
+		if not (row_variant is Dictionary):
+			continue
+
+		var row: Dictionary = row_variant as Dictionary
+		var line: String = str(row.get("reaction", "reaction"))
+		line += "  ·  in " + join_values(row.get("incoming", []))
+		line += "  ·  target " + join_values(row.get("target_tags", []))
+		line += "  ·  status " + join_values(row.get("target_statuses", []))
+		add_compact_card(line, false, "Reaction")
 
 
 func render_system() -> void:
 	add_text_card("Controls", "Tab / M: open or close menu\nEsc: close menu\nA/D or arrows: switch tabs\n1-7: jump tabs")
-	add_text_card("Future Panels", "Settings, save/load, controller mapping, accessibility, and debug toggles can attach here.")	
+	add_text_card("Future Panels", "Settings, save/load, controller mapping, accessibility, and debug toggles can attach here.")
 	add_text_card("Prototype Note", "Equipment is not enforcing hotkey assignment yet. The quick spell focus menu remains the combat-speed selector.")
+
+
+func add_section_header(title: String) -> void:
+	var header: Label = Label.new()
+	header.text = title
+	header.add_theme_color_override("font_color", TEXT_MAIN)
+	header.add_theme_font_size_override("font_size", 15)
+	header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content_box.add_child(header)
+
+
+func add_compact_card(line: String, selected: bool = false, subtitle: String = "") -> void:
+	var card: PanelContainer = PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.add_theme_stylebox_override(
+		"panel",
+		make_panel_style(CARD_SELECTED_BACKGROUND if selected else CARD_BACKGROUND, CARD_SELECTED_BORDER if selected else CARD_BORDER, 2 if selected else 1, 10)
+	)
+	content_box.add_child(card)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	card.add_child(margin)
+
+	var row_box: HBoxContainer = HBoxContainer.new()
+	row_box.add_theme_constant_override("separation", 8)
+	margin.add_child(row_box)
+
+	if subtitle != "":
+		var subtitle_label: Label = Label.new()
+		subtitle_label.text = subtitle
+		subtitle_label.custom_minimum_size = Vector2(84.0, 0.0)
+		subtitle_label.add_theme_color_override("font_color", TEXT_DIM)
+		subtitle_label.add_theme_font_size_override("font_size", 11)
+		row_box.add_child(subtitle_label)
+
+	var line_label: Label = Label.new()
+	line_label.text = line
+	line_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line_label.clip_text = true
+	line_label.add_theme_color_override("font_color", TEXT_MAIN if selected else TEXT_SOFT)
+	line_label.add_theme_font_size_override("font_size", 12)
+	row_box.add_child(line_label)
 
 
 func add_text_card(title: String, body: String, selected: bool = false, subtitle: String = "") -> void:
@@ -547,9 +624,9 @@ func add_text_card(title: String, body: String, selected: bool = false, subtitle
 
 	var margin: MarginContainer = MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_top", 9)
 	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_bottom", 10)
+	margin.add_theme_constant_override("margin_bottom", 9)
 	card.add_child(margin)
 
 	var box: VBoxContainer = VBoxContainer.new()

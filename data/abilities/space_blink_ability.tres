@@ -6,7 +6,18 @@
 [resource]
 script = ExtResource("2_ndf3y")
 display_name = "Space Blink"
-description = "Teleport a short distance"
+description = "Teleport a short distance."
 element = "space"
 category = 1
+spell_id = "space_blink"
+short_label = "Blink"
+icon_text = "S"
+roles = Array[String](["movement", "traversal", "defense", "positioning"])
+targeting_style = "directional"
+delivery_type = "instant"
+combo_tags = Array[String](["space", "movement", "escape", "gap_close"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["mobility", "defensive", "instant"])
+debug_tags = Array[String](["prototype", "player_movement"])
+design_notes = "Core mobility spell. Useful for dodging pressure, repositioning, and future traversal puzzles."
 ability_scene = ExtResource("1_wvict")

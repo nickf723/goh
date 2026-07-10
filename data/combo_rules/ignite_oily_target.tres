@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ComboRule" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+
+[resource]
+script = ExtResource("1_combo_rule")
+rule_id = "fire_x_oily"
+display_name = "Ignite Oil"
+description = "Fire reacts with oily targets by applying burning."
+incoming_tags = Array[String](["fire"])
+target_tags = Array[String](["oily"])
+priority = 80
+reaction_id = "ignite_oil"
+reaction_name = "Ignite Oil"
+feedback_text = "{target} ignites from the oil."
+output_status = "burning"
+output_status_duration = 4.0
+output_status_strength = 1.0
+output_status_source = "oil_ignition"
+output_tags = Array[String](["fire", "burning", "reaction", "oil"])
+debug_tags = Array[String](["elemental", "status_combo", "fire"])
+design_notes = "General fire + oily reaction. Later oil puddles, coated enemies, and greasy machinery can all reuse this."

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityTraitProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_trait_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "damage_projectile"
+display_name = "Damage Projectile"
+description = "Aimed projectile that primarily pressures health or stance from range."
+roles = Array[String](["damage", "projectile", "ranged"])
+targeting_style = "aimed"
+delivery_type = "projectile"
+combo_tags = Array[String](["projectile", "direct_hit"])
+ui_tags = Array[String](["offense", "aimed"])
+debug_tags = Array[String](["spell_profile", "projectile"])
+design_notes = "Good default profile for straightforward ranged spells."

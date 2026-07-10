@@ -7,9 +7,20 @@
 [resource]
 script = ExtResource("1_joub7")
 display_name = "Sound Pulse"
-description = "Emit a sound wave"
+description = "Emit a sound wave that reveals and briefly staggers nearby targets."
 element = "sound"
 category = 4
+spell_id = "sound_pulse"
+short_label = "Pulse"
+icon_text = "So"
+roles = Array[String](["detection", "reveal", "control", "area", "stagger"])
+targeting_style = "self_centered"
+delivery_type = "pulse"
+combo_tags = Array[String](["sound", "echo", "reveal", "resonance", "stagger"])
+status_tags = Array[String](["staggered"])
+ui_tags = Array[String](["utility", "reveal", "area"])
+debug_tags = Array[String](["prototype", "detection_pulse"])
+design_notes = "Sound's first identity: information plus a short breathing-room stagger. Future sound spells can resonate, distract, silence, or shatter."
 ability_scene = ExtResource("1_w4k2i")
 action_payload = ExtResource("2_qsh5n")
 metadata/_custom_type_script = "uid://cyp8hkceavuj4"

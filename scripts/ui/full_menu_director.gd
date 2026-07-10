@@ -220,6 +220,8 @@ func make_spell_row(ability: AbilityDefinition, slot_index: int, current_index: 
 		"combo_tags": ability.get_combo_tags() if ability.has_method("get_combo_tags") else ability.combo_tags,
 		"status_tags": ability.get_status_tags() if ability.has_method("get_status_tags") else ability.status_tags,
 		"ui_tags": ability.get_ui_tags() if ability.has_method("get_ui_tags") else ability.ui_tags,
+		"scaling_stats": ability.get_scaling_stats() if ability.has_method("get_scaling_stats") else [],
+		"scaling_note": ability.get_scaling_note() if ability.has_method("get_scaling_note") else "",
 		"notes": ability.get_design_notes() if ability.has_method("get_design_notes") else ability.design_notes,
 		"is_current": slot_index == current_index,
 	}
@@ -256,6 +258,8 @@ func get_weapon_data() -> Dictionary:
 		"range": weapon.range,
 		"cooldown": weapon.cooldown,
 		"stamina_cost": weapon.stamina_cost,
+		"scaling_stats": weapon.get_scaling_stats() if weapon.has_method("get_scaling_stats") else [],
+		"scaling_note": weapon.get_scaling_note() if weapon.has_method("get_scaling_note") else "",
 	}
 
 

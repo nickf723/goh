@@ -33,6 +33,10 @@ var weapon_class: String = "sword"
 @export var max_targets: int = 3
 @export var stamina_cost: int = 0
 
+# Pure metadata for build identity. These do not alter weapon damage yet.
+@export var scaling_stats: Array[String] = ["power", "dexterity"]
+@export_multiline var scaling_note: String = "Prototype weapon scaling identity only. Damage formulas are not active yet."
+
 @export var light_payload: DamagePayload
 
 
@@ -60,3 +64,34 @@ func get_light_payload() -> DamagePayload:
 		payload.tags.append("melee")
 
 	return payload
+
+
+func get_scaling_stats() -> Array[String]:
+	var resolved_scaling: Array[String] = []
+
+	for stat_name: String in scaling_stats:
+		if stat_name == "":
+			continue
+
+		if resolved_scaling.has(stat_name):
+			continue
+
+		resolved_scaling.append(stat_name)
+
+	return resolved_scaling
+
+
+func get_scaling_note() -> String:
+	if scaling_note != "":
+		return scaling_note
+
+	return "Prototype weapon scaling identity only. Damage formulas are not active yet."
+
+
+func get_scaling_summary() -> String:
+	var resolved_scaling: Array[String] = get_scaling_stats()
+
+	if resolved_scaling.size() <= 0:
+		return "none"
+
+	return " / ".join(resolved_scaling)

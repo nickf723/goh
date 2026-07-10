@@ -67,10 +67,86 @@ func emit_detection(detection_payload: DetectionPayload) -> void:
 		if result.has("message") and result["message"] != "":
 			messages.append(str(result["message"]))
 
+	var status_messages: Array[String] = emit_detection_status(detection_payload)
+	messages.append_array(status_messages)
+
 	if messages.size() > 0:
 		show_message("\n".join(messages))
 	else:
 		show_message(detection_payload.source_name + " echoes into silence.")
+
+func emit_detection_status(detection_payload: DetectionPayload) -> Array[String]:
+	var messages: Array[String] = []
+
+	if detection_payload.echo_status_effect == "":
+		return messages
+
+	if detection_payload.echo_status_duration <= 0.0:
+		return messages
+
+	var group_name: String = detection_payload.echo_status_group
+
+	if group_name == "":
+		group_name = "enemy"
+
+	var candidate_nodes: Array[Node] = get_tree().get_nodes_in_group(group_name)
+	var seen_ids: Dictionary = {}
+
+	for candidate: Node in candidate_nodes:
+		var target: Node = find_payload_target(candidate)
+
+		if target == null:
+			target = candidate
+
+		if target == null:
+			continue
+
+		if should_ignore_target(target):
+			continue
+
+		var target_id: int = target.get_instance_id()
+
+		if seen_ids.has(target_id):
+			continue
+
+		seen_ids[target_id] = true
+
+		var target_position: Vector3 = get_receiver_position(target)
+		var distance: float = origin_position.distance_to(target_position)
+
+		if distance > detection_payload.radius:
+			continue
+
+		var status_receiver: Node = get_component(target, "StatusReceiver")
+
+		if status_receiver == null:
+			continue
+
+		if status_receiver.has_method("sustain_status"):
+			status_receiver.sustain_status(
+				detection_payload.echo_status_effect,
+				detection_payload.echo_status_duration,
+				detection_payload.echo_status_strength,
+				detection_payload.source_name
+			)
+		elif status_receiver.has_method("apply_status"):
+			status_receiver.apply_status(
+				detection_payload.echo_status_effect,
+				detection_payload.echo_status_duration,
+				detection_payload.echo_status_strength,
+				detection_payload.source_name
+			)
+		else:
+			continue
+
+		messages.append(
+			detection_payload.source_name
+			+ " disrupts "
+			+ target.name
+			+ "."
+		)
+
+	return messages
 
 func emit_damage(damage_payload: DamagePayload) -> void:
 	var radius: float = default_radius
@@ -184,6 +260,22 @@ func get_receiver_position(receiver: Node) -> Vector3:
 		return parent.global_position
 
 	return Vector3.ZERO
+
+func get_component(target: Node, component_name: String) -> Node:
+	if target == null:
+		return null
+
+	var component: Node = target.get_node_or_null(component_name)
+
+	if component != null:
+		return component
+
+	var parent: Node = target.get_parent()
+
+	if parent != null:
+		return parent.get_node_or_null(component_name)
+
+	return null
 
 func play_pulse_visual(action_payload: Resource) -> void:
 	var mesh: MeshInstance3D = get_node_or_null("PulseVisual")

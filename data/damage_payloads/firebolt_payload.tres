@@ -4,8 +4,13 @@
 
 [resource]
 script = ExtResource("1_sgisn")
+amount = 2
+stance_damage = 1
 element = "fire"
 source_name = "Firebolt"
 hit_type = "projectile"
-tags = Array[String](["fire", "magic", "projectile"])
+status_effect = "burning"
+status_duration = 1.6
+status_strength = 1.0
+tags = Array[String](["fire", "magic", "projectile", "damage", "burning"])
 metadata/_custom_type_script = "uid://cajn6gipe7r2o"

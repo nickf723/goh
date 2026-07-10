@@ -4,12 +4,13 @@
 
 [resource]
 script = ExtResource("1_jpcdm")
-stance_damage = 3
+amount = 1
+stance_damage = 4
 element = "ice"
 source_name = "Ice Lance"
 hit_type = "projectile"
 status_effect = "chill"
-status_duration = 3.0
-status_strength = 0.5
-tags = Array[String](["ice", "magic", "projectile", "control"])
+status_duration = 4.0
+status_strength = 0.35
+tags = Array[String](["ice", "magic", "projectile", "control", "chill"])
 metadata/_custom_type_script = "uid://cajn6gipe7r2o"

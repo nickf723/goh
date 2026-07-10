@@ -4,7 +4,11 @@
 
 [resource]
 script = ExtResource("1_0v444")
+amount = 1
+stance_damage = 2
+element = "neutral"
 source_name = "Arcane Spark"
 hit_type = "projectile"
+knockback_strength = 2.25
 tags = Array[String](["arcane", "magic", "projectile", "force"])
 metadata/_custom_type_script = "uid://cajn6gipe7r2o"

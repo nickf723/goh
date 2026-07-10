@@ -1,6 +1,8 @@
 extends Node3D
 class_name WindGust
 
+const ComboRuleRegistryScript = preload("res://scripts/systems/combo_rule_registry.gd")
+
 const TARGET_LAYER: int = 1
 const HAZARD_LAYER: int = 2
 
@@ -280,9 +282,19 @@ func apply_wind_to_hazard(hazard: Node) -> void:
 
 	stirred_hazards.append(hazard)
 
+	var reactions: Array[Dictionary] = ComboRuleRegistryScript.resolve_hazard_reactions(hazard, get_payload(), global_position)
+
+	if reactions.size() > 0:
+		last_hazard_result_summary = "registry: " + get_reaction_summary(reactions)
+		show_result({
+			"message": "Wind Gust stirs " + get_hazard_label(hazard) + ".",
+			"objective": ""
+		})
+		return
+
 	if hazard.has_method("react_to_payload"):
 		hazard.call("react_to_payload", get_payload(), global_position)
-		last_hazard_result_summary = "stirred: " + get_hazard_label(hazard)
+		last_hazard_result_summary = "legacy: " + get_hazard_label(hazard)
 		show_result({
 			"message": "Wind Gust stirs " + get_hazard_label(hazard) + ".",
 			"objective": ""
@@ -404,6 +416,19 @@ func build_hazard_scan_summary(hazards: Array[Node]) -> String:
 		labels.append(get_hazard_label(hazard))
 
 	return ", ".join(labels)
+
+
+func get_reaction_summary(reactions: Array[Dictionary]) -> String:
+	var names: Array[String] = []
+
+	for reaction: Dictionary in reactions:
+		if reaction.has("reaction"):
+			names.append(str(reaction["reaction"]))
+
+	if names.size() <= 0:
+		return "reaction"
+
+	return ", ".join(names)
 
 
 func get_debug_data() -> Dictionary:

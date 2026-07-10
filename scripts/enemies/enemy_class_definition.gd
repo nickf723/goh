@@ -44,6 +44,10 @@ var creature_type: String = "fantasy_creature"
 @export var strafe_speed_multiplier: float = 0.65
 @export var strafe_switch_interval: float = 1.2
 
+# Pressure traits control how eagerly this class starts an attack once it can threaten Grace.
+@export var attack_commit_time: float = 0.12
+@export var attack_pressure_range_padding: float = 0.18
+
 @export var force_drag: float = 10.0
 @export var max_force_speed: float = 8.0
 

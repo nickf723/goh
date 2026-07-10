@@ -1,6 +1,8 @@
 extends Node3D
 class_name FireField
 
+const ComboRuleRegistryScript = preload("res://scripts/systems/combo_rule_registry.gd")
+
 const TARGET_LAYER: int = 1
 const HAZARD_LAYER: int = 2
 
@@ -26,6 +28,7 @@ var tick_timer: float = 0.0
 var flare_timer: float = 0.0
 var flare_count: int = 0
 var triggered_hazards: Array[Node] = []
+var last_hazard_reaction_summary: String = "none"
 
 @onready var hit_area: Area3D = get_node_or_null("HitArea")
 @onready var field_visual: MeshInstance3D = get_node_or_null("FieldVisual")
@@ -166,8 +169,7 @@ func apply_field_tick() -> void:
 			hazards.append(hazard_target)
 
 	for hazard: Node in hazards:
-		if hazard_has_any_tag(hazard, ["poison", "gas", "cloud"]):
-			trigger_hazard_reaction(hazard)
+		trigger_hazard_reaction(hazard)
 
 	for target: Node in targets:
 		apply_burning_to_target(target)
@@ -182,8 +184,15 @@ func trigger_hazard_reaction(hazard: Node) -> void:
 
 	triggered_hazards.append(hazard)
 
+	var reactions: Array[Dictionary] = ComboRuleRegistryScript.resolve_hazard_reactions(hazard, get_payload(), global_position)
+
+	if reactions.size() > 0:
+		last_hazard_reaction_summary = "registry: " + get_reaction_summary(reactions)
+		return
+
 	if hazard.has_method("react_to_payload"):
 		hazard.call("react_to_payload", get_payload(), global_position)
+		last_hazard_reaction_summary = "legacy: " + get_hazard_label(hazard)
 
 
 func apply_burning_to_target(target: Node) -> void:
@@ -229,8 +238,15 @@ func react_to_payload(incoming_payload: DamagePayload, source_position: Vector3 
 	if incoming_payload == null:
 		return
 
+	var reactions: Array[Dictionary] = ComboRuleRegistryScript.resolve_hazard_reactions(self, incoming_payload, source_position)
+
+	if reactions.size() > 0:
+		last_hazard_reaction_summary = "registry: " + get_reaction_summary(reactions)
+		return
+
 	if payload_has_any_tag(incoming_payload, ["air", "wind", "gust", "force"]) or incoming_payload.element == "air":
 		flare_field(source_position)
+		last_hazard_reaction_summary = "legacy: fanned_flames"
 		return
 
 
@@ -338,6 +354,32 @@ func hazard_has_any_tag(hazard: Node, tags_to_check: Array[String]) -> bool:
 	return false
 
 
+func get_hazard_label(hazard: Node) -> String:
+	if hazard == null:
+		return "hazard"
+
+	if hazard.has_method("get_hazard_tags"):
+		var tags: Array = hazard.call("get_hazard_tags")
+
+		if tags.size() > 0:
+			return str(tags[0]).capitalize() + " Hazard"
+
+	return hazard.name
+
+
+func get_reaction_summary(reactions: Array[Dictionary]) -> String:
+	var names: Array[String] = []
+
+	for reaction: Dictionary in reactions:
+		if reaction.has("reaction"):
+			names.append(str(reaction["reaction"]))
+
+	if names.size() <= 0:
+		return "reaction"
+
+	return ", ".join(names)
+
+
 func show_reaction_message(message: String) -> void:
 	var ui: Node = get_tree().get_first_node_in_group("game_ui")
 
@@ -356,4 +398,5 @@ func get_debug_data() -> Dictionary:
 		"payload": get_payload().source_name,
 		"flare": snapped(flare_timer, 0.1),
 		"flare_count": flare_count,
+		"hazard_rx": last_hazard_reaction_summary,
 	}

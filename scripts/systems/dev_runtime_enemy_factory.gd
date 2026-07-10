@@ -3,11 +3,10 @@ class_name DevRuntimeEnemyFactory
 
 const EnemyBrainScript: Script = preload("res://scripts/enemies/enemy_brain.gd")
 const EnemyDefinitionScript: Script = preload("res://scripts/enemies/enemy_definition.gd")
-const EnemyAttackDefinitionScript: Script = preload("res://scripts/enemies/enemy_attack_definition.gd")
 const EnemyTelegraphScript: Script = preload("res://scripts/enemies/enemy_telegraph.gd")
 const ZombieDefinitionResource: Resource = preload("res://data/enemies/zombie_definition.tres")
+const ZombieGrabAttackResource: Resource = preload("res://data/enemy_attacks/zombie_grab_attack.tres")
 
-const DamagePayloadScript: Script = preload("res://scripts/combat/damage_payload.gd")
 const PayloadReceiverScript: Script = preload("res://scripts/combat/payload_receiver.gd")
 const HitReceiverScript: Script = preload("res://scripts/combat/hit_receiver.gd")
 const StatusReceiverScript: Script = preload("res://scripts/combat/status_receiver.gd")
@@ -114,29 +113,4 @@ static func make_zombie_definition() -> Resource:
 
 
 static func make_zombie_attack() -> Resource:
-	var attack: Resource = EnemyAttackDefinitionScript.new()
-	attack.set("display_name", "Zombie Grab")
-	attack.set("payload", make_zombie_payload())
-	attack.set("range", 1.35)
-	attack.set("cone_angle_degrees", 145.0)
-	attack.set("windup_time", 0.65)
-	attack.set("recovery_time", 0.85)
-	attack.set("cooldown", 1.4)
-	attack.set("show_miss_message", true)
-	return attack
-
-
-static func make_zombie_payload() -> Resource:
-	var payload: Resource = DamagePayloadScript.new()
-	payload.set("amount", 2)
-	payload.set("stance_damage", 2)
-	payload.set("element", "neutral")
-	payload.set("source_name", "Zombie Grab")
-	payload.set("hit_type", "melee")
-	payload.set("status_effect", "staggered")
-	payload.set("status_duration", 0.2)
-	payload.set("status_strength", 1.0)
-	payload.set("knockback_strength", 1.2)
-	payload.set("knockback_up_strength", 0.0)
-	payload.set("tags", ["physical", "melee", "grab", "enemy_attack", "undead"])
-	return payload
+	return ZombieGrabAttackResource.duplicate(true)

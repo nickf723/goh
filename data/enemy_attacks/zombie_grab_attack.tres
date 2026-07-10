@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EnemyAttackDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_attack_definition.gd" id="1_attack"]
+[ext_resource type="Resource" path="res://data/enemy_attack_classes/grab_attack_class.tres" id="2_grab"]
+
+[resource]
+script = ExtResource("1_attack")
+attack_class = ExtResource("2_grab")
+use_class_timing = true
+use_class_payload = true
+display_name = "Zombie Grab"

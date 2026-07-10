@@ -7,6 +7,17 @@
 [resource]
 script = ExtResource("2_egnuw")
 display_name = "Arcane Spark"
-description = "Simple magic projectlle."
+description = "Simple magic projectile. Reliable neutral pressure."
+spell_id = "arcane_spark"
+short_label = "Spark"
+icon_text = "A"
+roles = Array[String](["damage", "stance", "force", "starter"])
+targeting_style = "aimed"
+delivery_type = "projectile"
+combo_tags = Array[String](["neutral", "arcane", "force", "projectile"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["reliable", "neutral", "starter"])
+debug_tags = Array[String](["prototype", "baseline_projectile"])
+design_notes = "Baseline spell for testing projectile aim, stance pressure, and light knockback."
 ability_scene = ExtResource("1_egnuw")
 action_payload = ExtResource("2_u5poo")

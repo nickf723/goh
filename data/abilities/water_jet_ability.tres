@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/generic_projectile.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/water_jet_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/control_projectile_profile.tres" id="4_profile"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Water Jet"
+description = "Water projectile that wets targets for ice and lightning follow-ups."
+element = "water"
+mana_cost = 1
+trait_profile = ExtResource("4_profile")
+spell_id = "water_jet"
+short_label = "Jet"
+icon_text = "W"
+roles = Array[String](["setup", "control", "combo_starter"])
+combo_tags = Array[String](["water", "wet", "conduct", "freeze_setup"])
+status_tags = Array[String](["wet"])
+ui_tags = Array[String](["setup", "wet", "combo"])
+debug_tags = Array[String](["prototype", "water_projectile"])
+design_notes = "First water spell. Low damage on purpose. It exists to make wet-state chemistry visible."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")

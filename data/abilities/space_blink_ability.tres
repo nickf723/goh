@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://bvxqbu4br22ea" path="res://scenes/abilities/space_blink.tscn" id="1_wvict"]
 [ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="2_ndf3y"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/movement_utility_profile.tres" id="3_profile"]
 
 [resource]
 script = ExtResource("2_ndf3y")
@@ -9,13 +10,14 @@ display_name = "Space Blink"
 description = "Teleport a short distance."
 element = "space"
 category = 1
+trait_profile = ExtResource("3_profile")
 spell_id = "space_blink"
 short_label = "Blink"
 icon_text = "S"
-roles = Array[String](["movement", "traversal", "defense", "positioning"])
+roles = Array[String](["defense", "positioning"])
 targeting_style = "directional"
 delivery_type = "instant"
-combo_tags = Array[String](["space", "movement", "escape", "gap_close"])
+combo_tags = Array[String](["space", "blink", "gap_close"])
 status_tags = Array[String]([])
 ui_tags = Array[String](["mobility", "defensive", "instant"])
 debug_tags = Array[String](["prototype", "player_movement"])

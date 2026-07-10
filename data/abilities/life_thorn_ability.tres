@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/generic_projectile.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/life_thorn_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/damage_projectile_profile.tres" id="4_profile"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Life Thorn"
+description = "Living thorn projectile. A small first step for Life before healing/growth systems exist."
+element = "life"
+mana_cost = 1
+trait_profile = ExtResource("4_profile")
+spell_id = "life_thorn"
+short_label = "Thorn"
+icon_text = "L"
+roles = Array[String](["damage", "growth"])
+combo_tags = Array[String](["life", "plant", "thorn", "growth"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["damage", "growth"])
+debug_tags = Array[String](["prototype", "life_projectile"])
+design_notes = "Prototype Life placeholder. Later this can split into healing, growth, roots, or summon flora."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")

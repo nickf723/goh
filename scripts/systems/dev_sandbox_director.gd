@@ -1,8 +1,11 @@
 extends Node
 class_name DevSandboxDirector
 
+const DevRuntimeEnemyFactoryScript: Script = preload("res://scripts/systems/dev_runtime_enemy_factory.gd")
+
 @export var goblin_scene: PackedScene
 @export var gremlin_scene: PackedScene
+@export var spawn_runtime_zombie: bool = true
 
 @export var spawn_wave_key: Key = KEY_F6
 @export var clear_wave_key: Key = KEY_F7
@@ -19,9 +22,11 @@ class_name DevSandboxDirector
 
 var spawned_enemies: Array[Node] = []
 
+
 func _ready() -> void:
 	add_to_group("debuggable")
 	print_help()
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey:
@@ -47,6 +52,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		run_dev_audit()
 		return
 
+
 func print_help() -> void:
 	if not print_debug:
 		return
@@ -56,29 +62,24 @@ func print_help() -> void:
 	print("F6: Spawn test wave")
 	print("F7: Clear spawned enemies")
 	print("F8: Run dev audit")
+	print("Runtime zombie enabled: ", spawn_runtime_zombie)
 	print("============================")
 	print("")
 
+
 func spawn_test_wave() -> void:
 	cleanup_dead_spawn_references()
-
-	var wave_scenes: Array[PackedScene] = []
-
-	if goblin_scene != null:
-		wave_scenes.append(goblin_scene)
-
-	if gremlin_scene != null:
-		wave_scenes.append(gremlin_scene)
-
-	if wave_scenes.size() == 0:
-		print("DevSandboxDirector: No enemy scenes assigned.")
-		return
 
 	var player: Node3D = find_player() as Node3D
 	var base_position: Vector3 = Vector3.ZERO
 
 	if spawn_relative_to_player and player != null:
 		base_position = player.global_position
+	else:
+		var parent_3d: Node3D = get_parent() as Node3D
+
+		if parent_3d != null:
+			base_position = parent_3d.global_position
 
 	var scene_root: Node = get_tree().current_scene
 
@@ -86,31 +87,65 @@ func spawn_test_wave() -> void:
 		print("DevSandboxDirector: No current scene root found.")
 		return
 
-	var spawn_count: int = min(wave_scenes.size(), spawn_offsets.size())
+	var spawned_count: int = 0
 
-	for i: int in range(spawn_count):
-		var enemy_scene: PackedScene = wave_scenes[i]
+	if goblin_scene != null:
+		if spawn_enemy_scene(scene_root, goblin_scene, base_position + get_spawn_offset(spawned_count)) != null:
+			spawned_count += 1
 
-		if enemy_scene == null:
-			continue
+	if gremlin_scene != null:
+		if spawn_enemy_scene(scene_root, gremlin_scene, base_position + get_spawn_offset(spawned_count)) != null:
+			spawned_count += 1
 
-		var enemy: Node = enemy_scene.instantiate()
+	if spawn_runtime_zombie:
+		var zombie: Node = DevRuntimeEnemyFactoryScript.create_zombie()
+		if spawn_enemy_node(scene_root, zombie, base_position + get_spawn_offset(spawned_count)) != null:
+			spawned_count += 1
 
-		if enemy == null:
-			continue
+	if spawned_count == 0:
+		print("DevSandboxDirector: No enemies spawned. Assign enemy scenes or enable runtime zombie.")
+		return
 
-		scene_root.add_child(enemy)
+	print("DevSandboxDirector: spawned ", spawned_count, " test enemies.")
 
-		if enemy is Node3D:
-			var enemy_3d: Node3D = enemy as Node3D
-			enemy_3d.global_position = base_position + spawn_offsets[i]
 
-		enemy.add_to_group("dev_spawned")
-		spawned_enemies.append(enemy)
+func spawn_enemy_scene(scene_root: Node, enemy_scene: PackedScene, spawn_position: Vector3) -> Node:
+	if enemy_scene == null:
+		return null
 
-		print("Spawned: ", enemy.name, " at ", enemy.get_path())
+	var enemy: Node = enemy_scene.instantiate()
+	return spawn_enemy_node(scene_root, enemy, spawn_position)
 
-	print("DevSandboxDirector: spawned ", spawn_count, " test enemies.")
+
+func spawn_enemy_node(scene_root: Node, enemy: Node, spawn_position: Vector3) -> Node:
+	if scene_root == null or enemy == null:
+		return null
+
+	scene_root.add_child(enemy)
+
+	if enemy is Node3D:
+		var enemy_3d: Node3D = enemy as Node3D
+		enemy_3d.global_position = spawn_position
+
+	enemy.add_to_group("dev_spawned")	
+	spawned_enemies.append(enemy)
+
+	print("Spawned: ", enemy.name, " at ", enemy.get_path())
+	return enemy
+
+
+func get_spawn_offset(index: int) -> Vector3:
+	if spawn_offsets.size() == 0:
+		return Vector3.ZERO
+
+	if index < spawn_offsets.size():
+		return spawn_offsets[index]
+
+	var ring_index: int = index - spawn_offsets.size() + 1
+	var side: float = -1.0 if ring_index % 2 == 0 else 1.0
+	var distance: float = 4.0 + float(ring_index) * 1.25
+	return Vector3(side * distance, 0.0, distance)
+
 
 func clear_spawned_enemies() -> void:
 	cleanup_dead_spawn_references()
@@ -131,6 +166,7 @@ func clear_spawned_enemies() -> void:
 
 	print("DevSandboxDirector: cleared spawned enemies: ", clear_count)
 
+
 func cleanup_dead_spawn_references() -> void:
 	var living_enemies: Array[Node] = []
 
@@ -139,6 +175,7 @@ func cleanup_dead_spawn_references() -> void:
 			living_enemies.append(enemy)
 
 	spawned_enemies = living_enemies
+
 
 func run_dev_audit() -> void:
 	var audit_manager: Node = find_dev_audit_manager()
@@ -152,6 +189,7 @@ func run_dev_audit() -> void:
 		return
 
 	audit_manager.run_audit()
+
 
 func find_player() -> Node:
 	var grouped_player: Node = get_tree().get_first_node_in_group("player")
@@ -170,6 +208,7 @@ func find_player() -> Node:
 
 	return null
 
+
 func find_dev_audit_manager() -> Node:
 	var scene_root: Node = get_tree().current_scene
 
@@ -182,6 +221,7 @@ func find_dev_audit_manager() -> Node:
 
 	return null
 
+
 func has_direct_child_with_script_name(parent: Node, script_name: String) -> bool:
 	if parent == null:
 		return false
@@ -191,6 +231,7 @@ func has_direct_child_with_script_name(parent: Node, script_name: String) -> boo
 			return true
 
 	return false
+
 
 func node_uses_script_name(node: Node, script_name: String) -> bool:
 	if node == null:
@@ -211,6 +252,7 @@ func node_uses_script_name(node: Node, script_name: String) -> bool:
 
 	return file_name == expected_snake_name
 
+
 func camel_to_snake(text: String) -> String:
 	var result: String = ""
 
@@ -224,6 +266,7 @@ func camel_to_snake(text: String) -> String:
 
 	return result
 
+
 func get_all_nodes(root: Node) -> Array[Node]:
 	var nodes: Array[Node] = [root]
 
@@ -232,6 +275,7 @@ func get_all_nodes(root: Node) -> Array[Node]:
 
 	return nodes
 
+
 func get_debug_data() -> Dictionary:
 	cleanup_dead_spawn_references()
 
@@ -239,4 +283,5 @@ func get_debug_data() -> Dictionary:
 		"spawned": spawned_enemies.size(),
 		"goblin": goblin_scene != null,
 		"gremlin": gremlin_scene != null,
+		"zombie": spawn_runtime_zombie,
 	}

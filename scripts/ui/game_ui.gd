@@ -155,7 +155,10 @@ func build_spell_focus_menu_text(menu_data: Dictionary) -> String:
 	var groups: Array = menu_data.get("groups", [])
 
 	for group_variant: Variant in groups:
-		var group: Dictionary = group_variant as Dictionary
+		if not group_variant is Dictionary:
+			continue
+
+		var group: Dictionary = group_variant
 
 		if group.is_empty():
 			continue

@@ -9,6 +9,7 @@ class_name EnemyDefinition
 @export var use_class_vitals: bool = true
 @export var use_class_defenses: bool = true
 @export var use_class_movement: bool = true
+@export var use_class_pressure: bool = true
 @export var use_class_force: bool = true
 
 @export var display_name: String = "Enemy"
@@ -54,6 +55,9 @@ var creature_type: String = "fantasy_creature"
 @export var immune_elements: Array[String] = []
 @export var weakness_multiplier: float = 2.0
 @export var resistance_multiplier: float = 0.5
+
+@export var attack_commit_time: float = 0.12
+@export var attack_pressure_range_padding: float = 0.18
 
 @export var force_drag: float = 10.0
 @export var max_force_speed: float = 8.0
@@ -240,6 +244,20 @@ func get_strafe_switch_interval() -> float:
 	return strafe_switch_interval
 
 
+func get_attack_commit_time() -> float:
+	if use_class_pressure and enemy_class != null:
+		return enemy_class.attack_commit_time
+
+	return attack_commit_time
+
+
+func get_attack_pressure_range_padding() -> float:
+	if use_class_pressure and enemy_class != null:
+		return enemy_class.attack_pressure_range_padding
+
+	return attack_pressure_range_padding
+
+
 func get_force_drag() -> float:
 	if use_class_force and enemy_class != null:
 		return enemy_class.force_drag
@@ -259,6 +277,10 @@ func get_class_summary() -> String:
 		return "no class"
 
 	return enemy_class.class_id
+
+
+func get_pressure_summary() -> String:
+	return str(snapped(get_attack_commit_time(), 0.01)) + "s / +" + str(snapped(get_attack_pressure_range_padding(), 0.01))
 
 
 func get_debug_notes() -> String:

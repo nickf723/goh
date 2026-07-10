@@ -145,7 +145,7 @@ func build_layout() -> void:
 	header_text_box.add_child(title_label)
 
 	subtitle_label = Label.new()
-	subtitle_label.text = "Loadouts, stats, journals, codex, and future augments."
+	subtitle_label.text = "Loadouts, stats, scaling, journals, codex, and future augments."
 	subtitle_label.add_theme_color_override("font_color", TEXT_SOFT)
 	subtitle_label.add_theme_font_size_override("font_size", 12)
 	header_text_box.add_child(subtitle_label)
@@ -276,7 +276,7 @@ func rebuild_content() -> void:
 func render_loadout() -> void:
 	add_text_card(
 		"Spell Loadout",
-		"Current goal: make every spell visible and inspectable here before we add swapping, augments, or inventory plumbing."
+		"Every spell and weapon can now show a build identity through scaling metadata. Formulas are not active yet."
 	)
 
 	var spells: Array = menu_data.get("spells", [])
@@ -291,13 +291,7 @@ func render_loadout() -> void:
 	var weapon: Dictionary = menu_data.get("weapon", {})
 
 	if not weapon.is_empty():
-		add_text_card(
-			"Weapon",
-			str(weapon.get("name", "Weapon"))
-			+ " | class=" + str(weapon.get("class", "unknown"))
-			+ " | dmg=" + str(weapon.get("damage", 0))
-			+ " | stance=" + str(weapon.get("stance_damage", 0))
-		)
+		render_weapon_card(weapon)
 
 
 func render_spell_card(spell: Dictionary) -> void:
@@ -310,9 +304,14 @@ func render_spell_card(spell: Dictionary) -> void:
 	lines.append(str(spell.get("description", "")))
 	lines.append("Profile: " + str(spell.get("profile", "none")))
 	lines.append("Cost: mana " + str(spell.get("mana_cost", 0)) + " / stamina " + str(spell.get("stamina_cost", 0)) + " / focus " + str(spell.get("focus_cost", 0)))
+	lines.append("Scaling: " + join_values(spell.get("scaling_stats", [])))
 	lines.append("Roles: " + join_values(spell.get("roles", [])))
 	lines.append("Combos: " + join_values(spell.get("combo_tags", [])))
 	lines.append("Status: " + join_values(spell.get("status_tags", [])))
+
+	var scaling_note: String = str(spell.get("scaling_note", ""))
+	if scaling_note != "":
+		lines.append("Scaling note: " + scaling_note)
 
 	var notes: String = str(spell.get("notes", ""))
 	if notes != "":
@@ -321,10 +320,30 @@ func render_spell_card(spell: Dictionary) -> void:
 	add_text_card(title, "\n".join(lines), bool(spell.get("is_current", false)), subtitle)
 
 
+func render_weapon_card(weapon: Dictionary) -> void:
+	var lines: Array[String] = []
+	var description: String = str(weapon.get("description", ""))
+
+	if description != "":
+		lines.append(description)
+
+	lines.append("Class: " + str(weapon.get("class", "unknown")))
+	lines.append("Damage: " + str(weapon.get("damage", 0)) + " / stance " + str(weapon.get("stance_damage", 0)))
+	lines.append("Range: " + str(weapon.get("range", 0.0)) + " / cooldown " + str(weapon.get("cooldown", 0.0)))
+	lines.append("Stamina cost: " + str(weapon.get("stamina_cost", 0)))
+	lines.append("Scaling: " + join_values(weapon.get("scaling_stats", [])))
+
+	var scaling_note: String = str(weapon.get("scaling_note", ""))
+	if scaling_note != "":
+		lines.append("Scaling note: " + scaling_note)
+
+	add_text_card("Weapon: " + str(weapon.get("name", "Weapon")), "\n".join(lines))
+
+
 func render_stats() -> void:
 	add_text_card(
 		"Base Stats Structure",
-		"These are Grace's 16 base stats plus elemental affinity hooks. This pass is structure only: formulas, leveling, equipment scaling, and proc math can attach later."
+		"These are Grace's base stats plus elemental affinity hooks. This is still structure only: formulas, leveling, equipment scaling, and proc math can attach later."
 	)
 
 	var sections: Array = menu_data.get("stat_sections", [])
@@ -455,7 +474,7 @@ func join_values(values: Variant) -> String:
 	for value in array_values:
 		text_values.append(str(value))
 
-	return ", ".join(text_values)
+	return " / ".join(text_values)
 
 
 func clear_children(parent: Node) -> void:

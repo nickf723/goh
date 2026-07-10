@@ -268,7 +268,27 @@ func handle_focus_menu_input(event: InputEvent) -> bool:
 	if not focus_spell_menu_open:
 		return false
 
+	if event.is_action_pressed("focus_element_left"):
+		cycle_focus_element(-1)
+		return true
+
+	if event.is_action_pressed("focus_element_right"):
+		cycle_focus_element(1)
+		return true
+
+	if event.is_action_pressed("focus_spell_up"):
+		cycle_focus_spell(-1)
+		return true
+
+	if event.is_action_pressed("focus_spell_down"):
+		cycle_focus_spell(1)
+		return true
+
 	if event.is_action_pressed("cast_spell"):
+		confirm_focus_spell_menu()
+		return true
+
+	if event.is_action_pressed("ui_accept"):
 		confirm_focus_spell_menu()
 		return true
 

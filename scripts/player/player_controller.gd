@@ -4,6 +4,9 @@ extends CharacterBody3D
 @export var jump_velocity: float = 4.5
 @export var gravity: float = 18.0
 @export var mouse_sensitivity: float = 0.0025
+@export var controller_camera_sensitivity: float = 3.0
+@export var controller_camera_deadzone: float = 0.18
+@export var allow_controller_camera_during_focus_menu: bool = false
 @export var spell_mana_cost: int = 1
 
 @onready var camera_pivot: Node3D = $CameraPivot
@@ -33,6 +36,10 @@ func _ready() -> void:
 	interaction_area.area_entered.connect(_on_interaction_area_entered)
 	interaction_area.area_exited.connect(_on_interaction_area_exited)
 	GameState.player_defeated.connect(_on_player_defeated)
+
+
+func _process(delta: float) -> void:
+	update_controller_camera(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -104,6 +111,30 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("cast_spell"):
 		ability_caster.cast_from_player(self)
+
+
+func update_controller_camera(delta: float) -> void:
+	if is_defeated:
+		return
+
+	if is_focus_spell_menu_open() and not allow_controller_camera_during_focus_menu:
+		return
+
+	var look_vector: Vector2 = Input.get_vector(
+		"camera_left",
+		"camera_right",
+		"camera_up",
+		"camera_down"
+	)
+
+	if look_vector.length() < controller_camera_deadzone:
+		return
+
+	rotate_y(-look_vector.x * controller_camera_sensitivity * delta)
+
+	camera_pitch -= look_vector.y * controller_camera_sensitivity * delta
+	camera_pitch = clamp(camera_pitch, min_pitch, max_pitch)
+	camera_pivot.rotation.x = camera_pitch
 
 
 func _physics_process(delta: float) -> void:

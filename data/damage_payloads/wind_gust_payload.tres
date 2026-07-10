@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_damage_payload"]
+
+[resource]
+script = ExtResource("1_damage_payload")
+amount = 0
+stance_damage = 1
+element = "air"
+source_name = "Wind Gust"
+hit_type = "magic"
+knockback_strength = 6.5
+knockback_up_strength = 0.4
+tags = Array[String](["air", "wind", "force", "gust", "magic"])

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/generic_projectile.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/soul_thread_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/control_projectile_profile.tres" id="4_profile"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Soul Thread"
+description = "Soul projectile that briefly interrupts an enemy's actions."
+element = "soul"
+mana_cost = 1
+trait_profile = ExtResource("4_profile")
+spell_id = "soul_thread"
+short_label = "Thread"
+icon_text = "S"
+roles = Array[String](["interrupt", "control", "spirit"])
+combo_tags = Array[String](["soul", "spirit", "interrupt", "stun"])
+status_tags = Array[String](["stunned"])
+ui_tags = Array[String](["interrupt", "control"])
+debug_tags = Array[String](["prototype", "soul_projectile"])
+design_notes = "Tiny interrupt window. Soul can later become charm, spirit binding, memory, or possession logic."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")

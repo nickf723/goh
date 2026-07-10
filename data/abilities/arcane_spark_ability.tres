@@ -3,18 +3,20 @@
 [ext_resource type="PackedScene" uid="uid://tj563cjynma8" path="res://scenes/actions/generic_projectile.tscn" id="1_egnuw"]
 [ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="2_egnuw"]
 [ext_resource type="Resource" uid="uid://c6alih0g16ufw" path="res://data/damage_payloads/arcane_spark_payload.tres" id="2_u5poo"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/damage_projectile_profile.tres" id="3_profile"]
 
 [resource]
 script = ExtResource("2_egnuw")
 display_name = "Arcane Spark"
 description = "Simple magic projectile. Reliable neutral pressure."
+trait_profile = ExtResource("3_profile")
 spell_id = "arcane_spark"
 short_label = "Spark"
 icon_text = "A"
-roles = Array[String](["damage", "stance", "force", "starter"])
+roles = Array[String](["stance", "force", "starter"])
 targeting_style = "aimed"
 delivery_type = "projectile"
-combo_tags = Array[String](["neutral", "arcane", "force", "projectile"])
+combo_tags = Array[String](["neutral", "arcane", "force"])
 status_tags = Array[String]([])
 ui_tags = Array[String](["reliable", "neutral", "starter"])
 debug_tags = Array[String](["prototype", "baseline_projectile"])

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 1
+stance_damage = 2
+element = "body"
+source_name = "Body Burst"
+hit_type = "projectile"
+tags = Array[String](["body", "force", "impact", "magic", "projectile", "stance", "combo_reactor"])
+knockback_strength = 4.0
+knockback_up_strength = 0.25

@@ -17,9 +17,15 @@ enum EnemyState {
 @export var player_group: String = "player"
 @export var show_debug_prints: bool = false
 
+# Prototype pressure tuning. These make enemies commit to attacks proactively
+# instead of hovering forever at their preferred spacing band.
+@export var attack_commit_time: float = 0.12
+@export var attack_pressure_range_padding: float = 0.18
+
 var state: EnemyState = EnemyState.IDLE
 var state_timer: float = 0.0
 var attack_cooldown_timer: float = 0.0
+var attack_commit_timer: float = 0.0
 var last_action_summary: String = "none"
 var strafe_direction: float = 1.0
 var strafe_switch_timer: float = 0.0
@@ -107,6 +113,7 @@ func refresh_player() -> void:
 
 func process_idle(_delta: float) -> void:
 	clear_horizontal_velocity()
+	reset_attack_commit()
 
 	if player == null:
 		return
@@ -128,15 +135,51 @@ func process_chase(delta: float) -> void:
 		return
 
 	if attack != null:
-		if distance <= attack.get_range() and attack_cooldown_timer <= 0.0:
-			start_attack()
+		var attack_range: float = attack.get_range()
+		var pressure_range: float = get_attack_pressure_range(attack)
+
+		if attack_cooldown_timer <= 0.0 and distance <= pressure_range:
+			commit_to_attack(delta, distance, attack)
 			return
 
-		if distance <= get_definition().get_preferred_distance() + get_definition().get_spacing_buffer():
+		# Only circle/wait when the enemy is actually close enough to threaten Grace.
+		# Previously enemies could stop just outside attack range because their preferred
+		# spacing band was wider than the attack's real hit range.
+		if attack_cooldown_timer > 0.0 and distance <= attack_range:
+			reset_attack_commit()
 			wait_for_attack_opening(delta)
 			return
 
+	reset_attack_commit()
 	move_toward_player(delta)
+
+
+func commit_to_attack(delta: float, distance: float, attack: EnemyAttackDefinition) -> void:
+	if distance > attack.get_range():
+		reset_attack_commit()
+		last_action_summary = "closing: " + attack.get_display_name()
+		move_toward_player(delta)
+		return
+
+	clear_horizontal_velocity()
+	face_player(delta)
+
+	attack_commit_timer += delta
+	last_action_summary = "pressuring: " + attack.get_display_name()
+
+	if attack_commit_timer >= max(attack_commit_time, 0.0):
+		start_attack()
+
+
+func get_attack_pressure_range(attack: EnemyAttackDefinition) -> float:
+	if attack == null:
+		return 0.0
+
+	return attack.get_range() + max(attack_pressure_range_padding, 0.0)
+
+
+func reset_attack_commit() -> void:
+	attack_commit_timer = 0.0
 
 
 func process_attack_windup(delta: float) -> void:
@@ -168,6 +211,7 @@ func process_attack_recover(delta: float) -> void:
 
 func process_staggered(_delta: float) -> void:
 	clear_horizontal_velocity()
+	reset_attack_commit()
 
 	if not status_blocks_actions():
 		if player != null and get_distance_to_player() <= get_definition().get_lose_interest_radius():
@@ -178,6 +222,7 @@ func process_staggered(_delta: float) -> void:
 
 func process_dead(_delta: float) -> void:
 	clear_horizontal_velocity()
+	reset_attack_commit()
 
 	if telegraph != null and telegraph.has_method("reset"):
 		telegraph.reset()
@@ -189,6 +234,7 @@ func start_attack() -> void:
 	if attack == null:
 		return
 
+	reset_attack_commit()
 	last_action_summary = "windup: " + attack.get_display_name()
 
 	if telegraph != null and telegraph.has_method("start_windup"):
@@ -417,6 +463,9 @@ func change_state(new_state: EnemyState, timer: float = 0.0) -> void:
 	if state == new_state and state_timer == timer:
 		return
 
+	if new_state != EnemyState.CHASE:
+		reset_attack_commit()
+
 	state = new_state
 	state_timer = timer
 
@@ -499,6 +548,7 @@ func get_debug_data() -> Dictionary:
 		"attack": get_attack_summary(),
 		"dist": snapped(get_distance_to_player(), 0.1),
 		"cd": snapped(attack_cooldown_timer, 0.1),
+		"commit": snapped(attack_commit_timer, 0.1),
 		"last": last_action_summary,
 	}
 

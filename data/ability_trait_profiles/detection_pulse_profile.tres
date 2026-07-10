@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AbilityTraitProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_trait_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "detection_pulse"
+display_name = "Detection Pulse"
+description = "Local pulse that reveals, exposes, or briefly disrupts nearby targets."
+roles = Array[String](["detection", "reveal", "utility", "area", "control"])
+targeting_style = "self_area"
+delivery_type = "pulse"
+combo_tags = Array[String](["reveal", "scan", "area_control"])
+status_tags = Array[String](["revealed"])
+ui_tags = Array[String](["utility", "reveal", "area"])
+debug_tags = Array[String](["spell_profile", "detection", "pulse"])
+design_notes = "Use for perception and information spells that radiate from Grace."

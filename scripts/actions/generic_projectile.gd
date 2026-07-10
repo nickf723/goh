@@ -3,8 +3,8 @@ class_name GenericProjectile
 
 const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
 
-@export var speed: float = 14.0
-@export var max_lifetime: float = 3.0
+@export var speed: float = 18.0
+@export var max_lifetime: float = 2.6
 @export var destroy_on_hit: bool = true
 @export var hit_limit: int = 1
 @export var ignore_source_for_seconds: float = 0.15

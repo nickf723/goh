@@ -3,6 +3,7 @@ class_name EnemyBrain
 
 const EnemyOverheadHud = preload("res://scripts/combat/enemy_overhead_hud.gd")
 
+
 enum EnemyState {
 	IDLE,
 	CHASE,
@@ -16,11 +17,6 @@ enum EnemyState {
 @export var default_attack: EnemyAttackDefinition
 @export var player_group: String = "player"
 @export var show_debug_prints: bool = false
-
-# Prototype pressure tuning. These make enemies commit to attacks proactively
-# instead of hovering forever at their preferred spacing band.
-@export var attack_commit_time: float = 0.12
-@export var attack_pressure_range_padding: float = 0.18
 
 var state: EnemyState = EnemyState.IDLE
 var state_timer: float = 0.0
@@ -143,8 +139,6 @@ func process_chase(delta: float) -> void:
 			return
 
 		# Only circle/wait when the enemy is actually close enough to threaten Grace.
-		# Previously enemies could stop just outside attack range because their preferred
-		# spacing band was wider than the attack's real hit range.
 		if attack_cooldown_timer > 0.0 and distance <= attack_range:
 			reset_attack_commit()
 			wait_for_attack_opening(delta)
@@ -167,7 +161,7 @@ func commit_to_attack(delta: float, distance: float, attack: EnemyAttackDefiniti
 	attack_commit_timer += delta
 	last_action_summary = "pressuring: " + attack.get_display_name()
 
-	if attack_commit_timer >= max(attack_commit_time, 0.0):
+	if attack_commit_timer >= max(get_definition().get_attack_commit_time(), 0.0):
 		start_attack()
 
 
@@ -175,7 +169,7 @@ func get_attack_pressure_range(attack: EnemyAttackDefinition) -> float:
 	if attack == null:
 		return 0.0
 
-	return attack.get_range() + max(attack_pressure_range_padding, 0.0)
+	return attack.get_range() + max(get_definition().get_attack_pressure_range_padding(), 0.0)
 
 
 func reset_attack_commit() -> void:
@@ -546,6 +540,7 @@ func get_debug_data() -> Dictionary:
 		"enemy": get_enemy_display_name(),
 		"class": get_definition().get_class_summary(),
 		"attack": get_attack_summary(),
+		"pressure": get_definition().get_pressure_summary(),
 		"dist": snapped(get_distance_to_player(), 0.1),
 		"cd": snapped(attack_cooldown_timer, 0.1),
 		"commit": snapped(attack_commit_timer, 0.1),

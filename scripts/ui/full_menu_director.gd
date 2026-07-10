@@ -2,6 +2,25 @@ extends Node
 
 const FullMenuShellScript = preload("res://scripts/ui/full_menu_shell.gd")
 
+const SPELL_LIBRARY_ELEMENT_ORDER: Array[String] = [
+	"water",
+	"earth",
+	"fire",
+	"air",
+	"ice",
+	"metal",
+	"lightning",
+	"poison",
+	"life",
+	"death",
+	"body",
+	"soul",
+	"dreams",
+	"sound",
+	"space",
+	"time",
+]
+
 var full_menu_shell: FullMenuShell
 var was_paused_before_menu: bool = false
 
@@ -134,6 +153,9 @@ func build_menu_data() -> Dictionary:
 		"stats": get_stat_rows(),
 		"stat_sections": get_stat_sections(),
 		"spells": get_spell_rows(),
+		"equipped_spell_slots": get_equipped_spell_slot_rows(),
+		"learned_spell_sections": get_learned_spell_sections(),
+		"loadout_summary": get_loadout_summary(),
 		"weapon": get_weapon_data(),
 	}
 
@@ -176,18 +198,16 @@ func get_stat_sections() -> Array[Dictionary]:
 
 func get_spell_rows() -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
-	var ability_caster: Node = find_first_node_named(get_tree().current_scene, "AbilityCaster")
+	var ability_caster: Node = get_ability_caster()
 
 	if ability_caster == null:
 		return rows
 
 	var current_index: int = int(ability_caster.get("current_ability_index"))
-	var loadout_variant: Variant = ability_caster.get("loadout")
+	var loadout: AbilityLoadout = get_ability_loadout(ability_caster)
 
-	if not (loadout_variant is AbilityLoadout):
+	if loadout == null:
 		return rows
-
-	var loadout: AbilityLoadout = loadout_variant as AbilityLoadout
 
 	for i: int in range(loadout.equipped_abilities.size()):
 		var ability: AbilityDefinition = loadout.equipped_abilities[i]
@@ -196,11 +216,145 @@ func get_spell_rows() -> Array[Dictionary]:
 	return rows
 
 
+func get_equipped_spell_slot_rows() -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	var ability_caster: Node = get_ability_caster()
+
+	if ability_caster == null:
+		return rows
+
+	var current_index: int = int(ability_caster.get("current_ability_index"))
+	var loadout: AbilityLoadout = get_ability_loadout(ability_caster)
+
+	if loadout == null:
+		return rows
+
+	var slot_count: int = 8
+
+	if loadout.has_method("get_quick_slot_count"):
+		slot_count = int(loadout.call("get_quick_slot_count"))
+
+	for i: int in range(slot_count):
+		var ability: AbilityDefinition = loadout.get_equipped_ability(i)
+		var row: Dictionary = make_spell_row(ability, i, current_index)
+		row["is_quick_slot"] = true
+		row["is_empty"] = ability == null
+		rows.append(row)
+
+	return rows
+
+
+func get_learned_spell_sections() -> Array[Dictionary]:
+	var sections: Array[Dictionary] = []
+	var ability_caster: Node = get_ability_caster()
+
+	if ability_caster == null:
+		return sections
+
+	var current_index: int = int(ability_caster.get("current_ability_index"))
+	var loadout: AbilityLoadout = get_ability_loadout(ability_caster)
+
+	if loadout == null:
+		return sections
+
+	for element: String in SPELL_LIBRARY_ELEMENT_ORDER:
+		var spell_rows: Array[Dictionary] = []
+
+		for ability: AbilityDefinition in get_learned_abilities(loadout):
+			if ability == null:
+				continue
+
+			if ability.element != element:
+				continue
+
+			var equipped_index: int = loadout.equipped_abilities.find(ability)
+			var row: Dictionary = make_spell_row(ability, equipped_index, current_index)
+			row["is_equipped"] = equipped_index >= 0
+			row["equipped_slot"] = equipped_index
+			spell_rows.append(row)
+
+		sections.append({
+			"element": element,
+			"title": element.capitalize(),
+			"spells": spell_rows,
+		})
+
+	return sections
+
+
+func get_loadout_summary() -> Dictionary:
+	var ability_caster: Node = get_ability_caster()
+
+	if ability_caster == null:
+		return {}
+
+	var loadout: AbilityLoadout = get_ability_loadout(ability_caster)
+
+	if loadout == null:
+		return {}
+
+	var quick_slots: int = 8
+
+	if loadout.has_method("get_quick_slot_count"):
+		quick_slots = int(loadout.call("get_quick_slot_count"))
+
+	return {
+		"quick_slots": quick_slots,
+		"active_ring_count": loadout.equipped_abilities.size(),
+		"learned_count": get_learned_abilities(loadout).size(),
+	}
+
+
+func get_ability_caster() -> Node:
+	return find_first_node_named(get_tree().current_scene, "AbilityCaster")
+
+
+func get_ability_loadout(ability_caster: Node) -> AbilityLoadout:
+	if ability_caster == null:
+		return null
+
+	var loadout_variant: Variant = ability_caster.get("loadout")
+
+	if not (loadout_variant is AbilityLoadout):
+		return null
+
+	return loadout_variant as AbilityLoadout
+
+
+func get_learned_abilities(loadout: AbilityLoadout) -> Array[AbilityDefinition]:
+	var abilities: Array[AbilityDefinition] = []
+
+	if loadout == null:
+		return abilities
+
+	if loadout.has_method("get_learned_abilities"):
+		var learned_variant: Variant = loadout.call("get_learned_abilities")
+
+		if learned_variant is Array:
+			for ability_variant in learned_variant:
+				if ability_variant is AbilityDefinition:
+					abilities.append(ability_variant as AbilityDefinition)
+
+		return abilities
+
+	for ability: AbilityDefinition in loadout.learned_abilities:
+		if ability != null and not abilities.has(ability):
+			abilities.append(ability)
+
+	if abilities.size() <= 0:
+		for ability: AbilityDefinition in loadout.equipped_abilities:
+			if ability != null and not abilities.has(ability):
+				abilities.append(ability)
+
+	return abilities
+
+
 func make_spell_row(ability: AbilityDefinition, slot_index: int, current_index: int) -> Dictionary:
 	if ability == null:
 		return {
 			"slot": slot_index,
 			"name": "Empty Slot",
+			"is_empty": true,
 			"is_current": slot_index == current_index,
 		}
 
@@ -223,6 +377,7 @@ func make_spell_row(ability: AbilityDefinition, slot_index: int, current_index: 
 		"scaling_stats": ability.get_scaling_stats() if ability.has_method("get_scaling_stats") else [],
 		"scaling_note": ability.get_scaling_note() if ability.has_method("get_scaling_note") else "",
 		"notes": ability.get_design_notes() if ability.has_method("get_design_notes") else ability.design_notes,
+		"is_empty": false,
 		"is_current": slot_index == current_index,
 	}
 

@@ -274,34 +274,73 @@ func rebuild_content() -> void:
 
 
 func render_loadout() -> void:
+	var summary: Dictionary = menu_data.get("loadout_summary", {})
+	var summary_lines: Array[String] = []
+	summary_lines.append("Equipped combat slots: " + str(summary.get("quick_slots", 0)))
+	summary_lines.append("Learned spells: " + str(summary.get("learned_count", 0)))
+	summary_lines.append("Active test ring: " + str(summary.get("active_ring_count", 0)))
 	add_text_card(
 		"Spell Loadout",
-		"Every spell and weapon can now show a build identity through scaling metadata. Formulas are not active yet."
+		"Equipped slots are the future combat-facing spell set. The active test ring still keeps all current spells available while we prototype.\n" + "\n".join(summary_lines)
 	)
 
-	var spells: Array = menu_data.get("spells", [])
+	var equipped_slots: Array = menu_data.get("equipped_spell_slots", [])
 
-	if spells.size() <= 0:
-		add_text_card("No spells found", "The menu shell is working, but it could not find an AbilityCaster loadout yet.")
+	if equipped_slots.size() <= 0:
+		add_text_card("Equipped Combat Slots", "No equipped slots found yet.")
 	else:
-		for spell_variant in spells:
-			if spell_variant is Dictionary:
-				render_spell_card(spell_variant as Dictionary)
+		add_text_card("Equipped Combat Slots", "These are the first loadout slots. Swapping is not wired yet, but the shelf is real.")
+
+		for slot_variant in equipped_slots:
+			if slot_variant is Dictionary:
+				render_equipped_slot_card(slot_variant as Dictionary)
 
 	var weapon: Dictionary = menu_data.get("weapon", {})
 
 	if not weapon.is_empty():
 		render_weapon_card(weapon)
 
+	var library_sections: Array = menu_data.get("learned_spell_sections", [])
+
+	if library_sections.size() > 0:
+		add_text_card("Learned Spell Library", "All known spells grouped by element. Empty shelves are allowed, and later this is where swapping and augments can plug in.")
+
+		for section_variant in library_sections:
+			if section_variant is Dictionary:
+				render_library_section(section_variant as Dictionary)
+
+
+func render_equipped_slot_card(spell: Dictionary) -> void:
+	var slot_index: int = int(spell.get("slot", 0))
+	var title: String = "Slot " + str(slot_index + 1) + ": " + str(spell.get("name", "Empty Slot"))
+
+	if bool(spell.get("is_empty", false)):
+		add_text_card(title, "Empty combat slot. Later, learned spells can be assigned here.", false, "Empty")
+		return
+
+	add_text_card(title, "\n".join(get_spell_detail_lines(spell, true)), bool(spell.get("is_current", false)), get_spell_subtitle(spell))
+
 
 func render_spell_card(spell: Dictionary) -> void:
-	var title: String = "Slot " + str(int(spell.get("slot", 0)) + 1) + ": " + str(spell.get("name", "Empty Slot"))
+	var slot_index: int = int(spell.get("slot", 0))
+	var title: String = "Slot " + str(slot_index + 1) + ": " + str(spell.get("name", "Empty Slot"))
+	add_text_card(title, "\n".join(get_spell_detail_lines(spell, true)), bool(spell.get("is_current", false)), get_spell_subtitle(spell))
+
+
+func get_spell_subtitle(spell: Dictionary) -> String:
 	var subtitle: String = str(spell.get("element", "neutral")).capitalize()
 	subtitle += " | " + str(spell.get("delivery", "delivery"))
 	subtitle += " | " + str(spell.get("targeting", "targeting"))
+	return subtitle
 
+
+func get_spell_detail_lines(spell: Dictionary, include_notes: bool = false) -> Array[String]:
 	var lines: Array[String] = []
-	lines.append(str(spell.get("description", "")))
+	var description: String = str(spell.get("description", ""))
+
+	if description != "":
+		lines.append(description)
+
 	lines.append("Profile: " + str(spell.get("profile", "none")))
 	lines.append("Cost: mana " + str(spell.get("mana_cost", 0)) + " / stamina " + str(spell.get("stamina_cost", 0)) + " / focus " + str(spell.get("focus_cost", 0)))
 	lines.append("Scaling: " + join_values(spell.get("scaling_stats", [])))
@@ -313,11 +352,47 @@ func render_spell_card(spell: Dictionary) -> void:
 	if scaling_note != "":
 		lines.append("Scaling note: " + scaling_note)
 
-	var notes: String = str(spell.get("notes", ""))
-	if notes != "":
-		lines.append("Notes: " + notes)
+	if include_notes:
+		var notes: String = str(spell.get("notes", ""))
+		if notes != "":
+			lines.append("Notes: " + notes)
 
-	add_text_card(title, "\n".join(lines), bool(spell.get("is_current", false)), subtitle)
+	return lines
+
+
+func render_library_section(section: Dictionary) -> void:
+	var element_title: String = str(section.get("title", "Element"))
+	var spells: Array = section.get("spells", [])
+	var lines: Array[String] = []
+
+	if spells.size() <= 0:
+		lines.append("No learned spells yet.")
+	else:
+		for spell_variant in spells:
+			if spell_variant is Dictionary:
+				lines.append(get_library_spell_line(spell_variant as Dictionary))
+
+	add_text_card(element_title + " Spells", "\n".join(lines))
+
+
+func get_library_spell_line(spell: Dictionary) -> String:
+	var equipped_suffix: String = ""
+
+	if bool(spell.get("is_equipped", false)):
+		var slot_index: int = int(spell.get("equipped_slot", -1))
+		if slot_index >= 0:
+			equipped_suffix = " [equipped " + str(slot_index + 1) + "]"
+		else:
+			equipped_suffix = " [equipped]"
+
+	return (
+		str(spell.get("name", "Spell"))
+		+ equipped_suffix
+		+ " | "
+		+ join_values(spell.get("scaling_stats", []))
+		+ " | "
+		+ join_values(spell.get("roles", []))
+	)
 
 
 func render_weapon_card(weapon: Dictionary) -> void:

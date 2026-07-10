@@ -9,7 +9,7 @@ const DevRuntimeEnemyFactoryScript: Script = preload("res://scripts/systems/dev_
 
 @export var spawn_wave_key: Key = KEY_F6
 @export var clear_wave_key: Key = KEY_F7
-@export var audit_key: Key = KEY_F8
+@export var audit_key: Key = KEY_F12
 @export var next_scenario_key: Key = KEY_F9
 @export var previous_scenario_key: Key = KEY_F10
 
@@ -84,7 +84,7 @@ func print_help() -> void:
 	print("=== DEV SANDBOX DIRECTOR ===")
 	print("F6: Spawn selected scenario")
 	print("F7: Clear spawned enemies")
-	print("F8: Run dev audit")
+	print("F12: Run dev audit")
 	print("F9: Next scenario")
 	print("F10: Previous scenario")
 	print("Runtime zombie enabled: ", spawn_runtime_zombie)

@@ -7,7 +7,18 @@
 [resource]
 script = ExtResource("2_fcptf")
 display_name = "Firebolt"
-description = "Fire projectile"
+description = "Fire projectile. Direct damage with short burning."
 element = "fire"
+spell_id = "firebolt"
+short_label = "Bolt"
+icon_text = "F"
+roles = Array[String](["damage", "burn", "projectile", "combo_starter"])
+targeting_style = "aimed"
+delivery_type = "projectile"
+combo_tags = Array[String](["fire", "ignite", "burn", "toxic_ignition", "hazard_reactor"])
+status_tags = Array[String](["burning"])
+ui_tags = Array[String](["damage", "burn", "fast"])
+debug_tags = Array[String](["prototype", "fire_projectile"])
+design_notes = "Primary early fire attack. Should feel like the default damage spell and combo trigger for poison gas."
 ability_scene = ExtResource("1_fcptf")
 action_payload = ExtResource("2_4nb7g")

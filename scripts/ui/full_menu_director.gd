@@ -132,6 +132,7 @@ func build_menu_data() -> Dictionary:
 	return {
 		"objective": get_current_objective_text(),
 		"stats": get_stat_rows(),
+		"stat_sections": get_stat_sections(),
 		"spells": get_spell_rows(),
 		"weapon": get_weapon_data(),
 	}
@@ -164,6 +165,13 @@ func get_stat_rows() -> Dictionary:
 		"mana": str(GameState.get_stat("mana")) + " / " + str(GameState.get_stat("max_mana")),
 		"stance": str(GameState.get_stat("stance")) + " / " + str(GameState.get_stat("max_stance")),
 	}
+
+
+func get_stat_sections() -> Array[Dictionary]:
+	if GameState.has_method("get_stat_menu_sections"):
+		return GameState.get_stat_menu_sections()
+
+	return []
 
 
 func get_spell_rows() -> Array[Dictionary]:

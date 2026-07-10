@@ -64,6 +64,7 @@ const ELEMENT_DISPLAY_NAMES: Dictionary = {
 
 @export var cast_spawn_height: float = 1.2
 @export var cast_spawn_distance: float = 1.0
+@export var focus_quick_cast_lock_duration: float = 0.04
 
 var focus_spell_menu_open: bool = false
 var focus_element_index: int = 2
@@ -92,24 +93,24 @@ func _ready() -> void:
 	#print_action_audit()
 
 
-func cast_from_player(player: Node3D) -> void:
+func cast_from_player(player: Node3D, cast_lock_duration: float = 0.18) -> bool:
 	var ability: AbilityDefinition = get_current_ability()
 	if action_state != null and not action_state.can_cast():
-		return
+		return false
 	if ability == null:
 		print("No current ability.")
-		return
+		return false
 
 	if ability.ability_scene == null:
 		print("Ability has no scene: ", ability.display_name)
-		return
+		return false
 
 	if not pay_ability_cost(ability):
 		show_feedback("Not enough resources for " + ability.display_name + ".")
-		return
+		return false
 		
 	if action_state != null:
-		action_state.begin_cast(0.18)
+		action_state.begin_cast(cast_lock_duration)
 		
 	var ability_instance: Node = ability.ability_scene.instantiate()
 
@@ -132,11 +133,17 @@ func cast_from_player(player: Node3D) -> void:
 	if camera != null:
 		cast_direction = -camera.global_transform.basis.z
 
-	get_tree().current_scene.add_child(ability_instance)
+	var scene_root: Node = get_tree().current_scene
+
+	if scene_root == null:
+		print("AbilityCaster: No current scene to cast into.")
+		return false
+
+	scene_root.add_child(ability_instance)
 
 	if ability_instance.has_method("execute"):
 		ability_instance.execute(player, cast_direction)
-		return
+		return true
 
 	ability_instance.global_position = (
 		player.global_position
@@ -146,6 +153,8 @@ func cast_from_player(player: Node3D) -> void:
 
 	if ability_instance.has_method("launch"):
 		ability_instance.launch(cast_direction)
+
+	return true
 
 
 func pay_ability_cost(ability: AbilityDefinition) -> bool:
@@ -170,7 +179,7 @@ func pay_ability_cost(ability: AbilityDefinition) -> bool:
 	return true
 
 
-func select_ability(index: int) -> void:
+func select_ability(index: int, should_show_feedback: bool = true) -> void:
 	if loadout == null:
 		return
 
@@ -180,7 +189,9 @@ func select_ability(index: int) -> void:
 	current_ability_index = index
 	align_focus_menu_to_current_ability()
 	emit_current_ability()
-	show_feedback("Equipped: " + get_current_ability_name())
+
+	if should_show_feedback:
+		show_feedback("Equipped: " + get_current_ability_name())
 
 
 func select_next_ability() -> void:
@@ -285,7 +296,7 @@ func handle_focus_menu_input(event: InputEvent) -> bool:
 		return true
 
 	if event.is_action_pressed("cast_spell"):
-		confirm_focus_spell_menu()
+		quick_cast_selected_focus_spell()
 		return true
 
 	if event.is_action_pressed("ui_accept"):
@@ -331,7 +342,7 @@ func handle_focus_menu_input(event: InputEvent) -> bool:
 				cycle_focus_spell(1)
 				return true
 			MOUSE_BUTTON_LEFT:
-				confirm_focus_spell_menu()
+				quick_cast_selected_focus_spell()
 				return true
 			_:
 				return true
@@ -370,6 +381,41 @@ func confirm_focus_spell_menu() -> void:
 
 	select_ability(selected_index)
 	update_focus_spell_menu_ui()
+
+
+func quick_cast_selected_focus_spell() -> void:
+	var selected_index: int = get_selected_focus_spell_global_index()
+
+	if selected_index < 0:
+		show_feedback("No learned " + get_selected_focus_element_display_name() + " spells yet.")
+		update_focus_spell_menu_ui()
+		return
+
+	select_ability(selected_index, false)
+
+	var player: Node3D = get_focus_player()
+
+	if player == null:
+		show_feedback("No player found for quick-cast.")
+		update_focus_spell_menu_ui()
+		return
+
+	cast_from_player(player, focus_quick_cast_lock_duration)
+	update_focus_spell_menu_ui()
+
+
+func get_focus_player() -> Node3D:
+	var parent_node: Node = get_parent()
+
+	if parent_node is Node3D:
+		return parent_node as Node3D
+
+	var grouped_player: Node = get_tree().get_first_node_in_group("player")
+
+	if grouped_player is Node3D:
+		return grouped_player as Node3D
+
+	return null
 
 
 func update_focus_spell_menu_ui() -> void:

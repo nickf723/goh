@@ -1,6 +1,6 @@
 extends Node
 
-@export var minimum_time_scale: float = 0.25
+@export var minimum_time_scale: float = 0.12
 @export var max_focus_for_best_slow: int = 10
 
 var is_focusing: bool = false

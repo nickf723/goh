@@ -1,6 +1,7 @@
 extends Node
 
 const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
+const EnemyOverheadHud = preload("res://scripts/combat/enemy_overhead_hud.gd")
 
 signal health_changed(current_health: int, max_health: int)
 signal stance_changed(current_stance: int, max_stance: int)
@@ -41,6 +42,7 @@ func _ready() -> void:
 	current_health = clamp(current_health, 0, max_health)
 	current_stance = clamp(current_stance, 0, max_stance)
 	add_to_group("debuggable")
+	refresh_overhead_hud()
 
 func receive_hit(power: int = 1) -> Dictionary:
 	var result: Dictionary = {}
@@ -68,6 +70,7 @@ func receive_hit(power: int = 1) -> Dictionary:
 			}
 
 	show_basic_feedback(power, result)
+	refresh_overhead_hud()
 	return result
 
 func _receive_invulnerable_hit() -> Dictionary:
@@ -129,10 +132,12 @@ func _damage_health(power: int) -> Dictionary:
 func reset_health() -> void:
 	current_health = max_health
 	health_changed.emit(current_health, max_health)
+	refresh_overhead_hud()
 
 func reset_stance() -> void:
 	current_stance = max_stance
 	stance_changed.emit(current_stance, max_stance)
+	refresh_overhead_hud()
 
 func receive_payload(payload: DamagePayload) -> Dictionary:
 	last_payload_summary = (
@@ -168,6 +173,7 @@ func receive_payload(payload: DamagePayload) -> Dictionary:
 			}
 
 	show_payload_feedback(payload, result)
+	refresh_overhead_hud()
 	return result
 
 func _receive_invulnerable_payload(payload: DamagePayload) -> Dictionary:
@@ -242,20 +248,24 @@ func _damage_health_from_payload(payload: DamagePayload) -> Dictionary:
 		"objective": "Element damage is working."
 	}
 
-func show_payload_feedback(payload: DamagePayload, result: Dictionary) -> void:
+func get_feedback_target() -> Node:
 	var target: Node = get_parent()
 
 	if target == null:
-		target = self
+		return self
 
-	CombatFeedback.show_payload_feedback(target, payload, result)
+	return target
+
+func refresh_overhead_hud() -> void:
+	var hud: Node = EnemyOverheadHud.ensure_for_target(get_feedback_target())
+
+	if hud != null and hud.has_method("refresh_now"):
+		hud.refresh_now()
+
+func show_payload_feedback(payload: DamagePayload, result: Dictionary) -> void:
+	CombatFeedback.show_payload_feedback(get_feedback_target(), payload, result)
 
 func show_basic_feedback(power: int, result: Dictionary) -> void:
-	var target: Node = get_parent()
-
-	if target == null:
-		target = self
-
 	var payload: DamagePayload = DamagePayload.new()
 	payload.amount = power
 	payload.stance_damage = power
@@ -263,7 +273,7 @@ func show_basic_feedback(power: int, result: Dictionary) -> void:
 	payload.source_name = "Hit"
 	payload.tags = ["physical"]
 
-	CombatFeedback.show_payload_feedback(target, payload, result)
+	CombatFeedback.show_payload_feedback(get_feedback_target(), payload, result)
 
 func get_element_multiplier(element: String) -> float:
 	if immune_elements.has(element):

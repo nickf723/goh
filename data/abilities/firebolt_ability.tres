@@ -3,16 +3,18 @@
 [ext_resource type="PackedScene" uid="uid://tj563cjynma8" path="res://scenes/actions/generic_projectile.tscn" id="1_fcptf"]
 [ext_resource type="Resource" uid="uid://d0tlr8wx54co0" path="res://data/damage_payloads/firebolt_payload.tres" id="2_4nb7g"]
 [ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="2_fcptf"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/damage_projectile_profile.tres" id="3_profile"]
 
 [resource]
 script = ExtResource("2_fcptf")
 display_name = "Firebolt"
 description = "Fire projectile. Direct damage with short burning."
 element = "fire"
+trait_profile = ExtResource("3_profile")
 spell_id = "firebolt"
 short_label = "Bolt"
 icon_text = "F"
-roles = Array[String](["damage", "burn", "projectile", "combo_starter"])
+roles = Array[String](["burn", "combo_starter"])
 targeting_style = "aimed"
 delivery_type = "projectile"
 combo_tags = Array[String](["fire", "ignite", "burn", "toxic_ignition", "hazard_reactor"])

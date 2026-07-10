@@ -9,6 +9,29 @@ enum AbilityCategory {
 	UTILITY,
 }
 
+const DEFAULT_SCALING_BY_ELEMENT: Dictionary = {
+	"neutral": ["arcana", "skill"],
+	"water": ["arcana", "water"],
+	"earth": ["power", "earth"],
+	"fire": ["arcana", "fire"],
+	"air": ["arcana", "air"],
+	"ice": ["intelligence", "ice"],
+	"metal": ["dexterity", "metal"],
+	"lightning": ["arcana", "lightning"],
+	"poison": ["intelligence", "poison"],
+	"life": ["arcana", "life"],
+	"death": ["intelligence", "death"],
+	"body": ["power", "body"],
+	"soul": ["intelligence", "soul"],
+	"dreams": ["intelligence", "dreams"],
+	"sound": ["intelligence", "sound"],
+	"space": ["focus", "space"],
+	"time": ["focus", "time"],
+	"light": ["arcana", "light"],
+	"darkness": ["intelligence", "darkness"],
+	"void": ["skill", "void"],
+}
+
 @export var display_name: String = "New Ability"
 @export var description: String = ""
 @export var element: String = "neutral"
@@ -53,6 +76,12 @@ enum AbilityCategory {
 @export var status_tags: Array[String] = []
 @export var ui_tags: Array[String] = []
 @export var debug_tags: Array[String] = []
+
+# Pure metadata for build identity. These do not alter damage yet.
+# Example: Firebolt can say it scales with ["arcana", "fire"] long before
+# the final combat formulas exist.
+@export var scaling_stats: Array[String] = []
+@export_multiline var scaling_note: String = ""
 
 @export_multiline var design_notes: String = ""
 
@@ -162,6 +191,43 @@ func get_debug_tags() -> Array[String]:
 	return merged_tags
 
 
+func get_scaling_stats() -> Array[String]:
+	var resolved_scaling: Array[String] = []
+	append_unique_strings(resolved_scaling, scaling_stats)
+
+	if resolved_scaling.size() <= 0:
+		append_unique_strings(resolved_scaling, get_default_scaling_stats())
+
+	return resolved_scaling
+
+
+func get_default_scaling_stats() -> Array[String]:
+	var default_stats: Array[String] = []
+
+	if DEFAULT_SCALING_BY_ELEMENT.has(element):
+		var values: Array = DEFAULT_SCALING_BY_ELEMENT[element]
+
+		for value in values:
+			default_stats.append(str(value))
+
+	else:
+		default_stats.append("skill")
+
+	return default_stats
+
+
+func get_scaling_note() -> String:
+	if scaling_note != "":
+		return scaling_note
+
+	var resolved_scaling: Array[String] = get_scaling_stats()
+
+	if resolved_scaling.size() <= 0:
+		return "No scaling identity set yet."
+
+	return "Prototype scaling identity only. Damage formulas are not active yet."
+
+
 func get_design_notes() -> String:
 	var notes: Array[String] = []
 	var profile_notes: String = get_profile_string("design_notes", "")
@@ -194,6 +260,10 @@ func get_identity_summary() -> String:
 	if effective_roles.size() > 0:
 		summary_parts.append("roles=" + ",".join(effective_roles))
 
+	var effective_scaling: Array[String] = get_scaling_stats()
+	if effective_scaling.size() > 0:
+		summary_parts.append("scales=" + ",".join(effective_scaling))
+
 	return " | ".join(summary_parts)
 
 
@@ -219,11 +289,12 @@ func has_any_role(required_roles: Array[String]) -> bool:
 
 func get_all_spell_tags() -> Array[String]:
 	var all_tags: Array[String] = []
-	append_unique_strings(all_tags, get_roles())
+	append_unique_strings(all_tags, get_roles())	
 	append_unique_strings(all_tags, get_combo_tags())
 	append_unique_strings(all_tags, get_status_tags())
 	append_unique_strings(all_tags, get_ui_tags())
 	append_unique_strings(all_tags, get_debug_tags())
+	append_unique_strings(all_tags, get_scaling_stats())
 
 	if element != "" and not all_tags.has(element):
 		all_tags.append(element)
@@ -256,6 +327,8 @@ func get_debug_data() -> Dictionary:
 		"status": get_status_tags(),
 		"ui": get_ui_tags(),
 		"debug": get_debug_tags(),
+		"scaling": get_scaling_stats(),
+		"scaling_note": get_scaling_note(),
 		"all_tags": get_all_spell_tags(),
 		"notes": get_design_notes(),
 	}

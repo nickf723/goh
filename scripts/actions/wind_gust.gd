@@ -14,6 +14,12 @@ const HAZARD_LAYER: int = 2
 @export var show_debug_prints: bool = true
 @export var payload: DamagePayload
 
+# Hazards are sometimes easier to find by group scan than by physics overlap,
+# especially for short-lived cone bursts that spawn and resolve in one frame.
+@export var hazard_scan_group: String = "hazard_reactive"
+@export var hazard_scan_extra_radius: float = 1.0
+@export var show_hazard_scan_feedback: bool = false
+
 var runtime_payload: DamagePayload
 var source_actor: Node3D
 var direction: Vector3 = Vector3.FORWARD
@@ -21,6 +27,10 @@ var lifetime_timer: float = 0.0
 var has_applied: bool = false
 var hit_targets: Array[Node] = []
 var stirred_hazards: Array[Node] = []
+var last_hazard_scan_summary: String = "none"
+var last_hazard_result_summary: String = "none"
+var last_target_scan_count: int = 0
+var last_hazard_scan_count: int = 0
 
 @onready var gust_area: Area3D = get_node_or_null("GustArea")
 @onready var gust_visual: MeshInstance3D = get_node_or_null("GustVisual")
@@ -143,6 +153,43 @@ func apply_gust_once() -> void:
 	var targets: Array[Node] = []
 	var hazards: Array[Node] = []
 
+	collect_overlap_targets_and_hazards(targets, hazards)
+	collect_group_hazards(hazards)
+
+	last_target_scan_count = targets.size()
+	last_hazard_scan_count = hazards.size()
+	last_hazard_scan_summary = build_hazard_scan_summary(hazards)
+
+	if show_debug_prints:
+		print("Wind Gust scan: targets=", targets.size(), " hazards=", hazards.size(), " ", last_hazard_scan_summary)
+
+	for target: Node in targets:
+		if is_target_in_cone(target):
+			apply_wind_to_target(target)
+
+	var stirred_count: int = 0
+
+	for hazard: Node in hazards:
+		if is_target_in_cone(hazard, hazard_scan_extra_radius):
+			apply_wind_to_hazard(hazard)
+			stirred_count += 1
+
+	if stirred_count <= 0:
+		last_hazard_result_summary = "none stirred"
+
+		if show_hazard_scan_feedback and hazards.size() > 0:
+			show_result({
+				"message": "Wind Gust found hazards nearby, but none were inside the cone.",
+				"objective": ""
+			})
+	elif show_hazard_scan_feedback:
+		show_result({
+			"message": "Wind Gust stirred " + str(stirred_count) + " hazard(s).",
+			"objective": ""
+		})
+
+
+func collect_overlap_targets_and_hazards(targets: Array[Node], hazards: Array[Node]) -> void:
 	for body: Node in gust_area.get_overlapping_bodies():
 		var body_target: Node = find_payload_target(body)
 
@@ -160,16 +207,24 @@ func apply_gust_once() -> void:
 		if hazard_target != null and not hazards.has(hazard_target):
 			hazards.append(hazard_target)
 
-	for target: Node in targets:
-		if is_target_in_cone(target):
-			apply_wind_to_target(target)
 
-	for hazard: Node in hazards:
-		if is_target_in_cone(hazard):
-			apply_wind_to_hazard(hazard)
+func collect_group_hazards(hazards: Array[Node]) -> void:
+	if hazard_scan_group == "":
+		return
+
+	for candidate: Node in get_tree().get_nodes_in_group(hazard_scan_group):
+		var hazard_target: Node = find_hazard_target(candidate)
+
+		if hazard_target == null:
+			continue
+
+		if hazards.has(hazard_target):
+			continue
+
+		hazards.append(hazard_target)
 
 
-func is_target_in_cone(target: Node) -> bool:
+func is_target_in_cone(target: Node, extra_radius: float = 0.0) -> bool:
 	if target == null:
 		return false
 
@@ -183,7 +238,7 @@ func is_target_in_cone(target: Node) -> bool:
 	if to_target.length() <= 0.01:
 		return true
 
-	if to_target.length() > radius:
+	if to_target.length() > radius + max(extra_radius, 0.0):
 		return false
 
 	var angle: float = rad_to_deg(direction.angle_to(to_target.normalized()))
@@ -227,6 +282,7 @@ func apply_wind_to_hazard(hazard: Node) -> void:
 
 	if hazard.has_method("react_to_payload"):
 		hazard.call("react_to_payload", get_payload(), global_position)
+		last_hazard_result_summary = "stirred: " + get_hazard_label(hazard)
 		show_result({
 			"message": "Wind Gust stirs " + get_hazard_label(hazard) + ".",
 			"objective": ""
@@ -338,11 +394,27 @@ func get_hazard_label(hazard: Node) -> String:
 	return hazard.name
 
 
+func build_hazard_scan_summary(hazards: Array[Node]) -> String:
+	if hazards.size() <= 0:
+		return "no hazards"
+
+	var labels: Array[String] = []
+
+	for hazard: Node in hazards:
+		labels.append(get_hazard_label(hazard))
+
+	return ", ".join(labels)
+
+
 func get_debug_data() -> Dictionary:
 	return {
 		"radius": radius,
 		"angle": cone_angle_degrees,
 		"life": snapped(lifetime_timer, 0.1),
 		"hits": hit_targets.size(),
-		"hazards": stirred_hazards.size(),
+		"targets": last_target_scan_count,
+		"hazards": last_hazard_scan_count,
+		"stirred": stirred_hazards.size(),
+		"scan": last_hazard_scan_summary,
+		"last": last_hazard_result_summary,
 	}

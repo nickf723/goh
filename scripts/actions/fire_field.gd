@@ -1,6 +1,9 @@
 extends Node3D
 class_name FireField
 
+const TARGET_LAYER: int = 1
+const HAZARD_LAYER: int = 2
+
 @export var radius: float = 3.0
 @export var lifetime: float = 5.0
 @export var tick_interval: float = 0.3
@@ -10,10 +13,19 @@ class_name FireField
 @export var show_debug_prints: bool = true
 @export var payload: DamagePayload
 
+@export var maximum_flare_radius: float = 5.25
+@export var flare_radius_bonus: float = 1.0
+@export var flare_lifetime_bonus: float = 1.25
+@export var flare_duration: float = 1.0
+@export var maximum_flare_count: int = 2
+
 var runtime_payload: DamagePayload
 var source_actor: Node3D
 var lifetime_timer: float = 0.0
 var tick_timer: float = 0.0
+var flare_timer: float = 0.0
+var flare_count: int = 0
+var triggered_hazards: Array[Node] = []
 
 @onready var hit_area: Area3D = get_node_or_null("HitArea")
 @onready var field_visual: MeshInstance3D = get_node_or_null("FieldVisual")
@@ -22,6 +34,7 @@ var tick_timer: float = 0.0
 
 func _ready() -> void:
 	add_to_group("debuggable")
+	add_to_group("hazard_reactive")
 	lifetime_timer = lifetime
 	tick_timer = 0.0
 	configure_area()
@@ -69,6 +82,9 @@ func _process(delta: float) -> void:
 	lifetime_timer -= delta
 	tick_timer -= delta
 
+	if flare_timer > 0.0:
+		flare_timer -= delta
+
 	if tick_timer <= 0.0:
 		tick_timer = tick_interval
 		apply_field_tick()
@@ -86,9 +102,9 @@ func configure_area() -> void:
 		add_child(hit_area)
 
 	hit_area.monitoring = true
-	hit_area.monitorable = false
-	hit_area.collision_layer = 0
-	hit_area.collision_mask = 1
+	hit_area.monitorable = true
+	hit_area.collision_layer = HAZARD_LAYER
+	hit_area.collision_mask = TARGET_LAYER | HAZARD_LAYER
 
 	if collision_shape == null:
 		collision_shape = hit_area.get_node_or_null("CollisionShape3D") as CollisionShape3D
@@ -119,8 +135,10 @@ func update_visual_pulse() -> void:
 		return
 
 	var age: float = lifetime - lifetime_timer
-	var pulse: float = 1.0 + sin(age * 8.0) * 0.055
-	field_visual.scale = Vector3(radius * pulse, radius * visual_height_scale, radius * pulse)
+	var flare_ratio: float = clamp(flare_timer / max(flare_duration, 0.01), 0.0, 1.0)
+	var pulse: float = 1.0 + sin(age * 8.0) * (0.055 + flare_ratio * 0.08)
+	var height_bonus: float = 1.0 + flare_ratio * 0.65
+	field_visual.scale = Vector3(radius * pulse, radius * visual_height_scale * height_bonus, radius * pulse)
 
 
 func apply_field_tick() -> void:
@@ -128,6 +146,7 @@ func apply_field_tick() -> void:
 		return
 
 	var targets: Array[Node] = []
+	var hazards: Array[Node] = []
 
 	for body: Node in hit_area.get_overlapping_bodies():
 		var body_target: Node = find_status_target(body)
@@ -141,8 +160,30 @@ func apply_field_tick() -> void:
 		if area_target != null and not targets.has(area_target):
 			targets.append(area_target)
 
+		var hazard_target: Node = find_hazard_target(area)
+
+		if hazard_target != null and hazard_target != self and not hazards.has(hazard_target):
+			hazards.append(hazard_target)
+
+	for hazard: Node in hazards:
+		if hazard_has_any_tag(hazard, ["poison", "gas", "cloud"]):
+			trigger_hazard_reaction(hazard)
+
 	for target: Node in targets:
 		apply_burning_to_target(target)
+
+
+func trigger_hazard_reaction(hazard: Node) -> void:
+	if hazard == null:
+		return
+
+	if triggered_hazards.has(hazard) and is_instance_valid(hazard):
+		return
+
+	triggered_hazards.append(hazard)
+
+	if hazard.has_method("react_to_payload"):
+		hazard.call("react_to_payload", get_payload(), global_position)
 
 
 func apply_burning_to_target(target: Node) -> void:
@@ -165,6 +206,9 @@ func apply_burning_to_target(target: Node) -> void:
 	if status_strength <= 0.0:
 		status_strength = 1.0
 
+	if flare_timer > 0.0:
+		status_strength += 0.5
+
 	if status_receiver.has_method("sustain_status"):
 		status_receiver.sustain_status(
 			status_name,
@@ -179,6 +223,31 @@ func apply_burning_to_target(target: Node) -> void:
 			status_strength,
 			field_payload.source_name
 		)
+
+
+func react_to_payload(incoming_payload: DamagePayload, source_position: Vector3 = Vector3.ZERO) -> void:
+	if incoming_payload == null:
+		return
+
+	if payload_has_any_tag(incoming_payload, ["air", "wind", "gust", "force"]) or incoming_payload.element == "air":
+		flare_field(source_position)
+		return
+
+
+func flare_field(_source_position: Vector3 = Vector3.ZERO) -> void:
+	if flare_count >= maximum_flare_count:
+		show_reaction_message("Wind scrapes the fire field, but the flames are already roaring.")
+		return
+
+	flare_count += 1
+	radius = min(radius + flare_radius_bonus, maximum_flare_radius)
+	lifetime_timer += flare_lifetime_bonus
+	flare_timer = flare_duration
+	configure_area()
+	show_reaction_message("Fanned Flames! Wind fattens the fire field.")
+
+	if show_debug_prints:
+		print("FireField reaction: Fanned Flames. Radius now ", radius)
 
 
 func get_payload() -> DamagePayload:
@@ -197,8 +266,12 @@ func get_payload() -> DamagePayload:
 	fallback_payload.status_effect = "burning"
 	fallback_payload.status_duration = 1.2
 	fallback_payload.status_strength = 1.0
-	fallback_payload.tags = ["fire", "field", "hazard", "status", "magic"]
+	fallback_payload.tags = ["fire", "flame", "field", "hazard", "status", "magic"]
 	return fallback_payload
+
+
+func get_hazard_tags() -> Array[String]:
+	return ["fire", "flame", "field", "hazard"]
 
 
 func find_status_target(node: Node) -> Node:
@@ -206,6 +279,18 @@ func find_status_target(node: Node) -> Node:
 
 	while current != null:
 		if get_component(current, "StatusReceiver") != null:
+			return current
+
+		current = current.get_parent()
+
+	return null
+
+
+func find_hazard_target(node: Node) -> Node:
+	var current: Node = node
+
+	while current != null:
+		if current.has_method("react_to_payload") and current.has_method("get_hazard_tags"):
 			return current
 
 		current = current.get_parent()
@@ -229,9 +314,46 @@ func get_component(target: Node, component_name: String) -> Node:
 	return null
 
 
+func payload_has_any_tag(incoming_payload: DamagePayload, tags_to_check: Array[String]) -> bool:
+	if incoming_payload == null:
+		return false
+
+	for tag: String in tags_to_check:
+		if incoming_payload.tags.has(tag):
+			return true
+
+	return false
+
+
+func hazard_has_any_tag(hazard: Node, tags_to_check: Array[String]) -> bool:
+	if hazard == null or not hazard.has_method("get_hazard_tags"):
+		return false
+
+	var hazard_tags: Array = hazard.call("get_hazard_tags")
+
+	for tag: String in tags_to_check:
+		if hazard_tags.has(tag):
+			return true
+
+	return false
+
+
+func show_reaction_message(message: String) -> void:
+	var ui: Node = get_tree().get_first_node_in_group("game_ui")
+
+	if ui == null:
+		print(message)
+		return
+
+	if ui.has_method("show_message"):
+		ui.show_message(message)
+
+
 func get_debug_data() -> Dictionary:
 	return {
 		"radius": radius,
 		"life": snapped(lifetime_timer, 0.1),
 		"payload": get_payload().source_name,
+		"flare": snapped(flare_timer, 0.1),
+		"flare_count": flare_count,
 	}

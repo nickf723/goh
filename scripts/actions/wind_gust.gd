@@ -1,6 +1,9 @@
 extends Node3D
 class_name WindGust
 
+const TARGET_LAYER: int = 1
+const HAZARD_LAYER: int = 2
+
 @export var radius: float = 4.2
 @export var cone_angle_degrees: float = 80.0
 @export var lifetime: float = 0.45
@@ -17,6 +20,7 @@ var direction: Vector3 = Vector3.FORWARD
 var lifetime_timer: float = 0.0
 var has_applied: bool = false
 var hit_targets: Array[Node] = []
+var stirred_hazards: Array[Node] = []
 
 @onready var gust_area: Area3D = get_node_or_null("GustArea")
 @onready var gust_visual: MeshInstance3D = get_node_or_null("GustVisual")
@@ -83,9 +87,9 @@ func configure_area() -> void:
 		add_child(gust_area)
 
 	gust_area.monitoring = true
-	gust_area.monitorable = false
-	gust_area.collision_layer = 0
-	gust_area.collision_mask = 1
+	gust_area.monitorable = true
+	gust_area.collision_layer = HAZARD_LAYER
+	gust_area.collision_mask = TARGET_LAYER | HAZARD_LAYER
 
 	if collision_shape == null:
 		collision_shape = gust_area.get_node_or_null("CollisionShape3D") as CollisionShape3D
@@ -137,6 +141,7 @@ func apply_gust_once() -> void:
 	await get_tree().physics_frame
 
 	var targets: Array[Node] = []
+	var hazards: Array[Node] = []
 
 	for body: Node in gust_area.get_overlapping_bodies():
 		var body_target: Node = find_payload_target(body)
@@ -150,9 +155,18 @@ func apply_gust_once() -> void:
 		if area_target != null and not targets.has(area_target):
 			targets.append(area_target)
 
+		var hazard_target: Node = find_hazard_target(area)
+
+		if hazard_target != null and not hazards.has(hazard_target):
+			hazards.append(hazard_target)
+
 	for target: Node in targets:
 		if is_target_in_cone(target):
 			apply_wind_to_target(target)
+
+	for hazard: Node in hazards:
+		if is_target_in_cone(hazard):
+			apply_wind_to_hazard(hazard)
 
 
 func is_target_in_cone(target: Node) -> bool:
@@ -200,6 +214,23 @@ func apply_wind_to_target(target: Node) -> void:
 			}
 
 	show_result(result)
+
+
+func apply_wind_to_hazard(hazard: Node) -> void:
+	if hazard == null:
+		return
+
+	if stirred_hazards.has(hazard):
+		return
+
+	stirred_hazards.append(hazard)
+
+	if hazard.has_method("react_to_payload"):
+		hazard.call("react_to_payload", get_payload(), global_position)
+		show_result({
+			"message": "Wind Gust stirs " + get_hazard_label(hazard) + ".",
+			"objective": ""
+		})
 
 
 func show_result(result: Dictionary) -> void:
@@ -251,6 +282,21 @@ func find_payload_target(node: Node) -> Node:
 	return null
 
 
+func find_hazard_target(node: Node) -> Node:
+	var current: Node = node
+
+	while current != null:
+		if current == self:
+			return null
+
+		if current.has_method("react_to_payload") and current.has_method("get_hazard_tags"):
+			return current
+
+		current = current.get_parent()
+
+	return null
+
+
 func get_component(target: Node, component_name: String) -> Node:
 	if target == null:
 		return null
@@ -279,10 +325,24 @@ func get_target_position(target: Node) -> Vector3:
 	return Vector3.ZERO
 
 
+func get_hazard_label(hazard: Node) -> String:
+	if hazard == null:
+		return "hazard"
+
+	if hazard.has_method("get_hazard_tags"):
+		var tags: Array = hazard.call("get_hazard_tags")
+
+		if tags.size() > 0:
+			return str(tags[0]).capitalize() + " Hazard"
+
+	return hazard.name
+
+
 func get_debug_data() -> Dictionary:
 	return {
 		"radius": radius,
 		"angle": cone_angle_degrees,
 		"life": snapped(lifetime_timer, 0.1),
 		"hits": hit_targets.size(),
+		"hazards": stirred_hazards.size(),
 	}

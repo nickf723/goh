@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_ability_definition"]
 [ext_resource type="PackedScene" path="res://scenes/actions/poison_cloud.tscn" id="2_poison_scene"]
 [ext_resource type="Resource" path="res://data/damage_payloads/poison_cloud_payload.tres" id="3_poison_payload"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/lingering_hazard_profile.tres" id="4_profile"]
 
 [resource]
 script = ExtResource("1_ability_definition")
@@ -11,10 +12,11 @@ description = "Create a lingering poisonous cloud."
 element = "poison"
 category = 4
 mana_cost = 1
+trait_profile = ExtResource("4_profile")
 spell_id = "poison_cloud"
 short_label = "Cloud"
 icon_text = "P"
-roles = Array[String](["hazard", "status", "area", "combo_starter", "damage_over_time"])
+roles = Array[String](["damage_over_time"])
 targeting_style = "ground_forward"
 delivery_type = "hazard_field"
 combo_tags = Array[String](["poison", "gas", "cloud", "toxic_ignition", "cloud_spread"])

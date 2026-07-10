@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityTraitProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_trait_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "cone_force"
+display_name = "Cone Force"
+description = "Short-range cone that pushes, staggers, redirects, or manipulates objects and hazards."
+roles = Array[String](["force", "control", "area", "utility", "hazard_manipulation"])
+targeting_style = "aimed_cone"
+delivery_type = "cone"
+combo_tags = Array[String](["force", "push", "spread", "hazard_reactor"])
+ui_tags = Array[String](["control", "force", "cone"])
+debug_tags = Array[String](["spell_profile", "force", "cone"])
+design_notes = "Use for directional blasts that affect multiple targets or reshape hazards."

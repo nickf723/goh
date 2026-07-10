@@ -3,16 +3,18 @@
 [ext_resource type="PackedScene" uid="uid://tj563cjynma8" path="res://scenes/actions/generic_projectile.tscn" id="1_blcr8"]
 [ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="2_blcr8"]
 [ext_resource type="Resource" uid="uid://btmw4r7ihn7hk" path="res://data/damage_payloads/lightning_spark_payload.tres" id="2_padcn"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/control_projectile_profile.tres" id="3_profile"]
 
 [resource]
 script = ExtResource("2_blcr8")
 display_name = "Lightning Spark"
 description = "Fast spark that briefly interrupts enemies."
 element = "lightning"
+trait_profile = ExtResource("3_profile")
 spell_id = "lightning_spark"
 short_label = "Spark"
 icon_text = "L"
-roles = Array[String](["interrupt", "damage", "projectile", "combo_reactor"])
+roles = Array[String](["interrupt", "damage", "combo_reactor"])
 targeting_style = "aimed"
 delivery_type = "projectile"
 combo_tags = Array[String](["lightning", "shock", "wet_shock", "conductive"])

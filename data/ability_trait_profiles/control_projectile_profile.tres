@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityTraitProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_trait_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "control_projectile"
+display_name = "Control Projectile"
+description = "Aimed projectile that slows, staggers, interrupts, or otherwise manipulates an enemy."
+roles = Array[String](["control", "projectile", "ranged", "status"])
+targeting_style = "aimed"
+delivery_type = "projectile"
+combo_tags = Array[String](["projectile", "control", "setup"])
+ui_tags = Array[String](["control", "aimed"])
+debug_tags = Array[String](["spell_profile", "projectile", "control"])
+design_notes = "Use for ranged spells that trade raw damage for tempo control."

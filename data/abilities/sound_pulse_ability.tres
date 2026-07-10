@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="1_joub7"]
 [ext_resource type="PackedScene" uid="uid://dohf5bh7tkyr1" path="res://scenes/actions/generic_pulse.tscn" id="1_w4k2i"]
 [ext_resource type="Resource" uid="uid://dnqou6nghv5ad" path="res://data/detection_payloads/sound_pulse_payload.tres" id="2_qsh5n"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/detection_pulse_profile.tres" id="3_profile"]
 
 [resource]
 script = ExtResource("1_joub7")
@@ -10,13 +11,14 @@ display_name = "Sound Pulse"
 description = "Emit a sound wave that reveals and briefly staggers nearby targets."
 element = "sound"
 category = 4
+trait_profile = ExtResource("3_profile")
 spell_id = "sound_pulse"
 short_label = "Pulse"
 icon_text = "So"
-roles = Array[String](["detection", "reveal", "control", "area", "stagger"])
+roles = Array[String](["stagger"])
 targeting_style = "self_centered"
 delivery_type = "pulse"
-combo_tags = Array[String](["sound", "echo", "reveal", "resonance", "stagger"])
+combo_tags = Array[String](["sound", "echo", "resonance", "stagger"])
 status_tags = Array[String](["staggered"])
 ui_tags = Array[String](["utility", "reveal", "area"])
 debug_tags = Array[String](["prototype", "detection_pulse"])

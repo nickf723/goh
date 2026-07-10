@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityTraitProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_trait_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "lingering_hazard"
+display_name = "Lingering Hazard"
+description = "Grounded area spell that persists, applies statuses, and participates in hazard reactions."
+roles = Array[String](["hazard", "area", "status", "zone_control", "combo_starter", "combo_reactor"])
+targeting_style = "ground_area"
+delivery_type = "hazard"
+combo_tags = Array[String](["hazard", "field", "area_control", "reaction_surface"])
+ui_tags = Array[String](["hazard", "area", "status"])
+debug_tags = Array[String](["spell_profile", "hazard"])
+design_notes = "Use for spawned zones like fire fields, poison clouds, traps, and future terrain magic."

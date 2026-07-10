@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_ability_definition"]
 [ext_resource type="PackedScene" path="res://scenes/actions/fire_field.tscn" id="2_fire_scene"]
 [ext_resource type="Resource" path="res://data/damage_payloads/fire_field_payload.tres" id="3_fire_payload"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/lingering_hazard_profile.tres" id="4_profile"]
 
 [resource]
 script = ExtResource("1_ability_definition")
@@ -11,10 +12,11 @@ description = "Create a lingering field of flame."
 element = "fire"
 category = 4
 mana_cost = 1
+trait_profile = ExtResource("4_profile")
 spell_id = "fire_field"
 short_label = "Field"
 icon_text = "FF"
-roles = Array[String](["hazard", "status", "area", "combo_reactor", "damage_over_time"])
+roles = Array[String](["damage_over_time"])
 targeting_style = "ground_forward"
 delivery_type = "hazard_field"
 combo_tags = Array[String](["fire", "burn", "fanned_flames", "toxic_ignition", "hazard_reactor"])

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 1
+stance_damage = 1
+element = "life"
+source_name = "Life Thorn"
+hit_type = "projectile"
+tags = Array[String](["life", "growth", "thorn", "plant", "magic", "projectile", "damage"])
+knockback_strength = 0.8

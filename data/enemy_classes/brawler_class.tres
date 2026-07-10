@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EnemyClassDefinition" format=3 uid="uid://c7kbrawlerclass"]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_class_definition.gd" id="1_brawler"]
+
+[resource]
+script = ExtResource("1_brawler")
+class_id = "brawler"
+display_name = "Brawler"
+description = "Baseline melee creature. Walks into range, pressures Grace, and teaches basic spacing."
+role_tags = Array[String](["brawler", "melee", "baseline"])
+default_tags = Array[String](["enemy", "monster", "organic", "living", "staggerable"])
+hit_mode = 2
+max_health = 8
+max_stance = 3
+weak_elements = Array[String](["fire"])
+move_speed = 2.2
+turn_speed = 9.0
+detection_radius = 9.0
+lose_interest_radius = 14.0
+preferred_distance = 1.35
+spacing_buffer = 0.25
+circle_when_waiting_to_attack = true
+strafe_speed_multiplier = 0.65
+strafe_switch_interval = 1.2
+force_drag = 10.0
+max_force_speed = 8.0
+debug_notes = "Good default enemy class for testing core combat."

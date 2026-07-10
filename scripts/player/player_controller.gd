@@ -9,6 +9,14 @@ extends CharacterBody3D
 @export var allow_controller_camera_during_focus_menu: bool = false
 @export var spell_mana_cost: int = 1
 
+@export var lock_on_range: float = 18.0
+@export var lock_on_forward_score_bonus: float = 8.0
+@export var lock_on_turn_speed: float = 8.0
+@export var lock_on_marker_height: float = 2.1
+@export var lock_on_marker_size: float = 0.34
+@export var lock_on_camera_pitch: float = -12.0
+@export var lock_on_camera_pitch_strength: float = 4.0
+
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var interaction_area: Area3D = $InteractionArea
 @onready var ability_caster: Node3D = $AbilityCaster
@@ -24,11 +32,16 @@ var nearby_interactables: Array[Area3D] = []
 var current_interactable: Area3D = null
 
 var is_defeated: bool = false
+var lock_on_target: Node3D = null
+var lock_on_marker: MeshInstance3D = null
 
 
 func _ready() -> void:
 	dodge_controller = find_dodge_controller()
 	print("Player found dodge controller: ", dodge_controller.get_path() if dodge_controller != null else "none")
+
+	ensure_runtime_lock_on_input_map()
+	create_lock_on_marker()
 
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	camera_pivot.rotation.x = camera_pitch
@@ -39,7 +52,10 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	update_controller_camera(delta)
+	if has_lock_on_target():
+		update_lock_on(delta)
+	else:
+		update_controller_camera(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -63,7 +79,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 
+	if event.is_action_pressed("lock_on"):
+		toggle_lock_on()
+		get_viewport().set_input_as_handled()
+		return
+
 	if event is InputEventMouseMotion:
+		if has_lock_on_target():
+			clear_lock_on("Lock-on released.")
 		rotate_y(-event.relative.x * mouse_sensitivity)
 
 		camera_pitch -= event.relative.y * mouse_sensitivity
@@ -185,6 +208,259 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 
+func ensure_runtime_lock_on_input_map() -> void:
+	if not InputMap.has_action("lock_on"):
+		InputMap.add_action("lock_on", 0.2)
+
+	if not input_action_has_key("lock_on", KEY_T):
+		var key_event: InputEventKey = InputEventKey.new()
+		key_event.physical_keycode = KEY_T
+		InputMap.action_add_event("lock_on", key_event)
+
+	# Godot's standard right-stick click / R3 button. If a controller driver reports
+	# this differently, we can swap the button index after one test.
+	if not input_action_has_joy_button("lock_on", 8):
+		var joy_event: InputEventJoypadButton = InputEventJoypadButton.new()
+		joy_event.button_index = 8
+		InputMap.action_add_event("lock_on", joy_event)
+
+
+func input_action_has_key(action_name: String, physical_keycode: Key) -> bool:
+	for event: InputEvent in InputMap.action_get_events(action_name):
+		if event is InputEventKey:
+			var key_event: InputEventKey = event as InputEventKey
+			if key_event.physical_keycode == physical_keycode:
+				return true
+
+	return false
+
+
+func input_action_has_joy_button(action_name: String, button_index: int) -> bool:
+	for event: InputEvent in InputMap.action_get_events(action_name):
+		if event is InputEventJoypadButton:
+			var joy_event: InputEventJoypadButton = event as InputEventJoypadButton
+			if joy_event.button_index == button_index:
+				return true
+
+	return false
+
+
+func toggle_lock_on() -> void:
+	if has_lock_on_target():
+		clear_lock_on("Lock-on released.")
+		return
+
+	var found_target: Node3D = find_best_lock_on_target()
+
+	if found_target == null:
+		show_game_message("No target in range.")
+		return
+
+	set_lock_on_target(found_target)
+
+
+func set_lock_on_target(target: Node3D) -> void:
+	lock_on_target = target
+	update_lock_on_marker()
+	show_game_message("Locked: " + get_target_display_name(target))
+
+
+func clear_lock_on(message: String = "") -> void:
+	lock_on_target = null
+
+	if lock_on_marker != null:
+		lock_on_marker.visible = false
+
+	if message != "":
+		show_game_message(message)
+
+
+func has_lock_on_target() -> bool:
+	return lock_on_target != null and is_instance_valid(lock_on_target) and not is_target_defeated(lock_on_target)
+
+
+func update_lock_on(delta: float) -> void:
+	if not has_lock_on_target():
+		clear_lock_on()
+		return
+
+	if global_position.distance_to(lock_on_target.global_position) > lock_on_range * 1.25:
+		clear_lock_on("Target lost.")
+		return
+
+	face_lock_on_target(delta)
+	update_lock_on_camera_pitch(delta)
+	update_lock_on_marker()
+
+
+func face_lock_on_target(delta: float) -> void:
+	var to_target: Vector3 = lock_on_target.global_position - global_position
+	to_target.y = 0.0
+
+	if to_target.length() <= 0.01:
+		return
+
+	var target_angle: float = atan2(-to_target.normalized().x, -to_target.normalized().z)
+	var turn_amount: float = clamp(lock_on_turn_speed * delta, 0.0, 1.0)
+	rotation.y = lerp_angle(rotation.y, target_angle, turn_amount)
+
+
+func update_lock_on_camera_pitch(delta: float) -> void:
+	var target_pitch: float = deg_to_rad(lock_on_camera_pitch)
+	var pitch_amount: float = clamp(lock_on_camera_pitch_strength * delta, 0.0, 1.0)
+	camera_pitch = lerp(camera_pitch, target_pitch, pitch_amount)
+	camera_pitch = clamp(camera_pitch, min_pitch, max_pitch)
+	camera_pivot.rotation.x = camera_pitch
+
+
+func find_best_lock_on_target() -> Node3D:
+	var best_target: Node3D = null
+	var best_score: float = INF
+	var camera: Camera3D = get_viewport().get_camera_3d()
+
+	for candidate_node: Node in get_tree().get_nodes_in_group("enemy"):
+		if not candidate_node is Node3D:
+			continue
+
+		var candidate: Node3D = candidate_node as Node3D
+
+		if not is_instance_valid(candidate):
+			continue
+
+		if is_target_defeated(candidate):
+			continue
+
+		var distance: float = global_position.distance_to(candidate.global_position)
+
+		if distance > lock_on_range:
+			continue
+
+		var score: float = distance
+
+		if camera != null:
+			var to_target: Vector3 = get_target_aim_point(candidate) - camera.global_position
+
+			if to_target.length() > 0.01:
+				var camera_forward: Vector3 = -camera.global_transform.basis.z
+				var forward_dot: float = camera_forward.normalized().dot(to_target.normalized())
+
+				if forward_dot < -0.25:
+					continue
+
+				score -= forward_dot * lock_on_forward_score_bonus
+
+		if score < best_score:
+			best_score = score
+			best_target = candidate
+
+	return best_target
+
+
+func is_target_defeated(target: Node) -> bool:
+	if target == null:
+		return true
+
+	var hit_receiver: Node = target.get_node_or_null("HitReceiver")
+
+	if hit_receiver == null:
+		return false
+
+	var current_health = hit_receiver.get("current_health")
+
+	if current_health != null and int(current_health) <= 0:
+		return true
+
+	return false
+
+
+func get_target_aim_point(target: Node3D) -> Vector3:
+	return target.global_position + Vector3.UP * 1.2
+
+
+func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
+	if not has_lock_on_target():
+		return Vector3.ZERO
+
+	var origin: Vector3 = cast_origin
+
+	if origin == Vector3.ZERO:
+		origin = global_position + Vector3.UP * 1.2
+
+	var direction: Vector3 = get_target_aim_point(lock_on_target) - origin
+
+	if direction.length() <= 0.01:
+		return Vector3.ZERO
+
+	return direction.normalized()
+
+
+func get_target_display_name(target: Node) -> String:
+	if target == null:
+		return "Target"
+
+	var brain: Node = target.get_node_or_null("EnemyBrain")
+
+	if brain != null and brain.has_method("get_definition"):
+		var definition = brain.get_definition()
+
+		if definition != null and "display_name" in definition:
+			return str(definition.display_name)
+
+	return target.name.capitalize()
+
+
+func create_lock_on_marker() -> void:
+	if lock_on_marker != null:
+		return
+
+	lock_on_marker = MeshInstance3D.new()
+	lock_on_marker.name = "LockOnMarker"
+	lock_on_marker.visible = false
+	lock_on_marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+	var marker_mesh: SphereMesh = SphereMesh.new()
+	marker_mesh.radius = lock_on_marker_size
+	marker_mesh.height = lock_on_marker_size * 2.0
+	lock_on_marker.mesh = marker_mesh
+
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = Color(1.0, 0.86, 0.18, 0.82)
+	material.emission_enabled = true
+	material.emission = Color(1.0, 0.72, 0.08, 1.0)
+	material.emission_energy_multiplier = 1.6
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	lock_on_marker.material_override = material
+
+	add_child(lock_on_marker)
+
+
+func update_lock_on_marker() -> void:
+	if lock_on_marker == null:
+		return
+
+	if not has_lock_on_target():
+		lock_on_marker.visible = false
+		return
+
+	lock_on_marker.visible = true
+	lock_on_marker.global_position = lock_on_target.global_position + Vector3.UP * lock_on_marker_height
+
+	var camera: Camera3D = get_viewport().get_camera_3d()
+
+	if camera != null:
+		lock_on_marker.look_at(camera.global_position, Vector3.UP)
+
+
+func show_game_message(text: String) -> void:
+	var ui: Node = get_game_ui()
+
+	if ui != null and ui.has_method("show_message"):
+		ui.show_message(text)
+	else:
+		print(text)
+
+
 func _on_interaction_area_entered(area: Area3D) -> void:
 	print("Area entered: ", area.name)
 
@@ -289,6 +565,7 @@ func is_focus_spell_menu_open() -> bool:
 
 func _on_player_defeated() -> void:
 	is_defeated = true
+	clear_lock_on()
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 

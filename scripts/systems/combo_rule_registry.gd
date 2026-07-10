@@ -260,10 +260,12 @@ static func get_rule_string_array(rule: Resource, property_name: String) -> Arra
 
 	var value: Variant = rule.get(property_name)
 
-	if not value is Array:
+	if not (value is Array):
 		return strings
 
-	for item in value:
+	var values: Array = value as Array
+
+	for item in values:
 		var text: String = str(item)
 
 		if text == "":

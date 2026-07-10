@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ComboRule" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+
+[resource]
+script = ExtResource("1_combo_rule")
+rule_id = "ice_x_wet"
+display_name = "Wet Freeze"
+description = "Ice freezes wet targets solid."
+incoming_tags = Array[String](["ice"])
+target_tags = Array[String](["wet"])
+priority = 80
+reaction_id = "wet_freeze"
+reaction_name = "Wet Freeze"
+feedback_text = "{target} freezes solid."
+output_status = "frozen"
+output_status_duration = 10.0
+output_status_strength = 1.0
+output_status_source = "wet_freeze"
+output_tags = Array[String](["ice", "wet", "frozen", "reaction"])
+debug_tags = Array[String](["elemental", "status_combo", "ice"])
+design_notes = "Water sets up hard ice control. Later this can make bridges, brittle shells, or shatterable frozen objects."

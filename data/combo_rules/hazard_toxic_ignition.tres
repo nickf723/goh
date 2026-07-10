@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ComboRule" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+
+[resource]
+script = ExtResource("1_combo_rule")
+rule_id = "fire_x_poison_cloud"
+display_name = "Toxic Ignition"
+description = "Fire ignites poison gas into a short violent burn."
+incoming_tags = Array[String](["fire"])
+target_tags = Array[String](["poison", "cloud"])
+priority = 90
+reaction_id = "toxic_ignition"
+reaction_name = "Toxic Ignition"
+feedback_text = "{target} flashes into burning venom."
+target_reaction_method = "trigger_toxic_ignition"
+target_reaction_pass_source_position = true
+output_tags = Array[String](["fire", "poison", "cloud", "explosion", "hazard", "reaction"])
+debug_tags = Array[String](["hazard_combo", "fire", "poison"])
+design_notes = "Fire Field can now trigger Poison Cloud through registry data. Poison Cloud still owns the explosion, damage, and visual/lifetime behavior."

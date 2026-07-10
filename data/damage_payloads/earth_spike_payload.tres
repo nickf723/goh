@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 1
+stance_damage = 3
+element = "earth"
+source_name = "Earth Spike"
+hit_type = "projectile"
+tags = Array[String](["earth", "stone", "magic", "projectile", "stance", "impact"])
+knockback_strength = 2.2
+knockback_up_strength = 0.2

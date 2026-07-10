@@ -5,6 +5,7 @@ const EnemyBrainScript: Script = preload("res://scripts/enemies/enemy_brain.gd")
 const EnemyDefinitionScript: Script = preload("res://scripts/enemies/enemy_definition.gd")
 const EnemyAttackDefinitionScript: Script = preload("res://scripts/enemies/enemy_attack_definition.gd")
 const EnemyTelegraphScript: Script = preload("res://scripts/enemies/enemy_telegraph.gd")
+const ZombieDefinitionResource: Resource = preload("res://data/enemies/zombie_definition.tres")
 
 const DamagePayloadScript: Script = preload("res://scripts/combat/damage_payload.gd")
 const PayloadReceiverScript: Script = preload("res://scripts/combat/payload_receiver.gd")
@@ -70,12 +71,10 @@ static func add_receivers(enemy: CharacterBody3D) -> void:
 	hit_receiver.name = "HitReceiver"
 	hit_receiver.set("target_name", "Zombie")
 	hit_receiver.set("hit_mode", 3)
-	hit_receiver.set("max_health", 8)
-	hit_receiver.set("current_health", 8)
-	hit_receiver.set("max_stance", 4)
-	hit_receiver.set("current_stance", 4)
-	# STANCE_THEN_HEALTH only reaches health after stance stays broken.
-	# If this is true, the zombie endlessly refills stance and feels immortal.
+	hit_receiver.set("max_health", 10)
+	hit_receiver.set("current_health", 10)
+	hit_receiver.set("max_stance", 5)
+	hit_receiver.set("current_stance", 5)
 	hit_receiver.set("resets_stance_after_break", false)
 	hit_receiver.set("disappears_when_defeated", true)
 	enemy.add_child(hit_receiver)
@@ -111,24 +110,7 @@ static func add_brain(enemy: CharacterBody3D) -> void:
 
 
 static func make_zombie_definition() -> Resource:
-	var definition: Resource = EnemyDefinitionScript.new()
-	definition.set("display_name", "Zombie")
-	definition.set("species_id", "zombie")
-	definition.set("faction_id", "monsters")
-	definition.set("creature_type", "undead")
-	definition.set("tags", ["enemy", "monster", "zombie", "undead", "organic", "slow", "staggerable"])
-	definition.set("move_speed", 1.25)
-	definition.set("turn_speed", 5.5)
-	definition.set("gravity", 18.0)
-	definition.set("detection_radius", 8.0)
-	definition.set("lose_interest_radius", 13.0)
-	definition.set("preferred_distance", 1.05)
-	definition.set("spacing_buffer", 0.1)
-	definition.set("circle_when_waiting_to_attack", false)
-	definition.set("strafe_speed_multiplier", 0.25)
-	definition.set("strafe_switch_interval", 2.0)
-	definition.set("debug_notes", "Runtime prototype zombie spawned by DevRuntimeEnemyFactory.")
-	return definition
+	return ZombieDefinitionResource.duplicate(true)
 
 
 static func make_zombie_attack() -> Resource:

@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="EnemyClassDefinition" format=3 uid="uid://c7kskirmishercls"]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_class_definition.gd" id="1_skirmisher"]
+
+[resource]
+script = ExtResource("1_skirmisher")
+class_id = "skirmisher"
+display_name = "Skirmisher"
+description = "Fast, fragile melee pest. Outruns slow projectiles, circles often, and rewards control spells."
+role_tags = Array[String](["skirmisher", "fast", "evasive", "melee"])
+default_tags = Array[String](["enemy", "monster", "organic", "living", "small", "skittish", "staggerable"])
+hit_mode = 2
+max_health = 3
+max_stance = 2
+weak_elements = Array[String](["ice", "lightning", "sound"])
+resistant_elements = Array[String](["poison"])
+move_speed = 3.35
+turn_speed = 13.0
+detection_radius = 10.5
+lose_interest_radius = 16.5
+preferred_distance = 1.75
+spacing_buffer = 0.35
+circle_when_waiting_to_attack = true
+strafe_speed_multiplier = 0.95
+strafe_switch_interval = 0.58
+force_drag = 12.0
+max_force_speed = 9.0
+debug_notes = "Harder to hit with slow shots. Try lightning, sound, ice, fields, or lock-on timing."

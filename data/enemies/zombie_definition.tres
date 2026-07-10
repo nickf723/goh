@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3 uid="uid://zombiedefclassv1"]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="1_zombie"]
+[ext_resource type="Resource" path="res://data/enemy_classes/brute_class.tres" id="2_brute"]
+
+[resource]
+script = ExtResource("1_zombie")
+enemy_class = ExtResource("2_brute")
+display_name = "Zombie"
+species_id = "zombie"
+faction_id = "monsters"
+creature_type = "undead"
+tags = Array[String](["enemy", "monster", "zombie", "undead", "organic", "slow", "staggerable"])
+debug_notes = "Slow brute species using the Brute enemy class."

@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="EnemyClassDefinition" format=3 uid="uid://c7kbruteclassxx"]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_class_definition.gd" id="1_brute"]
+
+[resource]
+script = ExtResource("1_brute")
+class_id = "brute"
+display_name = "Brute"
+description = "Slow, sturdy enemy. Easy to hit, harder to finish, and vulnerable to sustained pressure."
+role_tags = Array[String](["brute", "slow", "durable", "melee"])
+default_tags = Array[String](["enemy", "monster", "organic", "staggerable"])
+hit_mode = 3
+max_health = 10
+max_stance = 5
+resets_stance_after_break = false
+weak_elements = Array[String](["fire"])
+resistant_elements = Array[String](["poison"])
+move_speed = 1.25
+turn_speed = 5.5
+detection_radius = 8.0
+lose_interest_radius = 13.0
+preferred_distance = 1.05
+spacing_buffer = 0.1
+circle_when_waiting_to_attack = false
+strafe_speed_multiplier = 0.25
+strafe_switch_interval = 2.0
+force_drag = 7.5
+max_force_speed = 5.5
+debug_notes = "Tank class. It should feel slow, readable, and punishing if ignored."

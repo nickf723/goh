@@ -1,0 +1,41 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/actions/wind_gust.gd" id="1_wind_gust"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_wind"]
+radius = 1.0
+height = 2.0
+radial_segments = 24
+rings = 12
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wind"]
+albedo_color = Color(0.72, 0.95, 1.0, 0.32)
+transparency = 1
+emission_enabled = true
+emission = Color(0.55, 0.9, 1.0, 1.0)
+emission_energy_multiplier = 0.35
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_wind"]
+radius = 4.2
+
+[node name="WindGust" type="Node3D"]
+script = ExtResource("1_wind_gust")
+radius = 4.2
+cone_angle_degrees = 80.0
+lifetime = 0.45
+spawn_distance = 1.25
+spawn_height = 1.0
+
+[node name="GustVisual" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_wind")
+material_override = SubResource("StandardMaterial3D_wind")
+scale = Vector3(1.2, 0.54, 2.2)
+
+[node name="GustArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GustArea"]
+shape = SubResource("SphereShape3D_wind")

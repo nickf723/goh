@@ -4,7 +4,9 @@ class_name FullMenuShell
 const ComboRuleRegistryScript = preload("res://scripts/systems/combo_rule_registry.gd")
 
 const TAB_DEFS = [
-	{"id": "loadout", "title": "Loadout", "icon": "✦"},
+	{"id": "equipment", "title": "Equipment", "icon": "✦"},
+	{"id": "spellbook", "title": "Spellbook", "icon": "✧"},
+	{"id": "inventory", "title": "Inventory", "icon": "▣"},
 	{"id": "stats", "title": "Stats", "icon": "◇"},
 	{"id": "journal", "title": "Journal", "icon": "?"},
 	{"id": "codex", "title": "Codex", "icon": "#"},
@@ -95,6 +97,12 @@ func handle_menu_input(event: InputEvent) -> bool:
 			KEY_5:
 				select_tab(4)
 				return true
+			KEY_6:
+				select_tab(5)
+				return true
+			KEY_7:
+				select_tab(6)
+				return true
 			KEY_A, KEY_Q:
 				select_tab(selected_tab_index - 1)
 				return true
@@ -145,7 +153,7 @@ func build_layout() -> void:
 	header_text_box.add_child(title_label)
 
 	subtitle_label = Label.new()
-	subtitle_label.text = "Loadouts, stats, scaling, journals, codex, and future augments."
+	subtitle_label.text = "Equipment, spellbook, inventory, stats, journals, codex, and future augments."
 	subtitle_label.add_theme_color_override("font_color", TEXT_SOFT)
 	subtitle_label.add_theme_font_size_override("font_size", 12)
 	header_text_box.add_child(subtitle_label)
@@ -196,7 +204,7 @@ func build_layout() -> void:
 	content_margin.add_child(content_root)
 
 	content_title_label = Label.new()
-	content_title_label.text = "Loadout"
+	content_title_label.text = "Equipment"
 	content_title_label.add_theme_color_override("font_color", TEXT_MAIN)
 	content_title_label.add_theme_font_size_override("font_size", 20)
 	content_root.add_child(content_title_label)
@@ -212,7 +220,7 @@ func build_layout() -> void:
 	scroll.add_child(content_box)
 
 	footer_label = Label.new()
-	footer_label.text = "A/D or ←/→: tabs   1-5: jump tabs"
+	footer_label.text = "A/D or ←/→: tabs   1-7: jump tabs"
 	footer_label.add_theme_color_override("font_color", TEXT_DIM)
 	footer_label.add_theme_font_size_override("font_size", 11)
 	root_box.add_child(footer_label)
@@ -255,12 +263,16 @@ func rebuild_content() -> void:
 	clear_children(content_box)
 
 	var tab_def: Dictionary = TAB_DEFS[selected_tab_index]
-	var tab_id: String = str(tab_def.get("id", "loadout"))
-	content_title_label.text = str(tab_def.get("title", "Loadout"))
+	var tab_id: String = str(tab_def.get("id", "equipment"))
+	content_title_label.text = str(tab_def.get("title", "Equipment"))
 
 	match tab_id:
-		"loadout":
-			render_loadout()
+		"equipment":
+			render_equipment()
+		"spellbook":
+			render_spellbook()
+		"inventory":
+			render_inventory()
 		"stats":
 			render_stats()
 		"journal":
@@ -273,46 +285,78 @@ func rebuild_content() -> void:
 			add_text_card("Coming Soon", "This tab is only a placeholder right now.")
 
 
-func render_loadout() -> void:
+func render_equipment() -> void:
 	var summary: Dictionary = menu_data.get("loadout_summary", {})
 	var summary_lines: Array[String] = []
-	summary_lines.append("Equipped combat slots: " + str(summary.get("quick_slots", 0)))
-	summary_lines.append("Learned spells: " + str(summary.get("learned_count", 0)))
-	summary_lines.append("Active test ring: " + str(summary.get("active_ring_count", 0)))
+	summary_lines.append("Spell hotkey slots: " + str(summary.get("quick_slots", 0)))
+	summary_lines.append("Known spells in Spellbook: " + str(summary.get("learned_count", 0)))
+	summary_lines.append("Active prototype ring: " + str(summary.get("active_ring_count", 0)))
 	add_text_card(
-		"Spell Loadout",
-		"Equipped slots are the future combat-facing spell set. The active test ring still keeps all current spells available while we prototype.\n" + "\n".join(summary_lines)
+		"Ready Equipment",
+		"This tab is the belt: weapons, spell hotkeys, item hotkeys, and gadget slots. The Spellbook and Inventory are separate source menus now.\n" + "\n".join(summary_lines)
 	)
-
-	var equipped_slots: Array = menu_data.get("equipped_spell_slots", [])
-
-	if equipped_slots.size() <= 0:
-		add_text_card("Equipped Combat Slots", "No equipped slots found yet.")
-	else:
-		add_text_card("Equipped Combat Slots", "These are the first loadout slots. Swapping is not wired yet, but the shelf is real.")
-
-		for slot_variant in equipped_slots:
-			if slot_variant is Dictionary:
-				render_equipped_slot_card(slot_variant as Dictionary)
 
 	var weapon: Dictionary = menu_data.get("weapon", {})
 
 	if not weapon.is_empty():
 		render_weapon_card(weapon)
+	else:
+		add_text_card("Weapon Slot", "No equipped weapon found yet.", false, "Weapon")
+
+	var equipped_slots: Array = menu_data.get("equipped_spell_slots", [])
+
+	if equipped_slots.size() <= 0:
+		add_text_card("Spell Hotkeys", "No spell hotkey slots found yet.")
+	else:
+		add_text_card("Spell Hotkeys", "Future flow: click a hotkey slot, then choose a learned spell from the Spellbook. For now these are display-only shelves.")
+
+		for slot_variant in equipped_slots:
+			if slot_variant is Dictionary:
+				render_equipped_slot_card(slot_variant as Dictionary)
+
+	render_item_hotkey_placeholders()
+	render_gadget_slot_placeholders()
+
+
+func render_spellbook() -> void:
+	add_text_card(
+		"Spellbook",
+		"This is what Grace knows, not what she has equipped. Later, choosing a spell here can assign it to a spell hotkey or inspect augments."
+	)
 
 	var library_sections: Array = menu_data.get("learned_spell_sections", [])
 
-	if library_sections.size() > 0:
-		add_text_card("Learned Spell Library", "All known spells grouped by element. Empty shelves are allowed, and later this is where swapping and augments can plug in.")
+	if library_sections.size() <= 0:
+		add_text_card("No learned spells found", "The menu could not find learned spell data yet.")
+		return
 
-		for section_variant in library_sections:
-			if section_variant is Dictionary:
-				render_library_section(section_variant as Dictionary)
+	for section_variant in library_sections:
+		if section_variant is Dictionary:
+			render_library_section(section_variant as Dictionary)
+
+
+func render_inventory() -> void:
+	add_text_card(
+		"Inventory",
+		"This will be the bag: items, potions, crafting materials, quest objects, and usable tools. Equipment decides what gets hotkeyed."
+	)
+	add_text_card("Item Hotkey Source", "Later flow: pick an item here, then assign it to an item hotkey in Equipment.")
+	add_text_card("Consumables", "No item database yet. Potions, food, bombs, remedies, and other use-items will live here.")
+	add_text_card("Materials", "No crafting material database yet. Ores, herbs, monster parts, and relic scraps will live here.")
+	add_text_card("Key Items", "No key-item database yet. Story objects and dungeon tools will live here.")
+
+
+func render_item_hotkey_placeholders() -> void:
+	add_text_card("Item Hotkeys", "Slot 1: Empty\nSlot 2: Empty\nSlot 3: Empty\nSlot 4: Empty", false, "Items")
+
+
+func render_gadget_slot_placeholders() -> void:
+	add_text_card("Gadget Slots", "Gadget slot: Empty\nVehicle/tool slot: Empty\nSummon slot: Empty", false, "Tools")
 
 
 func render_equipped_slot_card(spell: Dictionary) -> void:
 	var slot_index: int = int(spell.get("slot", 0))
-	var title: String = "Slot " + str(slot_index + 1) + ": " + str(spell.get("name", "Empty Slot"))
+	var title: String = "Spell Hotkey " + str(slot_index + 1) + ": " + str(spell.get("name", "Empty Slot"))
 
 	if bool(spell.get("is_empty", false)):
 		add_text_card(title, "Empty combat slot. Later, learned spells can be assigned here.", false, "Empty")
@@ -372,7 +416,7 @@ func render_library_section(section: Dictionary) -> void:
 			if spell_variant is Dictionary:
 				lines.append(get_library_spell_line(spell_variant as Dictionary))
 
-	add_text_card(element_title + " Spells", "\n".join(lines))
+	add_text_card(element_title + " Spells", "\n".join(lines), false, "Spellbook")
 
 
 func get_library_spell_line(spell: Dictionary) -> String:
@@ -381,7 +425,7 @@ func get_library_spell_line(spell: Dictionary) -> String:
 	if bool(spell.get("is_equipped", false)):
 		var slot_index: int = int(spell.get("equipped_slot", -1))
 		if slot_index >= 0:
-			equipped_suffix = " [equipped " + str(slot_index + 1) + "]"
+			equipped_suffix = " [hotkey " + str(slot_index + 1) + "]"
 		else:
 			equipped_suffix = " [equipped]"
 
@@ -412,7 +456,7 @@ func render_weapon_card(weapon: Dictionary) -> void:
 	if scaling_note != "":
 		lines.append("Scaling note: " + scaling_note)
 
-	add_text_card("Weapon: " + str(weapon.get("name", "Weapon")), "\n".join(lines))
+	add_text_card("Weapon Slot: " + str(weapon.get("name", "Weapon")), "\n".join(lines), false, "Weapon")
 
 
 func render_stats() -> void:
@@ -487,9 +531,9 @@ func render_codex() -> void:
 
 
 func render_system() -> void:
-	add_text_card("Controls", "Tab / M: open or close menu\nEsc: close menu\nA/D or arrows: switch tabs\n1-5: jump tabs")
-	add_text_card("Future Panels", "Settings, save/load, controller mapping, accessibility, and debug toggles can attach here.")
-	add_text_card("Prototype Note", "This menu pauses gameplay while open. The quick spell focus menu remains the combat-speed selector.")
+	add_text_card("Controls", "Tab / M: open or close menu\nEsc: close menu\nA/D or arrows: switch tabs\n1-7: jump tabs")
+	add_text_card("Future Panels", "Settings, save/load, controller mapping, accessibility, and debug toggles can attach here.")	
+	add_text_card("Prototype Note", "Equipment is not enforcing hotkey assignment yet. The quick spell focus menu remains the combat-speed selector.")
 
 
 func add_text_card(title: String, body: String, selected: bool = false, subtitle: String = "") -> void:

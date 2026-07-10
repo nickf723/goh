@@ -1,5 +1,30 @@
 extends CanvasLayer
 
+const ELEMENT_COLORS: Dictionary = {
+	"water": Color(0.16, 0.48, 0.95, 1.0),
+	"earth": Color(0.42, 0.78, 0.24, 1.0),
+	"fire": Color(1.0, 0.28, 0.08, 1.0),
+	"air": Color(0.95, 0.48, 0.72, 1.0),
+	"ice": Color(0.5, 0.9, 1.0, 1.0),
+	"metal": Color(0.96, 0.78, 0.18, 1.0),
+	"lightning": Color(0.28, 0.46, 1.0, 1.0),
+	"poison": Color(0.48, 0.92, 0.22, 1.0),
+	"life": Color(0.1, 0.92, 0.5, 1.0),
+	"death": Color(0.82, 0.08, 0.08, 1.0),
+	"body": Color(0.92, 0.22, 0.72, 1.0),
+	"soul": Color(0.1, 0.86, 0.92, 1.0),
+	"dreams": Color(0.18, 0.28, 0.9, 1.0),
+	"sound": Color(1.0, 0.52, 0.08, 1.0),
+	"space": Color(0.58, 0.22, 1.0, 1.0),
+	"time": Color(0.98, 0.66, 0.16, 1.0),
+}
+
+const EMPTY_ELEMENT_COLOR: Color = Color(0.2, 0.22, 0.27, 1.0)
+const PANEL_BACKGROUND: Color = Color(0.035, 0.045, 0.06, 0.9)
+const PANEL_BORDER: Color = Color(0.44, 0.52, 0.68, 0.85)
+const TEXT_MAIN: Color = Color(0.92, 0.95, 1.0, 1.0)
+const TEXT_SOFT: Color = Color(0.64, 0.72, 0.84, 1.0)
+
 @onready var objective_label: Label = $ObjectiveLabel
 @onready var prompt_label: Label = $PromptLabel
 @onready var message_panel: PanelContainer = $MessagePanel
@@ -15,10 +40,22 @@ extends CanvasLayer
 @onready var spell_menu_label: Label = $SpellMenuLabel
 @onready var dev_vision_label: Label = $DevVisionLabel
 
+var focus_spell_panel: PanelContainer
+var focus_spell_title_label: Label
+var focus_spell_current_label: Label
+var focus_spell_element_grid: GridContainer
+var focus_spell_list: VBoxContainer
+var focus_spell_header_label: Label
+var focus_spell_selected_label: Label
+var focus_spell_help_label: Label
+var focus_spell_element_tiles: Dictionary = {}
+
 
 func _ready() -> void:
 	print("GameUI ready. Adding to game_ui group.")
 	add_to_group("game_ui")
+
+	ensure_focus_spell_selector_ui()
 	
 	GameState.stat_changed.connect(_on_stat_changed)
 	GameState.player_defeated.connect(_on_player_defeated)
@@ -30,6 +67,7 @@ func _ready() -> void:
 	hide_prompt()
 	hide_message()
 	hide_choices()
+	hide_spell_focus_menu()
 	set_objective("Look around.")
 
 
@@ -123,6 +161,9 @@ func hide_focus_mode() -> void:
 
 
 func show_spell_menu() -> void:
+	if focus_spell_panel != null and focus_spell_panel.visible:
+		return
+
 	spell_menu_label.visible = true
 
 
@@ -130,13 +171,325 @@ func hide_spell_menu() -> void:
 	spell_menu_label.visible = false
 
 
+func ensure_focus_spell_selector_ui() -> void:
+	if focus_spell_panel != null:
+		return
+
+	focus_spell_panel = PanelContainer.new()
+	focus_spell_panel.name = "FocusSpellSelectorPanel"
+	focus_spell_panel.visible = false
+	focus_spell_panel.anchor_left = 0.5
+	focus_spell_panel.anchor_top = 0.5
+	focus_spell_panel.anchor_right = 0.5
+	focus_spell_panel.anchor_bottom = 0.5
+	focus_spell_panel.offset_left = -470.0
+	focus_spell_panel.offset_top = -275.0
+	focus_spell_panel.offset_right = 470.0
+	focus_spell_panel.offset_bottom = 275.0
+	focus_spell_panel.add_theme_stylebox_override("panel", make_panel_style(PANEL_BACKGROUND, PANEL_BORDER, 2, 18))
+	add_child(focus_spell_panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	focus_spell_panel.add_child(margin)
+
+	var root_box: VBoxContainer = VBoxContainer.new()
+	root_box.add_theme_constant_override("separation", 12)
+	margin.add_child(root_box)
+
+	var header_box: HBoxContainer = HBoxContainer.new()
+	header_box.add_theme_constant_override("separation", 18)
+	root_box.add_child(header_box)
+
+	focus_spell_title_label = Label.new()
+	focus_spell_title_label.text = "FOCUS SPELL SELECTOR"
+	focus_spell_title_label.add_theme_color_override("font_color", TEXT_MAIN)
+	focus_spell_title_label.add_theme_font_size_override("font_size", 24)
+	focus_spell_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_box.add_child(focus_spell_title_label)
+
+	focus_spell_current_label = Label.new()
+	focus_spell_current_label.text = "Equipped: None"
+	focus_spell_current_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	focus_spell_current_label.add_theme_color_override("font_color", TEXT_SOFT)
+	focus_spell_current_label.add_theme_font_size_override("font_size", 16)
+	focus_spell_current_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_box.add_child(focus_spell_current_label)
+
+	var content_box: HBoxContainer = HBoxContainer.new()
+	content_box.add_theme_constant_override("separation", 18)
+	content_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root_box.add_child(content_box)
+
+	var element_panel: PanelContainer = PanelContainer.new()
+	element_panel.custom_minimum_size = Vector2(560.0, 390.0)
+	element_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	element_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	element_panel.add_theme_stylebox_override(
+		"panel",
+		make_panel_style(Color(0.06, 0.075, 0.1, 0.78), Color(0.22, 0.28, 0.4, 0.8), 1, 14)
+	)
+	content_box.add_child(element_panel)
+
+	var element_margin: MarginContainer = MarginContainer.new()
+	element_margin.add_theme_constant_override("margin_left", 14)
+	element_margin.add_theme_constant_override("margin_top", 14)
+	element_margin.add_theme_constant_override("margin_right", 14)
+	element_margin.add_theme_constant_override("margin_bottom", 14)
+	element_panel.add_child(element_margin)
+
+	focus_spell_element_grid = GridContainer.new()
+	focus_spell_element_grid.columns = 4
+	focus_spell_element_grid.add_theme_constant_override("h_separation", 10)
+	focus_spell_element_grid.add_theme_constant_override("v_separation", 10)
+	element_margin.add_child(focus_spell_element_grid)
+
+	var right_panel: PanelContainer = PanelContainer.new()
+	right_panel.custom_minimum_size = Vector2(315.0, 390.0)
+	right_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right_panel.add_theme_stylebox_override(
+		"panel",
+		make_panel_style(Color(0.06, 0.075, 0.1, 0.78), Color(0.22, 0.28, 0.4, 0.8), 1, 14)
+	)
+	content_box.add_child(right_panel)
+
+	var right_margin: MarginContainer = MarginContainer.new()
+	right_margin.add_theme_constant_override("margin_left", 14)
+	right_margin.add_theme_constant_override("margin_top", 14)
+	right_margin.add_theme_constant_override("margin_right", 14)
+	right_margin.add_theme_constant_override("margin_bottom", 14)
+	right_panel.add_child(right_margin)
+
+	var right_box: VBoxContainer = VBoxContainer.new()
+	right_box.add_theme_constant_override("separation", 10)
+	right_margin.add_child(right_box)
+
+	focus_spell_header_label = Label.new()
+	focus_spell_header_label.text = "Fire Spells"
+	focus_spell_header_label.add_theme_color_override("font_color", TEXT_MAIN)
+	focus_spell_header_label.add_theme_font_size_override("font_size", 20)
+	right_box.add_child(focus_spell_header_label)
+
+	focus_spell_selected_label = Label.new()
+	focus_spell_selected_label.text = "Highlighted: None"
+	focus_spell_selected_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	focus_spell_selected_label.add_theme_color_override("font_color", TEXT_SOFT)
+	focus_spell_selected_label.add_theme_font_size_override("font_size", 15)
+	right_box.add_child(focus_spell_selected_label)
+
+	focus_spell_list = VBoxContainer.new()
+	focus_spell_list.add_theme_constant_override("separation", 8)
+	focus_spell_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right_box.add_child(focus_spell_list)
+
+	focus_spell_help_label = Label.new()
+	focus_spell_help_label.text = "Focus held: Left/Right element, Up/Down or wheel spell, Q/Enter/Space select."
+	focus_spell_help_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	focus_spell_help_label.add_theme_color_override("font_color", Color(0.72, 0.78, 0.88, 1.0))
+	focus_spell_help_label.add_theme_font_size_override("font_size", 13)
+	root_box.add_child(focus_spell_help_label)
+
+
 func show_spell_focus_menu(menu_data: Dictionary) -> void:
-	spell_menu_label.text = build_spell_focus_menu_text(menu_data)
-	spell_menu_label.visible = true
+	ensure_focus_spell_selector_ui()
+
+	spell_menu_label.visible = false
+	focus_spell_panel.visible = true
+
+	var selected_element: String = str(menu_data.get("selected_element", ""))
+	var selected_element_name: String = str(menu_data.get("selected_element_name", selected_element.capitalize()))
+	var selected_spell_index: int = int(menu_data.get("selected_spell_index", 0))
+	var selected_spell_name: String = str(menu_data.get("selected_spell_name", "None"))
+	var current_ability_name: String = str(menu_data.get("current_ability_name", "None"))
+	var groups: Array = menu_data.get("groups", [])
+	var spell_names: Array = menu_data.get("spell_names", [])
+
+	focus_spell_current_label.text = "Equipped: " + current_ability_name
+	focus_spell_header_label.text = selected_element_name + " Spells"
+	focus_spell_header_label.add_theme_color_override("font_color", get_element_color(selected_element))
+	focus_spell_selected_label.text = "Highlighted: " + selected_spell_name
+
+	rebuild_element_tiles(groups, selected_element)
+	rebuild_spell_rows(spell_names, selected_spell_index, selected_element)
 
 
 func hide_spell_focus_menu() -> void:
+	if focus_spell_panel != null:
+		focus_spell_panel.visible = false
+
 	hide_spell_menu()
+
+
+func rebuild_element_tiles(groups: Array, selected_element: String) -> void:
+	if focus_spell_element_grid == null:
+		return
+
+	clear_children(focus_spell_element_grid)
+	focus_spell_element_tiles.clear()
+
+	for group_variant: Variant in groups:
+		if not group_variant is Dictionary:
+			continue
+
+		var group: Dictionary = group_variant
+		var group_name: String = str(group.get("name", "Group"))
+		var elements: Array = group.get("elements", [])
+
+		for element_variant: Variant in elements:
+			var element: String = str(element_variant)
+			var tile: PanelContainer = make_element_tile(element, group_name, element == selected_element)
+			focus_spell_element_grid.add_child(tile)
+
+
+func make_element_tile(element: String, group_name: String, is_selected: bool) -> PanelContainer:
+	var element_color: Color = get_element_color(element)
+	var tile_background: Color = Color(0.08, 0.095, 0.125, 0.95)
+	var border_color: Color = element_color.darkened(0.1)
+	var border_width: int = 1
+
+	if is_selected:
+		tile_background = element_color.darkened(0.45)
+		border_color = element_color
+		border_width = 3
+
+	var tile: PanelContainer = PanelContainer.new()
+	tile.custom_minimum_size = Vector2(128.0, 80.0)
+	tile.add_theme_stylebox_override("panel", make_panel_style(tile_background, border_color, border_width, 12))
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	tile.add_child(margin)
+
+	var box: VBoxContainer = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 2)
+	margin.add_child(box)
+
+	var name_label: Label = Label.new()
+	name_label.text = element.capitalize()
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.add_theme_color_override("font_color", TEXT_MAIN)
+	name_label.add_theme_font_size_override("font_size", 16)
+	box.add_child(name_label)
+
+	var group_label: Label = Label.new()
+	group_label.text = group_name
+	group_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	group_label.add_theme_color_override("font_color", TEXT_SOFT)
+	group_label.add_theme_font_size_override("font_size", 11)
+	box.add_child(group_label)
+
+	var marker_label: Label = Label.new()
+	marker_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	marker_label.add_theme_font_size_override("font_size", 12)
+
+	if is_selected:
+		marker_label.text = "SELECTED"
+		marker_label.add_theme_color_override("font_color", element_color.lightened(0.35))
+	else:
+		marker_label.text = " "
+		marker_label.add_theme_color_override("font_color", TEXT_SOFT)
+
+	box.add_child(marker_label)
+
+	return tile
+
+
+func rebuild_spell_rows(spell_names: Array, selected_spell_index: int, selected_element: String) -> void:
+	if focus_spell_list == null:
+		return
+
+	clear_children(focus_spell_list)
+
+	if spell_names.size() == 0:
+		var empty_panel: PanelContainer = PanelContainer.new()
+		empty_panel.add_theme_stylebox_override(
+			"panel",
+			make_panel_style(Color(0.075, 0.08, 0.1, 0.95), Color(0.22, 0.25, 0.32, 0.9), 1, 10)
+		)
+		focus_spell_list.add_child(empty_panel)
+
+		var empty_margin: MarginContainer = MarginContainer.new()
+		empty_margin.add_theme_constant_override("margin_left", 10)
+		empty_margin.add_theme_constant_override("margin_top", 10)
+		empty_margin.add_theme_constant_override("margin_right", 10)
+		empty_margin.add_theme_constant_override("margin_bottom", 10)
+		empty_panel.add_child(empty_margin)
+
+		var empty_label: Label = Label.new()
+		empty_label.text = "No learned spells yet.\nThis element shelf is waiting."
+		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty_label.add_theme_color_override("font_color", TEXT_SOFT)
+		empty_label.add_theme_font_size_override("font_size", 15)
+		empty_margin.add_child(empty_label)
+		return
+
+	var element_color: Color = get_element_color(selected_element)
+
+	for i: int in range(spell_names.size()):
+		var is_selected: bool = i == selected_spell_index
+		var row_background: Color = Color(0.075, 0.08, 0.1, 0.95)
+		var border_color: Color = Color(0.2, 0.24, 0.32, 0.95)
+		var border_width: int = 1
+
+		if is_selected:
+			row_background = element_color.darkened(0.5)
+			border_color = element_color
+			border_width = 2
+
+		var row_panel: PanelContainer = PanelContainer.new()
+		row_panel.custom_minimum_size = Vector2(0.0, 48.0)
+		row_panel.add_theme_stylebox_override("panel", make_panel_style(row_background, border_color, border_width, 10))
+		focus_spell_list.add_child(row_panel)
+
+		var margin: MarginContainer = MarginContainer.new()
+		margin.add_theme_constant_override("margin_left", 12)
+		margin.add_theme_constant_override("margin_top", 8)
+		margin.add_theme_constant_override("margin_right", 12)
+		margin.add_theme_constant_override("margin_bottom", 8)
+		row_panel.add_child(margin)
+
+		var row_label: Label = Label.new()
+		var prefix: String = "  "
+
+		if is_selected:
+			prefix = "> "
+
+		row_label.text = prefix + str(i + 1) + ". " + str(spell_names[i])
+		row_label.add_theme_color_override("font_color", TEXT_MAIN)
+		row_label.add_theme_font_size_override("font_size", 17)
+		row_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		margin.add_child(row_label)
+
+
+func clear_children(parent: Node) -> void:
+	if parent == null:
+		return
+
+	for child: Node in parent.get_children():
+		parent.remove_child(child)
+		child.queue_free()
+
+
+func get_element_color(element: String) -> Color:
+	if ELEMENT_COLORS.has(element):
+		return ELEMENT_COLORS[element]
+
+	return EMPTY_ELEMENT_COLOR
+
+
+func make_panel_style(background_color: Color, border_color: Color, border_width: int = 1, corner_radius: int = 10) -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = background_color
+	style.border_color = border_color
+	style.set_border_width_all(border_width)
+	style.set_corner_radius_all(corner_radius)
+	return style
 
 
 func build_spell_focus_menu_text(menu_data: Dictionary) -> String:
@@ -147,7 +500,7 @@ func build_spell_focus_menu_text(menu_data: Dictionary) -> String:
 	var current_ability_name: String = str(menu_data.get("current_ability_name", "None"))
 
 	var text: String = "FOCUS SPELL MENU\n"
-	text += "Hold focus. ←/→ element   ↑/↓ or wheel spell   Enter/Q/click select\n\n"
+	text += "Hold focus. Left/Right element   Up/Down or wheel spell   Enter/Q/click select\n\n"
 	text += "Element: " + selected_element_name + "\n"
 	text += "Highlighted spell: " + selected_spell_name + "\n"
 	text += "Equipped: " + current_ability_name + "\n\n"

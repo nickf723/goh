@@ -1,6 +1,8 @@
 extends Node3D
 class_name GenericProjectile
 
+const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
+
 @export var speed: float = 14.0
 @export var max_lifetime: float = 3.0
 @export var destroy_on_hit: bool = true
@@ -8,6 +10,7 @@ class_name GenericProjectile
 @export var ignore_source_for_seconds: float = 0.15
 @export var rotate_to_direction: bool = true
 @export var show_debug_prints: bool = false
+@export var show_miss_feedback: bool = true
 
 @export var payload: DamagePayload
 
@@ -41,6 +44,8 @@ func _process(delta: float) -> void:
 	lifetime_timer -= delta
 
 	if lifetime_timer <= 0.0:
+		if show_miss_feedback and hit_count <= 0:
+			CombatFeedback.show_miss_feedback(self, global_position)
 		queue_free()
 		return
 

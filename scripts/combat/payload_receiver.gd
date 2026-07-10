@@ -2,6 +2,7 @@ extends Node
 class_name PayloadReceiver
 
 const ReactionResolverScript = preload("res://scripts/systems/reaction_resolver.gd")
+const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
 
 var last_payload_summary: String = "none"
 var last_reaction_summary: String = "none"
@@ -75,7 +76,9 @@ func resolve_reactions(target: Node, payload: DamagePayload) -> Array[String]:
 
 	for reaction: Dictionary in reactions:
 		if reaction.has("reaction"):
-			reaction_names.append(str(reaction["reaction"]))
+			var reaction_name: String = str(reaction["reaction"])
+			reaction_names.append(reaction_name)
+			CombatFeedback.show_reaction_feedback(target, reaction_name)
 
 		if reaction.has("message"):
 			reaction_messages.append(str(reaction["message"]))

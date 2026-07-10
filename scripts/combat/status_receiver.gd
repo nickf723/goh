@@ -1,5 +1,7 @@
 extends Node
 
+const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
+
 var active_statuses: Dictionary = {}
 
 
@@ -21,6 +23,7 @@ func apply_status(status_name: String, duration: float, strength: float = 1.0, s
 	}
 
 	print("Applied status: ", status_name, " from ", source, " for ", duration, " seconds.")
+	show_status_feedback(status_name)
 
 
 func sustain_status(status_name: String, duration: float, strength: float = 1.0, source: String = "unknown") -> void:
@@ -149,6 +152,15 @@ func show_status_result(result: Dictionary) -> void:
 
 	if result.has("objective") and result["objective"] != "":
 		ui.set_objective(result["objective"])
+
+
+func show_status_feedback(status_name: String) -> void:
+	var target: Node = get_parent()
+
+	if target == null:
+		target = self
+
+	CombatFeedback.show_status_feedback(target, status_name)
 
 
 func has_status(status_name: String) -> bool:

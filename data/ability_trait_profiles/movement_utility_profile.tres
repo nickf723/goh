@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityTraitProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_trait_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "movement_utility"
+display_name = "Movement Utility"
+description = "Instant self-directed spell that changes Grace's position, reach, or traversal options."
+roles = Array[String](["movement", "utility", "traversal", "reposition"])
+targeting_style = "self_directional"
+delivery_type = "instant"
+combo_tags = Array[String](["positioning", "escape", "engage"])
+ui_tags = Array[String](["utility", "movement"])
+debug_tags = Array[String](["spell_profile", "movement"])
+design_notes = "Use for spells that are not primarily about hitting a target."

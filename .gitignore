@@ -1,3 +1,27 @@
-# Godot 4+ specific ignores
+# Godot generated/editor data
 .godot/
-/android/
+.import/
+
+# Godot exports and local export configs
+.export/
+builds/
+exports/
+export.cfg
+export_presets.cfg
+
+# Mono/C# Godot, if ever used
+.mono/
+data_*/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor junk
+.vscode/
+.idea/
+
+# Logs/temp
+*.log
+*.tmp

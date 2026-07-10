@@ -127,11 +127,8 @@ func cast_from_player(player: Node3D, cast_lock_duration: float = 0.18) -> bool:
 	if ability_instance.has_method("set_source_actor"):
 		ability_instance.set_source_actor(player)
 		
-	var camera: Camera3D = get_viewport().get_camera_3d()
-	var cast_direction: Vector3 = -player.global_transform.basis.z
-
-	if camera != null:
-		cast_direction = -camera.global_transform.basis.z
+	var cast_origin: Vector3 = player.global_position + Vector3.UP * cast_spawn_height
+	var cast_direction: Vector3 = get_cast_direction(player, cast_origin)
 
 	var scene_root: Node = get_tree().current_scene
 
@@ -145,16 +142,31 @@ func cast_from_player(player: Node3D, cast_lock_duration: float = 0.18) -> bool:
 		ability_instance.execute(player, cast_direction)
 		return true
 
-	ability_instance.global_position = (
-		player.global_position
-		+ Vector3.UP * cast_spawn_height
-		+ cast_direction * cast_spawn_distance
-	)
+	ability_instance.global_position = cast_origin + cast_direction * cast_spawn_distance
 
 	if ability_instance.has_method("launch"):
 		ability_instance.launch(cast_direction)
 
 	return true
+
+
+func get_cast_direction(player: Node3D, cast_origin: Vector3) -> Vector3:
+	if player != null and player.has_method("get_lock_on_cast_direction"):
+		var lock_direction: Vector3 = player.get_lock_on_cast_direction(cast_origin)
+
+		if lock_direction.length() > 0.01:
+			return lock_direction.normalized()
+
+	var camera: Camera3D = get_viewport().get_camera_3d()
+	var cast_direction: Vector3 = -player.global_transform.basis.z
+
+	if camera != null:
+		cast_direction = -camera.global_transform.basis.z
+
+	if cast_direction.length() <= 0.01:
+		return Vector3.FORWARD
+
+	return cast_direction.normalized()
 
 
 func pay_ability_cost(ability: AbilityDefinition) -> bool:

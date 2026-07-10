@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/generic_projectile.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/earth_spike_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/damage_projectile_profile.tres" id="4_profile"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Earth Spike"
+description = "Stone projectile that hits stance hard and nudges enemies back."
+element = "earth"
+mana_cost = 1
+trait_profile = ExtResource("4_profile")
+spell_id = "earth_spike"
+short_label = "Spike"
+icon_text = "E"
+roles = Array[String](["damage", "stance", "control"])
+combo_tags = Array[String](["earth", "stone", "impact", "stance_break"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["stance", "impact"])
+debug_tags = Array[String](["prototype", "earth_projectile"])
+design_notes = "Early earth spell should feel chunky: less raw damage than Firebolt, more stance pressure."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")

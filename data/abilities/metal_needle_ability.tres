@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/generic_projectile.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/metal_needle_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/damage_projectile_profile.tres" id="4_profile"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Metal Needle"
+description = "Sharp metal projectile with clean direct damage."
+element = "metal"
+mana_cost = 1
+trait_profile = ExtResource("4_profile")
+spell_id = "metal_needle"
+short_label = "Needle"
+icon_text = "M"
+roles = Array[String](["damage", "precision"])
+combo_tags = Array[String](["metal", "pierce", "sharp", "direct_hit"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["damage", "precision"])
+debug_tags = Array[String](["prototype", "metal_projectile"])
+design_notes = "First metal spell. Simple and readable for now: accurate-feeling direct pressure."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")

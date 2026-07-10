@@ -5,6 +5,7 @@ const ComboRuleRegistryScript = preload("res://scripts/systems/combo_rule_regist
 
 const TAB_DEFS = [
 	{"id": "loadout", "title": "Loadout", "icon": "✦"},
+	{"id": "stats", "title": "Stats", "icon": "◇"},
 	{"id": "journal", "title": "Journal", "icon": "?"},
 	{"id": "codex", "title": "Codex", "icon": "#"},
 	{"id": "system", "title": "System", "icon": "⚙"},
@@ -91,6 +92,9 @@ func handle_menu_input(event: InputEvent) -> bool:
 			KEY_4:
 				select_tab(3)
 				return true
+			KEY_5:
+				select_tab(4)
+				return true
 			KEY_A, KEY_Q:
 				select_tab(selected_tab_index - 1)
 				return true
@@ -141,7 +145,7 @@ func build_layout() -> void:
 	header_text_box.add_child(title_label)
 
 	subtitle_label = Label.new()
-	subtitle_label.text = "Loadouts, journals, codex, and future augments."
+	subtitle_label.text = "Loadouts, stats, journals, codex, and future augments."
 	subtitle_label.add_theme_color_override("font_color", TEXT_SOFT)
 	subtitle_label.add_theme_font_size_override("font_size", 12)
 	header_text_box.add_child(subtitle_label)
@@ -208,7 +212,7 @@ func build_layout() -> void:
 	scroll.add_child(content_box)
 
 	footer_label = Label.new()
-	footer_label.text = "A/D or ←/→: tabs   1-4: jump tabs"
+	footer_label.text = "A/D or ←/→: tabs   1-5: jump tabs"
 	footer_label.add_theme_color_override("font_color", TEXT_DIM)
 	footer_label.add_theme_font_size_override("font_size", 11)
 	root_box.add_child(footer_label)
@@ -257,6 +261,8 @@ func rebuild_content() -> void:
 	match tab_id:
 		"loadout":
 			render_loadout()
+		"stats":
+			render_stats()
 		"journal":
 			render_journal()
 		"codex":
@@ -315,6 +321,54 @@ func render_spell_card(spell: Dictionary) -> void:
 	add_text_card(title, "\n".join(lines), bool(spell.get("is_current", false)), subtitle)
 
 
+func render_stats() -> void:
+	add_text_card(
+		"Base Stats Structure",
+		"These are Grace's 16 base stats plus elemental affinity hooks. This pass is structure only: formulas, leveling, equipment scaling, and proc math can attach later."
+	)
+
+	var sections: Array = menu_data.get("stat_sections", [])
+
+	if sections.size() <= 0:
+		add_text_card("No stat sections found", "GameState did not provide stat section data yet.")
+		return
+
+	for section_variant in sections:
+		if section_variant is Dictionary:
+			render_stat_section(section_variant as Dictionary)
+
+
+func render_stat_section(section: Dictionary) -> void:
+	var title: String = str(section.get("title", "Stats"))
+	var lines: Array[String] = []
+	var description: String = str(section.get("description", ""))
+
+	if description != "":
+		lines.append(description)
+
+	var stats: Array = section.get("stats", [])
+
+	for stat_variant in stats:
+		if not (stat_variant is Dictionary):
+			continue
+
+		var stat: Dictionary = stat_variant as Dictionary
+		var stat_name: String = str(stat.get("name", stat.get("id", "Stat")))
+		var stat_value: String = str(stat.get("value", "0"))
+		var summary: String = str(stat.get("summary", ""))
+		var use_text: String = str(stat.get("use", ""))
+
+		lines.append(stat_name + ": " + stat_value)
+
+		if summary != "":
+			lines.append("  " + summary)
+
+		if use_text != "":
+			lines.append("  Use: " + use_text)
+
+	add_text_card(title, "\n".join(lines))
+
+
 func render_journal() -> void:
 	var objective: String = str(menu_data.get("objective", "Look around."))
 	add_text_card("Current Objective", objective)
@@ -339,7 +393,7 @@ func render_codex() -> void:
 
 
 func render_system() -> void:
-	add_text_card("Controls", "Tab / M: open or close menu\nEsc: close menu\nA/D or arrows: switch tabs\n1-4: jump tabs")
+	add_text_card("Controls", "Tab / M: open or close menu\nEsc: close menu\nA/D or arrows: switch tabs\n1-5: jump tabs")
 	add_text_card("Future Panels", "Settings, save/load, controller mapping, accessibility, and debug toggles can attach here.")
 	add_text_card("Prototype Note", "This menu pauses gameplay while open. The quick spell focus menu remains the combat-speed selector.")
 

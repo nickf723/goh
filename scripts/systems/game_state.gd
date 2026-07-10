@@ -5,57 +5,10 @@ signal flag_changed(flag_name: String, value: bool)
 signal stat_changed(stat_name: String, value: int)
 signal player_defeated
 
+const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
+
 var current_objective: String = "Look around."
-
-var stats: Dictionary = {
-	"level": 1,
-	
-	"health": 5,
-	"max_health": 5,
-	"stamina": 1,
-	"max_stamina": 1,
-	"mana": 5,
-	"max_mana": 5,
-	"stance": 5,
-	"max_stance": 5,
-	
-	"power": 1,
-	"dexterity": 1,
-	"arcana": 1,
-	"intelligence": 1,
-	
-	"defense": 1,
-	"resilience": 1,
-	"constitution": 1,
-	"evasion": 1,
-	
-	"charisma": 1,
-	"focus": 5,
-	"skill": 1,
-	"luck": 1,
-
-
-
-	"fire": 1,
-	"water": 1,
-	"earth": 1,
-	"air": 1,
-	"ice": 1,
-	"metal": 1,
-	"lightning": 1,
-	"poison": 1,
-	"life": 1,
-	"death": 1,
-	"body": 1,
-	"soul": 1,
-	"dream": 1,
-	"sound": 1,
-	"space": 1,
-	"time": 1,
-	"light": 1,
-	"darkness": 1,
-	"void": 1
-}
+var stats: Dictionary = StatCatalogScript.get_default_stats()
 
 var story_flags: Dictionary = {
 	"inspected_stone": false,
@@ -69,16 +22,20 @@ var story_flags: Dictionary = {
 var player_invulnerable: bool = false
 var player_invulnerability_timer: float = 0.0
 
+
 func _process(delta: float) -> void:
 	update_player_invulnerability(delta)
+
 
 func set_objective(new_objective: String) -> void:
 	current_objective = new_objective
 	objective_changed.emit(current_objective)
 
+
 func set_flag(flag_name: String, value: bool = true) -> void:
 	story_flags[flag_name] = value
 	flag_changed.emit(flag_name, value)
+
 
 func get_flag(flag_name: String) -> bool:
 	if not story_flags.has(flag_name):
@@ -86,24 +43,59 @@ func get_flag(flag_name: String) -> bool:
 
 	return story_flags[flag_name]
 
+
 func set_stat(stat_name: String, value: int) -> void:
 	stats[stat_name] = value
 	stat_changed.emit(stat_name, value)
+
 
 func get_stat(stat_name: String) -> int:
 	if not stats.has(stat_name):
 		return 0
 
-	return stats[stat_name]
+	return int(stats[stat_name])
+
 
 func add_stat(stat_name: String, amount: int) -> void:
 	var current_value: int = get_stat(stat_name)
 	set_stat(stat_name, current_value + amount)
 
+
+func get_stat_snapshot() -> Dictionary:
+	return stats.duplicate(true)
+
+
+func get_stat_menu_sections() -> Array[Dictionary]:
+	return StatCatalogScript.get_menu_sections(stats)
+
+
+func get_base_stat_sections() -> Array[Dictionary]:
+	return StatCatalogScript.get_base_stat_sections(stats)
+
+
+func get_elemental_affinity_sections() -> Array[Dictionary]:
+	return StatCatalogScript.get_elemental_affinity_sections(stats)
+
+
+func get_base_stat_ids() -> Array[String]:
+	return StatCatalogScript.get_base_stat_ids()
+
+
+func reset_stats_to_defaults(should_emit: bool = true) -> void:
+	stats = StatCatalogScript.get_default_stats()
+
+	if not should_emit:
+		return
+
+	for stat_name: String in stats.keys():
+		stat_changed.emit(stat_name, int(stats[stat_name]))
+
+
 func take_damage(amount: int) -> void:
 	if player_invulnerable:
 		print("Grace avoided the hit.")
 		return
+
 	var current_health: int = get_stat("health")
 	var max_health: int = get_stat("max_health")
 	var new_health: int = clamp(current_health - amount, 0, max_health)
@@ -117,12 +109,14 @@ func take_damage(amount: int) -> void:
 		print("Grace defeated signal emitted.")
 		player_defeated.emit()
 
+
 func heal(amount: int) -> void:
 	var current_health: int = get_stat("health")
 	var max_health: int = get_stat("max_health")
 	var new_health: int = clamp(current_health + amount, 0, max_health)
 
 	set_stat("health", new_health)
+
 
 func spend_stamina(amount: int) -> bool:
 	var current_stamina: int = get_stat("stamina")
@@ -133,6 +127,7 @@ func spend_stamina(amount: int) -> bool:
 	set_stat("stamina", current_stamina - amount)
 	return true
 
+
 func restore_stamina(amount: int) -> void:
 	var current_stamina: int = get_stat("stamina")
 	var max_stamina: int = get_stat("max_stamina")
@@ -140,12 +135,16 @@ func restore_stamina(amount: int) -> void:
 
 	set_stat("stamina", new_stamina)
 
+
 func spend_mana(amount: int) -> bool:
 	var current_mana: int = get_stat("mana")
+
 	if current_mana < amount:
 		return false
+
 	set_stat("mana", current_mana - amount)
 	return true
+
 
 func restore_mana(amount: int) -> void:
 	var current_mana: int = get_stat("mana")
@@ -154,11 +153,13 @@ func restore_mana(amount: int) -> void:
 
 	set_stat("mana", new_mana)
 
+
 func damage_stance(amount: int) -> void:
 	var current_stance: int = get_stat("stance")
 	var new_stance: int = clamp(current_stance - amount, 0, get_stat("max_stance"))
 
 	set_stat("stance", new_stance)
+
 
 func restore_stance(amount: int) -> void:
 	var current_stance: int = get_stat("stance")
@@ -167,16 +168,19 @@ func restore_stance(amount: int) -> void:
 
 	set_stat("stance", new_stance)
 
+
 func reset_run() -> void:
 	current_objective = "Look around."
-
-	for stat_name: String in stats.keys():
-		stats[stat_name] = 1
+	reset_stats_to_defaults(false)
 
 	for flag_name: String in story_flags.keys():
 		story_flags[flag_name] = false
 
 	objective_changed.emit(current_objective)
+
+	for stat_name: String in stats.keys():
+		stat_changed.emit(stat_name, int(stats[stat_name]))
+
 
 func begin_player_invulnerability(duration: float) -> void:
 	if duration <= 0.0:
@@ -184,6 +188,7 @@ func begin_player_invulnerability(duration: float) -> void:
 
 	player_invulnerable = true
 	player_invulnerability_timer = max(player_invulnerability_timer, duration)
+
 
 func update_player_invulnerability(delta: float) -> void:
 	if not player_invulnerable:
@@ -194,6 +199,7 @@ func update_player_invulnerability(delta: float) -> void:
 	if player_invulnerability_timer <= 0.0:
 		player_invulnerability_timer = 0.0
 		player_invulnerable = false
+
 
 func is_player_invulnerable() -> bool:
 	return player_invulnerable

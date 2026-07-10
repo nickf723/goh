@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyDefinition" format=3 uid="uid://zombiedefclassv1"]
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3 uid="uid://b8dmhi4cqehvw"]
 
 [ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="1_zombie"]
 [ext_resource type="Resource" path="res://data/enemy_classes/brute_class.tres" id="2_brute"]

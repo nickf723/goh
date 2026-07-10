@@ -13,8 +13,8 @@ class_name ComboRule
 # Payload element and hit_type also count as tags during matching.
 @export var incoming_tags: Array[String] = []
 
-# Target requirements. target_tags can match either TagComponent tags or statuses,
-# while target_statuses specifically requires StatusReceiver statuses.
+# Target requirements. target_tags can match either TagComponent tags or statuses
+# for normal targets. For hazards, target_tags match get_hazard_tags().
 @export var target_tags: Array[String] = []
 @export var target_statuses: Array[String] = []
 
@@ -24,6 +24,12 @@ class_name ComboRule
 @export var reaction_id: String = "reaction"
 @export var reaction_name: String = "Reaction"
 @export_multiline var feedback_text: String = "{target} reacts."
+
+# Optional hazard/object behavior hook. This lets a rule trigger a method on the
+# matched target, such as spread_cloud(), flare_field(), or trigger_toxic_ignition().
+# Keep this data string based so the rule registry can stay generic.
+@export var target_reaction_method: String = ""
+@export var target_reaction_pass_source_position: bool = true
 
 # Status output.
 @export var output_status: String = ""

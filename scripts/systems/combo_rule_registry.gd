@@ -5,6 +5,9 @@ const IgniteOilyRule: Resource = preload("res://data/combo_rules/ignite_oily_tar
 const WetConductionRule: Resource = preload("res://data/combo_rules/wet_conduction.tres")
 const WetFreezeRule: Resource = preload("res://data/combo_rules/wet_freeze.tres")
 const FrozenShatterRule: Resource = preload("res://data/combo_rules/frozen_shatter.tres")
+const ToxicIgnitionRule: Resource = preload("res://data/combo_rules/hazard_toxic_ignition.tres")
+const CloudSpreadRule: Resource = preload("res://data/combo_rules/hazard_cloud_spread.tres")
+const FannedFlamesRule: Resource = preload("res://data/combo_rules/hazard_fanned_flames.tres")
 
 
 static func resolve_payload_reactions(target: Node, payload: DamagePayload) -> Array[Dictionary]:
@@ -22,12 +25,30 @@ static func resolve_payload_reactions(target: Node, payload: DamagePayload) -> A
 	return reactions
 
 
+static func resolve_hazard_reactions(hazard: Node, payload: DamagePayload, source_position: Vector3 = Vector3.ZERO) -> Array[Dictionary]:
+	var reactions: Array[Dictionary] = []
+
+	if hazard == null or payload == null:
+		return reactions
+
+	for rule: Resource in get_rules():
+		if not hazard_rule_matches(rule, hazard, payload):
+			continue
+
+		reactions.append(apply_hazard_rule(rule, hazard, payload, source_position))
+
+	return reactions
+
+
 static func get_rules() -> Array[Resource]:
 	return [
 		IgniteOilyRule,
 		WetConductionRule,
 		WetFreezeRule,
 		FrozenShatterRule,
+		ToxicIgnitionRule,
+		CloudSpreadRule,
+		FannedFlamesRule,
 	]
 
 
@@ -47,11 +68,41 @@ static func rule_matches(rule: Resource, target: Node, payload: DamagePayload) -
 	return true
 
 
+static func hazard_rule_matches(rule: Resource, hazard: Node, payload: DamagePayload) -> bool:
+	if rule == null:
+		return false
+
+	if not payload_has_all_tags(payload, get_rule_string_array(rule, "incoming_tags")):
+		return false
+
+	if not hazard_has_all_tags(hazard, get_rule_string_array(rule, "target_tags")):
+		return false
+
+	if not target_has_all_statuses(hazard, get_rule_string_array(rule, "target_statuses")):
+		return false
+
+	return true
+
+
 static func apply_rule(rule: Resource, target: Node, payload: DamagePayload) -> Dictionary:
 	remove_rule_statuses(rule, target)
 	apply_rule_status(rule, target, payload)
 	apply_rule_damage(rule, target)
+	call_target_reaction_method(rule, target, Vector3.ZERO)
 
+	return build_reaction_result(rule, target)
+
+
+static func apply_hazard_rule(rule: Resource, hazard: Node, payload: DamagePayload, source_position: Vector3 = Vector3.ZERO) -> Dictionary:
+	remove_rule_statuses(rule, hazard)
+	apply_rule_status(rule, hazard, payload)
+	apply_rule_damage(rule, hazard)
+	call_target_reaction_method(rule, hazard, source_position)
+
+	return build_reaction_result(rule, hazard)
+
+
+static func build_reaction_result(rule: Resource, target: Node) -> Dictionary:
 	var reaction_id: String = get_rule_string(rule, "reaction_id", "reaction")
 	var reaction_name: String = get_rule_string(rule, "reaction_name", reaction_id)
 
@@ -61,6 +112,21 @@ static func apply_rule(rule: Resource, target: Node, payload: DamagePayload) -> 
 		"reaction_name": reaction_name,
 		"message": format_feedback_text(rule, target),
 	}
+
+
+static func call_target_reaction_method(rule: Resource, target: Node, source_position: Vector3 = Vector3.ZERO) -> void:
+	var method_name: String = get_rule_string(rule, "target_reaction_method", "")
+
+	if method_name == "":
+		return
+
+	if target == null or not target.has_method(method_name):
+		return
+
+	if get_rule_bool(rule, "target_reaction_pass_source_position", true):
+		target.call(method_name, source_position)
+	else:
+		target.call(method_name)
 
 
 static func remove_rule_statuses(rule: Resource, target: Node) -> void:
@@ -182,6 +248,25 @@ static func target_has_tag(target: Node, tag: String) -> bool:
 	return false
 
 
+static func hazard_has_all_tags(hazard: Node, required_tags: Array[String]) -> bool:
+	for tag: String in required_tags:
+		if not hazard_has_tag(hazard, tag):
+			return false
+
+	return true
+
+
+static func hazard_has_tag(hazard: Node, tag: String) -> bool:
+	if tag == "":
+		return true
+
+	if hazard == null or not hazard.has_method("get_hazard_tags"):
+		return false
+
+	var hazard_tags: Array = hazard.call("get_hazard_tags")
+	return hazard_tags.has(tag)
+
+
 static func target_has_status(target: Node, status_name: String) -> bool:
 	var status_receiver: Node = target.get_node_or_null("StatusReceiver")
 
@@ -201,6 +286,7 @@ static func get_debug_matrix_rows() -> Array[Dictionary]:
 			"target_tags": get_rule_string_array(rule, "target_tags"),
 			"target_statuses": get_rule_string_array(rule, "target_statuses"),
 			"reaction": get_rule_string(rule, "reaction_id", "reaction"),
+			"target_method": get_rule_string(rule, "target_reaction_method", ""),
 			"priority": get_rule_int(rule, "priority", 0),
 		})
 
@@ -250,6 +336,18 @@ static func get_rule_float(rule: Resource, property_name: String, fallback: floa
 		return fallback
 
 	return float(value)
+
+
+static func get_rule_bool(rule: Resource, property_name: String, fallback: bool = false) -> bool:
+	if rule == null:
+		return fallback
+
+	var value: Variant = rule.get(property_name)
+
+	if value == null:
+		return fallback
+
+	return bool(value)
 
 
 static func get_rule_string_array(rule: Resource, property_name: String) -> Array[String]:

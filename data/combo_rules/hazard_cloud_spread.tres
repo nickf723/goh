@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ComboRule" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+
+[resource]
+script = ExtResource("1_combo_rule")
+rule_id = "wind_x_poison_cloud"
+display_name = "Cloud Spread"
+description = "Wind spreads poison clouds wider and keeps them alive longer."
+incoming_tags = Array[String](["air"])
+target_tags = Array[String](["poison", "cloud"])
+priority = 70
+reaction_id = "cloud_spread"
+reaction_name = "Cloud Spread"
+feedback_text = "Wind blooms {target} wider."
+target_reaction_method = "spread_cloud"
+target_reaction_pass_source_position = true
+output_tags = Array[String](["air", "poison", "cloud", "hazard", "reaction"])
+debug_tags = Array[String](["hazard_combo", "wind", "poison"])
+design_notes = "This data rule replaces Wind Gust's direct hardcoded relationship with Poison Cloud. The cloud still owns the mechanical effect through spread_cloud()."

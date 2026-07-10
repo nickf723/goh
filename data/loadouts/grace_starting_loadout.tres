@@ -9,9 +9,11 @@
 [ext_resource type="Resource" uid="uid://bbwloguh30ok4" path="res://data/abilities/lightning_spark_ability.tres" id="6_ysnck"]
 [ext_resource type="Resource" uid="uid://0uovq6rtxhio" path="res://data/abilities/sound_pulse_ability.tres" id="7_cel76"]
 [ext_resource type="Resource" path="res://data/abilities/poison_cloud_ability.tres" id="8_poison"]
+[ext_resource type="Resource" path="res://data/abilities/fire_field_ability.tres" id="9_fire_field"]
+[ext_resource type="Resource" path="res://data/abilities/wind_gust_ability.tres" id="10_wind_gust"]
 
 [resource]
 script = ExtResource("2_lfgcu")
-learned_abilities = Array[ExtResource("1_vpdcl")]([ExtResource("2_kjjk6"), ExtResource("3_hbxob"), ExtResource("4_hbxob"), ExtResource("5_yyfdk"), ExtResource("6_ysnck"), ExtResource("7_cel76"), ExtResource("8_poison")])
-equipped_abilities = Array[ExtResource("1_vpdcl")]([ExtResource("2_kjjk6"), ExtResource("3_hbxob"), ExtResource("4_hbxob"), ExtResource("5_yyfdk"), ExtResource("6_ysnck"), ExtResource("7_cel76"), ExtResource("8_poison")])
+learned_abilities = Array[ExtResource("1_vpdcl")]([ExtResource("2_kjjk6"), ExtResource("3_hbxob"), ExtResource("4_hbxob"), ExtResource("5_yyfdk"), ExtResource("6_ysnck"), ExtResource("7_cel76"), ExtResource("8_poison"), ExtResource("9_fire_field"), ExtResource("10_wind_gust")])
+equipped_abilities = Array[ExtResource("1_vpdcl")]([ExtResource("2_kjjk6"), ExtResource("3_hbxob"), ExtResource("4_hbxob"), ExtResource("5_yyfdk"), ExtResource("6_ysnck"), ExtResource("7_cel76"), ExtResource("8_poison"), ExtResource("9_fire_field"), ExtResource("10_wind_gust")])
 metadata/_custom_type_script = "uid://d12bk5qmiywr3"

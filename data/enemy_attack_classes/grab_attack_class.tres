@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="EnemyAttackClassDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_attack_class_definition.gd" id="1_grab"]
+
+[resource]
+script = ExtResource("1_grab")
+attack_class_id = "grab"
+display_name = "Grab"
+role_tags = Array[String](["enemy_attack", "melee", "physical", "grab", "control"])
+delivery_style = "grab"
+range = 1.35
+cone_angle_degrees = 145.0
+windup_time = 0.65
+recovery_time = 0.85
+cooldown = 1.4
+show_miss_message = true
+payload_amount = 2
+payload_stance_damage = 2
+payload_element = "neutral"
+payload_source_name = "Grab"
+payload_hit_type = "melee"
+payload_status_effect = "staggered"
+payload_status_duration = 0.2
+payload_status_strength = 1.0
+payload_knockback_strength = 1.2
+payload_knockback_up_strength = 0.0
+payload_tags = Array[String](["physical", "melee", "grab", "enemy_attack"])
+debug_notes = "Slow committed control hit. Good for zombies, brutes, and grapplers."

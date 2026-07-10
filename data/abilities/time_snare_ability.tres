@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/generic_projectile.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/time_snare_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/control_projectile_profile.tres" id="4_profile"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Time Snare"
+description = "Temporal projectile that slows enemy movement."
+element = "time"
+mana_cost = 1
+trait_profile = ExtResource("4_profile")
+spell_id = "time_snare"
+short_label = "Snare"
+icon_text = "T"
+roles = Array[String](["slow", "control", "tempo"])
+combo_tags = Array[String](["time", "slow", "tempo", "chill"])
+status_tags = Array[String](["chill"])
+ui_tags = Array[String](["slow", "control"])
+debug_tags = Array[String](["prototype", "time_projectile"])
+design_notes = "Uses chill as the current slow carrier. Later Time can get a dedicated temporal slow/freeze status."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")

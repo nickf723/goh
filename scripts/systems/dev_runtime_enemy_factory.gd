@@ -74,7 +74,9 @@ static func add_receivers(enemy: CharacterBody3D) -> void:
 	hit_receiver.set("current_health", 8)
 	hit_receiver.set("max_stance", 4)
 	hit_receiver.set("current_stance", 4)
-	hit_receiver.set("resets_stance_after_break", true)
+	# STANCE_THEN_HEALTH only reaches health after stance stays broken.
+	# If this is true, the zombie endlessly refills stance and feels immortal.
+	hit_receiver.set("resets_stance_after_break", false)
 	hit_receiver.set("disappears_when_defeated", true)
 	enemy.add_child(hit_receiver)
 

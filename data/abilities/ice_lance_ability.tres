@@ -7,8 +7,19 @@
 [resource]
 script = ExtResource("1_fjtgo")
 display_name = "Ice Lance"
-description = "Pierce with ice"
+description = "Pierce with ice. Strong stance pressure and chill control."
 element = "ice"
+spell_id = "ice_lance"
+short_label = "Lance"
+icon_text = "I"
+roles = Array[String](["control", "stance", "slow", "projectile", "combo_starter"])
+targeting_style = "aimed"
+delivery_type = "projectile"
+combo_tags = Array[String](["ice", "freeze", "wet_freeze", "shatter_setup"])
+status_tags = Array[String](["chill"])
+ui_tags = Array[String](["control", "slow", "stance"])
+debug_tags = Array[String](["prototype", "control_projectile"])
+design_notes = "Primary single-target control spell. Should help Grace manage fast skirmishers and set up future frozen/shatter play."
 ability_scene = ExtResource("1_suwse")
 action_payload = ExtResource("2_suwse")
 metadata/_custom_type_script = "uid://cyp8hkceavuj4"

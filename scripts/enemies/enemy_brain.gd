@@ -441,11 +441,8 @@ func apply_definition_to_force_receiver(definition: EnemyDefinition) -> void:
 	if force_receiver == null:
 		return
 
-	if "drag" in force_receiver:
-		force_receiver.set("drag", definition.get_force_drag())
-
-	if "max_force_speed" in force_receiver:
-		force_receiver.set("max_force_speed", definition.get_max_force_speed())
+	force_receiver.set("drag", definition.get_force_drag())
+	force_receiver.set("max_force_speed", definition.get_max_force_speed())
 
 
 func apply_definition_tags(definition: EnemyDefinition) -> void:

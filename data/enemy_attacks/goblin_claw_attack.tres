@@ -1,13 +1,12 @@
 [gd_resource type="Resource" script_class="EnemyAttackDefinition" format=3 uid="uid://bq4of4nkti5iu"]
 
 [ext_resource type="Script" uid="uid://bwx0laq8guo7b" path="res://scripts/enemies/enemy_attack_definition.gd" id="1_634an"]
-[ext_resource type="Resource" uid="uid://cx24xit8qes2g" path="res://data/enemy_attacks/goblin_claw_payload.tres" id="1_t8bvg"]
+[ext_resource type="Resource" path="res://data/enemy_attack_classes/claw_attack_class.tres" id="2_claw"]
 
 [resource]
 script = ExtResource("1_634an")
+attack_class = ExtResource("2_claw")
+use_class_timing = true
+use_class_payload = true
 display_name = "Goblin Claw"
-payload = ExtResource("1_t8bvg")
-cone_angle_degrees = 120.0
-recovery_time = 0.55
-cooldown = 1.15
 metadata/_custom_type_script = "uid://bwx0laq8guo7b"

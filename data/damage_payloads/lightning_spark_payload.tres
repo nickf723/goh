@@ -4,7 +4,13 @@
 
 [resource]
 script = ExtResource("1_2f4tr")
+amount = 1
+stance_damage = 2
 element = "lightning"
 source_name = "Lightning Spark"
-tags = Array[String](["lightning", "magic", "projectile"])
+hit_type = "projectile"
+status_effect = "stunned"
+status_duration = 0.35
+status_strength = 1.0
+tags = Array[String](["lightning", "magic", "projectile", "shock", "control"])
 metadata/_custom_type_script = "uid://cajn6gipe7r2o"

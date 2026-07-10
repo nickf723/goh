@@ -1,16 +1,14 @@
 [gd_resource type="Resource" script_class="EnemyDefinition" format=3 uid="uid://podpgujkw8qg"]
 
 [ext_resource type="Script" uid="uid://c8102s34rjwhu" path="res://scripts/enemies/enemy_definition.gd" id="1_l2ih7"]
+[ext_resource type="Resource" path="res://data/enemy_classes/skirmisher_class.tres" id="2_skirmisher"]
 
 [resource]
 script = ExtResource("1_l2ih7")
+enemy_class = ExtResource("2_skirmisher")
 display_name = "Gremlin"
 species_id = "gremlin"
-strafe_speed_multiplier = 0.9
-strafe_switch_interval = 0.65
-move_speed = 3.1
-turn_speed = 12.0
-detection_radius = 10.0
-lose_interest_radius = 16.0
-preferred_distance = 1.75
+faction_id = "monsters"
+tags = Array[String](["enemy", "monster", "gremlin", "organic", "living", "small", "skittish"])
+debug_notes = "Fast skirmisher species using the Skirmisher enemy class."
 metadata/_custom_type_script = "uid://c8102s34rjwhu"

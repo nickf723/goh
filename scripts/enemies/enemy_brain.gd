@@ -121,13 +121,14 @@ func process_chase(delta: float) -> void:
 		return
 
 	var distance: float = get_distance_to_player()
+	var attack: EnemyAttackDefinition = get_current_attack()
 
 	if distance > get_definition().get_lose_interest_radius():
 		change_state(EnemyState.IDLE)
 		return
 
-	if default_attack != null:
-		if distance <= default_attack.range and attack_cooldown_timer <= 0.0:
+	if attack != null:
+		if distance <= attack.get_range() and attack_cooldown_timer <= 0.0:
 			start_attack()
 			return
 
@@ -183,35 +184,39 @@ func process_dead(_delta: float) -> void:
 
 
 func start_attack() -> void:
-	if default_attack == null:
+	var attack: EnemyAttackDefinition = get_current_attack()
+
+	if attack == null:
 		return
 
-	last_action_summary = "windup: " + default_attack.display_name
+	last_action_summary = "windup: " + attack.get_display_name()
 
 	if telegraph != null and telegraph.has_method("start_windup"):
 		telegraph.start_windup()
 
-	change_state(EnemyState.ATTACK_WINDUP, default_attack.windup_time)
+	change_state(EnemyState.ATTACK_WINDUP, attack.get_windup_time())
 
 
 func perform_attack() -> void:
-	if default_attack == null:
+	var attack: EnemyAttackDefinition = get_current_attack()
+
+	if attack == null:
 		return
 
-	attack_cooldown_timer = default_attack.cooldown
+	attack_cooldown_timer = attack.get_cooldown()
 
 	if player == null:
 		return
 
 	if not is_player_in_attack_range():
-		last_action_summary = default_attack.display_name + " missed"
+		last_action_summary = attack.get_display_name() + " missed"
 
-		if default_attack.show_miss_message:
+		if attack.should_show_miss_message():
 			show_message(get_enemy_display_name() + " misses.")
 
 		return
 
-	var payload: DamagePayload = default_attack.get_payload()
+	var payload: DamagePayload = attack.get_payload()
 	last_action_summary = "hit: " + payload.source_name
 
 	apply_attack_to_player(payload)
@@ -280,17 +285,21 @@ func face_direction(direction: Vector3, delta: float) -> void:
 
 
 func is_player_in_attack_range() -> bool:
-	if player == null or default_attack == null:
+	var attack: EnemyAttackDefinition = get_current_attack()
+
+	if player == null or attack == null:
 		return false
 
-	if get_distance_to_player() > default_attack.range:
+	if get_distance_to_player() > attack.get_range():
 		return false
 
 	return is_player_in_attack_cone()
 
 
 func is_player_in_attack_cone() -> bool:
-	if player == null or default_attack == null:
+	var attack: EnemyAttackDefinition = get_current_attack()
+
+	if player == null or attack == null:
 		return false
 
 	var to_player: Vector3 = player.global_position - actor.global_position
@@ -308,7 +317,7 @@ func is_player_in_attack_cone() -> bool:
 
 	forward = forward.normalized()
 
-	var minimum_dot: float = cos(deg_to_rad(default_attack.cone_angle_degrees * 0.5))
+	var minimum_dot: float = cos(deg_to_rad(attack.get_cone_angle_degrees() * 0.5))
 
 	return forward.dot(direction_to_player) >= minimum_dot
 
@@ -387,15 +396,21 @@ func get_definition() -> EnemyDefinition:
 	return fallback
 
 
+func get_current_attack() -> EnemyAttackDefinition:
+	return default_attack
+
+
 func get_enemy_display_name() -> String:
 	return get_definition().get_display_name()
 
 
 func get_attack_recovery() -> float:
-	if default_attack == null:
+	var attack: EnemyAttackDefinition = get_current_attack()
+
+	if attack == null:
 		return 0.4
 
-	return default_attack.recovery_time
+	return attack.get_recovery_time()
 
 
 func change_state(new_state: EnemyState, timer: float = 0.0) -> void:
@@ -481,10 +496,20 @@ func get_debug_data() -> Dictionary:
 		"state": EnemyState.keys()[state],
 		"enemy": get_enemy_display_name(),
 		"class": get_definition().get_class_summary(),
+		"attack": get_attack_summary(),
 		"dist": snapped(get_distance_to_player(), 0.1),
 		"cd": snapped(attack_cooldown_timer, 0.1),
 		"last": last_action_summary,
 	}
+
+
+func get_attack_summary() -> String:
+	var attack: EnemyAttackDefinition = get_current_attack()
+
+	if attack == null:
+		return "none"
+
+	return attack.get_attack_class_summary()
 
 
 func wait_for_attack_opening(delta: float) -> void:

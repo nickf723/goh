@@ -7,7 +7,18 @@
 [resource]
 script = ExtResource("2_blcr8")
 display_name = "Lightning Spark"
-description = "Bazinga"
+description = "Fast spark that briefly interrupts enemies."
 element = "lightning"
+spell_id = "lightning_spark"
+short_label = "Spark"
+icon_text = "L"
+roles = Array[String](["interrupt", "damage", "projectile", "combo_reactor"])
+targeting_style = "aimed"
+delivery_type = "projectile"
+combo_tags = Array[String](["lightning", "shock", "wet_shock", "conductive"])
+status_tags = Array[String](["stunned"])
+ui_tags = Array[String](["interrupt", "fast", "shock"])
+debug_tags = Array[String](["prototype", "interrupt_projectile"])
+design_notes = "Tiny stun gives Lightning a quick interrupt identity without replacing heavier control spells."
 ability_scene = ExtResource("1_blcr8")
 action_payload = ExtResource("2_padcn")

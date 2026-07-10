@@ -69,11 +69,12 @@ text = "Focus: Ready"
 
 [node name="SpellMenuLabel" type="Label" parent="." unique_id=170057078]
 visible = false
-offset_left = 181.0
-offset_top = 239.0
-offset_right = 267.0
-offset_bottom = 262.0
+offset_left = 275.0
+offset_top = 90.0
+offset_right = 1080.0
+offset_bottom = 585.0
 text = "Spell Menu"
+autowrap_mode = 3
 
 [node name="DevVisionLabel" type="Label" parent="." unique_id=18161658]
 offset_left = 10.0

@@ -10,9 +10,22 @@ const DevRuntimeEnemyFactoryScript: Script = preload("res://scripts/systems/dev_
 @export var spawn_wave_key: Key = KEY_F6
 @export var clear_wave_key: Key = KEY_F7
 @export var audit_key: Key = KEY_F8
+@export var next_scenario_key: Key = KEY_F9
+@export var previous_scenario_key: Key = KEY_F10
 
 @export var spawn_relative_to_player: bool = true
+@export var auto_clear_before_spawn: bool = true
 @export var print_debug: bool = true
+
+@export var current_scenario_index: int = 0
+@export var scenario_ids: Array[String] = [
+	"mixed_wave",
+	"goblin_duel",
+	"gremlin_duel",
+	"zombie_duel",
+	"zombie_pair",
+	"dodge_timing",
+]
 
 @export var spawn_offsets: Array[Vector3] = [
 	Vector3(3.5, 0.0, 2.5),
@@ -25,7 +38,9 @@ var spawned_enemies: Array[Node] = []
 
 func _ready() -> void:
 	add_to_group("debuggable")
+	normalize_scenario_index()
 	print_help()
+	print_current_scenario()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -41,7 +56,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if key_event.keycode == spawn_wave_key:
-		spawn_test_wave()
+		spawn_current_scenario()
 		return
 
 	if key_event.keycode == clear_wave_key:
@@ -52,6 +67,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		run_dev_audit()
 		return
 
+	if key_event.keycode == next_scenario_key:
+		cycle_scenario(1)
+		return
+
+	if key_event.keycode == previous_scenario_key:
+		cycle_scenario(-1)
+		return
+
 
 func print_help() -> void:
 	if not print_debug:
@@ -59,16 +82,91 @@ func print_help() -> void:
 
 	print("")
 	print("=== DEV SANDBOX DIRECTOR ===")
-	print("F6: Spawn test wave")
+	print("F6: Spawn selected scenario")
 	print("F7: Clear spawned enemies")
 	print("F8: Run dev audit")
+	print("F9: Next scenario")
+	print("F10: Previous scenario")
 	print("Runtime zombie enabled: ", spawn_runtime_zombie)
 	print("============================")
 	print("")
 
 
+func print_current_scenario() -> void:
+	if not print_debug:
+		return
+
+	print("Selected dev scenario: [", current_scenario_index + 1, "/", get_scenario_count(), "] ", get_current_scenario_name())
+
+
+func cycle_scenario(direction: int) -> void:
+	if get_scenario_count() <= 0:
+		current_scenario_index = 0
+		print("DevSandboxDirector: No scenarios configured.")
+		return
+
+	current_scenario_index += direction
+	normalize_scenario_index()
+	print_current_scenario()
+
+
+func normalize_scenario_index() -> void:
+	var scenario_count: int = get_scenario_count()
+
+	if scenario_count <= 0:
+		current_scenario_index = 0
+		return
+
+	while current_scenario_index < 0:
+		current_scenario_index += scenario_count
+
+	while current_scenario_index >= scenario_count:
+		current_scenario_index -= scenario_count
+
+
+func get_scenario_count() -> int:
+	return scenario_ids.size()
+
+
+func get_current_scenario_id() -> String:
+	if scenario_ids.size() == 0:
+		return "mixed_wave"
+
+	normalize_scenario_index()
+	return scenario_ids[current_scenario_index]
+
+
+func get_current_scenario_name() -> String:
+	return get_scenario_display_name(get_current_scenario_id())
+
+
+func get_scenario_display_name(scenario_id: String) -> String:
+	match scenario_id:
+		"mixed_wave":
+			return "Mixed Wave"
+		"goblin_duel":
+			return "Goblin Duel"
+		"gremlin_duel":
+			return "Gremlin Duel"
+		"zombie_duel":
+			return "Zombie Duel"
+		"zombie_pair":
+			return "Zombie Pair"
+		"dodge_timing":
+			return "Dodge Timing"
+		_:
+			return scenario_id.capitalize()
+
+
 func spawn_test_wave() -> void:
+	spawn_current_scenario()
+
+
+func spawn_current_scenario() -> void:
 	cleanup_dead_spawn_references()
+
+	if auto_clear_before_spawn:
+		clear_spawned_enemies()
 
 	var player: Node3D = find_player() as Node3D
 	var base_position: Vector3 = Vector3.ZERO
@@ -87,30 +185,69 @@ func spawn_test_wave() -> void:
 		print("DevSandboxDirector: No current scene root found.")
 		return
 
+	var scenario_id: String = get_current_scenario_id()
+	var enemy_ids: Array[String] = get_enemy_ids_for_scenario(scenario_id)
 	var spawned_count: int = 0
 
-	if goblin_scene != null:
-		if spawn_enemy_scene(scene_root, goblin_scene, base_position + get_spawn_offset(spawned_count)) != null:
-			spawned_count += 1
+	print("DevSandboxDirector: spawning scenario: ", get_scenario_display_name(scenario_id))
 
-	if gremlin_scene != null:
-		if spawn_enemy_scene(scene_root, gremlin_scene, base_position + get_spawn_offset(spawned_count)) != null:
-			spawned_count += 1
+	for enemy_id: String in enemy_ids:
+		var spawned_enemy: Node = spawn_enemy_by_id(scene_root, enemy_id, base_position + get_spawn_offset(spawned_count))
 
-	if spawn_runtime_zombie:
-		var zombie: Node = DevRuntimeEnemyFactoryScript.create_zombie()
-		if spawn_enemy_node(scene_root, zombie, base_position + get_spawn_offset(spawned_count)) != null:
+		if spawned_enemy != null:
 			spawned_count += 1
 
 	if spawned_count == 0:
-		print("DevSandboxDirector: No enemies spawned. Assign enemy scenes or enable runtime zombie.")
+		print("DevSandboxDirector: No enemies spawned for scenario: ", scenario_id)
 		return
 
-	print("DevSandboxDirector: spawned ", spawned_count, " test enemies.")
+	print("DevSandboxDirector: spawned ", spawned_count, " enemies for ", get_scenario_display_name(scenario_id), ".")
 
 
-func spawn_enemy_scene(scene_root: Node, enemy_scene: PackedScene, spawn_position: Vector3) -> Node:
+func get_enemy_ids_for_scenario(scenario_id: String) -> Array[String]:
+	match scenario_id:
+		"mixed_wave":
+			return ["goblin", "gremlin", "zombie"]
+		"goblin_duel":
+			return ["goblin"]
+		"gremlin_duel":
+			return ["gremlin"]
+		"zombie_duel":
+			return ["zombie"]
+		"zombie_pair":
+			return ["zombie", "zombie"]
+		"dodge_timing":
+			return ["zombie"]
+		_:
+			print("DevSandboxDirector: Unknown scenario id: ", scenario_id, ". Falling back to Mixed Wave.")
+			return ["goblin", "gremlin", "zombie"]
+
+
+func spawn_enemy_by_id(scene_root: Node, enemy_id: String, spawn_position: Vector3) -> Node:
+	match enemy_id:
+		"goblin":
+			return spawn_enemy_scene(scene_root, goblin_scene, spawn_position, "Goblin")
+		"gremlin":
+			return spawn_enemy_scene(scene_root, gremlin_scene, spawn_position, "Gremlin")
+		"zombie":
+			return spawn_runtime_zombie_enemy(scene_root, spawn_position)
+		_:
+			print("DevSandboxDirector: Unknown enemy id: ", enemy_id)
+			return null
+
+
+func spawn_runtime_zombie_enemy(scene_root: Node, spawn_position: Vector3) -> Node:
+	if not spawn_runtime_zombie:
+		print("DevSandboxDirector: Runtime zombie is disabled. Enable Spawn Runtime Zombie on DevSandboxDirector.")
+		return null
+
+	var zombie: Node = DevRuntimeEnemyFactoryScript.create_zombie()
+	return spawn_enemy_node(scene_root, zombie, spawn_position)
+
+
+func spawn_enemy_scene(scene_root: Node, enemy_scene: PackedScene, spawn_position: Vector3, enemy_label: String = "Enemy") -> Node:
 	if enemy_scene == null:
+		print("DevSandboxDirector: ", enemy_label, " scene is not assigned.")
 		return null
 
 	var enemy: Node = enemy_scene.instantiate()
@@ -127,7 +264,7 @@ func spawn_enemy_node(scene_root: Node, enemy: Node, spawn_position: Vector3) ->
 		var enemy_3d: Node3D = enemy as Node3D
 		enemy_3d.global_position = spawn_position
 
-	enemy.add_to_group("dev_spawned")	
+	enemy.add_to_group("dev_spawned")
 	spawned_enemies.append(enemy)
 
 	print("Spawned: ", enemy.name, " at ", enemy.get_path())
@@ -164,7 +301,8 @@ func clear_spawned_enemies() -> void:
 			enemy.queue_free()
 			clear_count += 1
 
-	print("DevSandboxDirector: cleared spawned enemies: ", clear_count)
+	if print_debug or clear_count > 0:
+		print("DevSandboxDirector: cleared spawned enemies: ", clear_count)
 
 
 func cleanup_dead_spawn_references() -> void:
@@ -280,6 +418,7 @@ func get_debug_data() -> Dictionary:
 	cleanup_dead_spawn_references()
 
 	return {
+		"scenario": get_current_scenario_name(),
 		"spawned": spawned_enemies.size(),
 		"goblin": goblin_scene != null,
 		"gremlin": gremlin_scene != null,

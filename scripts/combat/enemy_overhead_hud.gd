@@ -8,6 +8,17 @@ const HEALTH_MID_COLOR: Color = Color(1.0, 0.72, 0.18, 0.96)
 const STANCE_COLOR: Color = Color(0.42, 0.72, 1.0, 0.9)
 const STANCE_BACK_COLOR: Color = Color(0.02, 0.04, 0.08, 0.72)
 
+const STATUS_TAG_NAMES: Array[String] = [
+	"burning",
+	"poisoned",
+	"frozen",
+	"chill",
+	"stunned",
+	"wet",
+	"staggered",
+	"oily",
+]
+
 @export var vertical_padding: float = 0.52
 @export var fallback_target_height: float = 1.8
 @export var bar_width: float = 1.45
@@ -20,6 +31,7 @@ const STANCE_BACK_COLOR: Color = Color(0.02, 0.04, 0.08, 0.72)
 var target_node: Node3D = null
 var hit_receiver: Node = null
 var status_receiver: Node = null
+var tag_component: Node = null
 
 var health_back: MeshInstance3D = null
 var health_fill: MeshInstance3D = null
@@ -99,10 +111,12 @@ func refresh_component_refs() -> void:
 	if target_node == null or not is_instance_valid(target_node):
 		hit_receiver = null
 		status_receiver = null
+		tag_component = null
 		return
 
 	hit_receiver = target_node.get_node_or_null("HitReceiver")
 	status_receiver = target_node.get_node_or_null("StatusReceiver")
+	tag_component = target_node.get_node_or_null("TagComponent")
 
 
 func _process(delta: float) -> void:
@@ -114,6 +128,9 @@ func _process(delta: float) -> void:
 		refresh_component_refs()
 
 	if status_receiver == null or not is_instance_valid(status_receiver):
+		refresh_component_refs()
+
+	if tag_component == null or not is_instance_valid(tag_component):
 		refresh_component_refs()
 
 	if is_target_defeated():
@@ -168,6 +185,8 @@ func make_material(color: Color) -> StandardMaterial3D:
 	material.emission_energy_multiplier = 0.35
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	return material
 
 
@@ -184,25 +203,10 @@ func update_world_position() -> void:
 	global_position = target_node.global_position + Vector3.UP * (target_height + vertical_padding)
 
 
-func face_camera(delta: float) -> void:
-	var viewport: Viewport = get_viewport()
-
-	if viewport == null:
-		return
-
-	var camera: Camera3D = viewport.get_camera_3d()
-
-	if camera == null:
-		return
-
-	var look_point: Vector3 = camera.global_position
-
-	if global_position.distance_to(look_point) <= 0.01:
-		return
-
-	var desired_basis: Basis = Transform3D().looking_at(look_point - global_position, Vector3.UP).basis
-	var amount: float = clamp(billboard_smoothness * delta, 0.0, 1.0)
-	global_basis = global_basis.slerp(desired_basis, amount).orthonormalized()
+func face_camera(_delta: float) -> void:
+	# Bar quads and icon labels use built-in billboarding. Keeping this node unrotated
+	# avoids mirrored letters while the HUD still faces the camera.
+	return
 
 
 func update_bars() -> void:
@@ -314,6 +318,7 @@ func create_status_icon(status_name: String) -> Label3D:
 	label.text = get_status_icon_text(status_name)
 	label.font_size = 44
 	label.pixel_size = 0.0085
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.modulate = get_status_icon_color(status_name)
 	label.outline_size = 5
 	label.outline_modulate = Color(0.0, 0.0, 0.0, 0.96)
@@ -324,9 +329,15 @@ func create_status_icon(status_name: String) -> Label3D:
 
 func get_active_status_names() -> Array[String]:
 	var names: Array[String] = []
+	append_status_receiver_names(names)
+	append_tag_component_status_names(names)
+	names.sort()
+	return names
 
+
+func append_status_receiver_names(names: Array[String]) -> void:
 	if status_receiver == null or not is_instance_valid(status_receiver):
-		return names
+		return
 
 	var active_statuses: Variant = status_receiver.get("active_statuses")
 
@@ -334,10 +345,39 @@ func get_active_status_names() -> Array[String]:
 		var status_dictionary: Dictionary = active_statuses as Dictionary
 
 		for status_name: Variant in status_dictionary.keys():
-			names.append(str(status_name))
+			add_status_name(names, str(status_name))
 
-	names.sort()
-	return names
+
+func append_tag_component_status_names(names: Array[String]) -> void:
+	if tag_component == null or not is_instance_valid(tag_component):
+		return
+
+	for status_name: String in STATUS_TAG_NAMES:
+		if tag_component.has_method("has_tag"):
+			if tag_component.has_tag(status_name):
+				add_status_name(names, status_name)
+
+	var raw_tags: Variant = tag_component.get("tags")
+
+	if raw_tags is Array:
+		for tag_value: Variant in raw_tags:
+			var tag_name: String = str(tag_value)
+
+			if STATUS_TAG_NAMES.has(tag_name):
+				add_status_name(names, tag_name)
+
+
+func add_status_name(names: Array[String], status_name: String) -> void:
+	if status_name == "":
+		return
+
+	if not STATUS_TAG_NAMES.has(status_name):
+		return
+
+	if names.has(status_name):
+		return
+
+	names.append(status_name)
 
 
 func get_status_icon_text(status_name: String) -> String:
@@ -347,11 +387,11 @@ func get_status_icon_text(status_name: String) -> String:
 		"poisoned":
 			return "P"
 		"frozen":
-			return "❄"
+			return "*"
 		"chill":
 			return "C"
 		"stunned":
-			return "⚡"
+			return "Z"
 		"wet":
 			return "W"
 		"staggered":

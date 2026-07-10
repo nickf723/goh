@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ComboRule" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+
+[resource]
+script = ExtResource("1_combo_rule")
+rule_id = "wind_x_fire_field"
+display_name = "Fanned Flames"
+description = "Wind fattens fire fields into wider, hotter flames."
+incoming_tags = Array[String](["air"])
+target_tags = Array[String](["fire", "field"])
+priority = 70
+reaction_id = "fanned_flames"
+reaction_name = "Fanned Flames"
+feedback_text = "Wind fattens {target}."
+target_reaction_method = "flare_field"
+target_reaction_pass_source_position = true
+output_tags = Array[String](["air", "fire", "field", "hazard", "reaction"])
+debug_tags = Array[String](["hazard_combo", "wind", "fire"])
+design_notes = "This data rule lets Wind Gust interact with Fire Field through the combo registry while Fire Field still owns flare_field()."

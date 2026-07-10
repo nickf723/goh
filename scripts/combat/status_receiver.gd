@@ -74,16 +74,20 @@ func process_burning(delta: float, status_name: String) -> void:
 	active_statuses[status_name]["tick_timer"] = 1.0
 
 	var burn_damage: int = max(1, roundi(active_statuses[status_name]["strength"]))
+	var source: String = "Burning"
+
+	if active_statuses[status_name].has("source"):
+		source = str(active_statuses[status_name]["source"])
 
 	var burn_payload: DamagePayload = DamagePayload.new()
 	burn_payload.amount = burn_damage
 	burn_payload.stance_damage = 0
 	burn_payload.element = "fire"
-	burn_payload.source_name = "Burning"
+	burn_payload.source_name = source
 	burn_payload.hit_type = "status"
 	burn_payload.tags = ["fire", "burning", "status"]
 
-	apply_status_payload(burn_payload, false)
+	apply_status_payload(burn_payload, true)
 
 
 func process_poisoned(delta: float, status_name: String) -> void:

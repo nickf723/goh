@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ComboRule" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+
+[resource]
+script = ExtResource("1_combo_rule")
+rule_id = "force_x_frozen"
+display_name = "Shatter"
+description = "Force breaks frozen targets, removing frozen and applying reaction damage."
+incoming_tags = Array[String](["force"])
+target_tags = Array[String](["frozen"])
+priority = 90
+reaction_id = "shatter"
+reaction_name = "Shatter"
+feedback_text = "{target} shatters from the impact."
+remove_statuses = Array[String](["frozen"])
+output_damage = 3
+output_stance_damage = 2
+output_element = "ice"
+output_source_name = "Shatter"
+output_hit_type = "reaction"
+output_tags = Array[String](["ice", "force", "reaction", "shatter"])
+debug_tags = Array[String](["elemental", "status_combo", "force"])
+design_notes = "Frozen targets become brittle. This rule should eventually work for bludgeoning, explosions, and heavy impacts too."

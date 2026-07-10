@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_ability_definition"]
 [ext_resource type="PackedScene" path="res://scenes/actions/wind_gust.tscn" id="2_wind_scene"]
 [ext_resource type="Resource" path="res://data/damage_payloads/wind_gust_payload.tres" id="3_wind_payload"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/cone_force_profile.tres" id="4_profile"]
 
 [resource]
 script = ExtResource("1_ability_definition")
@@ -11,13 +12,14 @@ description = "Blast enemies with a short cone of force."
 element = "air"
 category = 4
 mana_cost = 1
+trait_profile = ExtResource("4_profile")
 spell_id = "wind_gust"
 short_label = "Gust"
 icon_text = "W"
-roles = Array[String](["force", "control", "cone", "combo_reactor", "hazard_manipulation"])
+roles = Array[String](["combo_reactor"])
 targeting_style = "directional_cone"
 delivery_type = "cone_burst"
-combo_tags = Array[String](["air", "wind", "force", "cloud_spread", "fanned_flames"])
+combo_tags = Array[String](["air", "wind", "cloud_spread", "fanned_flames"])
 status_tags = Array[String]([])
 ui_tags = Array[String](["force", "push", "combo"])
 debug_tags = Array[String](["prototype", "cone_force"])

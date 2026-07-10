@@ -25,7 +25,12 @@ const TEXT_SOFT: Color = Color(0.64, 0.72, 0.84, 0.86)
 const TEXT_DIM: Color = Color(0.48, 0.56, 0.68, 0.72)
 
 var selected_tab_index: int = 0
+var selected_action_index: int = 0
 var menu_data: Dictionary = {}
+var selectable_actions: Array = []
+
+var assignment_mode: String = ""
+var pending_spell_slot_index: int = -1
 
 var title_label: Label
 var subtitle_label: Label
@@ -57,6 +62,7 @@ func show_menu(new_menu_data: Dictionary) -> void:
 
 func hide_menu() -> void:
 	visible = false
+	cancel_assignment(false)
 
 
 func is_open() -> bool:
@@ -67,11 +73,29 @@ func handle_menu_input(event: InputEvent) -> bool:
 	if not visible:
 		return false
 
-	if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_up"):
+	if event.is_action_pressed("ui_cancel"):
+		if is_assigning_spell():
+			cancel_assignment()
+			return true
+		return false
+
+	if event.is_action_pressed("ui_up"):
+		select_action(selected_action_index - 1)
+		return true
+
+	if event.is_action_pressed("ui_down"):
+		select_action(selected_action_index + 1)
+		return true
+
+	if event.is_action_pressed("ui_accept"):
+		activate_selected_action()
+		return true
+
+	if event.is_action_pressed("ui_left"):
 		select_tab(selected_tab_index - 1)
 		return true
 
-	if event.is_action_pressed("ui_right") or event.is_action_pressed("ui_down"):
+	if event.is_action_pressed("ui_right"):
 		select_tab(selected_tab_index + 1)
 		return true
 
@@ -103,10 +127,19 @@ func handle_menu_input(event: InputEvent) -> bool:
 			KEY_7:
 				select_tab(6)
 				return true
-			KEY_A, KEY_Q:
+			KEY_W, KEY_UP:
+				select_action(selected_action_index - 1)
+				return true
+			KEY_S, KEY_DOWN:
+				select_action(selected_action_index + 1)
+				return true
+			KEY_ENTER, KEY_KP_ENTER, KEY_SPACE:
+				activate_selected_action()
+				return true
+			KEY_A, KEY_Q, KEY_LEFT:
 				select_tab(selected_tab_index - 1)
 				return true
-			KEY_D, KEY_E:
+			KEY_D, KEY_E, KEY_RIGHT:
 				select_tab(selected_tab_index + 1)
 				return true
 			_:
@@ -123,7 +156,116 @@ func handle_menu_input(event: InputEvent) -> bool:
 
 func select_tab(index: int) -> void:
 	selected_tab_index = (index + TAB_DEFS.size()) % TAB_DEFS.size()
+	selected_action_index = 0
 	rebuild_menu()
+
+
+func select_action(index: int) -> void:
+	if selectable_actions.size() <= 0:
+		selected_action_index = 0
+		return
+
+	selected_action_index = (index + selectable_actions.size()) % selectable_actions.size()
+	rebuild_menu()
+
+
+func activate_selected_action() -> void:
+	if selectable_actions.size() <= 0:
+		return
+
+	selected_action_index = clamp(selected_action_index, 0, selectable_actions.size() - 1)
+	activate_action(selectable_actions[selected_action_index])
+
+
+func activate_action(action: Dictionary) -> void:
+	match str(action.get("kind", "")):
+		"choose_spell_slot":
+			start_spell_assignment(int(action.get("slot", -1)))
+		"assign_spell":
+			complete_spell_assignment(int(action.get("learned_index", -1)))
+		_:
+			return
+
+
+func start_spell_assignment(slot_index: int) -> void:
+	if slot_index < 0:
+		return
+
+	assignment_mode = "spell"
+	pending_spell_slot_index = slot_index
+	selected_tab_index = get_tab_index("spellbook")
+	selected_action_index = 0
+	rebuild_menu()
+
+
+func complete_spell_assignment(learned_index: int) -> void:
+	if not is_assigning_spell():
+		return
+
+	var ability_caster: Node = get_ability_caster()
+	var loadout: AbilityLoadout = get_ability_loadout(ability_caster)
+
+	if loadout == null:
+		return
+
+	var learned: Array = get_learned_abilities(loadout)
+
+	if learned_index < 0 or learned_index >= learned.size():
+		return
+
+	var ability: AbilityDefinition = learned[learned_index]
+
+	if ability == null:
+		return
+
+	var assigned_slot: int = pending_spell_slot_index
+	loadout.equip_ability(assigned_slot, ability)
+
+	if ability_caster != null and ability_caster.has_method("select_ability"):
+		ability_caster.call("select_ability", assigned_slot, true)
+
+	assignment_mode = ""
+	pending_spell_slot_index = -1
+	selected_tab_index = get_tab_index("equipment")
+	selected_action_index = assigned_slot
+	refresh_menu_data()
+	rebuild_menu()
+
+
+func cancel_assignment(should_rebuild: bool = true) -> void:
+	assignment_mode = ""
+	pending_spell_slot_index = -1
+
+	if should_rebuild:
+		rebuild_menu()
+
+
+func is_assigning_spell() -> bool:
+	return assignment_mode == "spell" and pending_spell_slot_index >= 0
+
+
+func refresh_menu_data() -> void:
+	var director: Node = get_node_or_null("/root/FullMenuDirector")
+
+	if director == null:
+		return
+
+	if not director.has_method("build_menu_data"):
+		return
+
+	var data_variant: Variant = director.call("build_menu_data")
+
+	if data_variant is Dictionary:
+		menu_data = (data_variant as Dictionary).duplicate(true)
+
+
+func get_tab_index(tab_id: String) -> int:
+	for i: int in range(TAB_DEFS.size()):
+		var tab_def: Dictionary = TAB_DEFS[i]
+		if str(tab_def.get("id", "")) == tab_id:
+			return i
+
+	return 0
 
 
 func build_layout() -> void:
@@ -220,7 +362,7 @@ func build_layout() -> void:
 	scroll.add_child(content_box)
 
 	footer_label = Label.new()
-	footer_label.text = "A/D or ←/→: tabs   1-7: jump tabs"
+	footer_label.text = get_footer_text()
 	footer_label.add_theme_color_override("font_color", TEXT_DIM)
 	footer_label.add_theme_font_size_override("font_size", 11)
 	root_box.add_child(footer_label)
@@ -229,6 +371,7 @@ func build_layout() -> void:
 func rebuild_menu() -> void:
 	rebuild_tabs()
 	rebuild_content()
+	footer_label.text = get_footer_text()
 
 
 func rebuild_tabs() -> void:
@@ -260,6 +403,7 @@ func _on_tab_pressed(index: int) -> void:
 
 
 func rebuild_content() -> void:
+	selectable_actions.clear()
 	clear_children(content_box)
 
 	var tab_def: Dictionary = TAB_DEFS[selected_tab_index]
@@ -284,6 +428,11 @@ func rebuild_content() -> void:
 		_:
 			add_text_card("Coming Soon", "This tab is only a placeholder right now.")
 
+	if selectable_actions.size() <= 0:
+		selected_action_index = 0
+	else:
+		selected_action_index = clamp(selected_action_index, 0, selectable_actions.size() - 1)
+
 
 func render_equipment() -> void:
 	var summary: Dictionary = menu_data.get("loadout_summary", {})
@@ -305,7 +454,7 @@ func render_equipment() -> void:
 	if equipped_slots.size() <= 0:
 		add_text_card("Spell Hotkeys", "No spell hotkey slots found yet.")
 	else:
-		add_text_card("Spell Hotkeys", "Format: slot · spell · element · cost · scaling · role. Assignment comes next.")
+		add_text_card("Spell Hotkeys", "Select a spell hotkey, then choose a learned spell from the Spellbook.")
 
 		for slot_variant in equipped_slots:
 			if slot_variant is Dictionary:
@@ -316,7 +465,10 @@ func render_equipment() -> void:
 
 
 func render_spellbook() -> void:
-	add_text_card("Spellbook", "Known spells grouped by element. Rows stay compact now; a future inspector can hold the lore-scroll details.")
+	if is_assigning_spell():
+		add_text_card("Assign Spell", "Choose a learned spell for Spell Hotkey " + str(pending_spell_slot_index + 1) + ". Enter or click assigns it. Esc cancels.")
+	else:
+		add_text_card("Spellbook", "Known spells grouped by element. Select a hotkey in Equipment first to assign from here.")
 
 	var library_sections: Array = menu_data.get("learned_spell_sections", [])
 
@@ -346,12 +498,15 @@ func render_gadget_slot_placeholders() -> void:
 
 
 func render_equipped_slot_card(spell: Dictionary) -> void:
-	if bool(spell.get("is_empty", false)):
-		var empty_slot_index: int = int(spell.get("slot", 0))
-		add_compact_card("Spell Hotkey " + str(empty_slot_index + 1) + "  ·  Empty  ·  assign later", false, "Empty")
-		return
+	var slot_index: int = int(spell.get("slot", 0))
+	var line: String = ""
 
-	add_compact_card(get_spell_compact_line(spell, "Spell Hotkey " + str(int(spell.get("slot", 0)) + 1)), bool(spell.get("is_current", false)), "Spell")
+	if bool(spell.get("is_empty", false)):
+		line = "Spell Hotkey " + str(slot_index + 1) + "  ·  Empty  ·  choose to assign"
+	else:
+		line = get_spell_compact_line(spell, "Spell Hotkey " + str(slot_index + 1))
+
+	add_action_row(line, {"kind": "choose_spell_slot", "slot": slot_index}, "Hotkey")
 
 
 func render_spell_card(spell: Dictionary) -> void:
@@ -369,9 +524,17 @@ func render_library_section(section: Dictionary) -> void:
 	add_section_header(element_title + " Spells")
 
 	for spell_variant in spells:
-		if spell_variant is Dictionary:
-			var spell: Dictionary = spell_variant as Dictionary
-			add_compact_card(get_spell_compact_line(spell, "Known"), bool(spell.get("is_current", false)), get_spell_equipped_subtitle(spell))
+		if not (spell_variant is Dictionary):
+			continue
+
+		var spell: Dictionary = spell_variant as Dictionary
+		var line: String = get_spell_compact_line(spell, "Known")
+		var subtitle: String = get_spell_equipped_subtitle(spell)
+
+		if is_assigning_spell():
+			add_action_row(line, {"kind": "assign_spell", "learned_index": int(spell.get("learned_index", -1))}, subtitle)
+		else:
+			add_compact_card(line, bool(spell.get("is_current", false)), subtitle)
 
 
 func get_spell_compact_line(spell: Dictionary, prefix: String = "Spell") -> String:
@@ -562,9 +725,9 @@ func render_codex() -> void:
 
 
 func render_system() -> void:
-	add_text_card("Controls", "Tab / M: open or close menu\nEsc: close menu\nA/D or arrows: switch tabs\n1-7: jump tabs")
+	add_text_card("Controls", "Tab / M: open or close menu\nEsc: cancel assignment or close menu\nA/D or left/right: switch tabs\nW/S or up/down: move row selection\nEnter/click: choose row\n1-7: jump tabs")
 	add_text_card("Future Panels", "Settings, save/load, controller mapping, accessibility, and debug toggles can attach here.")
-	add_text_card("Prototype Note", "Equipment is not enforcing hotkey assignment yet. The quick spell focus menu remains the combat-speed selector.")
+	add_text_card("Prototype Note", "Equipment spell hotkeys can now be assigned from the Spellbook. Items, weapons, and gadgets are still display-only.")
 
 
 func add_section_header(title: String) -> void:
@@ -613,6 +776,42 @@ func add_compact_card(line: String, selected: bool = false, subtitle: String = "
 	row_box.add_child(line_label)
 
 
+func add_action_row(line: String, action: Dictionary, subtitle: String = "") -> void:
+	var action_index: int = selectable_actions.size()
+	selectable_actions.append(action.duplicate(true))
+
+	var button: Button = Button.new()
+	var is_selected: bool = action_index == selected_action_index
+	button.text = (subtitle + "  ·  " if subtitle != "" else "") + line
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.custom_minimum_size = Vector2(0.0, 32.0)
+	button.add_theme_font_size_override("font_size", 12)
+	button.add_theme_color_override("font_color", TEXT_MAIN if is_selected else TEXT_SOFT)
+	button.add_theme_stylebox_override(
+		"normal",
+		make_panel_style(CARD_SELECTED_BACKGROUND if is_selected else CARD_BACKGROUND, CARD_SELECTED_BORDER if is_selected else CARD_BORDER, 2 if is_selected else 1, 10)
+	)
+	button.add_theme_stylebox_override(
+		"hover",
+		make_panel_style(Color(0.11, 0.1, 0.17, 0.76), CARD_SELECTED_BORDER, 2, 10)
+	)
+	button.add_theme_stylebox_override(
+		"pressed",
+		make_panel_style(CARD_SELECTED_BACKGROUND, CARD_SELECTED_BORDER, 2, 10)
+	)
+	button.pressed.connect(_on_action_row_pressed.bind(action_index))
+	content_box.add_child(button)
+
+
+func _on_action_row_pressed(action_index: int) -> void:
+	if action_index < 0 or action_index >= selectable_actions.size():
+		return
+
+	selected_action_index = action_index
+	activate_action(selectable_actions[action_index])
+
+
 func add_text_card(title: String, body: String, selected: bool = false, subtitle: String = "") -> void:
 	var card: PanelContainer = PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -656,6 +855,13 @@ func add_text_card(title: String, body: String, selected: bool = false, subtitle
 		box.add_child(body_label)
 
 
+func get_footer_text() -> String:
+	if is_assigning_spell():
+		return "Assigning Spell Hotkey " + str(pending_spell_slot_index + 1) + "   W/S or ↑/↓: spell rows   Enter/click: assign   Esc: cancel"
+
+	return "A/D or ←/→: tabs   W/S or ↑/↓: rows   Enter/click: choose   1-7: jump tabs"
+
+
 func join_values(values: Variant) -> String:
 	if not (values is Array):
 		return str(values)
@@ -671,6 +877,66 @@ func join_values(values: Variant) -> String:
 		text_values.append(str(value))
 
 	return " / ".join(text_values)
+
+
+func get_ability_caster() -> Node:
+	return find_first_node_named(get_tree().current_scene, "AbilityCaster")
+
+
+func get_ability_loadout(ability_caster: Node) -> AbilityLoadout:
+	if ability_caster == null:
+		return null
+
+	var loadout_variant: Variant = ability_caster.get("loadout")
+
+	if not (loadout_variant is AbilityLoadout):
+		return null
+
+	return loadout_variant as AbilityLoadout
+
+
+func get_learned_abilities(loadout: AbilityLoadout) -> Array:
+	var abilities: Array = []
+
+	if loadout == null:
+		return abilities
+
+	if loadout.has_method("get_learned_abilities"):
+		var learned_variant: Variant = loadout.call("get_learned_abilities")
+
+		if learned_variant is Array:
+			for ability_variant in learned_variant:
+				if ability_variant is AbilityDefinition:
+					abilities.append(ability_variant as AbilityDefinition)
+
+		return abilities
+
+	for ability: AbilityDefinition in loadout.learned_abilities:
+		if ability != null and not abilities.has(ability):
+			abilities.append(ability)
+
+	if abilities.size() <= 0:
+		for ability: AbilityDefinition in loadout.equipped_abilities:
+			if ability != null and not abilities.has(ability):
+				abilities.append(ability)
+
+	return abilities
+
+
+func find_first_node_named(root: Node, node_name: String) -> Node:
+	if root == null:
+		return null
+
+	if root.name == node_name:
+		return root
+
+	for child: Node in root.get_children():
+		var found: Node = find_first_node_named(child, node_name)
+
+		if found != null:
+			return found
+
+	return null
 
 
 func clear_children(parent: Node) -> void:

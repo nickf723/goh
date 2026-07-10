@@ -21,7 +21,7 @@ const SPELL_LIBRARY_ELEMENT_ORDER: Array[String] = [
 	"time",
 ]
 
-var full_menu_shell: FullMenuShell
+var full_menu_shell: Control
 var was_paused_before_menu: bool = false
 
 
@@ -36,15 +36,22 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	if is_full_menu_open():
-		if event.is_action_pressed("ui_cancel"):
-			close_full_menu()
-		else:
-			ensure_full_menu_shell()
+	if not is_full_menu_open():
+		return
 
-			if full_menu_shell != null:
-				full_menu_shell.handle_menu_input(event)
+	ensure_full_menu_shell()
 
+	var was_consumed_by_shell: bool = false
+
+	if full_menu_shell != null and full_menu_shell.has_method("handle_menu_input"):
+		was_consumed_by_shell = bool(full_menu_shell.call("handle_menu_input", event))
+
+	if event.is_action_pressed("ui_cancel") and not was_consumed_by_shell:
+		close_full_menu()
+		get_viewport().set_input_as_handled()
+		return
+
+	if was_consumed_by_shell or event is InputEventKey or event is InputEventMouseButton or event is InputEventMouseMotion:
 		get_viewport().set_input_as_handled()
 		return
 
@@ -66,19 +73,21 @@ func open_full_menu() -> void:
 	was_paused_before_menu = get_tree().paused
 	get_tree().paused = true
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	full_menu_shell.show_menu(build_menu_data())
+
+	if full_menu_shell.has_method("show_menu"):
+		full_menu_shell.call("show_menu", build_menu_data())
 
 
 func close_full_menu() -> void:
-	if full_menu_shell != null:
-		full_menu_shell.hide_menu()
+	if full_menu_shell != null and full_menu_shell.has_method("hide_menu"):
+		full_menu_shell.call("hide_menu")
 
 	get_tree().paused = was_paused_before_menu
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 
 func is_full_menu_open() -> bool:
-	return full_menu_shell != null and full_menu_shell.is_open()
+	return full_menu_shell != null and is_instance_valid(full_menu_shell) and full_menu_shell.has_method("is_open") and bool(full_menu_shell.call("is_open"))
 
 
 func ensure_full_menu_shell() -> void:
@@ -92,8 +101,8 @@ func ensure_full_menu_shell() -> void:
 
 	var existing_shell: Node = game_ui.get_node_or_null("FullMenuShell")
 
-	if existing_shell is FullMenuShell:
-		full_menu_shell = existing_shell as FullMenuShell
+	if existing_shell is Control and existing_shell.has_method("show_menu"):
+		full_menu_shell = existing_shell as Control
 		return
 
 	full_menu_shell = FullMenuShellScript.new()
@@ -189,15 +198,15 @@ func get_stat_rows() -> Dictionary:
 	}
 
 
-func get_stat_sections() -> Array[Dictionary]:
+func get_stat_sections() -> Array:
 	if GameState.has_method("get_stat_menu_sections"):
 		return GameState.get_stat_menu_sections()
 
 	return []
 
 
-func get_spell_rows() -> Array[Dictionary]:
-	var rows: Array[Dictionary] = []
+func get_spell_rows() -> Array:
+	var rows: Array = []
 	var ability_caster: Node = get_ability_caster()
 
 	if ability_caster == null:
@@ -209,15 +218,17 @@ func get_spell_rows() -> Array[Dictionary]:
 	if loadout == null:
 		return rows
 
+	var learned: Array = get_learned_abilities(loadout)
+
 	for i: int in range(loadout.equipped_abilities.size()):
 		var ability: AbilityDefinition = loadout.equipped_abilities[i]
-		rows.append(make_spell_row(ability, i, current_index))
+		rows.append(make_spell_row(ability, i, current_index, learned.find(ability)))
 
 	return rows
 
 
-func get_equipped_spell_slot_rows() -> Array[Dictionary]:
-	var rows: Array[Dictionary] = []
+func get_equipped_spell_slot_rows() -> Array:
+	var rows: Array = []
 	var ability_caster: Node = get_ability_caster()
 
 	if ability_caster == null:
@@ -229,6 +240,7 @@ func get_equipped_spell_slot_rows() -> Array[Dictionary]:
 	if loadout == null:
 		return rows
 
+	var learned: Array = get_learned_abilities(loadout)
 	var slot_count: int = 8
 
 	if loadout.has_method("get_quick_slot_count"):
@@ -236,7 +248,7 @@ func get_equipped_spell_slot_rows() -> Array[Dictionary]:
 
 	for i: int in range(slot_count):
 		var ability: AbilityDefinition = loadout.get_equipped_ability(i)
-		var row: Dictionary = make_spell_row(ability, i, current_index)
+		var row: Dictionary = make_spell_row(ability, i, current_index, learned.find(ability))
 		row["is_quick_slot"] = true
 		row["is_empty"] = ability == null
 		rows.append(row)
@@ -244,8 +256,8 @@ func get_equipped_spell_slot_rows() -> Array[Dictionary]:
 	return rows
 
 
-func get_learned_spell_sections() -> Array[Dictionary]:
-	var sections: Array[Dictionary] = []
+func get_learned_spell_sections() -> Array:
+	var sections: Array = []
 	var ability_caster: Node = get_ability_caster()
 
 	if ability_caster == null:
@@ -257,10 +269,14 @@ func get_learned_spell_sections() -> Array[Dictionary]:
 	if loadout == null:
 		return sections
 
-	for element: String in SPELL_LIBRARY_ELEMENT_ORDER:
-		var spell_rows: Array[Dictionary] = []
+	var learned: Array = get_learned_abilities(loadout)
 
-		for ability: AbilityDefinition in get_learned_abilities(loadout):
+	for element: String in SPELL_LIBRARY_ELEMENT_ORDER:
+		var spell_rows: Array = []
+
+		for learned_index: int in range(learned.size()):
+			var ability: AbilityDefinition = learned[learned_index]
+
 			if ability == null:
 				continue
 
@@ -268,7 +284,7 @@ func get_learned_spell_sections() -> Array[Dictionary]:
 				continue
 
 			var equipped_index: int = loadout.equipped_abilities.find(ability)
-			var row: Dictionary = make_spell_row(ability, equipped_index, current_index)
+			var row: Dictionary = make_spell_row(ability, equipped_index, current_index, learned_index)
 			row["is_equipped"] = equipped_index >= 0
 			row["equipped_slot"] = equipped_index
 			spell_rows.append(row)
@@ -321,8 +337,8 @@ func get_ability_loadout(ability_caster: Node) -> AbilityLoadout:
 	return loadout_variant as AbilityLoadout
 
 
-func get_learned_abilities(loadout: AbilityLoadout) -> Array[AbilityDefinition]:
-	var abilities: Array[AbilityDefinition] = []
+func get_learned_abilities(loadout: AbilityLoadout) -> Array:
+	var abilities: Array = []
 
 	if loadout == null:
 		return abilities
@@ -349,10 +365,11 @@ func get_learned_abilities(loadout: AbilityLoadout) -> Array[AbilityDefinition]:
 	return abilities
 
 
-func make_spell_row(ability: AbilityDefinition, slot_index: int, current_index: int) -> Dictionary:
+func make_spell_row(ability: AbilityDefinition, slot_index: int, current_index: int, learned_index: int = -1) -> Dictionary:
 	if ability == null:
 		return {
 			"slot": slot_index,
+			"learned_index": learned_index,
 			"name": "Empty Slot",
 			"is_empty": true,
 			"is_current": slot_index == current_index,
@@ -360,6 +377,7 @@ func make_spell_row(ability: AbilityDefinition, slot_index: int, current_index: 
 
 	return {
 		"slot": slot_index,
+		"learned_index": learned_index,
 		"name": ability.display_name,
 		"description": ability.description,
 		"element": ability.element,

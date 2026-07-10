@@ -25,6 +25,9 @@ const DevRuntimeEnemyFactoryScript: Script = preload("res://scripts/systems/dev_
 	"zombie_duel",
 	"zombie_pair",
 	"poison_cloud_lab",
+	"fire_field_lab",
+	"wind_gust_lab",
+	"hazard_combo_lab",
 	"dodge_timing",
 ]
 
@@ -155,6 +158,12 @@ func get_scenario_display_name(scenario_id: String) -> String:
 			return "Zombie Pair"
 		"poison_cloud_lab":
 			return "Poison Cloud Lab"
+		"fire_field_lab":
+			return "Fire Field Lab"
+		"wind_gust_lab":
+			return "Wind Gust Lab"
+		"hazard_combo_lab":
+			return "Hazard Combo Lab"
 		"dodge_timing":
 			return "Dodge Timing"
 		_:
@@ -221,6 +230,12 @@ func get_enemy_ids_for_scenario(scenario_id: String) -> Array[String]:
 			return ["zombie", "zombie"]
 		"poison_cloud_lab":
 			return ["goblin", "zombie"]
+		"fire_field_lab":
+			return ["goblin", "zombie"]
+		"wind_gust_lab":
+			return ["goblin", "gremlin"]
+		"hazard_combo_lab":
+			return ["goblin", "gremlin", "zombie"]
 		"dodge_timing":
 			return ["zombie"]
 		_:

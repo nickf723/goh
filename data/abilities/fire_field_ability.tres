@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_ability_definition"]
+[ext_resource type="PackedScene" path="res://scenes/actions/fire_field.tscn" id="2_fire_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/fire_field_payload.tres" id="3_fire_payload"]
+
+[resource]
+script = ExtResource("1_ability_definition")
+display_name = "Fire Field"
+description = "Create a lingering field of flame."
+element = "fire"
+category = 4
+mana_cost = 1
+ability_scene = ExtResource("2_fire_scene")
+action_payload = ExtResource("3_fire_payload")

@@ -1,5 +1,7 @@
 extends Node
 
+const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
+
 signal health_changed(current_health: int, max_health: int)
 signal stance_changed(current_stance: int, max_stance: int)
 signal health_depleted
@@ -41,26 +43,32 @@ func _ready() -> void:
 	add_to_group("debuggable")
 
 func receive_hit(power: int = 1) -> Dictionary:
+	var result: Dictionary = {}
+
 	match hit_mode:
 		HitMode.INVULNERABLE:
-			return _receive_invulnerable_hit()
+			result = _receive_invulnerable_hit()
 
 		HitMode.STANCE_ONLY:
-			return _damage_stance(power)
+			result = _damage_stance(power)
 
 		HitMode.HEALTH_ONLY:
-			return _damage_health(power)
+			result = _damage_health(power)
 
 		HitMode.STANCE_THEN_HEALTH:
 			if current_stance > 0:
-				return _damage_stance(power)
+				result = _damage_stance(power)
+			else:
+				result = _damage_health(power)
 
-			return _damage_health(power)
+		_:
+			result = {
+				"message": target_name + " is hit, but nothing happens.",
+				"objective": ""
+			}
 
-	return {
-		"message": target_name + " is hit, but nothing happens.",
-		"objective": ""
-	}
+	show_basic_feedback(power, result)
+	return result
 
 func _receive_invulnerable_hit() -> Dictionary:
 	return {
@@ -112,15 +120,6 @@ func _damage_health(power: int) -> Dictionary:
 			"message": message,
 			"objective": "Breaking objects can now reward the player."
 		}
-		health_depleted.emit()
-
-		if disappears_when_defeated and get_parent() != null:
-			get_parent().queue_free()
-
-		return {
-			"message": target_name + " is defeated.",
-			"objective": "Target health is working."
-		}
 
 	return {
 		"message": target_name + " is hit. Health: " + str(current_health) + " / " + str(max_health),
@@ -135,33 +134,41 @@ func reset_stance() -> void:
 	current_stance = max_stance
 	stance_changed.emit(current_stance, max_stance)
 
-func receive_payload(payload: DamagePayload) -> Dictionary: 
+func receive_payload(payload: DamagePayload) -> Dictionary:
 	last_payload_summary = (
-	payload.source_name
-	+ " | " + payload.element
-	+ " | hp:" + str(payload.amount)
-	+ " | st:" + str(payload.stance_damage)
-	+ " | " + str(payload.tags))
+		payload.source_name
+		+ " | " + payload.element
+		+ " | hp:" + str(payload.amount)
+		+ " | st:" + str(payload.stance_damage)
+		+ " | " + str(payload.tags)
+	)
+
+	var result: Dictionary = {}
+
 	match hit_mode:
 		HitMode.INVULNERABLE:
-			return _receive_invulnerable_payload(payload)
+			result = _receive_invulnerable_payload(payload)
 
 		HitMode.STANCE_ONLY:
-			return _damage_stance_from_payload(payload)
+			result = _damage_stance_from_payload(payload)
 
 		HitMode.HEALTH_ONLY:
-			return _damage_health_from_payload(payload)
+			result = _damage_health_from_payload(payload)
 
 		HitMode.STANCE_THEN_HEALTH:
 			if current_stance > 0:
-				return _damage_stance_from_payload(payload)
+				result = _damage_stance_from_payload(payload)
+			else:
+				result = _damage_health_from_payload(payload)
 
-			return _damage_health_from_payload(payload)
+		_:
+			result = {
+				"message": payload.source_name + " hits " + target_name + ", but nothing happens.",
+				"objective": ""
+			}
 
-	return {
-		"message": payload.source_name + " hits " + target_name + ", but nothing happens.",
-		"objective": ""
-	}
+	show_payload_feedback(payload, result)
+	return result
 
 func _receive_invulnerable_payload(payload: DamagePayload) -> Dictionary:
 	return {
@@ -234,26 +241,29 @@ func _damage_health_from_payload(payload: DamagePayload) -> Dictionary:
 		"message": payload.source_name + " hits " + target_name + " for " + str(modified_amount) + " " + payload.element + " damage. Health: " + str(current_health) + " / " + str(max_health),
 		"objective": "Element damage is working."
 	}
-	match hit_mode:
-		HitMode.INVULNERABLE:
-			return _receive_invulnerable_payload(payload)
 
-		HitMode.STANCE_ONLY:
-			return _damage_stance_from_payload(payload)
+func show_payload_feedback(payload: DamagePayload, result: Dictionary) -> void:
+	var target: Node = get_parent()
 
-		HitMode.HEALTH_ONLY:
-			return _damage_health_from_payload(payload)
+	if target == null:
+		target = self
 
-		HitMode.STANCE_THEN_HEALTH:
-			if current_stance > 0:
-				return _damage_stance_from_payload(payload)
+	CombatFeedback.show_payload_feedback(target, payload, result)
 
-			return _damage_health_from_payload(payload)
+func show_basic_feedback(power: int, result: Dictionary) -> void:
+	var target: Node = get_parent()
 
-	return {
-		"message": payload.source_name + " hits " + target_name + ", but nothing happens.",
-		"objective": ""
-	}
+	if target == null:
+		target = self
+
+	var payload: DamagePayload = DamagePayload.new()
+	payload.amount = power
+	payload.stance_damage = power
+	payload.element = "neutral"
+	payload.source_name = "Hit"
+	payload.tags = ["physical"]
+
+	CombatFeedback.show_payload_feedback(target, payload, result)
 
 func get_element_multiplier(element: String) -> float:
 	if immune_elements.has(element):
@@ -298,38 +308,4 @@ func get_debug_data() -> Dictionary:
 		"st": str(current_stance) + "/" + str(max_stance),
 		"elem": elements,
 		"last": last_payload_summary,
-	}
-	var defense_notes: Array[String] = []
-
-	if weak_elements.size() > 0:
-		defense_notes.append("weak=" + str(weak_elements))
-
-	if resistant_elements.size() > 0:
-		defense_notes.append("resist=" + str(resistant_elements))
-
-	if immune_elements.size() > 0:
-		defense_notes.append("immune=" + str(immune_elements))
-
-	var defenses: String = "normal"
-
-	if defense_notes.size() > 0:
-		defenses = " | ".join(defense_notes)
-
-	return {
-		"type": "HitReceiver",
-		"mode": HitMode.keys()[hit_mode],
-		"hp": str(current_health) + "/" + str(max_health),
-		"stance": str(current_stance) + "/" + str(max_stance),
-		"elements": defenses,
-		"last_payload": last_payload_summary,
-	}
-	return {
-		"type": "HitReceiver",
-		"target_name": target_name,
-		"hit_mode": HitMode.keys()[hit_mode],
-		"health": str(current_health) + " / " + str(max_health),
-		"stance": str(current_stance) + " / " + str(max_stance),
-		"weak": weak_elements,
-		"resistant": resistant_elements,
-		"immune": immune_elements,
 	}

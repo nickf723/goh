@@ -22,6 +22,7 @@ var current_interactable: Area3D = null
 
 var is_defeated: bool = false
 
+
 func _ready() -> void:
 	dodge_controller = find_dodge_controller()
 	print("Player found dodge controller: ", dodge_controller.get_path() if dodge_controller != null else "none")
@@ -33,12 +34,28 @@ func _ready() -> void:
 	interaction_area.area_exited.connect(_on_interaction_area_exited)
 	GameState.player_defeated.connect(_on_player_defeated)
 
+
 func _unhandled_input(event: InputEvent) -> void:
 	if is_defeated:
 		if event.is_action_pressed("restart_scene"):
 			GameState.reset_run()
 			get_tree().reload_current_scene()
 		return
+
+	if is_focus_spell_menu_open():
+		if ability_caster.has_method("handle_focus_menu_input"):
+			if ability_caster.handle_focus_menu_input(event):
+				get_viewport().set_input_as_handled()
+				return
+
+		if event is InputEventMouseMotion:
+			get_viewport().set_input_as_handled()
+			return
+
+		if event is InputEventKey or event is InputEventMouseButton:
+			get_viewport().set_input_as_handled()
+			return
+
 	if event is InputEventMouseMotion:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 
@@ -88,6 +105,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("cast_spell"):
 		ability_caster.cast_from_player(self)
 
+
 func _physics_process(delta: float) -> void:
 	if dodge_controller != null and dodge_controller.is_dodge_active():
 		var dodge_velocity: Vector3 = dodge_controller.get_dodge_velocity()
@@ -135,6 +153,7 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 
+
 func _on_interaction_area_entered(area: Area3D) -> void:
 	print("Area entered: ", area.name)
 
@@ -146,6 +165,7 @@ func _on_interaction_area_entered(area: Area3D) -> void:
 	else:
 		print("Area does not have interact(): ", area.name)
 
+
 func _on_interaction_area_exited(area: Area3D) -> void:
 	print("Area exited: ", area.name)
 
@@ -156,6 +176,7 @@ func _on_interaction_area_exited(area: Area3D) -> void:
 		current_interactable = nearby_interactables.back() if nearby_interactables.size() > 0 else null
 
 	update_interaction_prompt()
+
 
 func update_interaction_prompt() -> void:
 	var game_ui := get_game_ui()
@@ -173,6 +194,7 @@ func update_interaction_prompt() -> void:
 		prompt = current_interactable.prompt_text
 
 	game_ui.show_prompt(prompt)
+
 
 func interact_with_current() -> void:
 	print("Pressed interact.")
@@ -201,6 +223,7 @@ func interact_with_current() -> void:
 	if interaction_result.has("show_prologue_choice") and interaction_result["show_prologue_choice"]:
 		ui.show_prologue_choice()
 
+
 func get_game_ui() -> Node:
 	return get_tree().get_first_node_in_group("game_ui")
 	
@@ -218,12 +241,25 @@ func get_game_ui() -> Node:
 
 	print("Cast Arcane Spark. Mana: ", GameState.get_stat("mana"), " / ", GameState.get_stat("max_mana"))
 
+
 func set_spell_label(ability_name: String) -> void:
 	spell_label.text = "Spell: " + ability_name
+
+
+func is_focus_spell_menu_open() -> bool:
+	if ability_caster == null:
+		return false
+
+	if not ability_caster.has_method("is_focus_spell_menu_open"):
+		return false
+
+	return ability_caster.is_focus_spell_menu_open()
+
 
 func _on_player_defeated() -> void:
 	is_defeated = true
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
 
 func find_dodge_controller() -> PlayerDodgeController:
 	var direct_node: Node = get_node_or_null("DodgeController")

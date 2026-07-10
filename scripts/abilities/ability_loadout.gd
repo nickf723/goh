@@ -1,8 +1,32 @@
 extends Resource
 class_name AbilityLoadout
 
+const DEFAULT_ELEMENT_ORDER: Array[String] = [
+	"water",
+	"earth",
+	"fire",
+	"air",
+	"ice",
+	"metal",
+	"lightning",
+	"poison",
+	"life",
+	"death",
+	"body",
+	"soul",
+	"dreams",
+	"sound",
+	"space",
+	"time",
+]
+
 @export var learned_abilities: Array[AbilityDefinition] = []
 @export var equipped_abilities: Array[AbilityDefinition] = []
+
+# Prototype combat-facing slot count. The equipped_abilities array can still be larger
+# while we are testing lots of spells, but the menu can now display a cleaner
+# smaller combat-slot structure.
+@export var quick_slot_count: int = 8
 
 
 func get_equipped_ability(index: int) -> AbilityDefinition:
@@ -16,6 +40,10 @@ func get_equipped_ability_count() -> int:
 	return equipped_abilities.size()
 
 
+func get_quick_slot_count() -> int:
+	return max(quick_slot_count, 0)
+
+
 func get_equipped_ability_names() -> Array[String]:
 	var names: Array[String] = []
 
@@ -26,6 +54,72 @@ func get_equipped_ability_names() -> Array[String]:
 			names.append(ability.display_name)
 
 	return names
+
+
+func get_equipped_slot_rows(current_ability_index: int = -1) -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	var slot_count: int = get_quick_slot_count()
+
+	for slot_index: int in range(slot_count):
+		var ability: AbilityDefinition = get_equipped_ability(slot_index)
+		rows.append({
+			"slot": slot_index,
+			"ability": ability,
+			"is_empty": ability == null,
+			"is_current": slot_index == current_ability_index,
+		})
+
+	return rows
+
+
+func get_learned_abilities() -> Array[AbilityDefinition]:
+	var abilities: Array[AbilityDefinition] = []
+
+	for ability: AbilityDefinition in learned_abilities:
+		append_unique_ability(abilities, ability)
+
+	# Safety fallback for older resources or testing files that only filled equipped.
+	if abilities.size() <= 0:
+		for ability: AbilityDefinition in equipped_abilities:
+			append_unique_ability(abilities, ability)
+
+	return abilities
+
+
+func get_learned_spell_sections() -> Array[Dictionary]:
+	var sections: Array[Dictionary] = []
+	var learned: Array[AbilityDefinition] = get_learned_abilities()
+
+	for element: String in DEFAULT_ELEMENT_ORDER:
+		var element_spells: Array[AbilityDefinition] = []
+
+		for ability: AbilityDefinition in learned:
+			if ability == null:
+				continue
+
+			if ability.element == element:
+				element_spells.append(ability)
+
+		sections.append({
+			"element": element,
+			"title": element.capitalize(),
+			"spells": element_spells,
+		})
+
+	return sections
+
+
+func get_unassigned_learned_abilities() -> Array[AbilityDefinition]:
+	var unassigned: Array[AbilityDefinition] = []
+
+	for ability: AbilityDefinition in get_learned_abilities():
+		if ability == null:
+			continue
+
+		if not equipped_abilities.has(ability):
+			unassigned.append(ability)
+
+	return unassigned
 
 
 func equip_ability(slot_index: int, ability: AbilityDefinition) -> void:
@@ -53,3 +147,13 @@ func knows_ability(ability: AbilityDefinition) -> bool:
 		return false
 
 	return learned_abilities.has(ability)
+
+
+func append_unique_ability(target: Array[AbilityDefinition], ability: AbilityDefinition) -> void:
+	if ability == null:
+		return
+
+	if target.has(ability):
+		return
+
+	target.append(ability)

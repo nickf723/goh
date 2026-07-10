@@ -1,0 +1,158 @@
+extends RefCounted
+class_name DevRuntimeEnemyFactory
+
+const EnemyBrainScript: Script = preload("res://scripts/enemies/enemy_brain.gd")
+const EnemyDefinitionScript: Script = preload("res://scripts/enemies/enemy_definition.gd")
+const EnemyAttackDefinitionScript: Script = preload("res://scripts/enemies/enemy_attack_definition.gd")
+const EnemyTelegraphScript: Script = preload("res://scripts/enemies/enemy_telegraph.gd")
+
+const DamagePayloadScript: Script = preload("res://scripts/combat/damage_payload.gd")
+const PayloadReceiverScript: Script = preload("res://scripts/combat/payload_receiver.gd")
+const HitReceiverScript: Script = preload("res://scripts/combat/hit_receiver.gd")
+const StatusReceiverScript: Script = preload("res://scripts/combat/status_receiver.gd")
+const ForceReceiverScript: Script = preload("res://scripts/combat/force_receiver.gd")
+const TagComponentScript: Script = preload("res://scripts/core/tag_component.gd")
+
+
+static func create_zombie() -> CharacterBody3D:
+	var zombie: CharacterBody3D = CharacterBody3D.new()
+	zombie.name = "ZombieDrone"
+	zombie.add_to_group("enemy")
+	zombie.add_to_group("dev_spawned")
+	zombie.collision_layer = 1
+	zombie.collision_mask = 1
+
+	add_collision(zombie)
+	add_visual(zombie)
+	add_receivers(zombie)
+	add_brain(zombie)
+
+	return zombie
+
+
+static func add_collision(enemy: CharacterBody3D) -> void:
+	var collision: CollisionShape3D = CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
+
+	var shape: CapsuleShape3D = CapsuleShape3D.new()
+	shape.radius = 0.42
+	shape.height = 1.7
+	collision.shape = shape
+	collision.position = Vector3(0.0, 0.85, 0.0)
+
+	enemy.add_child(collision)
+
+
+static func add_visual(enemy: CharacterBody3D) -> void:
+	var visual: MeshInstance3D = MeshInstance3D.new()
+	visual.name = "ZombieMesh"
+
+	var mesh: CapsuleMesh = CapsuleMesh.new()
+	mesh.radius = 0.42
+	mesh.height = 1.7
+	visual.mesh = mesh
+	visual.position = Vector3(0.0, 0.85, 0.0)
+
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = Color(0.42, 0.62, 0.36, 1.0)
+	material.roughness = 0.8
+	visual.material_override = material
+
+	enemy.add_child(visual)
+
+
+static func add_receivers(enemy: CharacterBody3D) -> void:
+	var payload_receiver: Node = PayloadReceiverScript.new()
+	payload_receiver.name = "PayloadReceiver"
+	enemy.add_child(payload_receiver)
+
+	var hit_receiver: Node = HitReceiverScript.new()
+	hit_receiver.name = "HitReceiver"
+	hit_receiver.set("target_name", "Zombie")
+	hit_receiver.set("hit_mode", 3)
+	hit_receiver.set("max_health", 8)
+	hit_receiver.set("current_health", 8)
+	hit_receiver.set("max_stance", 4)
+	hit_receiver.set("current_stance", 4)
+	hit_receiver.set("resets_stance_after_break", true)
+	hit_receiver.set("disappears_when_defeated", true)
+	enemy.add_child(hit_receiver)
+
+	var status_receiver: Node = StatusReceiverScript.new()
+	status_receiver.name = "StatusReceiver"
+	enemy.add_child(status_receiver)
+
+	var force_receiver: Node = ForceReceiverScript.new()
+	force_receiver.name = "ForceReceiver"
+	force_receiver.set("drag", 7.5)
+	force_receiver.set("max_force_speed", 5.5)
+	enemy.add_child(force_receiver)
+
+	var tag_component: Node = TagComponentScript.new()
+	tag_component.name = "TagComponent"
+	tag_component.set("tags", ["enemy", "monster", "zombie", "undead", "organic", "slow", "staggerable"])
+	enemy.add_child(tag_component)
+
+	var telegraph: Node = EnemyTelegraphScript.new()
+	telegraph.name = "EnemyTelegraph"
+	telegraph.set("windup_scale", Vector3(1.08, 1.16, 1.08))
+	telegraph.set("windup_flash_color", Color(0.9, 0.15, 0.08, 1.0))
+	enemy.add_child(telegraph)
+
+
+static func add_brain(enemy: CharacterBody3D) -> void:
+	var brain: Node = EnemyBrainScript.new()
+	brain.name = "EnemyBrain"
+	brain.set("enemy_definition", make_zombie_definition())
+	brain.set("default_attack", make_zombie_attack())
+	enemy.add_child(brain)
+
+
+static func make_zombie_definition() -> Resource:
+	var definition: Resource = EnemyDefinitionScript.new()
+	definition.set("display_name", "Zombie")
+	definition.set("species_id", "zombie")
+	definition.set("faction_id", "monsters")
+	definition.set("creature_type", "undead")
+	definition.set("tags", ["enemy", "monster", "zombie", "undead", "organic", "slow", "staggerable"])
+	definition.set("move_speed", 1.25)
+	definition.set("turn_speed", 5.5)
+	definition.set("gravity", 18.0)
+	definition.set("detection_radius", 8.0)
+	definition.set("lose_interest_radius", 13.0)
+	definition.set("preferred_distance", 1.05)
+	definition.set("spacing_buffer", 0.1)
+	definition.set("circle_when_waiting_to_attack", false)
+	definition.set("strafe_speed_multiplier", 0.25)
+	definition.set("strafe_switch_interval", 2.0)
+	definition.set("debug_notes", "Runtime prototype zombie spawned by DevRuntimeEnemyFactory.")
+	return definition
+
+
+static func make_zombie_attack() -> Resource:
+	var attack: Resource = EnemyAttackDefinitionScript.new()
+	attack.set("display_name", "Zombie Grab")
+	attack.set("payload", make_zombie_payload())
+	attack.set("range", 1.35)
+	attack.set("cone_angle_degrees", 145.0)
+	attack.set("windup_time", 0.65)
+	attack.set("recovery_time", 0.85)
+	attack.set("cooldown", 1.4)
+	attack.set("show_miss_message", true)
+	return attack
+
+
+static func make_zombie_payload() -> Resource:
+	var payload: Resource = DamagePayloadScript.new()
+	payload.set("amount", 2)
+	payload.set("stance_damage", 2)
+	payload.set("element", "neutral")
+	payload.set("source_name", "Zombie Grab")
+	payload.set("hit_type", "melee")
+	payload.set("status_effect", "staggered")
+	payload.set("status_duration", 0.2)
+	payload.set("status_strength", 1.0)
+	payload.set("knockback_strength", 1.2)
+	payload.set("knockback_up_strength", 0.0)
+	payload.set("tags", ["physical", "melee", "grab", "enemy_attack", "undead"])
+	return payload

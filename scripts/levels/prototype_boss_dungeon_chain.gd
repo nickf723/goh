@@ -1,21 +1,70 @@
 extends Node3D
 
-@export var opening_objective: String = "Church Trial: save, clear combat, solve the lock, defeat the armor, then exit."
-@export var opening_message: String = "Church Trial Prototype: the final room now contains an animated armor. Sleep before the boss."
+const RewardAltarScene = preload("res://scenes/actors/interactables/church_trial_reward_altar.tscn")
+
+@export var opening_objective: String = "Church Trial: save, clear combat, solve the lock, defeat the armor, claim the sigil, then exit."
+@export var opening_message: String = "Church Trial Prototype: defeat the Animated Armor, then claim the reward altar beyond the gate."
 @export var apply_save_on_ready: bool = true
+@export var add_reward_altar: bool = true
+@export var reward_altar_position: Vector3 = Vector3(0.0, 0.15, 112.5)
 
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	spawn_reward_altar()
+	configure_final_exit()
 	await get_tree().process_frame
 
 	if apply_save_on_ready and GameState.apply_save_for_current_scene():
 		set_objective(GameState.current_objective)
-		show_message("Grace wakes at the last save bed.")
+		show_message("Grace resumes from saved progress.")
 		return
 
 	set_objective(opening_objective)
 	show_message(opening_message)
+
+
+func spawn_reward_altar() -> void:
+	if not add_reward_altar:
+		return
+
+	if get_node_or_null("ChurchTrialRewardAltar") != null:
+		return
+
+	var altar: Node3D = RewardAltarScene.instantiate() as Node3D
+
+	if altar == null:
+		return
+
+	altar.name = "ChurchTrialRewardAltar"
+	add_child(altar)
+	altar.global_position = reward_altar_position
+
+
+func configure_final_exit() -> void:
+	var final_exit: Node = find_child_named(self, "LevelExit")
+
+	if final_exit == null:
+		return
+
+	if "completion_message" in final_exit:
+		final_exit.set("completion_message", "Church Trial complete. Grace defeats the Animated Armor and reaches the reward chamber.")
+
+	if "objective_after" in final_exit:
+		final_exit.set("objective_after", "Church Trial complete.")
+
+
+func find_child_named(root: Node, target_name: String) -> Node:
+	if root.name == target_name:
+		return root
+
+	for child: Node in root.get_children():
+		var found: Node = find_child_named(child, target_name)
+
+		if found != null:
+			return found
+
+	return null
 
 
 func show_message(text: String) -> void:

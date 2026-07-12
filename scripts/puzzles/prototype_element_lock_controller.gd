@@ -2,7 +2,6 @@ extends Node
 
 @export var target_group_name: String = "element_lock_target"
 @export var gate_path: NodePath
-@export var puzzle_start_objective: String = "Open the element lock."
 @export var puzzle_complete_message: String = "The element lock opens."
 @export var objective_after: String = "Reach the final exit."
 
@@ -13,7 +12,6 @@ var hooked_targets: Array[Node] = []
 func _ready() -> void:
 	await get_tree().process_frame
 	hook_targets()
-	set_objective(puzzle_start_objective)
 	check_targets()
 
 

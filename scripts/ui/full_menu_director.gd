@@ -1,6 +1,6 @@
 extends Node
 
-const FullMenuShellScript = preload("res://scripts/ui/full_menu_shell.gd")
+const FullMenuShellScript = preload("res://scripts/ui/full_menu_shell_key_items.gd")
 
 const SPELL_LIBRARY_ELEMENT_ORDER: Array[String] = [
 	"water",
@@ -166,6 +166,7 @@ func build_menu_data() -> Dictionary:
 		"learned_spell_sections": get_learned_spell_sections(),
 		"loadout_summary": get_loadout_summary(),
 		"weapon": get_weapon_data(),
+		"key_items": GameState.get_key_item_rows(),
 	}
 
 
@@ -276,7 +277,6 @@ func get_learned_spell_sections() -> Array:
 
 		for learned_index: int in range(learned.size()):
 			var ability: AbilityDefinition = learned[learned_index]
-
 			if ability == null:
 				continue
 
@@ -445,7 +445,6 @@ func find_first_node_named(root: Node, node_name: String) -> Node:
 
 	for child: Node in root.get_children():
 		var found: Node = find_first_node_named(child, node_name)
-
 		if found != null:
 			return found
 

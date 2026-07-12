@@ -1,0 +1,104 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="2_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="3_focus"]
+[ext_resource type="Script" path="res://scripts/levels/prototype_sound_reveal_bridge.gd" id="4_director"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/echo_bridge.tscn" id="5_bridge"]
+[ext_resource type="Script" path="res://scripts/interaction/fall_reset_area.gd" id="6_reset"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/level_exit.tscn" id="7_exit"]
+
+[sub_resource type="StandardMaterial3D" id="Material_stone"]
+albedo_color = Color(0.17, 0.2, 0.26, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Material_void"]
+albedo_color = Color(0.025, 0.015, 0.055, 1)
+emission_enabled = true
+emission = Color(0.08, 0.02, 0.18, 1)
+emission_energy_multiplier = 1.8
+
+[sub_resource type="StandardMaterial3D" id="Material_beacon"]
+albedo_color = Color(1, 0.45, 0.08, 1)
+emission_enabled = true
+emission = Color(1, 0.18, 0.02, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="BoxShape3D" id="Shape_platform"]
+size = Vector3(8, 1, 8)
+
+[sub_resource type="BoxMesh" id="Mesh_platform"]
+material = SubResource("Material_stone")
+size = Vector3(8, 1, 8)
+
+[sub_resource type="BoxMesh" id="Mesh_void"]
+material = SubResource("Material_void")
+size = Vector3(30, 0.2, 30)
+
+[sub_resource type="BoxShape3D" id="Shape_reset"]
+size = Vector3(30, 2, 30)
+
+[sub_resource type="SphereMesh" id="Mesh_beacon"]
+material = SubResource("Material_beacon")
+radius = 0.45
+height = 0.9
+
+[node name="PrototypeSoundRevealBridge" type="Node3D"]
+script = ExtResource("4_director")
+
+[node name="GameUI" parent="." instance=ExtResource("2_ui")]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -28, 0)
+shadow_enabled = true
+
+[node name="StartPlatform" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StartPlatform"]
+shape = SubResource("Shape_platform")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StartPlatform"]
+mesh = SubResource("Mesh_platform")
+
+[node name="DestinationPlatform" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, -6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DestinationPlatform"]
+shape = SubResource("Shape_platform")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="DestinationPlatform"]
+mesh = SubResource("Mesh_platform")
+
+[node name="EchoBridge" parent="." instance=ExtResource("5_bridge")]
+position = Vector3(0, 0, 0)
+
+[node name="VoidVisual" type="MeshInstance3D" parent="."]
+position = Vector3(0, -4.8, 0)
+mesh = SubResource("Mesh_void")
+
+[node name="DestinationBeacon" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.4, -6)
+mesh = SubResource("Mesh_beacon")
+
+[node name="StartMarker" type="Marker3D" parent="."]
+position = Vector3(0, 1.05, 7)
+
+[node name="FallResetArea" type="Area3D" parent="."]
+position = Vector3(0, -3.5, 0)
+script = ExtResource("6_reset")
+reset_marker_path = NodePath("../StartMarker")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FallResetArea"]
+shape = SubResource("Shape_reset")
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("1_player")]
+position = Vector3(0, 1.05, 7)
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("3_focus")
+
+[node name="LevelExit" parent="." instance=ExtResource("7_exit")]
+position = Vector3(0, 1, -8)
+completion_message = "The echo path carries Grace across. Sound can reveal what sight cannot."
+objective_after = "Sound Reveal trial complete."

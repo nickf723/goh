@@ -1,0 +1,58 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/interaction/church_trial_reward_altar.gd" id="1_altar"]
+[ext_resource type="Material" path="res://art/materials/prototype/exit_gold_glow.tres" id="2_gold"]
+[ext_resource type="Material" path="res://art/materials/prototype/gate_barrier_blue.tres" id="3_blue"]
+[ext_resource type="Material" path="res://art/materials/prototype/mana_cyan_glow.tres" id="4_cyan"]
+[ext_resource type="Material" path="res://art/materials/prototype/cover_warm_stone.tres" id="5_stone"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_interact"]
+radius = 2.35
+height = 2.4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_base"]
+top_radius = 1.25
+bottom_radius = 1.55
+height = 0.65
+
+[sub_resource type="BoxMesh" id="BoxMesh_slab"]
+size = Vector3(2.8, 0.22, 1.7)
+
+[sub_resource type="SphereMesh" id="SphereMesh_sigil"]
+radius = 0.42
+height = 0.84
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_glow"]
+top_radius = 1.7
+bottom_radius = 1.7
+height = 0.08
+
+[node name="ChurchTrialRewardAltar" type="Area3D"]
+script = ExtResource("1_altar")
+reward_display_name = "Church Trial Sigil"
+objective_after = "Church Trial complete. Carry the sigil forward."
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
+shape = SubResource("CylinderShape3D_interact")
+
+[node name="PedestalBase" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.32, 0)
+material_override = ExtResource("5_stone")
+mesh = SubResource("CylinderMesh_base")
+
+[node name="PedestalSlab" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 0)
+material_override = ExtResource("2_gold")
+mesh = SubResource("BoxMesh_slab")
+
+[node name="SigilVisual" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.78, 0, 0, 0, 1, 0, 1.45, 0)
+material_override = ExtResource("3_blue")
+mesh = SubResource("SphereMesh_sigil")
+
+[node name="ClaimedGlow" type="MeshInstance3D" parent="."]
+visible = false
+transform = Transform3D(1, 0, 0, 0, 0.18, 0, 0, 0, 1, 0, 1.1, 0)
+material_override = ExtResource("4_cyan")
+mesh = SubResource("CylinderMesh_glow")

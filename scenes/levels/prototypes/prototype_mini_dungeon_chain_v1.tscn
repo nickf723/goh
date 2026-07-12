@@ -1,0 +1,354 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_mini_dungeon_chain.gd" id="1_director"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Script" path="res://scripts/systems/encounter_manager.gd" id="5_encounter"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/readable_magic_gate.tscn" id="6_gate"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/level_exit.tscn" id="7_exit"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/mana_shrine.tscn" id="8_shrine"]
+[ext_resource type="PackedScene" path="res://scenes/surfaces/oil_patch.tscn" id="9_oil"]
+[ext_resource type="PackedScene" path="res://scenes/surfaces/water_patch.tscn" id="10_water"]
+[ext_resource type="PackedScene" path="res://scenes/actors/enemies/goblin_drone.tscn" id="11_goblin"]
+[ext_resource type="PackedScene" path="res://scenes/actors/enemies/gremlin_drone.tscn" id="12_gremlin"]
+[ext_resource type="Script" path="res://scripts/puzzles/prototype_element_lock_target.gd" id="13_target"]
+[ext_resource type="Script" path="res://scripts/puzzles/prototype_element_lock_controller.gd" id="14_lock"]
+[ext_resource type="Material" path="res://art/materials/prototype/floor_stone_gray.tres" id="15_floor"]
+[ext_resource type="Material" path="res://art/materials/prototype/wall_dark_stone.tres" id="16_wall"]
+[ext_resource type="Material" path="res://art/materials/prototype/cover_warm_stone.tres" id="17_cover"]
+[ext_resource type="Material" path="res://art/materials/prototype/water_blue_readable.tres" id="18_water_mat"]
+[ext_resource type="Material" path="res://art/materials/prototype/oil_black_gloss.tres" id="19_oil_mat"]
+[ext_resource type="Material" path="res://art/materials/prototype/exit_gold_glow.tres" id="20_exit_mat"]
+[ext_resource type="Material" path="res://art/materials/prototype/mana_cyan_glow.tres" id="21_mana_mat"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_floor"]
+size = Vector3(18, 1, 88)
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(18, 1, 88)
+
+[sub_resource type="BoxShape3D" id="BoxShape_side_wall"]
+size = Vector3(1, 3, 88)
+
+[sub_resource type="BoxMesh" id="BoxMesh_side_wall"]
+size = Vector3(1, 3, 88)
+
+[sub_resource type="BoxShape3D" id="BoxShape_end_wall"]
+size = Vector3(20, 3, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_end_wall"]
+size = Vector3(20, 3, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape_separator"]
+size = Vector3(5.6, 3, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_separator"]
+size = Vector3(5.6, 3, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape_cover"]
+size = Vector3(2.2, 2.0, 2.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_cover"]
+size = Vector3(2.2, 2.0, 2.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape_pillar"]
+size = Vector3(1.2, 4, 1.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pillar"]
+size = Vector3(1.2, 4, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape_target"]
+size = Vector3(1.45, 1.45, 1.45)
+
+[sub_resource type="BoxMesh" id="BoxMesh_target"]
+size = Vector3(1.25, 1.25, 1.25)
+
+[sub_resource type="BoxMesh" id="BoxMesh_marker"]
+size = Vector3(1.05, 0.25, 1.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_exit_pad"]
+size = Vector3(4.5, 0.18, 4.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_room_marker"]
+size = Vector3(2.8, 0.15, 2.8)
+
+[node name="PrototypeMiniDungeonChain" type="Node3D"]
+script = ExtResource("1_director")
+opening_objective = "Mini-dungeon: prepare, clear the combat room, solve the element lock, then exit."
+opening_message = "Mini-dungeon chain: Room 1 shrine, Room 2 fight, Room 3 element lock."
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, 0, 8, 12)
+light_energy = 1.35
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, -8)
+
+[node name="DungeonFloor" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 31)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DungeonFloor"]
+shape = SubResource("BoxShape_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="DungeonFloor"]
+material_override = ExtResource("15_floor")
+mesh = SubResource("BoxMesh_floor")
+
+[node name="LeftOuterWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 1, 31)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftOuterWall"]
+shape = SubResource("BoxShape_side_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftOuterWall"]
+material_override = ExtResource("16_wall")
+mesh = SubResource("BoxMesh_side_wall")
+
+[node name="RightOuterWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 1, 31)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RightOuterWall"]
+shape = SubResource("BoxShape_side_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RightOuterWall"]
+material_override = ExtResource("16_wall")
+mesh = SubResource("BoxMesh_side_wall")
+
+[node name="BackWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -13)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWall"]
+shape = SubResource("BoxShape_end_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWall"]
+material_override = ExtResource("16_wall")
+mesh = SubResource("BoxMesh_end_wall")
+
+[node name="FrontWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 75)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FrontWall"]
+shape = SubResource("BoxShape_end_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="FrontWall"]
+material_override = ExtResource("16_wall")
+mesh = SubResource("BoxMesh_end_wall")
+
+[node name="Room1SeparatorLeft" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 1, 12)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room1SeparatorLeft"]
+shape = SubResource("BoxShape_separator")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room1SeparatorLeft"]
+material_override = ExtResource("16_wall")
+mesh = SubResource("BoxMesh_separator")
+
+[node name="Room1SeparatorRight" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 1, 12)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room1SeparatorRight"]
+shape = SubResource("BoxShape_separator")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room1SeparatorRight"]
+material_override = ExtResource("16_wall")
+mesh = SubResource("BoxMesh_separator")
+
+[node name="Room2SeparatorLeft" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 1, 38)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room2SeparatorLeft"]
+shape = SubResource("BoxShape_separator")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room2SeparatorLeft"]
+material_override = ExtResource("16_wall")
+mesh = SubResource("BoxMesh_separator")
+
+[node name="Room2SeparatorRight" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 1, 38)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room2SeparatorRight"]
+shape = SubResource("BoxShape_separator")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room2SeparatorRight"]
+material_override = ExtResource("16_wall")
+mesh = SubResource("BoxMesh_separator")
+
+[node name="Room3SeparatorLeft" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 1, 66)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room3SeparatorLeft"]
+shape = SubResource("BoxShape_separator")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room3SeparatorLeft"]
+material_override = ExtResource("16_wall")
+mesh = SubResource("BoxMesh_separator")
+
+[node name="Room3SeparatorRight" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 1, 66)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room3SeparatorRight"]
+shape = SubResource("BoxShape_separator")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room3SeparatorRight"]
+material_override = ExtResource("16_wall")
+mesh = SubResource("BoxMesh_separator")
+
+[node name="Room1" type="Node3D" parent="."]
+
+[node name="ManaShrine" parent="Room1" instance=ExtResource("8_shrine")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.75, 1, -5.0)
+
+[node name="ShrineGlowMarker" type="MeshInstance3D" parent="Room1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.75, 0.08, -5.0)
+material_override = ExtResource("21_mana_mat")
+mesh = SubResource("BoxMesh_room_marker")
+
+[node name="EntryCoverLeft" type="StaticBody3D" parent="Room1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2, 0.5, 4.0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room1/EntryCoverLeft"]
+shape = SubResource("BoxShape_cover")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room1/EntryCoverLeft"]
+material_override = ExtResource("17_cover")
+mesh = SubResource("BoxMesh_cover")
+
+[node name="EntryCoverRight" type="StaticBody3D" parent="Room1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 0.5, 4.0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room1/EntryCoverRight"]
+shape = SubResource("BoxShape_cover")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room1/EntryCoverRight"]
+material_override = ExtResource("17_cover")
+mesh = SubResource("BoxMesh_cover")
+
+[node name="Room2Combat" type="Node3D" parent="."]
+
+[node name="OilPatch" parent="Room2Combat" instance=ExtResource("9_oil")]
+transform = Transform3D(1.15, 0, 0, 0, 1, 0, 0, 0, 1.15, -3.4, 0.12, 24.0)
+
+[node name="WaterPatch" parent="Room2Combat" instance=ExtResource("10_water")]
+transform = Transform3D(1.1, 0, 0, 0, 1, 0, 0, 0, 1.1, 3.6, 0.12, 23.0)
+
+[node name="CombatCoverCenter" type="StaticBody3D" parent="Room2Combat"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 19.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room2Combat/CombatCoverCenter"]
+shape = SubResource("BoxShape_cover")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room2Combat/CombatCoverCenter"]
+material_override = ExtResource("17_cover")
+mesh = SubResource("BoxMesh_cover")
+
+[node name="CombatPillarLeft" type="StaticBody3D" parent="Room2Combat"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.0, 1.5, 30)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room2Combat/CombatPillarLeft"]
+shape = SubResource("BoxShape_pillar")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room2Combat/CombatPillarLeft"]
+material_override = ExtResource("17_cover")
+mesh = SubResource("BoxMesh_pillar")
+
+[node name="CombatPillarRight" type="StaticBody3D" parent="Room2Combat"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.0, 1.5, 30)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room2Combat/CombatPillarRight"]
+shape = SubResource("BoxShape_pillar")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room2Combat/CombatPillarRight"]
+material_override = ExtResource("17_cover")
+mesh = SubResource("BoxMesh_pillar")
+
+[node name="GoblinDrone" parent="Room2Combat" instance=ExtResource("11_goblin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 0.58, 27.5)
+
+[node name="GremlinDrone" parent="Room2Combat" instance=ExtResource("12_gremlin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.0, 0.58, 29.5)
+
+[node name="CombatGate" parent="Room2Combat" instance=ExtResource("6_gate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 38)
+gate_name = "Combat Gate"
+unlock_message = "Combat trial clear. The next barrier opens."
+
+[node name="EncounterManager" type="Node" parent="Room2Combat"]
+script = ExtResource("5_encounter")
+reward_mana = 2
+
+[node name="Room3Puzzle" type="Node3D" parent="."]
+
+[node name="PuzzleHintWater" parent="Room3Puzzle" instance=ExtResource("10_water")]
+transform = Transform3D(0.65, 0, 0, 0, 1, 0, 0, 0, 0.65, -3.2, 0.12, 50.0)
+
+[node name="PuzzleHintOil" parent="Room3Puzzle" instance=ExtResource("9_oil")]
+transform = Transform3D(0.65, 0, 0, 0, 1, 0, 0, 0, 0.65, 3.2, 0.12, 50.0)
+
+[node name="WaterLockTarget" type="StaticBody3D" parent="Room3Puzzle"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2, 0.75, 54.0)
+script = ExtResource("13_target")
+display_name = "Water Lock"
+required_element = "water"
+activation_message = "Water Lock fills. One half of the seal wakes."
+wrong_element_message = "The blue lock wants Water."
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room3Puzzle/WaterLockTarget"]
+shape = SubResource("BoxShape_target")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room3Puzzle/WaterLockTarget"]
+material_override = ExtResource("18_water_mat")
+mesh = SubResource("BoxMesh_target")
+
+[node name="ActivatedMarker" type="MeshInstance3D" parent="Room3Puzzle/WaterLockTarget"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+material_override = ExtResource("20_exit_mat")
+mesh = SubResource("BoxMesh_marker")
+
+[node name="FireLockTarget" type="StaticBody3D" parent="Room3Puzzle"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 0.75, 54.0)
+script = ExtResource("13_target")
+display_name = "Fire Lock"
+required_element = "fire"
+activation_message = "Fire Lock ignites. The seal is nearly gone."
+wrong_element_message = "The black lock wants Fire."
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Room3Puzzle/FireLockTarget"]
+shape = SubResource("BoxShape_target")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Room3Puzzle/FireLockTarget"]
+material_override = ExtResource("19_oil_mat")
+mesh = SubResource("BoxMesh_target")
+
+[node name="ActivatedMarker" type="MeshInstance3D" parent="Room3Puzzle/FireLockTarget"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+material_override = ExtResource("20_exit_mat")
+mesh = SubResource("BoxMesh_marker")
+
+[node name="PuzzleGate" parent="Room3Puzzle" instance=ExtResource("6_gate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 66)
+gate_name = "Element Lock Gate"
+unlock_message = "Both locks answer. The final barrier fades."
+auto_add_encounter_reward_group = false
+
+[node name="ElementLockController" type="Node" parent="Room3Puzzle"]
+script = ExtResource("14_lock")
+gate_path = NodePath("../PuzzleGate")
+puzzle_complete_message = "Both element locks are active. The final gate opens."
+objective_after = "Step onto the gold exit pad."
+
+[node name="FinalExitPad" type="MeshInstance3D" parent="Room3Puzzle"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 71.5)
+material_override = ExtResource("20_exit_mat")
+mesh = SubResource("BoxMesh_exit_pad")
+
+[node name="LevelExit" parent="Room3Puzzle" instance=ExtResource("7_exit")]
+transform = Transform3D(1.8, 0, 0, 0, 1.0, 0, 0, 0, 1.8, 0, 1.0, 71.5)
+completion_message = "Mini-dungeon cleared. Grace finishes the prototype chain."
+objective_after = "Mini-dungeon complete."

@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/interaction/readable_magic_gate.gd" id="1_gate"]
+[ext_resource type="Material" path="res://art/materials/prototype/gate_frame_gold.tres" id="2_frame"]
+[ext_resource type="Material" path="res://art/materials/prototype/gate_barrier_blue.tres" id="3_barrier"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_barrier"]
+size = Vector3(4.2, 3.2, 0.35)
+
+[sub_resource type="BoxMesh" id="BoxMesh_barrier"]
+size = Vector3(4.2, 3.2, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pillar"]
+size = Vector3(0.5, 4.4, 0.65)
+
+[sub_resource type="BoxMesh" id="BoxMesh_top"]
+size = Vector3(5.3, 0.55, 0.65)
+
+[sub_resource type="BoxMesh" id="BoxMesh_base"]
+size = Vector3(5.6, 0.35, 0.9)
+
+[node name="ReadableMagicGate" type="StaticBody3D" groups=["encounter_reward"]]
+script = ExtResource("1_gate")
+gate_name = "Prototype Gate"
+unlock_message = "The blue barrier fades. The gate frame stays open."
+
+[node name="BarrierCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.05, 0)
+shape = SubResource("BoxShape3D_barrier")
+
+[node name="Barrier" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.05, -0.02)
+material_override = ExtResource("3_barrier")
+mesh = SubResource("BoxMesh_barrier")
+
+[node name="LeftFrame" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, 2.05, 0)
+material_override = ExtResource("2_frame")
+mesh = SubResource("BoxMesh_pillar")
+
+[node name="RightFrame" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, 2.05, 0)
+material_override = ExtResource("2_frame")
+mesh = SubResource("BoxMesh_pillar")
+
+[node name="TopFrame" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.05, 0)
+material_override = ExtResource("2_frame")
+mesh = SubResource("BoxMesh_top")
+
+[node name="BaseFrame" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, 0)
+material_override = ExtResource("2_frame")
+mesh = SubResource("BoxMesh_base")

@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/detection/revealable_receiver.gd" id="1_reveal"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_echo"]
+albedo_color = Color(1, 0.45, 0.08, 0.86)
+transparency = 1
+emission_enabled = true
+emission = Color(1, 0.22, 0.03, 1)
+emission_energy_multiplier = 2.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_bridge"]
+material = SubResource("StandardMaterial3D_echo")
+size = Vector3(3, 0.35, 8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bridge"]
+size = Vector3(3, 0.35, 8)
+
+[node name="EchoBridge" type="StaticBody3D"]
+
+[node name="BridgeMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_bridge")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_bridge")
+
+[node name="RevealableReceiver" type="Node" parent="."]
+script = ExtResource("1_reveal")
+starts_hidden = true
+reveal_duration_override = 8.0
+required_detection_tags = Array[String](["sound"])
+hide_visuals_when_hidden = true
+disable_collision_when_hidden = true
+reveal_message = "Sound outlines a hidden bridge."

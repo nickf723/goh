@@ -1,12 +1,14 @@
 extends Node3D
 
 const RewardAltarScene = preload("res://scenes/actors/interactables/church_trial_reward_altar.tscn")
+const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 
 @export var opening_objective: String = "Church Trial: save, clear combat, solve the lock, defeat the armor, claim the sigil, then exit."
-@export var opening_message: String = "Church Trial Prototype: defeat the Animated Armor, then claim the reward altar beyond the gate."
+@export var opening_message: String = "Church Trial Prototype: defeat the Animated Armor, then claim the reward altar beyond the gate. Press F8 to clear the prototype save and restart fresh."
 @export var apply_save_on_ready: bool = true
 @export var add_reward_altar: bool = true
 @export var reward_altar_position: Vector3 = Vector3(0.0, 0.15, 112.5)
+@export var enable_dev_save_reset: bool = true
 
 
 func _ready() -> void:
@@ -17,11 +19,47 @@ func _ready() -> void:
 
 	if apply_save_on_ready and GameState.apply_save_for_current_scene():
 		set_objective(GameState.current_objective)
-		show_message("Grace resumes from saved progress.")
+		show_message("Grace resumes from saved progress. Press F8 to clear this prototype save and restart fresh.")
 		return
 
 	set_objective(opening_objective)
 	show_message(opening_message)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not enable_dev_save_reset:
+		return
+
+	if not (event is InputEventKey):
+		return
+
+	var key_event: InputEventKey = event as InputEventKey
+
+	if not key_event.pressed or key_event.echo:
+		return
+
+	if key_event.physical_keycode != KEY_F8:
+		return
+
+	get_viewport().set_input_as_handled()
+	clear_prototype_save_and_restart()
+
+
+func clear_prototype_save_and_restart() -> void:
+	GameState.reset_run()
+
+	if FileAccess.file_exists(PROTOTYPE_SAVE_PATH):
+		var remove_result: Error = DirAccess.remove_absolute(PROTOTYPE_SAVE_PATH)
+
+		if remove_result != OK:
+			show_message("Could not clear prototype save: " + str(remove_result))
+			return
+
+	set_objective(opening_objective)
+	show_message("Prototype save cleared. Restarting the Church Trial from the beginning.")
+
+	await get_tree().create_timer(0.15).timeout
+	get_tree().reload_current_scene()
 
 
 func spawn_reward_altar() -> void:

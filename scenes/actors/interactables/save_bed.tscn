@@ -1,0 +1,51 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/interaction/save_bed.gd" id="1_bed"]
+[ext_resource type="Material" path="res://art/materials/prototype/cover_warm_stone.tres" id="2_frame"]
+[ext_resource type="Material" path="res://art/materials/prototype/floor_stone_gray.tres" id="3_mattress"]
+[ext_resource type="Material" path="res://art/materials/prototype/mana_cyan_glow.tres" id="4_blanket"]
+[ext_resource type="Material" path="res://art/materials/prototype/exit_gold_glow.tres" id="5_pillow"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_interaction"]
+size = Vector3(4.2, 1.4, 2.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_frame"]
+size = Vector3(4.0, 0.35, 2.45)
+
+[sub_resource type="BoxMesh" id="BoxMesh_mattress"]
+size = Vector3(3.45, 0.32, 2.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_blanket"]
+size = Vector3(2.15, 0.18, 2.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pillow"]
+size = Vector3(0.85, 0.25, 1.75)
+
+[node name="SaveBed" type="Area3D" groups=["save_point"]]
+script = ExtResource("1_bed")
+bed_id = "prototype_entry_bed"
+bed_display_name = "Entry Save Bed"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, 0)
+shape = SubResource("BoxShape3D_interaction")
+
+[node name="Frame" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+material_override = ExtResource("2_frame")
+mesh = SubResource("BoxMesh_frame")
+
+[node name="Mattress" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.55, 0)
+material_override = ExtResource("3_mattress")
+mesh = SubResource("BoxMesh_mattress")
+
+[node name="Blanket" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 0.82, 0)
+material_override = ExtResource("4_blanket")
+mesh = SubResource("BoxMesh_blanket")
+
+[node name="Pillow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.35, 0.88, 0)
+material_override = ExtResource("5_pillow")
+mesh = SubResource("BoxMesh_pillow")

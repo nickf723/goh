@@ -31,9 +31,9 @@ var next_attack: String = "pulse"
 var is_defeated: bool = false
 
 @onready var hit_receiver: Node = get_node_or_null(hit_receiver_path)
-@onready var visual_root: Node3D = get_node_or_null(visual_root_path)
-@onready var windup_marker: Node3D = get_node_or_null(windup_marker_path)
-@onready var pulse_marker: Node3D = get_node_or_null(pulse_marker_path)
+@onready var visual_root: Node3D = get_node_or_null(visual_root_path) as Node3D
+@onready var windup_marker: Node3D = get_node_or_null(windup_marker_path) as Node3D
+@onready var pulse_marker: Node3D = get_node_or_null(pulse_marker_path) as Node3D
 
 
 func _ready() -> void:
@@ -165,9 +165,9 @@ func process_windup(delta: float) -> void:
 		hide_attack_markers()
 
 
-func process_recover(_delta: float) -> void:
+func process_recover(delta: float) -> void:
 	clear_horizontal_velocity()
-	state_timer -= _delta
+	state_timer -= delta
 
 	if state_timer <= 0.0:
 		state = "chase"

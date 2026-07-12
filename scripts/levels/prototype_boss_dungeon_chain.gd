@@ -48,10 +48,19 @@ func configure_final_exit() -> void:
 		return
 
 	if "completion_message" in final_exit:
-		final_exit.set("completion_message", "Church Trial complete. Grace defeats the Animated Armor and reaches the reward chamber.")
+		final_exit.set("completion_message", "Church Trial complete. Grace carries the Church Trial Sigil beyond the reward chamber.")
 
 	if "objective_after" in final_exit:
 		final_exit.set("objective_after", "Church Trial complete.")
+
+	if "required_key_item_id" in final_exit:
+		final_exit.set("required_key_item_id", "church_trial_sigil")
+
+	if "missing_key_item_message" in final_exit:
+		final_exit.set("missing_key_item_message", "The final door waits for the Church Trial Sigil.")
+
+	if "missing_key_item_objective" in final_exit:
+		final_exit.set("missing_key_item_objective", "Claim the Church Trial Sigil from the reward altar.")
 
 
 func find_child_named(root: Node, target_name: String) -> Node:

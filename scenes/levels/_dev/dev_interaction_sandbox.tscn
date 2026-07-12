@@ -16,7 +16,7 @@
 [ext_resource type="PackedScene" uid="uid://dq6m8gaf1u2b7" path="res://scenes/surfaces/water_patch.tscn" id="14_eqklq"]
 [ext_resource type="PackedScene" uid="uid://dw6mih3hc1hq1" path="res://scenes/actors/enemies/gremlin_drone.tscn" id="15_ijhmh"]
 [ext_resource type="Script" uid="uid://bbb78at8demsw" path="res://scripts/systems/dev_audit_manager.gd" id="16_r3vux"]
-[ext_resource type="Script" uid="uid://wigfke7b475q" path="res://scripts/systems/dev_sandbox_director.gd" id="17_6lkbd"]
+[ext_resource type="Script" path="res://scripts/systems/dev_test_scenario_director.gd" id="17_6lkbd"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_3s6yi"]
 size = Vector3(20, 1, 20)
@@ -84,4 +84,3 @@ metadata/_custom_type_script = "uid://bbb78at8demsw"
 script = ExtResource("17_6lkbd")
 goblin_scene = ExtResource("8_xaa0i")
 gremlin_scene = ExtResource("15_ijhmh")
-metadata/_custom_type_script = "uid://wigfke7b475q"

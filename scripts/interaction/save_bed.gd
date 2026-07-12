@@ -16,6 +16,8 @@ func interact() -> Dictionary:
 	if rest_restores_resources and GameState.has_method("restore_rest_resources"):
 		GameState.restore_rest_resources()
 
+	GameState.set_objective(sleep_objective_after)
+
 	var save_position: Vector3 = global_position + save_position_offset
 	var save_result: Dictionary = GameState.save_at_bed(bed_id, bed_display_name, save_position)
 

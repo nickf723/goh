@@ -6,14 +6,26 @@ signal stat_changed(stat_name: String, value: int)
 signal player_defeated
 signal save_completed(save_data: Dictionary)
 signal save_loaded(save_data: Dictionary)
+signal key_item_changed(item_id: String, value: bool)
 
 const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
-const SAVE_VERSION: int = 1
+const SAVE_VERSION: int = 2
 const SAVE_SLOT_PATH: String = "user://goh_save_slot_1.json"
+
+const KEY_ITEM_DEFS: Dictionary = {
+	"church_trial_sigil": {
+		"id": "church_trial_sigil",
+		"name": "Church Trial Sigil",
+		"kind": "Trial Relic",
+		"description": "Proof that Grace survived the Church's trial and defeated the Animated Armor.",
+		"source": "First Church Trial",
+	},
+}
 
 var current_objective: String = "Look around."
 var stats: Dictionary = StatCatalogScript.get_default_stats()
 var last_save_data: Dictionary = {}
+var key_items: Dictionary = {}
 
 var story_flags: Dictionary = {
 	"inspected_stone": false,
@@ -72,6 +84,87 @@ func get_stat_snapshot() -> Dictionary:
 
 func get_story_flags_snapshot() -> Dictionary:
 	return story_flags.duplicate(true)
+
+
+func add_key_item(item_id: String, item_data: Dictionary = {}) -> void:
+	if item_id == "":
+		return
+
+	var row: Dictionary = get_key_item_definition(item_id).duplicate(true)
+
+	for key in item_data.keys():
+		row[str(key)] = item_data[key]
+
+	row["id"] = item_id
+	row["acquired"] = true
+	key_items[item_id] = row
+	key_item_changed.emit(item_id, true)
+
+
+func remove_key_item(item_id: String) -> void:
+	if not key_items.has(item_id):
+		return
+
+	key_items.erase(item_id)
+	key_item_changed.emit(item_id, false)
+
+
+func has_key_item(item_id: String) -> bool:
+	if key_items.has(item_id):
+		return true
+
+	# Backward compatibility for saves from the reward-altar pass before dedicated key items existed.
+	if item_id == "church_trial_sigil" and get_flag("claimed_church_trial_sigil"):
+		return true
+
+	return false
+
+
+func get_key_item_snapshot() -> Dictionary:
+	var snapshot: Dictionary = key_items.duplicate(true)
+
+	if get_flag("claimed_church_trial_sigil") and not snapshot.has("church_trial_sigil"):
+		snapshot["church_trial_sigil"] = get_key_item_definition("church_trial_sigil")
+		snapshot["church_trial_sigil"]["acquired"] = true
+
+	return snapshot
+
+
+func get_key_item_rows() -> Array:
+	var rows: Array = []
+	var snapshot: Dictionary = get_key_item_snapshot()
+
+	for item_id in snapshot.keys():
+		if not (snapshot[item_id] is Dictionary):
+			continue
+
+		var item: Dictionary = (snapshot[item_id] as Dictionary).duplicate(true)
+		item["id"] = str(item.get("id", item_id))
+		item["name"] = str(item.get("name", item["id"]))
+		item["kind"] = str(item.get("kind", "Key Item"))
+		item["description"] = str(item.get("description", "A key item Grace carries."))
+		item["source"] = str(item.get("source", "Unknown"))
+		rows.append(item)
+
+	rows.sort_custom(sort_key_item_rows)
+	return rows
+
+
+func sort_key_item_rows(a: Dictionary, b: Dictionary) -> bool:
+	return str(a.get("name", "")) < str(b.get("name", ""))
+
+
+func get_key_item_definition(item_id: String) -> Dictionary:
+	if KEY_ITEM_DEFS.has(item_id):
+		return (KEY_ITEM_DEFS[item_id] as Dictionary).duplicate(true)
+
+	return {
+		"id": item_id,
+		"name": item_id.capitalize(),
+		"kind": "Key Item",
+		"description": "A key item Grace carries.",
+		"source": "Unknown",
+	}
 
 
 func get_stat_menu_sections() -> Array[Dictionary]:
@@ -188,6 +281,7 @@ func restore_rest_resources() -> void:
 func reset_run() -> void:
 	current_objective = "Look around."
 	reset_stats_to_defaults(false)
+	key_items.clear()
 
 	for flag_name: String in story_flags.keys():
 		story_flags[flag_name] = false
@@ -196,6 +290,9 @@ func reset_run() -> void:
 
 	for stat_name: String in stats.keys():
 		stat_changed.emit(stat_name, int(stats[stat_name]))
+
+	for item_id in KEY_ITEM_DEFS.keys():
+		key_item_changed.emit(str(item_id), false)
 
 
 func begin_player_invulnerability(duration: float) -> void:
@@ -230,6 +327,7 @@ func save_at_bed(bed_id: String, bed_name: String, bed_position: Vector3) -> Dic
 		"bed_position": vector3_to_save_dict(bed_position),
 		"stats": get_stat_snapshot(),
 		"story_flags": get_story_flags_snapshot(),
+		"key_items": get_key_item_snapshot(),
 		"objective": current_objective,
 		"saved_at": Time.get_datetime_string_from_system(false, true),
 	}
@@ -302,6 +400,7 @@ func apply_save_data(save_data: Dictionary) -> bool:
 
 	apply_saved_stats(save_data)
 	apply_saved_flags(save_data)
+	apply_saved_key_items(save_data)
 
 	if save_data.has("objective"):
 		set_objective(str(save_data["objective"]))
@@ -344,6 +443,26 @@ func apply_saved_flags(save_data: Dictionary) -> void:
 	for flag_name in saved_flags.keys():
 		story_flags[str(flag_name)] = bool(saved_flags[flag_name])
 		flag_changed.emit(str(flag_name), bool(saved_flags[flag_name]))
+
+
+func apply_saved_key_items(save_data: Dictionary) -> void:
+	key_items.clear()
+
+	if save_data.has("key_items") and save_data["key_items"] is Dictionary:
+		var saved_key_items: Dictionary = save_data["key_items"] as Dictionary
+
+		for item_id in saved_key_items.keys():
+			if saved_key_items[item_id] is Dictionary:
+				var item: Dictionary = (saved_key_items[item_id] as Dictionary).duplicate(true)
+				item["id"] = str(item.get("id", item_id))
+				item["acquired"] = true
+				key_items[str(item_id)] = item
+
+	if get_flag("claimed_church_trial_sigil") and not key_items.has("church_trial_sigil"):
+		add_key_item("church_trial_sigil")
+
+	for item_id in key_items.keys():
+		key_item_changed.emit(str(item_id), true)
 
 
 func move_player_to_save_position(save_position: Vector3) -> void:

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TestScenarioDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/test_scenario_definition.gd" id="1_definition"]
+[ext_resource type="PackedScene" path="res://scenes/surfaces/oil_patch.tscn" id="2_oil"]
+
+[resource]
+script = ExtResource("1_definition")
+scenario_id = "oil_fire_reaction"
+display_name = "Oil + Fire"
+description = "Ignite the oily target with Firebolt."
+expected_result = "The target gains burning after oil and fire combine."
+recommended_ability_name = "Firebolt"
+enemy_ids = Array[String](["goblin"])
+prop_scenes = Array[PackedScene]([ExtResource("2_oil")])
+prop_offsets = Array[Vector3]([Vector3(3.5, 0.1, 2.5)])

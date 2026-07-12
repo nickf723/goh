@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://b3cxchurchtrial1"]
+[gd_scene format=3 uid="uid://cy256a6pn0vsq"]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="2_ui"]

@@ -28,16 +28,18 @@ func unlock() -> void:
 func disable_barrier() -> void:
 	var barrier: Node = get_node_or_null(barrier_path)
 
-	if barrier != null:
-		if barrier is Node3D:
-			(barrier as Node3D).visible = false
-		elif barrier is CanvasItem:
-			(barrier as CanvasItem).visible = false
+	if barrier is Node3D:
+		var barrier_3d: Node3D = barrier as Node3D
+		barrier_3d.visible = false
+	elif barrier is CanvasItem:
+		var barrier_canvas_item: CanvasItem = barrier as CanvasItem
+		barrier_canvas_item.visible = false
 
 	var collision_node: Node = get_node_or_null(collision_path)
 
 	if collision_node is CollisionShape3D:
-		(collision_node as CollisionShape3D).disabled = true
+		var collision_shape: CollisionShape3D = collision_node as CollisionShape3D
+		collision_shape.disabled = true
 
 
 func show_message(text: String) -> void:

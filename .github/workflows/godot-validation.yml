@@ -24,6 +24,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Validate custom agent profiles
+        run: python scripts/ci/validate_agent_profiles.py
+
       - name: Install Godot 4.6
         uses: chickensoft-games/setup-godot@v2
         with:

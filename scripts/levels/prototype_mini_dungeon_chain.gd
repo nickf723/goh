@@ -15,6 +15,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 
 	if apply_save_on_ready and GameState.apply_save_for_current_scene():
+		set_objective(GameState.current_objective)
 		show_message("Grace wakes at the last save bed.")
 		return
 
@@ -53,6 +54,8 @@ func show_message(text: String) -> void:
 
 
 func set_objective(text: String) -> void:
+	GameState.set_objective(text)
+
 	var ui: Node = get_tree().get_first_node_in_group("game_ui")
 
 	if ui != null and ui.has_method("set_objective"):

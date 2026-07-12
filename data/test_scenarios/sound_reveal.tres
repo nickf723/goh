@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TestScenarioDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/test_scenario_definition.gd" id="1_definition"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/cracked_crystal.tscn" id="2_crystal"]
+
+[resource]
+script = ExtResource("1_definition")
+scenario_id = "sound_reveal"
+display_name = "Sound Reveal"
+description = "Cast Sound Pulse toward the hidden crystal."
+expected_result = "The hidden crystal becomes visible when the sound detection pulse reaches it."
+recommended_ability_name = "Sound Pulse"
+prop_scenes = Array[PackedScene]([ExtResource("2_crystal")])
+prop_offsets = Array[Vector3]([Vector3(0, 0.5, 5)])

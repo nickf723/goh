@@ -81,6 +81,18 @@ Building work may create a feature branch, modify files, run validation, and ope
 
 Review work compares a pull request with its issue and checks correctness, scope, architecture reuse, regressions, and testability. The reviewer should not approve its own implementation merely because checks pass.
 
+## Specialist team
+
+Custom agent profiles live in `.github/agents/`:
+
+- **GoH Dispatcher** routes broad requests to the correct stage and specialist.
+- **GoH Planner** creates issue-ready plans without changing production code.
+- **GoH Builder** implements one approved issue on an agent branch.
+- **GoH QA** reproduces bugs and strengthens tests, validation, and debug scenarios.
+- **GoH Reviewer** independently checks pull requests without editing them.
+
+Read `docs/agents/team.md` for routing and `docs/agents/handoff_contract.md` before passing work between specialists.
+
 ## Branch and pull request rules
 
 - Branch from `main` using `agent/<short-description>`.

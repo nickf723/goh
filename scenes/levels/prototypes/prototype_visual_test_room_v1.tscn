@@ -1,0 +1,219 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_visual_test_room.gd" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Script" path="res://scripts/systems/encounter_manager.gd" id="5_encounter"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/readable_magic_gate.tscn" id="6_gate"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/level_exit.tscn" id="7_exit"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/mana_shrine.tscn" id="8_mana"]
+[ext_resource type="PackedScene" path="res://scenes/actors/enemies/goblin_drone.tscn" id="9_goblin"]
+[ext_resource type="PackedScene" path="res://scenes/actors/enemies/gremlin_drone.tscn" id="10_gremlin"]
+[ext_resource type="Script" path="res://scripts/surfaces/status_surface.gd" id="11_surface"]
+[ext_resource type="Material" path="res://art/materials/prototype/floor_stone_gray.tres" id="12_floor"]
+[ext_resource type="Material" path="res://art/materials/prototype/wall_dark_stone.tres" id="13_wall"]
+[ext_resource type="Material" path="res://art/materials/prototype/cover_warm_stone.tres" id="14_cover"]
+[ext_resource type="Material" path="res://art/materials/prototype/oil_black_gloss.tres" id="15_oil"]
+[ext_resource type="Material" path="res://art/materials/prototype/water_blue_readable.tres" id="16_water"]
+[ext_resource type="Material" path="res://art/materials/prototype/mana_cyan_glow.tres" id="17_mana_glow"]
+[ext_resource type="Material" path="res://art/materials/prototype/exit_gold_glow.tres" id="18_exit_glow"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(24, 1, 26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ground"]
+size = Vector3(24, 1, 26)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wall_back"]
+size = Vector3(24, 3.2, 0.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_back"]
+size = Vector3(24, 3.2, 0.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wall_side"]
+size = Vector3(0.8, 3.2, 26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_side"]
+size = Vector3(0.8, 3.2, 26)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cover"]
+size = Vector3(2.2, 1.2, 1.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_cover"]
+size = Vector3(2.2, 1.2, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_column"]
+size = Vector3(1.1, 2.8, 1.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_column"]
+size = Vector3(1.1, 2.8, 1.1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_patch"]
+size = Vector3(4.2, 0.2, 4.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_patch"]
+size = Vector3(4.2, 0.08, 4.2)
+
+[sub_resource type="SphereMesh" id="SphereMesh_glow"]
+radius = 0.5
+height = 1.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_exit_marker"]
+size = Vector3(2.6, 0.08, 2.6)
+
+[node name="PrototypeVisualTestRoom" type="Node3D"]
+script = ExtResource("1_room")
+opening_objective = "Use the color language: black oil, blue water, cyan mana, gold gate, gold exit. Clear the enemies and leave."
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="EncounterManager" type="Node" parent="."]
+script = ExtResource("5_encounter")
+reward_mana = 2
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, 0, 5.8, 0)
+light_energy = 1.4
+
+[node name="Ground" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape3D_ground")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+material_override = ExtResource("12_floor")
+mesh = SubResource("BoxMesh_ground")
+
+[node name="BackWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 12.8)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWall"]
+shape = SubResource("BoxShape3D_wall_back")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWall"]
+material_override = ExtResource("13_wall")
+mesh = SubResource("BoxMesh_wall_back")
+
+[node name="LeftWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.2, 1.1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftWall"]
+shape = SubResource("BoxShape3D_wall_side")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftWall"]
+material_override = ExtResource("13_wall")
+mesh = SubResource("BoxMesh_wall_side")
+
+[node name="RightWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.2, 1.1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RightWall"]
+shape = SubResource("BoxShape3D_wall_side")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RightWall"]
+material_override = ExtResource("13_wall")
+mesh = SubResource("BoxMesh_wall_side")
+
+[node name="CoverNearStart" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.4, 0.6, -5.6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CoverNearStart"]
+shape = SubResource("BoxShape3D_cover")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CoverNearStart"]
+material_override = ExtResource("14_cover")
+mesh = SubResource("BoxMesh_cover")
+
+[node name="CoverMidRight" type="StaticBody3D" parent="."]
+transform = Transform3D(0.70710677, 0, -0.70710677, 0, 1, 0, 0.70710677, 0, 0.70710677, 4.7, 0.6, 2.4)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CoverMidRight"]
+shape = SubResource("BoxShape3D_cover")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CoverMidRight"]
+material_override = ExtResource("14_cover")
+mesh = SubResource("BoxMesh_cover")
+
+[node name="LeftColumn" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.5, 1.35, 4.2)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftColumn"]
+shape = SubResource("BoxShape3D_column")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftColumn"]
+material_override = ExtResource("14_cover")
+mesh = SubResource("BoxMesh_column")
+
+[node name="RightColumn" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 1.35, 4.2)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RightColumn"]
+shape = SubResource("BoxShape3D_column")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RightColumn"]
+material_override = ExtResource("14_cover")
+mesh = SubResource("BoxMesh_column")
+
+[node name="OilPatch" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0.08, 0.5)
+script = ExtResource("11_surface")
+surface_name = "Oil"
+status_effect = "oily"
+status_source = "prototype_oil_patch"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="OilPatch"]
+shape = SubResource("BoxShape3D_patch")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="OilPatch"]
+material_override = ExtResource("15_oil")
+mesh = SubResource("BoxMesh_patch")
+
+[node name="WaterPatch" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.4, 0.09, 0.8)
+script = ExtResource("11_surface")
+surface_name = "Water"
+status_effect = "wet"
+status_source = "prototype_water_patch"
+removes_statuses = Array[String](["oily", "burning"])
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WaterPatch"]
+shape = SubResource("BoxShape3D_patch")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WaterPatch"]
+material_override = ExtResource("16_water")
+mesh = SubResource("BoxMesh_patch")
+
+[node name="ManaShrine" parent="." instance=ExtResource("8_mana")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.8, 1.0, -8.2)
+
+[node name="ManaShrineGlow" type="MeshInstance3D" parent="ManaShrine"]
+transform = Transform3D(1.25, 0, 0, 0, 1.25, 0, 0, 0, 1.25, 0, 1.1, 0)
+material_override = ExtResource("17_mana_glow")
+mesh = SubResource("SphereMesh_glow")
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, -8.7)
+
+[node name="GremlinDrone" parent="." instance=ExtResource("10_gremlin")]
+transform = Transform3D(0.75, 0, 0, 0, 0.75, 0, 0, 0, 0.75, -2.2, 0.58, 3.0)
+
+[node name="GoblinDrone" parent="." instance=ExtResource("9_goblin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 0.58, 4.8)
+
+[node name="ReadableMagicGate" parent="." instance=ExtResource("6_gate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8.8)
+
+[node name="ExitGlow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 11.4)
+material_override = ExtResource("18_exit_glow")
+mesh = SubResource("BoxMesh_exit_marker")
+
+[node name="LevelExit" parent="." instance=ExtResource("7_exit")]
+transform = Transform3D(1.25, 0, 0, 0, 1.25, 0, 0, 0, 1.25, 0, 1.0, 11.4)
+completion_message = "Visual test room cleared. The color language works."
+objective_after = "Prototype visual test complete."

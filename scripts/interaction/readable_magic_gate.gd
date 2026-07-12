@@ -5,12 +5,14 @@ extends StaticBody3D
 @export var barrier_path: NodePath = NodePath("Barrier")
 @export var collision_path: NodePath = NodePath("BarrierCollision")
 @export var frame_stays_after_unlock: bool = true
+@export var auto_add_encounter_reward_group: bool = true
 
 var is_unlocked: bool = false
 
 
 func _ready() -> void:
-	add_to_group("encounter_reward")
+	if auto_add_encounter_reward_group:
+		add_to_group("encounter_reward")
 
 
 func unlock() -> void:
@@ -54,4 +56,5 @@ func get_debug_data() -> Dictionary:
 		"gate": gate_name,
 		"unlocked": is_unlocked,
 		"frame_stays": frame_stays_after_unlock,
+		"encounter_reward": auto_add_encounter_reward_group,
 	}

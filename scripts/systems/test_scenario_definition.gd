@@ -19,7 +19,7 @@ func get_prop_offset(index: int) -> Vector3:
 
 
 func get_guidance_text() -> String:
-	var lines: Array[String] = [display_name]
+	var lines: PackedStringArray = [display_name]
 
 	if description != "":
 		lines.append(description)

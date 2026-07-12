@@ -28,6 +28,11 @@ func unlock() -> void:
 
 
 func disable_barrier() -> void:
+	hide_barrier_visual()
+	disable_gate_collision()
+
+
+func hide_barrier_visual() -> void:
 	var barrier: Node = get_node_or_null(barrier_path)
 
 	if barrier is Node3D:
@@ -37,11 +42,34 @@ func disable_barrier() -> void:
 		var barrier_canvas_item: CanvasItem = barrier as CanvasItem
 		barrier_canvas_item.visible = false
 
-	var collision_node: Node = get_node_or_null(collision_path)
 
-	if collision_node is CollisionShape3D:
-		var collision_shape: CollisionShape3D = collision_node as CollisionShape3D
-		collision_shape.disabled = true
+func disable_gate_collision() -> void:
+	# Clear the body itself first. This protects gate instances even if a collision
+	# shape is renamed, inherited, duplicated, or nested deeper than expected.
+	collision_layer = 0
+	collision_mask = 0
+	set_deferred("collision_layer", 0)
+	set_deferred("collision_mask", 0)
+
+	var named_collision: Node = get_node_or_null(collision_path)
+
+	if named_collision is CollisionShape3D:
+		disable_collision_shape(named_collision as CollisionShape3D)
+
+	disable_collision_shapes_recursive(self)
+
+
+func disable_collision_shapes_recursive(node: Node) -> void:
+	for child: Node in node.get_children():
+		if child is CollisionShape3D:
+			disable_collision_shape(child as CollisionShape3D)
+
+		disable_collision_shapes_recursive(child)
+
+
+func disable_collision_shape(collision_shape: CollisionShape3D) -> void:
+	collision_shape.disabled = true
+	collision_shape.set_deferred("disabled", true)
 
 
 func show_message(text: String) -> void:
@@ -57,4 +85,6 @@ func get_debug_data() -> Dictionary:
 		"unlocked": is_unlocked,
 		"frame_stays": frame_stays_after_unlock,
 		"encounter_reward": auto_add_encounter_reward_group,
+		"collision_layer": collision_layer,
+		"collision_mask": collision_mask,
 	}

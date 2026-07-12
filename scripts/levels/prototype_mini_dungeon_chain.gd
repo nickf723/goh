@@ -1,17 +1,20 @@
 extends Node3D
 
 const SaveBedScene = preload("res://scenes/actors/interactables/save_bed.tscn")
+const DeathRetryFromSaveScript = preload("res://scripts/systems/death_retry_from_save.gd")
 
 @export var opening_objective: String = "Enter the trial chain. Clear the combat room, then solve the element lock."
 @export var opening_message: String = "Prototype mini-dungeon: shrine, combat, element lock."
 @export var apply_save_on_ready: bool = true
 @export var add_entry_save_bed: bool = true
+@export var enable_death_retry_from_save: bool = true
 @export var entry_save_bed_position: Vector3 = Vector3(4.75, 0.12, -5.0)
 
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	spawn_entry_save_bed()
+	spawn_death_retry_controller()
 	await get_tree().process_frame
 
 	if apply_save_on_ready and GameState.apply_save_for_current_scene():
@@ -44,6 +47,19 @@ func spawn_entry_save_bed() -> void:
 
 	if "bed_display_name" in bed:
 		bed.set("bed_display_name", "Mini-Dungeon Entry Bed")
+
+
+func spawn_death_retry_controller() -> void:
+	if not enable_death_retry_from_save:
+		return
+
+	if get_node_or_null("DeathRetryFromSave") != null:
+		return
+
+	var retry_controller: Node = Node.new()
+	retry_controller.name = "DeathRetryFromSave"
+	retry_controller.set_script(DeathRetryFromSaveScript)
+	add_child(retry_controller)
 
 
 func show_message(text: String) -> void:

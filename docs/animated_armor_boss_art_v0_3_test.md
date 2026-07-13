@@ -140,7 +140,7 @@ Confirm no earlier room, transition, spell, enemy, save, or reward behavior chan
 
 ## CI and export
 
-GitHub Actions run #34 passed on commit `6e6df13ef699c16db8c0f8f6168048a3e94e1ca0`.
+GitHub Actions run #35 passed on the exact PR head before final review.
 
 The workflow completed:
 

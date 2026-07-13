@@ -47,6 +47,20 @@ Confirm the art wrapper does not alter:
 
 Pay special attention to whether the visible feet agree reasonably with the ground and whether the model fits inside the existing collision capsule.
 
+## Projectile free-aim regression
+
+1. Leave lock-on disabled.
+2. Select Firebolt, Water Bolt, Ice Lance, or another projectile spell.
+3. Aim the camera forward with its normal slightly downward third-person framing.
+4. Cast and confirm the projectile leaves Grace at chest height and travels forward rather than immediately striking the floor.
+5. Turn the camera left and right, cast again, and confirm the projectile follows the camera heading.
+6. Aim the camera upward and confirm unlocked casts can still travel upward.
+7. Lock onto an enemy and cast again.
+8. Confirm lock-on continues to aim at the target's center mass.
+9. Confirm non-projectile pulses, hazards, movement spells, and other abilities behave as before.
+
+Unlocked projectile casts intentionally ignore downward camera pitch so the standard third-person view does not fire into the floor. Lock-on remains the precise vertical aiming mode.
+
 ## Church entry dressing
 
 Before entering combat, inspect the opening room.
@@ -121,7 +135,7 @@ Judge:
 
 - Grace is an assembled low-poly proxy, not a rigged production model.
 - Her limbs do not yet use a skeleton or authored animations.
-- The practice sword still uses its prototype visual and anchor.
+- The practice sword still uses its prototype visual.
 - Only the Church entry has been redressed.
 - Goblin, Gremlin, Animated Armor, interactables, surfaces, gates, and later rooms remain prototype art.
 - No final textures, UVs, facial rig, cloth simulation, post-processing, or bespoke environment models are included.

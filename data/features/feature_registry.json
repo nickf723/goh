@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "features": [
+    {
+      "id": "church_trial",
+      "order": 10,
+      "display_name": "Church Trial",
+      "category": "Playable Vertical Slice",
+      "version": "v0.1+",
+      "status": "vertical_slice",
+      "description": "The integrated Church of Angels trial: exploration, elemental tests, combat rooms, Sound reveal, Animated Armor boss, reward, save flow, and exit.",
+      "scene": "res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn"
+      ],
+      "automated_tests": [],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON"
+      ],
+      "manual_test": "docs/church_trial_vertical_slice_test.md",
+      "temporary_state": "persistent",
+      "story_integrated": true,
+      "limitations": [
+        "Prototype geometry and procedural art remain replacement-ready.",
+        "Only the first Church Trial slice is integrated into progression.",
+        "Final animation, audio, cinematics, and balance are not represented."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 5
+    },
+    {
+      "id": "elemental_reaction_lab",
+      "order": 20,
+      "display_name": "Elemental Reaction Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v0.5",
+      "status": "prototype_verified",
+      "description": "Permanent laboratory for Fire, Water, Ice, Lightning, and Sound readability plus Ignite, Conduct, Freeze, Shatter, Steam, and Reveal reactions.",
+      "scene": "res://scenes/levels/prototypes/prototype_elemental_reaction_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_elemental_reaction_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/elemental_reaction_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "FOCUS",
+        "CAST",
+        "LIGHT",
+        "RESET"
+      ],
+      "manual_test": "docs/elemental_reaction_lab_v0_5_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Only five of sixteen core elements receive the refreshed visual pass.",
+        "Effects are procedural prototypes rather than final authored VFX.",
+        "Laboratory targets prioritize deterministic testing over encounter AI."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 5
+    },
+    {
+      "id": "weapon_combat_arena",
+      "order": 30,
+      "display_name": "Weapon Combat Arena",
+      "category": "Systems Arena",
+      "version": "v0.6",
+      "status": "prototype_verified",
+      "description": "Three-class combat arena for buffered Light/Heavy branch testing with Sword, Hammer, and Spear, plus target geometry and live enemy pressure.",
+      "scene": "res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/weapon_moveset_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON",
+        "RESET"
+      ],
+      "manual_test": "docs/weapon_combat_arena_v0_6_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Only Sword, Hammer, and Spear are represented.",
+        "Presentation is procedural and transform-driven rather than skeletal animation.",
+        "Blocking, parrying, aerial combat, and final balance are out of scope."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 5
+    },
+    {
+      "id": "runtime_stat_lab",
+      "order": 40,
+      "display_name": "Runtime Stat Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v0.7",
+      "status": "prototype_verified",
+      "description": "Safe runtime chamber for resource overcharge, Infinite Stamina and Mana, Focus slowdown comparison, stat inspection, and exact snapshot restoration.",
+      "scene": "res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/runtime_stat_lab_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "weapon_combat_arena"
+      ],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "RESET"
+      ],
+      "manual_test": "docs/runtime_stat_lab_v0_7_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Most non-resource stats remain Partial or Dormant by design.",
+        "The chamber is a development instrument, not a player allocation menu.",
+        "No leveling, equipment bonuses, respec, or permanent cheat state is included."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 5
+    },
+    {
+      "id": "dev_interaction_sandbox",
+      "order": 50,
+      "display_name": "Dev Interaction Sandbox",
+      "category": "Development Sandbox",
+      "version": "ongoing",
+      "status": "development_tool",
+      "description": "General-purpose playground for interactables, receivers, surfaces, enemy waves, developer vision, audits, and rapid scenario experiments.",
+      "scene": "res://scenes/levels/_dev/dev_interaction_sandbox.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/_dev/dev_interaction_sandbox.tscn"
+      ],
+      "automated_tests": [],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "DEV VISION",
+        "SPAWN WAVE",
+        "CLEAR WAVE",
+        "AUDIT"
+      ],
+      "manual_test": "docs/dev_interaction_sandbox_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "The sandbox is intentionally eclectic rather than a designed encounter.",
+        "Objects may represent older and newer prototype generations side by side.",
+        "Sandbox state is disposable and is not a progression contract."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 5
+    },
+    {
+      "id": "development_control_center",
+      "order": 100,
+      "display_name": "Development Control Center",
+      "category": "Infrastructure",
+      "version": "v0.8",
+      "status": "infrastructure",
+      "description": "Registry-driven controller-first launcher and health dashboard for permanent development scenes and their validation contracts.",
+      "scene": "res://scenes/ui/development_control_center_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/ui/development_control_center_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/architecture_contract_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "church_trial",
+        "elemental_reaction_lab",
+        "weapon_combat_arena",
+        "runtime_stat_lab",
+        "dev_interaction_sandbox"
+      ],
+      "controls": [
+        "NAVIGATE",
+        "SELECT",
+        "BACK"
+      ],
+      "manual_test": "docs/development_control_center_v0_8_test.md",
+      "temporary_state": "none",
+      "story_integrated": false,
+      "limitations": [
+        "This is a developer launcher, not a production level-select menu.",
+        "It does not inspect open pull requests or resolve branch conflicts.",
+        "It reports registry and local resource health, not creative quality."
+      ],
+      "launchable": true,
+      "visible_in_launcher": false,
+      "ci_validate": true,
+      "timeout_seconds": 5
+    }
+  ]
+}

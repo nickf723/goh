@@ -11,6 +11,45 @@ This file is a navigation aid for assistant-driven development.
   - `HitStop`
   - `FullMenuDirector`
 
+## Canonical feature registry
+
+Permanent development scenes and their validation contracts are registered in:
+
+```txt
+data/features/feature_registry.json
+```
+
+The registry is the source of truth for:
+
+- feature IDs and display order;
+- launcher visibility;
+- playable and validation scene paths;
+- automated test scenes;
+- feature-level dependencies;
+- maturity/status and version;
+- semantic controls;
+- temporary-state policy;
+- story-integration status;
+- manual test documents;
+- known limitations.
+
+Do not maintain another hard-coded list of permanent laboratories, arenas, sandboxes, or validation scenes.
+
+Key infrastructure:
+
+```txt
+scripts/systems/feature_registry.gd
+scripts/ui/development_control_center.gd
+scenes/ui/development_control_center_v1.tscn
+scripts/ci/validate_feature_registry.py
+scripts/ci/run_feature_registry.py
+scripts/tests/architecture_contract_smoke_test.gd
+scenes/tests/architecture_contract_smoke_test.tscn
+docs/feature_registry.md
+```
+
+The Development Control Center reads the registry at runtime. The Python validator and GitHub Actions runner read the same JSON. A new permanent feature should require a registry edit, not a workflow-YAML edit.
+
 ## Input actions
 
 Core actions currently include:
@@ -32,6 +71,7 @@ spell_menu
 restart_scene
 toggle_dev_vision
 lock_on / lock_on_previous / lock_on_next
+ui_up / ui_down / ui_accept / ui_cancel
 ```
 
 Development scenes and player-facing instructions should name semantic actions rather than fixed physical buttons:
@@ -45,6 +85,9 @@ CAST
 DODGE
 LOCK-ON
 RESET
+NAVIGATE
+SELECT
+BACK
 ```
 
 The current controller layout may be remapped by the user. `WeaponInputBootstrap` may install missing keyboard/controller categories, but it must not add another joypad binding when `weapon_heavy_attack` already has one.
@@ -130,7 +173,7 @@ Add future weapon classes through data first. Do not add class-specific conditio
 
 ### Stats and runtime resources
 
-`StatCatalog` owns stable ids, defaults, grouping, descriptions, and elemental-affinity hooks. `GameState` owns the current runtime values and emits `stat_changed`.
+`StatCatalog` owns stable IDs, defaults, grouping, descriptions, and elemental-affinity hooks. `GameState` owns current runtime values and emits `stat_changed`.
 
 Current action-resource pairs:
 
@@ -149,14 +192,14 @@ Health, Stamina, Mana, Stance, Focus
 
 PARTIAL
 Power, Dexterity, Arcana, Intelligence
-Elemental affinity ids
+Elemental affinity IDs
 
 DORMANT
 Defense, Resilience, Constitution, Evasion
 Charisma, Skill, Luck
 ```
 
-`PARTIAL` means definitions or scaling metadata reference the stat, but no production formula changes damage/timing yet. `DORMANT` means the stable catalog id exists without an active gameplay reader.
+`PARTIAL` means definitions or scaling metadata reference the stat, but no production formula changes damage or timing yet. `DORMANT` means the stable catalog ID exists without an active gameplay reader.
 
 The reusable temporary test-session stack is:
 
@@ -277,24 +320,54 @@ sound detection -> reveal
 
 Weapon attacks participate through ordinary payload tags such as `force`, `blunt`, `pierce`, `light`, and `heavy`. They should not call reaction rules directly.
 
-### Prototype laboratories and arenas
+## Registered permanent features
 
-Permanent development scenes currently include:
+The current registry contains:
 
 ```txt
-scenes/levels/prototypes/prototype_elemental_reaction_lab_v1.tscn
-scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn
-scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn
+church_trial
+    scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn
+
+elemental_reaction_lab
+    scenes/levels/prototypes/prototype_elemental_reaction_lab_v1.tscn
+
+weapon_combat_arena
+    scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn
+
+runtime_stat_lab
+    scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn
+
+dev_interaction_sandbox
+    scenes/levels/_dev/dev_interaction_sandbox.tscn
+
+development_control_center
+    scenes/ui/development_control_center_v1.tscn
 ```
 
-The Elemental Reaction Laboratory provides:
+Use the registry for current metadata rather than duplicating version, dependency, status, or test-path details here.
+
+### Church Trial
+
+The integrated player-facing route covers exploration, elemental tests, combat rooms, Sound reveal, Animated Armor, reward, save flow, and exit.
+
+Manual regression:
+
+```txt
+docs/church_trial_vertical_slice_test.md
+```
+
+### Elemental Reaction Laboratory
+
+Provides:
 
 - Fire, Water, Ice, Lightning, and Sound readability tests;
 - target and surface reaction stations;
 - resettable status/reaction state;
 - permanent recipe-development space.
 
-The Weapon Combat Arena provides:
+### Weapon Combat Arena
+
+Provides:
 
 - Sword, Hammer, and Spear equip racks;
 - resettable force-aware training targets;
@@ -303,7 +376,9 @@ The Weapon Combat Arena provides:
 - transient hit-volume debugging;
 - reset console and editor F8 reset.
 
-The Runtime Stat Laboratory provides:
+### Runtime Stat Laboratory
+
+Provides:
 
 - Stamina and Mana baseline/1000/Infinite controls;
 - weapon and spell spend telemetry;
@@ -314,7 +389,25 @@ The Runtime Stat Laboratory provides:
 - exact entry-snapshot reset and safe exit restoration;
 - semantic controller-first instructions.
 
-### Development automation
+### Dev Interaction Sandbox
+
+Provides a broad disposable workbench for interactables, receivers, surfaces, enemy waves, developer vision, audits, and rapid scenario experiments.
+
+Dedicated laboratories remain authoritative for focused feel and regression judgments.
+
+### Development Control Center
+
+Provides:
+
+- controller-first feature navigation;
+- registry-driven descriptions and status;
+- dependency and state-policy visibility;
+- launch validation and disabled invalid entries;
+- one entry point for permanent development scenes.
+
+It is developer infrastructure, not a production level-select menu.
+
+## Development automation
 
 Key files:
 
@@ -324,45 +417,64 @@ scripts/systems/dev_sandbox_director.gd
 scripts/tests/weapon_moveset_smoke_test.gd
 scripts/tests/elemental_reaction_smoke_test.gd
 scripts/tests/runtime_stat_lab_smoke_test.gd
+scripts/tests/architecture_contract_smoke_test.gd
+scripts/ci/validate_agent_profiles.py
+scripts/ci/validate_feature_registry.py
+scripts/ci/run_feature_registry.py
+scripts/ci/validate_project.ps1
 ```
 
 Current dev loop:
 
 ```txt
-F6 spawn wave
-F7 clear wave
+F6 spawn wave where supported
+F7 clear wave where supported
 F8 run audit or reset the active dedicated lab/arena
+Development Control Center launches registered permanent scenes
 ```
 
 CI validates:
 
 ```txt
+custom agent profiles
+feature-registry schema, paths, docs, dependencies, and cycles
 project import
-main startup
-Church Trial startup
-Elemental Reaction Lab startup and recipes
-Weapon Combat Arena startup and moveset graphs
-Runtime Stat Laboratory startup and stat-session restoration
+production main startup
+every registered validation scene
+every registered automated test
+architecture contracts
 Windows export
+artifact upload
 ```
+
+The GitHub Actions workflow must not enumerate each laboratory manually. `run_feature_registry.py` discovers CI-enabled scenes and tests from the JSON registry.
+
+The architecture contract test currently checks:
+
+- runtime registry loading and registered resources;
+- action-resource current/max pairs;
+- semantic UI, interaction, combat, Focus, cast, and dodge inputs;
+- Sword, Hammer, and Spear moveset graphs and payload tags;
+- starting loadout ability scene/payload references;
+- scaling-stat IDs.
 
 ## Recommended future automation
 
 ### Enemy factory
 
-Goal: let new prototype enemies be generated/configured from data rather than hand-built scene editing.
+Goal: let new prototype enemies be generated and configured from data rather than hand-built scene editing.
 
 ### Ability factory
 
-Goal: let new spells be created from ability definition + action scene + payload patterns.
+Goal: let new spells be created from ability definition, action scene, and payload patterns.
 
 ### Weapon moveset factory
 
-Goal: generate a validated attack graph skeleton, payload profile, prototype visual identity, and arena rack from a weapon-class specification.
+Goal: generate a validated attack graph skeleton, payload profile, prototype visual identity, arena rack, registry entry, and test template from a weapon-class specification.
 
 ### Stat formula harness
 
-Goal: add production formulas one category at a time and compare baseline/boost/overcharge behavior in the existing Runtime Stat Laboratory before those formulas enter story scenes.
+Goal: add production formulas one category at a time and compare baseline, boost, and overcharge behavior in the existing Runtime Stat Laboratory before those formulas enter story scenes.
 
 ### Receiver installer
 
@@ -381,3 +493,5 @@ spawn_test("sound_reveal_puzzle")
 spawn_test("hammer_shatter_trial")
 spawn_test("stamina_overcharge_combo")
 ```
+
+Future factories should write or propose feature-registry entries when they create permanent scenes. They should not silently promote scratch content into the canonical inventory.

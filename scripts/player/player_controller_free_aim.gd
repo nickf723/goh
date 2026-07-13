@@ -2,6 +2,9 @@ extends "res://scripts/player/player_controller.gd"
 
 @export_range(0.0, 1.0, 0.01) var unlocked_cast_max_upward_component: float = 0.45
 
+var combat_motion_velocity: Vector3 = Vector3.ZERO
+var combat_motion_timer: float = 0.0
+
 
 func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
 	if has_lock_on_target():
@@ -26,3 +29,59 @@ func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
 		return Vector3.FORWARD
 
 	return cast_direction.normalized()
+
+
+func begin_combat_motion(direction: Vector3, distance: float, duration: float) -> void:
+	if distance <= 0.0 or duration <= 0.0:
+		return
+
+	var horizontal_direction: Vector3 = direction
+	horizontal_direction.y = 0.0
+
+	if horizontal_direction.length() <= 0.01:
+		return
+
+	combat_motion_timer = duration
+	combat_motion_velocity = horizontal_direction.normalized() * (distance / duration)
+
+
+func cancel_combat_motion() -> void:
+	combat_motion_timer = 0.0
+	combat_motion_velocity = Vector3.ZERO
+
+
+func _physics_process(delta: float) -> void:
+	if dodge_controller != null and dodge_controller.is_dodge_active():
+		cancel_combat_motion()
+		super._physics_process(delta)
+		return
+
+	if combat_motion_timer <= 0.0:
+		super._physics_process(delta)
+		return
+
+	if is_defeated:
+		cancel_combat_motion()
+		super._physics_process(delta)
+		return
+
+	combat_motion_timer -= delta
+	velocity.x = combat_motion_velocity.x
+	velocity.z = combat_motion_velocity.z
+
+	if not is_on_floor():
+		velocity.y -= gravity * delta
+	elif velocity.y < 0.0:
+		velocity.y = -0.1
+
+	move_and_slide()
+
+	if combat_motion_timer <= 0.0:
+		cancel_combat_motion()
+
+
+func get_combat_motion_debug_data() -> Dictionary:
+	return {
+		"combat_motion": snapped(combat_motion_timer, 0.01),
+		"combat_velocity": combat_motion_velocity,
+	}

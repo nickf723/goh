@@ -11,6 +11,11 @@ class_name StatLabStation
 	"minimum",
 	"full",
 	"damage",
+	"select_previous",
+	"select_next",
+	"selected_baseline",
+	"selected_boost",
+	"selected_overcharge",
 	"reset_all",
 	"exit"
 )
@@ -112,6 +117,16 @@ func get_action_display_name() -> String:
 			return "RESTORE TO FULL"
 		"damage":
 			return (action_context.to_upper() + " " if action_context != "" else "") + "-" + str(max(action_value, 1))
+		"select_previous":
+			return "PREVIOUS SELECTED STAT"
+		"select_next":
+			return "NEXT SELECTED STAT"
+		"selected_baseline":
+			return "SELECTED → BASELINE"
+		"selected_boost":
+			return "SELECTED → 10"
+		"selected_overcharge":
+			return "SELECTED → 1000"
 		"reset_all":
 			return "RESTORE ENTRY SNAPSHOT"
 		"exit":

@@ -60,7 +60,7 @@ print_attack_debug = true
 metadata/_custom_type_script = "uid://dl8yw5cwab03v"
 
 [node name="HandAnchor" type="Node3D" parent="WeaponController" unique_id=984196414]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0, -0.15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.84, -0.15)
 
 [node name="WeaponVisualPivot" type="Node3D" parent="WeaponController/HandAnchor" unique_id=1406066353]
 

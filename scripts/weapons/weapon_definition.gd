@@ -24,6 +24,7 @@ var weapon_class: String = "sword"
 @export var display_name: String = "Practice Sword"
 @export var description: String = ""
 
+@export_group("Base Attributes")
 @export var damage: int = 1
 @export var stance_damage: int = 1
 @export var range: float = 2.0
@@ -33,10 +34,21 @@ var weapon_class: String = "sword"
 @export var max_targets: int = 3
 @export var stamina_cost: int = 0
 
+@export_group("Moveset")
+@export var moveset: WeaponMovesetDefinition
+
+@export_group("Prototype Visual Identity")
+@export var visual_primary_color: Color = Color(0.72, 0.78, 0.9, 1.0)
+@export var visual_secondary_color: Color = Color(0.22, 0.18, 0.28, 1.0)
+@export var visual_accent_color: Color = Color(1.0, 0.78, 0.28, 1.0)
+@export var visual_scale: float = 1.0
+
 # Pure metadata for build identity. These do not alter weapon damage yet.
+@export_group("Scaling Identity")
 @export var scaling_stats: Array[String] = ["power", "dexterity"]
 @export_multiline var scaling_note: String = "Prototype weapon scaling identity only. Damage formulas are not active yet."
 
+@export_group("Fallback Payload")
 @export var light_payload: DamagePayload
 
 
@@ -44,7 +56,7 @@ func get_light_payload() -> DamagePayload:
 	var payload: DamagePayload
 
 	if light_payload != null:
-		payload = light_payload.duplicate(true)
+		payload = light_payload.duplicate(true) as DamagePayload
 	else:
 		payload = DamagePayload.new()
 		payload.source_name = display_name
@@ -64,6 +76,14 @@ func get_light_payload() -> DamagePayload:
 		payload.tags.append("melee")
 
 	return payload
+
+
+func get_moveset() -> WeaponMovesetDefinition:
+	return moveset
+
+
+func has_moveset() -> bool:
+	return moveset != null and moveset.attacks.size() > 0
 
 
 func get_scaling_stats() -> Array[String]:
@@ -95,3 +115,23 @@ func get_scaling_summary() -> String:
 		return "none"
 
 	return " / ".join(resolved_scaling)
+
+
+func get_combat_summary() -> String:
+	var moveset_name: String = "legacy swing"
+	if moveset != null:
+		moveset_name = moveset.display_name
+
+	return (
+		display_name
+		+ " | "
+		+ weapon_class
+		+ " | dmg "
+		+ str(damage)
+		+ " | stance "
+		+ str(stance_damage)
+		+ " | speed "
+		+ str(attack_speed)
+		+ " | "
+		+ moveset_name
+	)

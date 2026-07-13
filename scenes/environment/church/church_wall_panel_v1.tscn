@@ -1,0 +1,76 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://art/materials/church/church_stone_charcoal_v1.tres" id="1_dark"]
+[ext_resource type="Material" path="res://art/materials/church/church_stone_warm_v1.tres" id="2_warm"]
+[ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="3_gold"]
+[ext_resource type="Material" path="res://art/materials/church/church_violet_glow_v1.tres" id="4_violet"]
+
+[sub_resource type="BoxMesh" id="Mesh_back"]
+size = Vector3(3.0, 3.8, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_recess"]
+size = Vector3(2.5, 3.25, 0.12)
+
+[sub_resource type="BoxMesh" id="Mesh_frame_vertical"]
+size = Vector3(0.11, 3.35, 0.1)
+
+[sub_resource type="BoxMesh" id="Mesh_frame_horizontal"]
+size = Vector3(2.6, 0.11, 0.1)
+
+[sub_resource type="TorusMesh" id="Mesh_sigil"]
+inner_radius = 0.48
+outer_radius = 0.58
+rings = 20
+ring_segments = 8
+
+[sub_resource type="BoxMesh" id="Mesh_ray"]
+size = Vector3(0.08, 1.45, 0.07)
+
+[node name="ChurchWallPanelV1" type="Node3D"]
+
+[node name="Backing" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.0, 0)
+material_override = ExtResource("1_dark")
+mesh = SubResource("Mesh_back")
+
+[node name="Recess" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.0, -0.14)
+material_override = ExtResource("2_warm")
+mesh = SubResource("Mesh_recess")
+
+[node name="FrameLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-1.28, 2.0, -0.22)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_frame_vertical")
+
+[node name="FrameRight" type="MeshInstance3D" parent="."]
+position = Vector3(1.28, 2.0, -0.22)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_frame_vertical")
+
+[node name="FrameTop" type="MeshInstance3D" parent="."]
+position = Vector3(0, 3.65, -0.22)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_frame_horizontal")
+
+[node name="FrameBottom" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.35, -0.22)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_frame_horizontal")
+
+[node name="Sigil" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.18, -0.28)
+rotation_degrees = Vector3(90, 0, 0)
+material_override = ExtResource("4_violet")
+mesh = SubResource("Mesh_sigil")
+
+[node name="SigilRayVertical" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.18, -0.28)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_ray")
+
+[node name="SigilRayDiagonal" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.18, -0.28)
+rotation_degrees = Vector3(0, 0, 90)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_ray")

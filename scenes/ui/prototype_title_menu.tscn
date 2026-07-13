@@ -1,0 +1,266 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/prototype_title_menu.gd" id="1_menu"]
+
+[sub_resource type="StyleBoxFlat" id="Style_panel"]
+bg_color = Color(0.055, 0.045, 0.09, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.58, 0.42, 0.12, 0.9)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 30.0
+content_margin_top = 28.0
+content_margin_right = 30.0
+content_margin_bottom = 28.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button"]
+bg_color = Color(0.12, 0.09, 0.19, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.48, 0.36, 0.16, 0.8)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button_hover"]
+bg_color = Color(0.23, 0.13, 0.34, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.95, 0.68, 0.19, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 15.0
+content_margin_top = 9.0
+content_margin_right = 15.0
+content_margin_bottom = 9.0
+
+[node name="PrototypeTitleMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.018, 0.014, 0.035, 1)
+mouse_filter = 2
+
+[node name="VioletAtmosphere" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.035, 0.2, 0.28)
+mouse_filter = 2
+
+[node name="TopRule" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 4.0
+grow_horizontal = 2
+color = Color(0.83, 0.58, 0.14, 0.85)
+mouse_filter = 2
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainPanel" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(560, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_panel")
+
+[node name="Content" type="VBoxContainer" parent="Center/MainPanel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Eyebrow" type="Label" parent="Center/MainPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.66, 0.22, 1)
+theme_override_font_sizes/font_size = 16
+text = "CHURCH TRIAL PROTOTYPE"
+horizontal_alignment = 1
+
+[node name="Title" type="Label" parent="Center/MainPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.94, 1, 1)
+theme_override_font_sizes/font_size = 42
+text = "GRACE OF HUMANITY"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Center/MainPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.68, 0.82, 1)
+theme_override_font_sizes/font_size = 17
+text = "Force. Understanding. Perception. Resolve."
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="Center/MainPanel/Content"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="NewTrialButton" type="Button" parent="Center/MainPanel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/focus = SubResource("Style_button_hover")
+text = "New Trial"
+
+[node name="ContinueButton" type="Button" parent="Center/MainPanel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/focus = SubResource("Style_button_hover")
+text = "Continue"
+
+[node name="ControlsButton" type="Button" parent="Center/MainPanel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/focus = SubResource("Style_button_hover")
+text = "Controls"
+
+[node name="QuitButton" type="Button" parent="Center/MainPanel/Content"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/focus = SubResource("Style_button_hover")
+text = "Quit"
+
+[node name="StatusLabel" type="Label" parent="Center/MainPanel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.76, 0.9, 1)
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Version" type="Label" parent="Center/MainPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.46, 0.58, 1)
+theme_override_font_sizes/font_size = 14
+text = "v0.1.0 Prototype"
+horizontal_alignment = 1
+
+[node name="ControlsPanel" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="ControlsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.82)
+
+[node name="Center" type="CenterContainer" parent="ControlsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="ControlsPanel/Center"]
+custom_minimum_size = Vector2(680, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_panel")
+
+[node name="Content" type="VBoxContainer" parent="ControlsPanel/Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Heading" type="Label" parent="ControlsPanel/Center/Panel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.68, 0.19, 1)
+theme_override_font_sizes/font_size = 30
+text = "Controls"
+horizontal_alignment = 1
+
+[node name="Reference" type="Label" parent="ControlsPanel/Center/Panel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.88, 0.95, 1)
+theme_override_font_sizes/font_size = 18
+text = "WASD / Left Stick     Move\nMouse / Right Stick   Camera\nSpace / Y              Jump\nC / A                  Dodge\nE / B                  Interact\nLeft Click / X         Light attack\nQ / Right Trigger      Cast selected spell\nMiddle Mouse / L3      Hold Focus spell menu\n1–0 / D-pad            Select spells\nTab or M               Open full menu\nEsc                    Close this panel"
+horizontal_alignment = 1
+
+[node name="Note" type="Label" parent="ControlsPanel/Center/Panel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.58, 0.7, 1)
+text = "Prototype controls may change as the full game grows."
+horizontal_alignment = 1
+
+[node name="CloseControlsButton" type="Button" parent="ControlsPanel/Center/Panel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/focus = SubResource("Style_button_hover")
+text = "Back"
+
+[connection signal="pressed" from="Center/MainPanel/Content/NewTrialButton" to="." method="start_new_trial"]
+[connection signal="pressed" from="Center/MainPanel/Content/ContinueButton" to="." method="continue_trial"]
+[connection signal="pressed" from="Center/MainPanel/Content/ControlsButton" to="." method="show_controls"]
+[connection signal="pressed" from="Center/MainPanel/Content/QuitButton" to="." method="quit_game"]
+[connection signal="pressed" from="ControlsPanel/Center/Panel/Content/CloseControlsButton" to="." method="hide_controls"]

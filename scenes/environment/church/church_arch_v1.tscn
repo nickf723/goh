@@ -1,0 +1,85 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://art/materials/church/church_stone_charcoal_v1.tres" id="1_dark"]
+[ext_resource type="Material" path="res://art/materials/church/church_stone_warm_v1.tres" id="2_warm"]
+[ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="3_gold"]
+[ext_resource type="Material" path="res://art/materials/church/church_violet_glow_v1.tres" id="4_violet"]
+
+[sub_resource type="BoxMesh" id="Mesh_upright"]
+size = Vector3(0.72, 3.7, 0.8)
+
+[sub_resource type="BoxMesh" id="Mesh_arch_stone"]
+size = Vector3(2.25, 0.62, 0.82)
+
+[sub_resource type="BoxMesh" id="Mesh_keystone"]
+size = Vector3(0.82, 0.92, 0.92)
+
+[sub_resource type="BoxMesh" id="Mesh_gold_upright"]
+size = Vector3(0.1, 2.9, 0.08)
+
+[sub_resource type="BoxMesh" id="Mesh_gold_diagonal"]
+size = Vector3(1.75, 0.1, 0.08)
+
+[sub_resource type="TorusMesh" id="Mesh_halo"]
+inner_radius = 1.05
+outer_radius = 1.14
+rings = 20
+ring_segments = 8
+
+[node name="ChurchArchV1" type="Node3D"]
+
+[node name="LeftUpright" type="MeshInstance3D" parent="."]
+position = Vector3(-2.0, 1.85, 0)
+material_override = ExtResource("1_dark")
+mesh = SubResource("Mesh_upright")
+
+[node name="RightUpright" type="MeshInstance3D" parent="."]
+position = Vector3(2.0, 1.85, 0)
+material_override = ExtResource("1_dark")
+mesh = SubResource("Mesh_upright")
+
+[node name="LeftArchStone" type="MeshInstance3D" parent="."]
+position = Vector3(-1.06, 4.02, 0)
+rotation_degrees = Vector3(0, 0, -35)
+material_override = ExtResource("2_warm")
+mesh = SubResource("Mesh_arch_stone")
+
+[node name="RightArchStone" type="MeshInstance3D" parent="."]
+position = Vector3(1.06, 4.02, 0)
+rotation_degrees = Vector3(0, 0, 35)
+material_override = ExtResource("2_warm")
+mesh = SubResource("Mesh_arch_stone")
+
+[node name="Keystone" type="MeshInstance3D" parent="."]
+position = Vector3(0, 4.85, 0)
+rotation_degrees = Vector3(0, 0, 45)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_keystone")
+
+[node name="LeftGoldLine" type="MeshInstance3D" parent="."]
+position = Vector3(-1.62, 1.72, -0.45)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_gold_upright")
+
+[node name="RightGoldLine" type="MeshInstance3D" parent="."]
+position = Vector3(1.62, 1.72, -0.45)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_gold_upright")
+
+[node name="LeftGoldArch" type="MeshInstance3D" parent="."]
+position = Vector3(-0.86, 3.72, -0.45)
+rotation_degrees = Vector3(0, 0, -35)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_gold_diagonal")
+
+[node name="RightGoldArch" type="MeshInstance3D" parent="."]
+position = Vector3(0.86, 3.72, -0.45)
+rotation_degrees = Vector3(0, 0, 35)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_gold_diagonal")
+
+[node name="VioletHalo" type="MeshInstance3D" parent="."]
+position = Vector3(0, 3.65, 0.38)
+rotation_degrees = Vector3(90, 0, 0)
+material_override = ExtResource("4_violet")
+mesh = SubResource("Mesh_halo")

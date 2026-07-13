@@ -15,7 +15,7 @@ const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 @export var add_sound_transition: bool = true
 @export_file("*.tscn") var sound_scene_path: String = "res://scenes/levels/prototypes/prototype_sound_reveal_bridge_v1.tscn"
 @export var sound_transition_position: Vector3 = Vector3(0.0, 1.0, 70.0)
-@export var sound_transition_scale: Vector3 = Vector3(8.5, 1.0, 1.25)
+@export var sound_transition_scale: Vector3 = Vector3(12.0, 1.0, 1.25)
 @export var sound_transition_message: String = "The elemental seal yields. The Church's next chamber listens for what sight cannot find."
 @export var sound_transition_objective: String = "Use Sound Pulse to reveal the hidden path."
 
@@ -110,6 +110,11 @@ func spawn_sound_transition() -> void:
 	transition.set("objective_after", sound_transition_objective)
 	transition.set("next_scene_path", sound_scene_path)
 	transition.set("triggers_on_touch", true)
+
+	var transition_visual: Node3D = transition.get_node_or_null("MeshInstance3D") as Node3D
+	if transition_visual != null:
+		transition_visual.visible = false
+
 	add_child(transition)
 	transition.global_position = sound_transition_position
 

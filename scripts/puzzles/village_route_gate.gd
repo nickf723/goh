@@ -28,8 +28,8 @@ func _ready() -> void:
 	add_to_group("village_route_gate")
 	add_to_group("debuggable")
 
-	if completion_flag != "" and GameState.get_flag(completion_flag):
-		open_gate("restored")
+	sync_from_game_state()
+	if is_open:
 		return
 
 	if starts_frozen:
@@ -48,6 +48,13 @@ func _process(delta: float) -> void:
 		is_frozen = false
 		set_visual_tint(Color(0.42, 0.31, 0.2, 1.0), false)
 		show_message("The ice coating melts away.")
+
+
+func sync_from_game_state() -> void:
+	if completion_flag == "":
+		return
+	if GameState.get_flag(completion_flag):
+		open_gate("restored", false)
 
 
 func receive_damage_payload(payload: DamagePayload) -> Dictionary:
@@ -95,7 +102,7 @@ func unlock() -> void:
 	open_gate("encounter")
 
 
-func open_gate(method: String = "unknown") -> void:
+func open_gate(method: String = "unknown", update_progress: bool = true) -> void:
 	if is_open:
 		return
 
@@ -107,16 +114,21 @@ func open_gate(method: String = "unknown") -> void:
 		collision_shape.set_deferred("disabled", true)
 
 	if visual_root != null:
-		var tween: Tween = create_tween()
-		tween.set_parallel(true)
-		tween.tween_property(visual_root, "position:y", visual_root.position.y - 3.2, 0.55)
-		tween.tween_property(visual_root, "scale", Vector3(1.0, 0.15, 1.0), 0.55)
+		if method == "restored":
+			visual_root.position.y -= 3.2
+			visual_root.scale = Vector3(1.0, 0.15, 1.0)
+		else:
+			var tween: Tween = create_tween()
+			tween.set_parallel(true)
+			tween.tween_property(visual_root, "position:y", visual_root.position.y - 3.2, 0.55)
+			tween.tween_property(visual_root, "scale", Vector3(1.0, 0.15, 1.0), 0.55)
 
-	if completion_flag != "":
-		GameState.set_flag(completion_flag, true)
+	if update_progress:
+		if completion_flag != "":
+			GameState.set_flag(completion_flag, true)
 
-	if objective_after != "":
-		GameState.set_objective(objective_after)
+		if objective_after != "":
+			GameState.set_objective(objective_after)
 
 	if method == "encounter":
 		show_message(display_name + " unlocks after the encounter.")

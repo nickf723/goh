@@ -1,0 +1,181 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_boss_dungeon_chain.gd" id="1_director"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Script" path="res://scripts/systems/death_retry_from_save.gd" id="5_retry"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/save_bed.tscn" id="6_bed"]
+[ext_resource type="PackedScene" path="res://scenes/actors/enemies/animated_armor_boss.tscn" id="7_boss"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/readable_magic_gate.tscn" id="8_gate"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/level_exit.tscn" id="9_exit"]
+[ext_resource type="Material" path="res://art/materials/prototype/floor_stone_gray.tres" id="10_floor"]
+[ext_resource type="Material" path="res://art/materials/prototype/wall_dark_stone.tres" id="11_wall"]
+[ext_resource type="Material" path="res://art/materials/prototype/cover_warm_stone.tres" id="12_cover"]
+[ext_resource type="Material" path="res://art/materials/prototype/gate_barrier_blue.tres" id="13_blue"]
+[ext_resource type="Material" path="res://art/materials/prototype/exit_gold_glow.tres" id="14_gold"]
+[ext_resource type="Material" path="res://art/materials/prototype/mana_cyan_glow.tres" id="15_mana"]
+
+[sub_resource type="BoxShape3D" id="Shape_floor"]
+size = Vector3(20, 1, 58)
+
+[sub_resource type="BoxMesh" id="Mesh_floor"]
+size = Vector3(20, 1, 58)
+
+[sub_resource type="BoxShape3D" id="Shape_side_wall"]
+size = Vector3(1, 4, 58)
+
+[sub_resource type="BoxMesh" id="Mesh_side_wall"]
+size = Vector3(1, 4, 58)
+
+[sub_resource type="BoxShape3D" id="Shape_end_wall"]
+size = Vector3(22, 4, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_end_wall"]
+size = Vector3(22, 4, 1)
+
+[sub_resource type="BoxShape3D" id="Shape_pillar"]
+size = Vector3(1.4, 4.5, 1.4)
+
+[sub_resource type="BoxMesh" id="Mesh_pillar"]
+size = Vector3(1.4, 4.5, 1.4)
+
+[sub_resource type="BoxMesh" id="Mesh_marker"]
+size = Vector3(3.2, 0.16, 3.2)
+
+[sub_resource type="BoxMesh" id="Mesh_exit_pad"]
+size = Vector3(4.8, 0.18, 4.8)
+
+[node name="PrototypeChurchTrialBossFinale" type="Node3D"]
+script = ExtResource("1_director")
+opening_objective = "Rest at the Armor Trial Bed, defeat the Animated Armor, claim the sigil, then leave the trial."
+opening_message = "Perception found the path. Resolve must now survive the judge waiting ahead."
+add_reward_altar = true
+reward_altar_position = Vector3(0, 0.15, 35)
+enable_dev_save_reset = false
+add_sound_transition = false
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="DeathRetryFromSave" type="Node" parent="."]
+script = ExtResource("5_retry")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -28, 0)
+light_energy = 1.35
+shadow_enabled = true
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, -8)
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 17)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("Shape_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+material_override = ExtResource("10_floor")
+mesh = SubResource("Mesh_floor")
+
+[node name="LeftWall" type="StaticBody3D" parent="."]
+position = Vector3(-10.5, 1.5, 17)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftWall"]
+shape = SubResource("Shape_side_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftWall"]
+material_override = ExtResource("11_wall")
+mesh = SubResource("Mesh_side_wall")
+
+[node name="RightWall" type="StaticBody3D" parent="."]
+position = Vector3(10.5, 1.5, 17)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RightWall"]
+shape = SubResource("Shape_side_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RightWall"]
+material_override = ExtResource("11_wall")
+mesh = SubResource("Mesh_side_wall")
+
+[node name="BackWall" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.5, -12)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWall"]
+shape = SubResource("Shape_end_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWall"]
+material_override = ExtResource("11_wall")
+mesh = SubResource("Mesh_end_wall")
+
+[node name="FrontWall" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.5, 46)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FrontWall"]
+shape = SubResource("Shape_end_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="FrontWall"]
+material_override = ExtResource("11_wall")
+mesh = SubResource("Mesh_end_wall")
+
+[node name="BossSaveBed" parent="." instance=ExtResource("6_bed")]
+position = Vector3(-4.8, 0.12, -5)
+bed_id = "animated_armor_finale_bed"
+bed_display_name = "Armor Trial Bed"
+sleep_objective_after = "Saved. Enter the final armor trial."
+
+[node name="BossBedMarker" type="MeshInstance3D" parent="."]
+position = Vector3(-4.8, 0.08, -5)
+material_override = ExtResource("15_mana")
+mesh = SubResource("Mesh_marker")
+
+[node name="LeftPillar" type="StaticBody3D" parent="."]
+position = Vector3(-6.8, 1.75, 16)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftPillar"]
+shape = SubResource("Shape_pillar")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftPillar"]
+material_override = ExtResource("12_cover")
+mesh = SubResource("Mesh_pillar")
+
+[node name="RightPillar" type="StaticBody3D" parent="."]
+position = Vector3(6.8, 1.75, 16)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RightPillar"]
+shape = SubResource("Shape_pillar")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RightPillar"]
+material_override = ExtResource("12_cover")
+mesh = SubResource("Mesh_pillar")
+
+[node name="BossCenterSeal" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.11, 16)
+scale = Vector3(4.2, 0.05, 4.2)
+material_override = ExtResource("13_blue")
+mesh = SubResource("Mesh_marker")
+
+[node name="AnimatedArmorBoss" parent="." instance=ExtResource("7_boss")]
+position = Vector3(0, 1.15, 16)
+scale = Vector3(1.15, 1.15, 1.15)
+boss_gate_path = NodePath("../BossExitGate")
+
+[node name="BossExitGate" parent="." instance=ExtResource("8_gate")]
+position = Vector3(0, 0, 28)
+gate_name = "Judgment Gate"
+unlock_message = "The Animated Armor falls. The sigil chamber opens."
+auto_add_encounter_reward_group = false
+
+[node name="FinalExitPad" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.08, 42)
+material_override = ExtResource("14_gold")
+mesh = SubResource("Mesh_exit_pad")
+
+[node name="LevelExit" parent="." instance=ExtResource("9_exit")]
+position = Vector3(0, 1, 42)
+scale = Vector3(1.8, 1, 1.8)
+completion_message = "Church Trial complete. Grace carries the Church Trial Sigil beyond the reward chamber."
+objective_after = "Church Trial complete."

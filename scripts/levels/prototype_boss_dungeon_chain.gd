@@ -1,19 +1,29 @@
 extends Node3D
 
-const RewardAltarScene = preload("res://scenes/actors/interactables/church_trial_reward_altar.tscn")
+const RewardAltarScene: PackedScene = preload("res://scenes/actors/interactables/church_trial_reward_altar.tscn")
+const TransitionAreaScene: PackedScene = preload("res://scenes/actors/interactables/level_exit.tscn")
 const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 
-@export var opening_objective: String = "Church Trial: save, clear combat, solve the lock, defeat the armor, claim the sigil, then exit."
-@export var opening_message: String = "Church Trial Prototype: defeat the Animated Armor, then claim the reward altar beyond the gate. Press F8 to clear the prototype save and restart fresh."
+@export var opening_objective: String = "Church Trial: save, clear combat, solve the lock, cross the echo path, defeat the armor, claim the sigil, then exit."
+@export var opening_message: String = "The Church Trial tests force, understanding, perception, and resolve. Press F8 to clear the prototype save and restart fresh."
 @export var apply_save_on_ready: bool = true
 @export var add_reward_altar: bool = true
 @export var reward_altar_position: Vector3 = Vector3(0.0, 0.15, 112.5)
 @export var enable_dev_save_reset: bool = true
 
+@export_group("Room Flow")
+@export var add_sound_transition: bool = true
+@export_file("*.tscn") var sound_scene_path: String = "res://scenes/levels/prototypes/prototype_sound_reveal_bridge_v1.tscn"
+@export var sound_transition_position: Vector3 = Vector3(0.0, 1.0, 70.0)
+@export var sound_transition_scale: Vector3 = Vector3(12.0, 1.0, 1.25)
+@export var sound_transition_message: String = "The elemental seal yields. The Church's next chamber listens for what sight cannot find."
+@export var sound_transition_objective: String = "Use Sound Pulse to reveal the hidden path."
+
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	spawn_reward_altar()
+	spawn_sound_transition()
 	configure_final_exit()
 	await get_tree().process_frame
 
@@ -79,6 +89,36 @@ func spawn_reward_altar() -> void:
 	altar.global_position = reward_altar_position
 
 
+func spawn_sound_transition() -> void:
+	if not add_sound_transition:
+		return
+
+	if sound_scene_path == "":
+		return
+
+	if get_node_or_null("SoundTrialTransition") != null:
+		return
+
+	var transition: Node3D = TransitionAreaScene.instantiate() as Node3D
+
+	if transition == null:
+		return
+
+	transition.name = "SoundTrialTransition"
+	transition.scale = sound_transition_scale
+	transition.set("completion_message", sound_transition_message)
+	transition.set("objective_after", sound_transition_objective)
+	transition.set("next_scene_path", sound_scene_path)
+	transition.set("triggers_on_touch", true)
+
+	var transition_visual: Node3D = transition.get_node_or_null("MeshInstance3D") as Node3D
+	if transition_visual != null:
+		transition_visual.visible = false
+
+	add_child(transition)
+	transition.global_position = sound_transition_position
+
+
 func configure_final_exit() -> void:
 	var final_exit: Node = find_child_named(self, "LevelExit")
 
@@ -107,7 +147,6 @@ func find_child_named(root: Node, target_name: String) -> Node:
 
 	for child: Node in root.get_children():
 		var found: Node = find_child_named(child, target_name)
-
 		if found != null:
 			return found
 

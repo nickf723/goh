@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ComboRule" format=3]
+[gd_resource type="Resource" script_class="ComboRule" format=3 uid="uid://c5tcpwwagvu5s"]
 
-[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+[ext_resource type="Script" uid="uid://bhyvrvl6332nr" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
 
 [resource]
 script = ExtResource("1_combo_rule")
@@ -20,7 +20,6 @@ visual_duration = 0.46
 target_reaction_method = "trigger_ignite"
 output_status = "burning"
 output_status_duration = 4.0
-output_status_strength = 1.0
 output_status_source = "oil_ignition"
 output_tags = Array[String](["fire", "burning", "reaction", "oil"])
 debug_tags = Array[String](["elemental", "status_combo", "fire"])

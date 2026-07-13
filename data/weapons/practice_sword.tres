@@ -6,22 +6,13 @@
 
 [resource]
 script = ExtResource("1_definition")
-weapon_class = "sword"
-display_name = "Practice Sword"
 description = "Balanced training blade with flexible Light and Heavy branches."
-damage = 1
-stance_damage = 1
 range = 3.0
-attack_speed = 1.0
-cooldown = 0.45
 cone_angle_degrees = 140.0
-max_targets = 3
-stamina_cost = 0
 moveset = ExtResource("3_moveset")
 visual_primary_color = Color(0.72, 0.82, 0.98, 1)
 visual_secondary_color = Color(0.16, 0.12, 0.22, 1)
 visual_accent_color = Color(1, 0.72, 0.22, 1)
-scaling_stats = Array[String](["power", "dexterity"])
 scaling_note = "Balanced prototype scaling identity."
 light_payload = ExtResource("2_payload")
 metadata/_custom_type_script = "uid://bs0qrbfjqaida"

@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ComboRule" format=3]
+[gd_resource type="Resource" script_class="ComboRule" format=3 uid="uid://dt6vifeihpeny"]
 
-[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+[ext_resource type="Script" uid="uid://bhyvrvl6332nr" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
 
 [resource]
 script = ExtResource("1_combo_rule")
@@ -20,7 +20,6 @@ visual_duration = 0.5
 target_reaction_method = "trigger_freeze"
 output_status = "frozen"
 output_status_duration = 10.0
-output_status_strength = 1.0
 output_status_source = "wet_freeze"
 output_tags = Array[String](["ice", "wet", "frozen", "reaction"])
 debug_tags = Array[String](["elemental", "status_combo", "ice"])

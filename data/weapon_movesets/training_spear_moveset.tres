@@ -1,20 +1,18 @@
-[gd_resource type="Resource" script_class="WeaponMovesetDefinition" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="WeaponMovesetDefinition" format=3 uid="uid://bpyswgqwd8k7q"]
 
-[ext_resource type="Script" path="res://scripts/weapons/weapon_attack_definition.gd" id="1_attack"]
-[ext_resource type="Script" path="res://scripts/weapons/weapon_moveset_definition.gd" id="2_moveset"]
+[ext_resource type="Script" uid="uid://bu1o0dtqib8kx" path="res://scripts/weapons/weapon_attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" uid="uid://dd2pxrjjcsjhc" path="res://scripts/weapons/weapon_moveset_definition.gd" id="2_moveset"]
 
 [sub_resource type="Resource" id="Attack_spear_l1"]
 script = ExtResource("1_attack")
 attack_id = "spear_l1"
 display_name = "Quick Jab"
-input_kind = "light"
 startup_time = 0.1
 active_time = 0.06
 recovery_time = 0.16
 combo_timeout = 0.62
 cancel_window_start_normalized = 0.42
 allow_spell_cancel = true
-allow_dodge_cancel = true
 damage_multiplier = 0.9
 stance_multiplier = 0.85
 knockback_multiplier = 0.55
@@ -40,15 +38,12 @@ strike_offset = Vector3(0, 0, -0.62)
 script = ExtResource("1_attack")
 attack_id = "spear_l2"
 display_name = "Passing Thrust"
-input_kind = "light"
 startup_time = 0.12
 active_time = 0.06
 recovery_time = 0.18
 combo_timeout = 0.64
 cancel_window_start_normalized = 0.44
 allow_spell_cancel = true
-allow_dodge_cancel = true
-damage_multiplier = 1.0
 stance_multiplier = 0.95
 knockback_multiplier = 0.65
 extra_tags = Array[String](["pierce", "thrust"])
@@ -73,17 +68,11 @@ strike_offset = Vector3(0, 0, -0.72)
 script = ExtResource("1_attack")
 attack_id = "spear_l3"
 display_name = "Clearing Arc"
-input_kind = "light"
-startup_time = 0.16
-active_time = 0.08
-recovery_time = 0.24
 combo_timeout = 0.7
 cancel_window_start_normalized = 0.54
 allow_spell_cancel = true
-allow_dodge_cancel = true
 damage_multiplier = 1.15
 stance_multiplier = 1.1
-knockback_multiplier = 1.0
 extra_tags = Array[String](["pierce", "sweep"])
 attack_range = 3.25
 cone_angle_degrees = 118.0
@@ -109,8 +98,6 @@ active_time = 0.09
 recovery_time = 0.38
 combo_timeout = 0.24
 cancel_window_start_normalized = 0.82
-allow_spell_cancel = false
-allow_dodge_cancel = true
 stamina_cost = 1
 damage_multiplier = 2.0
 stance_multiplier = 1.7
@@ -141,8 +128,6 @@ active_time = 0.1
 recovery_time = 0.34
 combo_timeout = 0.26
 cancel_window_start_normalized = 0.76
-allow_spell_cancel = false
-allow_dodge_cancel = true
 stamina_cost = 1
 damage_multiplier = 1.45
 stance_multiplier = 1.35
@@ -171,8 +156,6 @@ active_time = 0.1
 recovery_time = 0.42
 combo_timeout = 0.24
 cancel_window_start_normalized = 0.84
-allow_spell_cancel = false
-allow_dodge_cancel = true
 stamina_cost = 2
 damage_multiplier = 2.25
 stance_multiplier = 1.9
@@ -181,7 +164,6 @@ extra_tags = Array[String](["pierce", "thrust", "force", "finisher"])
 attack_range = 4.85
 cone_angle_degrees = 22.0
 attack_center_forward_offset = 2.15
-max_targets = 3
 movement_distance = 1.65
 movement_duration = 0.22
 hit_stop_duration = 0.095
@@ -203,8 +185,6 @@ active_time = 0.12
 recovery_time = 0.46
 combo_timeout = 0.2
 cancel_window_start_normalized = 0.86
-allow_spell_cancel = false
-allow_dodge_cancel = true
 stamina_cost = 2
 damage_multiplier = 2.0
 stance_multiplier = 1.8

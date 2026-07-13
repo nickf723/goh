@@ -1,20 +1,17 @@
-[gd_resource type="Resource" script_class="WeaponMovesetDefinition" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="WeaponMovesetDefinition" format=3 uid="uid://8yq88gcy85o5"]
 
-[ext_resource type="Script" path="res://scripts/weapons/weapon_attack_definition.gd" id="1_attack"]
-[ext_resource type="Script" path="res://scripts/weapons/weapon_moveset_definition.gd" id="2_moveset"]
+[ext_resource type="Script" uid="uid://bu1o0dtqib8kx" path="res://scripts/weapons/weapon_attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" uid="uid://dd2pxrjjcsjhc" path="res://scripts/weapons/weapon_moveset_definition.gd" id="2_moveset"]
 
 [sub_resource type="Resource" id="Attack_hammer_l1"]
 script = ExtResource("1_attack")
 attack_id = "hammer_l1"
 display_name = "Weighted Sweep"
-input_kind = "light"
 startup_time = 0.24
 active_time = 0.1
 recovery_time = 0.3
 combo_timeout = 0.72
 cancel_window_start_normalized = 0.68
-allow_spell_cancel = false
-allow_dodge_cancel = true
 damage_multiplier = 1.2
 stance_multiplier = 1.55
 knockback_multiplier = 1.25
@@ -38,14 +35,11 @@ strike_rotation_degrees = Vector3(0, 92, 12)
 script = ExtResource("1_attack")
 attack_id = "hammer_l2"
 display_name = "Backhand Crush"
-input_kind = "light"
 startup_time = 0.27
 active_time = 0.1
 recovery_time = 0.32
 combo_timeout = 0.74
 cancel_window_start_normalized = 0.7
-allow_spell_cancel = false
-allow_dodge_cancel = true
 damage_multiplier = 1.3
 stance_multiplier = 1.75
 knockback_multiplier = 1.35
@@ -69,14 +63,11 @@ strike_rotation_degrees = Vector3(0, -104, -14)
 script = ExtResource("1_attack")
 attack_id = "hammer_l3"
 display_name = "Falling Weight"
-input_kind = "light"
 startup_time = 0.34
 active_time = 0.12
 recovery_time = 0.38
 combo_timeout = 0.8
 cancel_window_start_normalized = 0.76
-allow_spell_cancel = false
-allow_dodge_cancel = true
 damage_multiplier = 1.55
 stance_multiplier = 2.1
 knockback_multiplier = 1.45
@@ -105,7 +96,6 @@ active_time = 0.14
 recovery_time = 0.58
 combo_timeout = 0.2
 cancel_window_start_normalized = 0.94
-allow_spell_cancel = false
 allow_dodge_cancel = false
 stamina_cost = 2
 damage_multiplier = 2.35
@@ -115,7 +105,6 @@ knockback_up_add = 0.8
 extra_tags = Array[String](["force", "blunt", "ground_slam", "guard_break"])
 attack_range = 3.25
 cone_angle_degrees = 138.0
-attack_center_forward_offset = 1.15
 max_targets = 6
 movement_distance = 0.18
 movement_duration = 0.18
@@ -137,7 +126,6 @@ active_time = 0.12
 recovery_time = 0.46
 combo_timeout = 0.22
 cancel_window_start_normalized = 0.9
-allow_spell_cancel = false
 allow_dodge_cancel = false
 stamina_cost = 2
 damage_multiplier = 1.9
@@ -166,7 +154,6 @@ active_time = 0.14
 recovery_time = 0.52
 combo_timeout = 0.22
 cancel_window_start_normalized = 0.92
-allow_spell_cancel = false
 allow_dodge_cancel = false
 stamina_cost = 2
 damage_multiplier = 2.15
@@ -196,7 +183,6 @@ active_time = 0.16
 recovery_time = 0.68
 combo_timeout = 0.18
 cancel_window_start_normalized = 0.96
-allow_spell_cancel = false
 allow_dodge_cancel = false
 stamina_cost = 3
 damage_multiplier = 3.0

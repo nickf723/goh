@@ -7,6 +7,7 @@ extends CharacterBody3D
 @export var visual_root_path: NodePath = NodePath("VisualRoot")
 @export var windup_marker_path: NodePath = NodePath("WindupMarker")
 @export var pulse_marker_path: NodePath = NodePath("PulseMarker")
+@export var collision_shape_path: NodePath = NodePath("CollisionShape3D")
 
 @export var move_speed: float = 2.1
 @export var turn_speed: float = 6.0
@@ -20,7 +21,7 @@ extends CharacterBody3D
 @export var pulse_windup: float = 1.18
 @export var recovery_time: float = 0.72
 @export var attack_cooldown: float = 0.55
-@export var death_reward_mana: int = 3
+@export var defeat_presentation_duration: float = 1.35
 
 var player: Node3D
 var state: String = "idle"
@@ -34,6 +35,7 @@ var is_defeated: bool = false
 @onready var visual_root: Node3D = get_node_or_null(visual_root_path) as Node3D
 @onready var windup_marker: Node3D = get_node_or_null(windup_marker_path) as Node3D
 @onready var pulse_marker: Node3D = get_node_or_null(pulse_marker_path) as Node3D
+@onready var collision_shape: CollisionShape3D = get_node_or_null(collision_shape_path) as CollisionShape3D
 
 
 func _ready() -> void:
@@ -143,17 +145,19 @@ func start_attack(attack_name: String) -> void:
 	state_timer = melee_windup if attack_name == "melee" else pulse_windup
 	clear_horizontal_velocity()
 	show_attack_marker(attack_name)
+	begin_visual_windup(attack_name, state_timer)
 
 	if attack_name == "melee":
-		show_message(display_name + " raises its hammer.")
+		show_message(display_name + " raises its judgment hammer.")
 	else:
-		show_message(display_name + " gathers a blue magic pulse.")
+		show_message(display_name + " opens its core and gathers a violet pulse.")
 
 
 func process_windup(delta: float) -> void:
 	clear_horizontal_velocity()
 	face_player(delta)
-	pulse_windup_marker(delta)
+	update_visual_windup()
+	pulse_windup_marker()
 	state_timer -= delta
 
 	if state_timer <= 0.0:
@@ -170,10 +174,13 @@ func process_recover(delta: float) -> void:
 	state_timer -= delta
 
 	if state_timer <= 0.0:
+		clear_visual_attack_pose()
 		state = "chase"
 
 
 func perform_attack() -> void:
+	release_visual_attack(queued_attack)
+
 	if queued_attack == "pulse":
 		perform_pulse_attack()
 		return
@@ -190,7 +197,7 @@ func perform_melee_attack() -> void:
 		return
 
 	GameState.take_damage(melee_damage)
-	show_message(display_name + " lands a heavy hammer slam.")
+	show_message(display_name + " lands a heavy judgment slam.")
 
 
 func perform_pulse_attack() -> void:
@@ -202,7 +209,7 @@ func perform_pulse_attack() -> void:
 		return
 
 	GameState.take_damage(pulse_damage)
-	show_message(display_name + " releases a magic pulse.")
+	show_message(display_name + " releases a wave of judgment energy.")
 
 
 func move_toward_player(_delta: float) -> void:
@@ -267,13 +274,41 @@ func show_attack_marker(attack_name: String) -> void:
 		pulse_marker.scale = Vector3.ONE
 
 
-func pulse_windup_marker(delta: float) -> void:
-	if visual_root != null:
-		visual_root.rotation.y += delta * 0.9
+func pulse_windup_marker() -> void:
+	var total_windup: float = melee_windup if queued_attack == "melee" else pulse_windup
+	var progress: float = 1.0 - clamp(state_timer / max(total_windup, 0.01), 0.0, 1.0)
+
+	if windup_marker != null and windup_marker.visible:
+		var marker_pulse: float = 1.0 + sin(float(Time.get_ticks_msec()) * 0.016) * 0.12
+		windup_marker.scale = Vector3.ONE * marker_pulse
 
 	if pulse_marker != null and pulse_marker.visible:
-		var grow: float = 1.0 + (pulse_windup - max(state_timer, 0.0)) * 0.65
+		var grow: float = 1.0 + progress * 0.78
 		pulse_marker.scale = Vector3(grow, 1.0, grow)
+
+
+func begin_visual_windup(attack_name: String, duration: float) -> void:
+	if visual_root != null and visual_root.has_method("begin_attack_windup"):
+		visual_root.call("begin_attack_windup", attack_name, duration)
+
+
+func update_visual_windup() -> void:
+	if visual_root == null or not visual_root.has_method("update_attack_windup"):
+		return
+
+	var total_windup: float = melee_windup if queued_attack == "melee" else pulse_windup
+	var progress: float = 1.0 - clamp(state_timer / max(total_windup, 0.01), 0.0, 1.0)
+	visual_root.call("update_attack_windup", queued_attack, progress)
+
+
+func release_visual_attack(attack_name: String) -> void:
+	if visual_root != null and visual_root.has_method("play_attack_release"):
+		visual_root.call("play_attack_release", attack_name)
+
+
+func clear_visual_attack_pose() -> void:
+	if visual_root != null and visual_root.has_method("clear_attack_pose"):
+		visual_root.call("clear_attack_pose")
 
 
 func hide_attack_markers() -> void:
@@ -293,13 +328,23 @@ func _on_health_depleted() -> void:
 	remove_from_group("boss")
 	clear_horizontal_velocity()
 	hide_attack_markers()
+	set_physics_process(false)
 
-	if death_reward_mana > 0:
-		GameState.restore_mana(death_reward_mana)
+	if collision_shape != null:
+		collision_shape.set_deferred("disabled", true)
 
-	show_message(display_name + " collapses. The final gate opens.")
+	if visual_root != null and visual_root.has_method("play_defeat"):
+		visual_root.call("play_defeat", defeat_presentation_duration)
+
+	# HitReceiver owns the single mana reward. The boss script owns presentation
+	# and progression so the reward cannot be granted twice.
+	show_message(display_name + " collapses as its judgment core goes dark. The final gate opens.")
 	unlock_boss_gate()
-	queue_free()
+
+	await get_tree().create_timer(defeat_presentation_duration).timeout
+
+	if is_inside_tree():
+		queue_free()
 
 
 func unlock_boss_gate() -> void:

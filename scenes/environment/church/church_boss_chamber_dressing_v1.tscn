@@ -1,0 +1,233 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/environment/church/church_arch_v1.tscn" id="1_arch"]
+[ext_resource type="PackedScene" path="res://scenes/environment/church/church_pillar_v1.tscn" id="2_pillar"]
+[ext_resource type="PackedScene" path="res://scenes/environment/church/church_brazier_v1.tscn" id="3_brazier"]
+[ext_resource type="PackedScene" path="res://scenes/environment/church/church_floor_trim_v1.tscn" id="4_trim"]
+[ext_resource type="PackedScene" path="res://scenes/environment/church/church_altar_frame_v1.tscn" id="5_altar"]
+[ext_resource type="Material" path="res://art/materials/church/church_stone_charcoal_v1.tres" id="6_dark"]
+[ext_resource type="Material" path="res://art/materials/church/church_stone_warm_v1.tres" id="7_warm"]
+[ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="8_gold"]
+[ext_resource type="Material" path="res://art/materials/church/church_violet_glow_v1.tres" id="9_violet"]
+
+[sub_resource type="CylinderMesh" id="Mesh_dais"]
+top_radius = 5.5
+bottom_radius = 5.5
+height = 0.08
+radial_segments = 32
+rings = 1
+
+[sub_resource type="TorusMesh" id="Mesh_outer_sigil"]
+inner_radius = 4.55
+outer_radius = 4.72
+rings = 28
+ring_segments = 8
+
+[sub_resource type="TorusMesh" id="Mesh_inner_sigil"]
+inner_radius = 2.55
+outer_radius = 2.68
+rings = 24
+ring_segments = 8
+
+[sub_resource type="BoxMesh" id="Mesh_sigil_ray"]
+size = Vector3(0.14, 0.05, 4.0)
+
+[sub_resource type="TorusMesh" id="Mesh_judgment_halo"]
+inner_radius = 2.35
+outer_radius = 2.55
+rings = 32
+ring_segments = 10
+
+[sub_resource type="BoxMesh" id="Mesh_halo_ray"]
+size = Vector3(0.14, 2.1, 0.1)
+
+[sub_resource type="BoxMesh" id="Mesh_gate_threshold"]
+size = Vector3(8.4, 0.08, 1.2)
+
+[sub_resource type="BoxMesh" id="Mesh_wall_inlay"]
+size = Vector3(0.12, 2.6, 8.0)
+
+[node name="ChurchBossChamberDressingV1" type="Node3D"]
+
+[node name="EntranceArch" parent="." instance=ExtResource("1_arch")]
+position = Vector3(0, 0, -9.8)
+scale = Vector3(1.45, 1.15, 1.15)
+
+[node name="SaveAltarFrame" parent="." instance=ExtResource("5_altar")]
+position = Vector3(-4.8, 0, -5)
+scale = Vector3(0.92, 0.92, 0.92)
+
+[node name="LeftApproachTrimA" parent="." instance=ExtResource("4_trim")]
+position = Vector3(-2.25, 0.01, -4)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="RightApproachTrimA" parent="." instance=ExtResource("4_trim")]
+position = Vector3(2.25, 0.01, -4)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="LeftApproachTrimB" parent="." instance=ExtResource("4_trim")]
+position = Vector3(-2.25, 0.01, 0)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="RightApproachTrimB" parent="." instance=ExtResource("4_trim")]
+position = Vector3(2.25, 0.01, 0)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="LeftApproachTrimC" parent="." instance=ExtResource("4_trim")]
+position = Vector3(-2.25, 0.01, 4)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="RightApproachTrimC" parent="." instance=ExtResource("4_trim")]
+position = Vector3(2.25, 0.01, 4)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="LeftArenaPillarBack" parent="." instance=ExtResource("2_pillar")]
+position = Vector3(-8.1, 0, 8.5)
+scale = Vector3(1.08, 1.22, 1.08)
+
+[node name="RightArenaPillarBack" parent="." instance=ExtResource("2_pillar")]
+position = Vector3(8.1, 0, 8.5)
+scale = Vector3(1.08, 1.22, 1.08)
+
+[node name="LeftArenaPillarCenter" parent="." instance=ExtResource("2_pillar")]
+position = Vector3(-8.4, 0, 16)
+scale = Vector3(1.18, 1.36, 1.18)
+
+[node name="RightArenaPillarCenter" parent="." instance=ExtResource("2_pillar")]
+position = Vector3(8.4, 0, 16)
+scale = Vector3(1.18, 1.36, 1.18)
+
+[node name="LeftArenaPillarFront" parent="." instance=ExtResource("2_pillar")]
+position = Vector3(-8.1, 0, 23.5)
+scale = Vector3(1.08, 1.22, 1.08)
+
+[node name="RightArenaPillarFront" parent="." instance=ExtResource("2_pillar")]
+position = Vector3(8.1, 0, 23.5)
+scale = Vector3(1.08, 1.22, 1.08)
+
+[node name="LeftBrazierBack" parent="." instance=ExtResource("3_brazier")]
+position = Vector3(-7.1, 0, 11.2)
+
+[node name="RightBrazierBack" parent="." instance=ExtResource("3_brazier")]
+position = Vector3(7.1, 0, 11.2)
+
+[node name="LeftBrazierFront" parent="." instance=ExtResource("3_brazier")]
+position = Vector3(-7.1, 0, 20.8)
+
+[node name="RightBrazierFront" parent="." instance=ExtResource("3_brazier")]
+position = Vector3(7.1, 0, 20.8)
+
+[node name="JudgmentDais" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.04, 16)
+material_override = ExtResource("6_dark")
+mesh = SubResource("Mesh_dais")
+
+[node name="OuterFloorSigil" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.105, 16)
+material_override = ExtResource("8_gold")
+mesh = SubResource("Mesh_outer_sigil")
+
+[node name="InnerFloorSigil" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.115, 16)
+material_override = ExtResource("9_violet")
+mesh = SubResource("Mesh_inner_sigil")
+
+[node name="NorthSigilRay" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.12, 12.7)
+material_override = ExtResource("9_violet")
+mesh = SubResource("Mesh_sigil_ray")
+
+[node name="SouthSigilRay" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.12, 19.3)
+material_override = ExtResource("9_violet")
+mesh = SubResource("Mesh_sigil_ray")
+
+[node name="WestSigilRay" type="MeshInstance3D" parent="."]
+position = Vector3(-3.3, 0.12, 16)
+rotation_degrees = Vector3(0, 90, 0)
+material_override = ExtResource("9_violet")
+mesh = SubResource("Mesh_sigil_ray")
+
+[node name="EastSigilRay" type="MeshInstance3D" parent="."]
+position = Vector3(3.3, 0.12, 16)
+rotation_degrees = Vector3(0, 90, 0)
+material_override = ExtResource("9_violet")
+mesh = SubResource("Mesh_sigil_ray")
+
+[node name="JudgmentHalo" type="MeshInstance3D" parent="."]
+position = Vector3(0, 3.25, 17.25)
+rotation_degrees = Vector3(90, 0, 0)
+material_override = ExtResource("9_violet")
+mesh = SubResource("Mesh_judgment_halo")
+
+[node name="HaloRayNorth" type="MeshInstance3D" parent="."]
+position = Vector3(0, 6.0, 17.3)
+material_override = ExtResource("8_gold")
+mesh = SubResource("Mesh_halo_ray")
+
+[node name="HaloRaySouth" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.5, 17.3)
+material_override = ExtResource("8_gold")
+mesh = SubResource("Mesh_halo_ray")
+
+[node name="HaloRayWest" type="MeshInstance3D" parent="."]
+position = Vector3(-2.75, 3.25, 17.3)
+rotation_degrees = Vector3(0, 0, 90)
+material_override = ExtResource("8_gold")
+mesh = SubResource("Mesh_halo_ray")
+
+[node name="HaloRayEast" type="MeshInstance3D" parent="."]
+position = Vector3(2.75, 3.25, 17.3)
+rotation_degrees = Vector3(0, 0, 90)
+material_override = ExtResource("8_gold")
+mesh = SubResource("Mesh_halo_ray")
+
+[node name="BossVioletLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 3.2, 16)
+light_color = Color(0.46, 0.17, 0.9, 1)
+light_energy = 3.2
+omni_range = 12.0
+shadow_enabled = true
+
+[node name="JudgmentGateArch" parent="." instance=ExtResource("1_arch")]
+position = Vector3(0, 0, 27.55)
+scale = Vector3(1.62, 1.34, 1.25)
+
+[node name="GateThreshold" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.07, 27.3)
+material_override = ExtResource("7_warm")
+mesh = SubResource("Mesh_gate_threshold")
+
+[node name="LeftGateInlay" type="MeshInstance3D" parent="."]
+position = Vector3(-9.85, 1.55, 28)
+material_override = ExtResource("8_gold")
+mesh = SubResource("Mesh_wall_inlay")
+
+[node name="RightGateInlay" type="MeshInstance3D" parent="."]
+position = Vector3(9.85, 1.55, 28)
+material_override = ExtResource("8_gold")
+mesh = SubResource("Mesh_wall_inlay")
+
+[node name="RewardAltarFrame" parent="." instance=ExtResource("5_altar")]
+position = Vector3(0, 0, 35)
+scale = Vector3(1.3, 1.22, 1.3)
+
+[node name="RewardArch" parent="." instance=ExtResource("1_arch")]
+position = Vector3(0, 0, 34.75)
+scale = Vector3(1.48, 1.18, 1.12)
+
+[node name="RewardLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 2.6, 34.3)
+light_color = Color(0.92, 0.66, 0.2, 1)
+light_energy = 2.7
+omni_range = 8.0
+shadow_enabled = true
+
+[node name="FinalExitArch" parent="." instance=ExtResource("1_arch")]
+position = Vector3(0, 0, 41.35)
+scale = Vector3(1.42, 1.12, 1.1)
+
+[node name="ExitThreshold" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.07, 41.8)
+material_override = ExtResource("8_gold")
+mesh = SubResource("Mesh_gate_threshold")

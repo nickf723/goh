@@ -6,37 +6,25 @@
 [ext_resource type="Script" path="res://scripts/core/tag_component.gd" id="4_tags"]
 [ext_resource type="Script" path="res://scripts/combat/payload_receiver.gd" id="5_payload"]
 [ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="6_force"]
-[ext_resource type="Material" path="res://art/materials/prototype/wall_dark_stone.tres" id="7_dark"]
-[ext_resource type="Material" path="res://art/materials/prototype/gate_frame_gold.tres" id="8_gold"]
-[ext_resource type="Material" path="res://art/materials/prototype/gate_barrier_blue.tres" id="9_blue"]
-[ext_resource type="Material" path="res://art/materials/prototype/exit_gold_glow.tres" id="10_glow"]
+[ext_resource type="PackedScene" path="res://scenes/actors/enemies/animated_armor_visual_v1.tscn" id="7_visual"]
+[ext_resource type="Material" path="res://art/materials/enemies/animated_armor_violet_core_v1.tres" id="8_core"]
+[ext_resource type="Material" path="res://art/materials/enemies/animated_armor_rune_v1.tres" id="9_rune"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.72
 height = 2.55
 
-[sub_resource type="BoxMesh" id="BoxMesh_torso"]
-size = Vector3(1.45, 1.85, 0.75)
-
-[sub_resource type="BoxMesh" id="BoxMesh_head"]
-size = Vector3(0.8, 0.55, 0.65)
-
-[sub_resource type="BoxMesh" id="BoxMesh_arm"]
-size = Vector3(0.36, 1.45, 0.36)
-
-[sub_resource type="BoxMesh" id="BoxMesh_hammer_head"]
-size = Vector3(1.25, 0.45, 0.45)
-
-[sub_resource type="BoxMesh" id="BoxMesh_hammer_handle"]
-size = Vector3(0.22, 1.7, 0.22)
-
 [sub_resource type="SphereMesh" id="SphereMesh_windup"]
 radius = 0.32
 height = 0.64
+radial_segments = 12
+rings = 6
 
 [sub_resource type="TorusMesh" id="TorusMesh_pulse"]
 inner_radius = 2.8
 outer_radius = 3.05
+rings = 28
+ring_segments = 8
 
 [node name="AnimatedArmorBoss" type="CharacterBody3D" groups=["enemy", "boss"]]
 script = ExtResource("1_boss")
@@ -46,53 +34,20 @@ display_name = "Animated Armor"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, 0)
 shape = SubResource("CapsuleShape3D_body")
 
-[node name="VisualRoot" type="Node3D" parent="."]
-
-[node name="Torso" type="MeshInstance3D" parent="VisualRoot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
-material_override = ExtResource("7_dark")
-mesh = SubResource("BoxMesh_torso")
-
-[node name="ChestGlow" type="MeshInstance3D" parent="VisualRoot"]
-transform = Transform3D(0.45, 0, 0, 0, 0.45, 0, 0, 0, 0.45, 0, 1.55, -0.44)
-material_override = ExtResource("9_blue")
-mesh = SubResource("SphereMesh_windup")
-
-[node name="Head" type="MeshInstance3D" parent="VisualRoot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.65, 0)
-material_override = ExtResource("8_gold")
-mesh = SubResource("BoxMesh_head")
-
-[node name="LeftArm" type="MeshInstance3D" parent="VisualRoot"]
-transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.17364818, 0, -0.17364818, 0.9848077, -0.95, 1.45, 0)
-material_override = ExtResource("8_gold")
-mesh = SubResource("BoxMesh_arm")
-
-[node name="RightArm" type="MeshInstance3D" parent="VisualRoot"]
-transform = Transform3D(1, 0, 0, 0, 0.9063078, -0.42261827, 0, 0.42261827, 0.9063078, 0.95, 1.55, -0.08)
-material_override = ExtResource("8_gold")
-mesh = SubResource("BoxMesh_arm")
-
-[node name="HammerHandle" type="MeshInstance3D" parent="VisualRoot"]
-transform = Transform3D(0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0, 1, 1.35, 1.55, -0.15)
-material_override = ExtResource("7_dark")
-mesh = SubResource("BoxMesh_hammer_handle")
-
-[node name="HammerHead" type="MeshInstance3D" parent="VisualRoot"]
-transform = Transform3D(1, 0, 0, 0, 0.70710677, -0.70710677, 0, 0.70710677, 0.70710677, 1.95, 2.15, -0.15)
-material_override = ExtResource("8_gold")
-mesh = SubResource("BoxMesh_hammer_head")
+[node name="VisualRoot" parent="." instance=ExtResource("7_visual")]
+position = Vector3(0, 0.47, 0)
+scale = Vector3(0.72, 0.72, 0.72)
 
 [node name="WindupMarker" type="MeshInstance3D" parent="."]
-transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 0, 3.35, 0)
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 0, 3.45, 0)
 visible = false
-material_override = ExtResource("10_glow")
+material_override = ExtResource("9_rune")
 mesh = SubResource("SphereMesh_windup")
 
 [node name="PulseMarker" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.08, 0, 0, 0, 1, 0, 0.16, 0)
 visible = false
-material_override = ExtResource("9_blue")
+material_override = ExtResource("8_core")
 mesh = SubResource("TorusMesh_pulse")
 
 [node name="HitReceiver" type="Node" parent="."]

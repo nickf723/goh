@@ -15,6 +15,7 @@
 [ext_resource type="Material" path="res://art/materials/prototype/gate_barrier_blue.tres" id="13_blue"]
 [ext_resource type="Material" path="res://art/materials/prototype/exit_gold_glow.tres" id="14_gold"]
 [ext_resource type="Material" path="res://art/materials/prototype/mana_cyan_glow.tres" id="15_mana"]
+[ext_resource type="PackedScene" path="res://scenes/environment/church/church_boss_chamber_dressing_v1.tscn" id="16_dressing"]
 
 [sub_resource type="BoxShape3D" id="Shape_floor"]
 size = Vector3(20, 1, 58)
@@ -65,8 +66,11 @@ script = ExtResource("5_retry")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-48, -28, 0)
-light_energy = 1.35
+light_color = Color(0.68, 0.72, 0.9, 1)
+light_energy = 0.95
 shadow_enabled = true
+
+[node name="ChurchBossChamberDressingV1" parent="." instance=ExtResource("16_dressing")]
 
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1, -8)

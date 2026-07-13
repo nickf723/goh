@@ -1,0 +1,379 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/visuals/animated_armor_visual_v1.gd" id="1_visual"]
+[ext_resource type="Material" path="res://art/materials/enemies/animated_armor_charcoal_v1.tres" id="2_dark"]
+[ext_resource type="Material" path="res://art/materials/enemies/animated_armor_gold_v1.tres" id="3_gold"]
+[ext_resource type="Material" path="res://art/materials/enemies/animated_armor_violet_core_v1.tres" id="4_core"]
+[ext_resource type="Material" path="res://art/materials/enemies/animated_armor_rune_v1.tres" id="5_rune"]
+
+[sub_resource type="CylinderMesh" id="Mesh_torso"]
+top_radius = 0.52
+bottom_radius = 0.68
+height = 1.05
+radial_segments = 8
+rings = 1
+
+[sub_resource type="BoxMesh" id="Mesh_chest_plate"]
+size = Vector3(1.18, 0.78, 0.22)
+
+[sub_resource type="BoxMesh" id="Mesh_chest_band"]
+size = Vector3(1.32, 0.16, 0.28)
+
+[sub_resource type="CylinderMesh" id="Mesh_pelvis"]
+top_radius = 0.52
+bottom_radius = 0.45
+height = 0.42
+radial_segments = 8
+
+[sub_resource type="SphereMesh" id="Mesh_core"]
+radius = 0.25
+height = 0.5
+radial_segments = 12
+rings = 6
+
+[sub_resource type="TorusMesh" id="Mesh_core_ring_outer"]
+inner_radius = 0.38
+outer_radius = 0.45
+rings = 18
+ring_segments = 8
+
+[sub_resource type="TorusMesh" id="Mesh_core_ring_inner"]
+inner_radius = 0.29
+outer_radius = 0.34
+rings = 16
+ring_segments = 8
+
+[sub_resource type="SphereMesh" id="Mesh_shoulder"]
+radius = 0.46
+height = 0.68
+radial_segments = 10
+rings = 5
+
+[sub_resource type="BoxMesh" id="Mesh_shoulder_trim"]
+size = Vector3(0.9, 0.18, 0.62)
+
+[sub_resource type="CapsuleMesh" id="Mesh_upper_arm"]
+radius = 0.17
+height = 0.72
+radial_segments = 8
+rings = 3
+
+[sub_resource type="CylinderMesh" id="Mesh_forearm"]
+top_radius = 0.16
+bottom_radius = 0.23
+height = 0.58
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="Mesh_gauntlet"]
+size = Vector3(0.4, 0.34, 0.42)
+
+[sub_resource type="CylinderMesh" id="Mesh_helmet"]
+top_radius = 0.4
+bottom_radius = 0.45
+height = 0.7
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="Mesh_face_mask"]
+size = Vector3(0.72, 0.45, 0.16)
+
+[sub_resource type="BoxMesh" id="Mesh_brow"]
+size = Vector3(0.86, 0.14, 0.24)
+
+[sub_resource type="BoxMesh" id="Mesh_crest"]
+size = Vector3(0.16, 0.52, 0.58)
+
+[sub_resource type="SphereMesh" id="Mesh_eye"]
+radius = 0.07
+height = 0.14
+radial_segments = 8
+rings = 4
+
+[sub_resource type="CapsuleMesh" id="Mesh_thigh"]
+radius = 0.22
+height = 0.8
+radial_segments = 8
+rings = 3
+
+[sub_resource type="CylinderMesh" id="Mesh_greave"]
+top_radius = 0.19
+bottom_radius = 0.27
+height = 0.72
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="Mesh_boot"]
+size = Vector3(0.48, 0.3, 0.72)
+
+[sub_resource type="CylinderMesh" id="Mesh_hammer_handle"]
+top_radius = 0.085
+bottom_radius = 0.105
+height = 2.3
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="Mesh_hammer_head"]
+size = Vector3(1.45, 0.56, 0.62)
+
+[sub_resource type="BoxMesh" id="Mesh_hammer_face"]
+size = Vector3(0.22, 0.7, 0.76)
+
+[sub_resource type="SphereMesh" id="Mesh_hammer_core"]
+radius = 0.16
+height = 0.32
+radial_segments = 10
+rings = 5
+
+[node name="AnimatedArmorVisualV1" type="Node3D"]
+script = ExtResource("1_visual")
+
+[node name="PoseRoot" type="Node3D" parent="."]
+
+[node name="Pelvis" type="MeshInstance3D" parent="PoseRoot"]
+position = Vector3(0, 1.02, 0)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_pelvis")
+
+[node name="PelvisBand" type="MeshInstance3D" parent="PoseRoot"]
+position = Vector3(0, 1.15, -0.02)
+scale = Vector3(0.72, 0.72, 0.72)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_chest_band")
+
+[node name="TorsoShell" type="MeshInstance3D" parent="PoseRoot"]
+position = Vector3(0, 1.72, 0)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_torso")
+
+[node name="ChestPlate" type="MeshInstance3D" parent="PoseRoot"]
+position = Vector3(0, 1.78, -0.43)
+rotation_degrees = Vector3(-5, 0, 0)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_chest_plate")
+
+[node name="UpperChestBand" type="MeshInstance3D" parent="PoseRoot"]
+position = Vector3(0, 2.08, -0.43)
+rotation_degrees = Vector3(-5, 0, 0)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_chest_band")
+
+[node name="LowerChestBand" type="MeshInstance3D" parent="PoseRoot"]
+position = Vector3(0, 1.46, -0.4)
+rotation_degrees = Vector3(-5, 0, 0)
+scale = Vector3(0.88, 0.88, 0.88)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_chest_band")
+
+[node name="CoreRoot" type="Node3D" parent="PoseRoot"]
+position = Vector3(0, 1.76, -0.58)
+
+[node name="DivineCore" type="MeshInstance3D" parent="PoseRoot/CoreRoot"]
+material_override = ExtResource("4_core")
+mesh = SubResource("Mesh_core")
+
+[node name="OuterRing" type="Node3D" parent="PoseRoot/CoreRoot"]
+rotation_degrees = Vector3(90, 0, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="PoseRoot/CoreRoot/OuterRing"]
+material_override = ExtResource("5_rune")
+mesh = SubResource("Mesh_core_ring_outer")
+
+[node name="InnerRing" type="Node3D" parent="PoseRoot/CoreRoot"]
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="PoseRoot/CoreRoot/InnerRing"]
+material_override = ExtResource("4_core")
+mesh = SubResource("Mesh_core_ring_inner")
+
+[node name="CoreLight" type="OmniLight3D" parent="PoseRoot/CoreRoot"]
+light_color = Color(0.54, 0.18, 1, 1)
+light_energy = 2.4
+omni_range = 5.5
+shadow_enabled = false
+
+[node name="HelmetPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(0, 2.72, 0)
+
+[node name="HelmetCrown" type="MeshInstance3D" parent="PoseRoot/HelmetPivot"]
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_helmet")
+
+[node name="FaceMask" type="MeshInstance3D" parent="PoseRoot/HelmetPivot"]
+position = Vector3(0, -0.02, -0.4)
+rotation_degrees = Vector3(-5, 0, 0)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_face_mask")
+
+[node name="Brow" type="MeshInstance3D" parent="PoseRoot/HelmetPivot"]
+position = Vector3(0, 0.22, -0.38)
+rotation_degrees = Vector3(-8, 0, 0)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_brow")
+
+[node name="Crest" type="MeshInstance3D" parent="PoseRoot/HelmetPivot"]
+position = Vector3(0, 0.58, 0.05)
+rotation_degrees = Vector3(-12, 0, 0)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_crest")
+
+[node name="LeftEye" type="MeshInstance3D" parent="PoseRoot/HelmetPivot"]
+position = Vector3(-0.16, 0.03, -0.5)
+scale = Vector3(1.2, 0.65, 0.6)
+material_override = ExtResource("4_core")
+mesh = SubResource("Mesh_eye")
+
+[node name="RightEye" type="MeshInstance3D" parent="PoseRoot/HelmetPivot"]
+position = Vector3(0.16, 0.03, -0.5)
+scale = Vector3(1.2, 0.65, 0.6)
+material_override = ExtResource("4_core")
+mesh = SubResource("Mesh_eye")
+
+[node name="LeftShoulderPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(-0.92, 2.16, 0)
+rotation_degrees = Vector3(0, 0, -6)
+
+[node name="Pauldron" type="MeshInstance3D" parent="PoseRoot/LeftShoulderPivot"]
+scale = Vector3(1.35, 0.72, 1.08)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_shoulder")
+
+[node name="Trim" type="MeshInstance3D" parent="PoseRoot/LeftShoulderPivot"]
+position = Vector3(0, 0.2, -0.04)
+rotation_degrees = Vector3(0, 0, -4)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_shoulder_trim")
+
+[node name="RightShoulderPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(0.92, 2.16, 0)
+rotation_degrees = Vector3(0, 0, 6)
+
+[node name="Pauldron" type="MeshInstance3D" parent="PoseRoot/RightShoulderPivot"]
+scale = Vector3(1.35, 0.72, 1.08)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_shoulder")
+
+[node name="Trim" type="MeshInstance3D" parent="PoseRoot/RightShoulderPivot"]
+position = Vector3(0, 0.2, -0.04)
+rotation_degrees = Vector3(0, 0, 4)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_shoulder_trim")
+
+[node name="LeftArmPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(-0.92, 1.73, 0)
+rotation_degrees = Vector3(0, 0, 4)
+
+[node name="UpperArm" type="MeshInstance3D" parent="PoseRoot/LeftArmPivot"]
+position = Vector3(0, -0.3, 0)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_upper_arm")
+
+[node name="Forearm" type="MeshInstance3D" parent="PoseRoot/LeftArmPivot"]
+position = Vector3(0, -0.88, -0.02)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_forearm")
+
+[node name="Gauntlet" type="MeshInstance3D" parent="PoseRoot/LeftArmPivot"]
+position = Vector3(0, -1.22, -0.05)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_gauntlet")
+
+[node name="RightArmPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(0.92, 1.73, 0)
+rotation_degrees = Vector3(0, 0, -4)
+
+[node name="UpperArm" type="MeshInstance3D" parent="PoseRoot/RightArmPivot"]
+position = Vector3(0, -0.3, 0)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_upper_arm")
+
+[node name="Forearm" type="MeshInstance3D" parent="PoseRoot/RightArmPivot"]
+position = Vector3(0, -0.88, -0.02)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_forearm")
+
+[node name="Gauntlet" type="MeshInstance3D" parent="PoseRoot/RightArmPivot"]
+position = Vector3(0, -1.22, -0.05)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_gauntlet")
+
+[node name="LeftLegPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(-0.36, 0.92, 0)
+rotation_degrees = Vector3(0, 0, -2)
+
+[node name="Thigh" type="MeshInstance3D" parent="PoseRoot/LeftLegPivot"]
+position = Vector3(0, -0.28, 0)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_thigh")
+
+[node name="Greave" type="MeshInstance3D" parent="PoseRoot/LeftLegPivot"]
+position = Vector3(0, -0.9, -0.03)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_greave")
+
+[node name="Boot" type="MeshInstance3D" parent="PoseRoot/LeftLegPivot"]
+position = Vector3(0, -1.32, -0.16)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_boot")
+
+[node name="RightLegPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(0.36, 0.92, 0)
+rotation_degrees = Vector3(0, 0, 2)
+
+[node name="Thigh" type="MeshInstance3D" parent="PoseRoot/RightLegPivot"]
+position = Vector3(0, -0.28, 0)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_thigh")
+
+[node name="Greave" type="MeshInstance3D" parent="PoseRoot/RightLegPivot"]
+position = Vector3(0, -0.9, -0.03)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_greave")
+
+[node name="Boot" type="MeshInstance3D" parent="PoseRoot/RightLegPivot"]
+position = Vector3(0, -1.32, -0.16)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_boot")
+
+[node name="HammerPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(1.28, 1.5, -0.1)
+rotation_degrees = Vector3(0, 0, -34)
+
+[node name="Handle" type="MeshInstance3D" parent="PoseRoot/HammerPivot"]
+position = Vector3(0, 0.18, 0)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_hammer_handle")
+
+[node name="HandleBandLower" type="MeshInstance3D" parent="PoseRoot/HammerPivot"]
+position = Vector3(0, -0.62, 0)
+scale = Vector3(1.35, 0.22, 1.35)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_hammer_core")
+
+[node name="HandleBandUpper" type="MeshInstance3D" parent="PoseRoot/HammerPivot"]
+position = Vector3(0, 0.7, 0)
+scale = Vector3(1.35, 0.22, 1.35)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_hammer_core")
+
+[node name="Head" type="MeshInstance3D" parent="PoseRoot/HammerPivot"]
+position = Vector3(0, 1.3, 0)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_hammer_head")
+
+[node name="LeftFace" type="MeshInstance3D" parent="PoseRoot/HammerPivot"]
+position = Vector3(-0.82, 1.3, 0)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_hammer_face")
+
+[node name="RightFace" type="MeshInstance3D" parent="PoseRoot/HammerPivot"]
+position = Vector3(0.82, 1.3, 0)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_hammer_face")
+
+[node name="HammerCore" type="MeshInstance3D" parent="PoseRoot/HammerPivot"]
+position = Vector3(0, 1.3, -0.38)
+material_override = ExtResource("4_core")
+mesh = SubResource("Mesh_hammer_core")
+
+[node name="HeadRune" type="MeshInstance3D" parent="PoseRoot/HammerPivot"]
+position = Vector3(0, 1.3, -0.49)
+scale = Vector3(0.72, 0.72, 0.32)
+material_override = ExtResource("5_rune")
+mesh = SubResource("Mesh_hammer_core")

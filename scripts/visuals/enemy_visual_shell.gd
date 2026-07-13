@@ -154,13 +154,13 @@ func get_pose_nodes() -> Array[Node3D]:
 func get_base_position(node: Node3D) -> Vector3:
 	if node == null:
 		return Vector3.ZERO
-	return base_positions.get(node.get_instance_id(), node.position) as Vector3
+	return base_positions.get(node.get_instance_id(), node.position)
 
 
 func get_base_rotation(node: Node3D) -> Vector3:
 	if node == null:
 		return Vector3.ZERO
-	return base_rotations.get(node.get_instance_id(), node.rotation) as Vector3
+	return base_rotations.get(node.get_instance_id(), node.rotation)
 
 
 func tween_position(node: Node3D, offset: Vector3, duration: float) -> void:

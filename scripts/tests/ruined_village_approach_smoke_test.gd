@@ -52,14 +52,21 @@ func validate_level_structure() -> void:
 		failures.append("level has no GameUI")
 
 	var geometry: Node = village.get_node_or_null("GeneratedGeometry")
-	if geometry == null or geometry.get_child_count() < 30:
-		failures.append("procedural terrain did not build the expected geometry density")
+	if geometry == null or geometry.get_child_count() < 34:
+		failures.append("procedural terrain and traversal ramps did not build the expected density")
+
+	if get_tree().get_nodes_in_group("ruined_village_traversal_ready").size() != 1:
+		failures.append("traversal grading did not finish")
 
 	if get_tree().get_nodes_in_group("village_clue").size() < 3:
 		failures.append("level must expose at least three environmental clues")
 
 	if get_tree().get_nodes_in_group("encounter_controller").size() != 1:
 		failures.append("level must contain exactly one local encounter controller")
+
+	var player: Node3D = village.get_node_or_null("Player") as Node3D
+	if player != null and abs(player.rotation_degrees.y) > 0.01:
+		failures.append("Grace must face down the village route on entry")
 
 
 func validate_encounter_definition() -> void:
@@ -120,10 +127,27 @@ func validate_water_ice_bridge() -> void:
 		return
 
 	var bridge: Node = bridges[0]
-	var status_receiver: Node = bridge.get_node_or_null("StatusReceiver")
+	var payload_target: Area3D = bridge.get_node_or_null("PayloadTarget") as Area3D
+	if payload_target == null:
+		failures.append("bridge target collision must be a non-solid Area3D")
+		return
+
+	var status_receiver: Node = payload_target.get_node_or_null("StatusReceiver")
 	if status_receiver == null or not status_receiver.has_method("apply_status"):
 		failures.append("Water/Ice bridge has no StatusReceiver")
 		return
+
+	var target_collision: CollisionShape3D = payload_target.get_node_or_null("TargetCollision") as CollisionShape3D
+	if target_collision == null or target_collision.disabled:
+		failures.append("bridge spell target is unavailable before freezing")
+
+	var bridge_collision: CollisionShape3D = bridge.get_node_or_null("BridgeCollision") as CollisionShape3D
+	if bridge_collision == null:
+		failures.append("bridge traversal collision is missing")
+		return
+
+	if not bridge_collision.disabled:
+		failures.append("bridge traversal collision starts enabled before freezing")
 
 	status_receiver.call("apply_status", "wet", 10.0, 1.0, "Smoke Test Water")
 	status_receiver.call("apply_status", "frozen", 10.0, 1.0, "Smoke Test Ice")
@@ -132,8 +156,7 @@ func validate_water_ice_bridge() -> void:
 	if not bool(bridge.get("is_frozen_bridge")):
 		failures.append("Water/Ice bridge did not become traversable after frozen status")
 
-	var bridge_collision: CollisionShape3D = bridge.get_node_or_null("BridgeCollision") as CollisionShape3D
-	if bridge_collision == null or bridge_collision.disabled:
+	if bridge_collision.disabled:
 		failures.append("frozen bridge collision remained disabled")
 
 

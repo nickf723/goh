@@ -35,6 +35,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, 0)
 shape = SubResource("CapsuleShape3D_body")
 
 [node name="VisualRoot" parent="." instance=ExtResource("7_visual")]
+position = Vector3(0, 0.47, 0)
+scale = Vector3(0.72, 0.72, 0.72)
 
 [node name="WindupMarker" type="MeshInstance3D" parent="."]
 transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 0, 3.45, 0)

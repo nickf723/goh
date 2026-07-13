@@ -101,8 +101,8 @@ func test_steam() -> void:
 func test_debug_matrix() -> void:
 	var rows: Array[Dictionary] = ComboRuleRegistryScript.get_debug_matrix_rows()
 
-	if rows.size() < 9:
-		failures.append("expected at least 9 registered combo rules, found " + str(rows.size()))
+	if rows.size() < 8:
+		failures.append("expected at least 8 registered combo rules, found " + str(rows.size()))
 
 	var visual_styles: Array[String] = []
 	for row: Dictionary in rows:

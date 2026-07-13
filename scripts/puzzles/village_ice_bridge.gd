@@ -26,10 +26,9 @@ func _ready() -> void:
 	add_to_group("village_ice_bridge")
 	add_to_group("debuggable")
 	convert_payload_target_to_area()
+	sync_from_game_state()
 
-	if completion_flag != "" and GameState.get_flag(completion_flag):
-		freeze_bridge(false)
-	else:
+	if not is_frozen_bridge:
 		set_bridge_state(false)
 
 
@@ -58,6 +57,11 @@ func convert_payload_target_to_area() -> void:
 		payload_receiver.reparent(payload_target_area)
 
 
+func sync_from_game_state() -> void:
+	if completion_flag != "" and GameState.get_flag(completion_flag):
+		freeze_bridge(false, false)
+
+
 func _process(_delta: float) -> void:
 	if is_frozen_bridge or status_receiver == null:
 		return
@@ -66,18 +70,19 @@ func _process(_delta: float) -> void:
 		freeze_bridge(true)
 
 
-func freeze_bridge(announce: bool = true) -> void:
+func freeze_bridge(announce: bool = true, update_progress: bool = true) -> void:
 	if is_frozen_bridge:
 		return
 
 	is_frozen_bridge = true
 	set_bridge_state(true)
 
-	if completion_flag != "":
-		GameState.set_flag(completion_flag, true)
+	if update_progress:
+		if completion_flag != "":
+			GameState.set_flag(completion_flag, true)
 
-	if objective_after != "":
-		GameState.set_objective(objective_after)
+		if objective_after != "":
+			GameState.set_objective(objective_after)
 
 	if announce:
 		show_message(freeze_message)

@@ -1,0 +1,93 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/visuals/church_flame_flicker.gd" id="1_flicker"]
+[ext_resource type="Material" path="res://art/materials/church/church_stone_charcoal_v1.tres" id="2_dark"]
+[ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="3_gold"]
+[ext_resource type="Material" path="res://art/materials/church/church_flame_glow_v1.tres" id="4_flame"]
+
+[sub_resource type="CylinderMesh" id="Mesh_base"]
+top_radius = 0.34
+bottom_radius = 0.44
+height = 0.58
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="Mesh_stem"]
+top_radius = 0.09
+bottom_radius = 0.13
+height = 0.72
+radial_segments = 8
+
+[sub_resource type="CylinderMesh" id="Mesh_bowl"]
+top_radius = 0.48
+bottom_radius = 0.28
+height = 0.24
+radial_segments = 12
+
+[sub_resource type="TorusMesh" id="Mesh_rim"]
+inner_radius = 0.38
+outer_radius = 0.48
+rings = 16
+ring_segments = 8
+
+[sub_resource type="SphereMesh" id="Mesh_flame_large"]
+radius = 0.22
+height = 0.62
+radial_segments = 10
+rings = 5
+
+[sub_resource type="SphereMesh" id="Mesh_flame_small"]
+radius = 0.14
+height = 0.42
+radial_segments = 10
+rings = 5
+
+[node name="ChurchBrazierV1" type="Node3D"]
+script = ExtResource("1_flicker")
+
+[node name="Base" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.29, 0)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_base")
+
+[node name="Stem" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.9, 0)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_stem")
+
+[node name="Bowl" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.34, 0)
+material_override = ExtResource("2_dark")
+mesh = SubResource("Mesh_bowl")
+
+[node name="Rim" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.47, 0)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_rim")
+
+[node name="FlameRoot" type="Node3D" parent="."]
+position = Vector3(0, 1.64, 0)
+
+[node name="MainFlame" type="MeshInstance3D" parent="FlameRoot"]
+position = Vector3(0, 0.22, 0)
+scale = Vector3(0.82, 1.2, 0.82)
+material_override = ExtResource("4_flame")
+mesh = SubResource("Mesh_flame_large")
+
+[node name="LeftFlame" type="MeshInstance3D" parent="FlameRoot"]
+position = Vector3(-0.15, 0.12, 0.04)
+rotation_degrees = Vector3(0, 0, -13)
+material_override = ExtResource("4_flame")
+mesh = SubResource("Mesh_flame_small")
+
+[node name="RightFlame" type="MeshInstance3D" parent="FlameRoot"]
+position = Vector3(0.16, 0.1, -0.02)
+rotation_degrees = Vector3(0, 0, 16)
+material_override = ExtResource("4_flame")
+mesh = SubResource("Mesh_flame_small")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+position = Vector3(0, 1.85, 0)
+light_color = Color(1, 0.45, 0.14, 1)
+light_energy = 2.4
+omni_range = 7.0
+shadow_enabled = true

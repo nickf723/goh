@@ -1,0 +1,51 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/interaction/combat_arena_reset_console.gd" id="1_console"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_console"]
+size = Vector3(1.4, 1.5, 1.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_base"]
+size = Vector3(1.2, 1.1, 0.9)
+
+[sub_resource type="SphereMesh" id="SphereMesh_core"]
+radius = 0.3
+height = 0.6
+
+[sub_resource type="StandardMaterial3D" id="Material_base"]
+albedo_color = Color(0.14, 0.1, 0.2, 1)
+metallic = 0.35
+roughness = 0.45
+
+[sub_resource type="StandardMaterial3D" id="Material_core"]
+albedo_color = Color(0.66, 0.3, 1, 1)
+emission_enabled = true
+emission = Color(0.66, 0.3, 1, 1)
+emission_energy_multiplier = 2.2
+shading_mode = 0
+
+[node name="CombatArenaResetConsole" type="Area3D"]
+script = ExtResource("1_console")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.75, 0)
+shape = SubResource("BoxShape_console")
+
+[node name="Base" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.55, 0)
+material_override = SubResource("Material_base")
+mesh = SubResource("BoxMesh_base")
+
+[node name="Core" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.15, 0)
+material_override = SubResource("Material_core")
+mesh = SubResource("SphereMesh_core")
+
+[node name="Label" type="Label3D" parent="."]
+position = Vector3(0, 1.72, 0)
+text = "RESET ARENA"
+font_size = 38
+pixel_size = 0.008
+billboard = 1
+modulate = Color(0.82, 0.58, 1, 1)
+outline_size = 6

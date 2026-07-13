@@ -1,0 +1,98 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/testing/combat_training_target.gd" id="1_target"]
+[ext_resource type="Script" path="res://scripts/combat/hit_receiver.gd" id="2_hit"]
+[ext_resource type="Script" path="res://scripts/combat/status_receiver.gd" id="3_status"]
+[ext_resource type="Script" path="res://scripts/combat/payload_receiver.gd" id="4_payload"]
+[ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="5_force"]
+[ext_resource type="Script" path="res://scripts/core/tag_component.gd" id="6_tags"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_target"]
+radius = 0.55
+height = 1.7
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_body"]
+top_radius = 0.44
+bottom_radius = 0.58
+height = 1.25
+radial_segments = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_head"]
+radius = 0.42
+height = 0.84
+radial_segments = 12
+rings = 8
+
+[sub_resource type="BoxMesh" id="BoxMesh_arms"]
+size = Vector3(1.55, 0.16, 0.16)
+
+[sub_resource type="StandardMaterial3D" id="Material_body"]
+albedo_color = Color(0.22, 0.16, 0.27, 1)
+metallic = 0.2
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Material_trim"]
+albedo_color = Color(0.82, 0.58, 0.18, 1)
+emission_enabled = true
+emission = Color(0.22, 0.08, 0.02, 1)
+emission_energy_multiplier = 0.45
+metallic = 0.65
+roughness = 0.3
+
+[node name="CombatTrainingTarget" type="CharacterBody3D"]
+script = ExtResource("1_target")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.85, 0)
+shape = SubResource("CapsuleShape_target")
+
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.72, 0)
+material_override = SubResource("Material_body")
+mesh = SubResource("CylinderMesh_body")
+
+[node name="Head" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 1.5, 0)
+material_override = SubResource("Material_body")
+mesh = SubResource("SphereMesh_head")
+
+[node name="Arms" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 1.05, 0)
+material_override = SubResource("Material_trim")
+mesh = SubResource("BoxMesh_arms")
+
+[node name="NameLabel" type="Label3D" parent="."]
+position = Vector3(0, 2.25, 0)
+text = "COMBAT TOTEM"
+font_size = 34
+pixel_size = 0.008
+billboard = 1
+modulate = Color(1, 0.82, 0.42, 1)
+outline_size = 6
+
+[node name="HitReceiver" type="Node" parent="."]
+script = ExtResource("2_hit")
+target_name = "Combat Totem"
+hit_mode = 3
+max_health = 30
+current_health = 30
+max_stance = 12
+current_stance = 12
+resets_stance_after_break = true
+
+[node name="StatusReceiver" type="Node" parent="."]
+script = ExtResource("3_status")
+
+[node name="PayloadReceiver" type="Node" parent="."]
+script = ExtResource("4_payload")
+
+[node name="ForceReceiver" type="Node" parent="."]
+script = ExtResource("5_force")
+drag = 9.0
+max_force_speed = 7.0
+
+[node name="TagComponent" type="Node" parent="."]
+script = ExtResource("6_tags")
+tags = Array[String](["training", "combat_target", "sturdy"])

@@ -2,6 +2,50 @@
   "schema_version": 1,
   "features": [
     {
+      "id": "ruined_village_approach",
+      "order": 5,
+      "display_name": "Ruined Village Approach",
+      "category": "Integrated Story Level",
+      "version": "v0.9",
+      "status": "vertical_slice",
+      "description": "Outdoor Italy approach combining exploration, environmental storytelling, weapon combat, elemental route solving, optional Sound discovery, checkpointing, and direct entry into the Church Trial.",
+      "scene": "res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/ruined_village_approach_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "church_trial",
+        "elemental_reaction_lab",
+        "weapon_combat_arena"
+      ],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON",
+        "RESET"
+      ],
+      "manual_test": "docs/ruined_village_approach_v0_9_test.md",
+      "temporary_state": "persistent",
+      "story_integrated": true,
+      "limitations": [
+        "Procedural terrain, ruins, vegetation, props, and church architecture remain replacement-ready.",
+        "The playable footprint is compressed while implying a broader village region.",
+        "Current Goblin and Gremlin archetypes stand in for future location-specific enemies."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
       "id": "church_trial",
       "order": 10,
       "display_name": "Church Trial",
@@ -212,6 +256,7 @@
         "res://scenes/tests/architecture_contract_smoke_test.tscn"
       ],
       "dependencies": [
+        "ruined_village_approach",
         "church_trial",
         "elemental_reaction_lab",
         "weapon_combat_arena",

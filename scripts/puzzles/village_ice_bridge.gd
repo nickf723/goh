@@ -12,22 +12,50 @@ class_name VillageIceBridge
 @export var status_receiver_path: NodePath = NodePath("StatusReceiver")
 
 var is_frozen_bridge: bool = false
+var payload_target_area: Area3D
 
 @onready var target_collision: CollisionShape3D = get_node_or_null(target_collision_path) as CollisionShape3D
 @onready var bridge_collision: CollisionShape3D = get_node_or_null(bridge_collision_path) as CollisionShape3D
 @onready var water_visual: MeshInstance3D = get_node_or_null(water_visual_path) as MeshInstance3D
 @onready var ice_visual: MeshInstance3D = get_node_or_null(ice_visual_path) as MeshInstance3D
 @onready var status_receiver: Node = get_node_or_null(status_receiver_path)
+@onready var payload_receiver: Node = get_node_or_null("PayloadReceiver")
 
 
 func _ready() -> void:
 	add_to_group("village_ice_bridge")
 	add_to_group("debuggable")
+	convert_payload_target_to_area()
 
 	if completion_flag != "" and GameState.get_flag(completion_flag):
 		freeze_bridge(false)
 	else:
 		set_bridge_state(false)
+
+
+func convert_payload_target_to_area() -> void:
+	if target_collision == null:
+		return
+
+	if target_collision.get_parent() is Area3D:
+		payload_target_area = target_collision.get_parent() as Area3D
+		return
+
+	payload_target_area = Area3D.new()
+	payload_target_area.name = "PayloadTarget"
+	payload_target_area.monitoring = false
+	payload_target_area.monitorable = true
+	payload_target_area.collision_layer = 1
+	payload_target_area.collision_mask = 0
+	add_child(payload_target_area)
+
+	target_collision.reparent(payload_target_area)
+
+	if status_receiver != null:
+		status_receiver.reparent(payload_target_area)
+
+	if payload_receiver != null:
+		payload_receiver.reparent(payload_target_area)
 
 
 func _process(_delta: float) -> void:
@@ -90,5 +118,6 @@ func get_debug_data() -> Dictionary:
 	return {
 		"bridge": bridge_id,
 		"frozen": is_frozen_bridge,
+		"target_is_area": payload_target_area != null,
 		"statuses": status_receiver.get("active_statuses") if status_receiver != null else {},
 	}

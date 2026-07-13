@@ -29,6 +29,20 @@ Run Current Scene. Press `F8` first when an old save skips the fresh opening sta
 5. Stand still and confirm the idle motion remains restrained.
 6. Confirm the hidden debug capsule does not render during normal play.
 
+## Model, collider, camera, and hand alignment
+
+Temporarily show the hidden capsule in the editor when useful.
+
+1. Confirm Grace's boots sit at the capsule's lower boundary rather than around its center.
+2. Confirm the top of her hair remains inside or very near the capsule's upper boundary.
+3. Run the scene and confirm her feet meet the floor without hovering or sinking.
+4. Orbit the camera and confirm its pivot remains near Grace's upper torso/head rather than above her.
+5. Perform a light attack and confirm the practice sword swings from the modeled right-hand area.
+6. Jump, land, dodge, and walk across slopes or edges available in the prototype.
+7. Confirm the visible model continues to agree with the physical body throughout motion.
+
+The assembled Grace proxy is approximately two meters tall and is lowered one meter inside the existing centered two-meter capsule. This preserves every gameplay spawn position while matching the visual feet to the capsule floor.
+
 ## Player regression
 
 Confirm the art wrapper does not alter:
@@ -47,19 +61,21 @@ Confirm the art wrapper does not alter:
 
 Pay special attention to whether the visible feet agree reasonably with the ground and whether the model fits inside the existing collision capsule.
 
-## Projectile free-aim regression
+## Projectile free-aim and puzzle-height regression
 
 1. Leave lock-on disabled.
 2. Select Firebolt, Water Bolt, Ice Lance, or another projectile spell.
 3. Aim the camera forward with its normal slightly downward third-person framing.
-4. Cast and confirm the projectile leaves Grace at chest height and travels forward rather than immediately striking the floor.
+4. Cast and confirm the projectile leaves Grace around chest height and travels forward rather than immediately striking the floor.
 5. Turn the camera left and right, cast again, and confirm the projectile follows the camera heading.
 6. Aim the camera upward and confirm unlocked casts can still travel upward.
-7. Lock onto an enemy and cast again.
-8. Confirm lock-on continues to aim at the target's center mass.
-9. Confirm non-projectile pulses, hazards, movement spells, and other abilities behave as before.
+7. In the elemental-lock room, cast Water and Fire projectiles at their puzzle blocks without lock-on.
+8. Confirm both projectiles intersect and activate the blocks rather than flying above them.
+9. Lock onto an enemy and cast again.
+10. Confirm lock-on continues to aim at the target's center mass.
+11. Confirm non-projectile pulses, hazards, movement spells, and other abilities behave as before.
 
-Unlocked projectile casts intentionally ignore downward camera pitch so the standard third-person view does not fire into the floor. Lock-on remains the precise vertical aiming mode.
+Unlocked projectile casts intentionally ignore downward camera pitch so the standard third-person view does not fire into the floor. Their release origin is now aligned with Grace's lowered chest rather than the former debug capsule's upper half. Lock-on remains the precise vertical aiming mode.
 
 ## Church entry dressing
 
@@ -116,8 +132,6 @@ Run the project normally and confirm:
 - New Trial and Continue still work;
 - Controls and Quit remain functional;
 - the Windows export pipeline still succeeds.
-
-GitHub Actions run #26 passed Godot import, title startup, Windows export, and artifact upload for the unlocked projectile fix.
 
 The release version remains v0.1 during this visual review. Version promotion can happen after the art direction is accepted.
 

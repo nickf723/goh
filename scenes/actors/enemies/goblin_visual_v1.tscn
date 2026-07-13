@@ -72,6 +72,8 @@ movement_lean_degrees = 3.0
 head_twitch_degrees = 1.4
 
 [node name="PoseRoot" type="Node3D" parent="."]
+position = Vector3(0, 0.06, 0)
+scale = Vector3(1, 0.78, 1)
 
 [node name="BodyPivot" type="Node3D" parent="PoseRoot"]
 position = Vector3(0, 0.06, 0)

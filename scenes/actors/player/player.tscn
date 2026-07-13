@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://yxbkrqi8ju8j" path="res://scripts/player/player_action_state.gd" id="7_g2g7f"]
 [ext_resource type="Script" uid="uid://dmp5o1qjlca1n" path="res://scripts/player/player_dodge_controller.gd" id="8_fp13k"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/grace_visual_v1.tscn" id="9_grace"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon_input_bootstrap.gd" id="10_weapon_input"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -61,12 +62,17 @@ equipped_weapon = ExtResource("6_g2g7f")
 print_attack_debug = true
 metadata/_custom_type_script = "uid://dl8yw5cwab03v"
 
+[node name="WeaponInputBootstrap" type="Node" parent="WeaponController"]
+script = ExtResource("10_weapon_input")
+
 [node name="HandAnchor" type="Node3D" parent="WeaponController" unique_id=984196414]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.43, -0.16, -0.02)
 
 [node name="WeaponVisualPivot" type="Node3D" parent="WeaponController/HandAnchor" unique_id=1406066353]
 
-[node name="SwordMesh" type="MeshInstance3D" parent="WeaponController/HandAnchor/WeaponVisualPivot" unique_id=1447703097]
+[node name="WeaponModelRoot" type="Node3D" parent="WeaponController/HandAnchor/WeaponVisualPivot"]
+
+[node name="SwordMesh" type="MeshInstance3D" parent="WeaponController/HandAnchor/WeaponVisualPivot/WeaponModelRoot" unique_id=1447703097]
 transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.65, 0.15, 0, -0.45)
 mesh = SubResource("BoxMesh_qdyt2")
 

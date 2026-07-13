@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://6raaty2e36ko"]
 
-[ext_resource type="Script" uid="uid://bbylksf6bxvx5" path="res://scripts/player/player_controller.gd" id="1_3vyb7"]
+[ext_resource type="Script" path="res://scripts/player/player_controller_free_aim.gd" id="1_3vyb7"]
 [ext_resource type="Material" uid="uid://bxrl6afl3gijr" path="res://art/materials/player_debug.tres" id="2_mpktj"]
 [ext_resource type="Script" uid="uid://did8gv2j4epru" path="res://scripts/abilities/ability_caster.gd" id="2_oj104"]
 [ext_resource type="Resource" uid="uid://bg485tlykg7uk" path="res://data/loadouts/grace_starting_loadout.tres" id="3_oj104"]
@@ -60,7 +60,7 @@ print_attack_debug = true
 metadata/_custom_type_script = "uid://dl8yw5cwab03v"
 
 [node name="HandAnchor" type="Node3D" parent="WeaponController" unique_id=984196414]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.84, -0.15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.42, 1.05, -0.08)
 
 [node name="WeaponVisualPivot" type="Node3D" parent="WeaponController/HandAnchor" unique_id=1406066353]
 

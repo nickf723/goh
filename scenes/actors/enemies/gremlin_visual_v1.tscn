@@ -68,7 +68,9 @@ windup_pose_time = 0.09
 recover_pose_time = 0.14
 
 [node name="PoseRoot" type="Node3D" parent="."]
+position = Vector3(0, 0.12, 0)
 rotation_degrees = Vector3(7, 0, 0)
+scale = Vector3(1, 0.7, 1)
 
 [node name="BodyPivot" type="Node3D" parent="PoseRoot"]
 position = Vector3(0, 0.08, 0.02)

@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ComboRule" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+
+[resource]
+script = ExtResource("1_combo_rule")
+rule_id = "fire_x_frozen"
+display_name = "Steam Burst"
+description = "Fire flashes frozen targets into a cloud of steam, clearing the ice lock without leaving them burning."
+incoming_tags = Array[String](["fire"])
+target_tags = Array[String](["frozen"])
+priority = 100
+reaction_id = "steam_burst"
+reaction_name = "Steam Burst"
+feedback_text = "{target} flashes into steam."
+visual_style = "steam"
+visual_color = Color(0.84, 0.9, 0.96, 1)
+visual_radius = 1.65
+visual_duration = 0.58
+target_reaction_method = "trigger_steam"
+output_status = "steamed"
+output_status_duration = 2.4
+output_status_strength = 1.0
+output_status_source = "steam_burst"
+remove_statuses = Array[String](["frozen", "burning", "chill"])
+output_tags = Array[String](["fire", "ice", "steam", "reaction"])
+debug_tags = Array[String](["elemental", "status_combo", "steam"])
+design_notes = "Completes the lab chain: Water -> Ice -> Fire. On frozen surfaces the method converts the visual state to steam; on normal targets the same data removes frozen and adds a short readable steamed state."

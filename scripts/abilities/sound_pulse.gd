@@ -1,9 +1,10 @@
 extends Node3D
 
+const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
+
 @export var detection_payload: DetectionPayload
-@export var pulse_lifetime: float = 0.35
-@export var visual_start_scale: Vector3 = Vector3(0.2, 0.2, 0.2)
-@export var visual_end_scale: Vector3 = Vector3(8.0, 8.0, 8.0)
+@export var pulse_lifetime: float = 0.48
+@export var visual_radius_multiplier: float = 1.0
 
 var origin_position: Vector3 = Vector3.ZERO
 
@@ -14,9 +15,9 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 
 	origin_position = player.global_position
 	global_position = origin_position
-
 	emit_detection()
 	play_pulse_visual()
+
 
 func emit_detection() -> void:
 	var detectable_nodes: Array[Node] = get_tree().get_nodes_in_group("detectable")
@@ -45,6 +46,7 @@ func emit_detection() -> void:
 	else:
 		show_message(detection_payload.source_name + " echoes into silence.")
 
+
 func get_receiver_position(receiver: Node) -> Vector3:
 	if receiver is Node3D:
 		return receiver.global_position
@@ -56,19 +58,15 @@ func get_receiver_position(receiver: Node) -> Vector3:
 
 	return Vector3.ZERO
 
+
 func play_pulse_visual() -> void:
-	var mesh: MeshInstance3D = get_node_or_null("PulseVisual")
+	var pulse_radius: float = max(detection_payload.radius * visual_radius_multiplier, 0.5)
+	ElementVisuals.spawn_sound_pulse(get_tree(), global_position + Vector3.UP * 0.1, pulse_radius, pulse_lifetime)
 
-	if mesh == null:
-		queue_free()
-		return
+	var cleanup: Tween = create_tween()
+	cleanup.tween_interval(pulse_lifetime + 0.12)
+	cleanup.tween_callback(Callable(self, "queue_free"))
 
-	mesh.visible = true
-	mesh.scale = visual_start_scale
-
-	var tween: Tween = create_tween()
-	tween.tween_property(mesh, "scale", visual_end_scale, pulse_lifetime)
-	tween.finished.connect(queue_free)
 
 func show_message(text: String) -> void:
 	print(text)

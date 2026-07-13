@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/church/church_wall_panel_v1.tscn" id="4_panel"]
 [ext_resource type="PackedScene" path="res://scenes/environment/church/church_floor_trim_v1.tscn" id="5_trim"]
 [ext_resource type="Material" path="res://art/materials/church/church_stone_charcoal_v1.tres" id="6_dark"]
-[ext_resource type="Material" path="res://art/materials/church/church_stone_warm_v1.tres" id="7_warm"]
+[ext_resource type="Material" path="res://art/materials/church/church_warm_stone_v1.tres" id="7_warm"]
 [ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="8_gold"]
 [ext_resource type="Material" path="res://art/materials/church/church_violet_glow_v1.tres" id="9_violet"]
 

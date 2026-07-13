@@ -1,0 +1,84 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/detection/revealable_receiver.gd" id="1_reveal"]
+[ext_resource type="Script" path="res://scripts/combat/status_receiver.gd" id="2_status"]
+
+[sub_resource type="StandardMaterial3D" id="Material_sound"]
+albedo_color = Color(1, 0.28, 0.7, 0.72)
+emission_enabled = true
+emission = Color(1, 0.28, 0.7, 1)
+emission_energy_multiplier = 2.4
+transparency = 1
+shading_mode = 0
+
+[sub_resource type="StandardMaterial3D" id="Material_gold"]
+albedo_color = Color(0.82, 0.58, 0.18, 1)
+metallic = 0.65
+roughness = 0.28
+
+[sub_resource type="TorusMesh" id="Torus_outer"]
+inner_radius = 0.72
+outer_radius = 0.82
+rings = 24
+ring_segments = 10
+
+[sub_resource type="TorusMesh" id="Torus_inner"]
+inner_radius = 0.38
+outer_radius = 0.46
+rings = 20
+ring_segments = 8
+
+[sub_resource type="BoxMesh" id="Box_spoke"]
+size = Vector3(0.08, 0.08, 1.35)
+
+[sub_resource type="SphereMesh" id="Sphere_core"]
+radius = 0.18
+height = 0.36
+radial_segments = 12
+rings = 6
+
+[sub_resource type="SphereShape3D" id="SphereShape_resonator"]
+radius = 0.85
+
+[node name="LabHiddenResonator" type="StaticBody3D" groups=["lab_resettable"]]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("SphereShape_resonator")
+
+[node name="VisualRoot" type="Node3D" parent="."]
+position = Vector3(0, 0.95, 0)
+
+[node name="OuterRing" type="MeshInstance3D" parent="VisualRoot"]
+rotation_degrees = Vector3(90, 0, 0)
+material_override = SubResource("Material_gold")
+mesh = SubResource("Torus_outer")
+
+[node name="InnerRing" type="MeshInstance3D" parent="VisualRoot"]
+rotation_degrees = Vector3(0, 0, 90)
+material_override = SubResource("Material_sound")
+mesh = SubResource("Torus_inner")
+
+[node name="SpokeA" type="MeshInstance3D" parent="VisualRoot"]
+rotation_degrees = Vector3(90, 0, 0)
+material_override = SubResource("Material_gold")
+mesh = SubResource("Box_spoke")
+
+[node name="SpokeB" type="MeshInstance3D" parent="VisualRoot"]
+rotation_degrees = Vector3(90, 90, 0)
+material_override = SubResource("Material_gold")
+mesh = SubResource("Box_spoke")
+
+[node name="SoundCore" type="MeshInstance3D" parent="VisualRoot"]
+material_override = SubResource("Material_sound")
+mesh = SubResource("Sphere_core")
+
+[node name="StatusReceiver" type="Node" parent="."]
+script = ExtResource("2_status")
+
+[node name="RevealableReceiver" type="Node" parent="."]
+script = ExtResource("1_reveal")
+starts_hidden = true
+reveal_duration_override = 12.0
+disable_collision_when_hidden = true
+reveal_message = "Sound reveals the hidden resonance instrument."

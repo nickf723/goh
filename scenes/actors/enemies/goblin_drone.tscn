@@ -10,10 +10,9 @@
 [ext_resource type="Resource" uid="uid://j4y75vgrs3br" path="res://data/enemies/golbin_definition.tres" id="8_dbc34"]
 [ext_resource type="Resource" uid="uid://bq4of4nkti5iu" path="res://data/enemy_attacks/goblin_claw_attack.tres" id="9_bo45w"]
 [ext_resource type="Script" uid="uid://qt8ipxix0ltk" path="res://scripts/enemies/enemy_telegraph.gd" id="10_dbc34"]
+[ext_resource type="PackedScene" path="res://scenes/actors/enemies/goblin_visual_v1.tscn" id="11_visual"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_gw7qh"]
-
-[sub_resource type="SphereMesh" id="SphereMesh_e3vcl"]
 
 [node name="GoblinDrone" type="CharacterBody3D" unique_id=436581859 groups=["enemy"]]
 script = ExtResource("1_8heeq")
@@ -52,8 +51,9 @@ metadata/_custom_type_script = "uid://yxe8eoiplh8i"
 
 [node name="EnemyTelegraph" type="Node" parent="." unique_id=1890575995]
 script = ExtResource("10_dbc34")
-visual_root_path = NodePath("../MeshInstance3D")
+visual_root_path = NodePath("../VisualRoot")
+windup_scale = Vector3(1.1, 1.08, 1.1)
+flash_strength = 0.48
 metadata/_custom_type_script = "uid://qt8ipxix0ltk"
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=114131425]
-mesh = SubResource("SphereMesh_e3vcl")
+[node name="VisualRoot" parent="." instance=ExtResource("11_visual")]

@@ -5,8 +5,8 @@ const PracticeSword: WeaponDefinition = preload("res://data/weapons/practice_swo
 const GoblinScene: PackedScene = preload("res://scenes/actors/enemies/goblin_drone.tscn")
 const GremlinScene: PackedScene = preload("res://scenes/actors/enemies/gremlin_drone.tscn")
 
-@export var opening_objective: String = "Equip Sword, Hammer, or Spear. Chain Light attacks and branch into Heavy finishers."
-@export var opening_message: String = "Weapon Combat Arena online. J or left click is Light. K or right bumper is Heavy."
+@export var opening_objective: String = "Equip Sword, Hammer, or Spear. Chain LIGHT attacks and branch into HEAVY finishers."
+@export var opening_message: String = "Weapon Combat Arena online. Use LIGHT for chains and HEAVY for branching finishers."
 @export var enable_editor_f8_reset: bool = true
 @export var hud_refresh_interval: float = 0.05
 
@@ -199,7 +199,7 @@ func refresh_hud() -> void:
 			+ ("OPEN" if bool(data.get("cast_cancel", false)) else "closed")
 			+ "  |  Dodge: "
 			+ ("OPEN" if bool(data.get("dodge_cancel", false)) else "closed")
-			+ "\nJ / LMB = LIGHT     K / R1 = HEAVY     T = LOCK-ON     F8 = RESET"
+			+ "\nACTIONS  •  LIGHT  •  HEAVY  •  LOCK-ON  •  SPELL  •  DODGE  •  RESET"
 		)
 
 

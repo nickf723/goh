@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
 [ext_resource type="Script" path="res://scripts/systems/death_retry_from_save.gd" id="5_retry"]
+[ext_resource type="Script" path="res://scripts/levels/ruined_village_traversal_grade.gd" id="6_traversal"]
 
 [node name="PrototypeRuinedVillageApproach" type="Node3D"]
 script = ExtResource("1_director")
@@ -20,6 +21,9 @@ defeated_message = "Grace falls among the vanished foundations. The church-groun
 no_save_message = "Grace falls before finding a place to rest. Use RESET or reload the level."
 reload_message = "Returning to the church-ground checkpoint..."
 
+[node name="TraversalGrade" type="Node" parent="."]
+script = ExtResource("6_traversal")
+
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1.2, 64)
-rotation_degrees = Vector3(0, 180, 0)
+rotation_degrees = Vector3(0, 0, 0)

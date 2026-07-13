@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Import, startup, and Windows export
+    name: Registry, import, startup, and Windows export
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -26,6 +26,9 @@ jobs:
 
       - name: Validate custom agent profiles
         run: python scripts/ci/validate_agent_profiles.py
+
+      - name: Validate feature registry
+        run: python scripts/ci/validate_feature_registry.py
 
       - name: Install Godot 4.6 and export templates
         uses: chickensoft-games/setup-godot@v2
@@ -43,26 +46,8 @@ jobs:
       - name: Start project headlessly
         run: godot --headless --path . --quit-after 5
 
-      - name: Start Church Trial headlessly
-        run: godot --headless --path . res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn --quit-after 5
-
-      - name: Start Elemental Reaction Lab headlessly
-        run: godot --headless --path . res://scenes/levels/prototypes/prototype_elemental_reaction_lab_v1.tscn --quit-after 5
-
-      - name: Validate elemental reaction recipes
-        run: godot --headless --path . res://scenes/tests/elemental_reaction_smoke_test.tscn
-
-      - name: Start Weapon Combat Arena headlessly
-        run: godot --headless --path . res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn --quit-after 5
-
-      - name: Validate weapon moveset graphs
-        run: godot --headless --path . res://scenes/tests/weapon_moveset_smoke_test.tscn
-
-      - name: Start Runtime Stat Laboratory headlessly
-        run: godot --headless --path . res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn --quit-after 5
-
-      - name: Validate runtime stat session
-        run: godot --headless --path . res://scenes/tests/runtime_stat_lab_smoke_test.tscn
+      - name: Run registered feature scenes and tests
+        run: python scripts/ci/run_feature_registry.py --godot godot
 
       - name: Export Windows v0.1 build
         run: |

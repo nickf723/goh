@@ -1,0 +1,304 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/development_control_center.gd" id="1_control"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_header"]
+bg_color = Color(0.055, 0.04, 0.095, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.47, 0.27, 0.8, 0.9)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_panel"]
+bg_color = Color(0.035, 0.03, 0.06, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.24, 0.2, 0.35, 0.9)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_footer"]
+bg_color = Color(0.05, 0.04, 0.075, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.32, 0.25, 0.47, 0.9)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="DevelopmentControlCenter" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_control")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.012, 0.009, 0.025, 1)
+mouse_filter = 2
+
+[node name="AmbientViolet" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.045, 0.2, 0.24)
+mouse_filter = 2
+
+[node name="OuterMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 26.0
+offset_top = 24.0
+offset_right = -26.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="MainVBox" type="VBoxContainer" parent="OuterMargin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Header" type="PanelContainer" parent="OuterMargin/MainVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBox_header")
+
+[node name="HeaderMargin" type="MarginContainer" parent="OuterMargin/MainVBox/Header"]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 16
+
+[node name="HeaderVBox" type="VBoxContainer" parent="OuterMargin/MainVBox/Header/HeaderMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="OuterMargin/MainVBox/Header/HeaderMargin/HeaderVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.86, 1, 1)
+theme_override_font_sizes/font_size = 34
+text = "DEVELOPMENT CONTROL CENTER"
+
+[node name="Subtitle" type="Label" parent="OuterMargin/MainVBox/Header/HeaderMargin/HeaderVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.72, 0.88, 1)
+theme_override_font_sizes/font_size = 16
+text = "One registry • every permanent prototype • one validation contract"
+
+[node name="HealthLabel" type="Label" parent="OuterMargin/MainVBox/Header/HeaderMargin/HeaderVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "REGISTRY LOADING..."
+
+[node name="Workspace" type="HSplitContainer" parent="OuterMargin/MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 430
+
+[node name="FeaturePanel" type="PanelContainer" parent="OuterMargin/MainVBox/Workspace"]
+custom_minimum_size = Vector2(410, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBox_panel")
+
+[node name="FeatureMargin" type="MarginContainer" parent="OuterMargin/MainVBox/Workspace/FeaturePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="FeatureVBox" type="VBoxContainer" parent="OuterMargin/MainVBox/Workspace/FeaturePanel/FeatureMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ListTitle" type="Label" parent="OuterMargin/MainVBox/Workspace/FeaturePanel/FeatureMargin/FeatureVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.78, 0.38, 1)
+theme_override_font_sizes/font_size = 20
+text = "REGISTERED FEATURES"
+
+[node name="ListHint" type="Label" parent="OuterMargin/MainVBox/Workspace/FeaturePanel/FeatureMargin/FeatureVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.62, 0.76, 1)
+text = "NAVIGATE • SELECT to launch"
+
+[node name="FeatureList" type="ItemList" parent="OuterMargin/MainVBox/Workspace/FeaturePanel/FeatureMargin/FeatureVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 420)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.97, 1)
+theme_override_colors/font_selected_color = Color(1, 1, 1, 1)
+theme_override_colors/guide_color = Color(0.2, 0.17, 0.28, 1)
+theme_override_font_sizes/font_size = 17
+allow_reselect = true
+
+[node name="DetailPanel" type="PanelContainer" parent="OuterMargin/MainVBox/Workspace"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBox_panel")
+
+[node name="DetailScroll" type="ScrollContainer" parent="OuterMargin/MainVBox/Workspace/DetailPanel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="DetailMargin" type="MarginContainer" parent="OuterMargin/MainVBox/Workspace/DetailPanel/DetailScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 18
+
+[node name="DetailVBox" type="VBoxContainer" parent="OuterMargin/MainVBox/Workspace/DetailPanel/DetailScroll/DetailMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="FeatureTitle" type="Label" parent="OuterMargin/MainVBox/Workspace/DetailPanel/DetailScroll/DetailMargin/DetailVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.78, 1, 1)
+theme_override_font_sizes/font_size = 30
+text = "FEATURE"
+autowrap_mode = 2
+
+[node name="FeatureMeta" type="Label" parent="OuterMargin/MainVBox/Workspace/DetailPanel/DetailScroll/DetailMargin/DetailVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.72, 0.34, 1)
+theme_override_font_sizes/font_size = 16
+text = "CATEGORY • VERSION • STATUS"
+autowrap_mode = 2
+
+[node name="DescriptionLabel" type="Label" parent="OuterMargin/MainVBox/Workspace/DetailPanel/DetailScroll/DetailMargin/DetailVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.86, 0.94, 1)
+theme_override_font_sizes/font_size = 17
+text = "Description"
+autowrap_mode = 2
+
+[node name="DependenciesLabel" type="Label" parent="OuterMargin/MainVBox/Workspace/DetailPanel/DetailScroll/DetailMargin/DetailVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.82, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "DEPENDENCIES"
+autowrap_mode = 2
+
+[node name="ControlsLabel" type="Label" parent="OuterMargin/MainVBox/Workspace/DetailPanel/DetailScroll/DetailMargin/DetailVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 1, 0.78, 1)
+theme_override_font_sizes/font_size = 15
+text = "SEMANTIC CONTROLS"
+autowrap_mode = 2
+
+[node name="StateLabel" type="Label" parent="OuterMargin/MainVBox/Workspace/DetailPanel/DetailScroll/DetailMargin/DetailVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.72, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "STATE POLICY"
+autowrap_mode = 2
+
+[node name="ManualTestLabel" type="Label" parent="OuterMargin/MainVBox/Workspace/DetailPanel/DetailScroll/DetailMargin/DetailVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.84, 0.58, 1)
+theme_override_font_sizes/font_size = 15
+text = "MANUAL TEST"
+autowrap_mode = 2
+
+[node name="ValidationLabel" type="Label" parent="OuterMargin/MainVBox/Workspace/DetailPanel/DetailScroll/DetailMargin/DetailVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "VALIDATION"
+autowrap_mode = 2
+
+[node name="LimitationsLabel" type="Label" parent="OuterMargin/MainVBox/Workspace/DetailPanel/DetailScroll/DetailMargin/DetailVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.74, 0.74, 0.82, 1)
+theme_override_font_sizes/font_size = 14
+text = "KNOWN LIMITATIONS"
+autowrap_mode = 2
+
+[node name="Footer" type="PanelContainer" parent="OuterMargin/MainVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBox_footer")
+
+[node name="FooterMargin" type="MarginContainer" parent="OuterMargin/MainVBox/Footer"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="FooterHBox" type="HBoxContainer" parent="OuterMargin/MainVBox/Footer/FooterMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="StatusLabel" type="Label" parent="OuterMargin/MainVBox/Footer/FooterMargin/FooterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.72, 0.74, 0.84, 1)
+theme_override_font_sizes/font_size = 14
+text = "Loading registry..."
+autowrap_mode = 2
+
+[node name="LaunchButton" type="Button" parent="OuterMargin/MainVBox/Footer/FooterMargin/FooterHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "LAUNCH"
+
+[node name="RefreshButton" type="Button" parent="OuterMargin/MainVBox/Footer/FooterMargin/FooterHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "REFRESH"
+
+[node name="ReturnButton" type="Button" parent="OuterMargin/MainVBox/Footer/FooterMargin/FooterHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "BACK TO TITLE"

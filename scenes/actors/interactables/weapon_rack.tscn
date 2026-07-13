@@ -1,0 +1,55 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/interaction/weapon_rack.gd" id="1_rack"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_rack"]
+size = Vector3(1.7, 1.5, 1.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pedestal"]
+size = Vector3(1.35, 0.75, 1.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_trim"]
+size = Vector3(1.5, 0.12, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="Material_pedestal"]
+albedo_color = Color(0.16, 0.13, 0.2, 1)
+metallic = 0.25
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Material_trim"]
+albedo_color = Color(0.82, 0.58, 0.18, 1)
+emission_enabled = true
+emission = Color(0.32, 0.15, 0.03, 1)
+emission_energy_multiplier = 0.55
+metallic = 0.7
+roughness = 0.28
+
+[node name="WeaponRack" type="Area3D"]
+script = ExtResource("1_rack")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.75, 0)
+shape = SubResource("BoxShape_rack")
+
+[node name="Pedestal" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.375, 0)
+material_override = SubResource("Material_pedestal")
+mesh = SubResource("BoxMesh_pedestal")
+
+[node name="Trim" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.76, 0)
+material_override = SubResource("Material_trim")
+mesh = SubResource("BoxMesh_trim")
+
+[node name="PreviewRoot" type="Node3D" parent="."]
+position = Vector3(0, 1.12, 0.18)
+rotation_degrees = Vector3(-12, 0, -18)
+scale = Vector3(0.72, 0.72, 0.72)
+
+[node name="WeaponLabel" type="Label3D" parent="."]
+position = Vector3(0, 1.55, 0)
+text = "WEAPON"
+font_size = 40
+pixel_size = 0.008
+billboard = 1
+outline_size = 6

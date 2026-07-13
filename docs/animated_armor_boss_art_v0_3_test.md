@@ -140,13 +140,21 @@ Confirm no earlier room, transition, spell, enemy, save, or reward behavior chan
 
 ## CI and export
 
-Confirm the PR head passes:
+GitHub Actions run #33 passed on commit `c93701237719476f7e3b3ec1765c76586368cd70`.
+
+The workflow completed:
 
 - custom agent validation;
 - Godot 4.6 project import;
 - title-screen startup;
 - Windows release export;
 - artifact upload.
+
+Artifact:
+
+```text
+GraceOfHumanity-v0.1.0-windows
+```
 
 Launch the generated Windows artifact and repeat at least the boss-finale portion.
 

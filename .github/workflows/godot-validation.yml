@@ -58,6 +58,12 @@ jobs:
       - name: Validate weapon moveset graphs
         run: godot --headless --path . res://scenes/tests/weapon_moveset_smoke_test.tscn
 
+      - name: Start Runtime Stat Laboratory headlessly
+        run: godot --headless --path . res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn --quit-after 5
+
+      - name: Validate runtime stat session
+        run: godot --headless --path . res://scenes/tests/runtime_stat_lab_smoke_test.tscn
+
       - name: Export Windows v0.1 build
         run: |
           mkdir -p build/windows

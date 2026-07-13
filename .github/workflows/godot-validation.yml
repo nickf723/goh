@@ -46,6 +46,9 @@ jobs:
       - name: Start Church Trial headlessly
         run: godot --headless --path . res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn --quit-after 5
 
+      - name: Start Elemental Reaction Lab headlessly
+        run: godot --headless --path . res://scenes/levels/prototypes/prototype_elemental_reaction_lab_v1.tscn --quit-after 5
+
       - name: Export Windows v0.1 build
         run: |
           mkdir -p build/windows

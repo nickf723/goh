@@ -8,6 +8,18 @@ static func resolve_payload_reactions(target: Node, payload: DamagePayload) -> A
 	return ComboRuleRegistryScript.resolve_payload_reactions(target, payload)
 
 
+static func resolve_hazard_reactions(
+	hazard: Node,
+	payload: DamagePayload,
+	source_position: Vector3 = Vector3.ZERO
+) -> Array[Dictionary]:
+	return ComboRuleRegistryScript.resolve_hazard_reactions(
+		hazard,
+		payload,
+		source_position
+	)
+
+
 static func target_has_status_or_tag(target: Node, name: String) -> bool:
 	return ComboRuleRegistryScript.target_has_status_or_tag(target, name)
 

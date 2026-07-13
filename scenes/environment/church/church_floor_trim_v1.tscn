@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://art/materials/church/church_stone_warm_v1.tres" id="1_warm"]
+[ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="2_gold"]
+[ext_resource type="Material" path="res://art/materials/church/church_violet_glow_v1.tres" id="3_violet"]
+
+[sub_resource type="BoxMesh" id="Mesh_stone"]
+size = Vector3(4.0, 0.12, 0.72)
+
+[sub_resource type="BoxMesh" id="Mesh_gold"]
+size = Vector3(3.75, 0.055, 0.08)
+
+[sub_resource type="BoxMesh" id="Mesh_violet"]
+size = Vector3(3.45, 0.045, 0.055)
+
+[node name="ChurchFloorTrimV1" type="Node3D"]
+
+[node name="StoneBorder" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.06, 0)
+material_override = ExtResource("1_warm")
+mesh = SubResource("Mesh_stone")
+
+[node name="GoldChannel" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.135, -0.14)
+material_override = ExtResource("2_gold")
+mesh = SubResource("Mesh_gold")
+
+[node name="VioletThread" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.17, -0.14)
+material_override = ExtResource("3_violet")
+mesh = SubResource("Mesh_violet")

@@ -33,9 +33,10 @@ material_override = ExtResource("2_mpktj")
 mesh = SubResource("CapsuleMesh_qhqgy")
 
 [node name="GraceVisualV1" parent="." instance=ExtResource("9_grace")]
+position = Vector3(0, -1, 0)
 
 [node name="CameraPivot" type="Node3D" parent="." unique_id=1528540765]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 
 [node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot" unique_id=1805100342]
 transform = Transform3D(1, 0, 0, 0, 0.9659258, 0.25881904, 0, -0.25881904, 0.9659258, 0, 0, 0)
@@ -52,6 +53,7 @@ shape = SubResource("SphereShape3D_3vyb7")
 [node name="AbilityCaster" type="Node3D" parent="." unique_id=16910546]
 script = ExtResource("2_oj104")
 loadout = ExtResource("3_oj104")
+cast_spawn_height = 0.3
 
 [node name="WeaponController" type="Node3D" parent="." unique_id=1363003010]
 script = ExtResource("5_qdyt2")
@@ -60,7 +62,7 @@ print_attack_debug = true
 metadata/_custom_type_script = "uid://dl8yw5cwab03v"
 
 [node name="HandAnchor" type="Node3D" parent="WeaponController" unique_id=984196414]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.42, 1.05, -0.08)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.43, -0.16, -0.02)
 
 [node name="WeaponVisualPivot" type="Node3D" parent="WeaponController/HandAnchor" unique_id=1406066353]
 

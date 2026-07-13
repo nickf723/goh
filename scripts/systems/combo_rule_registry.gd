@@ -5,6 +5,7 @@ const IgniteOilyRule: Resource = preload("res://data/combo_rules/ignite_oily_tar
 const WetConductionRule: Resource = preload("res://data/combo_rules/wet_conduction.tres")
 const WetFreezeRule: Resource = preload("res://data/combo_rules/wet_freeze.tres")
 const FrozenShatterRule: Resource = preload("res://data/combo_rules/frozen_shatter.tres")
+const FireFrozenSteamRule: Resource = preload("res://data/combo_rules/fire_frozen_steam.tres")
 const ToxicIgnitionRule: Resource = preload("res://data/combo_rules/hazard_toxic_ignition.tres")
 const CloudSpreadRule: Resource = preload("res://data/combo_rules/hazard_cloud_spread.tres")
 const FannedFlamesRule: Resource = preload("res://data/combo_rules/hazard_fanned_flames.tres")
@@ -42,10 +43,11 @@ static func resolve_hazard_reactions(hazard: Node, payload: DamagePayload, sourc
 
 static func get_rules() -> Array[Resource]:
 	return [
+		FireFrozenSteamRule,
+		FrozenShatterRule,
 		IgniteOilyRule,
 		WetConductionRule,
 		WetFreezeRule,
-		FrozenShatterRule,
 		ToxicIgnitionRule,
 		CloudSpreadRule,
 		FannedFlamesRule,
@@ -111,6 +113,11 @@ static func build_reaction_result(rule: Resource, target: Node) -> Dictionary:
 		"reaction": reaction_id,
 		"reaction_name": reaction_name,
 		"message": format_feedback_text(rule, target),
+		"visual_style": get_rule_string(rule, "visual_style", reaction_id),
+		"visual_color": get_rule_color(rule, "visual_color", Color(1.0, 0.58, 0.15, 1.0)),
+		"visual_radius": get_rule_float(rule, "visual_radius", 1.25),
+		"visual_duration": get_rule_float(rule, "visual_duration", 0.42),
+		"priority": get_rule_int(rule, "priority", 0),
 	}
 
 
@@ -286,6 +293,7 @@ static func get_debug_matrix_rows() -> Array[Dictionary]:
 			"target_tags": get_rule_string_array(rule, "target_tags"),
 			"target_statuses": get_rule_string_array(rule, "target_statuses"),
 			"reaction": get_rule_string(rule, "reaction_id", "reaction"),
+			"visual": get_rule_string(rule, "visual_style", "reaction"),
 			"target_method": get_rule_string(rule, "target_reaction_method", ""),
 			"priority": get_rule_int(rule, "priority", 0),
 		})
@@ -350,6 +358,18 @@ static func get_rule_bool(rule: Resource, property_name: String, fallback: bool 
 	return bool(value)
 
 
+static func get_rule_color(rule: Resource, property_name: String, fallback: Color) -> Color:
+	if rule == null:
+		return fallback
+
+	var value: Variant = rule.get(property_name)
+
+	if value is Color:
+		return value as Color
+
+	return fallback
+
+
 static func get_rule_string_array(rule: Resource, property_name: String) -> Array[String]:
 	var strings: Array[String] = []
 
@@ -363,7 +383,7 @@ static func get_rule_string_array(rule: Resource, property_name: String) -> Arra
 
 	var values: Array = value as Array
 
-	for item in values:
+	for item: Variant in values:
 		var text: String = str(item)
 
 		if text == "":

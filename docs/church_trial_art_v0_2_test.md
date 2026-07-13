@@ -117,6 +117,8 @@ Run the project normally and confirm:
 - Controls and Quit remain functional;
 - the Windows export pipeline still succeeds.
 
+GitHub Actions run #26 passed Godot import, title startup, Windows export, and artifact upload for the unlocked projectile fix.
+
 The release version remains v0.1 during this visual review. Version promotion can happen after the art direction is accepted.
 
 ## Creative review

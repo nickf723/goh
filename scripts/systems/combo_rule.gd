@@ -25,8 +25,15 @@ class_name ComboRule
 @export var reaction_name: String = "Reaction"
 @export_multiline var feedback_text: String = "{target} reacts."
 
+# Presentation metadata is deliberately data-driven so combat targets, hazards,
+# UI text, and future authored VFX can agree on the same reaction identity.
+@export var visual_style: String = "reaction"
+@export var visual_color: Color = Color(1.0, 0.58, 0.15, 1.0)
+@export var visual_radius: float = 1.25
+@export var visual_duration: float = 0.42
+
 # Optional hazard/object behavior hook. This lets a rule trigger a method on the
-# matched target, such as spread_cloud(), flare_field(), or trigger_toxic_ignition().
+# matched target, such as trigger_ignite(), trigger_freeze(), or trigger_steam().
 # Keep this data string based so the rule registry can stay generic.
 @export var target_reaction_method: String = ""
 @export var target_reaction_pass_source_position: bool = true

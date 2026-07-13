@@ -1,0 +1,40 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/testing/lab_reaction_target.gd" id="1_target"]
+[ext_resource type="PackedScene" path="res://scenes/actors/enemies/goblin_visual_v1.tscn" id="2_visual"]
+[ext_resource type="Script" path="res://scripts/combat/hit_receiver.gd" id="3_hit"]
+[ext_resource type="Script" path="res://scripts/combat/status_receiver.gd" id="4_status"]
+[ext_resource type="Script" path="res://scripts/combat/payload_receiver.gd" id="5_payload"]
+[ext_resource type="Script" path="res://scripts/core/tag_component.gd" id="6_tags"]
+
+[sub_resource type="SphereShape3D" id="SphereShape_target"]
+radius = 0.58
+
+[node name="GoblinReactionTarget" type="Area3D" groups=["enemy", "lab_resettable"]]
+script = ExtResource("1_target")
+prompt_text = "Inspect Goblin station"
+target_label = "Goblin Reaction Target"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape_target")
+
+[node name="GoblinVisualV1" parent="." instance=ExtResource("2_visual")]
+
+[node name="HitReceiver" type="Node" parent="."]
+script = ExtResource("3_hit")
+target_name = "Goblin Reaction Target"
+hit_mode = 2
+max_health = 40
+current_health = 40
+max_stance = 20
+current_stance = 20
+
+[node name="StatusReceiver" type="Node" parent="."]
+script = ExtResource("4_status")
+
+[node name="PayloadReceiver" type="Node" parent="."]
+script = ExtResource("5_payload")
+
+[node name="TagComponent" type="Node" parent="."]
+script = ExtResource("6_tags")
+tags = Array[String](["enemy", "training", "organic", "goblin", "reaction_target"])

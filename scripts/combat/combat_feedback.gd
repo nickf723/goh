@@ -1,6 +1,8 @@
 extends Node
 class_name CombatFeedback
 
+const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
+
 const DAMAGE_COLOR: Color = Color(1.0, 0.82, 0.35, 1.0)
 const STANCE_COLOR: Color = Color(0.55, 0.82, 1.0, 1.0)
 const STATUS_COLOR: Color = Color(0.62, 1.0, 0.48, 1.0)
@@ -33,13 +35,34 @@ static func show_status_feedback(target: Node, status_name: String) -> void:
 	show_world_text(target, text, get_status_color(status_name), true)
 
 
-static func show_reaction_feedback(target: Node, reaction_name: String) -> void:
+static func show_reaction_feedback(
+	target: Node,
+	reaction_name: String,
+	reaction_data: Dictionary = {}
+) -> void:
 	if target == null or reaction_name == "":
 		return
 
-	var text: String = reaction_name.replace("_", " ").to_upper()
-	show_world_text(target, text, REACTION_COLOR, true)
-	show_hit_burst(target, REACTION_COLOR, true)
+	var display_name: String = str(reaction_data.get("reaction_name", reaction_name))
+	var text: String = display_name.replace("_", " ").to_upper()
+	var color: Color = get_reaction_color(reaction_name, reaction_data)
+	var visual_style: String = str(reaction_data.get("visual_style", reaction_name))
+	var visual_radius: float = float(reaction_data.get("visual_radius", 1.25))
+	var visual_duration: float = float(reaction_data.get("visual_duration", 0.42))
+	var target_position: Vector3 = get_target_node_position(target)
+
+	show_world_text(target, text, color, true)
+	show_hit_burst(target, color, true)
+
+	if target.get_tree() != null:
+		ElementVisuals.spawn_reaction_burst(
+			target.get_tree(),
+			target_position + Vector3.UP * 0.4,
+			visual_style,
+			color,
+			visual_radius,
+			visual_duration
+		)
 
 
 static func show_miss_feedback(source: Node, world_position: Vector3) -> void:
@@ -189,6 +212,15 @@ static func get_feedback_position(target: Node) -> Vector3:
 	return node_3d.global_position + Vector3(offset_x, max(height * 0.82, 1.0), offset_z)
 
 
+static func get_target_node_position(target: Node) -> Vector3:
+	var node_3d: Node3D = get_target_node_3d(target)
+
+	if node_3d == null:
+		return Vector3.ZERO
+
+	return node_3d.global_position
+
+
 static func get_target_node_3d(target: Node) -> Node3D:
 	if target is Node3D:
 		return target as Node3D
@@ -257,10 +289,37 @@ static func get_status_color(status_name: String) -> Color:
 			return Color(1.0, 0.9, 0.18, 1.0)
 		"wet":
 			return Color(0.25, 0.58, 1.0, 1.0)
+		"oily":
+			return Color(0.58, 0.2, 0.68, 1.0)
+		"steamed":
+			return ElementVisuals.get_element_color("steam")
+		"revealed":
+			return ElementVisuals.get_element_color("sound")
 		"staggered":
 			return STANCE_COLOR
 		_:
 			return STATUS_COLOR
+
+
+static func get_reaction_color(reaction_name: String, reaction_data: Dictionary) -> Color:
+	var configured_color: Variant = reaction_data.get("visual_color")
+
+	if configured_color is Color:
+		return configured_color as Color
+
+	match reaction_name:
+		"ignite_oil", "ignite":
+			return ElementVisuals.get_element_color("fire")
+		"wet_conduction", "conduct":
+			return ElementVisuals.get_element_color("lightning")
+		"wet_freeze", "freeze", "shatter":
+			return ElementVisuals.get_element_color("ice")
+		"steam_burst", "steam":
+			return ElementVisuals.get_element_color("steam")
+		"reveal", "sound_reveal":
+			return ElementVisuals.get_element_color("sound")
+		_:
+			return REACTION_COLOR
 
 
 static func get_element_color(element: String) -> Color:
@@ -272,11 +331,11 @@ static func get_element_color(element: String) -> Color:
 		"ice":
 			return Color(0.5, 0.92, 1.0, 1.0)
 		"lightning":
-			return Color(0.42, 0.52, 1.0, 1.0)
+			return Color(0.72, 0.72, 1.0, 1.0)
 		"poison":
 			return Color(0.48, 1.0, 0.22, 1.0)
 		"sound":
-			return Color(1.0, 0.58, 0.14, 1.0)
+			return Color(1.0, 0.43, 0.74, 1.0)
 		"space":
 			return Color(0.68, 0.32, 1.0, 1.0)
 		"air":

@@ -1,22 +1,27 @@
 [gd_scene format=3 uid="uid://dq6m8gaf1u2b7"]
 
 [ext_resource type="Script" uid="uid://dmvne28s0m5qe" path="res://scripts/surfaces/status_surface.gd" id="1_7x63f"]
-[ext_resource type="Material" uid="uid://cciwpcf05da42" path="res://art/materials/wall_debug.tres" id="2_4okt1"]
+[ext_resource type="Material" path="res://art/materials/prototype/water_blue_readable.tres" id="2_water"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_o6qhy"]
 size = Vector3(4, 0.2, 4)
 
 [sub_resource type="BoxMesh" id="BoxMesh_g87l5"]
-size = Vector3(4, 0.2, 4)
+size = Vector3(4, 0.08, 4)
 
 [node name="WaterPatch" type="Area3D" unique_id=462673935]
 script = ExtResource("1_7x63f")
 surface_name = "Water"
 status_source = "water_patch"
+removes_statuses = Array[String](["oily", "burning"])
+reactive_enabled = true
+visual_profile = "water"
+hazard_tags = Array[String](["surface", "water", "wet", "conductive"])
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1961384559]
 shape = SubResource("BoxShape3D_o6qhy")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1910554811]
-material_override = ExtResource("2_4okt1")
+position = Vector3(0, -0.06, 0)
+material_override = ExtResource("2_water")
 mesh = SubResource("BoxMesh_g87l5")

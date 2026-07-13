@@ -1,12 +1,34 @@
 extends Node
 
 const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
+const StatusVisualControllerScript = preload("res://scripts/visuals/status_visual_controller.gd")
 
 var active_statuses: Dictionary = {}
+var status_visual_controller: Node3D
 
 
 func _ready() -> void:
 	add_to_group("debuggable")
+	attach_status_visual_controller()
+
+
+func attach_status_visual_controller() -> void:
+	var target: Node = get_parent()
+
+	if not (target is Node3D):
+		return
+
+	var existing: Node = target.get_node_or_null("StatusVisualController")
+
+	if existing is Node3D:
+		status_visual_controller = existing as Node3D
+	else:
+		status_visual_controller = StatusVisualControllerScript.new() as Node3D
+		status_visual_controller.name = "StatusVisualController"
+		target.add_child(status_visual_controller)
+
+	if status_visual_controller != null and status_visual_controller.has_method("bind"):
+		status_visual_controller.bind(self)
 
 
 func apply_status(status_name: String, duration: float, strength: float = 1.0, source: String = "unknown") -> void:
@@ -173,6 +195,10 @@ func remove_status(status_name: String) -> void:
 		print("Status removed: ", status_name)
 
 
+func clear_all_statuses() -> void:
+	active_statuses.clear()
+
+
 func get_status_strength(status_name: String) -> float:
 	if not active_statuses.has(status_name):
 		return 1.0
@@ -203,11 +229,17 @@ func resolve_status_conflicts(new_status: String) -> void:
 			remove_status("burning")
 
 		"burning":
-			remove_status("frozen")
+			# Frozen remains long enough for the data-driven Fire + Frozen steam
+			# reaction to resolve and remove both states deliberately.
 			remove_status("chill")
 
 		"frozen":
 			remove_status("burning")
+
+		"steamed":
+			remove_status("frozen")
+			remove_status("burning")
+			remove_status("chill")
 
 
 func blocks_actions() -> bool:

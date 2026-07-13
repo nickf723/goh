@@ -6,10 +6,12 @@ const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
 
 var last_payload_summary: String = "none"
 var last_reaction_summary: String = "none"
+var last_reaction_data: Dictionary = {}
 
 
 func _ready() -> void:
 	add_to_group("debuggable")
+
 
 func receive_payload(payload: DamagePayload) -> Dictionary:
 	if payload == null:
@@ -29,6 +31,7 @@ func receive_payload(payload: DamagePayload) -> Dictionary:
 
 	return combine_messages(result, reaction_messages)
 
+
 func get_target_node() -> Node:
 	var parent: Node = get_parent()
 
@@ -36,6 +39,7 @@ func get_target_node() -> Node:
 		return parent
 
 	return self
+
 
 func remember_payload(payload: DamagePayload) -> void:
 	last_payload_summary = (
@@ -45,6 +49,7 @@ func remember_payload(payload: DamagePayload) -> void:
 		+ " | "
 		+ str(payload.tags)
 	)
+
 
 func apply_direct_status(target: Node, payload: DamagePayload) -> void:
 	if payload.status_effect == "":
@@ -68,6 +73,7 @@ func apply_direct_status(target: Node, payload: DamagePayload) -> void:
 		payload.source_name
 	)
 
+
 func resolve_reactions(target: Node, payload: DamagePayload) -> Array[String]:
 	var reaction_messages: Array[String] = []
 	var reaction_names: Array[String] = []
@@ -78,7 +84,8 @@ func resolve_reactions(target: Node, payload: DamagePayload) -> Array[String]:
 		if reaction.has("reaction"):
 			var reaction_name: String = str(reaction["reaction"])
 			reaction_names.append(reaction_name)
-			CombatFeedback.show_reaction_feedback(target, reaction_name)
+			CombatFeedback.show_reaction_feedback(target, reaction_name, reaction)
+			last_reaction_data = reaction.duplicate(true)
 
 		if reaction.has("message"):
 			reaction_messages.append(str(reaction["message"]))
@@ -87,8 +94,10 @@ func resolve_reactions(target: Node, payload: DamagePayload) -> Array[String]:
 		last_reaction_summary = ", ".join(reaction_names)
 	else:
 		last_reaction_summary = "none"
+		last_reaction_data.clear()
 
 	return reaction_messages
+
 
 func apply_hit(target: Node, payload: DamagePayload) -> Dictionary:
 	var hit_receiver: Node = get_component(target, "HitReceiver")
@@ -105,6 +114,7 @@ func apply_hit(target: Node, payload: DamagePayload) -> Dictionary:
 		"objective": ""
 	}
 
+
 func combine_messages(result: Dictionary, reaction_messages: Array[String]) -> Dictionary:
 	if reaction_messages.size() == 0:
 		return result
@@ -115,8 +125,8 @@ func combine_messages(result: Dictionary, reaction_messages: Array[String]) -> D
 		combined_message += "\n" + str(result["message"])
 
 	result["message"] = combined_message
-
 	return result
+
 
 func get_component(target: Node, component_name: String) -> Node:
 	if target == null:
@@ -124,14 +134,16 @@ func get_component(target: Node, component_name: String) -> Node:
 
 	return target.get_node_or_null(component_name)
 
+
 func get_debug_data() -> Dictionary:
 	return {
 		"last": last_payload_summary,
 		"rx": last_reaction_summary,
+		"rx_visual": str(last_reaction_data.get("visual_style", "none")),
 	}
 
+
 func apply_force(target: Node, payload: DamagePayload) -> void:
-	
 	if payload.knockback_strength <= 0.0 and payload.knockback_up_strength <= 0.0:
 		return
 
@@ -154,6 +166,7 @@ func apply_force(target: Node, payload: DamagePayload) -> void:
 		payload.source_name
 	)
 
+
 func get_payload_source_position(_payload: DamagePayload) -> Vector3:
 	var player: Node3D = get_tree().get_first_node_in_group("player")
 
@@ -161,6 +174,7 @@ func get_payload_source_position(_payload: DamagePayload) -> Vector3:
 		return player.global_position
 
 	return Vector3.ZERO
+
 
 func get_target_position(target: Node) -> Vector3:
 	if target is Node3D:

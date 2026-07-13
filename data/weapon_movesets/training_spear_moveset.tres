@@ -1,0 +1,212 @@
+[gd_resource type="Resource" script_class="WeaponMovesetDefinition" format=3 uid="uid://bpyswgqwd8k7q"]
+
+[ext_resource type="Script" uid="uid://bu1o0dtqib8kx" path="res://scripts/weapons/weapon_attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" uid="uid://dd2pxrjjcsjhc" path="res://scripts/weapons/weapon_moveset_definition.gd" id="2_moveset"]
+
+[sub_resource type="Resource" id="Attack_spear_l1"]
+script = ExtResource("1_attack")
+attack_id = "spear_l1"
+display_name = "Quick Jab"
+startup_time = 0.1
+active_time = 0.06
+recovery_time = 0.16
+combo_timeout = 0.62
+cancel_window_start_normalized = 0.42
+allow_spell_cancel = true
+damage_multiplier = 0.9
+stance_multiplier = 0.85
+knockback_multiplier = 0.55
+extra_tags = Array[String](["pierce", "thrust"])
+attack_range = 3.55
+cone_angle_degrees = 34.0
+attack_center_forward_offset = 1.55
+max_targets = 2
+movement_distance = 0.55
+movement_duration = 0.11
+next_light_attack_id = "spear_l2"
+next_heavy_attack_id = "spear_h1"
+hit_stop_duration = 0.045
+trail_color = Color(0.42, 0.92, 0.86, 0.78)
+trail_start_scale = Vector3(0.18, 0.42, 1)
+trail_end_scale = Vector3(0.38, 0.72, 1)
+windup_rotation_degrees = Vector3(0, -14, 88)
+strike_rotation_degrees = Vector3(0, 4, 90)
+windup_offset = Vector3(0, 0, 0.3)
+strike_offset = Vector3(0, 0, -0.62)
+
+[sub_resource type="Resource" id="Attack_spear_l2"]
+script = ExtResource("1_attack")
+attack_id = "spear_l2"
+display_name = "Passing Thrust"
+startup_time = 0.12
+active_time = 0.06
+recovery_time = 0.18
+combo_timeout = 0.64
+cancel_window_start_normalized = 0.44
+allow_spell_cancel = true
+stance_multiplier = 0.95
+knockback_multiplier = 0.65
+extra_tags = Array[String](["pierce", "thrust"])
+attack_range = 3.9
+cone_angle_degrees = 28.0
+attack_center_forward_offset = 1.7
+max_targets = 2
+movement_distance = 0.72
+movement_duration = 0.13
+next_light_attack_id = "spear_l3"
+next_heavy_attack_id = "spear_h2"
+hit_stop_duration = 0.05
+trail_color = Color(0.38, 0.9, 0.84, 0.8)
+trail_start_scale = Vector3(0.16, 0.38, 1)
+trail_end_scale = Vector3(0.36, 0.68, 1)
+windup_rotation_degrees = Vector3(4, 18, 88)
+strike_rotation_degrees = Vector3(-2, -6, 90)
+windup_offset = Vector3(0, 0, 0.34)
+strike_offset = Vector3(0, 0, -0.72)
+
+[sub_resource type="Resource" id="Attack_spear_l3"]
+script = ExtResource("1_attack")
+attack_id = "spear_l3"
+display_name = "Clearing Arc"
+combo_timeout = 0.7
+cancel_window_start_normalized = 0.54
+allow_spell_cancel = true
+damage_multiplier = 1.15
+stance_multiplier = 1.1
+extra_tags = Array[String](["pierce", "sweep"])
+attack_range = 3.25
+cone_angle_degrees = 118.0
+attack_center_forward_offset = 1.28
+max_targets = 4
+movement_distance = 0.36
+movement_duration = 0.14
+next_heavy_attack_id = "spear_h3"
+hit_stop_duration = 0.06
+trail_color = Color(0.5, 0.96, 0.88, 0.82)
+trail_start_scale = Vector3(0.38, 0.72, 1)
+trail_end_scale = Vector3(1.05, 1.25, 1)
+windup_rotation_degrees = Vector3(0, -76, 82)
+strike_rotation_degrees = Vector3(0, 92, 98)
+
+[sub_resource type="Resource" id="Attack_spear_h0"]
+script = ExtResource("1_attack")
+attack_id = "spear_h0"
+display_name = "Brace Pierce"
+input_kind = "heavy"
+startup_time = 0.32
+active_time = 0.09
+recovery_time = 0.38
+combo_timeout = 0.24
+cancel_window_start_normalized = 0.82
+stamina_cost = 1
+damage_multiplier = 2.0
+stance_multiplier = 1.7
+knockback_multiplier = 1.6
+extra_tags = Array[String](["pierce", "thrust", "force", "guard_break"])
+attack_range = 4.35
+cone_angle_degrees = 24.0
+attack_center_forward_offset = 1.95
+max_targets = 2
+movement_distance = 1.35
+movement_duration = 0.2
+hit_stop_duration = 0.085
+trail_color = Color(0.26, 1, 0.78, 0.9)
+trail_start_scale = Vector3(0.16, 0.4, 1)
+trail_end_scale = Vector3(0.4, 0.8, 1)
+windup_rotation_degrees = Vector3(0, -24, 86)
+strike_rotation_degrees = Vector3(0, 0, 90)
+windup_offset = Vector3(0, 0, 0.48)
+strike_offset = Vector3(0, 0, -0.9)
+
+[sub_resource type="Resource" id="Attack_spear_h1"]
+script = ExtResource("1_attack")
+attack_id = "spear_h1"
+display_name = "Shaft Sweep"
+input_kind = "heavy"
+startup_time = 0.22
+active_time = 0.1
+recovery_time = 0.34
+combo_timeout = 0.26
+cancel_window_start_normalized = 0.76
+stamina_cost = 1
+damage_multiplier = 1.45
+stance_multiplier = 1.35
+knockback_multiplier = 1.25
+extra_tags = Array[String](["force", "sweep"])
+attack_range = 3.45
+cone_angle_degrees = 190.0
+attack_center_forward_offset = 0.95
+max_targets = 6
+movement_distance = 0.28
+movement_duration = 0.14
+hit_stop_duration = 0.07
+trail_color = Color(0.34, 0.98, 0.78, 0.88)
+trail_start_scale = Vector3(0.46, 0.8, 1)
+trail_end_scale = Vector3(1.28, 1.45, 1)
+windup_rotation_degrees = Vector3(0, 104, 86)
+strike_rotation_degrees = Vector3(0, -132, 94)
+
+[sub_resource type="Resource" id="Attack_spear_h2"]
+script = ExtResource("1_attack")
+attack_id = "spear_h2"
+display_name = "Driving Skewer"
+input_kind = "heavy"
+startup_time = 0.28
+active_time = 0.1
+recovery_time = 0.42
+combo_timeout = 0.24
+cancel_window_start_normalized = 0.84
+stamina_cost = 2
+damage_multiplier = 2.25
+stance_multiplier = 1.9
+knockback_multiplier = 1.8
+extra_tags = Array[String](["pierce", "thrust", "force", "finisher"])
+attack_range = 4.85
+cone_angle_degrees = 22.0
+attack_center_forward_offset = 2.15
+movement_distance = 1.65
+movement_duration = 0.22
+hit_stop_duration = 0.095
+trail_color = Color(0.24, 1, 0.76, 0.94)
+trail_start_scale = Vector3(0.14, 0.38, 1)
+trail_end_scale = Vector3(0.42, 0.82, 1)
+windup_rotation_degrees = Vector3(0, 20, 86)
+strike_rotation_degrees = Vector3(0, -2, 90)
+windup_offset = Vector3(0, 0, 0.5)
+strike_offset = Vector3(0, 0, -1.05)
+
+[sub_resource type="Resource" id="Attack_spear_h3"]
+script = ExtResource("1_attack")
+attack_id = "spear_h3"
+display_name = "Reaping Return"
+input_kind = "heavy"
+startup_time = 0.3
+active_time = 0.12
+recovery_time = 0.46
+combo_timeout = 0.2
+cancel_window_start_normalized = 0.86
+stamina_cost = 2
+damage_multiplier = 2.0
+stance_multiplier = 1.8
+knockback_multiplier = 1.55
+extra_tags = Array[String](["force", "sweep", "finisher"])
+attack_range = 3.75
+cone_angle_degrees = 250.0
+attack_center_forward_offset = 0.82
+max_targets = 8
+movement_distance = 0.42
+movement_duration = 0.18
+hit_stop_duration = 0.1
+trail_color = Color(0.3, 1, 0.72, 0.96)
+trail_start_scale = Vector3(0.55, 0.9, 1)
+trail_end_scale = Vector3(1.55, 1.7, 1)
+windup_rotation_degrees = Vector3(0, -138, 80)
+strike_rotation_degrees = Vector3(0, 188, 100)
+
+[resource]
+script = ExtResource("2_moveset")
+moveset_id = "training_spear"
+display_name = "Precision Spear Forms"
+entry_light_attack_id = "spear_l1"
+entry_heavy_attack_id = "spear_h0"
+attacks = Array[ExtResource("1_attack")]([SubResource("Attack_spear_l1"), SubResource("Attack_spear_l2"), SubResource("Attack_spear_l3"), SubResource("Attack_spear_h0"), SubResource("Attack_spear_h1"), SubResource("Attack_spear_h2"), SubResource("Attack_spear_h3")])

@@ -52,6 +52,12 @@ jobs:
       - name: Validate elemental reaction recipes
         run: godot --headless --path . res://scenes/tests/elemental_reaction_smoke_test.tscn
 
+      - name: Start Weapon Combat Arena headlessly
+        run: godot --headless --path . res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn --quit-after 5
+
+      - name: Validate weapon moveset graphs
+        run: godot --headless --path . res://scenes/tests/weapon_moveset_smoke_test.tscn
+
       - name: Export Windows v0.1 build
         run: |
           mkdir -p build/windows

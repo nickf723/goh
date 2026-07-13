@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ComboRule" format=3]
+[gd_resource type="Resource" script_class="ComboRule" format=3 uid="uid://scys34lb4mhu"]
 
-[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+[ext_resource type="Script" uid="uid://bhyvrvl6332nr" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
 
 [resource]
 script = ExtResource("1_combo_rule")
@@ -20,7 +20,6 @@ visual_duration = 0.58
 target_reaction_method = "trigger_steam"
 output_status = "steamed"
 output_status_duration = 2.4
-output_status_strength = 1.0
 output_status_source = "steam_burst"
 remove_statuses = Array[String](["frozen", "burning", "chill"])
 output_tags = Array[String](["fire", "ice", "steam", "reaction"])

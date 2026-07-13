@@ -15,10 +15,14 @@ class_name VillageMemoryRelic
 func _ready() -> void:
 	add_to_group("village_memory")
 	add_to_group("debuggable")
+	sync_from_game_state()
 
-	if story_flag != "" and GameState.get_flag(story_flag):
-		if revealable_receiver != null and revealable_receiver.has_method("reveal_target"):
-			revealable_receiver.call("reveal_target", 0.0, "restored memory")
+
+func sync_from_game_state() -> void:
+	if story_flag == "" or not GameState.get_flag(story_flag):
+		return
+	if revealable_receiver != null and revealable_receiver.has_method("reveal_target"):
+		revealable_receiver.call("reveal_target", 0.0, "restored memory")
 
 
 func interact() -> Dictionary:

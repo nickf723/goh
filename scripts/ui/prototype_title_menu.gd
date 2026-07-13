@@ -1,6 +1,7 @@
 extends Control
 
 const TRIAL_ENTRY_SCENE: String = "res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn"
+const PROTOTYPE_WINDOW_TITLE: String = "Grace of Humanity | v0.1.0 Prototype"
 
 @onready var new_trial_button: Button = %NewTrialButton
 @onready var continue_button: Button = %ContinueButton
@@ -10,6 +11,7 @@ const TRIAL_ENTRY_SCENE: String = "res://scenes/levels/prototypes/prototype_boss
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	DisplayServer.window_set_title(PROTOTYPE_WINDOW_TITLE)
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	controls_panel.visible = false
 	refresh_continue_state()

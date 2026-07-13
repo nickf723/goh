@@ -140,9 +140,9 @@ Confirm no earlier room, transition, spell, enemy, save, or reward behavior chan
 
 ## CI and export
 
-GitHub Actions run #35 passed on the exact PR head before final review.
+GitHub Actions validates the exact PR head before review.
 
-The workflow completed:
+The workflow covers:
 
 - custom agent validation;
 - Godot 4.6 project import;

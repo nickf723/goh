@@ -2,6 +2,7 @@ extends Node3D
 class_name PrototypeElementalReactionLab
 
 const ComboRuleRegistryScript = preload("res://scripts/systems/combo_rule_registry.gd")
+const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
 const LabLoadout: Resource = preload("res://data/loadouts/grace_reaction_lab_loadout.tres")
 
 @export var opening_objective: String = "Trigger IGNITE, CONDUCT, FREEZE, SHATTER, STEAM, and REVEAL. Use the reset console whenever needed."
@@ -15,6 +16,7 @@ var reset_count: int = 0
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	add_to_group("debuggable")
+	configure_surface_catalysts()
 	configure_lab_loadout()
 
 	if refill_resources_on_ready:
@@ -22,6 +24,71 @@ func _ready() -> void:
 
 	set_objective(opening_objective)
 	show_message(get_opening_message())
+
+
+func configure_surface_catalysts() -> void:
+	var catalysts: Array[Node] = find_children("ProjectileReceiver", "Area3D", true, false)
+
+	for catalyst_node: Node in catalysts:
+		if not (catalyst_node is Area3D):
+			continue
+
+		var catalyst := catalyst_node as Area3D
+		catalyst.position = Vector3(1.55, 0.74, 0.75)
+
+		var collision: CollisionShape3D = catalyst.get_node_or_null("CollisionShape3D") as CollisionShape3D
+		if collision != null and collision.shape is BoxShape3D:
+			var box: BoxShape3D = collision.shape.duplicate() as BoxShape3D
+			box.size = Vector3(0.72, 1.5, 0.72)
+			collision.shape = box
+
+		if catalyst.get_node_or_null("CatalystVisual") != null:
+			continue
+
+		var visual_root := Node3D.new()
+		visual_root.name = "CatalystVisual"
+		catalyst.add_child(visual_root)
+
+		var surface: Node = catalyst.get_parent()
+		var profile: String = "neutral"
+		if surface != null:
+			profile = str(surface.get("visual_profile"))
+			if profile == "none":
+				profile = str(surface.get("status_effect"))
+
+		var color: Color = ElementVisuals.get_element_color(profile)
+		ElementVisuals.add_box(
+			visual_root,
+			"CatalystPillar",
+			Vector3(0.34, 1.18, 0.34),
+			color,
+			Vector3.ZERO,
+			Vector3(0.0, 45.0, 0.0),
+			1.4,
+			0.82
+		)
+		ElementVisuals.add_torus(
+			visual_root,
+			"CatalystRing",
+			0.22,
+			0.29,
+			color.lightened(0.18),
+			Vector3(0.0, 0.18, 0.0),
+			Vector3.ZERO,
+			2.0,
+			0.78
+		)
+
+		var label := Label3D.new()
+		label.name = "CatalystLabel"
+		label.position = Vector3(0.0, 0.94, 0.0)
+		label.text = "SURFACE"
+		label.font_size = 28
+		label.pixel_size = 0.007
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.modulate = color.lightened(0.25)
+		label.outline_size = 5
+		visual_root.add_child(label)
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -80,7 +80,7 @@ max_health = 30
 current_health = 30
 max_stance = 12
 current_stance = 12
-resets_stance_after_break = true
+resets_stance_after_break = false
 
 [node name="StatusReceiver" type="Node" parent="."]
 script = ExtResource("3_status")

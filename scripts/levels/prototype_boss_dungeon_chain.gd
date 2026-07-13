@@ -5,7 +5,7 @@ const TransitionAreaScene: PackedScene = preload("res://scenes/actors/interactab
 const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 
 @export var opening_objective: String = "Church Trial: save, clear combat, solve the lock, cross the echo path, defeat the armor, claim the sigil, then exit."
-@export var opening_message: String = "The Church Trial tests force, understanding, perception, and resolve. Press F8 to clear the prototype save and restart fresh."
+@export var opening_message: String = "The Church Trial tests force, understanding, perception, and resolve."
 @export var apply_save_on_ready: bool = true
 @export var add_reward_altar: bool = true
 @export var reward_altar_position: Vector3 = Vector3(0.0, 0.15, 112.5)
@@ -29,14 +29,17 @@ func _ready() -> void:
 
 	if apply_save_on_ready and GameState.apply_save_for_current_scene():
 		set_objective(GameState.current_objective)
-		show_message("Grace resumes from saved progress. Press F8 to clear this prototype save and restart fresh.")
+		show_message(get_resume_message())
 		return
 
 	set_objective(opening_objective)
-	show_message(opening_message)
+	show_message(get_opening_message())
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not OS.has_feature("editor"):
+		return
+
 	if not enable_dev_save_reset:
 		return
 
@@ -53,6 +56,22 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	get_viewport().set_input_as_handled()
 	clear_prototype_save_and_restart()
+
+
+func get_opening_message() -> String:
+	if OS.has_feature("editor") and enable_dev_save_reset:
+		return opening_message + " Press F8 to clear the prototype save and restart fresh."
+
+	return opening_message
+
+
+func get_resume_message() -> String:
+	var message: String = "Grace resumes from saved progress."
+
+	if OS.has_feature("editor") and enable_dev_save_reset:
+		message += " Press F8 to clear this prototype save and restart fresh."
+
+	return message
 
 
 func clear_prototype_save_and_restart() -> void:

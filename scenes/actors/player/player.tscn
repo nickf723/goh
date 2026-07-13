@@ -8,6 +8,7 @@
 [ext_resource type="Resource" uid="uid://dgcmpqkn3b3a4" path="res://data/weapons/practice_sword.tres" id="6_g2g7f"]
 [ext_resource type="Script" uid="uid://yxbkrqi8ju8j" path="res://scripts/player/player_action_state.gd" id="7_g2g7f"]
 [ext_resource type="Script" uid="uid://dmp5o1qjlca1n" path="res://scripts/player/player_dodge_controller.gd" id="8_fp13k"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/grace_visual_v1.tscn" id="9_grace"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -27,8 +28,11 @@ script = ExtResource("1_3vyb7")
 shape = SubResource("CapsuleShape3D_g2els")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=871190334]
+visible = false
 material_override = ExtResource("2_mpktj")
 mesh = SubResource("CapsuleMesh_qhqgy")
+
+[node name="GraceVisualV1" parent="." instance=ExtResource("9_grace")]
 
 [node name="CameraPivot" type="Node3D" parent="." unique_id=1528540765]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)

@@ -1,0 +1,71 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://art/materials/church/church_stone_charcoal_v1.tres" id="1_dark"]
+[ext_resource type="Material" path="res://art/materials/church/church_stone_warm_v1.tres" id="2_warm"]
+[ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="3_gold"]
+[ext_resource type="Material" path="res://art/materials/church/church_violet_glow_v1.tres" id="4_violet"]
+
+[sub_resource type="BoxMesh" id="Mesh_base"]
+size = Vector3(1.5, 0.34, 1.5)
+
+[sub_resource type="BoxMesh" id="Mesh_step"]
+size = Vector3(1.18, 0.22, 1.18)
+
+[sub_resource type="CylinderMesh" id="Mesh_shaft"]
+top_radius = 0.39
+bottom_radius = 0.48
+height = 3.2
+radial_segments = 8
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_band"]
+top_radius = 0.51
+bottom_radius = 0.51
+height = 0.13
+radial_segments = 8
+
+[sub_resource type="BoxMesh" id="Mesh_capital"]
+size = Vector3(1.28, 0.3, 1.28)
+
+[sub_resource type="SphereMesh" id="Mesh_gem"]
+radius = 0.13
+height = 0.26
+radial_segments = 10
+rings = 5
+
+[node name="ChurchPillarV1" type="Node3D"]
+
+[node name="Base" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.17, 0)
+material_override = ExtResource("1_dark")
+mesh = SubResource("Mesh_base")
+
+[node name="Step" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.44, 0)
+material_override = ExtResource("2_warm")
+mesh = SubResource("Mesh_step")
+
+[node name="Shaft" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.0, 0)
+material_override = ExtResource("1_dark")
+mesh = SubResource("Mesh_shaft")
+
+[node name="LowerBand" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.68, 0)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_band")
+
+[node name="UpperBand" type="MeshInstance3D" parent="."]
+position = Vector3(0, 3.25, 0)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_band")
+
+[node name="Capital" type="MeshInstance3D" parent="."]
+position = Vector3(0, 3.72, 0)
+material_override = ExtResource("2_warm")
+mesh = SubResource("Mesh_capital")
+
+[node name="FrontGem" type="MeshInstance3D" parent="."]
+position = Vector3(0, 3.7, -0.67)
+material_override = ExtResource("4_violet")
+mesh = SubResource("Mesh_gem")

@@ -1,0 +1,81 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://art/materials/church/church_stone_charcoal_v1.tres" id="1_dark"]
+[ext_resource type="Material" path="res://art/materials/church/church_stone_warm_v1.tres" id="2_warm"]
+[ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="3_gold"]
+[ext_resource type="Material" path="res://art/materials/church/church_violet_glow_v1.tres" id="4_violet"]
+
+[sub_resource type="BoxMesh" id="Mesh_plinth"]
+size = Vector3(3.2, 0.18, 2.4)
+
+[sub_resource type="BoxMesh" id="Mesh_step"]
+size = Vector3(2.75, 0.16, 1.95)
+
+[sub_resource type="BoxMesh" id="Mesh_back"]
+size = Vector3(3.0, 2.5, 0.24)
+
+[sub_resource type="BoxMesh" id="Mesh_post"]
+size = Vector3(0.16, 2.2, 0.16)
+
+[sub_resource type="BoxMesh" id="Mesh_crown"]
+size = Vector3(2.7, 0.18, 0.22)
+
+[sub_resource type="TorusMesh" id="Mesh_halo"]
+inner_radius = 0.72
+outer_radius = 0.82
+rings = 20
+ring_segments = 8
+
+[sub_resource type="SphereMesh" id="Mesh_finial"]
+radius = 0.13
+height = 0.26
+radial_segments = 10
+rings = 5
+
+[node name="ChurchAltarFrameV1" type="Node3D"]
+
+[node name="Plinth" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.09, 0)
+material_override = ExtResource("1_dark")
+mesh = SubResource("Mesh_plinth")
+
+[node name="InsetStep" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.2, -0.05)
+material_override = ExtResource("2_warm")
+mesh = SubResource("Mesh_step")
+
+[node name="BackSlab" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.48, 0.92)
+material_override = ExtResource("1_dark")
+mesh = SubResource("Mesh_back")
+
+[node name="LeftPost" type="MeshInstance3D" parent="."]
+position = Vector3(-1.2, 1.48, 0.72)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_post")
+
+[node name="RightPost" type="MeshInstance3D" parent="."]
+position = Vector3(1.2, 1.48, 0.72)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_post")
+
+[node name="Crown" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.62, 0.75)
+material_override = ExtResource("3_gold")
+mesh = SubResource("Mesh_crown")
+
+[node name="Halo" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.62, 0.76)
+rotation_degrees = Vector3(90, 0, 0)
+material_override = ExtResource("4_violet")
+mesh = SubResource("Mesh_halo")
+
+[node name="LeftFinial" type="MeshInstance3D" parent="."]
+position = Vector3(-1.2, 2.74, 0.72)
+material_override = ExtResource("4_violet")
+mesh = SubResource("Mesh_finial")
+
+[node name="RightFinial" type="MeshInstance3D" parent="."]
+position = Vector3(1.2, 2.74, 0.72)
+material_override = ExtResource("4_violet")
+mesh = SubResource("Mesh_finial")

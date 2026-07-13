@@ -2,6 +2,7 @@ extends Node3D
 
 const RewardAltarScene: PackedScene = preload("res://scenes/actors/interactables/church_trial_reward_altar.tscn")
 const TransitionAreaScene: PackedScene = preload("res://scenes/actors/interactables/level_exit.tscn")
+const ChurchEntryDressingScene: PackedScene = preload("res://scenes/environment/church/church_entry_dressing_v1.tscn")
 const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 
 @export var opening_objective: String = "Church Trial: save, clear combat, solve the lock, cross the echo path, defeat the armor, claim the sigil, then exit."
@@ -10,6 +11,9 @@ const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 @export var add_reward_altar: bool = true
 @export var reward_altar_position: Vector3 = Vector3(0.0, 0.15, 112.5)
 @export var enable_dev_save_reset: bool = true
+
+@export_group("Art Dressing")
+@export var add_entry_art_dressing: bool = true
 
 @export_group("Room Flow")
 @export var add_sound_transition: bool = true
@@ -22,6 +26,7 @@ const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	spawn_entry_art_dressing()
 	spawn_reward_altar()
 	spawn_sound_transition()
 	configure_final_exit()
@@ -89,6 +94,28 @@ func clear_prototype_save_and_restart() -> void:
 
 	await get_tree().create_timer(0.15).timeout
 	get_tree().reload_current_scene()
+
+
+func spawn_entry_art_dressing() -> void:
+	if not add_entry_art_dressing:
+		return
+
+	var entry_room: Node3D = get_node_or_null("Room1Entry") as Node3D
+
+	if entry_room == null:
+		return
+
+	if entry_room.get_node_or_null("ChurchEntryDressingV1") != null:
+		return
+
+	var dressing: Node3D = ChurchEntryDressingScene.instantiate() as Node3D
+
+	if dressing == null:
+		return
+
+	dressing.name = "ChurchEntryDressingV1"
+	entry_room.add_child(dressing)
+	dressing.position = Vector3.ZERO
 
 
 func spawn_reward_altar() -> void:

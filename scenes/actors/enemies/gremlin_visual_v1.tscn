@@ -1,0 +1,253 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/visuals/enemy_visual_shell.gd" id="1_motion"]
+[ext_resource type="Material" path="res://art/materials/enemies/gremlin_skin_v1.tres" id="2_skin"]
+[ext_resource type="Material" path="res://art/materials/enemies/gremlin_membrane_v1.tres" id="3_membrane"]
+[ext_resource type="Material" path="res://art/materials/enemies/goblin_leather_v1.tres" id="4_leather"]
+[ext_resource type="Material" path="res://art/materials/enemies/goblin_bone_v1.tres" id="5_bone"]
+[ext_resource type="Material" path="res://art/materials/enemies/gobby_eye_glow_v1.tres" id="6_eye"]
+
+[sub_resource type="CapsuleMesh" id="Mesh_torso"]
+radius = 0.23
+height = 0.8
+radial_segments = 9
+rings = 4
+
+[sub_resource type="SphereMesh" id="Mesh_head"]
+radius = 0.28
+height = 0.56
+radial_segments = 11
+rings = 6
+
+[sub_resource type="BoxMesh" id="Mesh_ear"]
+size = Vector3(0.48, 0.09, 0.12)
+
+[sub_resource type="CapsuleMesh" id="Mesh_limb"]
+radius = 0.065
+height = 0.72
+radial_segments = 7
+rings = 3
+
+[sub_resource type="SphereMesh" id="Mesh_joint"]
+radius = 0.085
+height = 0.17
+radial_segments = 8
+rings = 4
+
+[sub_resource type="BoxMesh" id="Mesh_claw"]
+size = Vector3(0.045, 0.2, 0.055)
+
+[sub_resource type="BoxMesh" id="Mesh_jaw"]
+size = Vector3(0.34, 0.12, 0.22)
+
+[sub_resource type="BoxMesh" id="Mesh_tooth"]
+size = Vector3(0.04, 0.12, 0.04)
+
+[sub_resource type="SphereMesh" id="Mesh_eye"]
+radius = 0.04
+height = 0.08
+radial_segments = 8
+rings = 4
+
+[sub_resource type="BoxMesh" id="Mesh_wrap"]
+size = Vector3(0.48, 0.16, 0.34)
+
+[sub_resource type="BoxMesh" id="Mesh_tail"]
+size = Vector3(0.11, 0.11, 0.48)
+
+[node name="GremlinVisualV1" type="Node3D"]
+script = ExtResource("1_motion")
+profile = "gremlin"
+idle_bob_amount = 0.032
+movement_bob_amount = 0.075
+movement_bob_speed = 13.0
+idle_bob_speed = 5.2
+movement_lean_degrees = 8.0
+head_twitch_degrees = 4.2
+windup_pose_time = 0.09
+recover_pose_time = 0.14
+
+[node name="PoseRoot" type="Node3D" parent="."]
+rotation_degrees = Vector3(7, 0, 0)
+
+[node name="BodyPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(0, 0.08, 0.02)
+rotation_degrees = Vector3(-8, 0, 0)
+
+[node name="Torso" type="MeshInstance3D" parent="PoseRoot/BodyPivot"]
+position = Vector3(0, 0.08, 0)
+scale = Vector3(0.9, 1.0, 0.72)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_torso")
+
+[node name="RibWrap" type="MeshInstance3D" parent="PoseRoot/BodyPivot"]
+position = Vector3(0, 0.04, -0.18)
+rotation_degrees = Vector3(4, 0, 8)
+material_override = ExtResource("4_leather")
+mesh = SubResource("Mesh_wrap")
+
+[node name="TailBase" type="MeshInstance3D" parent="PoseRoot/BodyPivot"]
+position = Vector3(0, -0.12, 0.28)
+rotation_degrees = Vector3(54, 0, 0)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_tail")
+
+[node name="TailTip" type="MeshInstance3D" parent="PoseRoot/BodyPivot"]
+position = Vector3(0.08, -0.32, 0.48)
+rotation_degrees = Vector3(66, 0, -18)
+scale = Vector3(0.72, 0.72, 0.86)
+material_override = ExtResource("3_membrane")
+mesh = SubResource("Mesh_tail")
+
+[node name="HeadPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(0, 0.63, -0.16)
+rotation_degrees = Vector3(-5, 0, 0)
+
+[node name="Head" type="MeshInstance3D" parent="PoseRoot/HeadPivot"]
+scale = Vector3(0.9, 0.82, 1.08)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_head")
+
+[node name="LeftEar" type="MeshInstance3D" parent="PoseRoot/HeadPivot"]
+position = Vector3(-0.38, 0.08, 0.02)
+rotation_degrees = Vector3(0, 0, 22)
+material_override = ExtResource("3_membrane")
+mesh = SubResource("Mesh_ear")
+
+[node name="RightEar" type="MeshInstance3D" parent="PoseRoot/HeadPivot"]
+position = Vector3(0.38, 0.08, 0.02)
+rotation_degrees = Vector3(0, 0, -22)
+material_override = ExtResource("3_membrane")
+mesh = SubResource("Mesh_ear")
+
+[node name="LeftEye" type="MeshInstance3D" parent="PoseRoot/HeadPivot"]
+position = Vector3(-0.095, 0.06, -0.29)
+scale = Vector3(0.8, 1.15, 0.55)
+material_override = ExtResource("6_eye")
+mesh = SubResource("Mesh_eye")
+
+[node name="RightEye" type="MeshInstance3D" parent="PoseRoot/HeadPivot"]
+position = Vector3(0.095, 0.06, -0.29)
+scale = Vector3(0.8, 1.15, 0.55)
+material_override = ExtResource("6_eye")
+mesh = SubResource("Mesh_eye")
+
+[node name="JawPivot" type="Node3D" parent="PoseRoot/HeadPivot"]
+position = Vector3(0, -0.18, -0.2)
+rotation_degrees = Vector3(6, 0, 0)
+
+[node name="Jaw" type="MeshInstance3D" parent="PoseRoot/HeadPivot/JawPivot"]
+position = Vector3(0, -0.02, -0.08)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_jaw")
+
+[node name="LeftFang" type="MeshInstance3D" parent="PoseRoot/HeadPivot/JawPivot"]
+position = Vector3(-0.1, -0.06, -0.2)
+rotation_degrees = Vector3(0, 0, -5)
+material_override = ExtResource("5_bone")
+mesh = SubResource("Mesh_tooth")
+
+[node name="RightFang" type="MeshInstance3D" parent="PoseRoot/HeadPivot/JawPivot"]
+position = Vector3(0.1, -0.06, -0.2)
+rotation_degrees = Vector3(0, 0, 5)
+material_override = ExtResource("5_bone")
+mesh = SubResource("Mesh_tooth")
+
+[node name="LeftArmPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(-0.29, 0.3, -0.03)
+rotation_degrees = Vector3(20, 0, -22)
+
+[node name="Arm" type="MeshInstance3D" parent="PoseRoot/LeftArmPivot"]
+position = Vector3(0, -0.26, 0)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_limb")
+
+[node name="Wrist" type="MeshInstance3D" parent="PoseRoot/LeftArmPivot"]
+position = Vector3(0, -0.56, -0.04)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_joint")
+
+[node name="ClawA" type="MeshInstance3D" parent="PoseRoot/LeftArmPivot"]
+position = Vector3(-0.055, -0.68, -0.08)
+rotation_degrees = Vector3(14, 0, -9)
+material_override = ExtResource("5_bone")
+mesh = SubResource("Mesh_claw")
+
+[node name="ClawB" type="MeshInstance3D" parent="PoseRoot/LeftArmPivot"]
+position = Vector3(0.055, -0.68, -0.08)
+rotation_degrees = Vector3(14, 0, 9)
+material_override = ExtResource("5_bone")
+mesh = SubResource("Mesh_claw")
+
+[node name="RightArmPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(0.29, 0.3, -0.03)
+rotation_degrees = Vector3(20, 0, 22)
+
+[node name="Arm" type="MeshInstance3D" parent="PoseRoot/RightArmPivot"]
+position = Vector3(0, -0.26, 0)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_limb")
+
+[node name="Wrist" type="MeshInstance3D" parent="PoseRoot/RightArmPivot"]
+position = Vector3(0, -0.56, -0.04)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_joint")
+
+[node name="ClawA" type="MeshInstance3D" parent="PoseRoot/RightArmPivot"]
+position = Vector3(-0.055, -0.68, -0.08)
+rotation_degrees = Vector3(14, 0, -9)
+material_override = ExtResource("5_bone")
+mesh = SubResource("Mesh_claw")
+
+[node name="ClawB" type="MeshInstance3D" parent="PoseRoot/RightArmPivot"]
+position = Vector3(0.055, -0.68, -0.08)
+rotation_degrees = Vector3(14, 0, 9)
+material_override = ExtResource("5_bone")
+mesh = SubResource("Mesh_claw")
+
+[node name="LeftLegPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(-0.16, -0.24, 0.04)
+rotation_degrees = Vector3(-8, 0, -9)
+
+[node name="Leg" type="MeshInstance3D" parent="PoseRoot/LeftLegPivot"]
+position = Vector3(0, -0.27, 0)
+scale = Vector3(1.05, 1.0, 1.05)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_limb")
+
+[node name="Foot" type="MeshInstance3D" parent="PoseRoot/LeftLegPivot"]
+position = Vector3(0, -0.58, -0.12)
+scale = Vector3(1.3, 0.72, 1.65)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_joint")
+
+[node name="RightLegPivot" type="Node3D" parent="PoseRoot"]
+position = Vector3(0.16, -0.24, 0.04)
+rotation_degrees = Vector3(-8, 0, 9)
+
+[node name="Leg" type="MeshInstance3D" parent="PoseRoot/RightLegPivot"]
+position = Vector3(0, -0.27, 0)
+scale = Vector3(1.05, 1.0, 1.05)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_limb")
+
+[node name="Foot" type="MeshInstance3D" parent="PoseRoot/RightLegPivot"]
+position = Vector3(0, -0.58, -0.12)
+scale = Vector3(1.3, 0.72, 1.65)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_joint")
+
+[node name="HeadAnchor" type="Marker3D" parent="."]
+position = Vector3(0, 0.68, -0.18)
+
+[node name="LeftHandAnchor" type="Marker3D" parent="."]
+position = Vector3(-0.42, -0.28, -0.08)
+
+[node name="RightHandAnchor" type="Marker3D" parent="."]
+position = Vector3(0.42, -0.28, -0.08)
+
+[node name="ChestVFXAnchor" type="Marker3D" parent="."]
+position = Vector3(0, 0.2, -0.2)
+
+[node name="FeetVFXAnchor" type="Marker3D" parent="."]
+position = Vector3(0, -0.5, 0)

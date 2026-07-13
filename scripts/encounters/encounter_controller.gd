@@ -27,6 +27,10 @@ func _ready() -> void:
 	for error_text: String in errors:
 		push_error("EncounterDefinition: " + error_text)
 
+	sync_from_game_state()
+	if is_complete:
+		return
+
 	if activate_on_ready and errors.is_empty():
 		activate_encounter()
 
@@ -44,6 +48,19 @@ func _process(_delta: float) -> void:
 	prune_invalid_enemies()
 	if spawned_enemies.is_empty():
 		complete_encounter()
+
+
+func sync_from_game_state() -> void:
+	if definition == null or definition.completion_flag == "":
+		return
+
+	if not GameState.get_flag(definition.completion_flag):
+		return
+
+	clear_spawned_enemies()
+	is_active = false
+	is_complete = true
+	unlock_reward_objects()
 
 
 func activate_encounter() -> void:
@@ -126,12 +143,15 @@ func unlock_reward_objects() -> void:
 			reward_object.call("unlock")
 
 
-func reset_encounter() -> void:
+func clear_spawned_enemies() -> void:
 	for enemy: Node3D in spawned_enemies:
 		if enemy != null and is_instance_valid(enemy):
 			enemy.queue_free()
-
 	spawned_enemies.clear()
+
+
+func reset_encounter() -> void:
+	clear_spawned_enemies()
 	is_active = false
 	is_complete = false
 

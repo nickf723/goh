@@ -26,6 +26,7 @@ func _ready() -> void:
 	add_to_group("village_ice_bridge")
 	add_to_group("debuggable")
 	convert_payload_target_to_area()
+	bind_status_receiver()
 	sync_from_game_state()
 
 	if not is_frozen_bridge:
@@ -55,6 +56,20 @@ func convert_payload_target_to_area() -> void:
 
 	if payload_receiver != null:
 		payload_receiver.reparent(payload_target_area)
+
+
+func bind_status_receiver() -> void:
+	if status_receiver == null or not status_receiver.has_signal("status_applied"):
+		return
+
+	var callback: Callable = Callable(self, "_on_status_applied")
+	if not status_receiver.is_connected("status_applied", callback):
+		status_receiver.connect("status_applied", callback)
+
+
+func _on_status_applied(status_name: String, _status_data: Dictionary) -> void:
+	if status_name == "frozen":
+		freeze_bridge(true)
 
 
 func sync_from_game_state() -> void:

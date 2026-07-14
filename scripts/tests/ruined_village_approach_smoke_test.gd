@@ -192,17 +192,16 @@ func validate_save_state_sync() -> void:
 	var debris_gate: Node = village.get_node_or_null("VillagePuzzles/RavineDebrisGate")
 	var bridge_nodes: Array[Node] = get_tree().get_nodes_in_group("village_ice_bridge")
 	var memory_nodes: Array[Node] = get_tree().get_nodes_in_group("village_memory")
-	var clue_nodes: Array[Node] = get_tree().get_nodes_in_group("village_clue")
 	var encounter_nodes: Array[Node] = get_tree().get_nodes_in_group("encounter_controller")
 	var sync_node: Node = village.get_node_or_null("SaveWorldSync")
+	var clue: Node = find_clue_by_id("arrival_crater")
 
-	if square_gate == null or debris_gate == null or bridge_nodes.is_empty() or memory_nodes.is_empty() or clue_nodes.is_empty() or encounter_nodes.is_empty() or sync_node == null:
+	if square_gate == null or debris_gate == null or bridge_nodes.is_empty() or memory_nodes.is_empty() or encounter_nodes.is_empty() or sync_node == null or clue == null:
 		failures.append("save-state synchronization fixtures are incomplete")
 		return
 
 	var bridge: Node = bridge_nodes[0]
 	var memory: Node = memory_nodes[0]
-	var clue: Node = clue_nodes[0]
 	var encounter: Node = encounter_nodes[0]
 
 	square_gate.call("reset_gate")
@@ -232,9 +231,16 @@ func validate_save_state_sync() -> void:
 	if not bool(memory.call("is_revealed")):
 		failures.append("saved Sound memory did not restore revealed")
 	if not bool(clue.get("has_been_read")):
-		failures.append("saved village clue did not restore read state")
+		failures.append("saved arrival clue did not restore read state")
 	if not bool(encounter.get("is_complete")):
 		failures.append("saved encounter did not restore complete")
+
+
+func find_clue_by_id(required_id: String) -> Node:
+	for clue: Node in get_tree().get_nodes_in_group("village_clue"):
+		if str(clue.get("clue_id")) == required_id:
+			return clue
+	return null
 
 
 func validate_checkpoint_and_exit() -> void:

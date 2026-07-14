@@ -47,20 +47,7 @@ jobs:
         run: godot --headless --path . --quit-after 5
 
       - name: Run registered feature scenes and tests
-        shell: bash
-        run: |
-          mkdir -p build/validation
-          set -o pipefail
-          python scripts/ci/run_feature_registry.py --godot godot 2>&1 | tee build/validation/feature-registry.log
-
-      - name: Upload registry diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: feature-registry-diagnostics
-          path: build/validation/feature-registry.log
-          if-no-files-found: warn
-          retention-days: 2
+        run: python scripts/ci/run_feature_registry.py --godot godot
 
       - name: Export Windows v0.1 build
         run: |

@@ -19,8 +19,9 @@ func _ready() -> void:
 	validate_level_structure()
 	validate_encounter_definition()
 	validate_two_solution_gate()
-	validate_water_ice_bridge()
+	await validate_water_ice_bridge()
 	validate_sound_memory()
+	await validate_save_state_sync()
 	validate_checkpoint_and_exit()
 
 	if village != null and is_instance_valid(village):
@@ -57,6 +58,9 @@ func validate_level_structure() -> void:
 
 	if get_tree().get_nodes_in_group("ruined_village_traversal_ready").size() != 1:
 		failures.append("traversal grading did not finish")
+
+	if get_tree().get_nodes_in_group("ruined_village_save_sync").size() != 1:
+		failures.append("save-state world synchronizer is missing")
 
 	if get_tree().get_nodes_in_group("village_clue").size() < 3:
 		failures.append("level must expose at least three environmental clues")
@@ -181,6 +185,56 @@ func validate_sound_memory() -> void:
 
 	if not bool(revealable.get("is_revealed")):
 		failures.append("Sound detection did not reveal the optional memory")
+
+
+func validate_save_state_sync() -> void:
+	var square_gate: Node = village.get_node_or_null("VillagePuzzles/SquareEncounterBarrier")
+	var debris_gate: Node = village.get_node_or_null("VillagePuzzles/RavineDebrisGate")
+	var bridge_nodes: Array[Node] = get_tree().get_nodes_in_group("village_ice_bridge")
+	var memory_nodes: Array[Node] = get_tree().get_nodes_in_group("village_memory")
+	var clue_nodes: Array[Node] = get_tree().get_nodes_in_group("village_clue")
+	var encounter_nodes: Array[Node] = get_tree().get_nodes_in_group("encounter_controller")
+	var sync_node: Node = village.get_node_or_null("SaveWorldSync")
+
+	if square_gate == null or debris_gate == null or bridge_nodes.is_empty() or memory_nodes.is_empty() or clue_nodes.is_empty() or encounter_nodes.is_empty() or sync_node == null:
+		failures.append("save-state synchronization fixtures are incomplete")
+		return
+
+	var bridge: Node = bridge_nodes[0]
+	var memory: Node = memory_nodes[0]
+	var clue: Node = clue_nodes[0]
+	var encounter: Node = encounter_nodes[0]
+
+	square_gate.call("reset_gate")
+	debris_gate.call("reset_gate")
+	bridge.call("reset_bridge")
+	memory.call("reset_memory")
+	clue.call("reset_clue")
+	encounter.call("reset_encounter")
+
+	GameState.set_flag("opened_square_barrier", true)
+	GameState.set_flag("opened_ravine_debris", true)
+	GameState.set_flag("froze_village_bridge", true)
+	GameState.set_flag("found_village_memory", true)
+	GameState.set_flag("inspected_arrival_crater", true)
+	GameState.set_flag("cleared_village_square_ambush", true)
+
+	sync_node.call("synchronize_world_from_game_state")
+	await get_tree().process_frame
+	await get_tree().physics_frame
+
+	if not bool(square_gate.get("is_open")):
+		failures.append("saved encounter barrier did not restore open")
+	if not bool(debris_gate.get("is_open")):
+		failures.append("saved debris route did not restore open")
+	if not bool(bridge.get("is_frozen_bridge")):
+		failures.append("saved ice bridge did not restore traversable")
+	if not bool(memory.call("is_revealed")):
+		failures.append("saved Sound memory did not restore revealed")
+	if not bool(clue.get("has_been_read")):
+		failures.append("saved village clue did not restore read state")
+	if not bool(encounter.get("is_complete")):
+		failures.append("saved encounter did not restore complete")
 
 
 func validate_checkpoint_and_exit() -> void:

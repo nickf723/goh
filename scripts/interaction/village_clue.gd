@@ -14,8 +14,11 @@ var has_been_read: bool = false
 func _ready() -> void:
 	add_to_group("village_clue")
 	add_to_group("debuggable")
-	if story_flag != "" and GameState.get_flag(story_flag):
-		has_been_read = true
+	sync_from_game_state()
+
+
+func sync_from_game_state() -> void:
+	has_been_read = story_flag != "" and GameState.get_flag(story_flag)
 
 
 func interact() -> Dictionary:

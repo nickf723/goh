@@ -104,15 +104,38 @@ func apply_hit(target: Node, payload: DamagePayload) -> Dictionary:
 
 	if hit_receiver != null:
 		if hit_receiver.has_method("receive_payload"):
-			return hit_receiver.receive_payload(payload)
+			var payload_result: Dictionary = hit_receiver.receive_payload(payload)
+			play_hit_feedback(payload, payload_result)
+			return payload_result
 
 		if hit_receiver.has_method("receive_hit"):
-			return hit_receiver.receive_hit(payload.amount)
+			var hit_result: Dictionary = hit_receiver.receive_hit(payload.amount)
+			play_hit_feedback(payload, hit_result)
+			return hit_result
 
 	return {
 		"message": payload.source_name + " hits " + target.name + ", but nothing receives the hit.",
 		"objective": ""
 	}
+
+
+func play_hit_feedback(payload: DamagePayload, _result: Dictionary) -> void:
+	if payload == null:
+		return
+
+	if should_play_heavy_impact(payload):
+		GameFeedback.play("heavy_impact", {"source": payload.source_name})
+
+
+func should_play_heavy_impact(payload: DamagePayload) -> bool:
+	if payload.source_name.to_lower().contains("charged"):
+		return true
+
+	for tag: String in payload.tags:
+		if tag == "charged" or tag == "heavy_impact":
+			return true
+
+	return false
 
 
 func combine_messages(result: Dictionary, reaction_messages: Array[String]) -> Dictionary:

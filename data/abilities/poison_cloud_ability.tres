@@ -7,22 +7,22 @@
 
 [resource]
 script = ExtResource("1_ability_definition")
-display_name = "Poison Cloud"
-description = "Create a lingering poisonous cloud."
+display_name = "Poison Bloom"
+description = "Place a toxic bloom that leaves a lingering poison cloud."
 element = "poison"
 category = 4
 mana_cost = 1
 trait_profile = ExtResource("4_profile")
-spell_id = "poison_cloud"
-short_label = "Cloud"
+spell_id = "poison_bloom"
+short_label = "Bloom"
 icon_text = "P"
-roles = Array[String](["damage_over_time"])
-targeting_style = "ground_forward"
+roles = Array[String](["damage_over_time", "terrain", "combo_reactor"])
+targeting_style = "ground_targeted"
 delivery_type = "hazard_field"
-combo_tags = Array[String](["poison", "gas", "cloud", "toxic_ignition", "cloud_spread"])
+combo_tags = Array[String](["poison", "gas", "cloud", "toxic_ignition", "cloud_spread", "ground_targeted"])
 status_tags = Array[String](["poisoned"])
-ui_tags = Array[String](["hazard", "poison", "combo"])
-debug_tags = Array[String](["prototype", "lingering_hazard"])
-design_notes = "Poison's first battlefield-control spell. Strong when enemies stay inside, and a combo ingredient for fire/wind reactions."
+ui_tags = Array[String](["hazard", "poison", "combo", "ground_targeted"])
+debug_tags = Array[String](["prototype", "lingering_hazard", "ground_targeted"])
+design_notes = "Poison's first battlefield-control spell. Place it with a ground marker, then use fire or wind later for combo reactions."
 ability_scene = ExtResource("2_poison_scene")
 action_payload = ExtResource("3_poison_payload")

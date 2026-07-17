@@ -18,7 +18,7 @@ Current project mapping already includes:
 
 ```text
 Keyboard: Q
-Controller: right trigger / joypad axis 5
+Controller: right input axis 5
 ```
 
 So the same hold-and-release path should work for keyboard and controller.
@@ -33,6 +33,14 @@ scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn
 
 Run Current Scene.
 
+## Prototype shortcut
+
+For this branch, the boss dungeon director grants `charged_firebolt` automatically on scene load while running in the editor.
+
+This lets the upgrade be tested immediately without clearing the dungeon first.
+
+The normal Church Trial reward still grants `charged_firebolt` too, so the reward flow remains testable.
+
 ## What changed
 
 - `scripts/abilities/ability_caster.gd`
@@ -43,43 +51,52 @@ Run Current Scene.
   - Quick taps still fire a normal Firebolt.
   - Held charges create a stronger DamagePayload.
   - Charged shots scale projectile size and speed slightly.
+- `scripts/levels/prototype_boss_dungeon_chain.gd`
+  - Grants `charged_firebolt` on scene load in the editor for fast prototype testing.
+  - Shows a startup/resume message when the shortcut grants the unlock.
 - `scripts/interaction/church_trial_reward_altar.gd`
   - Adds `charged_firebolt` to the Church Trial reward unlocks for prototype testing.
 - `scripts/systems/unlock_catalog.gd`
   - Updates the Charged Firebolt description and hook list.
 
-## Main test flow
+## Fast test flow
 
 1. Pull branch `agent/charged-firebolt-v1`.
 2. Open the boss dungeon chain scene.
-3. Press `F8` for a fresh run if needed.
-4. Defeat the Animated Armor.
-5. Claim the Church Trial Sigil.
-6. Confirm the reward message mentions Firebolt can now be charged.
-7. Equip Firebolt.
-8. Tap the cast action.
-9. Confirm a normal Firebolt fires.
-10. Hold the cast action.
-11. Confirm the spell label shows `Charging Firebolt` with a percentage.
-12. Release after a partial or full charge.
-13. Confirm `Charged Firebolt released.` appears.
-14. Confirm the projectile appears larger/faster and hits harder.
-15. Repeat with controller right trigger.
+3. Run Current Scene.
+4. Confirm the startup or resume message says Charged Firebolt is unlocked for immediate testing.
+5. Equip Firebolt.
+6. Tap the cast action.
+7. Confirm a normal Firebolt fires.
+8. Hold the cast action.
+9. Confirm the spell label shows `Charging Firebolt` with a percentage.
+10. Release after a partial or full charge.
+11. Confirm `Charged Firebolt released.` appears.
+12. Confirm the projectile appears larger/faster and hits harder.
+13. Repeat with controller input.
+
+## Reward flow test
+
+1. Press `F8` for a fresh run if needed.
+2. Defeat the Animated Armor.
+3. Claim the Church Trial Sigil.
+4. Confirm the reward message mentions Firebolt can now be charged.
+5. Confirm Charged Firebolt remains listed in the Relics menu.
 
 ## Controller test
 
-Use the right trigger mapped to `cast_spell`.
+Use the controller input mapped to `cast_spell`.
 
 ```text
 press and release quickly -> normal Firebolt
-hold trigger -> charge percent rises
-release trigger -> charged Firebolt fires
+hold input -> charge percent rises
+release input -> charged Firebolt fires
 ```
 
 ## Regression checks
 
 - Other spells should still cast on button press.
-- Firebolt should not charge before `charged_firebolt` is unlocked.
+- Firebolt should not charge before `charged_firebolt` is unlocked outside the prototype shortcut scene.
 - Focus menu quick-cast should still cast normally and should not get trapped in charge state.
 - Switching spells while charging should cancel the charge cleanly.
 - If Grace lacks the extra mana for a charged shot, it should fail with the existing resource message instead of firing for free.
@@ -89,4 +106,5 @@ release trigger -> charged Firebolt fires
 - The charge indicator uses the existing spell label, not a polished charge meter.
 - Charged Firebolt currently uses direct `has_unlock("charged_firebolt")` checks instead of a full declarative Modifier Engine.
 - The Church Trial Sigil grants this upgrade for prototype testing; we can move it to a fire-specific reward later.
+- The boss dungeon also grants this upgrade immediately in the editor for testing speed.
 - I could not run Godot here, so parser and controller validation are needed.

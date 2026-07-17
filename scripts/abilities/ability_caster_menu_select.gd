@@ -2,93 +2,44 @@ extends "res://scripts/abilities/ability_caster.gd"
 
 # Prototype wrapper for the focus spell menu.
 # The base AbilityCaster still owns casting, loadout, charge logic, and menu data.
-# This wrapper changes the focus menu contract and hosts tiny prototype upgrade hooks
-# that are safer to iterate before a full modifier engine exists.
+# This wrapper changes the focus menu contract and delegates simple spell upgrade
+# payload hooks to SpellModifierRegistry.
 
-const PIERCE_ICE_LANCE_UNLOCK_ID: String = "piercing_ice_lance"
-const ICE_LANCE_SPELL_ID: String = "ice_lance"
-
-@export_group("Piercing Ice Lance")
-@export var piercing_ice_lance_extra_mana_cost: int = 0
-@export var piercing_ice_lance_lock_duration: float = 0.18
+const SpellModifiers = preload("res://scripts/abilities/spell_modifier_registry.gd")
 
 
 func cast_from_player(player: Node3D, cast_lock_duration: float = 0.18, allow_charge: bool = true) -> bool:
 	var ability: AbilityDefinition = get_current_ability()
 
-	if should_use_piercing_ice_lance(ability):
-		var payload_override: Resource = make_piercing_ice_lance_payload(ability)
-		var did_cast: bool = execute_ability_from_player(
-			player,
-			ability,
-			max(cast_lock_duration, piercing_ice_lance_lock_duration),
-			payload_override,
-			0.0,
-			piercing_ice_lance_extra_mana_cost
-		)
-
-		if did_cast:
-			show_feedback("Piercing Ice Lance.")
-
-		return did_cast
+	if SpellModifiers.has_active_payload_modifier_for_ability(ability):
+		return cast_with_spell_modifier(player, ability, cast_lock_duration)
 
 	return super.cast_from_player(player, cast_lock_duration, allow_charge)
 
 
-func should_use_piercing_ice_lance(ability: AbilityDefinition) -> bool:
+func cast_with_spell_modifier(player: Node3D, ability: AbilityDefinition, cast_lock_duration: float) -> bool:
 	if ability == null:
 		return false
 
-	if not GameState.has_method("has_unlock"):
-		return false
+	var payload_override: Resource = SpellModifiers.build_modified_payload_for_ability(ability)
+	var modifier_lock_duration: float = SpellModifiers.get_cast_lock_duration_for_ability(ability, cast_lock_duration)
+	var modifier_extra_mana_cost: int = SpellModifiers.get_cast_extra_mana_cost_for_ability(ability)
 
-	if not GameState.has_unlock(PIERCE_ICE_LANCE_UNLOCK_ID):
-		return false
+	var did_cast: bool = execute_ability_from_player(
+		player,
+		ability,
+		modifier_lock_duration,
+		payload_override,
+		0.0,
+		modifier_extra_mana_cost
+	)
 
-	if ability.element.to_lower() != "ice":
-		return false
+	if did_cast:
+		var cast_message: String = SpellModifiers.get_cast_message_for_ability(ability)
+		if cast_message != "":
+			show_feedback(cast_message)
 
-	if ability.has_method("get_spell_id"):
-		return ability.get_spell_id() == ICE_LANCE_SPELL_ID
-
-	return ability.display_name.to_lower() == "ice lance"
-
-
-func make_piercing_ice_lance_payload(ability: AbilityDefinition) -> Resource:
-	if ability == null:
-		return null
-
-	var base_payload: Resource = null
-
-	if ability.has_method("get_action_payload"):
-		base_payload = ability.get_action_payload()
-	elif ability.payload != null:
-		base_payload = ability.payload
-
-	if not (base_payload is DamagePayload):
-		return base_payload
-
-	var duplicate_payload: Resource = base_payload.duplicate(true)
-
-	if not (duplicate_payload is DamagePayload):
-		return base_payload
-
-	var piercing_payload: DamagePayload = duplicate_payload as DamagePayload
-	piercing_payload.amount = max(piercing_payload.amount, 2)
-	piercing_payload.stance_damage = max(piercing_payload.stance_damage + 1, 5)
-	piercing_payload.status_duration *= 1.15
-	piercing_payload.source_name = "Piercing Ice Lance"
-
-	var piercing_tags: Array[String] = []
-	for tag: String in piercing_payload.tags:
-		piercing_tags.append(tag)
-
-	for tag: String in ["piercing", "upgrade", "ice_lance"]:
-		if not piercing_tags.has(tag):
-			piercing_tags.append(tag)
-
-	piercing_payload.tags = piercing_tags
-	return piercing_payload
+	return did_cast
 
 
 func handle_focus_menu_input(event: InputEvent) -> bool:

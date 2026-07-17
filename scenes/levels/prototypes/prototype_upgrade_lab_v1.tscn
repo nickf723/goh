@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://luom2siuyjtt"]
 
-[ext_resource type="Script" uid="uid://dsfqge8pm4nvk" path="res://scripts/levels/prototype_upgrade_lab.gd" id="1_lab"]
+[ext_resource type="Script" uid="uid://s7nhpmgpp4fo" path="res://scripts/levels/prototype_upgrade_lab.gd" id="1_lab"]
 [ext_resource type="PackedScene" uid="uid://6raaty2e36ko" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" uid="uid://j44g36yeu58k" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" uid="uid://d4c66lkqs3ac6" path="res://scripts/systems/focus_time.gd" id="4_focus"]
@@ -43,7 +43,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("BoxShape3D_floor")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=623851616]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.050417, -4.204096, 1.4969397)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.050417, 0.051586628, 1.4969397)
 material_override = SubResource("Material_floor")
 mesh = SubResource("BoxMesh_floor")
 

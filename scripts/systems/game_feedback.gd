@@ -1,6 +1,9 @@
 extends Node
 class_name GameFeedback
 
+const HAPTICS_ENABLED: bool = true
+const DEBUG_PRINTS_ENABLED: bool = false
+
 const PRESETS: Dictionary = {
 	"light_tick": {
 		"label": "Light Tick",
@@ -54,14 +57,11 @@ const PRESETS: Dictionary = {
 	},
 }
 
-static var haptics_enabled: bool = true
-static var debug_prints_enabled: bool = false
-
 
 static func play(feedback_id: String, overrides: Dictionary = {}) -> Dictionary:
 	var data: Dictionary = get_feedback_data(feedback_id, overrides)
 
-	if debug_prints_enabled:
+	if DEBUG_PRINTS_ENABLED:
 		print("Feedback: ", feedback_id, " -> ", data)
 
 	play_haptics(data)
@@ -90,7 +90,7 @@ static func get_preset(feedback_id: String) -> Dictionary:
 
 
 static func play_haptics(feedback_data: Dictionary) -> void:
-	if not haptics_enabled:
+	if not HAPTICS_ENABLED:
 		return
 
 	if not feedback_data.has("haptic"):

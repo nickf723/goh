@@ -56,6 +56,9 @@ script = ExtResource("2_oj104")
 loadout = ExtResource("3_oj104")
 cast_spawn_height = 0.3
 
+[node name="SpellLabel" type="Label" parent="."]
+visible = false
+
 [node name="WeaponController" type="Node3D" parent="." unique_id=1363003010]
 script = ExtResource("5_qdyt2")
 equipped_weapon = ExtResource("6_g2g7f")

@@ -4,6 +4,7 @@ class_name GenericProjectile
 const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
 const ChargedFireboltImpactFeedback = preload("res://scripts/combat/charged_firebolt_impact_feedback.gd")
 const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
+const SpellModifiers = preload("res://scripts/abilities/spell_modifier_registry.gd")
 
 @export var speed: float = 18.0
 @export var max_lifetime: float = 2.6
@@ -28,6 +29,8 @@ var hit_targets: Dictionary = {}
 var elapsed: float = 0.0
 var trail_timer: float = 0.0
 var configured_element: String = ""
+var runtime_impact_radius: float = 1.0
+var applied_projectile_modifier_ids: Dictionary = {}
 
 @onready var hit_area: Area3D = get_node_or_null("HitArea")
 @onready var element_visual_root: Node3D = get_node_or_null("ElementVisualRoot") as Node3D
@@ -36,6 +39,7 @@ var configured_element: String = ""
 func _ready() -> void:
 	lifetime_timer = max_lifetime
 	ignore_timer = ignore_source_for_seconds
+	apply_payload_projectile_modifiers(get_payload())
 
 	if hit_area != null:
 		hit_area.body_entered.connect(_on_body_entered)
@@ -92,35 +96,46 @@ func apply_payload_projectile_modifiers(active_payload: DamagePayload) -> void:
 	if active_payload == null:
 		return
 
-	if is_piercing_ice_lance_payload(active_payload):
-		destroy_on_hit = true
-		hit_limit = max(hit_limit, 4)
-		speed = max(speed, 24.0)
-		max_lifetime = max(max_lifetime, 3.05)
-		trail_interval = min(trail_interval, 0.028)
+	for modifier_variant: Variant in SpellModifiers.get_projectile_modifiers_for_payload(active_payload):
+		if not (modifier_variant is Dictionary):
+			continue
 
-		if lifetime_timer > 0.0:
-			lifetime_timer = max(lifetime_timer, max_lifetime)
+		var modifier: Dictionary = modifier_variant as Dictionary
+		var modifier_id: String = str(modifier.get("id", ""))
 
+		if modifier_id != "" and applied_projectile_modifier_ids.has(modifier_id):
+			continue
 
-func is_piercing_ice_lance_payload(active_payload: DamagePayload) -> bool:
-	if active_payload == null:
-		return false
+		apply_projectile_modifier(modifier)
 
-	return payload_has_tag(active_payload, "piercing") and payload_has_tag(active_payload, "ice_lance")
+		if modifier_id != "":
+			applied_projectile_modifier_ids[modifier_id] = true
 
 
-func payload_has_tag(active_payload: DamagePayload, tag_name: String) -> bool:
-	if active_payload == null:
-		return false
+func apply_projectile_modifier(modifier: Dictionary) -> void:
+	if modifier.has("destroy_on_hit"):
+		destroy_on_hit = bool(modifier.get("destroy_on_hit", destroy_on_hit))
 
-	var normalized_tag_name: String = tag_name.to_lower()
+	if modifier.has("hit_limit"):
+		hit_limit = max(hit_limit, int(modifier.get("hit_limit", hit_limit)))
 
-	for tag_variant: Variant in active_payload.tags:
-		if str(tag_variant).to_lower() == normalized_tag_name:
-			return true
+	if modifier.has("min_speed"):
+		speed = max(speed, float(modifier.get("min_speed", speed)))
 
-	return false
+	if modifier.has("speed_bonus"):
+		speed += float(modifier.get("speed_bonus", 0.0))
+
+	if modifier.has("min_lifetime"):
+		max_lifetime = max(max_lifetime, float(modifier.get("min_lifetime", max_lifetime)))
+
+	if modifier.has("trail_interval"):
+		trail_interval = min(trail_interval, float(modifier.get("trail_interval", trail_interval)))
+
+	if modifier.has("impact_radius"):
+		runtime_impact_radius = max(runtime_impact_radius, float(modifier.get("impact_radius", runtime_impact_radius)))
+
+	if lifetime_timer > 0.0:
+		lifetime_timer = max(lifetime_timer, max_lifetime)
 
 
 func set_source_actor(new_source_actor: Node) -> void:
@@ -207,7 +222,7 @@ func try_hit(raw_target: Node) -> void:
 	var result: Dictionary = send_payload_to_target(target, active_payload)
 
 	if not ChargedFireboltImpactFeedback.play_if_charged_firebolt(self, target, active_payload, impact_position, direction):
-		ElementVisuals.spawn_impact(get_tree(), impact_position, get_element(), get_impact_radius(active_payload))
+		ElementVisuals.spawn_impact(get_tree(), impact_position, get_element(), get_impact_radius())
 
 	if result.has("message") and result["message"] != "":
 		show_message(str(result["message"]))
@@ -218,11 +233,8 @@ func try_hit(raw_target: Node) -> void:
 		queue_free()
 
 
-func get_impact_radius(active_payload: DamagePayload) -> float:
-	if is_piercing_ice_lance_payload(active_payload):
-		return 1.18
-
-	return 1.0
+func get_impact_radius() -> float:
+	return runtime_impact_radius
 
 
 func should_ignore_target(target: Node) -> bool:

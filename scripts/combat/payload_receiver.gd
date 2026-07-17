@@ -125,6 +125,9 @@ func play_hit_feedback(payload: DamagePayload, _result: Dictionary) -> void:
 
 	if should_play_heavy_impact(payload):
 		GameFeedback.play("heavy_impact", {"source": payload.source_name})
+		return
+
+	GameFeedback.play("hit_collision", {"source": payload.source_name})
 
 
 func should_play_heavy_impact(payload: DamagePayload) -> bool:

@@ -5,7 +5,7 @@ extends Node3D
 @export var enable_dev_reset_hotkey: bool = true
 @export var enable_dev_grant_hotkey: bool = true
 @export var enable_feedback_test_hotkey: bool = true
-@export var lab_unlock_ids: Array[String] = ["charged_firebolt", "piercing_ice_lance", "armor_trial_blessing"]
+@export var lab_unlock_ids: Array[String] = ["charged_firebolt", "piercing_ice_lance", "chain_lightning", "armor_trial_blessing"]
 @export var feedback_test_ids: Array[String] = ["light_tick", "hit_collision", "player_hit", "full_charge", "guard_block", "heavy_impact", "low_health_warning"]
 
 var feedback_test_index: int = 0
@@ -147,7 +147,7 @@ func grant_lab_unlocks() -> void:
 		parts.append("No lab upgrades changed.")
 
 	show_message("Lab shortcut | " + " ".join(parts))
-	set_objective("Equip Firebolt or Ice Lance, then test the upgraded projectile on targets.")
+	set_objective("Equip Firebolt, Ice Lance, or Lightning Spark, then test the upgraded projectile on targets.")
 
 
 func reset_lab_state() -> void:

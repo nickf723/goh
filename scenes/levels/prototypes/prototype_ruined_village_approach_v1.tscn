@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://bfbfwljr0glct"]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_ruined_village_approach.gd" id="1_director"]
+[ext_resource type="PackedScene" uid="uid://6raaty2e36ko" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://j44g36yeu58k" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" uid="uid://d4c66lkqs3ac6" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Script" uid="uid://bioh7e0asu68d" path="res://scripts/systems/death_retry_from_save.gd" id="5_retry"]
+[ext_resource type="Script" path="res://scripts/levels/ruined_village_traversal_grade.gd" id="6_traversal"]
+[ext_resource type="Script" path="res://scripts/levels/ruined_village_save_sync.gd" id="7_sync"]
+
+[node name="PrototypeRuinedVillageApproach" type="Node3D" unique_id=1016155457]
+script = ExtResource("1_director")
+
+[node name="GameUI" parent="." unique_id=2006851332 instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="." unique_id=759587872]
+script = ExtResource("4_focus")
+
+[node name="DeathRetryFromSave" type="Node" parent="." unique_id=533987808]
+script = ExtResource("5_retry")
+defeated_message = "Grace falls among the vanished foundations. The church-ground camp calls her back."
+no_save_message = "Grace falls before finding a place to rest. Use RESET or reload the level."
+reload_message = "Returning to the church-ground checkpoint..."
+
+[node name="TraversalGrade" type="Node" parent="." unique_id=103231426]
+script = ExtResource("6_traversal")
+
+[node name="SaveWorldSync" type="Node" parent="." unique_id=1322042051]
+script = ExtResource("7_sync")
+
+[node name="Player" parent="." unique_id=1457820298 groups=["player"] instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 64)

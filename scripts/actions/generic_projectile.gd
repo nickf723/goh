@@ -84,7 +84,43 @@ func update_element_trail(delta: float) -> void:
 func set_payload(new_payload: Resource) -> void:
 	if new_payload is DamagePayload:
 		runtime_payload = new_payload as DamagePayload
+		apply_payload_projectile_modifiers(runtime_payload)
 		configure_element_visual()
+
+
+func apply_payload_projectile_modifiers(active_payload: DamagePayload) -> void:
+	if active_payload == null:
+		return
+
+	if is_piercing_ice_lance_payload(active_payload):
+		destroy_on_hit = true
+		hit_limit = max(hit_limit, 4)
+		speed = max(speed, 24.0)
+		max_lifetime = max(max_lifetime, 3.05)
+		trail_interval = min(trail_interval, 0.028)
+
+		if lifetime_timer > 0.0:
+			lifetime_timer = max(lifetime_timer, max_lifetime)
+
+
+func is_piercing_ice_lance_payload(active_payload: DamagePayload) -> bool:
+	if active_payload == null:
+		return false
+
+	return payload_has_tag(active_payload, "piercing") and payload_has_tag(active_payload, "ice_lance")
+
+
+func payload_has_tag(active_payload: DamagePayload, tag_name: String) -> bool:
+	if active_payload == null:
+		return false
+
+	var normalized_tag_name: String = tag_name.to_lower()
+
+	for tag_variant: Variant in active_payload.tags:
+		if str(tag_variant).to_lower() == normalized_tag_name:
+			return true
+
+	return false
 
 
 func set_source_actor(new_source_actor: Node) -> void:
@@ -171,7 +207,7 @@ func try_hit(raw_target: Node) -> void:
 	var result: Dictionary = send_payload_to_target(target, active_payload)
 
 	if not ChargedFireboltImpactFeedback.play_if_charged_firebolt(self, target, active_payload, impact_position, direction):
-		ElementVisuals.spawn_impact(get_tree(), impact_position, get_element(), 1.0)
+		ElementVisuals.spawn_impact(get_tree(), impact_position, get_element(), get_impact_radius(active_payload))
 
 	if result.has("message") and result["message"] != "":
 		show_message(str(result["message"]))
@@ -180,6 +216,13 @@ func try_hit(raw_target: Node) -> void:
 
 	if destroy_on_hit and hit_count >= hit_limit:
 		queue_free()
+
+
+func get_impact_radius(active_payload: DamagePayload) -> float:
+	if is_piercing_ice_lance_payload(active_payload):
+		return 1.18
+
+	return 1.0
 
 
 func should_ignore_target(target: Node) -> bool:

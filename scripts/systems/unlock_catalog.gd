@@ -69,6 +69,18 @@ const UNLOCK_DEFS: Dictionary = {
 		"tags": ["fire", "charge", "projectile", "upgrade", "controller"],
 		"effect_preview": "Hold the cast action on keyboard or controller to charge Firebolt. Release to fire.",
 	},
+	"piercing_ice_lance": {
+		"id": "piercing_ice_lance",
+		"display_name": "Piercing Ice Lance",
+		"type": TYPE_MODIFIER,
+		"menu_category": "Spell Upgrades",
+		"description": "Ice Lance becomes a faster piercing projectile that can pass through several targets in a line.",
+		"source": "Prototype Upgrade Lab",
+		"requires": ["ice_lance"],
+		"hooks": ["on_cast", "on_projectile_spawned", "on_hit"],
+		"tags": ["ice", "projectile", "piercing", "upgrade", "control"],
+		"effect_preview": "Cast Ice Lance after unlocking this upgrade. The lance can pierce multiple targets before fading.",
+	},
 }
 
 

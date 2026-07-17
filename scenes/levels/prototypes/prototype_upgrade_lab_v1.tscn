@@ -98,7 +98,7 @@ transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.965
 billboard = 1
 text = "Controller: Right Trigger casts
 Hold Firebolt to charge
-Menu: Tab / M / controller menu"
+Ice Lance can pierce once upgraded"
 font_size = 42
 
 [node name="UpgradeSign" type="Label3D" parent="." unique_id=752821047]
@@ -153,6 +153,16 @@ unlock_ids = Array[String](["church_trial_sigil", "church_trial_doors"])
 success_message = "Trial relic and door permission granted."
 objective_after = "Open Relics and confirm the key item and permission appear."
 
+[node name="PiercingIceLancePedestal" parent="." instance=ExtResource("6_pedestal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+prompt_text = "Unlock Piercing Ice Lance"
+pedestal_title = "Piercing Ice Lance"
+unlock_ids = Array[String](["piercing_ice_lance"])
+success_message = "Ice Lance can now pierce lined targets."
+objective_after = "Equip Ice Lance and shoot through the center target line."
+should_restore_resources = true
+should_reset_targets = true
+
 [node name="RestorePedestal" parent="." unique_id=1728904792 instance=ExtResource("6_pedestal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 4)
 prompt_text = "Restore Resources"
@@ -186,22 +196,30 @@ transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.965
 billboard = 1
 text = "Targets
 Lock-on: R3 / T
-Charged Firebolt should hit harder"
+Ice Lance pierces the center line"
 font_size = 44
 
 [node name="TrainingTargets" type="Node3D" parent="." unique_id=1433173746]
 
 [node name="GoblinReactionTarget" parent="TrainingTargets" unique_id=1362693395 instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.58, -8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.58, -8)
 target_label = "Firebolt Target"
 
 [node name="GoblinReactionTarget2" parent="TrainingTargets" unique_id=683551557 instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.58, -8)
 target_label = "Charged Firebolt Target"
 
 [node name="GoblinReactionTarget3" parent="TrainingTargets" unique_id=1926966080 instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.58, -8)
-target_label = "Combo Target"
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -5)
+target_label = "Pierce Target A"
+
+[node name="IcePierceTargetB" parent="TrainingTargets" instance=ExtResource("7_target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -8)
+target_label = "Pierce Target B"
+
+[node name="IcePierceTargetC" parent="TrainingTargets" instance=ExtResource("7_target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -11)
+target_label = "Pierce Target C"
 
 [node name="GuardTestGoblin" parent="TrainingTargets" unique_id=1527247462 instance=ExtResource("8_goblin")]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 12, 0.85, -7)

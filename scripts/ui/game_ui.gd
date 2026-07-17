@@ -27,6 +27,8 @@ const INNER_PANEL_BORDER: Color = Color(0.28, 0.34, 0.48, 0.45)
 const ROW_BACKGROUND: Color = Color(0.075, 0.08, 0.1, 0.44)
 const TEXT_MAIN: Color = Color(0.92, 0.95, 1.0, 0.96)
 const TEXT_SOFT: Color = Color(0.64, 0.72, 0.84, 0.82)
+const FIRE_CHARGE_COLOR: Color = Color(1.0, 0.32, 0.08, 0.92)
+const FIRE_CHARGE_FULL_COLOR: Color = Color(1.0, 0.78, 0.18, 1.0)
 
 @onready var objective_label: Label = $ObjectiveLabel
 @onready var prompt_label: Label = $PromptLabel
@@ -53,12 +55,20 @@ var focus_spell_selected_label: Label
 var focus_spell_help_label: Label
 var focus_spell_element_tiles: Dictionary = {}
 
+var charge_panel: PanelContainer
+var charge_title_label: Label
+var charge_hint_label: Label
+var charge_progress_bar: ProgressBar
+var charge_meter_was_full: bool = false
+var charge_pulse_tween: Tween
+
 
 func _ready() -> void:
 	print("GameUI ready. Adding to game_ui group.")
 	add_to_group("game_ui")
 
 	ensure_focus_spell_selector_ui()
+	ensure_charge_meter_ui()
 	
 	GameState.stat_changed.connect(_on_stat_changed)
 	GameState.player_defeated.connect(_on_player_defeated)
@@ -71,6 +81,7 @@ func _ready() -> void:
 	hide_message()
 	hide_choices()
 	hide_spell_focus_menu()
+	hide_charge_meter()
 	set_objective("Look around.")
 
 
@@ -176,6 +187,125 @@ func hide_spell_menu() -> void:
 
 func set_spell_label(ability_name: String) -> void:
 	spell_menu_label.text = "Spell: " + ability_name
+
+	if ability_name.begins_with("Charging Firebolt"):
+		show_charge_meter(parse_charge_percent(ability_name))
+	else:
+		hide_charge_meter()
+
+
+func ensure_charge_meter_ui() -> void:
+	if charge_panel != null:
+		return
+
+	charge_panel = PanelContainer.new()
+	charge_panel.name = "ChargedFireboltMeter"
+	charge_panel.visible = false
+	charge_panel.anchor_left = 0.5
+	charge_panel.anchor_top = 1.0
+	charge_panel.anchor_right = 0.5
+	charge_panel.anchor_bottom = 1.0
+	charge_panel.offset_left = -170.0
+	charge_panel.offset_top = -150.0
+	charge_panel.offset_right = 170.0
+	charge_panel.offset_bottom = -86.0
+	charge_panel.pivot_offset = Vector2(170.0, 32.0)
+	charge_panel.add_theme_stylebox_override("panel", make_panel_style(Color(0.09, 0.045, 0.03, 0.76), Color(1.0, 0.38, 0.08, 0.72), 2, 14))
+	add_child(charge_panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	charge_panel.add_child(margin)
+
+	var box: VBoxContainer = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 5)
+	margin.add_child(box)
+
+	charge_title_label = Label.new()
+	charge_title_label.text = "CHARGING FIREBOLT"
+	charge_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	charge_title_label.add_theme_color_override("font_color", TEXT_MAIN)
+	charge_title_label.add_theme_font_size_override("font_size", 13)
+	box.add_child(charge_title_label)
+
+	charge_progress_bar = ProgressBar.new()
+	charge_progress_bar.min_value = 0.0
+	charge_progress_bar.max_value = 100.0
+	charge_progress_bar.value = 0.0
+	charge_progress_bar.show_percentage = false
+	charge_progress_bar.custom_minimum_size = Vector2(0.0, 14.0)
+	charge_progress_bar.add_theme_stylebox_override("background", make_panel_style(Color(0.04, 0.03, 0.025, 0.88), Color(0.4, 0.18, 0.08, 0.5), 1, 8))
+	charge_progress_bar.add_theme_stylebox_override("fill", make_panel_style(FIRE_CHARGE_COLOR, FIRE_CHARGE_COLOR, 0, 8))
+	box.add_child(charge_progress_bar)
+
+	charge_hint_label = Label.new()
+	charge_hint_label.text = "Release to cast"
+	charge_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	charge_hint_label.add_theme_color_override("font_color", TEXT_SOFT)
+	charge_hint_label.add_theme_font_size_override("font_size", 11)
+	box.add_child(charge_hint_label)
+
+
+func show_charge_meter(percent: int) -> void:
+	ensure_charge_meter_ui()
+
+	var clamped_percent: int = clamp(percent, 0, 100)
+	var is_full: bool = clamped_percent >= 100
+	charge_panel.visible = true
+	charge_progress_bar.value = clamped_percent
+
+	if is_full:
+		charge_title_label.text = "FULL CHARGE"
+		charge_hint_label.text = "Release the pocket sun"
+		charge_progress_bar.add_theme_stylebox_override("fill", make_panel_style(FIRE_CHARGE_FULL_COLOR, FIRE_CHARGE_FULL_COLOR, 0, 8))
+		if not charge_meter_was_full:
+			trigger_charge_full_feedback()
+	else:
+		charge_title_label.text = "CHARGING FIREBOLT  " + str(clamped_percent) + "%"
+		charge_hint_label.text = "Hold to build power"
+		charge_progress_bar.add_theme_stylebox_override("fill", make_panel_style(FIRE_CHARGE_COLOR, FIRE_CHARGE_COLOR, 0, 8))
+
+	charge_meter_was_full = is_full
+
+
+func hide_charge_meter() -> void:
+	if charge_panel != null:
+		charge_panel.visible = false
+		charge_panel.scale = Vector2.ONE
+
+	charge_meter_was_full = false
+
+
+func parse_charge_percent(text: String) -> int:
+	var split_text: PackedStringArray = text.split(":")
+
+	if split_text.size() < 2:
+		return 0
+
+	var percent_text: String = split_text[1].strip_edges().replace("%", "")
+
+	if not percent_text.is_valid_int():
+		return 0
+
+	return clamp(int(percent_text), 0, 100)
+
+
+func trigger_charge_full_feedback() -> void:
+	if charge_panel == null:
+		return
+
+	if charge_pulse_tween != null:
+		charge_pulse_tween.kill()
+
+	charge_panel.scale = Vector2.ONE
+	charge_pulse_tween = create_tween()
+	charge_pulse_tween.tween_property(charge_panel, "scale", Vector2(1.055, 1.055), 0.06)
+	charge_pulse_tween.tween_property(charge_panel, "scale", Vector2.ONE, 0.12)
+
+	Input.start_joy_vibration(0, 0.2, 0.65, 0.16)
 
 
 func ensure_focus_spell_selector_ui() -> void:
@@ -296,7 +426,7 @@ func ensure_focus_spell_selector_ui() -> void:
 	focus_spell_help_label.text = "D-pad: choose   ZR/Q: cast   Enter/A: equip"
 	focus_spell_help_label.add_theme_color_override("font_color", Color(0.72, 0.78, 0.88, 0.74))
 	focus_spell_help_label.add_theme_font_size_override("font_size", 11)
-	root_box.add_child(focus_spell_help_label)
+	right_box.add_child(focus_spell_help_label)
 
 
 func show_spell_focus_menu(menu_data: Dictionary) -> void:
@@ -571,6 +701,7 @@ func _on_player_defeated() -> void:
 	print("UI received defeated signal.")
 	show_message("Grace falls. Press R to restart.")
 	set_objective("Defeated.")
+	hide_charge_meter()
 
 
 func show_dev_vision(text: String) -> void:

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EncounterDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/encounters/encounter_definition.gd" id="1_definition"]
+[ext_resource type="PackedScene" path="res://scenes/actors/enemies/goblin_drone.tscn" id="2_goblin"]
+[ext_resource type="PackedScene" path="res://scenes/actors/enemies/gremlin_drone.tscn" id="3_gremlin"]
+
+[resource]
+script = ExtResource("1_definition")
+encounter_id = "village_square_ambush"
+display_name = "Ruined Square Ambush"
+description = "Goblin and Gremlin scavengers emerge among the displaced foundations."
+activation_radius = 15.0
+objective_on_start = "Defeat the scavengers in the village square."
+objective_on_complete = "Find a route across the collapsed ravine."
+completion_message = "The square falls quiet. A path toward the church is now visible."
+completion_flag = "cleared_village_square_ambush"
+reward_mana = 2
+enemy_scenes = Array[PackedScene]([ExtResource("2_goblin"), ExtResource("2_goblin"), ExtResource("3_gremlin")])
+spawn_positions = Array[Vector3]([Vector3(-5.5, 0.6, -1.5), Vector3(5.5, 0.6, 1.5), Vector3(0, 0.55, -6.0)])
+spawn_rotations_degrees = Array[Vector3]([Vector3(0, 165, 0), Vector3(0, -165, 0), Vector3(0, 180, 0)])

@@ -1,5 +1,9 @@
 extends Node
 
+signal status_applied(status_name: String, status_data: Dictionary)
+signal status_removed(status_name: String)
+signal statuses_cleared
+
 const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
 const StatusVisualControllerScript = preload("res://scripts/visuals/status_visual_controller.gd")
 
@@ -9,10 +13,13 @@ var status_visual_controller: Node3D
 
 func _ready() -> void:
 	add_to_group("debuggable")
-	attach_status_visual_controller()
+	call_deferred("attach_status_visual_controller")
 
 
 func attach_status_visual_controller() -> void:
+	if not is_inside_tree():
+		return
+
 	var target: Node = get_parent()
 
 	if not (target is Node3D):
@@ -46,6 +53,7 @@ func apply_status(status_name: String, duration: float, strength: float = 1.0, s
 
 	print("Applied status: ", status_name, " from ", source, " for ", duration, " seconds.")
 	show_status_feedback(status_name)
+	status_applied.emit(status_name, active_statuses[status_name].duplicate(true))
 
 
 func sustain_status(status_name: String, duration: float, strength: float = 1.0, source: String = "unknown") -> void:
@@ -62,12 +70,13 @@ func sustain_status(status_name: String, duration: float, strength: float = 1.0,
 		float(active_statuses[status_name]["duration"]),
 		duration
 	)
-
 	active_statuses[status_name]["strength"] = strength
 	active_statuses[status_name]["source"] = source
 
 	if not active_statuses[status_name].has("tick_timer"):
 		active_statuses[status_name]["tick_timer"] = 1.0
+
+	status_applied.emit(status_name, active_statuses[status_name].duplicate(true))
 
 
 func _process(delta: float) -> void:
@@ -88,6 +97,7 @@ func _process(delta: float) -> void:
 	for status_name: String in expired_statuses:
 		active_statuses.erase(status_name)
 		print("Status expired: ", status_name)
+		status_removed.emit(status_name)
 
 
 func process_burning(delta: float, status_name: String) -> void:
@@ -193,10 +203,15 @@ func remove_status(status_name: String) -> void:
 	if active_statuses.has(status_name):
 		active_statuses.erase(status_name)
 		print("Status removed: ", status_name)
+		status_removed.emit(status_name)
 
 
 func clear_all_statuses() -> void:
+	if active_statuses.is_empty():
+		return
+
 	active_statuses.clear()
+	statuses_cleared.emit()
 
 
 func get_status_strength(status_name: String) -> float:

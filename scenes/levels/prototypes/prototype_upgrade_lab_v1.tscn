@@ -1,25 +1,28 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://luom2siuyjtt"]
 
-[ext_resource type="Script" path="res://scripts/levels/prototype_upgrade_lab.gd" id="1_lab"]
-[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
-[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
-[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Script" uid="uid://s7nhpmgpp4fo" path="res://scripts/levels/prototype_upgrade_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" uid="uid://6raaty2e36ko" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://j44g36yeu58k" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" uid="uid://d4c66lkqs3ac6" path="res://scripts/systems/focus_time.gd" id="4_focus"]
 [ext_resource type="PackedScene" path="res://scenes/actors/interactables/save_bed.tscn" id="5_bed"]
 [ext_resource type="PackedScene" path="res://scenes/actors/interactables/upgrade_pedestal.tscn" id="6_pedestal"]
 [ext_resource type="PackedScene" path="res://scenes/actors/testing/goblin_reaction_target.tscn" id="7_target"]
-[ext_resource type="PackedScene" path="res://scenes/actors/enemies/goblin_drone.tscn" id="8_goblin"]
+[ext_resource type="PackedScene" uid="uid://dgprwdbmbpuqk" path="res://scenes/actors/enemies/goblin_drone.tscn" id="8_goblin"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
-size = Vector3(42, 1, 32)
-
-[sub_resource type="BoxMesh" id="BoxMesh_floor"]
 size = Vector3(42, 1, 32)
 
 [sub_resource type="StandardMaterial3D" id="Material_floor"]
 albedo_color = Color(0.12, 0.13, 0.16, 1)
 
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(42, 1, 32)
+
 [sub_resource type="BoxShape3D" id="BoxShape3D_wall_long"]
 size = Vector3(42, 4, 1)
+
+[sub_resource type="StandardMaterial3D" id="Material_wall"]
+albedo_color = Color(0.065, 0.075, 0.1, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_wall_long"]
 size = Vector3(42, 4, 1)
@@ -30,178 +33,175 @@ size = Vector3(1, 4, 32)
 [sub_resource type="BoxMesh" id="BoxMesh_wall_short"]
 size = Vector3(1, 4, 32)
 
-[sub_resource type="StandardMaterial3D" id="Material_wall"]
-albedo_color = Color(0.065, 0.075, 0.1, 1)
-
-[node name="PrototypeUpgradeLabV1" type="Node3D"]
+[node name="PrototypeUpgradeLabV1" type="Node3D" unique_id=311089370]
 script = ExtResource("1_lab")
 
-[node name="Ground" type="StaticBody3D" parent="."]
+[node name="Ground" type="StaticBody3D" parent="." unique_id=514219409]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=108301360]
 shape = SubResource("BoxShape3D_floor")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=623851616]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.050417, 0.051586628, 1.4969397)
 material_override = SubResource("Material_floor")
 mesh = SubResource("BoxMesh_floor")
 
-[node name="NorthWall" type="StaticBody3D" parent="."]
+[node name="NorthWall" type="StaticBody3D" parent="." unique_id=533922872]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -16)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="NorthWall"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NorthWall" unique_id=585247448]
 shape = SubResource("BoxShape3D_wall_long")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="NorthWall"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NorthWall" unique_id=1668773506]
 material_override = SubResource("Material_wall")
 mesh = SubResource("BoxMesh_wall_long")
 
-[node name="SouthWall" type="StaticBody3D" parent="."]
+[node name="SouthWall" type="StaticBody3D" parent="." unique_id=1335227108]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 16)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="SouthWall"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SouthWall" unique_id=1302684964]
 shape = SubResource("BoxShape3D_wall_long")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="SouthWall"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SouthWall" unique_id=554812259]
 material_override = SubResource("Material_wall")
 mesh = SubResource("BoxMesh_wall_long")
 
-[node name="WestWall" type="StaticBody3D" parent="."]
+[node name="WestWall" type="StaticBody3D" parent="." unique_id=96222007]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 1.5, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="WestWall"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WestWall" unique_id=697885247]
 shape = SubResource("BoxShape3D_wall_short")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="WestWall"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WestWall" unique_id=1715325997]
 material_override = SubResource("Material_wall")
 mesh = SubResource("BoxMesh_wall_short")
 
-[node name="EastWall" type="StaticBody3D" parent="."]
+[node name="EastWall" type="StaticBody3D" parent="." unique_id=1535461490]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 1.5, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="EastWall"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EastWall" unique_id=278501711]
 shape = SubResource("BoxShape3D_wall_short")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="EastWall"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="EastWall" unique_id=1926546650]
 material_override = SubResource("Material_wall")
 mesh = SubResource("BoxMesh_wall_short")
 
-[node name="TitleSign" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, 3.0, 12.5)
+[node name="TitleSign" type="Label3D" parent="." unique_id=1383323494]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, 3, 12.5)
+billboard = 1
 text = "Prototype Upgrade Lab"
 font_size = 72
-billboard = 1
 
-[node name="ControllerSign" type="Label3D" parent="."]
+[node name="ControllerSign" type="Label3D" parent="." unique_id=1690635778]
 transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 7.5, 2.3, 10.5)
-text = "Controller: Right Trigger casts\nHold Firebolt to charge\nMenu: Tab / M / controller menu"
-font_size = 42
 billboard = 1
-
-[node name="UpgradeSign" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, -8.0, 2.3, 10.5)
-text = "Pedestals grant/revoke test rules\nRelics menu shows earned upgrades\nF6 grants lab upgrades, F8 resets"
+text = "Controller: Right Trigger casts
+Hold Firebolt to charge
+Menu: Tab / M / controller menu"
 font_size = 42
+
+[node name="UpgradeSign" type="Label3D" parent="." unique_id=752821047]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, -8, 2.3, 10.5)
 billboard = 1
+text = "Pedestals grant/revoke test rules
+Relics menu shows earned upgrades
+F6 grants lab upgrades, F8 resets"
+font_size = 42
 
-[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+[node name="GameUI" parent="." unique_id=1608573111 instance=ExtResource("3_ui")]
 
-[node name="FocusTime" type="Node" parent="."]
+[node name="FocusTime" type="Node" parent="." unique_id=603665384]
 script = ExtResource("4_focus")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=317354801]
 transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, 0, 0, 0)
 light_energy = 1.6
 
-[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 10)
+[node name="Player" parent="." unique_id=1870194079 groups=["player"] instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 10)
 
-[node name="LabSaveBed" parent="." instance=ExtResource("5_bed")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -13, 0.0, 9)
+[node name="LabSaveBed" parent="." unique_id=406189009 instance=ExtResource("5_bed")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -13, 0, 9)
 bed_id = "prototype_upgrade_lab_bed"
 bed_display_name = "Upgrade Lab Bed"
 
-[node name="ChargedFireboltPedestal" parent="." instance=ExtResource("6_pedestal")]
+[node name="ChargedFireboltPedestal" parent="." unique_id=290985161 instance=ExtResource("6_pedestal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, 4)
 prompt_text = "Unlock Charged Firebolt"
 pedestal_title = "Charged Firebolt"
-mode = "grant_unlocks"
 unlock_ids = Array[String](["charged_firebolt"])
-source_label = "Prototype Upgrade Lab"
 success_message = "Firebolt can now charge."
 objective_after = "Equip Firebolt, hold cast, then release at a target."
 should_restore_resources = true
 
-[node name="ArmorBlessingPedestal" parent="." instance=ExtResource("6_pedestal")]
+[node name="ArmorBlessingPedestal" parent="." unique_id=1502711326 instance=ExtResource("6_pedestal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 4)
 prompt_text = "Unlock Armor Blessing"
 pedestal_title = "Armor Trial Blessing"
-mode = "grant_unlocks"
 unlock_ids = Array[String](["armor_trial_blessing"])
-source_label = "Prototype Upgrade Lab"
 success_message = "Beds can now grant Guard."
 objective_after = "Sleep in the lab bed to gain Guard, then let a goblin hit Grace."
 should_restore_resources = true
 should_grant_guard = true
 
-[node name="ChurchKitPedestal" parent="." instance=ExtResource("6_pedestal")]
+[node name="ChurchKitPedestal" parent="." unique_id=1246587007 instance=ExtResource("6_pedestal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 4)
 prompt_text = "Unlock Church Trial Kit"
 pedestal_title = "Church Trial Kit"
-mode = "grant_unlocks"
 unlock_ids = Array[String](["church_trial_sigil", "church_trial_doors"])
-source_label = "Prototype Upgrade Lab"
 success_message = "Trial relic and door permission granted."
 objective_after = "Open Relics and confirm the key item and permission appear."
 
-[node name="RestorePedestal" parent="." instance=ExtResource("6_pedestal")]
+[node name="RestorePedestal" parent="." unique_id=1728904792 instance=ExtResource("6_pedestal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 4)
 prompt_text = "Restore Resources"
 pedestal_title = "Resource Console"
 mode = "restore_resources"
 objective_after = "Return to target testing."
-should_grant_guard = false
 
-[node name="StatusPedestal" parent="." instance=ExtResource("6_pedestal")]
+[node name="StatusPedestal" parent="." unique_id=1803049199 instance=ExtResource("6_pedestal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 4)
 prompt_text = "Inspect Unlocks"
 pedestal_title = "Unlock Inspector"
 mode = "show_unlocks"
 objective_after = "Use the menu Relics tab for the cleaner view."
 
-[node name="ResetTargetsPedestal" parent="." instance=ExtResource("6_pedestal")]
+[node name="ResetTargetsPedestal" parent="." unique_id=1684189073 instance=ExtResource("6_pedestal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 4)
 prompt_text = "Reset Targets"
 pedestal_title = "Target Reset"
 mode = "reset_targets"
 objective_after = "Try another cast pattern."
 
-[node name="ResetProgressPedestal" parent="." instance=ExtResource("6_pedestal")]
+[node name="ResetProgressPedestal" parent="." unique_id=92437970 instance=ExtResource("6_pedestal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 4)
 prompt_text = "Reset Lab Progress"
 pedestal_title = "Progress Reset"
 mode = "reset_progress"
 objective_after = "Choose an upgrade pedestal and test again."
 
-[node name="TargetSign" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, 2.4, -3.0)
-text = "Targets\nLock-on: R3 / T\nCharged Firebolt should hit harder"
-font_size = 44
+[node name="TargetSign" type="Label3D" parent="." unique_id=2013222093]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, 2.4, -3)
 billboard = 1
+text = "Targets
+Lock-on: R3 / T
+Charged Firebolt should hit harder"
+font_size = 44
 
-[node name="TrainingTargets" type="Node3D" parent="."]
+[node name="TrainingTargets" type="Node3D" parent="." unique_id=1433173746]
 
-[node name="GoblinReactionTarget" parent="TrainingTargets" instance=ExtResource("7_target")]
+[node name="GoblinReactionTarget" parent="TrainingTargets" unique_id=1362693395 instance=ExtResource("7_target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.58, -8)
 target_label = "Firebolt Target"
 
-[node name="GoblinReactionTarget2" parent="TrainingTargets" instance=ExtResource("7_target")]
+[node name="GoblinReactionTarget2" parent="TrainingTargets" unique_id=683551557 instance=ExtResource("7_target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -8)
 target_label = "Charged Firebolt Target"
 
-[node name="GoblinReactionTarget3" parent="TrainingTargets" instance=ExtResource("7_target")]
+[node name="GoblinReactionTarget3" parent="TrainingTargets" unique_id=1926966080 instance=ExtResource("7_target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.58, -8)
 target_label = "Combo Target"
 
-[node name="GuardTestGoblin" parent="TrainingTargets" instance=ExtResource("8_goblin")]
+[node name="GuardTestGoblin" parent="TrainingTargets" unique_id=1527247462 instance=ExtResource("8_goblin")]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 12, 0.85, -7)

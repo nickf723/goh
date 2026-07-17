@@ -2,6 +2,7 @@ extends Node3D
 class_name GenericProjectile
 
 const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
+const ChargedFireboltImpactFeedback = preload("res://scripts/combat/charged_firebolt_impact_feedback.gd")
 const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
 
 @export var speed: float = 18.0
@@ -166,9 +167,11 @@ func try_hit(raw_target: Node) -> void:
 
 	hit_targets[target_id] = true
 	var impact_position: Vector3 = global_position
-	var result: Dictionary = send_payload_to_target(target, get_payload())
+	var active_payload: DamagePayload = get_payload()
+	var result: Dictionary = send_payload_to_target(target, active_payload)
 
-	ElementVisuals.spawn_impact(get_tree(), impact_position, get_element(), 1.0)
+	if not ChargedFireboltImpactFeedback.play_if_charged_firebolt(self, target, active_payload, impact_position, direction):
+		ElementVisuals.spawn_impact(get_tree(), impact_position, get_element(), 1.0)
 
 	if result.has("message") and result["message"] != "":
 		show_message(str(result["message"]))

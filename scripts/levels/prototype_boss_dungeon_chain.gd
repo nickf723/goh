@@ -4,6 +4,7 @@ const RewardAltarScene: PackedScene = preload("res://scenes/actors/interactables
 const TransitionAreaScene: PackedScene = preload("res://scenes/actors/interactables/level_exit.tscn")
 const ChurchEntryDressingScene: PackedScene = preload("res://scenes/environment/church/church_entry_dressing_v1.tscn")
 const ChurchCombatWingDressingScene: PackedScene = preload("res://scenes/environment/church/church_combat_wing_dressing_v1.tscn")
+const GuardTestEnemyScene: PackedScene = preload("res://scenes/actors/enemies/goblin_drone.tscn")
 const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 
 @export var opening_objective: String = "Church Trial: save, clear combat, solve the lock, cross the echo path, defeat the armor, claim the sigil, then exit."
@@ -25,19 +26,28 @@ const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 @export var sound_transition_message: String = "The elemental seal yields. The Church's next chamber listens for what sight cannot find."
 @export var sound_transition_objective: String = "Use Sound Pulse to reveal the hidden path."
 
+@export_group("Guard Testing")
+@export var add_guard_test_enemy: bool = true
+@export var guard_test_enemy_position: Vector3 = Vector3(4.0, 0.85, 112.0)
+@export var guard_test_enemy_offset_from_player: Vector3 = Vector3(3.0, 0.0, 0.0)
+@export var guard_test_enemy_message: String = "A Guard Test Goblin appears nearby. Let it strike once to test Guard."
+
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	connect_guard_test_signals()
 	spawn_entry_art_dressing()
 	spawn_combat_art_dressing()
 	spawn_reward_altar()
 	spawn_sound_transition()
 	configure_final_exit()
+	spawn_guard_test_enemy_if_ready()
 	await get_tree().process_frame
 
 	if apply_save_on_ready and GameState.apply_save_for_current_scene():
 		set_objective(GameState.current_objective)
 		show_message(get_resume_message())
+		spawn_guard_test_enemy_if_ready()
 		return
 
 	set_objective(opening_objective)
@@ -66,6 +76,36 @@ func _unhandled_input(event: InputEvent) -> void:
 	clear_prototype_save_and_restart()
 
 
+func connect_guard_test_signals() -> void:
+	var unlock_callable: Callable = Callable(self, "_on_game_state_unlock_changed")
+	if not GameState.unlock_changed.is_connected(unlock_callable):
+		GameState.unlock_changed.connect(unlock_callable)
+
+	var stat_callable: Callable = Callable(self, "_on_game_state_stat_changed")
+	if not GameState.stat_changed.is_connected(stat_callable):
+		GameState.stat_changed.connect(stat_callable)
+
+
+func _on_game_state_unlock_changed(unlock_id: String, value: bool) -> void:
+	if unlock_id != "armor_trial_blessing":
+		return
+
+	if not value:
+		return
+
+	call_deferred("spawn_guard_test_enemy_if_ready")
+
+
+func _on_game_state_stat_changed(stat_name: String, value: int) -> void:
+	if stat_name != "guard":
+		return
+
+	if value <= 0:
+		return
+
+	call_deferred("spawn_guard_test_enemy_if_ready")
+
+
 func get_opening_message() -> String:
 	if OS.has_feature("editor") and enable_dev_save_reset:
 		return opening_message + " Press F8 to clear the prototype save and restart fresh."
@@ -91,7 +131,6 @@ func clear_prototype_save_and_restart() -> void:
 		if remove_result != OK:
 			show_message("Could not clear prototype save: " + str(remove_result))
 			return
-
 	set_objective(opening_objective)
 	show_message("Prototype save cleared. Restarting the Church Trial from the beginning.")
 
@@ -188,6 +227,39 @@ func spawn_sound_transition() -> void:
 
 	add_child(transition)
 	transition.global_position = sound_transition_position
+
+
+func spawn_guard_test_enemy_if_ready() -> void:
+	if not add_guard_test_enemy:
+		return
+
+	if get_node_or_null("GuardTestGoblin") != null:
+		return
+
+	if not GameState.has_method("has_unlock") or not GameState.has_unlock("armor_trial_blessing"):
+		return
+
+	if GameState.get_stat("guard") <= 0:
+		return
+
+	var enemy: Node3D = GuardTestEnemyScene.instantiate() as Node3D
+
+	if enemy == null:
+		return
+
+	enemy.name = "GuardTestGoblin"
+	add_child(enemy)
+	enemy.global_position = get_guard_test_enemy_position()
+	show_message(guard_test_enemy_message)
+
+
+func get_guard_test_enemy_position() -> Vector3:
+	var player: Node3D = get_tree().get_first_node_in_group("player") as Node3D
+
+	if player != null:
+		return player.global_position + guard_test_enemy_offset_from_player
+
+	return guard_test_enemy_position
 
 
 func configure_final_exit() -> void:

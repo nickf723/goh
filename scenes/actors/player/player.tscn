@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/player/player_controller_free_aim.gd" id="1_3vyb7"]
 [ext_resource type="Material" uid="uid://bxrl6afl3gijr" path="res://art/materials/player_debug.tres" id="2_mpktj"]
-[ext_resource type="Script" uid="uid://did8gv2j4epru" path="res://scripts/abilities/ability_caster.gd" id="2_oj104"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_caster_menu_select.gd" id="2_oj104"]
 [ext_resource type="Resource" uid="uid://bg485tlykg7uk" path="res://data/loadouts/grace_starting_loadout.tres" id="3_oj104"]
 [ext_resource type="Script" uid="uid://dl8yw5cwab03v" path="res://scripts/weapons/weapon_controller.gd" id="5_qdyt2"]
 [ext_resource type="Resource" uid="uid://dgcmpqkn3b3a4" path="res://data/weapons/practice_sword.tres" id="6_g2g7f"]

@@ -1,8 +1,6 @@
 extends Node
 class_name ChargedFireboltImpactFeedback
 
-const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
-
 const FIRE_COLOR: Color = Color(1.0, 0.28, 0.06, 1.0)
 const GOLD_COLOR: Color = Color(1.0, 0.78, 0.18, 1.0)
 const HOT_CENTER_COLOR: Color = Color(1.0, 0.92, 0.42, 1.0)
@@ -68,10 +66,10 @@ static func spawn_charged_burst(tree: SceneTree, position: Vector3, impact_direc
 
 	var burst: Node3D = Node3D.new()
 	burst.name = "ChargedFireboltImpact"
+	tree.current_scene.add_child(burst)
 	burst.global_position = position
 	if impact_direction.length() > 0.01:
 		burst.look_at(position + impact_direction.normalized(), Vector3.UP)
-	tree.current_scene.add_child(burst)
 
 	add_sphere(burst, "WhiteHotCore", 0.22, HOT_CENTER_COLOR, Vector3.ZERO, Vector3.ONE, 5.0, 0.72)
 	add_torus(burst, "GoldShockRing", 0.34, 0.45, GOLD_COLOR, Vector3.ZERO, Vector3(90.0, 0.0, 0.0), 4.2, 0.84)
@@ -80,11 +78,14 @@ static func spawn_charged_burst(tree: SceneTree, position: Vector3, impact_direc
 	for index: int in range(8):
 		var angle: float = TAU * float(index) / 8.0
 		var shard_position: Vector3 = Vector3(cos(angle), 0.05 + float(index % 2) * 0.09, sin(angle)) * 0.32
+		var shard_color: Color = FIRE_COLOR
+		if index % 2 == 0:
+			shard_color = GOLD_COLOR
 		add_box(
 			burst,
 			"ChargedShard" + str(index),
 			Vector3(0.06, 0.06, 0.34),
-			GOLD_COLOR if index % 2 == 0 else FIRE_COLOR,
+			shard_color,
 			shard_position,
 			Vector3(0.0, rad_to_deg(angle), 42.0),
 			2.9,
@@ -170,7 +171,9 @@ static func nudge_camera(source: Node, impact_direction: Vector3) -> void:
 	if camera == null:
 		return
 
-	var nudge_direction: Vector3 = impact_direction.normalized() if impact_direction.length() > 0.01 else Vector3.FORWARD
+	var nudge_direction: Vector3 = Vector3.FORWARD
+	if impact_direction.length() > 0.01:
+		nudge_direction = impact_direction.normalized()
 	var camera_right: Vector3 = camera.global_transform.basis.x.normalized()
 	var side_amount: float = clamp(camera_right.dot(nudge_direction), -1.0, 1.0) * CAMERA_NUDGE_SIDE_AMOUNT
 	var original_h_offset: float = camera.h_offset
@@ -259,16 +262,16 @@ static func make_material(color: Color, emission_energy: float, alpha: float = 1
 
 static func add_sphere(
 	root: Node3D,
-	name: String,
+	node_name: String,
 	radius: float,
 	color: Color,
 	position: Vector3,
-	scale: Vector3,
+	scale_value: Vector3,
 	emission_energy: float,
 	alpha: float = 1.0
 ) -> MeshInstance3D:
 	var sphere: MeshInstance3D = MeshInstance3D.new()
-	sphere.name = name
+	sphere.name = node_name
 	sphere.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var mesh: SphereMesh = SphereMesh.new()
 	mesh.radius = radius
@@ -279,13 +282,13 @@ static func add_sphere(
 	sphere.material_override = make_material(color, emission_energy, alpha)
 	root.add_child(sphere)
 	sphere.position = position
-	sphere.scale = scale
+	sphere.scale = scale_value
 	return sphere
 
 
 static func add_torus(
 	root: Node3D,
-	name: String,
+	node_name: String,
 	inner_radius: float,
 	outer_radius: float,
 	color: Color,
@@ -295,13 +298,12 @@ static func add_torus(
 	alpha: float = 1.0
 ) -> MeshInstance3D:
 	var torus: MeshInstance3D = MeshInstance3D.new()
-	torus.name = name
+	torus.name = node_name
 	torus.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var mesh: TorusMesh = TorusMesh.new()
 	mesh.inner_radius = inner_radius
 	mesh.outer_radius = outer_radius
 	mesh.ring_segments = 32
-	mesh.radial_segments = 8
 	torus.mesh = mesh
 	torus.material_override = make_material(color, emission_energy, alpha)
 	root.add_child(torus)
@@ -312,7 +314,7 @@ static func add_torus(
 
 static func add_box(
 	root: Node3D,
-	name: String,
+	node_name: String,
 	size: Vector3,
 	color: Color,
 	position: Vector3,
@@ -321,7 +323,7 @@ static func add_box(
 	alpha: float = 1.0
 ) -> MeshInstance3D:
 	var box: MeshInstance3D = MeshInstance3D.new()
-	box.name = name
+	box.name = node_name
 	box.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var mesh: BoxMesh = BoxMesh.new()
 	mesh.size = size
@@ -333,11 +335,11 @@ static func add_box(
 	return box
 
 
-static func add_light(root: Node3D, color: Color, energy: float, range_value: float) -> OmniLight3D:
+static func add_light(root: Node3D, color: Color, energy: float, light_range: float) -> OmniLight3D:
 	var light: OmniLight3D = OmniLight3D.new()
 	light.name = "ChargedImpactLight"
 	light.light_color = color
 	light.light_energy = energy
-	light.omni_range = range_value
+	light.omni_range = light_range
 	root.add_child(light)
 	return light

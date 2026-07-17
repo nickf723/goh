@@ -35,6 +35,11 @@ Run Current Scene.
   - Calls `GameState.apply_rest_unlocks()` after rest restoration.
   - If Grace has `armor_trial_blessing`, sleeping grants 1 Guard.
   - The sleep/save message reports the blessing.
+- `scripts/levels/prototype_boss_dungeon_chain.gd`
+  - Spawns a `GuardTestGoblin` after Grace has both:
+    - `armor_trial_blessing`
+    - at least 1 Guard
+  - The test goblin appears near Grace so the Guard hit can be tested after the boss is already defeated.
 
 ## Main test flow
 
@@ -52,15 +57,17 @@ Run Current Scene.
 Armor Trial Blessing grants 1 Guard.
 ```
 
-10. Let an enemy hit Grace once.
-11. Confirm the message says Guard absorbs the hit.
-12. Confirm Grace does not lose health on that hit.
-13. Let a second hit land.
-14. Confirm normal health damage happens after Guard is consumed.
+10. Confirm a `GuardTestGoblin` appears nearby.
+11. Let the test goblin hit Grace once.
+12. Confirm the message says Guard absorbs the hit.
+13. Confirm Grace does not lose health on that hit.
+14. Let a second hit land.
+15. Confirm normal health damage happens after Guard is consumed.
 
 ## Regression checks
 
 - Before claiming the sigil/blessing, sleeping should not grant Guard.
+- Before gaining Guard, the Guard Test Goblin should not spawn.
 - Pressing `F8` should clear the save and remove the blessing.
 - Saving after gaining Guard should preserve the current Guard value.
 - Existing save/load, boss retry, and final exit behavior should still work.
@@ -69,6 +76,7 @@ Armor Trial Blessing grants 1 Guard.
 
 - Guard is currently a prototype dynamic stat, not a polished HUD resource.
 - Guard absorbs a whole hit, regardless of hit damage amount.
+- The Guard Test Goblin is a prototype test affordance, not final dungeon pacing.
 - The modifier hook is direct for now: `has_unlock("armor_trial_blessing")` inside rest handling.
 - A later Modifier Engine can generalize this into declarative hooks like `on_sleep` and `on_damage_taken`.
 - I could not run Godot here, so parser and scene validation are needed.

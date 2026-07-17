@@ -1,7 +1,7 @@
 extends Node3D
 
 @export var opening_objective: String = "Prototype Upgrade Lab: unlock an upgrade, test it on targets, then reset or inspect Relics."
-@export var opening_message: String = "Prototype Upgrade Lab online. Use pedestals to grant or reset unlocks. Right trigger / Q casts; hold Firebolt to charge once unlocked."
+@export var opening_message: String = "Prototype Upgrade Lab online. Use pedestals to grant or reset unlocks. Keyboard: E interact, Tab focus, Q cast. Controller: B interact, hold LT/L2 focus, RT/R2 cast."
 @export var enable_dev_reset_hotkey: bool = true
 @export var enable_dev_grant_hotkey: bool = true
 @export var enable_feedback_test_hotkey: bool = true

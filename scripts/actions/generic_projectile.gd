@@ -224,8 +224,26 @@ func try_hit(raw_target: Node) -> void:
 	if not ChargedFireboltImpactFeedback.play_if_charged_firebolt(self, target, active_payload, impact_position, direction):
 		ElementVisuals.spawn_impact(get_tree(), impact_position, get_element(), get_impact_radius())
 
+	var effect_messages: Array[String] = SpellModifiers.apply_on_hit_effects(
+		self,
+		target,
+		active_payload,
+		impact_position,
+		direction,
+		hit_targets
+	)
+
+	var messages: Array[String] = []
 	if result.has("message") and result["message"] != "":
-		show_message(str(result["message"]))
+		messages.append(str(result["message"]))
+
+	for effect_message: String in effect_messages:
+		if effect_message == "":
+			continue
+		messages.append(effect_message)
+
+	if messages.size() > 0:
+		show_message("\n".join(messages))
 
 	hit_count += 1
 

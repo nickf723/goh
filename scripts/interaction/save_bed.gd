@@ -7,14 +7,25 @@ extends Area3D
 @export var rest_restores_resources: bool = true
 @export var sleep_objective_after: String = "Saved. Continue the dungeon."
 
+var last_rest_messages: Array[String] = []
+
 
 func _ready() -> void:
 	add_to_group("save_point")
 
 
 func interact() -> Dictionary:
+	last_rest_messages.clear()
+
 	if rest_restores_resources and GameState.has_method("restore_rest_resources"):
 		GameState.restore_rest_resources()
+
+	if GameState.has_method("apply_rest_unlocks"):
+		var rest_result: Variant = GameState.call("apply_rest_unlocks")
+
+		if rest_result is Array:
+			for message in rest_result:
+				last_rest_messages.append(str(message))
 
 	GameState.set_objective(sleep_objective_after)
 
@@ -23,7 +34,7 @@ func interact() -> Dictionary:
 
 	if bool(save_result.get("ok", false)):
 		return {
-			"message": get_success_message(),
+			"message": get_success_message(last_rest_messages),
 			"objective": sleep_objective_after,
 		}
 
@@ -33,11 +44,17 @@ func interact() -> Dictionary:
 	}
 
 
-func get_success_message() -> String:
+func get_success_message(rest_messages: Array[String] = []) -> String:
 	var message: String = "Grace sleeps. Progress saved at " + bed_display_name + "."
 
 	if rest_restores_resources:
 		message += " Health, mana, stamina, and stance are restored."
+
+	for rest_message: String in rest_messages:
+		if rest_message == "":
+			continue
+
+		message += " " + rest_message
 
 	return message
 
@@ -47,4 +64,5 @@ func get_debug_data() -> Dictionary:
 		"bed_id": bed_id,
 		"bed": bed_display_name,
 		"restores": rest_restores_resources,
+		"rest_messages": last_rest_messages,
 	}

@@ -7,9 +7,11 @@ signal player_defeated
 signal save_completed(save_data: Dictionary)
 signal save_loaded(save_data: Dictionary)
 signal key_item_changed(item_id: String, value: bool)
+signal unlock_changed(unlock_id: String, value: bool)
 
 const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
-const SAVE_VERSION: int = 2
+const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
+const SAVE_VERSION: int = 3
 const SAVE_SLOT_PATH: String = "user://goh_save_slot_1.json"
 
 const KEY_ITEM_DEFS: Dictionary = {
@@ -26,6 +28,7 @@ var current_objective: String = "Look around."
 var stats: Dictionary = StatCatalogScript.get_default_stats()
 var last_save_data: Dictionary = {}
 var key_items: Dictionary = {}
+var unlocks: Dictionary = {}
 
 var story_flags: Dictionary = {
 	"inspected_stone": false,
@@ -86,6 +89,64 @@ func get_story_flags_snapshot() -> Dictionary:
 	return story_flags.duplicate(true)
 
 
+func grant_unlock(unlock_id: String, unlock_data: Dictionary = {}) -> void:
+	if unlock_id == "":
+		return
+
+	var row: Dictionary = UnlockCatalogScript.normalize_unlock(unlock_id, unlock_data)
+	unlocks[unlock_id] = row
+	unlock_changed.emit(unlock_id, true)
+
+
+func revoke_unlock(unlock_id: String) -> void:
+	if not unlocks.has(unlock_id):
+		return
+
+	unlocks.erase(unlock_id)
+	unlock_changed.emit(unlock_id, false)
+
+
+func has_unlock(unlock_id: String) -> bool:
+	return unlocks.has(unlock_id)
+
+
+func get_unlock_snapshot() -> Dictionary:
+	return unlocks.duplicate(true)
+
+
+func get_unlock_rows() -> Array:
+	return UnlockCatalogScript.get_rows(get_unlock_snapshot())
+
+
+func get_unlock_rows_by_type(unlock_type: String) -> Array:
+	return UnlockCatalogScript.get_rows_by_type(get_unlock_snapshot(), unlock_type)
+
+
+func get_modifier_unlock_rows() -> Array:
+	return get_unlock_rows_by_type(UnlockCatalogScript.TYPE_MODIFIER)
+
+
+func get_permission_unlock_rows() -> Array:
+	return get_unlock_rows_by_type(UnlockCatalogScript.TYPE_PERMISSION)
+
+
+func get_unlock_type_counts() -> Dictionary:
+	return UnlockCatalogScript.get_type_counts(get_unlock_snapshot())
+
+
+func get_active_modifier_ids() -> Array[String]:
+	var modifier_ids: Array[String] = []
+
+	for row_variant in get_modifier_unlock_rows():
+		if not (row_variant is Dictionary):
+			continue
+
+		var row: Dictionary = row_variant as Dictionary
+		modifier_ids.append(str(row.get("id", "")))
+
+	return modifier_ids
+
+
 func add_key_item(item_id: String, item_data: Dictionary = {}) -> void:
 	if item_id == "":
 		return
@@ -98,6 +159,14 @@ func add_key_item(item_id: String, item_data: Dictionary = {}) -> void:
 	row["id"] = item_id
 	row["acquired"] = true
 	key_items[item_id] = row
+	grant_unlock(item_id, {
+		"type": UnlockCatalogScript.TYPE_KEY_ITEM,
+		"display_name": str(row.get("name", item_id.capitalize())),
+		"description": str(row.get("description", "A key item Grace carries.")),
+		"source": str(row.get("source", "Unknown")),
+		"menu_category": "Key Items",
+		"related_key_item": item_id,
+	})
 	key_item_changed.emit(item_id, true)
 
 
@@ -106,12 +175,18 @@ func remove_key_item(item_id: String) -> void:
 		return
 
 	key_items.erase(item_id)
+	revoke_unlock(item_id)
 	key_item_changed.emit(item_id, false)
 
 
 func has_key_item(item_id: String) -> bool:
 	if key_items.has(item_id):
 		return true
+
+	if has_unlock(item_id):
+		var unlock_definition: Dictionary = UnlockCatalogScript.get_definition(item_id)
+		if str(unlock_definition.get("type", "")) == UnlockCatalogScript.TYPE_KEY_ITEM:
+			return true
 
 	# Backward compatibility for saves from the reward-altar pass before dedicated key items existed.
 	if item_id == "church_trial_sigil" and get_flag("claimed_church_trial_sigil"):
@@ -122,6 +197,17 @@ func has_key_item(item_id: String) -> bool:
 
 func get_key_item_snapshot() -> Dictionary:
 	var snapshot: Dictionary = key_items.duplicate(true)
+
+	for unlock_id in unlocks.keys():
+		if snapshot.has(unlock_id):
+			continue
+
+		var unlock_definition: Dictionary = UnlockCatalogScript.get_definition(str(unlock_id))
+		if str(unlock_definition.get("type", "")) != UnlockCatalogScript.TYPE_KEY_ITEM:
+			continue
+
+		snapshot[unlock_id] = get_key_item_definition(str(unlock_id))
+		snapshot[unlock_id]["acquired"] = true
 
 	if get_flag("claimed_church_trial_sigil") and not snapshot.has("church_trial_sigil"):
 		snapshot["church_trial_sigil"] = get_key_item_definition("church_trial_sigil")
@@ -157,6 +243,16 @@ func sort_key_item_rows(a: Dictionary, b: Dictionary) -> bool:
 func get_key_item_definition(item_id: String) -> Dictionary:
 	if KEY_ITEM_DEFS.has(item_id):
 		return (KEY_ITEM_DEFS[item_id] as Dictionary).duplicate(true)
+
+	var unlock_definition: Dictionary = UnlockCatalogScript.get_definition(item_id)
+	if str(unlock_definition.get("type", "")) == UnlockCatalogScript.TYPE_KEY_ITEM:
+		return {
+			"id": item_id,
+			"name": str(unlock_definition.get("display_name", item_id.capitalize())),
+			"kind": str(unlock_definition.get("menu_category", "Key Item")),
+			"description": str(unlock_definition.get("description", "A key item Grace carries.")),
+			"source": str(unlock_definition.get("source", "Unknown")),
+		}
 
 	return {
 		"id": item_id,
@@ -282,6 +378,7 @@ func reset_run() -> void:
 	current_objective = "Look around."
 	reset_stats_to_defaults(false)
 	key_items.clear()
+	unlocks.clear()
 
 	for flag_name: String in story_flags.keys():
 		story_flags[flag_name] = false
@@ -293,6 +390,9 @@ func reset_run() -> void:
 
 	for item_id in KEY_ITEM_DEFS.keys():
 		key_item_changed.emit(str(item_id), false)
+
+	for unlock_id in UnlockCatalogScript.UNLOCK_DEFS.keys():
+		unlock_changed.emit(str(unlock_id), false)
 
 
 func begin_player_invulnerability(duration: float) -> void:
@@ -328,6 +428,7 @@ func save_at_bed(bed_id: String, bed_name: String, bed_position: Vector3) -> Dic
 		"stats": get_stat_snapshot(),
 		"story_flags": get_story_flags_snapshot(),
 		"key_items": get_key_item_snapshot(),
+		"unlocks": get_unlock_snapshot(),
 		"objective": current_objective,
 		"saved_at": Time.get_datetime_string_from_system(false, true),
 	}
@@ -400,7 +501,9 @@ func apply_save_data(save_data: Dictionary) -> bool:
 
 	apply_saved_stats(save_data)
 	apply_saved_flags(save_data)
+	apply_saved_unlocks(save_data)
 	apply_saved_key_items(save_data)
+	sync_legacy_progression_state()
 
 	if save_data.has("objective"):
 		set_objective(str(save_data["objective"]))
@@ -445,6 +548,25 @@ func apply_saved_flags(save_data: Dictionary) -> void:
 		flag_changed.emit(str(flag_name), bool(saved_flags[flag_name]))
 
 
+func apply_saved_unlocks(save_data: Dictionary) -> void:
+	unlocks.clear()
+
+	if not save_data.has("unlocks"):
+		return
+
+	if not save_data["unlocks"] is Dictionary:
+		return
+
+	var saved_unlocks: Dictionary = save_data["unlocks"] as Dictionary
+
+	for unlock_id in saved_unlocks.keys():
+		if saved_unlocks[unlock_id] is Dictionary:
+			var unlock_data: Dictionary = (saved_unlocks[unlock_id] as Dictionary).duplicate(true)
+			grant_unlock(str(unlock_id), unlock_data)
+		elif bool(saved_unlocks[unlock_id]):
+			grant_unlock(str(unlock_id))
+
+
 func apply_saved_key_items(save_data: Dictionary) -> void:
 	key_items.clear()
 
@@ -457,12 +579,26 @@ func apply_saved_key_items(save_data: Dictionary) -> void:
 				item["id"] = str(item.get("id", item_id))
 				item["acquired"] = true
 				key_items[str(item_id)] = item
+				grant_unlock(str(item_id), {
+					"type": UnlockCatalogScript.TYPE_KEY_ITEM,
+					"display_name": str(item.get("name", str(item_id).capitalize())),
+					"description": str(item.get("description", "A key item Grace carries.")),
+					"source": str(item.get("source", "Unknown")),
+					"menu_category": "Key Items",
+					"related_key_item": str(item_id),
+				})
 
 	if get_flag("claimed_church_trial_sigil") and not key_items.has("church_trial_sigil"):
 		add_key_item("church_trial_sigil")
 
 	for item_id in key_items.keys():
 		key_item_changed.emit(str(item_id), true)
+
+
+func sync_legacy_progression_state() -> void:
+	if get_flag("claimed_church_trial_sigil") or has_key_item("church_trial_sigil"):
+		grant_unlock("church_trial_sigil")
+		grant_unlock("church_trial_doors")
 
 
 func move_player_to_save_position(save_position: Vector3) -> void:

@@ -13,7 +13,7 @@ extends Area3D
 @export var save_position_offset: Vector3 = Vector3(0.0, 1.0, -1.25)
 @export var restore_resources_on_claim: bool = true
 @export var autosave_on_claim: bool = true
-@export var progression_unlock_ids: Array[String] = ["church_trial_doors", "armor_trial_blessing"]
+@export var progression_unlock_ids: Array[String] = ["church_trial_doors", "armor_trial_blessing", "charged_firebolt"]
 @export var sigil_visual_path: NodePath = NodePath("SigilVisual")
 @export var claimed_marker_path: NodePath = NodePath("ClaimedGlow")
 
@@ -74,7 +74,7 @@ func interact() -> Dictionary:
 	refresh_visual_state()
 
 	return {
-		"message": "Grace claims the " + reward_display_name + ". " + lore_message + " Progression unlocks updated." + save_message,
+		"message": "Grace claims the " + reward_display_name + ". " + lore_message + " Progression unlocks updated. Firebolt can now be charged." + save_message,
 		"objective": objective_after,
 	}
 

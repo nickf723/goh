@@ -59,6 +59,9 @@ const ELEMENT_DISPLAY_NAMES: Dictionary = {
 	"time": "Time",
 }
 
+const CHARGED_FIREBOLT_UNLOCK_ID: String = "charged_firebolt"
+const FIREBOLT_SPELL_ID: String = "firebolt"
+
 @export var loadout: AbilityLoadout
 @export var current_ability_index: int = 0
 
@@ -66,9 +69,24 @@ const ELEMENT_DISPLAY_NAMES: Dictionary = {
 @export var cast_spawn_distance: float = 1.0
 @export var focus_quick_cast_lock_duration: float = 0.04
 
+@export_group("Charged Firebolt")
+@export var charged_firebolt_min_charge_time: float = 0.28
+@export var charged_firebolt_full_charge_time: float = 1.15
+@export var charged_firebolt_extra_mana_cost: int = 1
+@export var charged_firebolt_max_damage_multiplier: float = 2.0
+@export var charged_firebolt_scale_bonus: float = 0.55
+@export var charged_firebolt_speed_bonus: float = 4.0
+@export var charged_firebolt_lock_duration: float = 0.22
+
 var focus_spell_menu_open: bool = false
 var focus_element_index: int = 2
 var focus_spell_index: int = 0
+
+var is_charging_firebolt: bool = false
+var charge_timer: float = 0.0
+var charge_player: Node3D = null
+var charge_ability: AbilityDefinition = null
+var charge_full_feedback_shown: bool = false
 
 @onready var action_state: PlayerActionState = get_parent().get_node_or_null("PlayerActionState")
 
@@ -93,9 +111,36 @@ func _ready() -> void:
 	#print_action_audit()
 
 
-func cast_from_player(player: Node3D, cast_lock_duration: float = 0.18) -> bool:
+func _process(delta: float) -> void:
+	update_charged_firebolt(delta)
+
+
+func cast_from_player(player: Node3D, cast_lock_duration: float = 0.18, allow_charge: bool = true) -> bool:
 	var ability: AbilityDefinition = get_current_ability()
 	if action_state != null and not action_state.can_cast():
+		return false
+	if ability == null:
+		print("No current ability.")
+		return false
+
+	if allow_charge and should_charge_firebolt(ability):
+		return begin_charged_firebolt(player, ability)
+
+	return execute_ability_from_player(player, ability, cast_lock_duration)
+
+
+func execute_ability_from_player(
+	player: Node3D,
+	ability: AbilityDefinition,
+	cast_lock_duration: float = 0.18,
+	action_payload_override: Resource = null,
+	power_ratio: float = 0.0,
+	extra_mana_cost: int = 0
+) -> bool:
+	if action_state != null and not action_state.can_cast():
+		return false
+	if player == null:
+		print("No player for ability cast.")
 		return false
 	if ability == null:
 		print("No current ability.")
@@ -105,7 +150,7 @@ func cast_from_player(player: Node3D, cast_lock_duration: float = 0.18) -> bool:
 		print("Ability has no scene: ", ability.display_name)
 		return false
 
-	if not pay_ability_cost(ability):
+	if not pay_ability_cost(ability, extra_mana_cost):
 		show_feedback("Not enough resources for " + ability.display_name + ".")
 		return false
 		
@@ -114,12 +159,13 @@ func cast_from_player(player: Node3D, cast_lock_duration: float = 0.18) -> bool:
 		
 	var ability_instance: Node = ability.ability_scene.instantiate()
 
-	var action_payload: Resource = null
+	var action_payload: Resource = action_payload_override
 
-	if ability.has_method("get_action_payload"):
-		action_payload = ability.get_action_payload()
-	elif ability.payload != null:
-		action_payload = ability.payload
+	if action_payload == null:
+		if ability.has_method("get_action_payload"):
+			action_payload = ability.get_action_payload()
+		elif ability.payload != null:
+			action_payload = ability.payload
 
 	if action_payload != null and ability_instance.has_method("set_payload"):
 		ability_instance.set_payload(action_payload)
@@ -137,17 +183,198 @@ func cast_from_player(player: Node3D, cast_lock_duration: float = 0.18) -> bool:
 		return false
 
 	scene_root.add_child(ability_instance)
+	configure_charged_projectile_visuals(ability_instance, power_ratio)
 
 	if ability_instance.has_method("execute"):
 		ability_instance.execute(player, cast_direction)
 		return true
 
-	ability_instance.global_position = cast_origin + cast_direction * cast_spawn_distance
+	if ability_instance is Node3D:
+		var node_3d: Node3D = ability_instance as Node3D
+		node_3d.global_position = cast_origin + cast_direction * cast_spawn_distance
 
 	if ability_instance.has_method("launch"):
 		ability_instance.launch(cast_direction)
 
 	return true
+
+
+func should_charge_firebolt(ability: AbilityDefinition) -> bool:
+	if ability == null:
+		return false
+
+	if not GameState.has_method("has_unlock"):
+		return false
+
+	if not GameState.has_unlock(CHARGED_FIREBOLT_UNLOCK_ID):
+		return false
+
+	if ability.element != "fire":
+		return false
+
+	if ability.has_method("get_spell_id"):
+		return ability.get_spell_id() == FIREBOLT_SPELL_ID
+
+	return ability.display_name.to_lower() == "firebolt"
+
+
+func begin_charged_firebolt(player: Node3D, ability: AbilityDefinition) -> bool:
+	if player == null:
+		return false
+
+	if is_charging_firebolt:
+		return true
+
+	is_charging_firebolt = true
+	charge_timer = 0.0
+	charge_player = player
+	charge_ability = ability
+	charge_full_feedback_shown = false
+	show_feedback("Charging Firebolt. Release to cast.")
+	update_charged_firebolt_label()
+	return true
+
+
+func update_charged_firebolt(delta: float) -> void:
+	if not is_charging_firebolt:
+		return
+
+	charge_timer += delta
+	update_charged_firebolt_label()
+
+	if not charge_full_feedback_shown and get_charged_firebolt_ratio() >= 1.0:
+		charge_full_feedback_shown = true
+		show_feedback("Firebolt fully charged.")
+
+	if Input.is_action_pressed("cast_spell"):
+		return
+
+	finish_charged_firebolt()
+
+
+func finish_charged_firebolt() -> void:
+	if not is_charging_firebolt:
+		return
+
+	var player: Node3D = charge_player
+	var ability: AbilityDefinition = charge_ability
+	var charge_ratio: float = get_charged_firebolt_ratio()
+	var extra_mana_cost: int = 0
+	var payload_override: Resource = null
+	var lock_duration: float = 0.18
+
+	if charge_ratio > 0.0:
+		extra_mana_cost = charged_firebolt_extra_mana_cost
+		payload_override = make_charged_firebolt_payload(ability, charge_ratio)
+		lock_duration = charged_firebolt_lock_duration
+
+	clear_charged_firebolt_state()
+
+	if player == null or ability == null:
+		emit_current_ability()
+		return
+
+	var did_cast: bool = execute_ability_from_player(
+		player,
+		ability,
+		lock_duration,
+		payload_override,
+		charge_ratio,
+		extra_mana_cost
+	)
+
+	if did_cast and charge_ratio > 0.0:
+		show_feedback("Charged Firebolt released.")
+
+	emit_current_ability()
+
+
+func cancel_charged_firebolt(should_emit: bool = true) -> void:
+	if not is_charging_firebolt:
+		return
+
+	clear_charged_firebolt_state()
+
+	if should_emit:
+		emit_current_ability()
+
+
+func clear_charged_firebolt_state() -> void:
+	is_charging_firebolt = false
+	charge_timer = 0.0
+	charge_player = null
+	charge_ability = null
+	charge_full_feedback_shown = false
+
+
+func get_charged_firebolt_ratio() -> float:
+	if charge_timer < charged_firebolt_min_charge_time:
+		return 0.0
+
+	var charge_window: float = max(charged_firebolt_full_charge_time - charged_firebolt_min_charge_time, 0.01)
+	return clamp((charge_timer - charged_firebolt_min_charge_time) / charge_window, 0.0, 1.0)
+
+
+func update_charged_firebolt_label() -> void:
+	var ui: Node = get_tree().get_first_node_in_group("game_ui")
+
+	if ui == null or not ui.has_method("set_spell_label"):
+		return
+
+	var percent: int = int(round(get_charged_firebolt_ratio() * 100.0))
+	ui.set_spell_label("Charging Firebolt: " + str(percent) + "%")
+
+
+func make_charged_firebolt_payload(ability: AbilityDefinition, charge_ratio: float) -> Resource:
+	if ability == null:
+		return null
+
+	var base_payload: Resource = null
+
+	if ability.has_method("get_action_payload"):
+		base_payload = ability.get_action_payload()
+	elif ability.payload != null:
+		base_payload = ability.payload
+
+	if not (base_payload is DamagePayload):
+		return base_payload
+
+	var duplicate_payload: Resource = base_payload.duplicate(true)
+
+	if not (duplicate_payload is DamagePayload):
+		return base_payload
+
+	var charged_payload: DamagePayload = duplicate_payload as DamagePayload
+	var multiplier: float = lerp(1.0, charged_firebolt_max_damage_multiplier, charge_ratio)
+	charged_payload.amount = max(charged_payload.amount + 1, int(ceil(float(charged_payload.amount) * multiplier)))
+	charged_payload.stance_damage = max(charged_payload.stance_damage + 1, int(ceil(float(charged_payload.stance_damage) * multiplier)))
+	charged_payload.status_duration *= lerp(1.0, 1.5, charge_ratio)
+	charged_payload.source_name = "Charged Firebolt"
+
+	var charged_tags: Array[String] = []
+	for tag: String in charged_payload.tags:
+		charged_tags.append(tag)
+
+	for tag: String in ["charged", "upgrade", "firebolt"]:
+		if not charged_tags.has(tag):
+			charged_tags.append(tag)
+
+	charged_payload.tags = charged_tags
+	return charged_payload
+
+
+func configure_charged_projectile_visuals(ability_instance: Node, charge_ratio: float) -> void:
+	if charge_ratio <= 0.0:
+		return
+
+	if ability_instance is Node3D:
+		var node_3d: Node3D = ability_instance as Node3D
+		var scale_bonus: float = 1.0 + charged_firebolt_scale_bonus * charge_ratio
+		node_3d.scale *= scale_bonus
+
+	if "speed" in ability_instance:
+		var speed_value: float = float(ability_instance.get("speed"))
+		ability_instance.set("speed", speed_value + charged_firebolt_speed_bonus * charge_ratio)
 
 
 func get_cast_direction(player: Node3D, cast_origin: Vector3) -> Vector3:
@@ -169,8 +396,10 @@ func get_cast_direction(player: Node3D, cast_origin: Vector3) -> Vector3:
 	return cast_direction.normalized()
 
 
-func pay_ability_cost(ability: AbilityDefinition) -> bool:
-	if GameState.get_stat("mana") < ability.mana_cost:
+func pay_ability_cost(ability: AbilityDefinition, extra_mana_cost: int = 0) -> bool:
+	var required_mana: int = ability.mana_cost + extra_mana_cost
+
+	if GameState.get_stat("mana") < required_mana:
 		return false
 
 	if GameState.get_stat("stamina") < ability.stamina_cost:
@@ -179,8 +408,8 @@ func pay_ability_cost(ability: AbilityDefinition) -> bool:
 	if GameState.get_stat("focus") < ability.focus_cost:
 		return false
 
-	if ability.mana_cost > 0:
-		GameState.set_stat("mana", GameState.get_stat("mana") - ability.mana_cost)
+	if required_mana > 0:
+		GameState.set_stat("mana", GameState.get_stat("mana") - required_mana)
 
 	if ability.stamina_cost > 0:
 		GameState.set_stat("stamina", GameState.get_stat("stamina") - ability.stamina_cost)
@@ -198,6 +427,7 @@ func select_ability(index: int, should_show_feedback: bool = true) -> void:
 	if index < 0 or index >= loadout.get_equipped_ability_count():
 		return
 
+	cancel_charged_firebolt(false)
 	current_ability_index = index
 	align_focus_menu_to_current_ability()
 	emit_current_ability()
@@ -215,6 +445,7 @@ func select_next_ability() -> void:
 	if ability_count <= 0:
 		return
 
+	cancel_charged_firebolt(false)
 	current_ability_index += 1
 
 	if current_ability_index >= ability_count:
@@ -412,7 +643,7 @@ func quick_cast_selected_focus_spell() -> void:
 		update_focus_spell_menu_ui()
 		return
 
-	cast_from_player(player, focus_quick_cast_lock_duration)
+	cast_from_player(player, focus_quick_cast_lock_duration, false)
 	update_focus_spell_menu_ui()
 
 
@@ -573,11 +804,15 @@ func get_debug_data() -> Dictionary:
 	var ability_name: String = "None"
 	var element: String = "none"
 	var mana_cost: int = 0
+	var charge_percent: int = 0
 
 	if ability != null:
 		ability_name = ability.display_name
 		element = ability.element
 		mana_cost = ability.mana_cost
+
+	if is_charging_firebolt:
+		charge_percent = int(round(get_charged_firebolt_ratio() * 100.0))
 
 	return {
 		"type": "AbilityCaster",
@@ -587,6 +822,8 @@ func get_debug_data() -> Dictionary:
 		"slot_index": current_ability_index,
 		"menu": focus_spell_menu_open,
 		"menu_element": get_selected_focus_element(),
+		"charging_firebolt": is_charging_firebolt,
+		"charged_firebolt_percent": charge_percent,
 	}
 
 

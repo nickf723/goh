@@ -172,4 +172,6 @@ func get_float(key: String, fallback: float) -> float:
 
 func get_color(key: String, fallback: Color) -> Color:
 	var value: Variant = config.get(key, fallback)
-	return value if value is Color else fallback
+	if value is Color:
+		return value as Color
+	return fallback

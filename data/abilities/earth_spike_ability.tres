@@ -8,18 +8,20 @@
 [resource]
 script = ExtResource("3_definition")
 display_name = "Earth Spike"
-description = "Stone projectile that hits stance hard and nudges enemies back."
+description = "Ground-targeted stone eruption. Place a circle, confirm, and spikes burst up inside the area."
 element = "earth"
 mana_cost = 1
 trait_profile = ExtResource("4_profile")
 spell_id = "earth_spike"
 short_label = "Spike"
 icon_text = "E"
-roles = Array[String](["damage", "stance", "control"])
-combo_tags = Array[String](["earth", "stone", "impact", "stance_break"])
+roles = Array[String](["damage", "stance", "control", "terrain"])
+targeting_style = "ground_aoe"
+delivery_type = "ground_targeted"
+combo_tags = Array[String](["earth", "stone", "impact", "stance_break", "ground_targeted"])
 status_tags = Array[String]([])
-ui_tags = Array[String](["stance", "impact"])
-debug_tags = Array[String](["prototype", "earth_projectile"])
-design_notes = "Early earth spell should feel chunky: less raw damage than Firebolt, more stance pressure."
+ui_tags = Array[String](["stance", "impact", "area"])
+debug_tags = Array[String](["prototype", "earth_ground_targeted"])
+design_notes = "Early earth spell should feel chunky and territorial: place the impact zone, then erupt for stance pressure."
 ability_scene = ExtResource("1_scene")
 action_payload = ExtResource("2_payload")

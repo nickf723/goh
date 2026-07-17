@@ -81,6 +81,18 @@ const UNLOCK_DEFS: Dictionary = {
 		"tags": ["ice", "projectile", "piercing", "upgrade", "control"],
 		"effect_preview": "Cast Ice Lance after unlocking this upgrade. The lance can pierce multiple targets before fading.",
 	},
+	"chain_lightning": {
+		"id": "chain_lightning",
+		"display_name": "Chain Lightning",
+		"type": TYPE_MODIFIER,
+		"menu_category": "Spell Upgrades",
+		"description": "Lightning Spark jumps from its first target to nearby enemies, preventing repeat hits on the same chain.",
+		"source": "Prototype Upgrade Lab",
+		"requires": ["lightning_spark"],
+		"hooks": ["on_cast", "on_projectile_spawned", "on_hit", "on_chain_jump"],
+		"tags": ["lightning", "projectile", "chain", "upgrade", "interrupt"],
+		"effect_preview": "Cast Lightning Spark after unlocking this upgrade. The spark can arc to nearby targets after impact.",
+	},
 }
 
 

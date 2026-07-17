@@ -14,6 +14,10 @@ const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 @export var reward_altar_position: Vector3 = Vector3(0.0, 0.15, 112.5)
 @export var enable_dev_save_reset: bool = true
 
+@export_group("Dev Shortcuts")
+@export var dev_grant_charged_firebolt_on_ready: bool = true
+@export var dev_charged_firebolt_message: String = "Prototype shortcut: Charged Firebolt is unlocked for immediate testing."
+
 @export_group("Art Dressing")
 @export var add_entry_art_dressing: bool = true
 @export var add_combat_art_dressing: bool = true
@@ -46,12 +50,20 @@ func _ready() -> void:
 
 	if apply_save_on_ready and GameState.apply_save_for_current_scene():
 		set_objective(GameState.current_objective)
-		show_message(get_resume_message())
+		var resume_message: String = get_resume_message()
+		var resume_dev_message: String = grant_dev_charged_firebolt_if_enabled()
+		if resume_dev_message != "":
+			resume_message += " " + resume_dev_message
+		show_message(resume_message)
 		spawn_guard_test_enemy_if_ready()
 		return
 
 	set_objective(opening_objective)
-	show_message(get_opening_message())
+	var start_message: String = get_opening_message()
+	var start_dev_message: String = grant_dev_charged_firebolt_if_enabled()
+	if start_dev_message != "":
+		start_message += " " + start_dev_message
+	show_message(start_message)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -104,6 +116,25 @@ func _on_game_state_stat_changed(stat_name: String, value: int) -> void:
 		return
 
 	call_deferred("spawn_guard_test_enemy_if_ready")
+
+
+func grant_dev_charged_firebolt_if_enabled() -> String:
+	if not OS.has_feature("editor"):
+		return ""
+
+	if not dev_grant_charged_firebolt_on_ready:
+		return ""
+
+	if not GameState.has_method("grant_unlock"):
+		return ""
+
+	if GameState.has_method("has_unlock") and GameState.has_unlock("charged_firebolt"):
+		return ""
+
+	GameState.grant_unlock("charged_firebolt", {
+		"source": "Prototype shortcut",
+	})
+	return dev_charged_firebolt_message
 
 
 func get_opening_message() -> String:

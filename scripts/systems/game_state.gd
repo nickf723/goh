@@ -11,8 +11,11 @@ signal unlock_changed(unlock_id: String, value: bool)
 
 const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
 const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
-const SAVE_VERSION: int = 3
+const SAVE_VERSION: int = 4
 const SAVE_SLOT_PATH: String = "user://goh_save_slot_1.json"
+const ARMOR_TRIAL_BLESSING_ID: String = "armor_trial_blessing"
+const GUARD_STAT: String = "guard"
+const MAX_GUARD_STAT: String = "max_guard"
 
 const KEY_ITEM_DEFS: Dictionary = {
 	"church_trial_sigil": {
@@ -281,6 +284,8 @@ func get_base_stat_ids() -> Array[String]:
 
 func reset_stats_to_defaults(should_emit: bool = true) -> void:
 	stats = StatCatalogScript.get_default_stats()
+	stats.erase(GUARD_STAT)
+	stats.erase(MAX_GUARD_STAT)
 
 	if not should_emit:
 		return
@@ -288,10 +293,21 @@ func reset_stats_to_defaults(should_emit: bool = true) -> void:
 	for stat_name: String in stats.keys():
 		stat_changed.emit(stat_name, int(stats[stat_name]))
 
+	stat_changed.emit(GUARD_STAT, 0)
+	stat_changed.emit(MAX_GUARD_STAT, 0)
+
 
 func take_damage(amount: int) -> void:
 	if player_invulnerable:
 		print("Grace avoided the hit.")
+		return
+
+	if amount <= 0:
+		return
+
+	if consume_guard():
+		print("Armor Trial Guard absorbs the hit.")
+		show_system_message("Guard absorbs the hit.")
 		return
 
 	var current_health: int = get_stat("health")
@@ -374,6 +390,52 @@ func restore_rest_resources() -> void:
 	set_stat("stance", get_stat("max_stance"))
 
 
+func apply_rest_unlocks() -> Array[String]:
+	var messages: Array[String] = []
+
+	if has_unlock(ARMOR_TRIAL_BLESSING_ID):
+		if grant_guard(1, 1):
+			messages.append("Armor Trial Blessing grants 1 Guard.")
+		else:
+			messages.append("Armor Trial Blessing keeps Guard ready.")
+
+	return messages
+
+
+func grant_guard(amount: int = 1, max_guard: int = 1) -> bool:
+	if amount <= 0:
+		return false
+
+	var current_max_guard: int = max(max_guard, get_stat(MAX_GUARD_STAT))
+	if current_max_guard <= 0:
+		current_max_guard = 1
+
+	set_stat(MAX_GUARD_STAT, current_max_guard)
+
+	var current_guard: int = get_stat(GUARD_STAT)
+	var new_guard: int = clamp(current_guard + amount, 0, current_max_guard)
+
+	if new_guard == current_guard:
+		return false
+
+	set_stat(GUARD_STAT, new_guard)
+	return true
+
+
+func consume_guard(amount: int = 1) -> bool:
+	var current_guard: int = get_stat(GUARD_STAT)
+
+	if amount <= 0 or current_guard <= 0:
+		return false
+
+	set_stat(GUARD_STAT, max(current_guard - amount, 0))
+	return true
+
+
+func get_guard_label() -> String:
+	return str(get_stat(GUARD_STAT)) + " / " + str(get_stat(MAX_GUARD_STAT))
+
+
 func reset_run() -> void:
 	current_objective = "Look around."
 	reset_stats_to_defaults(false)
@@ -387,6 +449,9 @@ func reset_run() -> void:
 
 	for stat_name: String in stats.keys():
 		stat_changed.emit(stat_name, int(stats[stat_name]))
+
+	stat_changed.emit(GUARD_STAT, 0)
+	stat_changed.emit(MAX_GUARD_STAT, 0)
 
 	for item_id in KEY_ITEM_DEFS.keys():
 		key_item_changed.emit(str(item_id), false)
@@ -599,6 +664,13 @@ func sync_legacy_progression_state() -> void:
 	if get_flag("claimed_church_trial_sigil") or has_key_item("church_trial_sigil"):
 		grant_unlock("church_trial_sigil")
 		grant_unlock("church_trial_doors")
+
+
+func show_system_message(text: String) -> void:
+	var ui: Node = get_tree().get_first_node_in_group("game_ui")
+
+	if ui != null and ui.has_method("show_message"):
+		ui.show_message(text)
 
 
 func move_player_to_save_position(save_position: Vector3) -> void:

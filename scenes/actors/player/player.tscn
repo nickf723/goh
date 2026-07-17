@@ -80,7 +80,7 @@ transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.65, 0.15, 0, -0.45)
 mesh = SubResource("BoxMesh_qdyt2")
 
 [node name="SlashTrail" type="MeshInstance3D" parent="WeaponController/HandAnchor/WeaponVisualPivot" unique_id=21744106]
-transform = Transform3D(-2.4041263e-08, 0, 1, 0, 1.1, 0, -0.55, 0.2, 0, -0.55)
+transform = Transform3D(-2.4041263e-08, 0, 1, 0, 1.1, 0, -0.55, 0, -4.371139e-08, 0.2, 0, -0.55)
 visible = false
 mesh = SubResource("PlaneMesh_qdyt2")
 

@@ -3,12 +3,16 @@ extends "res://scripts/abilities/ability_caster.gd"
 # Prototype wrapper for the focus spell menu.
 # The base AbilityCaster still owns casting, loadout, charge logic, and menu data.
 # This wrapper changes the focus menu contract, delegates simple spell upgrade
-# payload hooks to SpellModifierRegistry, and hosts prototype ground-targeted spells.
+# payload hooks to SpellModifierRegistry, and routes ground-targeted spells through
+# GroundTargetingController.
 
 const SpellModifiers = preload("res://scripts/abilities/spell_modifier_registry.gd")
+const GroundTargeting = preload("res://scripts/abilities/ground_targeting_controller.gd")
 
 const EARTH_SPIKE_SPELL_ID: String = "earth_spike"
 const POISON_BLOOM_SPELL_IDS: Array[String] = ["poison_cloud", "poison_bloom"]
+const GROUND_SPELL_EARTH_SPIKE: String = "earth_spike"
+const GROUND_SPELL_POISON_BLOOM: String = "poison_bloom"
 
 @export_group("Earth Spike Targeting")
 @export var earth_spike_target_radius: float = 2.15
@@ -28,39 +32,27 @@ const POISON_BLOOM_SPELL_IDS: Array[String] = ["poison_cloud", "poison_bloom"]
 @export var poison_bloom_ground_y_offset: float = 0.06
 @export var poison_bloom_cast_lock_duration: float = 0.22
 
-var earth_spike_targeting_active: bool = false
-var earth_spike_targeting_player: Node3D = null
-var earth_spike_targeting_ability: AbilityDefinition = null
-var earth_spike_target_position: Vector3 = Vector3.ZERO
-var earth_spike_target_marker: Node3D = null
-
-var poison_bloom_targeting_active: bool = false
-var poison_bloom_targeting_player: Node3D = null
-var poison_bloom_targeting_ability: AbilityDefinition = null
-var poison_bloom_target_position: Vector3 = Vector3.ZERO
-var poison_bloom_target_marker: Node3D = null
+var ground_targeting_controller: RefCounted = null
 
 
 func _process(delta: float) -> void:
 	super._process(delta)
-	update_earth_spike_targeting(delta)
-	update_poison_bloom_targeting(delta)
+
+	if is_ground_targeting():
+		get_ground_targeting_controller().update(delta)
 
 
 func cast_from_player(player: Node3D, cast_lock_duration: float = 0.18, allow_charge: bool = true) -> bool:
 	var ability: AbilityDefinition = get_current_ability()
 
-	if poison_bloom_targeting_active:
-		return confirm_poison_bloom_targeting()
-
-	if earth_spike_targeting_active:
-		return confirm_earth_spike_targeting()
+	if is_ground_targeting():
+		return confirm_ground_targeting()
 
 	if should_use_poison_bloom_targeting(ability):
-		return begin_poison_bloom_targeting(player, ability)
+		return begin_ground_targeting(player, ability, get_poison_bloom_target_config(), "Place Poison Bloom. Right stick moves target. Cast confirms. Cancel backs out.")
 
 	if should_use_earth_spike_targeting(ability):
-		return begin_earth_spike_targeting(player, ability)
+		return begin_ground_targeting(player, ability, get_earth_spike_target_config(), "Place Earth Spike. Right stick moves target. Cast confirms. Cancel backs out.")
 
 	if SpellModifiers.has_active_payload_modifier_for_ability(ability):
 		return cast_with_spell_modifier(player, ability, cast_lock_duration)
@@ -136,7 +128,14 @@ func get_ability_spell_id(ability: AbilityDefinition) -> String:
 	return ""
 
 
-func begin_earth_spike_targeting(player: Node3D, ability: AbilityDefinition) -> bool:
+func get_ground_targeting_controller() -> RefCounted:
+	if ground_targeting_controller == null:
+		ground_targeting_controller = GroundTargeting.new()
+
+	return ground_targeting_controller
+
+
+func begin_ground_targeting(player: Node3D, ability: AbilityDefinition, target_config: Dictionary, message: String) -> bool:
 	if player == null or ability == null:
 		return false
 
@@ -144,122 +143,23 @@ func begin_earth_spike_targeting(player: Node3D, ability: AbilityDefinition) -> 
 		return false
 
 	cancel_charged_firebolt(false)
-	earth_spike_targeting_active = true
-	earth_spike_targeting_player = player
-	earth_spike_targeting_ability = ability
-	earth_spike_target_position = get_initial_earth_spike_target_position(player)
+
+	var controller: RefCounted = get_ground_targeting_controller()
+	if not controller.start(self, player, ability, target_config):
+		return false
+
 	focus_spell_menu_open = true
-	ensure_earth_spike_marker()
-	update_earth_spike_marker_visual()
-	show_feedback("Place Earth Spike. Right stick moves target. Cast confirms. Cancel backs out.")
+	show_feedback(message)
 	return true
 
 
-func begin_poison_bloom_targeting(player: Node3D, ability: AbilityDefinition) -> bool:
-	if player == null or ability == null:
-		return false
-
-	if action_state != null and not action_state.can_cast():
-		return false
-
-	cancel_charged_firebolt(false)
-	poison_bloom_targeting_active = true
-	poison_bloom_targeting_player = player
-	poison_bloom_targeting_ability = ability
-	poison_bloom_target_position = get_initial_poison_bloom_target_position(player)
-	focus_spell_menu_open = true
-	ensure_poison_bloom_marker()
-	update_poison_bloom_marker_visual()
-	show_feedback("Place Poison Bloom. Right stick moves target. Cast confirms. Cancel backs out.")
-	return true
-
-
-func update_earth_spike_targeting(delta: float) -> void:
-	if not earth_spike_targeting_active:
-		return
-
-	if earth_spike_targeting_player == null or not is_instance_valid(earth_spike_targeting_player):
-		cancel_earth_spike_targeting(false)
-		return
-
-	var target_input: Vector2 = Input.get_vector(
-		"camera_left",
-		"camera_right",
-		"camera_up",
-		"camera_down"
-	)
-
-	if target_input.length() >= earth_spike_marker_deadzone:
-		var move_direction: Vector3 = get_ground_target_move_direction(target_input, earth_spike_targeting_player)
-		if move_direction.length() > 0.01:
-			earth_spike_target_position += move_direction * earth_spike_marker_speed * delta
-			earth_spike_target_position = clamp_ground_target_position(earth_spike_target_position, earth_spike_targeting_player, earth_spike_target_range)
-			earth_spike_target_position = resolve_ground_position(earth_spike_target_position, earth_spike_ground_y_offset)
-
-	update_earth_spike_marker_visual()
-
-
-func update_poison_bloom_targeting(delta: float) -> void:
-	if not poison_bloom_targeting_active:
-		return
-
-	if poison_bloom_targeting_player == null or not is_instance_valid(poison_bloom_targeting_player):
-		cancel_poison_bloom_targeting(false)
-		return
-
-	var target_input: Vector2 = Input.get_vector(
-		"camera_left",
-		"camera_right",
-		"camera_up",
-		"camera_down"
-	)
-
-	if target_input.length() >= poison_bloom_marker_deadzone:
-		var move_direction: Vector3 = get_ground_target_move_direction(target_input, poison_bloom_targeting_player)
-		if move_direction.length() > 0.01:
-			poison_bloom_target_position += move_direction * poison_bloom_marker_speed * delta
-			poison_bloom_target_position = clamp_ground_target_position(poison_bloom_target_position, poison_bloom_targeting_player, poison_bloom_target_range)
-			poison_bloom_target_position = resolve_ground_position(poison_bloom_target_position, poison_bloom_ground_y_offset)
-
-	update_poison_bloom_marker_visual()
-
-
-func get_ground_target_move_direction(target_input: Vector2, player: Node3D) -> Vector3:
-	var camera: Camera3D = get_viewport().get_camera_3d()
-	var right_axis: Vector3 = Vector3.RIGHT
-	var forward_axis: Vector3 = Vector3.FORWARD
-
-	if camera != null:
-		right_axis = camera.global_transform.basis.x
-		forward_axis = -camera.global_transform.basis.z
-	elif player != null:
-		right_axis = player.global_transform.basis.x
-		forward_axis = -player.global_transform.basis.z
-
-	right_axis.y = 0.0
-	forward_axis.y = 0.0
-
-	if right_axis.length() <= 0.01:
-		right_axis = Vector3.RIGHT
-	if forward_axis.length() <= 0.01:
-		forward_axis = Vector3.FORWARD
-
-	right_axis = right_axis.normalized()
-	forward_axis = forward_axis.normalized()
-
-	var move_direction: Vector3 = right_axis * target_input.x + forward_axis * -target_input.y
-	if move_direction.length() <= 0.01:
-		return Vector3.ZERO
-
-	return move_direction.normalized()
+func is_ground_targeting() -> bool:
+	return ground_targeting_controller != null and ground_targeting_controller.is_active()
 
 
 func handle_focus_menu_input(event: InputEvent) -> bool:
-	if poison_bloom_targeting_active:
-		return handle_poison_bloom_targeting_input(event)
-
-	if earth_spike_targeting_active:
-		return handle_earth_spike_targeting_input(event)
+	if is_ground_targeting():
+		return handle_ground_targeting_input(event)
 
 	if not focus_spell_menu_open:
 		return false
@@ -341,13 +241,13 @@ func handle_focus_menu_input(event: InputEvent) -> bool:
 	return true
 
 
-func handle_earth_spike_targeting_input(event: InputEvent) -> bool:
+func handle_ground_targeting_input(event: InputEvent) -> bool:
 	if event.is_action_pressed("cast_spell") or event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
-		confirm_earth_spike_targeting()
+		confirm_ground_targeting()
 		return true
 
 	if event.is_action_pressed("ui_cancel"):
-		cancel_earth_spike_targeting(true)
+		cancel_ground_targeting(true)
 		return true
 
 	if event is InputEventKey:
@@ -355,330 +255,135 @@ func handle_earth_spike_targeting_input(event: InputEvent) -> bool:
 		if key_event.pressed and not key_event.echo:
 			match key_event.keycode:
 				KEY_ENTER, KEY_KP_ENTER, KEY_SPACE:
-					confirm_earth_spike_targeting()
+					confirm_ground_targeting()
 					return true
 				KEY_ESCAPE:
-					cancel_earth_spike_targeting(true)
+					cancel_ground_targeting(true)
 					return true
 
 	if event is InputEventMouseButton:
 		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
 		if mouse_event.pressed:
 			if mouse_event.button_index == MOUSE_BUTTON_LEFT:
-				confirm_earth_spike_targeting()
+				confirm_ground_targeting()
 				return true
 			if mouse_event.button_index == MOUSE_BUTTON_RIGHT:
-				cancel_earth_spike_targeting(true)
+				cancel_ground_targeting(true)
 				return true
 
 	return true
 
 
-func handle_poison_bloom_targeting_input(event: InputEvent) -> bool:
-	if event.is_action_pressed("cast_spell") or event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
-		confirm_poison_bloom_targeting()
-		return true
-
-	if event.is_action_pressed("ui_cancel"):
-		cancel_poison_bloom_targeting(true)
-		return true
-
-	if event is InputEventKey:
-		var key_event: InputEventKey = event as InputEventKey
-		if key_event.pressed and not key_event.echo:
-			match key_event.keycode:
-				KEY_ENTER, KEY_KP_ENTER, KEY_SPACE:
-					confirm_poison_bloom_targeting()
-					return true
-				KEY_ESCAPE:
-					cancel_poison_bloom_targeting(true)
-					return true
-
-	if event is InputEventMouseButton:
-		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
-		if mouse_event.pressed:
-			if mouse_event.button_index == MOUSE_BUTTON_LEFT:
-				confirm_poison_bloom_targeting()
-				return true
-			if mouse_event.button_index == MOUSE_BUTTON_RIGHT:
-				cancel_poison_bloom_targeting(true)
-				return true
-
-	return true
-
-
-func confirm_earth_spike_targeting() -> bool:
-	if not earth_spike_targeting_active:
+func confirm_ground_targeting() -> bool:
+	if not is_ground_targeting():
 		return false
 
-	var player: Node3D = earth_spike_targeting_player
-	var ability: AbilityDefinition = earth_spike_targeting_ability
+	var controller: RefCounted = get_ground_targeting_controller()
+	var ability_resource: Resource = controller.get_ability()
+	var ability: AbilityDefinition = ability_resource as AbilityDefinition
+	var player: Node3D = controller.get_source_player()
+	var spell_key: String = controller.get_spell_key()
+	var target_position: Vector3 = controller.get_target_position()
 
-	if player == null or ability == null:
-		cancel_earth_spike_targeting(false)
+	if ability == null or player == null:
+		cancel_ground_targeting(false)
 		return false
 
 	if action_state != null and not action_state.can_cast():
 		return true
 
 	if not pay_ability_cost(ability):
-		show_feedback("Not enough resources for Earth Spike.")
+		show_feedback("Not enough resources for " + ability.display_name + ".")
 		return true
 
 	if action_state != null:
-		action_state.begin_cast(earth_spike_cast_lock_duration)
+		action_state.begin_cast(controller.get_cast_lock_duration(0.22))
 
-	var payload: DamagePayload = make_earth_spike_ground_payload(ability)
-	var target_position: Vector3 = earth_spike_target_position
-	var hit_count: int = erupt_earth_spike(target_position, payload, player)
-	cancel_earth_spike_targeting(false)
+	if spell_key == GROUND_SPELL_EARTH_SPIKE:
+		var earth_payload: DamagePayload = make_earth_spike_ground_payload(ability)
+		var hit_count: int = erupt_earth_spike(target_position, earth_payload, player)
+		cancel_ground_targeting(false)
+		if hit_count > 0:
+			show_feedback("Earth Spike erupts and hits " + str(hit_count) + " target(s).")
+		else:
+			show_feedback("Earth Spike erupts.")
+		return true
 
-	if hit_count > 0:
-		show_feedback("Earth Spike erupts and hits " + str(hit_count) + " target(s).")
-	else:
-		show_feedback("Earth Spike erupts.")
+	if spell_key == GROUND_SPELL_POISON_BLOOM:
+		spawn_poison_bloom(target_position, ability, player)
+		cancel_ground_targeting(false)
+		show_feedback("Poison Bloom unfurls.")
+		return true
 
+	cancel_ground_targeting(false)
 	return true
 
 
-func confirm_poison_bloom_targeting() -> bool:
-	if not poison_bloom_targeting_active:
-		return false
+func cancel_ground_targeting(should_show_feedback: bool = true) -> void:
+	if not is_ground_targeting():
+		return
 
-	var player: Node3D = poison_bloom_targeting_player
-	var ability: AbilityDefinition = poison_bloom_targeting_ability
-
-	if player == null or ability == null:
-		cancel_poison_bloom_targeting(false)
-		return false
-
-	if action_state != null and not action_state.can_cast():
-		return true
-
-	if not pay_ability_cost(ability):
-		show_feedback("Not enough resources for Poison Bloom.")
-		return true
-
-	if action_state != null:
-		action_state.begin_cast(poison_bloom_cast_lock_duration)
-
-	var target_position: Vector3 = poison_bloom_target_position
-	spawn_poison_bloom(target_position, ability, player)
-	cancel_poison_bloom_targeting(false)
-	show_feedback("Poison Bloom unfurls.")
-	return true
-
-
-func cancel_earth_spike_targeting(should_show_feedback: bool = true) -> void:
-	if earth_spike_target_marker != null:
-		earth_spike_target_marker.queue_free()
-
-	earth_spike_target_marker = null
-	earth_spike_targeting_active = false
-	earth_spike_targeting_player = null
-	earth_spike_targeting_ability = null
-	focus_spell_menu_open = poison_bloom_targeting_active
+	var spell_key: String = get_ground_targeting_controller().get_spell_key()
+	get_ground_targeting_controller().cancel()
+	focus_spell_menu_open = false
 
 	var ui: Node = get_tree().get_first_node_in_group("game_ui")
-	if ui != null and ui.has_method("hide_spell_focus_menu") and not focus_spell_menu_open:
+	if ui != null and ui.has_method("hide_spell_focus_menu"):
 		ui.hide_spell_focus_menu()
 
-	if should_show_feedback:
+	if not should_show_feedback:
+		return
+
+	if spell_key == GROUND_SPELL_POISON_BLOOM:
+		show_feedback("Poison Bloom canceled.")
+	else:
 		show_feedback("Earth Spike canceled.")
 
 
-func cancel_poison_bloom_targeting(should_show_feedback: bool = true) -> void:
-	if poison_bloom_target_marker != null:
-		poison_bloom_target_marker.queue_free()
-
-	poison_bloom_target_marker = null
-	poison_bloom_targeting_active = false
-	poison_bloom_targeting_player = null
-	poison_bloom_targeting_ability = null
-	focus_spell_menu_open = earth_spike_targeting_active
-
-	var ui: Node = get_tree().get_first_node_in_group("game_ui")
-	if ui != null and ui.has_method("hide_spell_focus_menu") and not focus_spell_menu_open:
-		ui.hide_spell_focus_menu()
-
-	if should_show_feedback:
-		show_feedback("Poison Bloom canceled.")
-
-
-func is_ground_targeting() -> bool:
-	return earth_spike_targeting_active or poison_bloom_targeting_active
-
-
-func get_initial_earth_spike_target_position(player: Node3D) -> Vector3:
-	var initial_position: Vector3 = get_initial_ground_target_position(player, earth_spike_initial_distance)
-	return resolve_ground_position(clamp_ground_target_position(initial_position, player, earth_spike_target_range), earth_spike_ground_y_offset)
+func get_earth_spike_target_config() -> Dictionary:
+	return {
+		"spell_key": GROUND_SPELL_EARTH_SPIKE,
+		"marker_name": "EarthSpikeTargetMarker",
+		"disc_name": "TargetDisc",
+		"center_name": "TargetCenter",
+		"radius": earth_spike_target_radius,
+		"range": earth_spike_target_range,
+		"initial_distance": earth_spike_initial_distance,
+		"speed": earth_spike_marker_speed,
+		"deadzone": earth_spike_marker_deadzone,
+		"ground_y_offset": earth_spike_ground_y_offset,
+		"cast_lock_duration": earth_spike_cast_lock_duration,
+		"disc_color": Color(0.36, 0.27, 0.14, 0.32),
+		"center_color": Color(0.36, 0.27, 0.14, 0.78),
+		"disc_alpha": 0.32,
+		"center_alpha": 0.78,
+		"pulse_speed": 5.5,
+		"pulse_size": 0.035,
+		"emission_energy": 0.55,
+	}
 
 
-func get_initial_poison_bloom_target_position(player: Node3D) -> Vector3:
-	var initial_position: Vector3 = get_initial_ground_target_position(player, poison_bloom_initial_distance)
-	return resolve_ground_position(clamp_ground_target_position(initial_position, player, poison_bloom_target_range), poison_bloom_ground_y_offset)
-
-
-func get_initial_ground_target_position(player: Node3D, initial_distance: float) -> Vector3:
-	var forward_axis: Vector3 = -player.global_transform.basis.z
-	forward_axis.y = 0.0
-
-	if forward_axis.length() <= 0.01:
-		forward_axis = Vector3.FORWARD
-
-	return player.global_position + forward_axis.normalized() * initial_distance
-
-
-func clamp_ground_target_position(raw_position: Vector3, player: Node3D, target_range: float) -> Vector3:
-	if player == null:
-		return raw_position
-
-	var origin: Vector3 = player.global_position
-	var offset: Vector3 = raw_position - origin
-	offset.y = 0.0
-
-	if offset.length() > target_range:
-		offset = offset.normalized() * target_range
-
-	return origin + offset
-
-
-func resolve_ground_position(raw_position: Vector3, y_offset: float) -> Vector3:
-	var resolved_position: Vector3 = raw_position
-	var world_3d: World3D = get_world_3d()
-
-	if world_3d != null:
-		var ray_from: Vector3 = raw_position + Vector3.UP * 8.0
-		var ray_to: Vector3 = raw_position + Vector3.DOWN * 18.0
-		var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(ray_from, ray_to)
-		var result: Dictionary = world_3d.direct_space_state.intersect_ray(query)
-
-		if result.has("position"):
-			resolved_position = result["position"]
-
-	resolved_position.y += y_offset
-	return resolved_position
-
-
-func ensure_earth_spike_marker() -> void:
-	if earth_spike_target_marker != null and is_instance_valid(earth_spike_target_marker):
-		return
-
-	earth_spike_target_marker = make_ground_target_marker(
-		"EarthSpikeTargetMarker",
-		"TargetDisc",
-		"TargetCenter",
-		earth_spike_target_radius,
-		make_earth_spike_marker_material(),
-		make_earth_spike_marker_material(0.78),
-		false
-	)
-
-
-func ensure_poison_bloom_marker() -> void:
-	if poison_bloom_target_marker != null and is_instance_valid(poison_bloom_target_marker):
-		return
-
-	poison_bloom_target_marker = make_ground_target_marker(
-		"PoisonBloomTargetMarker",
-		"PoisonBloomDisc",
-		"PoisonBloomCenter",
-		poison_bloom_target_radius,
-		make_poison_bloom_marker_material(),
-		make_poison_bloom_marker_material(0.78),
-		true
-	)
-
-
-func make_ground_target_marker(
-	marker_name: String,
-	disc_name: String,
-	center_name: String,
-	radius: float,
-	disc_material: StandardMaterial3D,
-	center_material: StandardMaterial3D,
-	use_sphere_center: bool = false
-) -> Node3D:
-	var scene_root: Node = get_tree().current_scene
-	if scene_root == null:
-		return null
-
-	var marker: Node3D = Node3D.new()
-	marker.name = marker_name
-
-	var disc: MeshInstance3D = MeshInstance3D.new()
-	disc.name = disc_name
-	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var disc_mesh: CylinderMesh = CylinderMesh.new()
-	disc_mesh.top_radius = 1.0
-	disc_mesh.bottom_radius = 1.0
-	disc_mesh.height = 0.035
-	disc.mesh = disc_mesh
-	disc.scale = Vector3(radius, 1.0, radius)
-	disc.material_override = disc_material
-	marker.add_child(disc)
-
-	var center: MeshInstance3D = MeshInstance3D.new()
-	center.name = center_name
-	center.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	if use_sphere_center:
-		var center_sphere: SphereMesh = SphereMesh.new()
-		center_sphere.radius = 0.13
-		center_sphere.height = 0.26
-		center.mesh = center_sphere
-	else:
-		var center_box: BoxMesh = BoxMesh.new()
-		center_box.size = Vector3(0.18, 0.08, 0.18)
-		center.mesh = center_box
-	center.material_override = center_material
-	marker.add_child(center)
-
-	scene_root.add_child(marker)
-	return marker
-
-
-func make_earth_spike_marker_material(alpha: float = 0.32) -> StandardMaterial3D:
-	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = Color(0.36, 0.27, 0.14, alpha)
-	material.emission_enabled = true
-	material.emission = Color(0.46, 0.34, 0.14, 1.0)
-	material.emission_energy_multiplier = 0.55
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	return material
-
-
-func make_poison_bloom_marker_material(alpha: float = 0.34) -> StandardMaterial3D:
-	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = Color(0.22, 0.85, 0.22, alpha)
-	material.emission_enabled = true
-	material.emission = Color(0.12, 0.62, 0.12, 1.0)
-	material.emission_energy_multiplier = 0.72
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	return material
-
-
-func update_earth_spike_marker_visual() -> void:
-	if earth_spike_target_marker == null:
-		return
-
-	earth_spike_target_marker.global_position = earth_spike_target_position
-
-	var pulse_age: float = float(Time.get_ticks_msec()) * 0.001
-	var pulse: float = 1.0 + sin(pulse_age * 5.5) * 0.035
-	earth_spike_target_marker.scale = Vector3.ONE * pulse
-
-
-func update_poison_bloom_marker_visual() -> void:
-	if poison_bloom_target_marker == null:
-		return
-
-	poison_bloom_target_marker.global_position = poison_bloom_target_position
-
-	var pulse_age: float = float(Time.get_ticks_msec()) * 0.001
-	var pulse: float = 1.0 + sin(pulse_age * 4.4) * 0.055
-	poison_bloom_target_marker.scale = Vector3.ONE * pulse
+func get_poison_bloom_target_config() -> Dictionary:
+	return {
+		"spell_key": GROUND_SPELL_POISON_BLOOM,
+		"marker_name": "PoisonBloomTargetMarker",
+		"disc_name": "PoisonBloomDisc",
+		"center_name": "PoisonBloomCenter",
+		"radius": poison_bloom_target_radius,
+		"range": poison_bloom_target_range,
+		"initial_distance": poison_bloom_initial_distance,
+		"speed": poison_bloom_marker_speed,
+		"deadzone": poison_bloom_marker_deadzone,
+		"ground_y_offset": poison_bloom_ground_y_offset,
+		"cast_lock_duration": poison_bloom_cast_lock_duration,
+		"disc_color": Color(0.22, 0.85, 0.22, 0.34),
+		"center_color": Color(0.22, 0.85, 0.22, 0.78),
+		"disc_alpha": 0.34,
+		"center_alpha": 0.78,
+		"pulse_speed": 4.4,
+		"pulse_size": 0.055,
+		"emission_energy": 0.72,
+	}
 
 
 func make_earth_spike_ground_payload(ability: AbilityDefinition) -> DamagePayload:
@@ -897,6 +602,17 @@ func show_earth_spike_erupt_visual(target_position: Vector3) -> void:
 	var cleanup_tween: Tween = root.create_tween()
 	cleanup_tween.tween_interval(0.5)
 	cleanup_tween.tween_callback(root.queue_free)
+
+
+func make_earth_spike_marker_material(alpha: float = 0.32) -> StandardMaterial3D:
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = Color(0.36, 0.27, 0.14, alpha)
+	material.emission_enabled = true
+	material.emission = Color(0.46, 0.34, 0.14, 1.0)
+	material.emission_energy_multiplier = 0.55
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	return material
 
 
 func make_earth_spike_spike_material() -> StandardMaterial3D:

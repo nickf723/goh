@@ -6,13 +6,19 @@ extends Node3D
 @export var enable_dev_grant_hotkey: bool = true
 @export var enable_feedback_test_hotkey: bool = true
 @export var lab_unlock_ids: Array[String] = ["charged_firebolt", "armor_trial_blessing"]
-@export var feedback_test_ids: Array[String] = ["light_tick", "full_charge", "guard_block", "heavy_impact", "low_health_warning"]
+@export var feedback_test_ids: Array[String] = ["light_tick", "hit_collision", "player_hit", "full_charge", "guard_block", "heavy_impact", "low_health_warning"]
 
 var feedback_test_index: int = 0
+var previous_guard_value: int = 0
+var previous_health_value: int = 0
+var suppress_hit_feedback: bool = false
 
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	previous_guard_value = GameState.get_stat("guard")
+	previous_health_value = GameState.get_stat("health")
+	connect_feedback_signals()
 	await get_tree().process_frame
 	set_objective(opening_objective)
 	show_message(get_opening_message())
@@ -43,6 +49,43 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		grant_lab_unlocks()
 		return
+
+
+func connect_feedback_signals() -> void:
+	var stat_callable: Callable = Callable(self, "_on_game_state_stat_changed")
+	if not GameState.stat_changed.is_connected(stat_callable):
+		GameState.stat_changed.connect(stat_callable)
+
+
+func _on_game_state_stat_changed(stat_name: String, value: int) -> void:
+	if stat_name == "guard":
+		handle_guard_feedback(value)
+		return
+
+	if stat_name == "health":
+		handle_player_hit_feedback(value)
+
+
+func handle_guard_feedback(value: int) -> void:
+	if suppress_hit_feedback:
+		previous_guard_value = value
+		return
+
+	if previous_guard_value > 0 and value < previous_guard_value:
+		GameFeedback.play("guard_block", {"source": "Prototype Upgrade Lab Guard"})
+
+	previous_guard_value = value
+
+
+func handle_player_hit_feedback(value: int) -> void:
+	if suppress_hit_feedback:
+		previous_health_value = value
+		return
+
+	if previous_health_value > 0 and value < previous_health_value:
+		GameFeedback.play("player_hit", {"source": "Prototype Upgrade Lab Health"})
+
+	previous_health_value = value
 
 
 func get_opening_message() -> String:
@@ -91,6 +134,7 @@ func grant_lab_unlocks() -> void:
 		granted.append(unlock_id)
 
 	GameState.restore_rest_resources()
+	previous_health_value = GameState.get_stat("health")
 	GameFeedback.play("light_tick", {"source": "Prototype Upgrade Lab Shortcut"})
 
 	var parts: Array[String] = []
@@ -107,7 +151,11 @@ func grant_lab_unlocks() -> void:
 
 
 func reset_lab_state() -> void:
+	suppress_hit_feedback = true
 	GameState.reset_run()
+	previous_guard_value = GameState.get_stat("guard")
+	previous_health_value = GameState.get_stat("health")
+	suppress_hit_feedback = false
 	reset_lab_targets()
 	GameFeedback.play("light_tick", {"source": "Prototype Upgrade Lab Reset"})
 	set_objective(opening_objective)

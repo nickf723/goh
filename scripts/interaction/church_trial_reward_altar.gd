@@ -13,6 +13,7 @@ extends Area3D
 @export var save_position_offset: Vector3 = Vector3(0.0, 1.0, -1.25)
 @export var restore_resources_on_claim: bool = true
 @export var autosave_on_claim: bool = true
+@export var progression_unlock_ids: Array[String] = ["church_trial_doors", "armor_trial_blessing"]
 @export var sigil_visual_path: NodePath = NodePath("SigilVisual")
 @export var claimed_marker_path: NodePath = NodePath("ClaimedGlow")
 
@@ -27,8 +28,10 @@ func _ready() -> void:
 	add_to_group("debuggable")
 	claimed = GameState.get_flag(claimed_flag_name) or GameState.has_key_item(reward_id)
 
-	if claimed and not GameState.has_key_item(reward_id):
-		grant_key_item_only()
+	if claimed:
+		if not GameState.has_key_item(reward_id):
+			grant_key_item_only()
+		grant_progression_unlocks()
 
 	refresh_visual_state()
 
@@ -36,6 +39,7 @@ func _ready() -> void:
 func interact() -> Dictionary:
 	if claimed or GameState.get_flag(claimed_flag_name) or GameState.has_key_item(reward_id):
 		claimed = true
+		grant_progression_unlocks()
 		refresh_visual_state()
 		return {
 			"message": reward_display_name + " already rests with Grace.",
@@ -46,6 +50,7 @@ func interact() -> Dictionary:
 	GameState.set_flag(completion_flag_name, true)
 	GameState.set_flag(claimed_flag_name, true)
 	grant_key_item_only()
+	grant_progression_unlocks()
 
 	if restore_resources_on_claim and GameState.has_method("restore_rest_resources"):
 		GameState.restore_rest_resources()
@@ -69,7 +74,7 @@ func interact() -> Dictionary:
 	refresh_visual_state()
 
 	return {
-		"message": "Grace claims the " + reward_display_name + ". " + lore_message + save_message,
+		"message": "Grace claims the " + reward_display_name + ". " + lore_message + " Progression unlocks updated." + save_message,
 		"objective": objective_after,
 	}
 
@@ -84,6 +89,16 @@ func grant_key_item_only() -> void:
 		"description": reward_description,
 		"source": reward_source,
 	})
+
+
+func grant_progression_unlocks() -> void:
+	if not GameState.has_method("grant_unlock"):
+		return
+
+	for unlock_id: String in progression_unlock_ids:
+		GameState.grant_unlock(unlock_id, {
+			"source": reward_display_name,
+		})
 
 
 func refresh_visual_state() -> void:
@@ -104,6 +119,8 @@ func get_debug_data() -> Dictionary:
 		"reward_id": reward_id,
 		"claimed": claimed,
 		"has_key_item": GameState.has_key_item(reward_id) if GameState.has_method("has_key_item") else false,
+		"progression_unlock_ids": progression_unlock_ids,
+		"active_modifiers": GameState.get_active_modifier_ids() if GameState.has_method("get_active_modifier_ids") else [],
 		"completion_flag": GameState.get_flag(completion_flag_name),
 		"claimed_flag": GameState.get_flag(claimed_flag_name),
 	}

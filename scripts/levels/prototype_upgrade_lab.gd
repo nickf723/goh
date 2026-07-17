@@ -4,7 +4,11 @@ extends Node3D
 @export var opening_message: String = "Prototype Upgrade Lab online. Use pedestals to grant or reset unlocks. Right trigger / Q casts; hold Firebolt to charge once unlocked."
 @export var enable_dev_reset_hotkey: bool = true
 @export var enable_dev_grant_hotkey: bool = true
+@export var enable_feedback_test_hotkey: bool = true
 @export var lab_unlock_ids: Array[String] = ["charged_firebolt", "armor_trial_blessing"]
+@export var feedback_test_ids: Array[String] = ["light_tick", "full_charge", "guard_block", "heavy_impact", "low_health_warning"]
+
+var feedback_test_index: int = 0
 
 
 func _ready() -> void:
@@ -25,6 +29,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not key_event.pressed or key_event.echo:
 		return
 
+	if enable_feedback_test_hotkey and key_event.physical_keycode == KEY_F5:
+		get_viewport().set_input_as_handled()
+		play_next_feedback_test()
+		return
+
 	if enable_dev_reset_hotkey and key_event.physical_keycode == KEY_F8:
 		get_viewport().set_input_as_handled()
 		reset_lab_state()
@@ -41,6 +50,8 @@ func get_opening_message() -> String:
 
 	if OS.has_feature("editor"):
 		var shortcuts: Array[String] = []
+		if enable_feedback_test_hotkey:
+			shortcuts.append("F5 cycles feedback presets")
 		if enable_dev_grant_hotkey:
 			shortcuts.append("F6 grants core lab upgrades")
 		if enable_dev_reset_hotkey:
@@ -50,6 +61,21 @@ func get_opening_message() -> String:
 			message += " " + "; ".join(shortcuts) + "."
 
 	return message
+
+
+func play_next_feedback_test() -> void:
+	if feedback_test_ids.size() <= 0:
+		show_message("No feedback presets configured for the lab.")
+		return
+
+	feedback_test_index = clamp(feedback_test_index, 0, feedback_test_ids.size() - 1)
+	var feedback_id: String = feedback_test_ids[feedback_test_index]
+	feedback_test_index = (feedback_test_index + 1) % feedback_test_ids.size()
+
+	var feedback_data: Dictionary = GameFeedback.play(feedback_id, {"source": "Prototype Upgrade Lab Shortcut"})
+	var label: String = str(feedback_data.get("label", feedback_id.capitalize()))
+	show_message("Feedback test: " + label + " (" + feedback_id + ")")
+	set_objective("Feel the haptic preset, then press F5 again to cycle the next one.")
 
 
 func grant_lab_unlocks() -> void:
@@ -65,6 +91,7 @@ func grant_lab_unlocks() -> void:
 		granted.append(unlock_id)
 
 	GameState.restore_rest_resources()
+	GameFeedback.play("light_tick", {"source": "Prototype Upgrade Lab Shortcut"})
 
 	var parts: Array[String] = []
 	if granted.size() > 0:
@@ -82,6 +109,7 @@ func grant_lab_unlocks() -> void:
 func reset_lab_state() -> void:
 	GameState.reset_run()
 	reset_lab_targets()
+	GameFeedback.play("light_tick", {"source": "Prototype Upgrade Lab Reset"})
 	set_objective(opening_objective)
 	show_message("Prototype lab reset. Unlocks, Guard, story flags, and targets refreshed.")
 

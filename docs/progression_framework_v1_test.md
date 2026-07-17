@@ -2,120 +2,108 @@
 
 ## Goal
 
-Prepare the prototype for lots of mechanics without turning every reward into a one-off script.
+Prepare Grace's growth curve for many future mechanics without turning every reward into a one-off script.
 
-This pass adds a central progression ledger:
+The new progression pattern is:
 
 ```text
-unlock id -> type -> menu-ready row -> save data -> query hooks
+unlock id -> type -> catalog row -> save data -> query helpers -> gameplay payoff
 ```
 
-The goal is not to add a new combat toy yet. The goal is to make future toys safer to add.
+This pass also proves the first modifier-style payoff:
+
+```text
+Armor Trial Blessing -> sleep at bed -> gain Guard -> next hit is absorbed
+```
+
+## Scene
+
+Open:
+
+```text
+scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn
+```
+
+Run Current Scene.
 
 ## What changed
 
-- Adds `scripts/systems/unlock_catalog.gd`.
-- Updates `scripts/systems/game_state.gd` with progression unlock state.
-- Updates the Church Trial reward altar to grant progression unlocks.
+- `scripts/systems/unlock_catalog.gd`
+  - Adds catalog definitions for progression unlocks.
+  - Supports unlock types:
+    - `key_item`
+    - `spell`
+    - `modifier`
+    - `passive`
+    - `permission`
+  - Adds initial entries:
+    - `church_trial_sigil`
+    - `church_trial_doors`
+    - `armor_trial_blessing`
+    - `firebolt`
+    - `blink`
+    - `charged_firebolt`
+- `scripts/systems/game_state.gd`
+  - Adds `unlocks` state.
+  - Adds `grant_unlock()`.
+  - Adds `revoke_unlock()`.
+  - Adds `has_unlock()`.
+  - Adds unlock row helpers for menu/debug display.
+  - Saves and loads unlocks.
+  - Keeps old key-item saves compatible with the new unlock ledger.
+  - Adds prototype Guard support.
+- `scripts/interaction/church_trial_reward_altar.gd`
+  - Grants progression unlocks when Grace claims the sigil:
+    - `church_trial_sigil`
+    - `church_trial_doors`
+    - `armor_trial_blessing`
+- `scripts/interaction/save_bed.gd`
+  - Applies rest unlocks after sleeping.
+  - Grants 1 Guard when Grace has Armor Trial Blessing.
+- `scripts/levels/prototype_boss_dungeon_chain.gd`
+  - Spawns a Guard Test Goblin after Grace has Armor Trial Blessing and at least 1 Guard.
 
-## Unlock types supported
+## Main flow
 
-```text
-key_item
-spell
-modifier
-passive
-permission
-```
+1. Press `F8` to clear the prototype save if needed.
+2. Defeat the Animated Armor.
+3. Claim the Church Trial Sigil.
+4. Confirm the reward text still appears.
+5. Confirm the final exit still works.
+6. Restart the scene.
+7. Confirm saved progression still resumes correctly.
 
-## New GameState helpers
+## Guard payoff flow
 
-```gdscript
-grant_unlock(unlock_id, unlock_data)
-revoke_unlock(unlock_id)
-has_unlock(unlock_id)
-get_unlock_snapshot()
-get_unlock_rows()
-get_unlock_rows_by_type(type)
-get_modifier_unlock_rows()
-get_permission_unlock_rows()
-get_active_modifier_ids()
-get_unlock_type_counts()
-```
-
-## Current catalog entries
-
-```text
-church_trial_sigil       key_item
-church_trial_doors       permission
-armor_trial_blessing     modifier
-firebolt                 spell definition placeholder
-blink                    spell definition placeholder
-charged_firebolt         future modifier placeholder
-```
-
-Only granted unlocks are active. The spell placeholders are definitions for future reward work, not automatic rewards.
-
-## Test flow
-
-1. Pull branch `agent/progression-framework-v1`.
-2. Open Godot.
-3. Open `scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn`.
-4. Run Current Scene.
-5. Press `F8` if you want a clean save.
-6. Defeat the Animated Armor.
-7. Claim the Church Trial Sigil.
-8. Confirm the normal reward message appears.
-9. Confirm there are no parser errors from `game_state.gd`, `unlock_catalog.gd`, or `church_trial_reward_altar.gd`.
-10. Restart the scene.
-11. Confirm Grace still has the sigil and can complete the final exit.
-
-## Expected result
-
-The visible gameplay should stay mostly the same:
+1. Claim the sigil and gain Armor Trial Blessing.
+2. Sleep at a save bed.
+3. Confirm the message says:
 
 ```text
-boss -> altar -> sigil -> save -> final exit
+Armor Trial Blessing grants 1 Guard.
 ```
 
-Under the hood, the altar now grants:
+4. Confirm a Guard Test Goblin appears nearby.
+5. Let it hit Grace once.
+6. Confirm Guard absorbs the hit.
+7. Let it hit again.
+8. Confirm normal health damage happens once Guard is gone.
 
-```text
-church_trial_sigil       key item unlock
-church_trial_doors       world permission unlock
-armor_trial_blessing     modifier unlock placeholder
-```
+## Save compatibility checks
 
-The save file now stores:
-
-```text
-key_items
-unlocks
-story_flags
-stats
-objective
-bed position
-```
-
-## Why this matters
-
-Future rewards can now be represented as data before they become full mechanics:
-
-```text
-Blink upgrade
-Firebolt modifier
-bed-rest blessing
-world permission
-new spell
-passive rule change
-combo expansion
-```
-
-This keeps Grace's growth feeling constant while keeping the codebase from becoming a cabinet of loose gears.
+- Old save with `claimed_church_trial_sigil = true` should still count as having the sigil.
+- Old key-item save should create compatible unlock rows.
+- New unlock save should preserve:
+  - key item unlocks
+  - permission unlocks
+  - modifier unlocks
+  - current Guard value
 
 ## Known limitations
 
-- Unlocks are not rendered in a dedicated menu panel yet.
-- Modifier hooks are cataloged but not applied to combat behavior yet.
-- Spell definitions in the unlock catalog do not yet control the actual learned spell list.
+- Unlocks are menu-ready but not rendered in a dedicated menu panel yet.
+- Guard is currently a prototype dynamic stat, not a polished HUD resource.
+- The Guard Test Goblin is for prototype verification only.
+- Spell catalog entries do not yet drive the actual learned spell list.
+- Modifier hooks are still direct checks, not a full declarative modifier engine yet.
 - I could not run Godot here, so parser and scene validation are needed.

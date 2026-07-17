@@ -35,6 +35,26 @@ const PRESETS: Dictionary = {
 		},
 		"tags": ["defense", "guard", "impact"],
 	},
+	"hit_collision": {
+		"label": "Hit Collision",
+		"haptic": {
+			"weak": 0.18,
+			"strong": 0.22,
+			"duration": 0.075,
+			"device": 0,
+		},
+		"tags": ["combat", "contact", "hit"],
+	},
+	"player_hit": {
+		"label": "Player Hit",
+		"haptic": {
+			"weak": 0.32,
+			"strong": 0.55,
+			"duration": 0.12,
+			"device": 0,
+		},
+		"tags": ["combat", "player", "damage"],
+	},
 	"heavy_impact": {
 		"label": "Heavy Impact",
 		"haptic": {

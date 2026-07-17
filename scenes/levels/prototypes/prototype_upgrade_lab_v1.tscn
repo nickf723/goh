@@ -97,8 +97,8 @@ font_size = 72
 transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 7.5, 2.3, 10.5)
 billboard = 1
 text = "Controller: Right Trigger casts
-Hold Firebolt to charge
-Ice Lance can pierce once upgraded"
+Firebolt charges, Ice pierces
+Lightning Spark chains once upgraded"
 font_size = 42
 
 [node name="UpgradeSign" type="Label3D" parent="." unique_id=752821047]
@@ -163,6 +163,16 @@ objective_after = "Equip Ice Lance and shoot through the center target line."
 should_restore_resources = true
 should_reset_targets = true
 
+[node name="ChainLightningPedestal" parent="." instance=ExtResource("6_pedestal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 4)
+prompt_text = "Unlock Chain Lightning"
+pedestal_title = "Chain Lightning"
+unlock_ids = Array[String](["chain_lightning"])
+success_message = "Lightning Spark can now jump to nearby targets."
+objective_after = "Equip Lightning Spark and hit the center targets to watch arcs jump."
+should_restore_resources = true
+should_reset_targets = true
+
 [node name="RestorePedestal" parent="." unique_id=1728904792 instance=ExtResource("6_pedestal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 4)
 prompt_text = "Restore Resources"
@@ -196,7 +206,7 @@ transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.965
 billboard = 1
 text = "Targets
 Lock-on: R3 / T
-Ice Lance pierces the center line"
+Ice pierces the line, Lightning chains nearby"
 font_size = 44
 
 [node name="TrainingTargets" type="Node3D" parent="." unique_id=1433173746]
@@ -211,15 +221,15 @@ target_label = "Charged Firebolt Target"
 
 [node name="GoblinReactionTarget3" parent="TrainingTargets" unique_id=1926966080 instance=ExtResource("7_target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -5)
-target_label = "Pierce Target A"
+target_label = "Pierce / Chain Target A"
 
 [node name="IcePierceTargetB" parent="TrainingTargets" instance=ExtResource("7_target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -8)
-target_label = "Pierce Target B"
+target_label = "Pierce / Chain Target B"
 
 [node name="IcePierceTargetC" parent="TrainingTargets" instance=ExtResource("7_target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -11)
-target_label = "Pierce Target C"
+target_label = "Pierce / Chain Target C"
 
 [node name="GuardTestGoblin" parent="TrainingTargets" unique_id=1527247462 instance=ExtResource("8_goblin")]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 12, 0.85, -7)

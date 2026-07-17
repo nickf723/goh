@@ -1,0 +1,57 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/interaction/upgrade_pedestal.gd" id="1_pedestal"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_interaction"]
+size = Vector3(2.5, 2.2, 2.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_base"]
+size = Vector3(1.6, 0.35, 1.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_column"]
+size = Vector3(0.8, 1.0, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_orb"]
+radius = 0.38
+height = 0.76
+
+[sub_resource type="StandardMaterial3D" id="Material_base"]
+albedo_color = Color(0.18, 0.16, 0.22, 1)
+
+[sub_resource type="StandardMaterial3D" id="Material_column"]
+albedo_color = Color(0.28, 0.24, 0.36, 1)
+
+[sub_resource type="StandardMaterial3D" id="Material_orb"]
+albedo_color = Color(1, 0.46, 0.12, 0.88)
+emission_enabled = true
+emission = Color(1, 0.32, 0.06, 1)
+emission_energy_multiplier = 1.6
+transparency = 1
+
+[node name="UpgradePedestal" type="Area3D" groups=["upgrade_pedestal", "debuggable"]]
+script = ExtResource("1_pedestal")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+shape = SubResource("BoxShape3D_interaction")
+
+[node name="Base" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.175, 0)
+material_override = SubResource("Material_base")
+mesh = SubResource("BoxMesh_base")
+
+[node name="Column" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+material_override = SubResource("Material_column")
+mesh = SubResource("BoxMesh_column")
+
+[node name="Orb" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.42, 0)
+material_override = SubResource("Material_orb")
+mesh = SubResource("SphereMesh_orb")
+
+[node name="Label" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, 2.05, 0)
+text = "Upgrade"
+font_size = 44
+billboard = 1

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PhysicalMaterialProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/physics/physical_material_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+material_id = "copper"
+display_name = "Copper"
+density_kg_m3 = 8960.0
+default_mass_kg = 4.5
+electrical_conductivity = 1.0
+electrical_resistivity = 1.68e-08
+magnetic_susceptibility = 0.01
+magnetic_retention = 0.0
+permanent_magnetic_strength = 0.0
+material_tags = Array[String](["metal", "highly_conductive", "nonmagnetic"])

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PhysicalMaterialProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/physics/physical_material_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+material_id = "iron"
+display_name = "Iron"
+density_kg_m3 = 7874.0
+default_mass_kg = 4.0
+electrical_conductivity = 0.28
+electrical_resistivity = 9.71e-08
+magnetic_susceptibility = 0.92
+magnetic_retention = 0.38
+permanent_magnetic_strength = 0.0
+material_tags = Array[String](["metal", "conductive", "ferromagnetic"])

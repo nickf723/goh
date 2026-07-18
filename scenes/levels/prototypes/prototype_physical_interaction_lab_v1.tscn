@@ -1,0 +1,409 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/physical_interaction_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/lab_reset_console.tscn" id="4_reset"]
+[ext_resource type="Script" path="res://scripts/physics/magnetic_dipole_field.gd" id="5_field"]
+[ext_resource type="Script" path="res://scripts/physics/field_responsive_body.gd" id="6_body"]
+[ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="7_force"]
+[ext_resource type="Script" path="res://scripts/physics/physical_field_receiver.gd" id="8_receiver"]
+[ext_resource type="Script" path="res://scripts/interaction/magnetic_polarity_switch.gd" id="9_switch"]
+[ext_resource type="Resource" path="res://data/materials/permanent_magnet_physical_profile.tres" id="10_magnet_profile"]
+[ext_resource type="Resource" path="res://data/materials/iron_physical_profile.tres" id="11_iron_profile"]
+[ext_resource type="Resource" path="res://data/materials/copper_physical_profile.tres" id="12_copper_profile"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_floor"]
+albedo_color = Color(0.055, 0.065, 0.09, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="Mat_wall"]
+albedo_color = Color(0.09, 0.1, 0.14, 1)
+roughness = 0.88
+
+[sub_resource type="StandardMaterial3D" id="Mat_core"]
+albedo_color = Color(0.22, 0.25, 0.3, 1)
+metallic = 0.75
+roughness = 0.3
+
+[sub_resource type="StandardMaterial3D" id="Mat_coil"]
+albedo_color = Color(0.82, 0.34, 0.08, 1)
+metallic = 0.8
+roughness = 0.25
+emission_enabled = true
+emission = Color(0.38, 0.08, 0.01, 1)
+emission_energy_multiplier = 1.4
+
+[sub_resource type="StandardMaterial3D" id="Mat_magnet"]
+albedo_color = Color(0.48, 0.5, 0.58, 1)
+metallic = 0.65
+roughness = 0.28
+
+[sub_resource type="StandardMaterial3D" id="Mat_north"]
+albedo_color = Color(0.9, 0.12, 0.12, 1)
+emission_enabled = true
+emission = Color(0.45, 0.02, 0.02, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_south"]
+albedo_color = Color(0.08, 0.3, 0.95, 1)
+emission_enabled = true
+emission = Color(0.02, 0.08, 0.5, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_iron"]
+albedo_color = Color(0.34, 0.37, 0.42, 1)
+metallic = 0.85
+roughness = 0.38
+
+[sub_resource type="StandardMaterial3D" id="Mat_copper"]
+albedo_color = Color(0.86, 0.37, 0.14, 1)
+metallic = 0.9
+roughness = 0.24
+
+[sub_resource type="StandardMaterial3D" id="Mat_switch"]
+albedo_color = Color(0.2, 0.08, 0.34, 1)
+emission_enabled = true
+emission = Color(0.25, 0.04, 0.52, 1)
+emission_energy_multiplier = 1.6
+
+[sub_resource type="BoxShape3D" id="Shape_floor"]
+size = Vector3(18, 1, 18)
+
+[sub_resource type="BoxMesh" id="Mesh_floor"]
+size = Vector3(18, 1, 18)
+
+[sub_resource type="BoxShape3D" id="Shape_wall_long"]
+size = Vector3(18, 4, 0.6)
+
+[sub_resource type="BoxMesh" id="Mesh_wall_long"]
+size = Vector3(18, 4, 0.6)
+
+[sub_resource type="BoxShape3D" id="Shape_wall_side"]
+size = Vector3(0.6, 4, 18)
+
+[sub_resource type="BoxMesh" id="Mesh_wall_side"]
+size = Vector3(0.6, 4, 18)
+
+[sub_resource type="BoxShape3D" id="Shape_core"]
+size = Vector3(2.4, 1.1, 1.1)
+
+[sub_resource type="BoxMesh" id="Mesh_core"]
+size = Vector3(2.4, 1.1, 1.1)
+
+[sub_resource type="TorusMesh" id="Mesh_coil"]
+inner_radius = 0.68
+outer_radius = 0.82
+rings = 24
+ring_segments = 10
+
+[sub_resource type="BoxShape3D" id="Shape_bar"]
+size = Vector3(2.2, 0.55, 0.55)
+
+[sub_resource type="BoxMesh" id="Mesh_bar"]
+size = Vector3(2.2, 0.55, 0.55)
+
+[sub_resource type="BoxMesh" id="Mesh_pole"]
+size = Vector3(0.32, 0.62, 0.62)
+
+[sub_resource type="CylinderShape3D" id="Shape_slug"]
+radius = 0.48
+height = 1.2
+
+[sub_resource type="CylinderMesh" id="Mesh_slug"]
+top_radius = 0.48
+bottom_radius = 0.48
+height = 1.2
+radial_segments = 16
+
+[sub_resource type="BoxShape3D" id="Shape_copper"]
+size = Vector3(1.1, 0.8, 1.1)
+
+[sub_resource type="BoxMesh" id="Mesh_copper"]
+size = Vector3(1.1, 0.8, 1.1)
+
+[sub_resource type="BoxShape3D" id="Shape_switch"]
+size = Vector3(1.3, 1.1, 0.9)
+
+[sub_resource type="BoxMesh" id="Mesh_switch"]
+size = Vector3(1.3, 1.1, 0.9)
+
+[node name="PrototypePhysicalInteractionLab" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-58, -32, 0)
+light_energy = 1.25
+shadow_enabled = true
+
+[node name="FieldGlow" type="OmniLight3D" parent="."]
+position = Vector3(0, 3.2, 0)
+light_color = Color(0.45, 0.28, 1, 1)
+light_energy = 2.8
+omni_range = 13.0
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("Shape_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+material_override = SubResource("Mat_floor")
+mesh = SubResource("Mesh_floor")
+
+[node name="BackWall" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.5, 8.7)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWall"]
+shape = SubResource("Shape_wall_long")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWall"]
+material_override = SubResource("Mat_wall")
+mesh = SubResource("Mesh_wall_long")
+
+[node name="LeftWall" type="StaticBody3D" parent="."]
+position = Vector3(-8.7, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftWall"]
+shape = SubResource("Shape_wall_side")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftWall"]
+material_override = SubResource("Mat_wall")
+mesh = SubResource("Mesh_wall_side")
+
+[node name="RightWall" type="StaticBody3D" parent="."]
+position = Vector3(8.7, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RightWall"]
+shape = SubResource("Shape_wall_side")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RightWall"]
+material_override = SubResource("Mat_wall")
+mesh = SubResource("Mesh_wall_side")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector3(0, 0.15, -6.4)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="LabResetConsole" parent="." instance=ExtResource("4_reset")]
+position = Vector3(-6.1, 0, -6.2)
+
+[node name="Title" type="Label3D" parent="."]
+position = Vector3(0, 3.6, -5.7)
+text = "PHYSICAL INTERACTION FOUNDATION"
+font_size = 48
+pixel_size = 0.008
+billboard = 1
+modulate = Color(0.82, 0.76, 1, 1)
+outline_size = 7
+
+[node name="Instructions" type="Label3D" parent="."]
+position = Vector3(0, 2.85, -5.5)
+text = "IRON ATTRACTS  •  MAGNET ROTATES  •  COPPER CONDUCTS BUT IGNORES THE FIELD  •  USE SWITCH TO REVERSE POLARITY"
+font_size = 24
+pixel_size = 0.006
+billboard = 1
+modulate = Color(0.95, 0.9, 0.68, 1)
+outline_size = 5
+
+[node name="MagneticCore" type="Node3D" parent="."]
+position = Vector3(0, 0.78, 0)
+script = ExtResource("5_field")
+field_id = "prototype_electromagnetic_core"
+display_name = "Prototype Electromagnetic Core"
+maximum_distance = 7.5
+minimum_distance = 0.7
+base_strength = 11.0
+falloff_power = 2.4
+local_moment_axis = Vector3(1, 0, 0)
+maximum_field_strength = 14.0
+
+[node name="CoreBody" type="StaticBody3D" parent="MagneticCore"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MagneticCore/CoreBody"]
+shape = SubResource("Shape_core")
+
+[node name="CoreMesh" type="MeshInstance3D" parent="MagneticCore/CoreBody"]
+material_override = SubResource("Mat_core")
+mesh = SubResource("Mesh_core")
+
+[node name="CoilA" type="MeshInstance3D" parent="MagneticCore"]
+position = Vector3(-0.62, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+material_override = SubResource("Mat_coil")
+mesh = SubResource("Mesh_coil")
+
+[node name="CoilB" type="MeshInstance3D" parent="MagneticCore"]
+rotation_degrees = Vector3(0, 90, 0)
+material_override = SubResource("Mat_coil")
+mesh = SubResource("Mesh_coil")
+
+[node name="CoilC" type="MeshInstance3D" parent="MagneticCore"]
+position = Vector3(0.62, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+material_override = SubResource("Mat_coil")
+mesh = SubResource("Mesh_coil")
+
+[node name="CoreLabel" type="Label3D" parent="MagneticCore"]
+position = Vector3(0, 1.4, 0)
+text = "ENERGIZED COIL\nVECTOR FIELD SOURCE"
+font_size = 28
+pixel_size = 0.0065
+billboard = 1
+modulate = Color(0.78, 0.65, 1, 1)
+outline_size = 5
+
+[node name="PolaritySwitch" type="Area3D" parent="."]
+position = Vector3(0, 0.58, -3.4)
+script = ExtResource("9_switch")
+field_path = NodePath("../MagneticCore")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PolaritySwitch"]
+shape = SubResource("Shape_switch")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PolaritySwitch"]
+material_override = SubResource("Mat_switch")
+mesh = SubResource("Mesh_switch")
+
+[node name="Label3D" type="Label3D" parent="PolaritySwitch"]
+position = Vector3(0, 1.15, 0)
+text = "POLARITY: N →"
+font_size = 32
+pixel_size = 0.007
+billboard = 1
+modulate = Color(0.9, 0.72, 1, 1)
+outline_size = 5
+
+[node name="PermanentMagnetBar" type="CharacterBody3D" parent="."]
+position = Vector3(0, 0.4, 3.5)
+rotation_degrees = Vector3(0, 90, 0)
+script = ExtResource("6_body")
+body_label = "Permanent Magnet Bar"
+material_profile = ExtResource("10_magnet_profile")
+angular_inertia = 0.75
+gravity_strength = 20.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PermanentMagnetBar"]
+shape = SubResource("Shape_bar")
+
+[node name="BodyMesh" type="MeshInstance3D" parent="PermanentMagnetBar"]
+material_override = SubResource("Mat_magnet")
+mesh = SubResource("Mesh_bar")
+
+[node name="NorthPole" type="MeshInstance3D" parent="PermanentMagnetBar"]
+position = Vector3(0.96, 0, 0)
+material_override = SubResource("Mat_north")
+mesh = SubResource("Mesh_pole")
+
+[node name="SouthPole" type="MeshInstance3D" parent="PermanentMagnetBar"]
+position = Vector3(-0.96, 0, 0)
+material_override = SubResource("Mat_south")
+mesh = SubResource("Mesh_pole")
+
+[node name="ForceReceiver" type="Node" parent="PermanentMagnetBar"]
+script = ExtResource("7_force")
+continuous_linear_damping = 2.4
+continuous_angular_damping = 2.8
+max_continuous_speed = 2.4
+max_angular_speed = 3.2
+
+[node name="PhysicalFieldReceiver" type="Node" parent="PermanentMagnetBar"]
+script = ExtResource("8_receiver")
+material_profile = ExtResource("10_magnet_profile")
+local_magnetic_axis = Vector3(1, 0, 0)
+field_force_scale = 2.0
+field_torque_scale = 6.0
+
+[node name="Label3D" type="Label3D" parent="PermanentMagnetBar"]
+position = Vector3(0, 1.15, 0)
+text = "PERMANENT MAGNET\nTORQUE + POLARITY"
+font_size = 26
+pixel_size = 0.006
+billboard = 1
+modulate = Color(0.9, 0.75, 0.95, 1)
+outline_size = 5
+
+[node name="IronSlug" type="CharacterBody3D" parent="."]
+position = Vector3(4.4, 0.6, 0)
+rotation_degrees = Vector3(0, 0, 90)
+script = ExtResource("6_body")
+body_label = "Iron Slug"
+material_profile = ExtResource("11_iron_profile")
+angular_inertia = 1.4
+gravity_strength = 20.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="IronSlug"]
+shape = SubResource("Shape_slug")
+
+[node name="BodyMesh" type="MeshInstance3D" parent="IronSlug"]
+material_override = SubResource("Mat_iron")
+mesh = SubResource("Mesh_slug")
+
+[node name="ForceReceiver" type="Node" parent="IronSlug"]
+script = ExtResource("7_force")
+continuous_linear_damping = 2.1
+continuous_angular_damping = 3.0
+max_continuous_speed = 2.8
+max_angular_speed = 2.2
+
+[node name="PhysicalFieldReceiver" type="Node" parent="IronSlug"]
+script = ExtResource("8_receiver")
+material_profile = ExtResource("11_iron_profile")
+field_force_scale = 10.0
+field_torque_scale = 1.5
+
+[node name="Label3D" type="Label3D" parent="IronSlug"]
+position = Vector3(0, 1.15, 0)
+text = "IRON\nINDUCED MAGNETIZATION"
+font_size = 26
+pixel_size = 0.006
+billboard = 1
+modulate = Color(0.78, 0.84, 0.95, 1)
+outline_size = 5
+
+[node name="CopperBlock" type="CharacterBody3D" parent="."]
+position = Vector3(-4.4, 0.42, 0)
+script = ExtResource("6_body")
+body_label = "Copper Block"
+material_profile = ExtResource("12_copper_profile")
+angular_inertia = 1.2
+gravity_strength = 20.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CopperBlock"]
+shape = SubResource("Shape_copper")
+
+[node name="BodyMesh" type="MeshInstance3D" parent="CopperBlock"]
+material_override = SubResource("Mat_copper")
+mesh = SubResource("Mesh_copper")
+
+[node name="ForceReceiver" type="Node" parent="CopperBlock"]
+script = ExtResource("7_force")
+continuous_linear_damping = 2.0
+continuous_angular_damping = 3.0
+max_continuous_speed = 2.5
+max_angular_speed = 2.0
+
+[node name="PhysicalFieldReceiver" type="Node" parent="CopperBlock"]
+script = ExtResource("8_receiver")
+material_profile = ExtResource("12_copper_profile")
+field_force_scale = 10.0
+field_torque_scale = 4.0
+
+[node name="Label3D" type="Label3D" parent="CopperBlock"]
+position = Vector3(0, 1.1, 0)
+text = "COPPER\nCONDUCTIVE ≠ MAGNETIC"
+font_size = 26
+pixel_size = 0.006
+billboard = 1
+modulate = Color(1, 0.68, 0.38, 1)
+outline_size = 5
+
+[node name="FieldReadout" type="Label3D" parent="."]
+position = Vector3(0, 3.15, 5.9)
+text = "FIELD INITIALIZING"
+font_size = 27
+pixel_size = 0.0065
+billboard = 1
+modulate = Color(0.82, 0.9, 1, 1)
+outline_size = 6

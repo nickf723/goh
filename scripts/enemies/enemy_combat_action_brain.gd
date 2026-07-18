@@ -97,11 +97,15 @@ func process_attack_recover(delta: float) -> void:
 	action_runner.tick(delta)
 
 	if action_runner.consume_finished_request():
+		var default_cooldown: float = 0.0
 		if committed_action != null:
-			attack_cooldown_timer = committed_action.get_cooldown()
-		else:
-			attack_cooldown_timer = 0.0
+			default_cooldown = committed_action.get_cooldown()
 
+		on_action_completed(committed_action)
+		attack_cooldown_timer = get_shared_cooldown_after_action(
+			committed_action,
+			default_cooldown
+		)
 		finish_action_state()
 
 
@@ -261,6 +265,17 @@ func finish_action_state() -> void:
 		change_state(EnemyState.CHASE)
 	else:
 		change_state(EnemyState.IDLE)
+
+
+func on_action_completed(_attack: EnemyAttackDefinition) -> void:
+	pass
+
+
+func get_shared_cooldown_after_action(
+	_attack: EnemyAttackDefinition,
+	default_cooldown: float
+) -> float:
+	return max(default_cooldown, 0.0)
 
 
 func has_running_action() -> bool:

@@ -1,25 +1,27 @@
 [gd_resource type="Resource" script_class="AbilityDefinition" format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/actions/generic_projectile.tscn" id="1_scene"]
+[ext_resource type="PackedScene" path="res://scenes/actions/dream_trap_field.tscn" id="1_scene"]
 [ext_resource type="Resource" path="res://data/damage_payloads/dream_snare_payload.tres" id="2_payload"]
 [ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
 [ext_resource type="Resource" path="res://data/ability_trait_profiles/control_projectile_profile.tres" id="4_profile"]
 
 [resource]
 script = ExtResource("3_definition")
-display_name = "Dream Snare"
-description = "Illusory projectile that briefly staggers an enemy."
+display_name = "Dream Trap"
+description = "Place an illusory trap that springs when an enemy enters."
 element = "dreams"
 mana_cost = 1
 trait_profile = ExtResource("4_profile")
-spell_id = "dream_snare"
-short_label = "Snare"
+spell_id = "dream_trap"
+short_label = "Trap"
 icon_text = "Dr"
-roles = Array[String](["illusion", "control", "debuff"])
-combo_tags = Array[String](["dreams", "illusion", "mind", "snare"])
+roles = Array[String](["illusion", "control", "trap"])
+targeting_style = "ground_targeted"
+delivery_type = "trigger_field"
+combo_tags = Array[String](["dreams", "illusion", "mind", "trap", "ground_targeted"])
 status_tags = Array[String](["staggered"])
-ui_tags = Array[String](["control", "illusion"])
-debug_tags = Array[String](["prototype", "dream_projectile"])
-design_notes = "Dreams gets a control identity now using stagger. Later this can become perception rewrite, fear, lure, or false target logic."
+ui_tags = Array[String](["control", "illusion", "ground_targeted"])
+debug_tags = Array[String](["prototype", "dream_trap", "ground_targeted"])
+design_notes = "Dreams' first delayed-trigger spell. Uses stagger as the current sleep/confusion carrier until dedicated dream statuses exist."
 ability_scene = ExtResource("1_scene")
 action_payload = ExtResource("2_payload")

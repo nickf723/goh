@@ -50,6 +50,7 @@ metadata/_custom_type_script = "uid://c2xu2guuvxg5l"
 script = ExtResource("7_f6t4f")
 enemy_definition = ExtResource("8_6vf88")
 default_attack = ExtResource("9_fu54f")
+personality_id = "skittish"
 
 [node name="EnemyTelegraph" type="Node" parent="." unique_id=1890575995]
 script = ExtResource("10_a3vpn")

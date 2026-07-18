@@ -12,6 +12,13 @@ func _ready() -> void:
 	add_to_group("enemy")
 	add_to_group("lab_resettable")
 	add_to_group("debuggable")
+	call_deferred("capture_reset_transform")
+
+
+func capture_reset_transform() -> void:
+	# The laboratory director may arrange targets during its own _ready(). Capture
+	# once more after the scene tree settles so reset returns to the staged lane.
+	initial_transform = transform
 
 
 func _physics_process(delta: float) -> void:

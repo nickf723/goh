@@ -1,25 +1,25 @@
-# Elemental Reaction Laboratory + Visual Refresh v0.5 QA
+# Elemental Reaction Laboratory + Steam Burst v1 QA
 
 ## Goal
 
-Verify that the existing payload/receiver/combo grammar now supports a readable, resettable five-element laboratory without breaking the Church Trial.
+Verify that the existing payload, receiver, status, force, and combo-rule grammar supports a visible multi-target elemental reaction:
 
-The player-facing recipes are:
+```text
+Water → Ice → Fire → STEAM BURST
+```
+
+The Steam Burst should transform the frozen surface, create a readable cloud burst, and apply a reusable radial consequence to nearby actors.
+
+The broader laboratory still supports:
 
 ```text
 Fire + Oil → IGNITE
 Water + Lightning → CONDUCT
 Water + Ice → FREEZE
 Frozen + Sword/Force → SHATTER
-Frozen + Fire → STEAM
+Frozen + Fire → STEAM BURST
 Sound + Hidden → REVEAL
 ```
-
-## Dependency
-
-This branch is stacked on PR #69 and expects the Goblin and Gremlin visual wrappers from that pass.
-
-Merge PR #69 first. Then retarget this PR to `main` if GitHub does not do so automatically.
 
 ## Scene
 
@@ -29,19 +29,26 @@ Run:
 scenes/levels/prototypes/prototype_elemental_reaction_lab_v1.tscn
 ```
 
-The lab should start with:
+The laboratory should contain:
 
 - Grace near the entry wall;
 - a violet reset console on the left;
 - a mana shrine on the right;
-- three front stations: Ignite, Conduct, Freeze;
-- two rear stations: Shatter, Steam;
-- one final Sound Reveal station;
-- station labels readable from the normal gameplay camera.
+- Ignite, Conduct, and Freeze stations at the front;
+- Shatter and Steam stations behind them;
+- the Sound Reveal station at the rear;
+- live surface-state readouts at the reaction stations.
 
-## Focused spell loadout
+The Steam station should additionally contain:
 
-Confirm the lab equips exactly these five spells in this order:
+- a water surface and side `SURFACE` catalyst;
+- three reaction targets arranged around the surface;
+- a pale circular guide labeled `STEAM BURST • 2.65m`;
+- a readout showing state, last reaction, burst target count, and target names.
+
+## Focused loadout
+
+The lab equips these five spells:
 
 1. Firebolt
 2. Water Jet
@@ -49,288 +56,183 @@ Confirm the lab equips exactly these five spells in this order:
 4. Lightning Spark
 5. Sound Pulse
 
-The practice sword remains available and supplies the `force` tag for Shatter.
+The practice sword remains available for Force and Shatter testing.
 
-The lab should refill Grace's mana, stamina, and focus at startup and after every reset.
+Grace's mana, stamina, and focus should refill when the scene starts and whenever the lab resets.
 
-## Element visual identity
+## Station targeting
 
-### Fire
+Each surface station exposes a glowing side catalyst labeled `SURFACE`.
 
-Confirm Firebolt reads as:
+- Aim at the creature to test status combinations on a normal target.
+- Aim at the side catalyst to change the puddle or hazard itself.
+- The catalyst must not physically block Grace, the camera, enemies, or projectiles.
 
-- a hot ember core;
-- a brighter inner center;
-- layered orange/red flame tails;
-- a warm point light;
-- a flickering trail;
-- an orange-red impact flare.
+## Steam Burst arena
 
-### Water
+### Surface sequence
 
-Confirm Water Jet reads as:
+1. Go to the Steam station.
+2. Note that the readout begins at `STATE: NORMAL` and `LAST: NONE`.
+3. Cast Ice Lance at the side `SURFACE` catalyst.
+4. Confirm the water becomes visibly frozen.
+5. Confirm the readout changes to `STATE: FROZEN` and reports the Freeze reaction.
+6. Cast Firebolt at the same frozen catalyst.
+7. Confirm `STEAM BURST` appears over the surface.
+8. Confirm the surface changes to a temporary steaming state.
+9. Confirm a pale expanding cloud and reaction rings clearly reach toward the radius guide.
+10. Confirm the readout changes to `STATE: STEAMING`, `LAST: STEAM_BURST`, and reports nearby targets.
 
-- a stretched flowing body rather than a sphere;
-- cyan flow rings;
-- detached droplets;
-- a softer blue trail and impact ripple.
+### Radial consequence
 
-### Ice
+The Steam Burst uses a `2.65m` sphere centered on the reacting surface.
 
-Confirm Ice Lance reads as:
+For targets inside that radius, confirm:
 
-- an angular crystal lance;
-- separate side shards;
-- pale cyan frost halo;
-- a rigid rotating trail and crystalline impact.
+- they gain the short `steamed` status;
+- they receive one point of stance pressure;
+- they receive a modest outward impulse;
+- their force/debug summary identifies Steam Burst;
+- the surface readout includes their names and the total number caught.
 
-### Lightning
+The push should be visible but restrained. It should scatter the test arrangement slightly rather than launch targets across the laboratory.
 
-Confirm Lightning Spark reads as:
+A target beyond the pale radius guide should not receive the radial result.
 
-- a bright white core;
-- multiple jagged arc pieces;
-- violet-blue charge ring;
-- rapid flicker/jitter;
-- a sharp electric impact.
+### Primary reaction behavior
 
-### Sound
+Confirm the frozen surface itself:
 
-Confirm Sound Pulse is not a projectile.
+- loses its frozen state;
+- enters the temporary steaming state;
+- continues applying short steamed pulses to actors standing inside it;
+- returns to ordinary water after its configured duration.
 
-It should create:
+The radial burst should occur once when the recipe resolves. The lingering steaming surface should not repeatedly reapply the one-point burst stance damage or burst impulse.
 
-- three expanding horizontal rings;
-- two crossing vertical resonance rings;
-- pink Sound coloring;
-- a clear radius that reaches the hidden resonator when Grace is nearby.
-
-The five elements should be distinguishable before reading the spell label.
-
-## Station anatomy
-
-Each surface station contains two valid targets:
-
-- the Goblin or Gremlin in the center for status/reaction testing;
-- the smaller glowing `SURFACE` catalyst beside it for changing the puddle itself.
-
-Confirm projectiles aimed at the creature hit the creature rather than being stolen by the surface catalyst.
-
-Confirm projectiles aimed at the side catalyst trigger the puddle's reaction state.
-
-The catalyst is an Area3D and must not block Grace, the camera, enemies, or projectiles physically.
-
-## IGNITE station
-
-### Target reaction
-
-1. Approach the Goblin standing in oil.
-2. Confirm the oil patch gives it the `oily` status visual.
-3. Cast Firebolt at the Goblin.
-4. Confirm:
-   - `IGNITE` appears;
-   - an orange-red reaction burst appears;
-   - the Goblin gains persistent burning visuals;
-   - normal Firebolt damage still applies;
-   - burning continues to tick normally.
-
-### Surface reaction
+### Direct target reaction
 
 1. Reset the lab.
-2. Cast Firebolt at the station's side `SURFACE` catalyst.
-3. Confirm the oil patch visibly ignites with multiple flame markers.
-4. Step into the burning oil.
-5. Confirm targets inside sustain burning.
-6. Wait for the configured state duration and confirm the oil returns to its glossy baseline.
-
-## CONDUCT station
-
-### Target reaction
-
-1. Confirm the Gremlin standing in water gains `wet` visuals.
-2. Cast Lightning Spark at the Gremlin.
-3. Confirm:
-   - `CONDUCT` appears;
-   - the reaction burst is violet-blue;
-   - the Gremlin gains persistent electric/stunned visuals;
-   - its action/movement block follows existing stunned behavior;
-   - normal Lightning Spark damage still applies.
-
-### Surface reaction
-
-1. Reset the lab.
-2. Cast Lightning Spark at the station's side `SURFACE` catalyst.
-3. Confirm the water becomes electrified with visible arc pieces.
-4. Step into the electrified water.
-5. Confirm targets inside sustain short stun pulses while the state lasts.
-6. Confirm the water returns to normal afterward.
-
-## FREEZE station
-
-### Target reaction
-
-1. Confirm the Goblin is wet from the water patch.
-2. Cast Ice Lance at the Goblin.
-3. Confirm:
-   - `FREEZE` appears;
-   - the burst is pale cyan;
-   - the Goblin receives a visible ice shell/shards;
-   - frozen blocks movement/actions according to the existing status system;
-   - normal Ice Lance damage and stance pressure still apply.
-
-### Surface reaction
-
-1. Reset the lab.
-2. Cast Ice Lance at the station's side `SURFACE` catalyst.
-3. Confirm the water gains a crystalline frozen surface state.
-4. Confirm targets inside sustain frozen while the state remains active.
-5. Confirm the patch returns to water after its duration.
-
-## SHATTER station
-
-### Target reaction
-
-1. Cast Ice Lance at the wet Gremlin to produce `FREEZE`.
-2. Move into sword range.
-3. Strike the frozen Gremlin with the practice sword.
-4. Confirm:
-   - `SHATTER` appears;
-   - the reaction produces an outward crystal-shard burst;
-   - frozen is removed;
-   - reaction health/stance damage applies;
-   - the normal sword payload still applies once;
-   - the target remains available for further tests unless its large test health is depleted.
-
-### Surface reaction
-
-1. Reset the lab.
-2. Cast Ice Lance at the side `SURFACE` catalyst to freeze the water.
-3. Strike the nearby catalyst with the practice sword.
-4. Confirm the surface produces a Shatter burst and returns to water.
-
-## STEAM station
-
-### Target reaction
-
-1. Cast Ice Lance at the wet Goblin to produce `FREEZE`.
-2. Cast Firebolt at the same target.
-3. Confirm:
+2. Let a reaction target become wet.
+3. Cast Ice Lance directly at it to produce Freeze.
+4. Cast Firebolt directly at the same target.
+5. Confirm:
    - `STEAM BURST` appears;
-   - a pale expanding steam-cloud reaction appears;
-   - frozen, chill, and direct burning are removed by the recipe;
-   - the short `steamed` visual/status remains;
-   - Firebolt direct damage still applies.
+   - frozen, chill, and direct burning are removed;
+   - the target keeps the short steamed status;
+   - Firebolt's normal direct payload still resolves;
+   - nearby receiver-equipped targets can still receive the radial consequence.
 
-### Surface reaction
+## Live station readouts
 
-1. Reset the lab.
-2. Cast Ice Lance at the side `SURFACE` catalyst.
-3. Cast Firebolt at the frozen catalyst.
-4. Confirm the water becomes a temporary steam-cloud state and later returns to water.
-
-## REVEAL station
-
-1. Approach the empty gold marker at the rear station.
-2. Confirm the resonance instrument starts hidden and non-colliding.
-3. Cast Sound Pulse nearby.
-4. Confirm:
-   - the expanding Sound rings are visible;
-   - `REVEAL` appears in pink;
-   - the hidden ring instrument becomes visible;
-   - its collision is enabled only while revealed;
-   - pink crossing resonance rings mark the revealed state;
-   - it hides again after the configured reveal duration.
-
-## Persistent status readability
-
-On the reaction targets, verify the following can be recognized without relying on UI text:
-
-- Wet: orbiting/droplet shapes
-- Oily: dark-violet sheen ring
-- Burning: multiple orange flames
-- Frozen: translucent ice shell and shards
-- Stunned: jagged electric arcs
-- Steamed: pale vapor clouds
-- Revealed: pink resonance rings
-
-Confirm status visuals follow the target and do not add collision.
-
-## Reset console
-
-After changing every station:
-
-1. Interact with the violet reset console.
-2. Confirm:
-   - oil and water patches return to normal;
-   - reaction timers clear;
-   - target health and stance refill;
-   - all target statuses clear;
-   - the hidden Sound instrument hides again;
-   - Grace's resources refill;
-   - the five-spell lab loadout remains selected;
-   - no scene reload is required.
-
-In editor builds, press F8 and confirm it performs the same laboratory reset.
-
-## Debug contract
-
-Inspect debug output/overlay and confirm:
-
-- the lab reports the registered rule count;
-- each surface reports profile, active target count, reaction state, timer, last reaction, and hazard tags;
-- each test target reports statuses and its last reaction;
-- `PayloadReceiver` reports the last incoming payload, reaction ID, and reaction visual style;
-- the combo matrix includes visual styles for Ignite, Conduct, Freeze, Shatter, and Steam.
-
-## Church Trial regression
-
-Run:
+The Ignite, Conduct, Freeze, Shatter, and Steam stations should display:
 
 ```text
-scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn
-```
-
-Complete:
-
-```text
-entry/save → Goblin + Gremlin combat → Fire/Water lock → Sound Reveal bridge → Animated Armor → sigil → exit
+STATE: <current surface state>
+LAST: <most recent reaction>
+BURST: <area target count> | <target names>
 ```
 
 Confirm:
 
-- Firebolt, Water Jet, Ice Lance, Lightning Spark, and Sound Pulse still cast normally;
-- free aim and lock-on remain correct;
-- projectiles retain their original collision and payload behavior;
-- Goblin and Gremlin AI, telegraphs, health, damage, status reactions, and defeat remain correct;
-- water/oil patches do not unexpectedly block movement or projectiles;
-- Sound still reveals the bridge;
-- saves, retry, boss, reward, Inventory, and exit remain functional.
+- the text is readable from the ordinary gameplay camera;
+- its color follows the current elemental state;
+- non-area recipes report a burst count of zero;
+- Steam Burst reports the actual deduplicated targets caught;
+- the panel updates after reset without reloading the scene.
+
+## Other reaction regressions
+
+### Ignite
+
+1. Cast Firebolt at an oily target or Oil `SURFACE` catalyst.
+2. Confirm Ignite feedback and persistent burning.
+3. Confirm the oil surface eventually returns to baseline.
+
+### Conduct
+
+1. Cast Lightning Spark at a wet target or Water `SURFACE` catalyst.
+2. Confirm Conduct feedback and electric/stun behavior.
+3. Confirm the surface eventually returns to water.
+
+### Freeze
+
+1. Cast Ice Lance at a wet target or Water `SURFACE` catalyst.
+2. Confirm Freeze feedback and frozen movement/action blocking.
+3. Confirm the surface gains its crystalline state.
+
+### Shatter
+
+1. Freeze a target or surface.
+2. Apply the practice sword's Force-tagged attack.
+3. Confirm Shatter removes frozen and applies the existing reaction payload.
+
+### Reveal
+
+1. Approach the empty gold marker at the rear station.
+2. Cast Sound Pulse nearby.
+3. Confirm the hidden resonator becomes visible and collidable for the reveal duration.
+
+## Reset contract
+
+After triggering Steam Burst and moving the targets:
+
+1. Use the violet reset console or press F8 in an editor build.
+2. Confirm:
+   - every surface returns to normal;
+   - reaction timers and burst histories clear;
+   - each target returns to its staged Steam-arena position;
+   - target health and stance refill;
+   - all statuses clear;
+   - stored external force clears;
+   - the readout returns to `NORMAL`, `NONE`, and zero targets;
+   - Grace's resources refill;
+   - the five-spell laboratory loadout remains active.
+
+No scene reload should be required.
+
+## Debug contract
+
+Confirm debug data exposes:
+
+- laboratory version `elemental_reaction_v1`;
+- registered combo-rule count;
+- surface state and remaining reaction time;
+- last reaction ID;
+- radial target count and names;
+- current hazard tags;
+- target statuses and force summaries;
+- Steam Burst's area radius and area status in the combo matrix.
 
 ## Automated validation
 
-The exact PR head must pass:
+The exact branch head must pass:
 
-- custom agent validation;
+- feature-registry validation;
 - Godot 4.6 import;
-- title-screen startup;
-- Church Trial startup;
-- Elemental Reaction Lab startup;
-- automated recipe smoke test for Ignite, Conduct, Freeze, Shatter, Steam, and the debug matrix;
+- project startup;
+- registered feature scenes and tests;
+- elemental reaction smoke tests for Ignite, Conduct, Freeze, Shatter, and Steam;
+- explicit Steam Burst tests for radial steamed status, one stance damage, and force;
 - Windows release export;
 - artifact upload.
 
-## Windows artifact
+## Creative review
 
-Launch the generated Windows artifact and repeat:
+Judge these qualities during the manual pass:
 
-- one full pass through all six lab reactions;
-- reset console verification;
-- at least the common-enemy and Sound portions of the Church Trial.
+- Does Ice followed by Fire read as one compounded magical event?
+- Is the Steam Burst large enough to reward setup without feeling detached from the surface?
+- Is the cloud visible without obscuring the entire station?
+- Is the outward push noticeable but controlled?
+- Does the live readout help diagnose the reaction without becoming visual wallpaper?
+- Does the three-step Water → Ice → Fire chain feel worth performing?
 
 ## Known limitations
 
-- Visuals are procedural and replacement-ready rather than final authored particle systems.
-- Only Fire, Water, Ice, Lightning, and Sound receive this pass.
-- Lab targets are static presentation targets using the Goblin and Gremlin wrappers, not active AI encounters.
-- Reaction damage/ranges remain prototype values.
-- No new audio, authored UV textures, cinematics, skeletal animation, or post-processing is included.
+- The radial query is a simple sphere and does not test line of sight or cover.
+- Steam currently applies status, stance pressure, and force, but no dedicated concealment gameplay.
+- The surface and reaction visuals are procedural and replacement-ready.
+- Laboratory targets are deterministic test actors rather than active encounter AI.
+- Reaction tuning remains prototype balance.
+- Only a subset of the sixteen core elements is represented in this laboratory pass.

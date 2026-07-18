@@ -40,6 +40,10 @@ func reset_source() -> void:
 	update_source_visual(emitter.active if emitter != null else true)
 
 
+func reset_target() -> void:
+	reset_source()
+
+
 func update_source_visual(is_active: bool) -> void:
 	var visual_root: Node3D = get_node_or_null("VisualRoot") as Node3D
 	if visual_root != null:

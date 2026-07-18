@@ -25,6 +25,7 @@ signal reservoir_changed(current_units: float, maximum_units: float)
 @export var units_per_pulse: float = 0.0
 @export var recovery_units_per_second: float = 0.0
 
+var initial_active: bool = true
 var current_units: float = 0.0
 var pulse_timer: float = 0.0
 var pulse_count: int = 0
@@ -36,6 +37,7 @@ var emitted_contact_ids: Dictionary = {}
 func _ready() -> void:
 	monitoring = true
 	monitorable = true
+	initial_active = active
 	current_units = clampf(starting_units, 0.0, max(maximum_units, 0.0))
 	pulse_timer = max(pulse_interval, 0.02)
 	add_to_group("debuggable")
@@ -95,7 +97,8 @@ func emit_pulse() -> Array[Dictionary]:
 			emitted_contact_ids[target_id] = true
 
 	prune_contact_memory(current_contact_ids)
-	consume_pulse_cost()
+	if not results.is_empty():
+		consume_pulse_cost()
 	pulse_count += 1
 	last_results = results.duplicate(true)
 	pulse_emitted.emit(payload, results)
@@ -215,6 +218,10 @@ func set_emitting(next_active: bool) -> void:
 	if active == next_active:
 		return
 	active = next_active
+	pulse_timer = max(pulse_interval, 0.02)
+	emitted_contact_ids.clear()
+	last_target_names.clear()
+	last_results.clear()
 	active_changed.emit(active)
 
 
@@ -253,6 +260,7 @@ func recover_reservoir(delta: float) -> void:
 
 
 func reset_emitter() -> void:
+	active = initial_active
 	current_units = clampf(starting_units, 0.0, max(maximum_units, 0.0))
 	pulse_timer = max(pulse_interval, 0.02)
 	pulse_count = 0

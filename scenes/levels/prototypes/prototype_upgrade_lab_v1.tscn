@@ -44,7 +44,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("BoxShape3D_floor")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=623851616]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.050417, 0.051586628, 1.4969397)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.33035564, 0.051586628, 0.014582634)
 material_override = SubResource("Material_floor")
 mesh = SubResource("BoxMesh_floor")
 

@@ -1,0 +1,126 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/environmental_chemistry_station.gd" id="1_station"]
+[ext_resource type="PackedScene" path="res://scenes/surfaces/water_patch.tscn" id="2_water"]
+[ext_resource type="PackedScene" path="res://scenes/environment/frost_crystal_source.tscn" id="3_frost"]
+[ext_resource type="PackedScene" path="res://scenes/environment/pushable_brazier_source.tscn" id="4_brazier"]
+[ext_resource type="PackedScene" path="res://scenes/actors/testing/gremlin_reaction_target.tscn" id="5_target"]
+[ext_resource type="Material" path="res://art/materials/church/church_warm_stone_v1.tres" id="6_floor"]
+[ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="7_gold"]
+[ext_resource type="Material" path="res://art/materials/prototype/mana_cyan_glow.tres" id="8_ice"]
+[ext_resource type="Material" path="res://art/materials/prototype/exit_gold_glow.tres" id="9_fire"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_platform"]
+size = Vector3(8.2, 0.16, 6.2)
+
+[sub_resource type="TorusMesh" id="TorusMesh_reaction"]
+inner_radius = 2.58
+outer_radius = 2.66
+rings = 32
+ring_segments = 10
+
+[sub_resource type="BoxMesh" id="BoxMesh_arrow"]
+size = Vector3(1.1, 0.06, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_goal"]
+size = Vector3(0.12, 0.08, 1.7)
+
+[node name="EnvironmentalChemistryStation" type="Node3D"]
+script = ExtResource("1_station")
+
+[node name="Platform" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.02, 0)
+material_override = ExtResource("6_floor")
+mesh = SubResource("BoxMesh_platform")
+
+[node name="ReactionRadius" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.16, 0)
+material_override = ExtResource("7_gold")
+mesh = SubResource("TorusMesh_reaction")
+
+[node name="Title" type="Label3D" parent="."]
+position = Vector3(0, 2.72, -2.72)
+text = "ENVIRONMENT CHEMISTRY"
+font_size = 46
+pixel_size = 0.007
+billboard = 1
+modulate = Color(0.88, 0.94, 1, 1)
+outline_size = 7
+
+[node name="Instruction" type="Label3D" parent="."]
+position = Vector3(0, 2.08, -2.65)
+text = "1  Crystal freezes water   •   2  Stand right of brazier   •   3  Heavy sword toward ice"
+font_size = 25
+pixel_size = 0.0065
+billboard = 1
+modulate = Color(1, 0.88, 0.62, 1)
+outline_size = 5
+
+[node name="FrostLabel" type="Label3D" parent="."]
+position = Vector3(-2.55, 1.86, 0)
+text = "INFINITE ICE\nFrost Crystal"
+font_size = 28
+pixel_size = 0.0065
+billboard = 1
+modulate = Color(0.58, 0.94, 1, 1)
+outline_size = 5
+
+[node name="BrazierLabel" type="Label3D" parent="."]
+position = Vector3(3.35, 1.9, 0)
+text = "FINITE FIRE\nPushable Brazier"
+font_size = 28
+pixel_size = 0.0065
+billboard = 1
+modulate = Color(1, 0.42, 0.12, 1)
+outline_size = 5
+
+[node name="GoalLabel" type="Label3D" parent="."]
+position = Vector3(0, 0.58, -1.5)
+text = "FROZEN WATER\nMOVE FIRE HERE"
+font_size = 25
+pixel_size = 0.0065
+billboard = 1
+modulate = Color(0.82, 0.96, 1, 1)
+outline_size = 5
+
+[node name="PushArrowA" type="MeshInstance3D" parent="."]
+position = Vector3(2.55, 0.18, 0)
+material_override = ExtResource("9_fire")
+mesh = SubResource("BoxMesh_arrow")
+
+[node name="PushArrowB" type="MeshInstance3D" parent="."]
+position = Vector3(1.65, 0.18, 0)
+material_override = ExtResource("9_fire")
+mesh = SubResource("BoxMesh_arrow")
+
+[node name="GoalCrossA" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.17, 0)
+material_override = ExtResource("8_ice")
+mesh = SubResource("BoxMesh_goal")
+
+[node name="GoalCrossB" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.17, 0)
+rotation_degrees = Vector3(0, 90, 0)
+material_override = ExtResource("8_ice")
+mesh = SubResource("BoxMesh_goal")
+
+[node name="WaterPatch" parent="." instance=ExtResource("2_water")]
+position = Vector3(0, 0.13, 0)
+
+[node name="FrostCrystalSource" parent="." instance=ExtResource("3_frost")]
+position = Vector3(-2.55, 0.14, 0)
+
+[node name="PushableBrazierSource" parent="." instance=ExtResource("4_brazier")]
+position = Vector3(3.4, 0.08, 0)
+
+[node name="ReactionTarget" parent="." instance=ExtResource("5_target")]
+position = Vector3(0, 0.5, 1.75)
+
+[node name="StateReadout" type="Label3D" parent="."]
+position = Vector3(0, 1.28, 2.72)
+text = "SURFACE: INITIALIZING"
+font_size = 27
+pixel_size = 0.0065
+billboard = 1
+modulate = Color(0.9, 0.9, 0.95, 1)
+outline_size = 6

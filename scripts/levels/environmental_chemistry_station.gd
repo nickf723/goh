@@ -76,8 +76,8 @@ func get_machine_data() -> Dictionary:
 		return {}
 
 	var data: Dictionary = pressure_lift.get_debug_data()
-	var pressure_data: Dictionary = data.get("pressure", {}) as Dictionary
-	var actuator_data: Dictionary = data.get("actuator", {}) as Dictionary
+	var pressure_data: Dictionary = data.get("pressure", {})
+	var actuator_data: Dictionary = data.get("actuator", {})
 	return {
 		"pressure_value": float(pressure_data.get("pressure", 0.0)),
 		"threshold": float(actuator_data.get("activation_pressure", 80.0)),

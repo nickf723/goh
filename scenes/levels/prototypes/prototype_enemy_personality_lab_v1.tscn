@@ -1,0 +1,243 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_enemy_personality_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" uid="uid://6raaty2e36ko" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://j44g36yeu58k" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" uid="uid://d4c66lkqs3ac6" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="PackedScene" uid="uid://dgprwdbmbpuqk" path="res://scenes/actors/enemies/goblin_drone.tscn" id="5_goblin"]
+[ext_resource type="PackedScene" path="res://scenes/actions/poison_cloud.tscn" id="6_poison"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
+size = Vector3(46, 1, 22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(46, 1, 22)
+
+[sub_resource type="StandardMaterial3D" id="Material_floor"]
+albedo_color = Color(0.095, 0.105, 0.13, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wall_long"]
+size = Vector3(46, 4, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_long"]
+size = Vector3(46, 4, 0.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wall_short"]
+size = Vector3(0.5, 4, 22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_short"]
+size = Vector3(0.5, 4, 22)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lane_divider"]
+size = Vector3(0.35, 1.6, 16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_lane_divider"]
+size = Vector3(0.35, 1.6, 16)
+
+[sub_resource type="StandardMaterial3D" id="Material_wall"]
+albedo_color = Color(0.05, 0.06, 0.085, 1)
+
+[node name="PrototypeEnemyPersonalityLabV1" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="Ground" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape3D_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+material_override = SubResource("Material_floor")
+mesh = SubResource("BoxMesh_floor")
+
+[node name="NorthWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -11)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NorthWall"]
+shape = SubResource("BoxShape3D_wall_long")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NorthWall"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("BoxMesh_wall_long")
+
+[node name="SouthWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 11)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SouthWall"]
+shape = SubResource("BoxShape3D_wall_long")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SouthWall"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("BoxMesh_wall_long")
+
+[node name="WestWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WestWall"]
+shape = SubResource("BoxShape3D_wall_short")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WestWall"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("BoxMesh_wall_short")
+
+[node name="EastWall" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EastWall"]
+shape = SubResource("BoxShape3D_wall_short")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="EastWall"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("BoxMesh_wall_short")
+
+[node name="LaneDividerA" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.3, -1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LaneDividerA"]
+shape = SubResource("BoxShape3D_lane_divider")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LaneDividerA"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("BoxMesh_lane_divider")
+
+[node name="LaneDividerB" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LaneDividerB"]
+shape = SubResource("BoxShape3D_lane_divider")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LaneDividerB"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("BoxMesh_lane_divider")
+
+[node name="LaneDividerC" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.3, -1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LaneDividerC"]
+shape = SubResource("BoxShape3D_lane_divider")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LaneDividerC"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("BoxMesh_lane_divider")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, 0, 0, 0)
+light_energy = 1.8
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 9.25)
+
+[node name="TitleSign" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, 3, 8.2)
+billboard = 1
+text = "Enemy Personality Lab\nSame goblin, same lane, same poison cloud\nCompare steering: cautious / bold / skittish / brute"
+font_size = 54
+
+[node name="ResetSign" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, 2.3, 6.6)
+billboard = 1
+text = "Use RESET / F8 to rerun the race. Watch debug: personality, zone, zone_wait."
+font_size = 34
+
+[node name="Targets" type="Node3D" parent="."]
+
+[node name="CautiousTarget" type="Node3D" parent="Targets" groups=["personality_lab_cautious_target"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.8, 4.7)
+
+[node name="BoldTarget" type="Node3D" parent="Targets" groups=["personality_lab_bold_target"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.8, 4.7)
+
+[node name="SkittishTarget" type="Node3D" parent="Targets" groups=["personality_lab_skittish_target"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.8, 4.7)
+
+[node name="BruteTarget" type="Node3D" parent="Targets" groups=["personality_lab_brute_target"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.8, 4.7)
+
+[node name="Lanes" type="Node3D" parent="."]
+
+[node name="CautiousLabel" type="Label3D" parent="Lanes"]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, -15, 2.25, 5.8)
+billboard = 1
+text = "CAUTIOUS\nstrong danger avoidance\nlonger commit"
+font_size = 34
+
+[node name="BoldLabel" type="Label3D" parent="Lanes"]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, -5, 2.25, 5.8)
+billboard = 1
+text = "BOLD\nless avoidance\nfaster commitment"
+font_size = 34
+
+[node name="SkittishLabel" type="Label3D" parent="Lanes"]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 5, 2.25, 5.8)
+billboard = 1
+text = "SKITTISH\nwidest avoidance\nmore hesitation"
+font_size = 34
+
+[node name="BruteLabel" type="Label3D" parent="Lanes"]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 15, 2.25, 5.8)
+billboard = 1
+text = "BRUTE\nlow trap/slow concern\nonly respects danger"
+font_size = 34
+
+[node name="CautiousGoblin" parent="Lanes" instance=ExtResource("5_goblin")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -15, 0.85, -5.2)
+
+[node name="EnemyBrain" parent="Lanes/CautiousGoblin"]
+personality_id = "cautious"
+player_group = "personality_lab_cautious_target"
+zone_awareness_radius = 7.0
+
+[node name="BoldGoblin" parent="Lanes" instance=ExtResource("5_goblin")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -5, 0.85, -5.2)
+
+[node name="EnemyBrain" parent="Lanes/BoldGoblin"]
+personality_id = "bold"
+player_group = "personality_lab_bold_target"
+zone_awareness_radius = 7.0
+
+[node name="SkittishGoblin" parent="Lanes" instance=ExtResource("5_goblin")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 5, 0.85, -5.2)
+
+[node name="EnemyBrain" parent="Lanes/SkittishGoblin"]
+personality_id = "skittish"
+player_group = "personality_lab_skittish_target"
+zone_awareness_radius = 7.0
+
+[node name="BruteGoblin" parent="Lanes" instance=ExtResource("5_goblin")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 15, 0.85, -5.2)
+
+[node name="EnemyBrain" parent="Lanes/BruteGoblin"]
+personality_id = "brute"
+player_group = "personality_lab_brute_target"
+zone_awareness_radius = 7.0
+
+[node name="Hazards" type="Node3D" parent="."]
+
+[node name="CautiousPoison" parent="Hazards" instance=ExtResource("6_poison")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.12, 0.1)
+radius = 1.65
+lifetime = 999.0
+show_debug_prints = false
+
+[node name="BoldPoison" parent="Hazards" instance=ExtResource("6_poison")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.12, 0.1)
+radius = 1.65
+lifetime = 999.0
+show_debug_prints = false
+
+[node name="SkittishPoison" parent="Hazards" instance=ExtResource("6_poison")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.12, 0.1)
+radius = 1.65
+lifetime = 999.0
+show_debug_prints = false
+
+[node name="BrutePoison" parent="Hazards" instance=ExtResource("6_poison")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.12, 0.1)
+radius = 1.65
+lifetime = 999.0
+show_debug_prints = false

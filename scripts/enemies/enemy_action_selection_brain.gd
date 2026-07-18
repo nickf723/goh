@@ -5,12 +5,19 @@ class_name EnemyActionSelectionBrain
 @export var action_options: Array[EnemyActionOption] = []
 @export var reposition_when_no_action_matches: bool = true
 @export var retreat_speed_multiplier: float = 0.9
+@export var shared_decision_cooldown: float = 0.02
 
 var selected_option: EnemyActionOption
 var committed_option: EnemyActionOption
 var last_selection_score: float = 0.0
 var last_selection_summary: String = "none"
 var post_miss_retreat_timer: float = 0.0
+var option_cooldowns: Dictionary = {}
+
+
+func update_timers(delta: float) -> void:
+	super.update_timers(delta)
+	update_option_cooldowns(delta)
 
 
 func process_chase(delta: float) -> void:
@@ -34,6 +41,13 @@ func process_chase(delta: float) -> void:
 		return
 
 	if post_miss_retreat_timer > 0.0:
+		selected_option = select_action(distance, true)
+		if selected_option != null:
+			post_miss_retreat_timer = 0.0
+			last_action_summary = "cornered into " + selected_option.get_display_name()
+			commit_selected_action(delta, selected_option)
+			return
+
 		post_miss_retreat_timer = max(post_miss_retreat_timer - delta, 0.0)
 		clear_selection("post-miss retreat")
 		reset_attack_commit()
@@ -42,14 +56,14 @@ func process_chase(delta: float) -> void:
 		return
 
 	if attack_cooldown_timer > 0.0:
-		clear_selection("cooldown")
+		clear_selection("shared cooldown")
 		reset_attack_commit()
 
 		if distance <= get_maximum_action_start_distance():
-			last_action_summary = "repositioning during cooldown"
+			last_action_summary = "repositioning during shared cooldown"
 			wait_for_attack_opening(delta)
 		else:
-			last_action_summary = "closing during cooldown"
+			last_action_summary = "closing during shared cooldown"
 			move_toward_player(delta)
 		return
 
@@ -62,12 +76,21 @@ func process_chase(delta: float) -> void:
 	reposition_for_action(delta, distance)
 
 
-func select_action(distance: float) -> EnemyActionOption:
+func select_action(
+	distance: float,
+	retreat_interrupt_only: bool = false
+) -> EnemyActionOption:
 	var best_option: EnemyActionOption
 	var best_score: float = -INF
 
 	for option: EnemyActionOption in action_options:
 		if option == null or not option.is_valid_at_distance(distance):
+			continue
+
+		if retreat_interrupt_only and not option.can_interrupt_post_miss_retreat:
+			continue
+
+		if not is_option_available(option):
 			continue
 
 		var score: float = score_action_option(option, distance)
@@ -182,6 +205,18 @@ func register_attack_miss() -> void:
 	post_miss_retreat_timer = get_personality_number("post_miss_retreat_time", 0.0)
 
 
+func on_action_completed(_attack: EnemyAttackDefinition) -> void:
+	if committed_option != null:
+		start_option_cooldown(committed_option)
+
+
+func get_shared_cooldown_after_action(
+	_attack: EnemyAttackDefinition,
+	_default_cooldown: float
+) -> float:
+	return max(shared_decision_cooldown, 0.0)
+
+
 func interrupt_current_action(reason: String) -> bool:
 	var interrupted: bool = super.interrupt_current_action(reason)
 	if interrupted:
@@ -224,9 +259,28 @@ func reposition_for_action(delta: float, distance: float) -> void:
 		move_toward_player(delta)
 		return
 
-	last_selection_summary = "reposition"
+	last_selection_summary = get_reposition_summary(distance)
 	last_action_summary = "repositioning between action windows"
 	circle_player(delta)
+
+
+func get_reposition_summary(distance: float) -> String:
+	var cooling_options: Array[String] = []
+
+	for option: EnemyActionOption in action_options:
+		if option == null or not option.is_valid_at_distance(distance):
+			continue
+
+		var remaining: float = get_option_cooldown(option)
+		if remaining > 0.0:
+			cooling_options.append(
+				option.get_display_name() + " " + str(snapped(remaining, 0.1)) + "s"
+			)
+
+	if not cooling_options.is_empty():
+		return "waiting: " + ", ".join(cooling_options)
+
+	return "reposition"
 
 
 func move_away_from_player(delta: float) -> void:
@@ -251,6 +305,65 @@ func move_away_from_player(delta: float) -> void:
 	face_player(delta)
 
 
+func start_option_cooldown(option: EnemyActionOption) -> void:
+	if option == null:
+		return
+
+	var cooldown: float = option.get_reuse_cooldown()
+	if cooldown <= 0.0:
+		option_cooldowns.erase(get_option_key(option))
+		return
+
+	option_cooldowns[get_option_key(option)] = cooldown
+
+
+func update_option_cooldowns(delta: float) -> void:
+	var expired_keys: Array = []
+
+	for key in option_cooldowns.keys():
+		var remaining: float = max(float(option_cooldowns[key]) - delta, 0.0)
+		option_cooldowns[key] = remaining
+
+		if remaining <= 0.0:
+			expired_keys.append(key)
+
+	for key in expired_keys:
+		option_cooldowns.erase(key)
+
+
+func is_option_available(option: EnemyActionOption) -> bool:
+	return get_option_cooldown(option) <= 0.0
+
+
+func get_option_cooldown(option: EnemyActionOption) -> float:
+	if option == null:
+		return 0.0
+
+	return float(option_cooldowns.get(get_option_key(option), 0.0))
+
+
+func get_option_key(option: EnemyActionOption) -> int:
+	return option.get_instance_id() if option != null else 0
+
+
+func get_option_cooldown_summary() -> String:
+	var summaries: Array[String] = []
+
+	for option: EnemyActionOption in action_options:
+		if option == null:
+			continue
+
+		var remaining: float = get_option_cooldown(option)
+		if remaining <= 0.0:
+			continue
+
+		summaries.append(
+			option.get_display_name() + "=" + str(snapped(remaining, 0.1))
+		)
+
+	return "none" if summaries.is_empty() else ", ".join(summaries)
+
+
 func get_maximum_action_start_distance() -> float:
 	var maximum: float = 0.0
 	for option: EnemyActionOption in action_options:
@@ -266,4 +379,5 @@ func get_debug_data() -> Dictionary:
 	debug_data["selection_score"] = snapped(last_selection_score, 0.01)
 	debug_data["committed_option"] = committed_option.get_display_name() if committed_option != null else "none"
 	debug_data["retreat"] = snapped(post_miss_retreat_timer, 0.01)
+	debug_data["option_cooldowns"] = get_option_cooldown_summary()
 	return debug_data

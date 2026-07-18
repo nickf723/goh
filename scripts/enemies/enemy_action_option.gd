@@ -54,7 +54,8 @@ func get_display_name() -> String:
 
 func get_role_tags() -> Array[String]:
 	if attack == null:
-		return []
+		var empty_tags: Array[String] = []
+		return empty_tags
 
 	return attack.get_role_tags()
 

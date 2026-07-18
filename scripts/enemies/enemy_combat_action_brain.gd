@@ -7,7 +7,7 @@ const EnemyActionRunnerScript = preload("res://scripts/enemies/enemy_action_runn
 @export var action_runner_path: NodePath = NodePath("../EnemyActionRunner")
 @export var force_interrupt_threshold: float = 4.0
 
-var action_runner: EnemyActionRunner
+var action_runner
 var recover_visual_started: bool = false
 
 
@@ -17,11 +17,11 @@ func _ready() -> void:
 
 
 func resolve_action_runner() -> void:
-	action_runner = get_node_or_null(action_runner_path) as EnemyActionRunner
+	action_runner = get_node_or_null(action_runner_path)
 	if action_runner != null:
 		return
 
-	action_runner = EnemyActionRunnerScript.new() as EnemyActionRunner
+	action_runner = EnemyActionRunnerScript.new()
 	action_runner.name = "EnemyActionRunner"
 
 	if actor != null:
@@ -90,32 +90,42 @@ func process_attack_recover(delta: float) -> void:
 		finish_action_state()
 		return
 
+	var committed_action: EnemyAttackDefinition = action_runner.get_current_action()
+
 	apply_action_movement()
 	face_action_direction(delta)
 	action_runner.tick(delta)
 
 	if action_runner.consume_finished_request():
-		attack_cooldown_timer = get_attack_cooldown()
+		if committed_action != null:
+			attack_cooldown_timer = committed_action.get_cooldown()
+		else:
+			attack_cooldown_timer = 0.0
+
 		finish_action_state()
 
 
 func process_staggered(delta: float) -> void:
 	if has_running_action() and status_blocks_actions():
-		interrupt_current_action("status")
+		if not interrupt_current_action("status"):
+			cancel_current_action("status")
 
 	super.process_staggered(delta)
 
 
 func process_dead(delta: float) -> void:
 	if action_runner != null and action_runner.is_running():
-		action_runner.cancel_action("defeated")
+		cancel_current_action("defeated")
 
 	super.process_dead(delta)
 
 
 func perform_attack() -> void:
-	var attack: EnemyAttackDefinition = get_current_attack()
-	if attack == null or action_runner == null or action_runner.hit_registered:
+	if action_runner == null or action_runner.hit_registered:
+		return
+
+	var attack: EnemyAttackDefinition = action_runner.get_current_action()
+	if attack == null:
 		return
 
 	if player == null or not is_player_in_locked_attack_shape(attack):
@@ -128,7 +138,10 @@ func perform_attack() -> void:
 
 
 func register_attack_miss() -> void:
-	var attack: EnemyAttackDefinition = get_current_attack()
+	if action_runner == null:
+		return
+
+	var attack: EnemyAttackDefinition = action_runner.get_current_action()
 	if attack == null:
 		return
 
@@ -215,6 +228,18 @@ func interrupt_current_action(reason: String) -> bool:
 	return true
 
 
+func cancel_current_action(reason: String) -> void:
+	if action_runner == null or not action_runner.is_running():
+		return
+
+	action_runner.cancel_action(reason)
+	last_action_summary = "cancelled: " + reason
+	recover_visual_started = false
+
+	if telegraph != null and telegraph.has_method("reset"):
+		telegraph.reset()
+
+
 func start_recovery_visual() -> void:
 	if recover_visual_started:
 		return
@@ -255,13 +280,11 @@ func get_direction_to_player() -> Vector3:
 
 
 func get_current_attack_name() -> String:
+	if action_runner != null and action_runner.is_running():
+		return action_runner.get_action_display_name()
+
 	var attack: EnemyAttackDefinition = get_current_attack()
 	return attack.get_display_name() if attack != null else "attack"
-
-
-func get_attack_cooldown() -> float:
-	var attack: EnemyAttackDefinition = get_current_attack()
-	return attack.get_cooldown() if attack != null else 0.0
 
 
 func get_debug_data() -> Dictionary:

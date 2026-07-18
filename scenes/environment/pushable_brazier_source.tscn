@@ -128,6 +128,7 @@ display_name = "Lit Brazier"
 element = "fire"
 payload_tags = Array[String](["environment", "element_source", "brazier", "heat", "fire"])
 pulse_interval = 0.18
+emit_once_per_contact = true
 required_target_tags = Array[String](["frozen"])
 blocked_target_tags = Array[String](["steamed", "steam"])
 reservoir_mode = "finite"

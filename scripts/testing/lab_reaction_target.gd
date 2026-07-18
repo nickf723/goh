@@ -14,6 +14,18 @@ func _ready() -> void:
 	add_to_group("debuggable")
 
 
+func _physics_process(delta: float) -> void:
+	var force_receiver: Node = get_node_or_null("ForceReceiver")
+	if force_receiver == null or not force_receiver.has_method("consume_external_velocity"):
+		return
+
+	var external_velocity: Vector3 = force_receiver.consume_external_velocity(delta)
+	if external_velocity.length() <= 0.001:
+		return
+
+	global_position += external_velocity * delta
+
+
 func interact() -> Dictionary:
 	return {
 		"message": get_inspection_message(),
@@ -49,6 +61,11 @@ func reset_target() -> void:
 	if status_receiver != null and status_receiver.has_method("clear_all_statuses"):
 		status_receiver.clear_all_statuses()
 
+	var force_receiver: Node = get_node_or_null("ForceReceiver")
+	if force_receiver != null:
+		force_receiver.set("external_velocity", Vector3.ZERO)
+		force_receiver.set("last_force_summary", "none")
+
 	var payload_receiver: Node = get_node_or_null("PayloadReceiver")
 	if payload_receiver != null:
 		payload_receiver.set("last_payload_summary", "none")
@@ -69,7 +86,20 @@ func get_inspection_message() -> String:
 	if payload_receiver != null:
 		reaction = str(payload_receiver.get("last_reaction_summary"))
 
-	return target_label + " | statuses: " + statuses + " | last reaction: " + reaction
+	var force_summary: String = "none"
+	var force_receiver: Node = get_node_or_null("ForceReceiver")
+	if force_receiver != null:
+		force_summary = str(force_receiver.get("last_force_summary"))
+
+	return (
+		target_label
+		+ " | statuses: "
+		+ statuses
+		+ " | last reaction: "
+		+ reaction
+		+ " | force: "
+		+ force_summary
+	)
 
 
 func set_collision_enabled(node: Node, enabled: bool) -> void:
@@ -93,8 +123,14 @@ func get_debug_data() -> Dictionary:
 	if payload_receiver != null:
 		reaction = str(payload_receiver.get("last_reaction_summary"))
 
+	var force_summary: String = "none"
+	var force_receiver: Node = get_node_or_null("ForceReceiver")
+	if force_receiver != null:
+		force_summary = str(force_receiver.get("last_force_summary"))
+
 	return {
 		"lab_target": target_label,
 		"statuses": statuses,
 		"reaction": reaction,
+		"force": force_summary,
 	}

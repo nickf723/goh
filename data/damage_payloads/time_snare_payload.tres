@@ -5,11 +5,11 @@
 [resource]
 script = ExtResource("1_payload")
 amount = 0
-stance_damage = 1
+stance_damage = 0
 element = "time"
 source_name = "Time Snare"
-hit_type = "projectile"
+hit_type = "ground_field"
 status_effect = "chill"
-status_duration = 3.0
+status_duration = 0.75
 status_strength = 0.45
-tags = Array[String](["time", "slow", "tempo", "magic", "projectile", "control"])
+tags = Array[String](["time", "slow", "tempo", "magic", "field", "ground_targeted", "control"])

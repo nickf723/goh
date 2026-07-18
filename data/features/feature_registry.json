@@ -10,10 +10,28 @@
       "status": "vertical_slice",
       "description": "Outdoor Italy approach combining exploration, environmental storytelling, weapon combat, elemental route solving, optional Sound discovery, checkpointing, and direct entry into the Church Trial.",
       "scene": "res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn",
-      "validation_scenes": ["res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn"],
-      "automated_tests": ["res://scenes/tests/ruined_village_approach_smoke_test.tscn"],
-      "dependencies": ["church_trial", "elemental_reaction_lab", "weapon_combat_arena"],
-      "controls": ["MOVE", "INTERACT", "LIGHT", "HEAVY", "FOCUS", "CAST", "DODGE", "LOCK-ON", "RESET"],
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/ruined_village_approach_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "church_trial",
+        "elemental_reaction_lab",
+        "weapon_combat_arena"
+      ],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON",
+        "RESET"
+      ],
       "manual_test": "docs/ruined_village_approach_v0_9_test.md",
       "temporary_state": "persistent",
       "story_integrated": true,
@@ -36,10 +54,21 @@
       "status": "vertical_slice",
       "description": "The integrated Church of Angels trial: exploration, elemental tests, combat rooms, Sound reveal, Animated Armor boss, reward, save flow, and exit.",
       "scene": "res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn",
-      "validation_scenes": ["res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn"],
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn"
+      ],
       "automated_tests": [],
       "dependencies": [],
-      "controls": ["MOVE", "INTERACT", "LIGHT", "HEAVY", "FOCUS", "CAST", "DODGE", "LOCK-ON"],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON"
+      ],
       "manual_test": "docs/church_trial_vertical_slice_test.md",
       "temporary_state": "persistent",
       "story_integrated": true,
@@ -62,13 +91,23 @@
       "status": "prototype_verified",
       "description": "Permanent laboratory for elemental reactions, environmental element sources, Steam Burst pressure accumulation, and a mechanical lift that converts repeated chemistry into physical work.",
       "scene": "res://scenes/levels/prototypes/prototype_environmental_chemistry_lab_v1.tscn",
-      "validation_scenes": ["res://scenes/levels/prototypes/prototype_environmental_chemistry_lab_v1.tscn"],
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_environmental_chemistry_lab_v1.tscn"
+      ],
       "automated_tests": [
         "res://scenes/tests/elemental_reaction_smoke_test.tscn",
         "res://scenes/tests/mechanical_consumer_smoke_test.tscn"
       ],
       "dependencies": [],
-      "controls": ["MOVE", "INTERACT", "FOCUS", "CAST", "LIGHT", "HEAVY", "RESET"],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "FOCUS",
+        "CAST",
+        "LIGHT",
+        "HEAVY",
+        "RESET"
+      ],
       "manual_test": "docs/mechanical_consumers_pressure_lift_v1_test.md",
       "temporary_state": "runtime_only",
       "story_integrated": false,
@@ -92,10 +131,24 @@
       "status": "prototype_verified",
       "description": "Three-class combat arena for buffered Light/Heavy branch testing with Sword, Hammer, and Spear, plus target geometry and live enemy pressure.",
       "scene": "res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn",
-      "validation_scenes": ["res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn"],
-      "automated_tests": ["res://scenes/tests/weapon_moveset_smoke_test.tscn"],
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/weapon_moveset_smoke_test.tscn"
+      ],
       "dependencies": [],
-      "controls": ["MOVE", "INTERACT", "LIGHT", "HEAVY", "FOCUS", "CAST", "DODGE", "LOCK-ON", "RESET"],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON",
+        "RESET"
+      ],
       "manual_test": "docs/weapon_combat_arena_v0_6_test.md",
       "temporary_state": "runtime_only",
       "story_integrated": false,
@@ -118,10 +171,25 @@
       "status": "prototype_verified",
       "description": "Safe runtime chamber for resource overcharge, Infinite Stamina and Mana, Focus slowdown comparison, stat inspection, and exact snapshot restoration.",
       "scene": "res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn",
-      "validation_scenes": ["res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn"],
-      "automated_tests": ["res://scenes/tests/runtime_stat_lab_smoke_test.tscn"],
-      "dependencies": ["weapon_combat_arena"],
-      "controls": ["MOVE", "INTERACT", "LIGHT", "HEAVY", "FOCUS", "CAST", "DODGE", "RESET"],
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/runtime_stat_lab_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "weapon_combat_arena"
+      ],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "RESET"
+      ],
       "manual_test": "docs/runtime_stat_lab_v0_7_test.md",
       "temporary_state": "runtime_only",
       "story_integrated": false,
@@ -144,10 +212,24 @@
       "status": "development_tool",
       "description": "General-purpose playground for interactables, receivers, surfaces, enemy waves, developer vision, audits, and rapid scenario experiments.",
       "scene": "res://scenes/levels/_dev/dev_interaction_sandbox.tscn",
-      "validation_scenes": ["res://scenes/levels/_dev/dev_interaction_sandbox.tscn"],
+      "validation_scenes": [
+        "res://scenes/levels/_dev/dev_interaction_sandbox.tscn"
+      ],
       "automated_tests": [],
       "dependencies": [],
-      "controls": ["MOVE", "INTERACT", "LIGHT", "HEAVY", "FOCUS", "CAST", "DODGE", "DEV VISION", "SPAWN WAVE", "CLEAR WAVE", "AUDIT"],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "DEV VISION",
+        "SPAWN WAVE",
+        "CLEAR WAVE",
+        "AUDIT"
+      ],
       "manual_test": "docs/dev_interaction_sandbox_test.md",
       "temporary_state": "runtime_only",
       "story_integrated": false,
@@ -170,10 +252,25 @@
       "status": "infrastructure",
       "description": "Registry-driven controller-first launcher and health dashboard for permanent development scenes and their validation contracts.",
       "scene": "res://scenes/ui/development_control_center_v1.tscn",
-      "validation_scenes": ["res://scenes/ui/development_control_center_v1.tscn"],
-      "automated_tests": ["res://scenes/tests/architecture_contract_smoke_test.tscn"],
-      "dependencies": ["ruined_village_approach", "church_trial", "elemental_reaction_lab", "weapon_combat_arena", "runtime_stat_lab", "dev_interaction_sandbox"],
-      "controls": ["NAVIGATE", "SELECT", "BACK"],
+      "validation_scenes": [
+        "res://scenes/ui/development_control_center_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/architecture_contract_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "ruined_village_approach",
+        "church_trial",
+        "elemental_reaction_lab",
+        "weapon_combat_arena",
+        "runtime_stat_lab",
+        "dev_interaction_sandbox"
+      ],
+      "controls": [
+        "NAVIGATE",
+        "SELECT",
+        "BACK"
+      ],
       "manual_test": "docs/development_control_center_v0_8_test.md",
       "temporary_state": "none",
       "story_integrated": false,

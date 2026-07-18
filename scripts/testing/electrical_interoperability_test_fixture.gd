@@ -2,10 +2,13 @@ extends RefCounted
 class_name ElectricalInteroperabilityTestFixture
 
 const CopperProfile: PhysicalMaterialProfile = preload("res://data/materials/copper_physical_profile.tres")
+const LabLoadout: AbilityLoadout = preload("res://data/loadouts/electrical_interoperability_lab_loadout.tres")
+const LabScene: PackedScene = preload("res://scenes/levels/prototypes/prototype_electrical_interoperability_lab_v1.tscn")
 
 
 static func run(host: Node) -> Array[String]:
 	var failures: Array[String] = []
+	test_compact_lab_loadout(failures)
 	var fixture := Node3D.new()
 	fixture.name = "ElectricalInteroperabilityFixture"
 	host.add_child(fixture)
@@ -109,6 +112,80 @@ static func run(host: Node) -> Array[String]:
 		failures.append("interoperability: environmental source identity should reach the circuit port")
 
 	fixture.queue_free()
+	await host.get_tree().process_frame
+	failures.append_array(await test_playable_lab_runtime(host))
+	return failures
+
+
+static func test_compact_lab_loadout(failures: Array[String]) -> void:
+	if LabLoadout.get_equipped_ability_count() != 2:
+		failures.append("interoperability lab: compact loadout should contain exactly Lightning Spark and Firebolt")
+		return
+	var first_ability: AbilityDefinition = LabLoadout.get_equipped_ability(0)
+	var second_ability: AbilityDefinition = LabLoadout.get_equipped_ability(1)
+	if first_ability == null or first_ability.element != "lightning":
+		failures.append("interoperability lab: Lightning Spark should be equipped by default")
+	if second_ability == null or second_ability.element != "fire":
+		failures.append("interoperability lab: Firebolt should remain available as the rejection comparison")
+
+
+static func test_playable_lab_runtime(host: Node) -> Array[String]:
+	var failures: Array[String] = []
+	var lab: Node = LabScene.instantiate()
+	host.add_child(lab)
+	await host.get_tree().process_frame
+	await host.get_tree().process_frame
+	await host.get_tree().process_frame
+
+	var base_lab: Node3D = lab.get_node_or_null("BaseCircuitLab") as Node3D
+	if base_lab == null:
+		failures.append("interoperability lab: playable scene should contain the conductive base laboratory")
+		lab.queue_free()
+		return failures
+
+	var caster: Node = base_lab.get_node_or_null("Player/AbilityCaster")
+	var runtime_loadout: AbilityLoadout = caster.get("loadout") as AbilityLoadout if caster != null else null
+	if runtime_loadout == null or runtime_loadout.get_equipped_ability_count() != 2:
+		failures.append("interoperability lab: playable player should receive the compact spell loadout")
+	elif caster.has_method("get_current_ability"):
+		var active_ability: AbilityDefinition = caster.call("get_current_ability") as AbilityDefinition
+		if active_ability == null or active_ability.element != "lightning":
+			failures.append("interoperability lab: playable scene should begin with Lightning Spark selected")
+
+	var copper_bridge: FieldResponsiveBody = base_lab.get_node_or_null("CopperBridge") as FieldResponsiveBody
+	if copper_bridge == null:
+		failures.append("interoperability lab: installed copper link is missing")
+	else:
+		if copper_bridge.position.distance_to(Vector3(0.0, 0.35, 2.5)) > 0.02:
+			failures.append("interoperability lab: copper link should begin installed in the circuit cradle")
+		if copper_bridge.is_physics_processing():
+			failures.append("interoperability lab: installed copper link should not require precision pushing")
+
+	var wood_bridge: FieldResponsiveBody = base_lab.get_node_or_null("WoodBridge") as FieldResponsiveBody
+	if wood_bridge != null and wood_bridge.visible:
+		failures.append("interoperability lab: wood comparison should be removed from the simplified room")
+
+	var circuit_switch: CircuitSwitch = base_lab.get_node_or_null("Circuit/Switch") as CircuitSwitch
+	if circuit_switch == null or not circuit_switch.path_enabled:
+		failures.append("interoperability lab: simplified bench should begin with its internal switch closed")
+	elif circuit_switch.visible:
+		failures.append("interoperability lab: redundant internal switch should be hidden")
+
+	var source_selector: CircuitSourceSelector = base_lab.get_node_or_null("SourceSelector") as CircuitSourceSelector
+	var storm_console: EnvironmentalEmitterConsole = base_lab.get_node_or_null("StormPulseConsole") as EnvironmentalEmitterConsole
+	if source_selector == null or storm_console == null:
+		failures.append("interoperability lab: source selector and storm console should both exist")
+	elif source_selector.position.distance_to(storm_console.position) < 10.0:
+		failures.append("interoperability lab: source controls should be spread apart for readability")
+
+	var target_area: Area3D = base_lab.get_node_or_null("Circuit/LightningInputPort/LightningTargetArea") as Area3D
+	var target_collision: CollisionShape3D = target_area.get_node_or_null("CollisionShape3D") as CollisionShape3D if target_area != null else null
+	var target_shape: SphereShape3D = target_collision.shape as SphereShape3D if target_collision != null else null
+	if target_shape == null or target_shape.radius < 1.2:
+		failures.append("interoperability lab: Lightning input should have a generous strike target")
+
+	lab.queue_free()
+	await host.get_tree().process_frame
 	return failures
 
 

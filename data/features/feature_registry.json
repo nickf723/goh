@@ -123,6 +123,41 @@
       "timeout_seconds": 7
     },
     {
+      "id": "physical_interaction_lab",
+      "order": 25,
+      "display_name": "Physical Interaction Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v0.1",
+      "status": "experimental",
+      "description": "Shared physical substrate for material properties, vector fields, continuous force, torque, induced magnetization, polarity reversal, and material-specific magnetic response.",
+      "scene": "res://scenes/levels/prototypes/prototype_physical_interaction_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_physical_interaction_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/physical_interaction_foundation_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "RESET"
+      ],
+      "manual_test": "docs/physical_interaction_foundation_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "This slice proves field and material infrastructure rather than a complete circuit or electromagnetism engine.",
+        "Magnetic translation uses a stable gameplay approximation of field-gradient response.",
+        "Copper eddy currents, induction, circuit current, and charged-particle behavior are intentionally out of scope.",
+        "Geometry, materials, field visualization, and tuning remain replacement-ready."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 7
+    },
+    {
       "id": "weapon_combat_arena",
       "order": 30,
       "display_name": "Weapon Combat Arena",
@@ -262,6 +297,7 @@
         "ruined_village_approach",
         "church_trial",
         "elemental_reaction_lab",
+        "physical_interaction_lab",
         "weapon_combat_arena",
         "runtime_stat_lab",
         "dev_interaction_sandbox"

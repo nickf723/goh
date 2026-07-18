@@ -54,6 +54,15 @@ func _ready() -> void:
 	ice_emitter.required_target_tags = ["wet"]
 	ice_emitter.blocked_target_tags = ["frozen", "steamed"]
 	ice_emitter.reservoir_mode = "infinite"
+	ice_emitter.emit_once_per_contact = true
+	ice_emitter.collision_layer = 0
+	ice_emitter.collision_mask = 1
+	var ice_collision := CollisionShape3D.new()
+	ice_collision.name = "CollisionShape3D"
+	var ice_shape := SphereShape3D.new()
+	ice_shape.radius = 2.0
+	ice_collision.shape = ice_shape
+	ice_emitter.add_child(ice_collision)
 	add_child(ice_emitter)
 
 	fire_emitter = ElementEmitterScript.new()
@@ -71,6 +80,7 @@ func _ready() -> void:
 	add_child(fire_emitter)
 
 	await get_tree().process_frame
+	await get_tree().physics_frame
 	run_tests()
 
 	if failures.is_empty():
@@ -92,6 +102,7 @@ func run_tests() -> void:
 	test_steam()
 	test_steam_area_effect()
 	test_environmental_sources()
+	test_environmental_refreeze_cycle()
 	test_source_reservoir_contract()
 	test_debug_matrix()
 
@@ -213,6 +224,34 @@ func test_environmental_sources() -> void:
 		failures.append("environmental Fire should resolve through the existing Steam Burst rule")
 	if not str(fire_result.get("message", "")).to_lower().contains("steam"):
 		failures.append("environmental Fire result should report Steam Burst")
+
+
+func test_environmental_refreeze_cycle() -> void:
+	environmental_water.call("reset_surface")
+	ice_emitter.reset_emitter()
+
+	var first_freeze: Array[Dictionary] = ice_emitter.emit_pulse()
+	if first_freeze.is_empty():
+		failures.append("Frost Crystal should affect an overlapping wet surface")
+	if str(environmental_water.get("reaction_state")) != "frozen":
+		failures.append("first environmental Ice pulse should freeze the water")
+
+	var water_id: int = environmental_water.get_instance_id()
+	if not ice_emitter.emitted_contact_ids.has(water_id):
+		failures.append("once-per-contact emitter should remember its eligible frozen target")
+
+	var blocked_pulse: Array[Dictionary] = ice_emitter.emit_pulse()
+	if not blocked_pulse.is_empty():
+		failures.append("Frost Crystal should not repeatedly pulse while water is already frozen")
+	if ice_emitter.emitted_contact_ids.has(water_id):
+		failures.append("ineligible frozen state should rearm contact memory for a later thaw")
+
+	environmental_water.call("set_reaction_state", "normal", 0.0)
+	var refreeze: Array[Dictionary] = ice_emitter.emit_pulse()
+	if refreeze.is_empty():
+		failures.append("Frost Crystal should emit again when overlapping water becomes eligible")
+	if str(environmental_water.get("reaction_state")) != "frozen":
+		failures.append("thawed water should refreeze without separating from the Frost Crystal")
 
 
 func test_source_reservoir_contract() -> void:

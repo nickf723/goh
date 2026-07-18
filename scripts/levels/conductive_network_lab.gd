@@ -2,6 +2,10 @@ extends Node3D
 class_name ConductiveNetworkLab
 
 @export var readout_refresh_interval: float = 0.08
+@export var bridge_terminal_radius: float = 0.36
+@export var bridge_impulse_retention: float = 0.0
+@export var bridge_drag: float = 8.5
+@export var bridge_max_speed: float = 4.2
 
 @onready var solver: DCCircuitSolver = get_node_or_null("DCCircuitSolver") as DCCircuitSolver
 @onready var battery: CircuitVoltageSource = get_node_or_null("Circuit/Battery") as CircuitVoltageSource
@@ -10,6 +14,8 @@ class_name ConductiveNetworkLab
 @onready var lamp: CircuitComponent = get_node_or_null("Circuit/Lamp") as CircuitComponent
 @onready var readout: Label3D = get_node_or_null("CircuitReadout") as Label3D
 @onready var player: Node3D = get_node_or_null("Player") as Node3D
+@onready var copper_bridge: FieldResponsiveBody = get_node_or_null("CopperBridge") as FieldResponsiveBody
+@onready var wood_bridge: FieldResponsiveBody = get_node_or_null("WoodBridge") as FieldResponsiveBody
 
 var refresh_timer: float = 0.0
 var initial_player_transform: Transform3D
@@ -19,9 +25,34 @@ var completion_announced: bool = false
 func _ready() -> void:
 	add_to_group("debuggable")
 	if player != null:
+		player.add_to_group("player")
 		initial_player_transform = player.transform
+	configure_bridge(copper_bridge)
+	configure_bridge(wood_bridge)
 	GameState.set_objective("Bridge the circuit gap, close the switch, and energize the electromagnet.")
+	if solver != null:
+		solver.request_solve()
 	update_presentation()
+
+
+func configure_bridge(bridge: FieldResponsiveBody) -> void:
+	if bridge == null:
+		return
+	bridge.floor_snap_length = 0.35
+	bridge.floor_stop_on_slope = true
+
+	var force_receiver: ForceReceiver = bridge.get_node_or_null("ForceReceiver") as ForceReceiver
+	if force_receiver != null:
+		force_receiver.impulse_momentum_retention = clampf(bridge_impulse_retention, 0.0, 1.0)
+		force_receiver.drag = max(bridge_drag, 0.0)
+		force_receiver.max_force_speed = max(bridge_max_speed, 0.1)
+
+	var component: CircuitComponent = bridge.get_node_or_null("CircuitComponent") as CircuitComponent
+	if component == null:
+		return
+	for terminal: CircuitTerminal in [component.get_terminal_a(), component.get_terminal_b()]:
+		if terminal != null:
+			terminal.connection_radius = max(terminal.connection_radius, bridge_terminal_radius)
 
 
 func _process(delta: float) -> void:
@@ -124,4 +155,6 @@ func get_debug_data() -> Dictionary:
 		"battery": battery.get_debug_data() if battery != null else {},
 		"switch": circuit_switch.get_debug_data() if circuit_switch != null else {},
 		"coil": coil.get_debug_data() if coil != null else {},
+		"copper_bridge": copper_bridge.get_debug_data() if copper_bridge != null else {},
+		"wood_bridge": wood_bridge.get_debug_data() if wood_bridge != null else {},
 	}

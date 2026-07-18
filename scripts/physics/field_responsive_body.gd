@@ -13,6 +13,7 @@ class_name FieldResponsiveBody
 
 var initial_transform: Transform3D
 var gravity_velocity: float = 0.0
+var contact_normals: Array[Vector3] = []
 
 
 func _ready() -> void:
@@ -45,6 +46,8 @@ func _physics_process(delta: float) -> void:
 		"linear_velocity",
 		Vector3.ZERO
 	) as Vector3
+	if force_receiver != null:
+		field_velocity = force_receiver.constrain_continuous_velocity(contact_normals)
 	velocity.x = impulse_velocity.x + field_velocity.x
 	velocity.z = impulse_velocity.z + field_velocity.z
 
@@ -62,6 +65,27 @@ func _physics_process(delta: float) -> void:
 		rotate(angular_velocity.normalized(), angular_velocity.length() * delta)
 
 	move_and_slide()
+	refresh_contact_normals()
+	if force_receiver != null:
+		force_receiver.constrain_continuous_velocity(contact_normals)
+
+
+func refresh_contact_normals() -> void:
+	contact_normals.clear()
+	for collision_index: int in get_slide_collision_count():
+		var collision: KinematicCollision3D = get_slide_collision(collision_index)
+		if collision == null:
+			continue
+		var normal: Vector3 = collision.get_normal()
+		if normal.length() <= 0.001:
+			continue
+		var duplicate: bool = false
+		for existing_normal: Vector3 in contact_normals:
+			if existing_normal.normalized().dot(normal.normalized()) > 0.995:
+				duplicate = true
+				break
+		if not duplicate:
+			contact_normals.append(normal.normalized())
 
 
 func get_effective_mass() -> float:
@@ -86,6 +110,7 @@ func reset_body() -> void:
 	transform = initial_transform
 	velocity = Vector3.ZERO
 	gravity_velocity = 0.0
+	contact_normals.clear()
 	if force_receiver != null:
 		force_receiver.reset_forces()
 	if field_receiver != null:
@@ -113,6 +138,7 @@ func get_debug_data() -> Dictionary:
 		"mass_kg": snapped(get_effective_mass(), 0.01),
 		"position": global_position,
 		"velocity": velocity,
+		"contact_normals": contact_normals.duplicate(),
 		"force": force_receiver.get_debug_data() if force_receiver != null else {},
 		"field_response": field_receiver.get_debug_data() if field_receiver != null else {},
 	}

@@ -107,6 +107,7 @@ static func run(host: Node) -> Array[String]:
 
 	fixture.queue_free()
 	failures.append_array(await ElectricalInteroperabilityTestFixture.run(host))
+	failures.append_array(await ConductiveWaterTestFixture.run(host))
 	return failures
 
 

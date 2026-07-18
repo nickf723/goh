@@ -9,9 +9,10 @@
 [ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="7_gold"]
 [ext_resource type="Material" path="res://art/materials/prototype/mana_cyan_glow.tres" id="8_ice"]
 [ext_resource type="Material" path="res://art/materials/prototype/exit_gold_glow.tres" id="9_fire"]
+[ext_resource type="PackedScene" path="res://scenes/environment/steam_pressure_lift.tscn" id="10_lift"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_platform"]
-size = Vector3(8.2, 0.16, 6.2)
+size = Vector3(8.2, 0.16, 7.2)
 
 [sub_resource type="TorusMesh" id="TorusMesh_reaction"]
 inner_radius = 2.58
@@ -29,7 +30,7 @@ size = Vector3(0.12, 0.08, 1.7)
 script = ExtResource("1_station")
 
 [node name="Platform" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.02, 0)
+position = Vector3(0, 0.02, 0.5)
 material_override = ExtResource("6_floor")
 mesh = SubResource("BoxMesh_platform")
 
@@ -39,18 +40,18 @@ material_override = ExtResource("7_gold")
 mesh = SubResource("TorusMesh_reaction")
 
 [node name="Title" type="Label3D" parent="."]
-position = Vector3(0, 2.72, -2.72)
-text = "ENVIRONMENT CHEMISTRY"
-font_size = 46
+position = Vector3(0, 2.92, -2.72)
+text = "ENVIRONMENT CHEMISTRY → MECHANICAL WORK"
+font_size = 40
 pixel_size = 0.007
 billboard = 1
 modulate = Color(0.88, 0.94, 1, 1)
 outline_size = 7
 
 [node name="Instruction" type="Label3D" parent="."]
-position = Vector3(0, 2.08, -2.65)
-text = "1  Crystal freezes water   •   2  Stand right of brazier   •   3  Heavy sword toward ice"
-font_size = 25
+position = Vector3(0, 2.32, -2.65)
+text = "Freeze water • Push brazier into ice • Repeat 3 Steam Bursts • Ride the pressure lift"
+font_size = 24
 pixel_size = 0.0065
 billboard = 1
 modulate = Color(1, 0.88, 0.62, 1)
@@ -76,7 +77,7 @@ outline_size = 5
 
 [node name="GoalLabel" type="Label3D" parent="."]
 position = Vector3(0, 0.58, -1.5)
-text = "FROZEN WATER\nMOVE FIRE HERE"
+text = "FROZEN WATER\nFEED STEAM INTAKE"
 font_size = 25
 pixel_size = 0.0065
 billboard = 1
@@ -114,13 +115,16 @@ position = Vector3(-2.55, 0.14, 0)
 position = Vector3(3.4, 0.08, 0)
 
 [node name="ReactionTarget" parent="." instance=ExtResource("5_target")]
-position = Vector3(0, 0.5, 1.75)
+position = Vector3(2.35, 0.5, 1.0)
+
+[node name="SteamPressureLift" parent="." instance=ExtResource("10_lift")]
+position = Vector3(0, 0, 2.2)
 
 [node name="StateReadout" type="Label3D" parent="."]
-position = Vector3(0, 1.28, 2.72)
+position = Vector3(3.42, 1.42, 2.65)
 text = "SURFACE: INITIALIZING"
-font_size = 27
-pixel_size = 0.0065
+font_size = 24
+pixel_size = 0.0062
 billboard = 1
 modulate = Color(0.9, 0.9, 0.95, 1)
 outline_size = 6

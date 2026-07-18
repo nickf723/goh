@@ -3,12 +3,13 @@ class_name EnvironmentalChemistryStation
 
 const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
 
-@export var success_message: String = "Environmental chemistry complete: the world supplied both Ice and Fire."
+@export var success_message: String = "Environmental chemistry complete: repeated Steam Bursts powered the lift."
 @export var readout_refresh_interval: float = 0.1
 
 @onready var water_patch: Node = get_node_or_null("WaterPatch")
 @onready var frost_crystal: Node3D = get_node_or_null("FrostCrystalSource") as Node3D
 @onready var brazier: Node3D = get_node_or_null("PushableBrazierSource") as Node3D
+@onready var pressure_lift: Node = get_node_or_null("SteamPressureLift")
 @onready var readout: Label3D = get_node_or_null("StateReadout") as Label3D
 
 var refresh_timer: float = 0.0
@@ -44,6 +45,10 @@ func update_readout() -> void:
 	var frost_data: Dictionary = get_emitter_data(frost_crystal)
 	var fire_data: Dictionary = get_emitter_data(brazier)
 	var distance_to_water: float = get_horizontal_distance(brazier, water_patch)
+	var machine_data: Dictionary = get_machine_data()
+	var pressure: float = float(machine_data.get("pressure_value", 0.0))
+	var threshold: float = float(machine_data.get("threshold", 80.0))
+	var lift_state: String = "LIFTED" if bool(machine_data.get("activated", false)) else "CHARGING"
 
 	readout.text = (
 		"SURFACE: " + state.to_upper()
@@ -51,8 +56,10 @@ func update_readout() -> void:
 		+ "\nICE: " + format_source(frost_data)
 		+ "\nFIRE: " + format_source(fire_data)
 		+ "\nBRAZIER → WATER: " + str(snapped(distance_to_water, 0.05)) + "m"
+		+ "\nPRESSURE: " + str(roundi(pressure)) + " / " + str(roundi(threshold))
+		+ "  •  " + lift_state
 	)
-	readout.modulate = get_state_color(state)
+	readout.modulate = get_state_color(state, bool(machine_data.get("activated", false)))
 
 
 func get_emitter_data(source: Node) -> Dictionary:
@@ -62,6 +69,21 @@ func get_emitter_data(source: Node) -> Dictionary:
 	if emitter == null:
 		return {}
 	return emitter.get_debug_data()
+
+
+func get_machine_data() -> Dictionary:
+	if pressure_lift == null or not pressure_lift.has_method("get_debug_data"):
+		return {}
+
+	var data: Dictionary = pressure_lift.get_debug_data()
+	var pressure_data: Dictionary = data.get("pressure", {})
+	var actuator_data: Dictionary = data.get("actuator", {})
+	return {
+		"pressure_value": float(pressure_data.get("pressure", 0.0)),
+		"threshold": float(actuator_data.get("activation_pressure", 80.0)),
+		"activated": bool(data.get("activated", false)),
+		"raw": data,
+	}
 
 
 func format_source(data: Dictionary) -> String:
@@ -92,19 +114,22 @@ func get_horizontal_distance(a: Node3D, b: Node) -> float:
 
 
 func check_for_success() -> void:
-	if success_announced or water_patch == null or not water_patch.has_method("get_debug_data"):
+	if success_announced or pressure_lift == null:
 		return
-
-	var surface_data: Dictionary = water_patch.get_debug_data()
-	if str(surface_data.get("last_reaction", "none")) != "steam_burst":
+	if not pressure_lift.has_method("is_lift_activated"):
+		return
+	if not bool(pressure_lift.is_lift_activated()):
 		return
 
 	success_announced = true
 	show_message(success_message)
-	GameState.set_objective("Environmental sources can now participate in the elemental reaction system.")
+	GameState.set_objective("Environmental reactions can now accumulate resources and operate machinery.")
 
 
-func get_state_color(state: String) -> Color:
+func get_state_color(state: String, lift_activated: bool = false) -> Color:
+	if lift_activated:
+		return ElementVisuals.get_element_color("steam")
+
 	match state:
 		"frozen":
 			return ElementVisuals.get_element_color("ice")
@@ -138,5 +163,6 @@ func get_debug_data() -> Dictionary:
 		"frost_source": get_emitter_data(frost_crystal),
 		"fire_source": get_emitter_data(brazier),
 		"brazier_distance": get_horizontal_distance(brazier, water_patch),
+		"machine": get_machine_data(),
 		"success": success_announced,
 	}

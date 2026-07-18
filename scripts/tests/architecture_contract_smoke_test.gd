@@ -2,10 +2,13 @@ extends Node
 
 const FeatureRegistryScript = preload("res://scripts/systems/feature_registry.gd")
 const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
+const EnemyActionSelectionBrainScript = preload("res://scripts/enemies/enemy_action_selection_brain.gd")
 const StartingLoadout: AbilityLoadout = preload("res://data/loadouts/grace_starting_loadout.tres")
 const PracticeSword: WeaponDefinition = preload("res://data/weapons/practice_sword.tres")
 const TrainingHammer: WeaponDefinition = preload("res://data/weapons/training_hammer.tres")
 const TrainingSpear: WeaponDefinition = preload("res://data/weapons/training_spear.tres")
+const GremlinBiteOption: EnemyActionOption = preload("res://data/enemy_action_options/gremlin_bite_option.tres")
+const GremlinPounceOption: EnemyActionOption = preload("res://data/enemy_action_options/gremlin_pounce_option.tres")
 
 const REQUIRED_INPUT_ACTIONS: Array[String] = [
 	"ui_up",
@@ -39,6 +42,7 @@ func _ready() -> void:
 func run_tests() -> void:
 	validate_feature_registry_contract()
 	validate_action_resource_pairs()
+	validate_enemy_action_selection_contract()
 	validate_input_contract()
 	validate_weapon_contracts()
 	validate_ability_contracts()
@@ -126,6 +130,45 @@ func validate_action_resource_pairs() -> void:
 			failures.append(maximum_id + " default must be positive")
 		if int(defaults.get(resource_id, 0)) > int(defaults.get(maximum_id, 0)):
 			failures.append(resource_id + " default exceeds " + maximum_id)
+
+
+func validate_enemy_action_selection_contract() -> void:
+	if GremlinBiteOption == null or GremlinPounceOption == null:
+		failures.append("Gremlin action options must load")
+		return
+
+	var brain = EnemyActionSelectionBrainScript.new()
+	var options: Array[EnemyActionOption] = [
+		GremlinBiteOption,
+		GremlinPounceOption,
+	]
+	brain.action_options = options
+	brain.personality_id = "skittish"
+
+	var close_choice: EnemyActionOption = brain.select_action(0.9)
+	if close_choice != GremlinBiteOption:
+		failures.append("Gremlin must select Close Bite at 0.9m")
+
+	var mid_choice: EnemyActionOption = brain.select_action(2.2)
+	if mid_choice != GremlinPounceOption:
+		failures.append("Gremlin must select Pounce at 2.2m")
+
+	brain.start_option_cooldown(GremlinPounceOption)
+	if brain.get_option_cooldown(GremlinPounceOption) <= 0.0:
+		failures.append("Pounce must enter its independent reuse cooldown")
+
+	var close_during_pounce_cooldown: EnemyActionOption = brain.select_action(0.9)
+	if close_during_pounce_cooldown != GremlinBiteOption:
+		failures.append("Pounce cooldown must not block Close Bite")
+
+	var mid_during_pounce_cooldown: EnemyActionOption = brain.select_action(2.2)
+	if mid_during_pounce_cooldown != null:
+		failures.append("Cooling Pounce must be unavailable at mid-range")
+
+	if not GremlinBiteOption.can_interrupt_post_miss_retreat:
+		failures.append("Close Bite must be allowed to interrupt retreat when cornered")
+
+	brain.free()
 
 
 func validate_input_contract() -> void:

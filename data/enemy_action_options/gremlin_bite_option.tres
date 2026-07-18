@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="EnemyActionOption" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_option.gd" id="1_option"]
+[ext_resource type="Resource" path="res://data/enemy_attacks/gremlin_bite_attack.tres" id="2_attack"]
+[ext_resource type="Resource" path="res://data/enemy_action_presentations/gremlin_bite_presentation.tres" id="3_presentation"]
+
+[resource]
+script = ExtResource("1_option")
+attack = ExtResource("2_attack")
+presentation = ExtResource("3_presentation")
+selection_role = "close"
+minimum_start_distance = 0.0
+maximum_start_distance = 1.15
+selection_weight = 1.0
+can_interrupt_post_miss_retreat = true
+contact_range_override = 1.1
+stop_movement_on_hit = true
+reuse_cooldown_override = 0.75
+debug_label = "Close Bite"

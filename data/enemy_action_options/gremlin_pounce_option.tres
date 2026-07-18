@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyActionOption" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_option.gd" id="1_option"]
+[ext_resource type="Resource" path="res://data/enemy_attacks/gremlin_pounce_attack.tres" id="2_attack"]
+[ext_resource type="Resource" path="res://data/enemy_action_presentations/gremlin_pounce_presentation.tres" id="3_presentation"]
+
+[resource]
+script = ExtResource("1_option")
+attack = ExtResource("2_attack")
+presentation = ExtResource("3_presentation")
+selection_role = "lunge"
+minimum_start_distance = 1.65
+maximum_start_distance = 3.1
+selection_weight = 1.05
+contact_range_override = 0.9
+stop_movement_on_hit = true
+reuse_cooldown_override = 1.4
+debug_label = "Pounce"

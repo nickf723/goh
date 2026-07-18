@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/actors/interactables/upgrade_pedestal.tscn" id="6_pedestal"]
 [ext_resource type="PackedScene" path="res://scenes/actors/testing/goblin_reaction_target.tscn" id="7_target"]
 [ext_resource type="PackedScene" uid="uid://dgprwdbmbpuqk" path="res://scenes/actors/enemies/goblin_drone.tscn" id="8_goblin"]
+[ext_resource type="PackedScene" uid="uid://dw6mih3hc1hq1" path="res://scenes/actors/enemies/gremlin_drone.tscn" id="9_3c387"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
 size = Vector3(42, 1, 32)
@@ -43,7 +44,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("BoxShape3D_floor")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=623851616]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.050417, 0.051586628, 1.4969397)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.33035564, 0.051586628, 0.014582634)
 material_override = SubResource("Material_floor")
 mesh = SubResource("BoxMesh_floor")
 
@@ -153,7 +154,7 @@ unlock_ids = Array[String](["church_trial_sigil", "church_trial_doors"])
 success_message = "Trial relic and door permission granted."
 objective_after = "Open Relics and confirm the key item and permission appear."
 
-[node name="PiercingIceLancePedestal" parent="." instance=ExtResource("6_pedestal")]
+[node name="PiercingIceLancePedestal" parent="." unique_id=1766016026 instance=ExtResource("6_pedestal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
 prompt_text = "Unlock Piercing Ice Lance"
 pedestal_title = "Piercing Ice Lance"
@@ -163,7 +164,7 @@ objective_after = "Equip Ice Lance and shoot through the center target line."
 should_restore_resources = true
 should_reset_targets = true
 
-[node name="ChainLightningPedestal" parent="." instance=ExtResource("6_pedestal")]
+[node name="ChainLightningPedestal" parent="." unique_id=639206938 instance=ExtResource("6_pedestal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 4)
 prompt_text = "Unlock Chain Lightning"
 pedestal_title = "Chain Lightning"
@@ -223,13 +224,16 @@ target_label = "Charged Firebolt Target"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -5)
 target_label = "Pierce / Chain Target A"
 
-[node name="IcePierceTargetB" parent="TrainingTargets" instance=ExtResource("7_target")]
+[node name="IcePierceTargetB" parent="TrainingTargets" unique_id=1538736278 instance=ExtResource("7_target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -8)
 target_label = "Pierce / Chain Target B"
 
-[node name="IcePierceTargetC" parent="TrainingTargets" instance=ExtResource("7_target")]
+[node name="IcePierceTargetC" parent="TrainingTargets" unique_id=150646997 instance=ExtResource("7_target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -11)
 target_label = "Pierce / Chain Target C"
 
 [node name="GuardTestGoblin" parent="TrainingTargets" unique_id=1527247462 instance=ExtResource("8_goblin")]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 12, 0.85, -7)
+
+[node name="GremlinDrone" parent="TrainingTargets" unique_id=436581859 instance=ExtResource("9_3c387")]
+transform = Transform3D(0.75, 0, 0, 0, 0.75, 0, 0, 0, 0.75, -18.208706, 0, -13.1601925)

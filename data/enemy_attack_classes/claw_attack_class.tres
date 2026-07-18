@@ -1,26 +1,16 @@
-[gd_resource type="Resource" script_class="EnemyAttackClassDefinition" format=3]
+[gd_resource type="Resource" script_class="EnemyAttackClassDefinition" format=3 uid="uid://ecgpmsnpj8cv"]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_attack_class_definition.gd" id="1_claw"]
+[ext_resource type="Script" uid="uid://bohih2diipy1v" path="res://scripts/enemies/enemy_attack_class_definition.gd" id="1_claw"]
 
 [resource]
 script = ExtResource("1_claw")
 attack_class_id = "claw"
 display_name = "Claw"
 role_tags = Array[String](["enemy_attack", "melee", "physical", "claw"])
-delivery_style = "melee"
-range = 1.5
 cone_angle_degrees = 120.0
-windup_time = 0.35
 active_time = 0.12
 recovery_time = 0.55
 cooldown = 1.15
-interruptible_during_windup = true
-interruptible_during_active = false
-interruptible_during_recovery = false
-payload_amount = 1
-payload_stance_damage = 1
-payload_element = "neutral"
 payload_source_name = "Claw"
-payload_hit_type = "melee"
 payload_tags = Array[String](["physical", "melee", "claw", "enemy_attack"])
 debug_notes = "Reusable quick melee swipe. Good baseline animal/monster attack."

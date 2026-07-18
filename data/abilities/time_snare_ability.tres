@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3 uid="uid://4jedrxuurmh2"]
 
 [ext_resource type="PackedScene" path="res://scenes/actions/time_snare_field.tscn" id="1_scene"]
-[ext_resource type="Resource" path="res://data/damage_payloads/time_snare_payload.tres" id="2_payload"]
-[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+[ext_resource type="Resource" uid="uid://bybhn7as6gs5w" path="res://data/damage_payloads/time_snare_payload.tres" id="2_payload"]
+[ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
 [ext_resource type="Resource" path="res://data/ability_trait_profiles/control_projectile_profile.tres" id="4_profile"]
 
 [resource]
@@ -10,7 +10,8 @@ script = ExtResource("3_definition")
 display_name = "Time Snare"
 description = "Place a temporal field that slows enemies inside it."
 element = "time"
-mana_cost = 1
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")
 trait_profile = ExtResource("4_profile")
 spell_id = "time_snare"
 short_label = "Snare"
@@ -23,5 +24,3 @@ status_tags = Array[String](["chill"])
 ui_tags = Array[String](["slow", "control", "ground_targeted"])
 debug_tags = Array[String](["prototype", "time_field", "ground_targeted"])
 design_notes = "Uses chill as the current slow carrier. The ground-targeted field proves Time as lingering battlefield control."
-ability_scene = ExtResource("1_scene")
-action_payload = ExtResource("2_payload")

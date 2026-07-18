@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyActionPresentation" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_presentation.gd" id="1_presentation"]
+
+[resource]
+script = ExtResource("1_presentation")
+windup_scale = Vector3(0.94, 1.08, 1.08)
+active_scale = Vector3(1.08, 0.9, 1.2)
+windup_flash_color = Color(0.95, 0.28, 0.58, 1)
+active_flash_color = Color(1, 0.9, 0.3, 1)
+flash_strength = 0.5
+active_flash_strength = 0.7
+windup_pulse_time = 0.09
+active_snap_time = 0.035
+recover_time = 0.14

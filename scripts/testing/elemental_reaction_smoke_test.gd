@@ -44,6 +44,10 @@ func _ready() -> void:
 	environmental_water.name = "EnvironmentalWaterFixture"
 	add_child(environmental_water)
 
+	var ice_source_root := Node3D.new()
+	ice_source_root.name = "TestFrostCrystalSource"
+	add_child(ice_source_root)
+
 	ice_emitter = ElementEmitterScript.new()
 	ice_emitter.name = "TestIceEmitter"
 	ice_emitter.pulse_on_ready = false
@@ -63,7 +67,7 @@ func _ready() -> void:
 	ice_shape.radius = 2.0
 	ice_collision.shape = ice_shape
 	ice_emitter.add_child(ice_collision)
-	add_child(ice_emitter)
+	ice_source_root.add_child(ice_emitter)
 
 	fire_emitter = ElementEmitterScript.new()
 	fire_emitter.name = "TestFireEmitter"

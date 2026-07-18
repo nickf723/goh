@@ -1,0 +1,42 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/actions/dream_trap_field.gd" id="1_dream_field"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_dream_field"]
+top_radius = 1.0
+bottom_radius = 1.0
+height = 0.05
+radial_segments = 48
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dream_field"]
+albedo_color = Color(0.6, 0.2, 0.92, 0.34)
+emission_enabled = true
+emission = Color(0.72, 0.24, 1, 1)
+emission_energy_multiplier = 0.9
+transparency = 1
+shading_mode = 0
+
+[sub_resource type="SphereShape3D" id="SphereShape_dream_field"]
+radius = 2.75
+
+[node name="DreamField" type="Node3D"]
+script = ExtResource("1_dream_field")
+radius = 2.75
+lifetime = 8.0
+arming_delay = 0.25
+
+[node name="TrapVisual" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_dream_field")
+material_override = SubResource("StandardMaterial3D_dream_field")
+scale = Vector3(2.75, 0.08, 2.75)
+
+[node name="TriggerArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TriggerArea"]
+shape = SubResource("SphereShape_dream_field")

@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://dmp5o1qjlca1n" path="res://scripts/player/player_dodge_controller.gd" id="8_fp13k"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/grace_visual_v1.tscn" id="9_grace"]
 [ext_resource type="Script" path="res://scripts/weapons/weapon_input_bootstrap.gd" id="10_weapon_input"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon_threat_broadcaster.gd" id="11_threat"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -67,6 +68,9 @@ metadata/_custom_type_script = "uid://dl8yw5cwab03v"
 
 [node name="WeaponInputBootstrap" type="Node" parent="WeaponController"]
 script = ExtResource("10_weapon_input")
+
+[node name="WeaponThreatBroadcaster" type="Node" parent="WeaponController"]
+script = ExtResource("11_threat")
 
 [node name="HandAnchor" type="Node3D" parent="WeaponController" unique_id=984196414]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.43, -0.16, -0.02)

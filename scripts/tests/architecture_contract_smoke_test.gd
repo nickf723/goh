@@ -3,6 +3,7 @@ extends Node
 const FeatureRegistryScript = preload("res://scripts/systems/feature_registry.gd")
 const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
 const EnemyActionSelectionBrainScript = preload("res://scripts/enemies/enemy_action_selection_brain.gd")
+const EnemyThreatAwareActionBrainScript = preload("res://scripts/enemies/enemy_threat_aware_action_brain.gd")
 const StartingLoadout: AbilityLoadout = preload("res://data/loadouts/grace_starting_loadout.tres")
 const PracticeSword: WeaponDefinition = preload("res://data/weapons/practice_sword.tres")
 const TrainingHammer: WeaponDefinition = preload("res://data/weapons/training_hammer.tres")
@@ -44,6 +45,7 @@ func run_tests() -> void:
 	validate_feature_registry_contract()
 	validate_action_resource_pairs()
 	validate_enemy_action_selection_contract()
+	validate_enemy_threat_awareness_contract()
 	validate_input_contract()
 	validate_weapon_contracts()
 	validate_ability_contracts()
@@ -193,6 +195,82 @@ func validate_enemy_action_selection_contract() -> void:
 		failures.append("Close Bite must be allowed to interrupt retreat when cornered")
 
 	brain.free()
+
+
+func validate_enemy_threat_awareness_contract() -> void:
+	var source: Node3D = Node3D.new()
+	source.position = Vector3.ZERO
+	var threatened_actor: Node3D = Node3D.new()
+	threatened_actor.position = Vector3(0.0, 0.0, -1.2)
+
+	var heavy_threat: CombatThreat = CombatThreat.new().configure(
+		"sword_h0",
+		"Practice Sword • Guardbreaker",
+		source,
+		1.0,
+		Vector3.FORWARD,
+		0.32,
+		0.11,
+		2.9,
+		68.0,
+		1.25,
+		0.85,
+		3.0,
+		["weapon", "melee", "heavy", "sword", "guard_break"]
+	)
+	heavy_threat.announced_at_msec = Time.get_ticks_msec() - 100
+
+	if not heavy_threat.contains_point(threatened_actor.position, 0.2):
+		failures.append("Heavy sword threat must predict the close target inside its swing")
+	if not GremlinBackstepOption.can_respond_to_threat(heavy_threat):
+		failures.append("Backstep must answer a telegraphed heavy melee weapon threat")
+
+	var light_threat: CombatThreat = CombatThreat.new().configure(
+		"sword_l1",
+		"Practice Sword • Opening Cut",
+		source,
+		1.0,
+		Vector3.FORWARD,
+		0.13,
+		0.07,
+		2.7,
+		112.0,
+		1.1,
+		0.85,
+		1.5,
+		["weapon", "melee", "light", "sword"]
+	)
+	light_threat.announced_at_msec = Time.get_ticks_msec() - 90
+	if GremlinBackstepOption.can_respond_to_threat(light_threat):
+		failures.append("Backstep v1 must not react to a light sword cut after the safe window closes")
+
+	var sensor: EnemyThreatSensor = EnemyThreatSensor.new()
+	sensor.actor = threatened_actor
+	sensor.base_reaction_delay = 0.0
+	sensor.receive_combat_threat(heavy_threat)
+	var sensed_threat: CombatThreat = sensor.get_best_actionable_threat(threatened_actor.position)
+	if sensed_threat != heavy_threat:
+		failures.append("Threat sensor must surface an actionable heavy sword threat")
+
+	var threat_brain = EnemyThreatAwareActionBrainScript.new()
+	threat_brain.action_options = [
+		GremlinBiteOption,
+		GremlinPounceOption,
+		GremlinBackstepOption,
+	]
+	threat_brain.personality_id = "skittish"
+	var threat_response: EnemyActionOption = threat_brain.select_threat_response(0.9, heavy_threat)
+	if threat_response != GremlinBackstepOption:
+		failures.append("Gremlin must choose Backstep as its compatible heavy-sword response")
+
+	sensor.acknowledge_threat(heavy_threat)
+	if sensor.get_best_actionable_threat(threatened_actor.position) != null:
+		failures.append("Acknowledged threats must leave the sensor queue")
+
+	threat_brain.free()
+	sensor.free()
+	source.free()
+	threatened_actor.free()
 
 
 func validate_input_contract() -> void:

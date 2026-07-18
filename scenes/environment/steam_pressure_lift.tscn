@@ -1,0 +1,201 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/steam_pressure_lift.gd" id="1_machine"]
+[ext_resource type="Script" path="res://scripts/environment/pressure_reservoir.gd" id="2_reservoir"]
+[ext_resource type="Script" path="res://scripts/environment/element_consumer.gd" id="3_consumer"]
+[ext_resource type="Script" path="res://scripts/environment/mechanical_actuator.gd" id="4_actuator"]
+[ext_resource type="Script" path="res://scripts/combat/status_receiver.gd" id="5_status"]
+
+[sub_resource type="StandardMaterial3D" id="Material_metal"]
+albedo_color = Color(0.13, 0.16, 0.2, 1)
+metallic = 0.82
+roughness = 0.28
+
+[sub_resource type="StandardMaterial3D" id="Material_brass"]
+albedo_color = Color(0.68, 0.42, 0.12, 1)
+metallic = 0.72
+roughness = 0.26
+
+[sub_resource type="StandardMaterial3D" id="Material_steam"]
+albedo_color = Color(0.74, 0.9, 1, 0.48)
+emission_enabled = true
+emission = Color(0.42, 0.82, 1, 1)
+emission_energy_multiplier = 2.2
+transparency = 1
+roughness = 0.12
+
+[sub_resource type="StandardMaterial3D" id="Material_platform"]
+albedo_color = Color(0.24, 0.31, 0.38, 1)
+metallic = 0.58
+roughness = 0.34
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_tank"]
+top_radius = 0.64
+bottom_radius = 0.64
+height = 1.75
+radial_segments = 16
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_pipe"]
+top_radius = 0.11
+bottom_radius = 0.11
+height = 2.3
+radial_segments = 10
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_rail"]
+top_radius = 0.09
+bottom_radius = 0.09
+height = 3.2
+radial_segments = 8
+
+[sub_resource type="SphereMesh" id="SphereMesh_intake"]
+radius = 0.58
+height = 1.16
+radial_segments = 12
+rings = 8
+
+[sub_resource type="BoxMesh" id="BoxMesh_platform"]
+size = Vector3(2.15, 0.22, 1.85)
+
+[sub_resource type="BoxMesh" id="BoxMesh_needle"]
+size = Vector3(0.055, 0.62, 0.055)
+
+[sub_resource type="BoxMesh" id="BoxMesh_base"]
+size = Vector3(5.9, 0.16, 3.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape_platform"]
+size = Vector3(2.15, 0.22, 1.85)
+
+[sub_resource type="SphereShape3D" id="SphereShape_consumer"]
+radius = 0.78
+
+[node name="SteamPressureLift" type="Node3D"]
+script = ExtResource("1_machine")
+
+[node name="MachineBase" type="MeshInstance3D" parent="."]
+position = Vector3(-0.45, 0.08, 0.35)
+material_override = SubResource("Material_metal")
+mesh = SubResource("BoxMesh_base")
+
+[node name="PressureTank" type="MeshInstance3D" parent="."]
+position = Vector3(0.3, 1.05, 0.15)
+rotation_degrees = Vector3(0, 0, 90)
+material_override = SubResource("Material_metal")
+mesh = SubResource("CylinderMesh_tank")
+
+[node name="TankBandA" type="MeshInstance3D" parent="."]
+position = Vector3(-0.18, 1.05, 0.15)
+rotation_degrees = Vector3(0, 0, 90)
+scale = Vector3(1.08, 0.08, 1.08)
+material_override = SubResource("Material_brass")
+mesh = SubResource("CylinderMesh_tank")
+
+[node name="TankBandB" type="MeshInstance3D" parent="."]
+position = Vector3(0.78, 1.05, 0.15)
+rotation_degrees = Vector3(0, 0, 90)
+scale = Vector3(1.08, 0.08, 1.08)
+material_override = SubResource("Material_brass")
+mesh = SubResource("CylinderMesh_tank")
+
+[node name="IntakePipe" type="MeshInstance3D" parent="."]
+position = Vector3(0.3, 0.76, -1.08)
+rotation_degrees = Vector3(90, 0, 0)
+material_override = SubResource("Material_brass")
+mesh = SubResource("CylinderMesh_pipe")
+
+[node name="IntakeGlow" type="MeshInstance3D" parent="."]
+position = Vector3(0.3, 0.62, -1.72)
+scale = Vector3(1.0, 0.55, 1.0)
+material_override = SubResource("Material_steam")
+mesh = SubResource("SphereMesh_intake")
+
+[node name="SteamConsumer" type="Area3D" parent="."]
+position = Vector3(0.3, 0.62, -1.72)
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("3_consumer")
+consumer_id = "steam_pressure_intake"
+display_name = "Steam Pressure Intake"
+accepted_statuses = Array[String](["steamed"])
+accepted_status_sources = Array[String](["steam_burst"])
+output_element = "steam"
+output_amount = 32.0
+output_target_path = NodePath("../PressureReservoir")
+event_cooldown = 0.2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SteamConsumer"]
+shape = SubResource("SphereShape_consumer")
+
+[node name="StatusReceiver" type="Node" parent="SteamConsumer"]
+script = ExtResource("5_status")
+
+[node name="PressureReservoir" type="Node" parent="."]
+script = ExtResource("2_reservoir")
+maximum_pressure = 100.0
+starting_pressure = 0.0
+leak_per_second = 1.5
+
+[node name="LiftRailLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-3.15, 1.6, 0.12)
+material_override = SubResource("Material_brass")
+mesh = SubResource("CylinderMesh_rail")
+
+[node name="LiftRailRight" type="MeshInstance3D" parent="."]
+position = Vector3(-1.55, 1.6, 0.12)
+material_override = SubResource("Material_brass")
+mesh = SubResource("CylinderMesh_rail")
+
+[node name="LiftPlatform" type="AnimatableBody3D" parent="."]
+position = Vector3(-2.35, 0.28, 0.22)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LiftPlatform"]
+shape = SubResource("BoxShape_platform")
+
+[node name="PlatformMesh" type="MeshInstance3D" parent="LiftPlatform"]
+material_override = SubResource("Material_platform")
+mesh = SubResource("BoxMesh_platform")
+
+[node name="PlatformLabel" type="Label3D" parent="LiftPlatform"]
+position = Vector3(0, 0.38, 0)
+text = "PRESSURE LIFT"
+font_size = 25
+pixel_size = 0.0065
+billboard = 1
+modulate = Color(0.78, 0.91, 1, 1)
+outline_size = 5
+
+[node name="MechanicalActuator" type="Node" parent="."]
+script = ExtResource("4_actuator")
+reservoir_path = NodePath("../PressureReservoir")
+moving_node_path = NodePath("../LiftPlatform")
+activation_pressure = 80.0
+deactivation_pressure = 20.0
+travel_offset = Vector3(0, 2.6, 0)
+move_duration = 1.35
+latch_when_activated = true
+
+[node name="GaugeTitle" type="Label3D" parent="."]
+position = Vector3(0.3, 2.22, 0.1)
+text = "STEAM ENGINE"
+font_size = 31
+pixel_size = 0.0065
+billboard = 1
+modulate = Color(1, 0.77, 0.34, 1)
+outline_size = 6
+
+[node name="GaugeLabel" type="Label3D" parent="."]
+position = Vector3(0.3, 1.78, 0.1)
+text = "STEAM PRESSURE: 0 / 100"
+font_size = 23
+pixel_size = 0.006
+billboard = 1
+modulate = Color(0.82, 0.91, 1, 1)
+outline_size = 5
+
+[node name="GaugeNeedle" type="Node3D" parent="."]
+position = Vector3(1.5, 1.17, 0.1)
+rotation_degrees = Vector3(0, 0, -105)
+
+[node name="NeedleMesh" type="MeshInstance3D" parent="GaugeNeedle"]
+position = Vector3(0, 0.28, 0)
+material_override = SubResource("Material_steam")
+mesh = SubResource("BoxMesh_needle")

@@ -87,15 +87,16 @@
       "order": 20,
       "display_name": "Elemental Reaction Laboratory",
       "category": "Systems Laboratory",
-      "version": "v0.5",
+      "version": "v0.8",
       "status": "prototype_verified",
-      "description": "Permanent laboratory for Fire, Water, Ice, Lightning, and Sound readability plus Ignite, Conduct, Freeze, Shatter, Steam, and Reveal reactions.",
-      "scene": "res://scenes/levels/prototypes/prototype_elemental_reaction_lab_v1.tscn",
+      "description": "Permanent laboratory for elemental reactions, environmental element sources, Steam Burst pressure accumulation, and a mechanical lift that converts repeated chemistry into physical work.",
+      "scene": "res://scenes/levels/prototypes/prototype_environmental_chemistry_lab_v1.tscn",
       "validation_scenes": [
-        "res://scenes/levels/prototypes/prototype_elemental_reaction_lab_v1.tscn"
+        "res://scenes/levels/prototypes/prototype_environmental_chemistry_lab_v1.tscn"
       ],
       "automated_tests": [
-        "res://scenes/tests/elemental_reaction_smoke_test.tscn"
+        "res://scenes/tests/elemental_reaction_smoke_test.tscn",
+        "res://scenes/tests/mechanical_consumer_smoke_test.tscn"
       ],
       "dependencies": [],
       "controls": [
@@ -104,20 +105,22 @@
         "FOCUS",
         "CAST",
         "LIGHT",
+        "HEAVY",
         "RESET"
       ],
-      "manual_test": "docs/elemental_reaction_lab_v0_5_test.md",
+      "manual_test": "docs/mechanical_consumers_pressure_lift_v1_test.md",
       "temporary_state": "runtime_only",
       "story_integrated": false,
       "limitations": [
         "Only five of sixteen core elements receive the refreshed visual pass.",
-        "Effects are procedural prototypes rather than final authored VFX.",
-        "Laboratory targets prioritize deterministic testing over encounter AI."
+        "Effects, sources, and machinery are procedural prototypes rather than final authored assets.",
+        "Pressure is a scalar resource and does not simulate gas temperature, volume, sealing, or pipe flow.",
+        "Laboratory targets and machinery prioritize deterministic systems testing over encounter design."
       ],
       "launchable": true,
       "visible_in_launcher": true,
       "ci_validate": true,
-      "timeout_seconds": 5
+      "timeout_seconds": 7
     },
     {
       "id": "weapon_combat_arena",

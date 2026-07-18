@@ -76,6 +76,10 @@ func reset_source() -> void:
 	update_source_visual(emitter.active if emitter != null else true)
 
 
+func reset_target() -> void:
+	reset_source()
+
+
 func update_source_visual(is_active: bool) -> void:
 	var flame_root: Node3D = get_node_or_null("VisualRoot/FlameRoot") as Node3D
 	if flame_root != null:

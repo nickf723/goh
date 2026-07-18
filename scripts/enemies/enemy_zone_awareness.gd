@@ -169,8 +169,9 @@ static func describe_hazard(tags: Array[String]) -> String:
 	return "hazard"
 
 
-static func has_any_tag(tags: Array[String], tags_to_check: Array[String]) -> bool:
-	for tag: String in tags_to_check:
+static func has_any_tag(tags: Array[String], tags_to_check: Array) -> bool:
+	for tag_variant: Variant in tags_to_check:
+		var tag: String = str(tag_variant)
 		if tags.has(tag):
 			return true
 

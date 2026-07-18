@@ -79,6 +79,7 @@ display_name = "Frost Crystal"
 element = "ice"
 payload_tags = Array[String](["environment", "element_source", "crystal", "cold", "ice"])
 pulse_interval = 0.8
+emit_once_per_contact = true
 required_target_tags = Array[String](["wet"])
 blocked_target_tags = Array[String](["frozen", "steamed", "steam"])
 reservoir_mode = "infinite"

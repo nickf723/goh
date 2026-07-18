@@ -1,24 +1,23 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cu5fjdil5hsri"]
 
-[ext_resource type="Script" path="res://scripts/levels/prototype_elemental_reaction_lab.gd" id="1_director"]
-[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
-[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
-[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
-[ext_resource type="PackedScene" path="res://scenes/surfaces/oil_patch.tscn" id="5_oil"]
-[ext_resource type="PackedScene" path="res://scenes/surfaces/water_patch.tscn" id="6_water"]
+[ext_resource type="Script" uid="uid://bsipx5bm0m5kn" path="res://scripts/levels/prototype_elemental_reaction_lab.gd" id="1_director"]
+[ext_resource type="PackedScene" uid="uid://6raaty2e36ko" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://j44g36yeu58k" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" uid="uid://d4c66lkqs3ac6" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="PackedScene" uid="uid://c7ggpkgrksqox" path="res://scenes/surfaces/oil_patch.tscn" id="5_oil"]
+[ext_resource type="PackedScene" uid="uid://dq6m8gaf1u2b7" path="res://scenes/surfaces/water_patch.tscn" id="6_water"]
 [ext_resource type="PackedScene" path="res://scenes/actors/testing/goblin_reaction_target.tscn" id="7_goblin"]
 [ext_resource type="PackedScene" path="res://scenes/actors/testing/gremlin_reaction_target.tscn" id="8_gremlin"]
 [ext_resource type="PackedScene" path="res://scenes/actors/interactables/lab_reset_console.tscn" id="9_reset"]
 [ext_resource type="PackedScene" path="res://scenes/actors/testing/lab_hidden_resonator.tscn" id="10_resonator"]
-[ext_resource type="PackedScene" path="res://scenes/actors/interactables/mana_shrine.tscn" id="11_mana"]
+[ext_resource type="PackedScene" uid="uid://ke547jyi5w0l" path="res://scenes/actors/interactables/mana_shrine.tscn" id="11_mana"]
 [ext_resource type="Material" path="res://art/materials/prototype/floor_stone_gray.tres" id="12_floor"]
 [ext_resource type="Material" path="res://art/materials/prototype/wall_dark_stone.tres" id="13_wall"]
-[ext_resource type="Material" path="res://art/materials/church/church_warm_stone_v1.tres" id="14_warm"]
+[ext_resource type="Material" uid="uid://cus0fxhktfmpx" path="res://art/materials/church/church_warm_stone_v1.tres" id="14_warm"]
 [ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="15_gold"]
 [ext_resource type="Material" path="res://art/materials/church/church_violet_glow_v1.tres" id="16_violet"]
 [ext_resource type="Material" path="res://art/materials/prototype/gate_barrier_blue.tres" id="17_blue"]
 [ext_resource type="Material" path="res://art/materials/prototype/exit_gold_glow.tres" id="18_fire"]
-[ext_resource type="Material" path="res://art/materials/prototype/water_blue_readable.tres" id="19_water_mat"]
 [ext_resource type="Material" path="res://art/materials/prototype/mana_cyan_glow.tres" id="20_ice"]
 
 [sub_resource type="BoxShape3D" id="BoxShape_floor"]
@@ -42,8 +41,11 @@ size = Vector3(1, 4, 34)
 [sub_resource type="BoxMesh" id="BoxMesh_platform"]
 size = Vector3(5.1, 0.16, 5.1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_divider"]
-size = Vector3(0.12, 0.06, 5.0)
+[sub_resource type="TorusMesh" id="TorusMesh_station_ring"]
+inner_radius = 2.16
+outer_radius = 2.26
+rings = 24
+ring_segments = 8
 
 [sub_resource type="BoxShape3D" id="BoxShape_surface_receiver"]
 size = Vector3(4, 1.8, 4)
@@ -54,334 +56,332 @@ bottom_radius = 0.46
 height = 0.72
 radial_segments = 12
 
-[sub_resource type="TorusMesh" id="TorusMesh_station_ring"]
-inner_radius = 2.16
-outer_radius = 2.26
-rings = 24
-ring_segments = 8
+[sub_resource type="BoxMesh" id="BoxMesh_divider"]
+size = Vector3(0.12, 0.06, 5)
 
-[node name="PrototypeElementalReactionLab" type="Node3D"]
+[node name="PrototypeElementalReactionLab" type="Node3D" unique_id=382738974]
 script = ExtResource("1_director")
 
-[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+[node name="GameUI" parent="." unique_id=791153085 instance=ExtResource("3_ui")]
 
-[node name="FocusTime" type="Node" parent="."]
+[node name="FocusTime" type="Node" parent="." unique_id=1591461399]
 script = ExtResource("4_focus")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1809478906]
 transform = Transform3D(0.707107, -0.353553, 0.612372, 0, 0.866025, 0.5, -0.707107, -0.353553, 0.612372, 0, 9, -2)
 light_energy = 1.2
 shadow_enabled = true
 
-[node name="VioletFill" type="OmniLight3D" parent="."]
-position = Vector3(0, 4.5, 2)
+[node name="VioletFill" type="OmniLight3D" parent="." unique_id=1860538241]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, 2)
 light_color = Color(0.58, 0.34, 1, 1)
 light_energy = 2.2
 omni_range = 18.0
-shadow_enabled = false
 
-[node name="WarmEntryFill" type="OmniLight3D" parent="."]
-position = Vector3(0, 3.0, -11)
+[node name="WarmEntryFill" type="OmniLight3D" parent="." unique_id=1776828653]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -11)
 light_color = Color(1, 0.58, 0.28, 1)
 light_energy = 1.25
 omni_range = 9.0
-shadow_enabled = false
 
-[node name="LabFloor" type="StaticBody3D" parent="."]
-position = Vector3(0, -0.5, 2)
+[node name="LabFloor" type="StaticBody3D" parent="." unique_id=1110676263]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 2)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="LabFloor"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LabFloor" unique_id=2124279617]
 shape = SubResource("BoxShape_floor")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="LabFloor"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LabFloor" unique_id=1924997110]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.024329662, -0.019280434, -0.001288414)
 material_override = ExtResource("12_floor")
 mesh = SubResource("BoxMesh_floor")
 
-[node name="BackWall" type="StaticBody3D" parent="."]
-position = Vector3(0, 1.5, 19.5)
+[node name="BackWall" type="StaticBody3D" parent="." unique_id=534031974]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 19.5)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWall"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWall" unique_id=532424893]
 shape = SubResource("BoxShape_wall_back")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWall"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWall" unique_id=366195029]
 material_override = ExtResource("13_wall")
 mesh = SubResource("BoxMesh_wall_back")
 
-[node name="FrontWall" type="StaticBody3D" parent="."]
-position = Vector3(0, 1.5, -15.5)
+[node name="FrontWall" type="StaticBody3D" parent="." unique_id=1562745722]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -15.5)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="FrontWall"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FrontWall" unique_id=85968691]
 shape = SubResource("BoxShape_wall_back")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="FrontWall"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="FrontWall" unique_id=121319478]
 material_override = ExtResource("13_wall")
 mesh = SubResource("BoxMesh_wall_back")
 
-[node name="LeftWall" type="StaticBody3D" parent="."]
-position = Vector3(-14.5, 1.5, 2)
+[node name="LeftWall" type="StaticBody3D" parent="." unique_id=320844305]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.5, 1.5, 2)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftWall"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftWall" unique_id=1955991258]
 shape = SubResource("BoxShape_wall_side")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftWall"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftWall" unique_id=726810807]
 material_override = ExtResource("13_wall")
 mesh = SubResource("BoxMesh_wall_side")
 
-[node name="RightWall" type="StaticBody3D" parent="."]
-position = Vector3(14.5, 1.5, 2)
+[node name="RightWall" type="StaticBody3D" parent="." unique_id=200352530]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 1.5, 2)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="RightWall"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RightWall" unique_id=13921243]
 shape = SubResource("BoxShape_wall_side")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="RightWall"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RightWall" unique_id=487773810]
 material_override = ExtResource("13_wall")
 mesh = SubResource("BoxMesh_wall_side")
 
-[node name="LabTitle" type="Label3D" parent="."]
-position = Vector3(0, 3.1, -12.6)
-text = "ELEMENTAL REACTION LABORATORY"
-font_size = 72
+[node name="LabTitle" type="Label3D" parent="." unique_id=1033310793]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1, -12.6)
 pixel_size = 0.008
 billboard = 1
 modulate = Color(0.9, 0.78, 1, 1)
+text = "ELEMENTAL REACTION LABORATORY"
+font_size = 72
 outline_size = 8
 
-[node name="LabSubtitle" type="Label3D" parent="."]
-position = Vector3(0, 2.45, -12.5)
-text = "FIRE • WATER • ICE • LIGHTNING • SOUND"
-font_size = 42
+[node name="LabSubtitle" type="Label3D" parent="." unique_id=798791099]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, -12.5)
 pixel_size = 0.007
 billboard = 1
 modulate = Color(0.72, 0.82, 1, 1)
+text = "FIRE • WATER • ICE • LIGHTNING • SOUND"
+font_size = 42
 outline_size = 6
 
-[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
-position = Vector3(0, 1, -11.5)
+[node name="Player" parent="." unique_id=1223919980 groups=["player"] instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -11.5)
 
-[node name="LabResetConsole" parent="." instance=ExtResource("9_reset")]
-position = Vector3(-9.4, 0, -11.2)
-rotation_degrees = Vector3(0, -22, 0)
+[node name="LabResetConsole" parent="." unique_id=368433195 instance=ExtResource("9_reset")]
+transform = Transform3D(0.92718387, 0, -0.37460658, 0, 1, 0, 0.37460658, 0, 0.92718387, -9.4, 0, -11.2)
 
-[node name="ManaShrine" parent="." instance=ExtResource("11_mana")]
-position = Vector3(9.4, 1, -11.2)
+[node name="ManaShrine" parent="." unique_id=1226703839 instance=ExtResource("11_mana")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.4, 1, -11.2)
 
-[node name="EntryInstruction" type="Label3D" parent="."]
-position = Vector3(0, 1.6, -9.1)
-text = "Cycle five spells • Sword supplies FORCE • Violet console resets all"
-font_size = 34
+[node name="EntryInstruction" type="Label3D" parent="." unique_id=2124982433]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, -9.1)
 pixel_size = 0.007
 billboard = 1
 modulate = Color(1, 0.88, 0.62, 1)
+text = "Cycle five spells • Sword supplies FORCE • Violet console resets all"
+font_size = 34
 outline_size = 5
 
-[node name="IgniteStation" type="Node3D" parent="."]
-position = Vector3(-8.4, 0, -3.5)
+[node name="IgniteStation" type="Node3D" parent="." unique_id=1075256912]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.4, 0, -3.5)
 
-[node name="Platform" type="MeshInstance3D" parent="IgniteStation"]
-position = Vector3(0, 0.02, 0)
+[node name="Platform" type="MeshInstance3D" parent="IgniteStation" unique_id=974243078]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
 material_override = ExtResource("14_warm")
 mesh = SubResource("BoxMesh_platform")
 
-[node name="Ring" type="MeshInstance3D" parent="IgniteStation"]
-position = Vector3(0, 0.12, 0)
+[node name="Ring" type="MeshInstance3D" parent="IgniteStation" unique_id=641379382]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12, 0)
 material_override = ExtResource("18_fire")
 mesh = SubResource("TorusMesh_station_ring")
 
-[node name="Label" type="Label3D" parent="IgniteStation"]
-position = Vector3(0, 2.0, -2.15)
-text = "IGNITE\nOil → Fire"
-font_size = 40
+[node name="Label" type="Label3D" parent="IgniteStation" unique_id=1556448332]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -2.15)
 pixel_size = 0.008
 billboard = 1
 modulate = Color(1, 0.36, 0.12, 1)
+text = "IGNITE
+Oil → Fire"
+font_size = 40
 outline_size = 6
 
-[node name="OilPatch" parent="IgniteStation" instance=ExtResource("5_oil")]
-position = Vector3(0, 0.13, 0)
+[node name="OilPatch" parent="IgniteStation" unique_id=211746200 instance=ExtResource("5_oil")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
 
-[node name="ProjectileReceiver" type="Area3D" parent="IgniteStation/OilPatch"]
-position = Vector3(0, 0.78, 0)
+[node name="ProjectileReceiver" type="Area3D" parent="IgniteStation/OilPatch" unique_id=342663048]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="IgniteStation/OilPatch/ProjectileReceiver"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="IgniteStation/OilPatch/ProjectileReceiver" unique_id=1708580180]
 shape = SubResource("BoxShape_surface_receiver")
 
-[node name="GoblinTarget" parent="IgniteStation" instance=ExtResource("7_goblin")]
-position = Vector3(0, 0.58, 0)
+[node name="GoblinTarget" parent="IgniteStation" unique_id=194007258 instance=ExtResource("7_goblin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, 0)
 
-[node name="ConductStation" type="Node3D" parent="."]
-position = Vector3(0, 0, -3.5)
+[node name="ConductStation" type="Node3D" parent="." unique_id=1258383995]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -3.5)
 
-[node name="Platform" type="MeshInstance3D" parent="ConductStation"]
-position = Vector3(0, 0.02, 0)
+[node name="Platform" type="MeshInstance3D" parent="ConductStation" unique_id=677396430]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
 material_override = ExtResource("14_warm")
 mesh = SubResource("BoxMesh_platform")
 
-[node name="Ring" type="MeshInstance3D" parent="ConductStation"]
-position = Vector3(0, 0.12, 0)
+[node name="Ring" type="MeshInstance3D" parent="ConductStation" unique_id=1173304982]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12, 0)
 material_override = ExtResource("17_blue")
 mesh = SubResource("TorusMesh_station_ring")
 
-[node name="Label" type="Label3D" parent="ConductStation"]
-position = Vector3(0, 2.0, -2.15)
-text = "CONDUCT\nWater → Lightning"
-font_size = 40
+[node name="Label" type="Label3D" parent="ConductStation" unique_id=902263313]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -2.15)
 pixel_size = 0.008
 billboard = 1
 modulate = Color(0.72, 0.72, 1, 1)
+text = "CONDUCT
+Water → Lightning"
+font_size = 40
 outline_size = 6
 
-[node name="WaterPatch" parent="ConductStation" instance=ExtResource("6_water")]
-position = Vector3(0, 0.13, 0)
+[node name="WaterPatch" parent="ConductStation" unique_id=626156014 instance=ExtResource("6_water")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
 
-[node name="ProjectileReceiver" type="Area3D" parent="ConductStation/WaterPatch"]
-position = Vector3(0, 0.78, 0)
+[node name="ProjectileReceiver" type="Area3D" parent="ConductStation/WaterPatch" unique_id=722084940]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="ConductStation/WaterPatch/ProjectileReceiver"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ConductStation/WaterPatch/ProjectileReceiver" unique_id=1011453594]
 shape = SubResource("BoxShape_surface_receiver")
 
-[node name="GremlinTarget" parent="ConductStation" instance=ExtResource("8_gremlin")]
-position = Vector3(0, 0.5, 0)
+[node name="GremlinTarget" parent="ConductStation" unique_id=497341090 instance=ExtResource("8_gremlin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 
-[node name="FreezeStation" type="Node3D" parent="."]
-position = Vector3(8.4, 0, -3.5)
+[node name="FreezeStation" type="Node3D" parent="." unique_id=1040315883]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4, 0, -3.5)
 
-[node name="Platform" type="MeshInstance3D" parent="FreezeStation"]
-position = Vector3(0, 0.02, 0)
+[node name="Platform" type="MeshInstance3D" parent="FreezeStation" unique_id=1309563645]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
 material_override = ExtResource("14_warm")
 mesh = SubResource("BoxMesh_platform")
 
-[node name="Ring" type="MeshInstance3D" parent="FreezeStation"]
-position = Vector3(0, 0.12, 0)
+[node name="Ring" type="MeshInstance3D" parent="FreezeStation" unique_id=1382448027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12, 0)
 material_override = ExtResource("20_ice")
 mesh = SubResource("TorusMesh_station_ring")
 
-[node name="Label" type="Label3D" parent="FreezeStation"]
-position = Vector3(0, 2.0, -2.15)
-text = "FREEZE\nWater → Ice"
-font_size = 40
+[node name="Label" type="Label3D" parent="FreezeStation" unique_id=262160761]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -2.15)
 pixel_size = 0.008
 billboard = 1
 modulate = Color(0.58, 0.94, 1, 1)
+text = "FREEZE
+Water → Ice"
+font_size = 40
 outline_size = 6
 
-[node name="WaterPatch" parent="FreezeStation" instance=ExtResource("6_water")]
-position = Vector3(0, 0.13, 0)
+[node name="WaterPatch" parent="FreezeStation" unique_id=1663301028 instance=ExtResource("6_water")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
 
-[node name="ProjectileReceiver" type="Area3D" parent="FreezeStation/WaterPatch"]
-position = Vector3(0, 0.78, 0)
+[node name="ProjectileReceiver" type="Area3D" parent="FreezeStation/WaterPatch" unique_id=176082716]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="FreezeStation/WaterPatch/ProjectileReceiver"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FreezeStation/WaterPatch/ProjectileReceiver" unique_id=530522140]
 shape = SubResource("BoxShape_surface_receiver")
 
-[node name="GoblinTarget" parent="FreezeStation" instance=ExtResource("7_goblin")]
-position = Vector3(0, 0.58, 0)
+[node name="GoblinTarget" parent="FreezeStation" unique_id=675498980 instance=ExtResource("7_goblin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, 0)
 
-[node name="ShatterStation" type="Node3D" parent="."]
-position = Vector3(-5.2, 0, 6.5)
+[node name="ShatterStation" type="Node3D" parent="." unique_id=1321465002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.2, 0, 6.5)
 
-[node name="Platform" type="MeshInstance3D" parent="ShatterStation"]
-position = Vector3(0, 0.02, 0)
+[node name="Platform" type="MeshInstance3D" parent="ShatterStation" unique_id=1427977980]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
 material_override = ExtResource("14_warm")
 mesh = SubResource("BoxMesh_platform")
 
-[node name="Ring" type="MeshInstance3D" parent="ShatterStation"]
-position = Vector3(0, 0.12, 0)
+[node name="Ring" type="MeshInstance3D" parent="ShatterStation" unique_id=1097892737]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12, 0)
 material_override = ExtResource("20_ice")
 mesh = SubResource("TorusMesh_station_ring")
 
-[node name="Label" type="Label3D" parent="ShatterStation"]
-position = Vector3(0, 2.0, -2.15)
-text = "SHATTER\nWater → Ice → Sword"
-font_size = 38
+[node name="Label" type="Label3D" parent="ShatterStation" unique_id=737851907]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -2.15)
 pixel_size = 0.008
 billboard = 1
 modulate = Color(0.62, 0.95, 1, 1)
+text = "SHATTER
+Water → Ice → Sword"
+font_size = 38
 outline_size = 6
 
-[node name="WaterPatch" parent="ShatterStation" instance=ExtResource("6_water")]
-position = Vector3(0, 0.13, 0)
+[node name="WaterPatch" parent="ShatterStation" unique_id=1276201201 instance=ExtResource("6_water")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
 
-[node name="ProjectileReceiver" type="Area3D" parent="ShatterStation/WaterPatch"]
-position = Vector3(0, 0.78, 0)
+[node name="ProjectileReceiver" type="Area3D" parent="ShatterStation/WaterPatch" unique_id=880402733]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="ShatterStation/WaterPatch/ProjectileReceiver"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ShatterStation/WaterPatch/ProjectileReceiver" unique_id=718573820]
 shape = SubResource("BoxShape_surface_receiver")
 
-[node name="GremlinTarget" parent="ShatterStation" instance=ExtResource("8_gremlin")]
-position = Vector3(0, 0.5, 0)
+[node name="GremlinTarget" parent="ShatterStation" unique_id=1162550310 instance=ExtResource("8_gremlin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 
-[node name="SteamStation" type="Node3D" parent="."]
-position = Vector3(5.2, 0, 6.5)
+[node name="SteamStation" type="Node3D" parent="." unique_id=972212773]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 0, 6.5)
 
-[node name="Platform" type="MeshInstance3D" parent="SteamStation"]
-position = Vector3(0, 0.02, 0)
+[node name="Platform" type="MeshInstance3D" parent="SteamStation" unique_id=1567815963]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
 material_override = ExtResource("14_warm")
 mesh = SubResource("BoxMesh_platform")
 
-[node name="Ring" type="MeshInstance3D" parent="SteamStation"]
-position = Vector3(0, 0.12, 0)
+[node name="Ring" type="MeshInstance3D" parent="SteamStation" unique_id=972423849]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12, 0)
 material_override = ExtResource("16_violet")
 mesh = SubResource("TorusMesh_station_ring")
 
-[node name="Label" type="Label3D" parent="SteamStation"]
-position = Vector3(0, 2.0, -2.15)
-text = "STEAM\nWater → Ice → Fire"
-font_size = 38
+[node name="Label" type="Label3D" parent="SteamStation" unique_id=262991846]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -2.15)
 pixel_size = 0.008
 billboard = 1
 modulate = Color(0.9, 0.94, 1, 1)
+text = "STEAM
+Water → Ice → Fire"
+font_size = 38
 outline_size = 6
 
-[node name="WaterPatch" parent="SteamStation" instance=ExtResource("6_water")]
-position = Vector3(0, 0.13, 0)
+[node name="WaterPatch" parent="SteamStation" unique_id=121448666 instance=ExtResource("6_water")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
 
-[node name="ProjectileReceiver" type="Area3D" parent="SteamStation/WaterPatch"]
-position = Vector3(0, 0.78, 0)
+[node name="ProjectileReceiver" type="Area3D" parent="SteamStation/WaterPatch" unique_id=514498913]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="SteamStation/WaterPatch/ProjectileReceiver"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SteamStation/WaterPatch/ProjectileReceiver" unique_id=456582370]
 shape = SubResource("BoxShape_surface_receiver")
 
-[node name="GoblinTarget" parent="SteamStation" instance=ExtResource("7_goblin")]
-position = Vector3(0, 0.58, 0)
+[node name="GoblinTarget" parent="SteamStation" unique_id=2090450089 instance=ExtResource("7_goblin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, 0)
 
-[node name="SoundStation" type="Node3D" parent="."]
-position = Vector3(0, 0, 14.0)
+[node name="SoundStation" type="Node3D" parent="." unique_id=417176526]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 14)
 
-[node name="Platform" type="MeshInstance3D" parent="SoundStation"]
-position = Vector3(0, 0.02, 0)
+[node name="Platform" type="MeshInstance3D" parent="SoundStation" unique_id=1266603004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
 material_override = ExtResource("14_warm")
 mesh = SubResource("BoxMesh_platform")
 
-[node name="Ring" type="MeshInstance3D" parent="SoundStation"]
-position = Vector3(0, 0.12, 0)
+[node name="Ring" type="MeshInstance3D" parent="SoundStation" unique_id=1067800805]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12, 0)
 material_override = ExtResource("16_violet")
 mesh = SubResource("TorusMesh_station_ring")
 
-[node name="Label" type="Label3D" parent="SoundStation"]
-position = Vector3(0, 2.4, -2.15)
-text = "REVEAL\nCast Sound Pulse nearby"
-font_size = 40
+[node name="Label" type="Label3D" parent="SoundStation" unique_id=299667649]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, -2.15)
 pixel_size = 0.008
 billboard = 1
 modulate = Color(1, 0.43, 0.74, 1)
+text = "REVEAL
+Cast Sound Pulse nearby"
+font_size = 40
 outline_size = 6
 
-[node name="EmptyMarker" type="MeshInstance3D" parent="SoundStation"]
-position = Vector3(0, 0.36, 0)
+[node name="EmptyMarker" type="MeshInstance3D" parent="SoundStation" unique_id=100119352]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.36, 0)
 material_override = ExtResource("15_gold")
 mesh = SubResource("CylinderMesh_marker")
 
-[node name="HiddenResonator" parent="SoundStation" instance=ExtResource("10_resonator")]
-position = Vector3(0, 0, 0)
+[node name="HiddenResonator" parent="SoundStation" unique_id=555664909 instance=ExtResource("10_resonator")]
 
-[node name="CenterDividerA" type="MeshInstance3D" parent="."]
-position = Vector3(-4.2, 0.06, 1.4)
-rotation_degrees = Vector3(0, 0, 0)
+[node name="CenterDividerA" type="MeshInstance3D" parent="." unique_id=1122433655]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 0.06, 1.4)
 material_override = ExtResource("15_gold")
 mesh = SubResource("BoxMesh_divider")
 
-[node name="CenterDividerB" type="MeshInstance3D" parent="."]
-position = Vector3(4.2, 0.06, 1.4)
-rotation_degrees = Vector3(0, 0, 0)
+[node name="CenterDividerB" type="MeshInstance3D" parent="." unique_id=1098391084]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 0.06, 1.4)
 material_override = ExtResource("15_gold")
 mesh = SubResource("BoxMesh_divider")

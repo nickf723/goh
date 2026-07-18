@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="EnemyActionOption" format=3]
+[gd_resource type="Resource" script_class="EnemyActionOption" format=3 uid="uid://hy5eajgnelln"]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_option.gd" id="1_option"]
+[ext_resource type="Script" uid="uid://dtcemnxne07vk" path="res://scripts/enemies/enemy_action_option.gd" id="1_option"]
 [ext_resource type="Resource" path="res://data/enemy_defenses/gremlin_backstep_defense.tres" id="2_action"]
 [ext_resource type="Resource" path="res://data/enemy_action_presentations/gremlin_backstep_presentation.tres" id="3_presentation"]
 
@@ -9,10 +9,8 @@ script = ExtResource("1_option")
 action = ExtResource("2_action")
 presentation = ExtResource("3_presentation")
 selection_role = "defense"
-minimum_start_distance = 0.0
 maximum_start_distance = 1.45
 selection_weight = 0.45
-can_interrupt_post_miss_retreat = false
 responds_to_threats = true
 threat_required_tags = Array[String](["weapon", "melee", "heavy"])
 minimum_threat_time_to_impact = 0.14

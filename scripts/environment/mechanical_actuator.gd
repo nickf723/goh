@@ -94,7 +94,11 @@ func move_to(destination: Vector3, activated_state: bool) -> void:
 	motion_tween.set_trans(Tween.TRANS_SINE)
 	motion_tween.set_ease(Tween.EASE_IN_OUT)
 	motion_tween.tween_property(moving_node, "position", destination, move_duration)
-	motion_tween.tween_callback(func() -> void: motion_completed.emit(activated_state))
+	motion_tween.tween_callback(Callable(self, "finish_motion").bind(activated_state))
+
+
+func finish_motion(activated_state: bool) -> void:
+	motion_completed.emit(activated_state)
 
 
 func reset_actuator() -> void:

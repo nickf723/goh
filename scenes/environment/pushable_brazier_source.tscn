@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://scripts/combat/payload_receiver.gd" id="3_payload"]
 [ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="4_force"]
 [ext_resource type="Script" path="res://scripts/core/tag_component.gd" id="5_tags"]
+[ext_resource type="Script" path="res://scripts/combat/status_receiver.gd" id="6_status"]
 
 [sub_resource type="StandardMaterial3D" id="Material_metal"]
 albedo_color = Color(0.17, 0.12, 0.1, 1)
@@ -113,6 +114,9 @@ script = ExtResource("3_payload")
 script = ExtResource("4_force")
 drag = 6.5
 max_force_speed = 6.0
+
+[node name="StatusReceiver" type="Node" parent="."]
+script = ExtResource("6_status")
 
 [node name="TagComponent" type="Node" parent="."]
 script = ExtResource("5_tags")

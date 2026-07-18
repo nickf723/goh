@@ -27,6 +27,9 @@ const PROFILES: Dictionary = {
 			"close": 1.0,
 			"lunge": 1.0,
 			"gap_closer": 1.0,
+			"defense": 1.0,
+			"evade": 1.0,
+			"guard": 1.0,
 		},
 	},
 	"cautious": {
@@ -48,6 +51,9 @@ const PROFILES: Dictionary = {
 			"close": 0.95,
 			"lunge": 0.85,
 			"gap_closer": 0.9,
+			"defense": 1.25,
+			"evade": 1.2,
+			"guard": 1.3,
 		},
 	},
 	"bold": {
@@ -69,6 +75,9 @@ const PROFILES: Dictionary = {
 			"close": 1.1,
 			"lunge": 1.25,
 			"gap_closer": 1.15,
+			"defense": 0.65,
+			"evade": 0.7,
+			"guard": 0.6,
 		},
 	},
 	"skittish": {
@@ -90,6 +99,9 @@ const PROFILES: Dictionary = {
 			"close": 0.75,
 			"lunge": 1.1,
 			"gap_closer": 1.15,
+			"defense": 1.35,
+			"evade": 1.45,
+			"guard": 0.8,
 		},
 	},
 	"brute": {
@@ -111,6 +123,9 @@ const PROFILES: Dictionary = {
 			"close": 1.25,
 			"lunge": 0.9,
 			"gap_closer": 0.85,
+			"defense": 0.45,
+			"evade": 0.35,
+			"guard": 1.05,
 		},
 	},
 	"opportunist": {
@@ -132,6 +147,9 @@ const PROFILES: Dictionary = {
 			"close": 1.1,
 			"lunge": 1.15,
 			"gap_closer": 1.25,
+			"defense": 0.95,
+			"evade": 1.0,
+			"guard": 0.9,
 		},
 	},
 }

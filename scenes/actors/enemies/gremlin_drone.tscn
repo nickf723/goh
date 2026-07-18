@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="4_aomjw"]
 [ext_resource type="Script" uid="uid://dl7cjack4ydjg" path="res://scripts/combat/payload_receiver.gd" id="5_gkn5l"]
 [ext_resource type="Script" uid="uid://c2xu2guuvxg5l" path="res://scripts/combat/force_receiver.gd" id="6_pqsi1"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_selection_brain.gd" id="7_f6t4f"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_threat_aware_action_brain.gd" id="7_f6t4f"]
 [ext_resource type="Resource" uid="uid://podpgujkw8qg" path="res://data/enemies/gremlin_definition.tres" id="8_6vf88"]
 [ext_resource type="Resource" uid="uid://dkvtfch44sst7" path="res://data/enemy_attacks/gremlin_bite_attack.tres" id="9_bite"]
 [ext_resource type="Script" uid="uid://qt8ipxix0ltk" path="res://scripts/enemies/enemy_telegraph.gd" id="10_a3vpn"]
@@ -15,6 +15,8 @@
 [ext_resource type="Script" path="res://scripts/enemies/enemy_action_option.gd" id="13_option_script"]
 [ext_resource type="Resource" path="res://data/enemy_action_options/gremlin_bite_option.tres" id="14_bite_option"]
 [ext_resource type="Resource" path="res://data/enemy_action_options/gremlin_pounce_option.tres" id="15_pounce_option"]
+[ext_resource type="Resource" path="res://data/enemy_action_options/gremlin_backstep_option.tres" id="16_backstep_option"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_threat_sensor.gd" id="17_threat_sensor"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_gw7qh"]
 
@@ -50,12 +52,18 @@ script = ExtResource("5_gkn5l")
 script = ExtResource("6_pqsi1")
 metadata/_custom_type_script = "uid://c2xu2guuvxg5l"
 
+[node name="EnemyThreatSensor" type="Node" parent="."]
+script = ExtResource("17_threat_sensor")
+awareness_radius = 7.0
+base_reaction_delay = 0.09
+geometry_padding = 0.2
+
 [node name="EnemyBrain" type="Node" parent="." unique_id=1445189114]
 script = ExtResource("7_f6t4f")
 enemy_definition = ExtResource("8_6vf88")
 default_attack = ExtResource("9_bite")
 personality_id = "skittish"
-action_options = Array[ExtResource("13_option_script")]([ExtResource("14_bite_option"), ExtResource("15_pounce_option")])
+action_options = Array[ExtResource("13_option_script")]([ExtResource("14_bite_option"), ExtResource("15_pounce_option"), ExtResource("16_backstep_option")])
 reposition_when_no_action_matches = true
 retreat_speed_multiplier = 0.92
 

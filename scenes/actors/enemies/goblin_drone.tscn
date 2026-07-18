@@ -47,6 +47,7 @@ metadata/_custom_type_script = "uid://c2xu2guuvxg5l"
 script = ExtResource("7_tbb3o")
 enemy_definition = ExtResource("8_dbc34")
 default_attack = ExtResource("9_bo45w")
+personality_id = "cautious"
 
 [node name="EnemyTelegraph" type="Node" parent="." unique_id=1890575995]
 script = ExtResource("10_dbc34")

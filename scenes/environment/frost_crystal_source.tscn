@@ -1,0 +1,88 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/environmental_element_source.gd" id="1_source"]
+[ext_resource type="Script" path="res://scripts/environment/element_emitter.gd" id="2_emitter"]
+
+[sub_resource type="StandardMaterial3D" id="Material_crystal"]
+albedo_color = Color(0.45, 0.88, 1, 0.88)
+emission_enabled = true
+emission = Color(0.24, 0.78, 1, 1)
+emission_energy_multiplier = 2.4
+transparency = 1
+roughness = 0.16
+
+[sub_resource type="StandardMaterial3D" id="Material_core"]
+albedo_color = Color(0.86, 0.98, 1, 1)
+emission_enabled = true
+emission = Color(0.72, 0.96, 1, 1)
+emission_energy_multiplier = 4.0
+roughness = 0.08
+
+[sub_resource type="BoxMesh" id="BoxMesh_tall"]
+size = Vector3(0.42, 1.65, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_side"]
+size = Vector3(0.28, 1.05, 0.28)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_base"]
+top_radius = 0.6
+bottom_radius = 0.78
+height = 0.28
+radial_segments = 10
+
+[sub_resource type="SphereShape3D" id="SphereShape_emission"]
+radius = 2.65
+
+[node name="FrostCrystalSource" type="Node3D"]
+script = ExtResource("1_source")
+source_label = "Frost Crystal"
+
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="CrystalCore" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.92, 0)
+rotation_degrees = Vector3(0, 0, 45)
+material_override = SubResource("Material_core")
+mesh = SubResource("BoxMesh_tall")
+
+[node name="CrystalLeft" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(-0.38, 0.58, 0.08)
+rotation_degrees = Vector3(18, -12, 34)
+material_override = SubResource("Material_crystal")
+mesh = SubResource("BoxMesh_side")
+
+[node name="CrystalRight" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0.38, 0.62, -0.05)
+rotation_degrees = Vector3(-12, 16, -38)
+material_override = SubResource("Material_crystal")
+mesh = SubResource("BoxMesh_side")
+
+[node name="CrystalBase" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.14, 0)
+material_override = SubResource("Material_crystal")
+mesh = SubResource("CylinderMesh_base")
+
+[node name="SourceLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 1.05, 0)
+light_color = Color(0.42, 0.9, 1, 1)
+light_energy = 2.0
+omni_range = 5.0
+shadow_enabled = false
+
+[node name="ElementEmitter" type="Area3D" parent="."]
+position = Vector3(0, 0.6, 0)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("2_emitter")
+emitter_id = "frost_crystal"
+display_name = "Frost Crystal"
+element = "ice"
+payload_tags = Array[String](["environment", "element_source", "crystal", "cold", "ice"])
+pulse_interval = 0.8
+emit_once_per_contact = true
+required_target_tags = Array[String](["wet"])
+blocked_target_tags = Array[String](["frozen", "steamed", "steam"])
+reservoir_mode = "infinite"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ElementEmitter"]
+shape = SubResource("SphereShape_emission")

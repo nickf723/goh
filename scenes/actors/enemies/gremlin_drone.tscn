@@ -6,9 +6,9 @@
 [ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="4_aomjw"]
 [ext_resource type="Script" uid="uid://dl7cjack4ydjg" path="res://scripts/combat/payload_receiver.gd" id="5_gkn5l"]
 [ext_resource type="Script" uid="uid://c2xu2guuvxg5l" path="res://scripts/combat/force_receiver.gd" id="6_pqsi1"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_combat_action_brain.gd" id="7_f6t4f"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_lunge_action_brain.gd" id="7_f6t4f"]
 [ext_resource type="Resource" uid="uid://podpgujkw8qg" path="res://data/enemies/gremlin_definition.tres" id="8_6vf88"]
-[ext_resource type="Resource" uid="uid://dkvtfch44sst7" path="res://data/enemy_attacks/gremlin_bite_attack.tres" id="9_fu54f"]
+[ext_resource type="Resource" path="res://data/enemy_attacks/gremlin_pounce_attack.tres" id="9_fu54f"]
 [ext_resource type="Script" uid="uid://qt8ipxix0ltk" path="res://scripts/enemies/enemy_telegraph.gd" id="10_a3vpn"]
 [ext_resource type="PackedScene" path="res://scenes/actors/enemies/gremlin_visual_v1.tscn" id="11_visual"]
 
@@ -51,15 +51,22 @@ script = ExtResource("7_f6t4f")
 enemy_definition = ExtResource("8_6vf88")
 default_attack = ExtResource("9_fu54f")
 personality_id = "skittish"
+lunge_start_range = 3.1
+contact_range_override = 0.9
+stop_movement_on_hit = true
 
 [node name="EnemyTelegraph" type="Node" parent="." unique_id=1890575995]
 script = ExtResource("10_a3vpn")
 visual_root_path = NodePath("../VisualRoot")
-windup_scale = Vector3(1.06, 1.12, 1.06)
+windup_scale = Vector3(1.14, 0.76, 1.14)
+active_scale = Vector3(0.9, 0.88, 1.35)
 windup_flash_color = Color(0.95, 0.2, 0.55, 1)
-flash_strength = 0.54
-windup_pulse_time = 0.09
-recover_time = 0.14
+active_flash_color = Color(1, 0.78, 0.2, 1)
+flash_strength = 0.58
+active_flash_strength = 0.76
+windup_pulse_time = 0.18
+active_snap_time = 0.05
+recover_time = 0.28
 metadata/_custom_type_script = "uid://qt8ipxix0ltk"
 
 [node name="VisualRoot" parent="." instance=ExtResource("11_visual")]

@@ -51,7 +51,8 @@ func build(components: Array[CircuitComponent]) -> void:
 
 	for raw_terminal: Variant in terminal_values:
 		var terminal: CircuitTerminal = raw_terminal as CircuitTerminal
-		terminal.set_contact_debug(contact_debug.get(terminal.get_instance_id(), []) as Array[String])
+		var raw_contacts: Array = contact_debug.get(terminal.get_instance_id(), []) as Array
+		terminal.set_contact_debug(raw_contacts)
 	contact_pairs.sort()
 
 

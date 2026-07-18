@@ -62,7 +62,7 @@ func update_readout() -> void:
 		"FIELD POLARITY: " + polarity
 		+ "\nMAGNET  torque " + format_vector_magnitude(magnet_data.get("torque", Vector3.ZERO))
 		+ "  force " + format_vector_magnitude(magnet_data.get("force", Vector3.ZERO))
-		+ "\nIRON      magnetization " + format_vector_magnitude(magnet_data.get("induced", Vector3.ZERO) if false else iron_data.get("induced", Vector3.ZERO))
+		+ "\nIRON      magnetization " + format_vector_magnitude(iron_data.get("induced", Vector3.ZERO))
 		+ "  force " + format_vector_magnitude(iron_data.get("force", Vector3.ZERO))
 		+ "\nCOPPER  conductivity 1.00  magnetic force " + format_vector_magnitude(copper_data.get("force", Vector3.ZERO))
 	)

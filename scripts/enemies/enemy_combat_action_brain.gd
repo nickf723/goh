@@ -74,9 +74,13 @@ func process_attack_windup(delta: float) -> void:
 		if telegraph != null and telegraph.has_method("start_active"):
 			telegraph.start_active()
 
+	if action_runner.get_phase_name() == "ACTIVE" and not action_runner.hit_registered:
 		perform_attack()
 
 	if action_runner.get_phase_name() == "RECOVERY":
+		if not action_runner.hit_registered:
+			register_attack_miss()
+
 		start_recovery_visual()
 		change_state(EnemyState.ATTACK_RECOVER)
 
@@ -111,21 +115,27 @@ func process_dead(delta: float) -> void:
 
 func perform_attack() -> void:
 	var attack: EnemyAttackDefinition = get_current_attack()
-	if attack == null or action_runner == null:
+	if attack == null or action_runner == null or action_runner.hit_registered:
 		return
 
 	if player == null or not is_player_in_locked_attack_shape(attack):
-		last_action_summary = attack.get_display_name() + " missed"
-
-		if attack.should_show_miss_message():
-			show_message(get_enemy_display_name() + " misses.")
-
 		return
 
 	var payload: DamagePayload = attack.get_payload()
 	action_runner.mark_hit_registered()
 	last_action_summary = "hit: " + payload.source_name
 	apply_attack_to_player(payload)
+
+
+func register_attack_miss() -> void:
+	var attack: EnemyAttackDefinition = get_current_attack()
+	if attack == null:
+		return
+
+	last_action_summary = attack.get_display_name() + " missed"
+
+	if attack.should_show_miss_message():
+		show_message(get_enemy_display_name() + " misses.")
 
 
 func is_player_in_locked_attack_shape(attack: EnemyAttackDefinition) -> bool:

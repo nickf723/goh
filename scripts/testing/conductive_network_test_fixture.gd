@@ -103,8 +103,57 @@ static func run(host: Node) -> Array[String]:
 	if before_polarity * magnetic_field.polarity >= 0.0:
 		failures.append("circuit: reversed current should reverse magnetic polarity")
 
+	test_bridge_configuration(fixture, failures)
+
 	fixture.queue_free()
 	return failures
+
+
+static func test_bridge_configuration(fixture: Node3D, failures: Array[String]) -> void:
+	var lab := ConductiveNetworkLab.new()
+	lab.bridge_terminal_radius = 0.36
+	lab.bridge_impulse_retention = 0.0
+	lab.bridge_drag = 8.5
+	lab.bridge_max_speed = 4.2
+
+	var body := FieldResponsiveBody.new()
+	body.name = "ConfiguredBridge"
+	body.material_profile = CopperProfile
+
+	var receiver := ForceReceiver.new()
+	receiver.name = "ForceReceiver"
+	body.add_child(receiver)
+
+	var component := CircuitComponent.new()
+	component.name = "CircuitComponent"
+	component.component_id = "configured_bridge"
+	component.material_profile = CopperProfile
+	add_terminals(component, Vector3.ZERO, Vector3(1.0, 0.0, 0.0))
+	body.add_child(component)
+	fixture.add_child(body)
+
+	lab.configure_bridge(body)
+	if not is_zero_approx(receiver.impulse_momentum_retention):
+		failures.append("circuit: puzzle bridge hits should replace stale impulse momentum")
+	if not is_equal_approx(component.get_terminal_a().connection_radius, 0.36):
+		failures.append("circuit: bridge terminals should receive forgiving socket tolerance")
+
+	receiver.apply_impulse(Vector3.RIGHT, 2.0, 0.0, "first")
+	receiver.apply_impulse(Vector3.LEFT, 1.0, 0.0, "reverse")
+	if receiver.external_velocity.x >= 0.0:
+		failures.append("circuit: a new opposite hit should reverse bridge movement immediately")
+
+	var socket := CircuitComponent.new()
+	socket.name = "VisualSocket"
+	socket.component_id = "visual_socket"
+	socket.material_profile = CopperProfile
+	socket.position = Vector3(0.2, 0.45, 0.0)
+	add_terminals(socket, Vector3.ZERO, Vector3(0.0, 0.0, 1.0))
+	fixture.add_child(socket)
+	if not component.get_terminal_a().can_connect_to(socket.get_terminal_a()):
+		failures.append("circuit: visually aligned floor-resting bridge should count as contact")
+
+	lab.free()
 
 
 static func add_terminals(

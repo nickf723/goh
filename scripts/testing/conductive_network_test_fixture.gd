@@ -106,6 +106,7 @@ static func run(host: Node) -> Array[String]:
 	test_bridge_configuration(fixture, failures)
 
 	fixture.queue_free()
+	failures.append_array(await ElectricalInteroperabilityTestFixture.run(host))
 	return failures
 
 

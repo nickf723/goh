@@ -3,6 +3,7 @@ class_name ForceReceiver
 
 @export var drag: float = 10.0
 @export var max_force_speed: float = 8.0
+@export_range(0.0, 1.0, 0.01) var impulse_momentum_retention: float = 1.0
 
 @export_group("Continuous Influence")
 @export var continuous_linear_damping: float = 1.4
@@ -40,6 +41,8 @@ func apply_impulse(
 	else:
 		direction = Vector3.FORWARD
 
+	var retained_momentum: float = clampf(impulse_momentum_retention, 0.0, 1.0)
+	external_velocity *= retained_momentum
 	external_velocity += direction * strength
 	external_velocity.y += up_strength
 
@@ -179,6 +182,7 @@ func get_debug_data() -> Dictionary:
 	return {
 		"force": snapped(external_velocity.length(), 0.01),
 		"impulse_velocity": external_velocity,
+		"impulse_retention": snapped(impulse_momentum_retention, 0.01),
 		"continuous_velocity": continuous_velocity,
 		"continuous_force": get_total_continuous_force(),
 		"continuous_sources": continuous_forces.keys(),

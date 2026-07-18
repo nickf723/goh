@@ -1,0 +1,665 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/conductive_network_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/lab_reset_console.tscn" id="4_reset"]
+[ext_resource type="Script" path="res://scripts/physics/dc_circuit_solver.gd" id="5_solver"]
+[ext_resource type="Script" path="res://scripts/physics/circuit_component.gd" id="6_component"]
+[ext_resource type="Script" path="res://scripts/physics/circuit_terminal.gd" id="7_terminal"]
+[ext_resource type="Script" path="res://scripts/physics/circuit_voltage_source.gd" id="8_source"]
+[ext_resource type="Script" path="res://scripts/physics/circuit_switch.gd" id="9_switch"]
+[ext_resource type="Script" path="res://scripts/physics/electromagnetic_coil_component.gd" id="10_coil"]
+[ext_resource type="Script" path="res://scripts/physics/magnetic_dipole_field.gd" id="11_field"]
+[ext_resource type="Script" path="res://scripts/physics/field_responsive_body.gd" id="12_body"]
+[ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="13_force"]
+[ext_resource type="Script" path="res://scripts/combat/payload_receiver.gd" id="14_payload"]
+[ext_resource type="Script" path="res://scripts/physics/physical_field_receiver.gd" id="15_field_receiver"]
+[ext_resource type="Resource" path="res://data/materials/copper_physical_profile.tres" id="16_copper"]
+[ext_resource type="Resource" path="res://data/materials/iron_physical_profile.tres" id="17_iron"]
+[ext_resource type="Resource" path="res://data/materials/wood_physical_profile.tres" id="18_wood"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_floor"]
+albedo_color = Color(0.045, 0.055, 0.075, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="Mat_wall"]
+albedo_color = Color(0.075, 0.085, 0.12, 1)
+roughness = 0.86
+
+[sub_resource type="StandardMaterial3D" id="Mat_copper"]
+albedo_color = Color(0.78, 0.3, 0.08, 1)
+metallic = 0.92
+roughness = 0.24
+
+[sub_resource type="StandardMaterial3D" id="Mat_current"]
+albedo_color = Color(1, 0.72, 0.08, 0.9)
+emission_enabled = true
+emission = Color(1, 0.34, 0.02, 1)
+emission_energy_multiplier = 4.2
+transparency = 1
+
+[sub_resource type="StandardMaterial3D" id="Mat_wood"]
+albedo_color = Color(0.38, 0.19, 0.07, 1)
+roughness = 0.86
+
+[sub_resource type="StandardMaterial3D" id="Mat_battery"]
+albedo_color = Color(0.16, 0.2, 0.28, 1)
+metallic = 0.45
+roughness = 0.3
+
+[sub_resource type="StandardMaterial3D" id="Mat_switch"]
+albedo_color = Color(0.35, 0.1, 0.52, 1)
+emission_enabled = true
+emission = Color(0.18, 0.02, 0.36, 1)
+emission_energy_multiplier = 1.6
+
+[sub_resource type="StandardMaterial3D" id="Mat_lamp"]
+albedo_color = Color(0.95, 0.82, 0.3, 0.65)
+emission_enabled = true
+emission = Color(1, 0.45, 0.04, 1)
+emission_energy_multiplier = 3.8
+transparency = 1
+
+[sub_resource type="StandardMaterial3D" id="Mat_iron"]
+albedo_color = Color(0.3, 0.34, 0.4, 1)
+metallic = 0.88
+roughness = 0.35
+
+[sub_resource type="BoxShape3D" id="Shape_floor"]
+size = Vector3(19, 1, 19)
+
+[sub_resource type="BoxMesh" id="Mesh_floor"]
+size = Vector3(19, 1, 19)
+
+[sub_resource type="BoxShape3D" id="Shape_wall_long"]
+size = Vector3(19, 4, 0.6)
+
+[sub_resource type="BoxMesh" id="Mesh_wall_long"]
+size = Vector3(19, 4, 0.6)
+
+[sub_resource type="BoxShape3D" id="Shape_wall_side"]
+size = Vector3(0.6, 4, 19)
+
+[sub_resource type="BoxMesh" id="Mesh_wall_side"]
+size = Vector3(0.6, 4, 19)
+
+[sub_resource type="BoxMesh" id="Mesh_wire"]
+size = Vector3(1, 0.13, 0.13)
+
+[sub_resource type="BoxMesh" id="Mesh_wire_vertical"]
+size = Vector3(0.13, 0.13, 1)
+
+[sub_resource type="SphereMesh" id="Mesh_terminal"]
+radius = 0.18
+height = 0.36
+radial_segments = 10
+rings = 6
+
+[sub_resource type="BoxShape3D" id="Shape_battery"]
+size = Vector3(1.2, 1.2, 1.0)
+
+[sub_resource type="BoxMesh" id="Mesh_battery"]
+size = Vector3(1.2, 1.2, 1.0)
+
+[sub_resource type="BoxShape3D" id="Shape_switch"]
+size = Vector3(1.4, 0.9, 1.0)
+
+[sub_resource type="BoxMesh" id="Mesh_switch"]
+size = Vector3(1.4, 0.9, 1.0)
+
+[sub_resource type="SphereMesh" id="Mesh_lamp"]
+radius = 0.52
+height = 1.04
+radial_segments = 14
+rings = 8
+
+[sub_resource type="BoxMesh" id="Mesh_core"]
+size = Vector3(2.4, 0.8, 0.8)
+
+[sub_resource type="TorusMesh" id="Mesh_coil"]
+inner_radius = 0.58
+outer_radius = 0.74
+rings = 20
+ring_segments = 9
+
+[sub_resource type="BoxShape3D" id="Shape_bridge"]
+size = Vector3(2.2, 0.5, 0.62)
+
+[sub_resource type="BoxMesh" id="Mesh_bridge"]
+size = Vector3(2.2, 0.5, 0.62)
+
+[sub_resource type="CylinderShape3D" id="Shape_iron"]
+radius = 0.45
+height = 1.0
+
+[sub_resource type="CylinderMesh" id="Mesh_iron"]
+top_radius = 0.45
+bottom_radius = 0.45
+height = 1.0
+radial_segments = 16
+
+[node name="PrototypeConductiveNetworkLab" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="DCCircuitSolver" type="Node" parent="."]
+script = ExtResource("5_solver")
+solve_interval = 0.06
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-58, -30, 0)
+light_energy = 1.25
+shadow_enabled = true
+
+[node name="CircuitGlow" type="OmniLight3D" parent="."]
+position = Vector3(0, 4, 0)
+light_color = Color(0.42, 0.22, 1, 1)
+light_energy = 2.0
+omni_range = 14.0
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("Shape_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+material_override = SubResource("Mat_floor")
+mesh = SubResource("Mesh_floor")
+
+[node name="BackWall" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.5, 9.2)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWall"]
+shape = SubResource("Shape_wall_long")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWall"]
+material_override = SubResource("Mat_wall")
+mesh = SubResource("Mesh_wall_long")
+
+[node name="LeftWall" type="StaticBody3D" parent="."]
+position = Vector3(-9.2, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftWall"]
+shape = SubResource("Shape_wall_side")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftWall"]
+material_override = SubResource("Mat_wall")
+mesh = SubResource("Mesh_wall_side")
+
+[node name="RightWall" type="StaticBody3D" parent="."]
+position = Vector3(9.2, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RightWall"]
+shape = SubResource("Shape_wall_side")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RightWall"]
+material_override = SubResource("Mat_wall")
+mesh = SubResource("Mesh_wall_side")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector3(0, 0.15, -7.2)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="LabResetConsole" parent="." instance=ExtResource("4_reset")]
+position = Vector3(-7.4, 0, -7.0)
+
+[node name="Title" type="Label3D" parent="."]
+position = Vector3(0, 3.6, -6.2)
+text = "CONDUCTIVE NETWORKS"
+font_size = 50
+pixel_size = 0.008
+billboard = 1
+modulate = Color(0.86, 0.78, 1, 1)
+outline_size = 7
+
+[node name="Instructions" type="Label3D" parent="."]
+position = Vector3(0, 2.85, -5.9)
+text = "MOVE COPPER INTO THE GAP  •  CLOSE SWITCH  •  REVERSE BATTERY  •  WOOD INSULATES"
+font_size = 24
+pixel_size = 0.006
+billboard = 1
+modulate = Color(1, 0.84, 0.42, 1)
+outline_size = 5
+
+[node name="CircuitReadout" type="Label3D" parent="."]
+position = Vector3(-7.2, 2.3, 0)
+text = "CIRCUIT: OPEN LOOP"
+font_size = 26
+pixel_size = 0.006
+billboard = 1
+modulate = Color(0.72, 0.9, 1, 1)
+outline_size = 5
+
+[node name="GapLabel" type="Label3D" parent="."]
+position = Vector3(0, 1.35, 3.1)
+text = "CONDUCTIVE GAP"
+font_size = 28
+pixel_size = 0.0065
+billboard = 1
+modulate = Color(1, 0.58, 0.2, 1)
+outline_size = 5
+
+[node name="Circuit" type="Node3D" parent="."]
+
+[node name="Battery" type="Area3D" parent="Circuit"]
+position = Vector3(-5, 0.7, 0)
+script = ExtResource("8_source")
+component_id = "battery"
+display_name = "12 V Battery"
+nominal_voltage_volts = 12.0
+source_internal_resistance_ohms = 0.2
+max_current_amps = 8.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Circuit/Battery"]
+shape = SubResource("Shape_battery")
+
+[node name="Body" type="MeshInstance3D" parent="Circuit/Battery"]
+material_override = SubResource("Mat_battery")
+mesh = SubResource("Mesh_battery")
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="Circuit/Battery"]
+visible = false
+scale = Vector3(1.12, 1.12, 1.12)
+material_override = SubResource("Mat_current")
+mesh = SubResource("Mesh_battery")
+
+[node name="StateLabel" type="Label3D" parent="Circuit/Battery"]
+position = Vector3(0, 1.15, 0)
+text = "BATTERY\nA → B"
+font_size = 25
+pixel_size = 0.006
+billboard = 1
+outline_size = 5
+
+[node name="TerminalA" type="Marker3D" parent="Circuit/Battery"]
+position = Vector3(0, 0, 2.5)
+script = ExtResource("7_terminal")
+terminal_id = "positive"
+
+[node name="Pad" type="MeshInstance3D" parent="Circuit/Battery/TerminalA"]
+material_override = SubResource("Mat_copper")
+mesh = SubResource("Mesh_terminal")
+
+[node name="TerminalB" type="Marker3D" parent="Circuit/Battery"]
+position = Vector3(0, 0, -2.5)
+script = ExtResource("7_terminal")
+terminal_id = "negative"
+
+[node name="Pad" type="MeshInstance3D" parent="Circuit/Battery/TerminalB"]
+material_override = SubResource("Mat_copper")
+mesh = SubResource("Mesh_terminal")
+
+[node name="TopLeftWire" type="Node3D" parent="Circuit"]
+position = Vector3(-3.1, 0.7, 2.5)
+script = ExtResource("6_component")
+component_id = "top_left_wire"
+display_name = "Copper Wire"
+material_profile = ExtResource("16_copper")
+resistance_ohms = 0.2
+
+[node name="Body" type="MeshInstance3D" parent="Circuit/TopLeftWire"]
+scale = Vector3(3.8, 1, 1)
+material_override = SubResource("Mat_copper")
+mesh = SubResource("Mesh_wire")
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="Circuit/TopLeftWire"]
+visible = false
+scale = Vector3(3.8, 1.45, 1.45)
+material_override = SubResource("Mat_current")
+mesh = SubResource("Mesh_wire")
+
+[node name="TerminalA" type="Marker3D" parent="Circuit/TopLeftWire"]
+position = Vector3(-1.9, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "a"
+
+[node name="TerminalB" type="Marker3D" parent="Circuit/TopLeftWire"]
+position = Vector3(1.9, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "b"
+
+[node name="TopRightWire" type="Node3D" parent="Circuit"]
+position = Vector3(3.1, 0.7, 2.5)
+script = ExtResource("6_component")
+component_id = "top_right_wire"
+display_name = "Copper Wire"
+material_profile = ExtResource("16_copper")
+resistance_ohms = 0.2
+
+[node name="Body" type="MeshInstance3D" parent="Circuit/TopRightWire"]
+scale = Vector3(3.8, 1, 1)
+material_override = SubResource("Mat_copper")
+mesh = SubResource("Mesh_wire")
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="Circuit/TopRightWire"]
+visible = false
+scale = Vector3(3.8, 1.45, 1.45)
+material_override = SubResource("Mat_current")
+mesh = SubResource("Mesh_wire")
+
+[node name="TerminalA" type="Marker3D" parent="Circuit/TopRightWire"]
+position = Vector3(-1.9, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "a"
+
+[node name="TerminalB" type="Marker3D" parent="Circuit/TopRightWire"]
+position = Vector3(1.9, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "b"
+
+[node name="ElectromagneticCoil" type="Node3D" parent="Circuit"]
+position = Vector3(5, 0.7, 0)
+script = ExtResource("10_coil")
+component_id = "electromagnetic_coil"
+display_name = "Electromagnetic Coil"
+material_profile = ExtResource("16_copper")
+resistance_ohms = 4.0
+field_strength_per_amp = 5.0
+maximum_base_strength = 16.0
+
+[node name="Core" type="MeshInstance3D" parent="Circuit/ElectromagneticCoil"]
+material_override = SubResource("Mat_iron")
+mesh = SubResource("Mesh_core")
+
+[node name="CoilA" type="MeshInstance3D" parent="Circuit/ElectromagneticCoil"]
+position = Vector3(-0.55, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+material_override = SubResource("Mat_copper")
+mesh = SubResource("Mesh_coil")
+
+[node name="CoilB" type="MeshInstance3D" parent="Circuit/ElectromagneticCoil"]
+position = Vector3(0.55, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+material_override = SubResource("Mat_copper")
+mesh = SubResource("Mesh_coil")
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="Circuit/ElectromagneticCoil"]
+visible = false
+scale = Vector3(1.1, 1.1, 1.1)
+material_override = SubResource("Mat_current")
+mesh = SubResource("Mesh_core")
+
+[node name="StateLabel" type="Label3D" parent="Circuit/ElectromagneticCoil"]
+position = Vector3(0, 1.55, 0)
+text = "ELECTROMAGNET\nOFF"
+font_size = 25
+pixel_size = 0.006
+billboard = 1
+outline_size = 5
+
+[node name="TerminalA" type="Marker3D" parent="Circuit/ElectromagneticCoil"]
+position = Vector3(0, 0, 2.5)
+script = ExtResource("7_terminal")
+terminal_id = "a"
+
+[node name="TerminalB" type="Marker3D" parent="Circuit/ElectromagneticCoil"]
+position = Vector3(0, 0, -2.5)
+script = ExtResource("7_terminal")
+terminal_id = "b"
+
+[node name="MagneticField" type="Node3D" parent="Circuit/ElectromagneticCoil"]
+script = ExtResource("11_field")
+field_id = "circuit_powered_coil"
+display_name = "Circuit-Powered Electromagnet"
+active = false
+maximum_distance = 5.5
+minimum_distance = 0.7
+base_strength = 0.0
+falloff_power = 2.2
+local_moment_axis = Vector3(1, 0, 0)
+maximum_field_strength = 14.0
+
+[node name="Lamp" type="Node3D" parent="Circuit"]
+position = Vector3(3.5, 0.7, -2.5)
+script = ExtResource("6_component")
+component_id = "lamp"
+display_name = "Indicator Lamp"
+component_kind = "load"
+material_profile = ExtResource("16_copper")
+resistance_ohms = 2.0
+
+[node name="Bulb" type="MeshInstance3D" parent="Circuit/Lamp"]
+material_override = SubResource("Mat_lamp")
+mesh = SubResource("Mesh_lamp")
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="Circuit/Lamp"]
+visible = false
+scale = Vector3(1.18, 1.18, 1.18)
+material_override = SubResource("Mat_current")
+mesh = SubResource("Mesh_lamp")
+
+[node name="LampLight" type="OmniLight3D" parent="Circuit/Lamp"]
+visible = false
+light_color = Color(1, 0.45, 0.08, 1)
+light_energy = 3.2
+omni_range = 5.0
+
+[node name="StateLabel" type="Label3D" parent="Circuit/Lamp"]
+position = Vector3(0, 1.2, 0)
+text = "INDICATOR LAMP\nOFF"
+font_size = 24
+pixel_size = 0.006
+billboard = 1
+outline_size = 5
+
+[node name="TerminalA" type="Marker3D" parent="Circuit/Lamp"]
+position = Vector3(1.5, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "a"
+
+[node name="TerminalB" type="Marker3D" parent="Circuit/Lamp"]
+position = Vector3(-1.5, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "b"
+
+[node name="Switch" type="Area3D" parent="Circuit"]
+position = Vector3(0.75, 0.7, -2.5)
+script = ExtResource("9_switch")
+component_id = "switch"
+display_name = "Knife Switch"
+material_profile = ExtResource("16_copper")
+resistance_ohms = 0.1
+starts_closed = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Circuit/Switch"]
+shape = SubResource("Shape_switch")
+
+[node name="Body" type="MeshInstance3D" parent="Circuit/Switch"]
+material_override = SubResource("Mat_switch")
+mesh = SubResource("Mesh_switch")
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="Circuit/Switch"]
+visible = false
+scale = Vector3(1.12, 1.12, 1.12)
+material_override = SubResource("Mat_current")
+mesh = SubResource("Mesh_switch")
+
+[node name="StateLabel" type="Label3D" parent="Circuit/Switch"]
+position = Vector3(0, 1.15, 0)
+text = "SWITCH\nOPEN"
+font_size = 25
+pixel_size = 0.006
+billboard = 1
+outline_size = 5
+
+[node name="TerminalA" type="Marker3D" parent="Circuit/Switch"]
+position = Vector3(1.25, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "a"
+
+[node name="TerminalB" type="Marker3D" parent="Circuit/Switch"]
+position = Vector3(-1.25, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "b"
+
+[node name="BottomWire" type="Node3D" parent="Circuit"]
+position = Vector3(-2.75, 0.7, -2.5)
+script = ExtResource("6_component")
+component_id = "bottom_wire"
+display_name = "Copper Wire"
+material_profile = ExtResource("16_copper")
+resistance_ohms = 0.2
+
+[node name="Body" type="MeshInstance3D" parent="Circuit/BottomWire"]
+scale = Vector3(4.5, 1, 1)
+material_override = SubResource("Mat_copper")
+mesh = SubResource("Mesh_wire")
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="Circuit/BottomWire"]
+visible = false
+scale = Vector3(4.5, 1.45, 1.45)
+material_override = SubResource("Mat_current")
+mesh = SubResource("Mesh_wire")
+
+[node name="TerminalA" type="Marker3D" parent="Circuit/BottomWire"]
+position = Vector3(2.25, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "a"
+
+[node name="TerminalB" type="Marker3D" parent="Circuit/BottomWire"]
+position = Vector3(-2.25, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "b"
+
+[node name="CopperBridge" type="CharacterBody3D" parent="."]
+position = Vector3(0, 0.35, 1.0)
+script = ExtResource("12_body")
+body_label = "Movable Copper Bridge"
+material_profile = ExtResource("16_copper")
+mass_override_kg = 3.0
+gravity_strength = 20.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CopperBridge"]
+shape = SubResource("Shape_bridge")
+
+[node name="Body" type="MeshInstance3D" parent="CopperBridge"]
+material_override = SubResource("Mat_copper")
+mesh = SubResource("Mesh_bridge")
+
+[node name="PayloadReceiver" type="Node" parent="CopperBridge"]
+script = ExtResource("14_payload")
+
+[node name="ForceReceiver" type="Node" parent="CopperBridge"]
+script = ExtResource("13_force")
+drag = 6.0
+max_force_speed = 5.0
+
+[node name="CircuitComponent" type="Node3D" parent="CopperBridge"]
+script = ExtResource("6_component")
+component_id = "movable_copper_bridge"
+display_name = "Copper Bridge"
+material_profile = ExtResource("16_copper")
+resistance_ohms = 0.2
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="CopperBridge/CircuitComponent"]
+visible = false
+scale = Vector3(1.06, 1.16, 1.16)
+material_override = SubResource("Mat_current")
+mesh = SubResource("Mesh_bridge")
+
+[node name="TerminalA" type="Marker3D" parent="CopperBridge/CircuitComponent"]
+position = Vector3(-1, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "a"
+
+[node name="TerminalB" type="Marker3D" parent="CopperBridge/CircuitComponent"]
+position = Vector3(1, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "b"
+
+[node name="Label3D" type="Label3D" parent="CopperBridge"]
+position = Vector3(0, 0.9, 0)
+text = "COPPER\nCONDUCTOR"
+font_size = 24
+pixel_size = 0.006
+billboard = 1
+outline_size = 5
+
+[node name="WoodBridge" type="CharacterBody3D" parent="."]
+position = Vector3(0, 0.35, -0.2)
+script = ExtResource("12_body")
+body_label = "Movable Wooden Bar"
+material_profile = ExtResource("18_wood")
+mass_override_kg = 2.0
+gravity_strength = 20.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WoodBridge"]
+shape = SubResource("Shape_bridge")
+
+[node name="Body" type="MeshInstance3D" parent="WoodBridge"]
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_bridge")
+
+[node name="PayloadReceiver" type="Node" parent="WoodBridge"]
+script = ExtResource("14_payload")
+
+[node name="ForceReceiver" type="Node" parent="WoodBridge"]
+script = ExtResource("13_force")
+drag = 6.0
+max_force_speed = 5.0
+
+[node name="CircuitComponent" type="Node3D" parent="WoodBridge"]
+script = ExtResource("6_component")
+component_id = "movable_wood_bridge"
+display_name = "Wooden Bar"
+material_profile = ExtResource("18_wood")
+resistance_ohms = 1000000.0
+
+[node name="TerminalA" type="Marker3D" parent="WoodBridge/CircuitComponent"]
+position = Vector3(-1, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "a"
+
+[node name="TerminalB" type="Marker3D" parent="WoodBridge/CircuitComponent"]
+position = Vector3(1, 0, 0)
+script = ExtResource("7_terminal")
+terminal_id = "b"
+
+[node name="Label3D" type="Label3D" parent="WoodBridge"]
+position = Vector3(0, 0.9, 0)
+text = "WOOD\nINSULATOR"
+font_size = 24
+pixel_size = 0.006
+billboard = 1
+outline_size = 5
+
+[node name="IronSlug" type="CharacterBody3D" parent="."]
+position = Vector3(7.6, 0.55, 0)
+rotation_degrees = Vector3(0, 0, 90)
+script = ExtResource("12_body")
+body_label = "Iron Test Slug"
+material_profile = ExtResource("17_iron")
+mass_override_kg = 4.0
+angular_inertia = 1.4
+gravity_strength = 20.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="IronSlug"]
+shape = SubResource("Shape_iron")
+
+[node name="Body" type="MeshInstance3D" parent="IronSlug"]
+material_override = SubResource("Mat_iron")
+mesh = SubResource("Mesh_iron")
+
+[node name="ForceReceiver" type="Node" parent="IronSlug"]
+script = ExtResource("13_force")
+continuous_linear_damping = 2.8
+continuous_angular_damping = 3.2
+max_continuous_speed = 2.0
+max_angular_speed = 2.0
+
+[node name="PhysicalFieldReceiver" type="Node" parent="IronSlug"]
+script = ExtResource("15_field_receiver")
+material_profile = ExtResource("17_iron")
+field_force_scale = 3.2
+field_torque_scale = 0.8
+
+[node name="Label3D" type="Label3D" parent="IronSlug"]
+position = Vector3(0, 1.0, 0)
+text = "IRON LOAD"
+font_size = 24
+pixel_size = 0.006
+billboard = 1
+outline_size = 5

@@ -14,6 +14,7 @@ func _ready() -> void:
 	test_force_mass_and_torque_integration()
 	test_contact_constraints()
 	test_material_specific_magnetic_response()
+	failures.append_array(await ConductiveNetworkTestFixture.run(self))
 
 	if failures.is_empty():
 		print("PHYSICAL_INTERACTION_FOUNDATION_SMOKE_TEST: PASS")

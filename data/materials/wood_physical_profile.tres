@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PhysicalMaterialProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/physics/physical_material_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+material_id = "wood"
+display_name = "Dry Wood"
+density_kg_m3 = 700.0
+default_mass_kg = 2.0
+electrical_conductivity = 0.0
+electrical_resistivity = 100000000000000.0
+magnetic_susceptibility = 0.0
+magnetic_retention = 0.0
+permanent_magnetic_strength = 0.0
+material_tags = Array[String](["organic", "insulator", "nonmagnetic"])

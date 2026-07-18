@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="4_gw7qh"]
 [ext_resource type="Script" uid="uid://dl7cjack4ydjg" path="res://scripts/combat/payload_receiver.gd" id="5_e3vcl"]
 [ext_resource type="Script" uid="uid://c2xu2guuvxg5l" path="res://scripts/combat/force_receiver.gd" id="6_p5olj"]
-[ext_resource type="Script" uid="uid://yxe8eoiplh8i" path="res://scripts/enemies/enemy_brain.gd" id="7_tbb3o"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_zone_aware_brain.gd" id="7_tbb3o"]
 [ext_resource type="Resource" uid="uid://j4y75vgrs3br" path="res://data/enemies/golbin_definition.tres" id="8_dbc34"]
 [ext_resource type="Resource" uid="uid://bq4of4nkti5iu" path="res://data/enemy_attacks/goblin_claw_attack.tres" id="9_bo45w"]
 [ext_resource type="Script" uid="uid://qt8ipxix0ltk" path="res://scripts/enemies/enemy_telegraph.gd" id="10_dbc34"]
@@ -47,7 +47,6 @@ metadata/_custom_type_script = "uid://c2xu2guuvxg5l"
 script = ExtResource("7_tbb3o")
 enemy_definition = ExtResource("8_dbc34")
 default_attack = ExtResource("9_bo45w")
-metadata/_custom_type_script = "uid://yxe8eoiplh8i"
 
 [node name="EnemyTelegraph" type="Node" parent="." unique_id=1890575995]
 script = ExtResource("10_dbc34")

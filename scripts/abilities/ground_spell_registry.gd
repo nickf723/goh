@@ -160,7 +160,8 @@ static func get_definition_for_ability(ability: AbilityDefinition) -> Dictionary
 	if ability == null:
 		return {}
 
-	for spell_key: String in GROUND_SPELL_DEFS.keys():
+	for spell_key_variant in GROUND_SPELL_DEFS.keys():
+		var spell_key: String = str(spell_key_variant)
 		var definition: Dictionary = GROUND_SPELL_DEFS[spell_key]
 		if ability_matches_definition(ability, definition):
 			return definition.duplicate(true)
@@ -231,7 +232,8 @@ static func make_payload_for_ability(ability: AbilityDefinition, definition: Dic
 			payload = duplicate_payload as DamagePayload
 
 	if definition.has("payload") and definition["payload"] is Dictionary:
-		apply_payload_definition(payload, definition["payload"] as Dictionary)
+		var payload_def: Dictionary = definition["payload"]
+		apply_payload_definition(payload, payload_def)
 
 	return payload
 
@@ -300,7 +302,7 @@ static func apply_payload_definition(payload: DamagePayload, payload_def: Dictio
 		payload.status_strength = float(payload_def["default_status_strength"])
 
 	if payload_def.has("tags") and payload_def["tags"] is Array:
-		append_payload_tags(payload, payload_def["tags"] as Array)
+		append_payload_tags(payload, payload_def["tags"])
 
 
 static func append_payload_tags(payload: DamagePayload, tags_to_add: Array) -> void:

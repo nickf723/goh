@@ -15,12 +15,12 @@ var post_miss_retreat_timer: float = 0.0
 
 func process_chase(delta: float) -> void:
 	if player == null:
-		selected_option = null
+		clear_selection("no target")
 		change_state(EnemyState.IDLE)
 		return
 
 	if should_hesitate_for_zone():
-		selected_option = null
+		clear_selection("zone hesitation")
 		clear_horizontal_velocity()
 		reset_attack_commit()
 		face_player(delta)
@@ -29,20 +29,20 @@ func process_chase(delta: float) -> void:
 
 	var distance: float = get_distance_to_player()
 	if distance > get_definition().get_lose_interest_radius():
-		selected_option = null
+		clear_selection("lost target")
 		change_state(EnemyState.IDLE)
 		return
 
 	if post_miss_retreat_timer > 0.0:
 		post_miss_retreat_timer = max(post_miss_retreat_timer - delta, 0.0)
-		selected_option = null
+		clear_selection("post-miss retreat")
 		reset_attack_commit()
 		move_away_from_player(delta)
 		last_action_summary = "retreating after miss"
 		return
 
 	if attack_cooldown_timer > 0.0:
-		selected_option = null
+		clear_selection("cooldown")
 		reset_attack_commit()
 
 		if distance <= get_maximum_action_start_distance():
@@ -182,10 +182,35 @@ func register_attack_miss() -> void:
 	post_miss_retreat_timer = get_personality_number("post_miss_retreat_time", 0.0)
 
 
+func interrupt_current_action(reason: String) -> bool:
+	var interrupted: bool = super.interrupt_current_action(reason)
+	if interrupted:
+		selected_option = null
+		committed_option = null
+		last_selection_summary = "interrupted"
+		last_selection_score = 0.0
+
+	return interrupted
+
+
+func cancel_current_action(reason: String) -> void:
+	super.cancel_current_action(reason)
+	selected_option = null
+	committed_option = null
+	last_selection_summary = reason
+	last_selection_score = 0.0
+
+
 func finish_action_state() -> void:
 	super.finish_action_state()
 	selected_option = null
 	committed_option = null
+
+
+func clear_selection(reason: String = "none") -> void:
+	selected_option = null
+	last_selection_summary = reason
+	last_selection_score = 0.0
 
 
 func reposition_for_action(delta: float, distance: float) -> void:
@@ -199,6 +224,7 @@ func reposition_for_action(delta: float, distance: float) -> void:
 		move_toward_player(delta)
 		return
 
+	last_selection_summary = "reposition"
 	last_action_summary = "repositioning between action windows"
 	circle_player(delta)
 

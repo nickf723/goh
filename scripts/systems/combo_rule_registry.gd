@@ -1,6 +1,7 @@
 extends Node
 class_name ComboRuleRegistry
 
+const ReactionBurstResolverScript = preload("res://scripts/systems/reaction_burst_resolver.gd")
 const IgniteOilyRule: Resource = preload("res://data/combo_rules/ignite_oily_target.tres")
 const WetConductionRule: Resource = preload("res://data/combo_rules/wet_conduction.tres")
 const WetFreezeRule: Resource = preload("res://data/combo_rules/wet_freeze.tres")
@@ -26,7 +27,11 @@ static func resolve_payload_reactions(target: Node, payload: DamagePayload) -> A
 	return reactions
 
 
-static func resolve_hazard_reactions(hazard: Node, payload: DamagePayload, source_position: Vector3 = Vector3.ZERO) -> Array[Dictionary]:
+static func resolve_hazard_reactions(
+	hazard: Node,
+	payload: DamagePayload,
+	source_position: Vector3 = Vector3.ZERO
+) -> Array[Dictionary]:
 	var reactions: Array[Dictionary] = []
 
 	if hazard == null or payload == null:
@@ -92,21 +97,46 @@ static func apply_rule(rule: Resource, target: Node, payload: DamagePayload) -> 
 	apply_rule_damage(rule, target)
 	call_target_reaction_method(rule, target, Vector3.ZERO)
 
-	return build_reaction_result(rule, target)
+	var area_results: Array[Dictionary] = ReactionBurstResolverScript.apply_area_effect(
+		rule,
+		target,
+		get_target_position(target)
+	)
+	return build_reaction_result(rule, target, area_results)
 
 
-static func apply_hazard_rule(rule: Resource, hazard: Node, payload: DamagePayload, source_position: Vector3 = Vector3.ZERO) -> Dictionary:
+static func apply_hazard_rule(
+	rule: Resource,
+	hazard: Node,
+	payload: DamagePayload,
+	source_position: Vector3 = Vector3.ZERO
+) -> Dictionary:
 	remove_rule_statuses(rule, hazard)
 	apply_rule_status(rule, hazard, payload)
 	apply_rule_damage(rule, hazard)
 	call_target_reaction_method(rule, hazard, source_position)
 
-	return build_reaction_result(rule, hazard)
+	var area_results: Array[Dictionary] = ReactionBurstResolverScript.apply_area_effect(
+		rule,
+		hazard,
+		get_target_position(hazard)
+	)
+	return build_reaction_result(rule, hazard, area_results)
 
 
-static func build_reaction_result(rule: Resource, target: Node) -> Dictionary:
+static func build_reaction_result(
+	rule: Resource,
+	target: Node,
+	area_results: Array[Dictionary] = []
+) -> Dictionary:
 	var reaction_id: String = get_rule_string(rule, "reaction_id", "reaction")
 	var reaction_name: String = get_rule_string(rule, "reaction_name", reaction_id)
+	var area_target_names: Array[String] = []
+
+	for area_result: Dictionary in area_results:
+		var target_name: String = str(area_result.get("target", ""))
+		if target_name != "" and not area_target_names.has(target_name):
+			area_target_names.append(target_name)
 
 	return {
 		"rule": get_rule_string(rule, "rule_id", reaction_id),
@@ -118,15 +148,22 @@ static func build_reaction_result(rule: Resource, target: Node) -> Dictionary:
 		"visual_radius": get_rule_float(rule, "visual_radius", 1.25),
 		"visual_duration": get_rule_float(rule, "visual_duration", 0.42),
 		"priority": get_rule_int(rule, "priority", 0),
+		"area_effect_radius": get_rule_float(rule, "area_effect_radius", 0.0),
+		"area_target_count": area_results.size(),
+		"area_targets": area_target_names,
+		"area_results": area_results,
 	}
 
 
-static func call_target_reaction_method(rule: Resource, target: Node, source_position: Vector3 = Vector3.ZERO) -> void:
+static func call_target_reaction_method(
+	rule: Resource,
+	target: Node,
+	source_position: Vector3 = Vector3.ZERO
+) -> void:
 	var method_name: String = get_rule_string(rule, "target_reaction_method", "")
 
 	if method_name == "":
 		return
-
 	if target == null or not target.has_method(method_name):
 		return
 
@@ -192,7 +229,11 @@ static func apply_rule_damage(rule: Resource, target: Node) -> void:
 	reaction_payload.amount = output_damage
 	reaction_payload.stance_damage = output_stance_damage
 	reaction_payload.element = get_rule_string(rule, "output_element", "neutral")
-	reaction_payload.source_name = get_rule_string(rule, "output_source_name", get_rule_string(rule, "reaction_name", "Reaction"))
+	reaction_payload.source_name = get_rule_string(
+		rule,
+		"output_source_name",
+		get_rule_string(rule, "reaction_name", "Reaction")
+	)
 	reaction_payload.hit_type = get_rule_string(rule, "output_hit_type", "reaction")
 	reaction_payload.tags = get_rule_string_array(rule, "output_tags")
 
@@ -295,6 +336,8 @@ static func get_debug_matrix_rows() -> Array[Dictionary]:
 			"reaction": get_rule_string(rule, "reaction_id", "reaction"),
 			"visual": get_rule_string(rule, "visual_style", "reaction"),
 			"target_method": get_rule_string(rule, "target_reaction_method", ""),
+			"area_radius": get_rule_float(rule, "area_effect_radius", 0.0),
+			"area_status": get_rule_string(rule, "area_output_status", ""),
 			"priority": get_rule_int(rule, "priority", 0),
 		})
 
@@ -308,6 +351,17 @@ static func format_feedback_text(rule: Resource, target: Node) -> String:
 		text = "{target} reacts."
 
 	return text.replace("{target}", target.name)
+
+
+static func get_target_position(target: Node) -> Vector3:
+	if target is Node3D:
+		return (target as Node3D).global_position
+
+	var parent: Node = target.get_parent()
+	if parent is Node3D:
+		return (parent as Node3D).global_position
+
+	return Vector3.ZERO
 
 
 static func get_rule_string(rule: Resource, property_name: String, fallback: String = "") -> String:

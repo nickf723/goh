@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnemyAttackDefinition" format=3]
+
+[ext_resource type="Script" uid="uid://bwx0laq8guo7b" path="res://scripts/enemies/enemy_attack_definition.gd" id="1_pounce"]
+[ext_resource type="Resource" path="res://data/enemy_attack_classes/pounce_attack_class.tres" id="2_pounce"]
+
+[resource]
+script = ExtResource("1_pounce")
+attack_class = ExtResource("2_pounce")
+use_class_timing = true
+use_class_payload = true
+display_name = "Gremlin Pounce"
+role_tags = Array[String](["enemy_attack", "melee", "lunge", "gap_closer", "pounce", "gremlin"])
+metadata/_custom_type_script = "uid://bwx0laq8guo7b"

@@ -21,8 +21,21 @@ var delivery_style: String = "melee"
 @export var cone_angle_degrees: float = 110.0
 
 @export var windup_time: float = 0.35
+@export var active_time: float = 0.10
 @export var recovery_time: float = 0.45
 @export var cooldown: float = 1.0
+
+@export_group("Phase Movement")
+@export var windup_move_speed_multiplier: float = 0.0
+@export var active_move_speed_multiplier: float = 0.0
+@export var recovery_move_speed_multiplier: float = 0.0
+
+@export_group("Interrupts")
+@export var interruptible_during_windup: bool = true
+@export var interruptible_during_active: bool = false
+@export var interruptible_during_recovery: bool = false
+
+@export_group("")
 @export var show_miss_message: bool = false
 
 @export var payload_amount: int = 1

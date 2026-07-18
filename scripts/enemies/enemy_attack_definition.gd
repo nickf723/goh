@@ -12,6 +12,7 @@ class_name EnemyAttackDefinition
 @export var use_class_payload: bool = false
 
 @export var display_name: String = "Enemy Attack"
+@export var role_tags: Array[String] = ["enemy_attack", "melee"]
 
 @export var payload: DamagePayload
 
@@ -19,9 +20,21 @@ class_name EnemyAttackDefinition
 @export var cone_angle_degrees: float = 110.0
 
 @export var windup_time: float = 0.35
+@export var active_time: float = 0.10
 @export var recovery_time: float = 0.45
 @export var cooldown: float = 1.0
 
+@export_group("Phase Movement")
+@export var windup_move_speed_multiplier: float = 0.0
+@export var active_move_speed_multiplier: float = 0.0
+@export var recovery_move_speed_multiplier: float = 0.0
+
+@export_group("Interrupts")
+@export var interruptible_during_windup: bool = true
+@export var interruptible_during_active: bool = false
+@export var interruptible_during_recovery: bool = false
+
+@export_group("")
 @export var show_miss_message: bool = false
 
 
@@ -30,6 +43,21 @@ func get_display_name() -> String:
 		return get_class_string("display_name", display_name)
 
 	return display_name
+
+
+func get_role_tags() -> Array[String]:
+	var merged_tags: Array[String] = []
+	append_unique_strings(merged_tags, role_tags)
+
+	if has_attack_class():
+		var class_tags: Variant = attack_class.get("role_tags")
+		if class_tags is Array:
+			for tag_value in class_tags:
+				var tag: String = str(tag_value)
+				if tag != "" and not merged_tags.has(tag):
+					merged_tags.append(tag)
+
+	return merged_tags
 
 
 func get_range() -> float:
@@ -53,6 +81,13 @@ func get_windup_time() -> float:
 	return windup_time
 
 
+func get_active_time() -> float:
+	if use_class_timing and has_attack_class():
+		return get_class_float("active_time", active_time)
+
+	return active_time
+
+
 func get_recovery_time() -> float:
 	if use_class_timing and has_attack_class():
 		return get_class_float("recovery_time", recovery_time)
@@ -65,6 +100,48 @@ func get_cooldown() -> float:
 		return get_class_float("cooldown", cooldown)
 
 	return cooldown
+
+
+func get_windup_move_speed_multiplier() -> float:
+	if use_class_timing and has_attack_class():
+		return get_class_float("windup_move_speed_multiplier", windup_move_speed_multiplier)
+
+	return windup_move_speed_multiplier
+
+
+func get_active_move_speed_multiplier() -> float:
+	if use_class_timing and has_attack_class():
+		return get_class_float("active_move_speed_multiplier", active_move_speed_multiplier)
+
+	return active_move_speed_multiplier
+
+
+func get_recovery_move_speed_multiplier() -> float:
+	if use_class_timing and has_attack_class():
+		return get_class_float("recovery_move_speed_multiplier", recovery_move_speed_multiplier)
+
+	return recovery_move_speed_multiplier
+
+
+func get_interruptible_during_windup() -> bool:
+	if use_class_timing and has_attack_class():
+		return get_class_bool("interruptible_during_windup", interruptible_during_windup)
+
+	return interruptible_during_windup
+
+
+func get_interruptible_during_active() -> bool:
+	if use_class_timing and has_attack_class():
+		return get_class_bool("interruptible_during_active", interruptible_during_active)
+
+	return interruptible_during_active
+
+
+func get_interruptible_during_recovery() -> bool:
+	if use_class_timing and has_attack_class():
+		return get_class_bool("interruptible_during_recovery", interruptible_during_recovery)
+
+	return interruptible_during_recovery
 
 
 func should_show_miss_message() -> bool:
@@ -159,3 +236,14 @@ func get_class_payload() -> DamagePayload:
 		return payload_variant as DamagePayload
 
 	return null
+
+
+func append_unique_strings(target: Array[String], source: Array[String]) -> void:
+	for value: String in source:
+		if value == "":
+			continue
+
+		if target.has(value):
+			continue
+
+		target.append(value)

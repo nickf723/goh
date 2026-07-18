@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="EnemyAttackClassDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_attack_class_definition.gd" id="1_pounce"]
+
+[resource]
+script = ExtResource("1_pounce")
+attack_class_id = "pounce"
+display_name = "Pounce"
+role_tags = Array[String](["enemy_attack", "melee", "physical", "lunge", "gap_closer", "pounce"])
+delivery_style = "lunge"
+range = 0.9
+cone_angle_degrees = 78.0
+windup_time = 0.32
+active_time = 0.3
+recovery_time = 0.68
+cooldown = 1.25
+windup_move_speed_multiplier = 0.0
+active_move_speed_multiplier = 2.75
+recovery_move_speed_multiplier = 0.0
+interruptible_during_windup = true
+interruptible_during_active = false
+interruptible_during_recovery = false
+show_miss_message = false
+payload_amount = 1
+payload_stance_damage = 2
+payload_element = "neutral"
+payload_source_name = "Pounce Bite"
+payload_hit_type = "melee"
+payload_knockback_strength = 2.0
+payload_tags = Array[String](["physical", "melee", "bite", "lunge", "pounce", "enemy_attack"])
+debug_notes = "Committed gap-closing leap. Sidestep the locked line, then punish the long recovery."

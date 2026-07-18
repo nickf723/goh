@@ -3,13 +3,17 @@ class_name EnemyTelegraph
 
 @export var visual_root_path: NodePath
 @export var windup_scale: Vector3 = Vector3(1.18, 1.18, 1.18)
+@export var active_scale: Vector3 = Vector3(1.04, 0.96, 1.04)
 @export var normal_scale: Vector3 = Vector3.ONE
 
 @export var windup_flash_color: Color = Color(1.0, 0.25, 0.15, 1.0)
+@export var active_flash_color: Color = Color(1.0, 0.88, 0.3, 1.0)
 @export var normal_color: Color = Color(1.0, 1.0, 1.0, 1.0)
 @export_range(0.0, 1.0, 0.05) var flash_strength: float = 0.58
+@export_range(0.0, 1.0, 0.05) var active_flash_strength: float = 0.72
 
 @export var windup_pulse_time: float = 0.12
+@export var active_snap_time: float = 0.05
 @export var recover_time: float = 0.18
 
 var visual_root: Node3D
@@ -81,9 +85,7 @@ func cache_materials_recursive(node: Node) -> void:
 
 
 func start_windup() -> void:
-	if active_tween != null:
-		active_tween.kill()
-
+	kill_active_tween()
 	set_flash(windup_flash_color)
 
 	if visual_root == null:
@@ -101,10 +103,27 @@ func start_windup() -> void:
 	)
 
 
-func start_recover() -> void:
-	if active_tween != null:
-		active_tween.kill()
+func start_active() -> void:
+	kill_active_tween()
+	set_flash(active_flash_color, active_flash_strength)
 
+	if visual_root == null:
+		return
+
+	if visual_root.has_method("start_active"):
+		visual_root.call("start_active")
+
+	active_tween = create_tween()
+	active_tween.tween_property(
+		visual_root,
+		"scale",
+		base_visual_scale * active_scale,
+		active_snap_time
+	)
+
+
+func start_recover() -> void:
+	kill_active_tween()
 	set_flash(normal_color, 0.0)
 
 	if visual_root == null:
@@ -123,10 +142,7 @@ func start_recover() -> void:
 
 
 func reset() -> void:
-	if active_tween != null:
-		active_tween.kill()
-		active_tween = null
-
+	kill_active_tween()
 	set_flash(normal_color, 0.0)
 
 	if visual_root != null:
@@ -134,6 +150,14 @@ func reset() -> void:
 
 		if visual_root.has_method("reset_presentation"):
 			visual_root.call("reset_presentation")
+
+
+func kill_active_tween() -> void:
+	if active_tween == null:
+		return
+
+	active_tween.kill()
+	active_tween = null
 
 
 func set_flash(color: Color, strength: float = -1.0) -> void:

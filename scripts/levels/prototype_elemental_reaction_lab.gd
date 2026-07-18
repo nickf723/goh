@@ -4,6 +4,8 @@ class_name PrototypeElementalReactionLab
 const ComboRuleRegistryScript = preload("res://scripts/systems/combo_rule_registry.gd")
 const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
 const LabLoadout: Resource = preload("res://data/loadouts/grace_reaction_lab_loadout.tres")
+const GoblinReactionTargetScene: PackedScene = preload("res://scenes/actors/testing/goblin_reaction_target.tscn")
+const GremlinReactionTargetScene: PackedScene = preload("res://scenes/actors/testing/gremlin_reaction_target.tscn")
 
 @export var opening_objective: String = "At the STEAM BURST station: cast Water, then Ice, then Fire. Watch the burst catch nearby targets."
 @export var opening_message: String = "Elemental Reaction Laboratory online. The Steam arena now reports surface state, reaction history, and radial targets."
@@ -21,6 +23,7 @@ func _ready() -> void:
 	add_to_group("debuggable")
 	configure_surface_catalysts()
 	configure_lab_loadout()
+	configure_steam_arena()
 	configure_station_readouts()
 
 	if refill_resources_on_ready:
@@ -104,6 +107,56 @@ func configure_surface_catalysts() -> void:
 		visual_root.add_child(label)
 
 
+func configure_steam_arena() -> void:
+	var station: Node3D = get_node_or_null("SteamStation") as Node3D
+	if station == null:
+		return
+
+	var primary_target: Node3D = station.get_node_or_null("GoblinTarget") as Node3D
+	if primary_target != null:
+		primary_target.position = Vector3(-1.55, 0.58, 0.35)
+		primary_target.name = "SteamGoblinLeft"
+
+	if station.get_node_or_null("SteamGremlinRight") == null:
+		var gremlin: Node3D = GremlinReactionTargetScene.instantiate() as Node3D
+		gremlin.name = "SteamGremlinRight"
+		gremlin.position = Vector3(1.55, 0.5, 0.35)
+		station.add_child(gremlin)
+
+	if station.get_node_or_null("SteamGoblinRear") == null:
+		var goblin: Node3D = GoblinReactionTargetScene.instantiate() as Node3D
+		goblin.name = "SteamGoblinRear"
+		goblin.position = Vector3(0.0, 0.58, 2.25)
+		station.add_child(goblin)
+
+	if station.get_node_or_null("BurstRadiusGuide") == null:
+		var guide := Node3D.new()
+		guide.name = "BurstRadiusGuide"
+		station.add_child(guide)
+		ElementVisuals.add_torus(
+			guide,
+			"SteamBurstRadius",
+			2.58,
+			2.66,
+			ElementVisuals.get_element_color("steam"),
+			Vector3(0.0, 0.16, 0.0),
+			Vector3.ZERO,
+			1.2,
+			0.34
+		)
+
+		var radius_label := Label3D.new()
+		radius_label.name = "RadiusLabel"
+		radius_label.position = Vector3(0.0, 0.42, 2.72)
+		radius_label.text = "STEAM BURST • 2.65m"
+		radius_label.font_size = 26
+		radius_label.pixel_size = 0.007
+		radius_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		radius_label.modulate = ElementVisuals.get_element_color("steam")
+		radius_label.outline_size = 5
+		guide.add_child(radius_label)
+
+
 func configure_station_readouts() -> void:
 	station_readouts.clear()
 
@@ -170,11 +223,15 @@ func update_station_readouts() -> void:
 		var state: String = str(data.get("reaction_state", "normal"))
 		var last_reaction: String = str(data.get("last_reaction", "none"))
 		var area_count: int = int(data.get("area_target_count", 0))
-		var area_targets: Variant = data.get("area_targets", [])
-		var target_text: String = "none"
-		if area_targets is Array and not (area_targets as Array).is_empty():
-			target_text = ", ".join(area_targets as Array)
+		var target_names: Array[String] = []
+		var raw_area_targets: Variant = data.get("area_targets", [])
+		if raw_area_targets is Array:
+			for raw_target: Variant in raw_area_targets as Array:
+				var target_name: String = str(raw_target)
+				if target_name != "":
+					target_names.append(target_name)
 
+		var target_text: String = "none" if target_names.is_empty() else ", ".join(target_names)
 		label.text = (
 			"STATE: "
 			+ state.to_upper()

@@ -97,7 +97,7 @@ func deliver_output(
 
 	var raw_result: Variant = output_target.call(output_method, element_name, amount, source, tags)
 	var delivered: float = amount
-	if raw_result is float or raw_result is int:
+	if typeof(raw_result) == TYPE_FLOAT or typeof(raw_result) == TYPE_INT:
 		delivered = float(raw_result)
 
 	if delivered <= 0.0:

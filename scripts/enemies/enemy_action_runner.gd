@@ -10,10 +10,11 @@ enum ActionPhase {
 }
 
 
-var current_action: EnemyAttackDefinition
+var current_action: EnemyCombatActionDefinition
 var phase: int = ActionPhase.NONE
 var phase_timer: float = 0.0
-var locked_direction: Vector3 = Vector3.FORWARD
+var locked_target_direction: Vector3 = Vector3.FORWARD
+var locked_movement_direction: Vector3 = Vector3.ZERO
 var hit_registered: bool = false
 var impact_requested: bool = false
 var finished_requested: bool = false
@@ -24,12 +25,17 @@ func _ready() -> void:
 	add_to_group("debuggable")
 
 
-func begin_action(action: EnemyAttackDefinition, direction: Vector3) -> bool:
+func begin_action(
+	action: EnemyCombatActionDefinition,
+	target_direction: Vector3,
+	movement_direction: Vector3 = Vector3.ZERO
+) -> bool:
 	if action == null or is_running():
 		return false
 
 	current_action = action
-	locked_direction = normalize_direction(direction)
+	locked_target_direction = normalize_required_direction(target_direction)
+	locked_movement_direction = normalize_optional_direction(movement_direction)
 	hit_registered = false
 	impact_requested = false
 	finished_requested = false
@@ -63,10 +69,7 @@ func interrupt_action(reason: String = "interrupted") -> bool:
 		return false
 
 	last_interrupt_reason = reason
-	current_action = null
-	phase = ActionPhase.NONE
-	phase_timer = 0.0
-	impact_requested = false
+	clear_running_action()
 	finished_requested = true
 	return true
 
@@ -76,19 +79,21 @@ func cancel_action(reason: String = "cancelled") -> void:
 		return
 
 	last_interrupt_reason = reason
-	current_action = null
-	phase = ActionPhase.NONE
-	phase_timer = 0.0
-	impact_requested = false
+	clear_running_action()
 	finished_requested = true
 
 
 func finish_action() -> void:
+	clear_running_action()
+	finished_requested = true
+
+
+func clear_running_action() -> void:
 	current_action = null
 	phase = ActionPhase.NONE
 	phase_timer = 0.0
 	impact_requested = false
-	finished_requested = true
+	locked_movement_direction = Vector3.ZERO
 
 
 func enter_phase(next_phase: int, duration: float) -> void:
@@ -158,22 +163,27 @@ func get_phase_time_remaining() -> float:
 	return phase_timer
 
 
-func get_current_action() -> EnemyAttackDefinition:
+func get_current_action() -> EnemyCombatActionDefinition:
 	return current_action
 
 
 func get_action_display_name() -> String:
-	if current_action == null:
-		return "none"
-
-	return current_action.get_display_name()
+	return current_action.get_display_name() if current_action != null else "none"
 
 
 func get_locked_direction() -> Vector3:
-	return locked_direction
+	return locked_target_direction
 
 
-func normalize_direction(direction: Vector3) -> Vector3:
+func get_locked_target_direction() -> Vector3:
+	return locked_target_direction
+
+
+func get_locked_movement_direction() -> Vector3:
+	return locked_movement_direction
+
+
+func normalize_required_direction(direction: Vector3) -> Vector3:
 	direction.y = 0.0
 	if direction.length() <= 0.01:
 		return Vector3.FORWARD
@@ -181,12 +191,22 @@ func normalize_direction(direction: Vector3) -> Vector3:
 	return direction.normalized()
 
 
+func normalize_optional_direction(direction: Vector3) -> Vector3:
+	direction.y = 0.0
+	if direction.length() <= 0.01:
+		return Vector3.ZERO
+
+	return direction.normalized()
+
+
 func get_debug_data() -> Dictionary:
 	return {
 		"action": get_action_display_name(),
+		"kind": current_action.get_action_kind() if current_action != null else "none",
 		"phase": get_phase_name(),
 		"phase_time": snapped(phase_timer, 0.01),
 		"interruptible": is_interruptible(),
 		"hit": hit_registered,
+		"movement": locked_movement_direction,
 		"interrupt": last_interrupt_reason,
 	}

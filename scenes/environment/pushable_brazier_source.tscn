@@ -1,0 +1,139 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/pushable_element_source.gd" id="1_source"]
+[ext_resource type="Script" path="res://scripts/environment/element_emitter.gd" id="2_emitter"]
+[ext_resource type="Script" path="res://scripts/combat/payload_receiver.gd" id="3_payload"]
+[ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="4_force"]
+[ext_resource type="Script" path="res://scripts/core/tag_component.gd" id="5_tags"]
+
+[sub_resource type="StandardMaterial3D" id="Material_metal"]
+albedo_color = Color(0.17, 0.12, 0.1, 1)
+metallic = 0.78
+roughness = 0.34
+
+[sub_resource type="StandardMaterial3D" id="Material_ember"]
+albedo_color = Color(1, 0.28, 0.035, 0.9)
+emission_enabled = true
+emission = Color(1, 0.18, 0.02, 1)
+emission_energy_multiplier = 3.2
+transparency = 1
+roughness = 0.15
+
+[sub_resource type="StandardMaterial3D" id="Material_flame"]
+albedo_color = Color(1, 0.72, 0.08, 0.78)
+emission_enabled = true
+emission = Color(1, 0.48, 0.03, 1)
+emission_energy_multiplier = 4.2
+transparency = 1
+roughness = 0.08
+
+[sub_resource type="CylinderShape3D" id="CylinderShape_body"]
+radius = 0.58
+height = 0.88
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_base"]
+top_radius = 0.45
+bottom_radius = 0.62
+height = 0.52
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_bowl"]
+top_radius = 0.78
+bottom_radius = 0.48
+height = 0.28
+radial_segments = 14
+
+[sub_resource type="SphereMesh" id="SphereMesh_ember"]
+radius = 0.32
+height = 0.64
+radial_segments = 10
+rings = 6
+
+[sub_resource type="SphereMesh" id="SphereMesh_flame"]
+radius = 0.24
+height = 0.48
+radial_segments = 10
+rings = 6
+
+[sub_resource type="SphereShape3D" id="SphereShape_emission"]
+radius = 1.15
+
+[node name="PushableBrazierSource" type="CharacterBody3D"]
+script = ExtResource("1_source")
+source_label = "Lit Brazier"
+floor_snap_length = 0.35
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.48, 0)
+shape = SubResource("CylinderShape_body")
+
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="Base" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.26, 0)
+material_override = SubResource("Material_metal")
+mesh = SubResource("CylinderMesh_base")
+
+[node name="Bowl" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.66, 0)
+material_override = SubResource("Material_metal")
+mesh = SubResource("CylinderMesh_bowl")
+
+[node name="FlameRoot" type="Node3D" parent="VisualRoot"]
+position = Vector3(0, 0.9, 0)
+
+[node name="Ember" type="MeshInstance3D" parent="VisualRoot/FlameRoot"]
+scale = Vector3(1.15, 0.58, 1.15)
+material_override = SubResource("Material_ember")
+mesh = SubResource("SphereMesh_ember")
+
+[node name="FlameA" type="MeshInstance3D" parent="VisualRoot/FlameRoot"]
+position = Vector3(-0.12, 0.3, 0.03)
+scale = Vector3(0.72, 1.42, 0.72)
+material_override = SubResource("Material_flame")
+mesh = SubResource("SphereMesh_flame")
+
+[node name="FlameB" type="MeshInstance3D" parent="VisualRoot/FlameRoot"]
+position = Vector3(0.14, 0.22, -0.06)
+scale = Vector3(0.58, 1.12, 0.58)
+material_override = SubResource("Material_ember")
+mesh = SubResource("SphereMesh_flame")
+
+[node name="SourceLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 1.18, 0)
+light_color = Color(1, 0.34, 0.07, 1)
+light_energy = 2.4
+omni_range = 5.2
+shadow_enabled = false
+
+[node name="PayloadReceiver" type="Node" parent="."]
+script = ExtResource("3_payload")
+
+[node name="ForceReceiver" type="Node" parent="."]
+script = ExtResource("4_force")
+drag = 6.5
+max_force_speed = 6.0
+
+[node name="TagComponent" type="Node" parent="."]
+script = ExtResource("5_tags")
+tags = Array[String](["environment", "element_source", "fire", "heat", "brazier", "pushable"])
+
+[node name="ElementEmitter" type="Area3D" parent="."]
+position = Vector3(0, 0.72, 0)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("2_emitter")
+emitter_id = "lit_brazier"
+display_name = "Lit Brazier"
+element = "fire"
+payload_tags = Array[String](["environment", "element_source", "brazier", "heat", "fire"])
+pulse_interval = 0.18
+required_target_tags = Array[String](["frozen"])
+blocked_target_tags = Array[String](["steamed", "steam"])
+reservoir_mode = "finite"
+maximum_units = 8.0
+starting_units = 8.0
+units_per_pulse = 0.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ElementEmitter"]
+shape = SubResource("SphereShape_emission")

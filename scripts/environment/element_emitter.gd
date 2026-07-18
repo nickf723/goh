@@ -70,7 +70,7 @@ func emit_pulse() -> Array[Dictionary]:
 
 	var payload: DamagePayload = build_payload()
 	var seen_targets: Dictionary = {}
-	var current_contact_ids: Dictionary = {}
+	var current_eligible_contact_ids: Dictionary = {}
 
 	for raw_target: Node in get_overlap_nodes():
 		var target: Node = find_payload_target(raw_target)
@@ -78,14 +78,15 @@ func emit_pulse() -> Array[Dictionary]:
 			continue
 
 		var target_id: int = target.get_instance_id()
-		current_contact_ids[target_id] = true
 		if seen_targets.has(target_id):
 			continue
 		seen_targets[target_id] = true
 
-		if emit_once_per_contact and emitted_contact_ids.has(target_id):
-			continue
 		if not target_matches_filters(target):
+			continue
+
+		current_eligible_contact_ids[target_id] = true
+		if emit_once_per_contact and emitted_contact_ids.has(target_id):
 			continue
 
 		var result: Dictionary = send_payload_to_target(target, payload)
@@ -96,7 +97,7 @@ func emit_pulse() -> Array[Dictionary]:
 		if emit_once_per_contact:
 			emitted_contact_ids[target_id] = true
 
-	prune_contact_memory(current_contact_ids)
+	prune_contact_memory(current_eligible_contact_ids)
 	if not results.is_empty():
 		consume_pulse_cost()
 	pulse_count += 1
@@ -105,14 +106,14 @@ func emit_pulse() -> Array[Dictionary]:
 	return results
 
 
-func prune_contact_memory(current_contact_ids: Dictionary) -> void:
+func prune_contact_memory(current_eligible_contact_ids: Dictionary) -> void:
 	if not emit_once_per_contact:
 		emitted_contact_ids.clear()
 		return
 
 	var stale_ids: Array[int] = []
 	for stored_id: Variant in emitted_contact_ids.keys():
-		if not current_contact_ids.has(stored_id):
+		if not current_eligible_contact_ids.has(stored_id):
 			stale_ids.append(int(stored_id))
 
 	for stale_id: int in stale_ids:

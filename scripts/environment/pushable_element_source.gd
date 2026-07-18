@@ -70,6 +70,10 @@ func reset_source() -> void:
 		force_receiver.external_velocity = Vector3.ZERO
 		force_receiver.last_force_summary = "none"
 
+	var status_receiver: Node = get_node_or_null("StatusReceiver")
+	if status_receiver != null and status_receiver.has_method("clear_all_statuses"):
+		status_receiver.clear_all_statuses()
+
 	var emitter: ElementEmitter = get_emitter()
 	if emitter != null:
 		emitter.reset_emitter()
@@ -104,10 +108,15 @@ func interact() -> Dictionary:
 func get_debug_data() -> Dictionary:
 	var emitter: ElementEmitter = get_emitter()
 	var force_receiver: ForceReceiver = get_node_or_null("ForceReceiver") as ForceReceiver
+	var status_receiver: Node = get_node_or_null("StatusReceiver")
+	var status_data: Dictionary = {}
+	if status_receiver != null and status_receiver.has_method("get_debug_data"):
+		status_data = status_receiver.get_debug_data()
 	return {
 		"environment_source": source_label,
 		"position": global_position,
 		"speed": snapped(Vector2(velocity.x, velocity.z).length(), 0.01),
 		"emitter": emitter.get_debug_data() if emitter != null else {},
 		"force": force_receiver.get_debug_data() if force_receiver != null else {},
+		"statuses": status_data,
 	}

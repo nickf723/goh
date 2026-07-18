@@ -55,8 +55,10 @@ func get_contacting_terminals() -> Array[CircuitTerminal]:
 	return contacts
 
 
-func set_contact_debug(contacts: Array[String]) -> void:
-	last_contact_keys = contacts.duplicate()
+func set_contact_debug(contacts: Array) -> void:
+	last_contact_keys.clear()
+	for raw_contact: Variant in contacts:
+		last_contact_keys.append(str(raw_contact))
 
 
 func get_debug_data() -> Dictionary:

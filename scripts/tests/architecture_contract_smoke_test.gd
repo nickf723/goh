@@ -9,6 +9,7 @@ const TrainingHammer: WeaponDefinition = preload("res://data/weapons/training_ha
 const TrainingSpear: WeaponDefinition = preload("res://data/weapons/training_spear.tres")
 const GremlinBiteOption: EnemyActionOption = preload("res://data/enemy_action_options/gremlin_bite_option.tres")
 const GremlinPounceOption: EnemyActionOption = preload("res://data/enemy_action_options/gremlin_pounce_option.tres")
+const GremlinBackstepOption: EnemyActionOption = preload("res://data/enemy_action_options/gremlin_backstep_option.tres")
 
 const REQUIRED_INPUT_ACTIONS: Array[String] = [
 	"ui_up",
@@ -133,21 +134,26 @@ func validate_action_resource_pairs() -> void:
 
 
 func validate_enemy_action_selection_contract() -> void:
-	if GremlinBiteOption == null or GremlinPounceOption == null:
-		failures.append("Gremlin action options must load")
+	if (
+		GremlinBiteOption == null
+		or GremlinPounceOption == null
+		or GremlinBackstepOption == null
+	):
+		failures.append("Gremlin offense and defense options must load")
 		return
 
 	var brain = EnemyActionSelectionBrainScript.new()
 	var options: Array[EnemyActionOption] = [
 		GremlinBiteOption,
 		GremlinPounceOption,
+		GremlinBackstepOption,
 	]
 	brain.action_options = options
 	brain.personality_id = "skittish"
 
 	var close_choice: EnemyActionOption = brain.select_action(0.9)
 	if close_choice != GremlinBiteOption:
-		failures.append("Gremlin must select Close Bite at 0.9m")
+		failures.append("Gremlin must prefer Close Bite at 0.9m while Bite is ready")
 
 	var mid_choice: EnemyActionOption = brain.select_action(2.2)
 	if mid_choice != GremlinPounceOption:
@@ -164,6 +170,24 @@ func validate_enemy_action_selection_contract() -> void:
 	var mid_during_pounce_cooldown: EnemyActionOption = brain.select_action(2.2)
 	if mid_during_pounce_cooldown != null:
 		failures.append("Cooling Pounce must be unavailable at mid-range")
+
+	brain.option_cooldowns.clear()
+	brain.start_option_cooldown(GremlinBiteOption)
+	var defense_during_bite_cooldown: EnemyActionOption = brain.select_action(0.9)
+	if defense_during_bite_cooldown != GremlinBackstepOption:
+		failures.append("Cooling Close Bite must open the Backstep defense at close range")
+
+	if not GremlinBackstepOption.is_defensive_option():
+		failures.append("Backstep must be represented as a defense, not an attack")
+
+	var backstep: EnemyDefenseDefinition = GremlinBackstepOption.get_action() as EnemyDefenseDefinition
+	if backstep == null:
+		failures.append("Backstep option must resolve an EnemyDefenseDefinition")
+	else:
+		if backstep.get_movement_mode() != "away_from_target":
+			failures.append("Backstep must move away from the committed target direction")
+		if backstep.get_active_move_speed_multiplier() <= 1.0:
+			failures.append("Backstep active movement must be faster than ordinary movement")
 
 	if not GremlinBiteOption.can_interrupt_post_miss_retreat:
 		failures.append("Close Bite must be allowed to interrupt retreat when cornered")

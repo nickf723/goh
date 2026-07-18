@@ -17,6 +17,7 @@ var continuous_forces: Dictionary = {}
 var continuous_torques: Dictionary = {}
 var last_force_summary: String = "none"
 var last_torque_summary: String = "none"
+var contact_constraint_count: int = 0
 
 
 func _ready() -> void:
@@ -97,12 +98,31 @@ func integrate_continuous_motion(
 	if angular_velocity.length() > max_angular_speed:
 		angular_velocity = angular_velocity.normalized() * max_angular_speed
 
+	if total_force.length() <= 0.0001 and continuous_velocity.length() <= 0.005:
+		continuous_velocity = Vector3.ZERO
+	if total_torque.length() <= 0.0001 and angular_velocity.length() <= 0.005:
+		angular_velocity = Vector3.ZERO
+
 	return {
 		"linear_velocity": continuous_velocity,
 		"angular_velocity": angular_velocity,
 		"force": total_force,
 		"torque": total_torque,
 	}
+
+
+func constrain_continuous_velocity(contact_normals: Array[Vector3]) -> Vector3:
+	contact_constraint_count = 0
+	for raw_normal: Vector3 in contact_normals:
+		if raw_normal.length() <= 0.001:
+			continue
+		var normal: Vector3 = raw_normal.normalized()
+		var inward_speed: float = continuous_velocity.dot(normal)
+		if inward_speed >= 0.0:
+			continue
+		continuous_velocity -= normal * inward_speed
+		contact_constraint_count += 1
+	return continuous_velocity
 
 
 func get_total_continuous_force() -> Vector3:
@@ -132,6 +152,7 @@ func clear_all_continuous_influences() -> void:
 	continuous_torques.clear()
 	continuous_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
+	contact_constraint_count = 0
 	last_torque_summary = "none"
 
 
@@ -141,6 +162,7 @@ func reset_forces() -> void:
 	angular_velocity = Vector3.ZERO
 	continuous_forces.clear()
 	continuous_torques.clear()
+	contact_constraint_count = 0
 	last_force_summary = "none"
 	last_torque_summary = "none"
 
@@ -163,6 +185,7 @@ func get_debug_data() -> Dictionary:
 		"angular_velocity": angular_velocity,
 		"continuous_torque": get_total_continuous_torque(),
 		"torque_sources": continuous_torques.keys(),
+		"contact_constraints": contact_constraint_count,
 		"last": last_force_summary,
 		"last_torque": last_torque_summary,
 	}

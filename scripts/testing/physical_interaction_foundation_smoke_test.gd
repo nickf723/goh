@@ -12,6 +12,7 @@ func _ready() -> void:
 	test_material_profiles()
 	test_field_polarity_reversal()
 	test_force_mass_and_torque_integration()
+	test_contact_constraints()
 	test_material_specific_magnetic_response()
 
 	if failures.is_empty():
@@ -81,6 +82,26 @@ func test_force_mass_and_torque_integration() -> void:
 	var angular_velocity: Vector3 = torque_motion.get("angular_velocity", Vector3.ZERO)
 	if angular_velocity.y <= 0.0:
 		failures.append("continuous torque should produce angular velocity")
+
+	receiver.queue_free()
+
+
+func test_contact_constraints() -> void:
+	var receiver := ForceReceiver.new()
+	add_child(receiver)
+	await get_tree().process_frame
+
+	receiver.continuous_velocity = Vector3(-2.0, 0.0, 1.0)
+	var constrained: Vector3 = receiver.constrain_continuous_velocity([Vector3.RIGHT])
+	if absf(constrained.x) > 0.0001:
+		failures.append("contact constraints should remove inward field velocity")
+	if not is_equal_approx(constrained.z, 1.0):
+		failures.append("contact constraints should preserve tangential field motion")
+
+	receiver.continuous_velocity = Vector3(2.0, 0.0, 0.0)
+	var separating: Vector3 = receiver.constrain_continuous_velocity([Vector3.RIGHT])
+	if not is_equal_approx(separating.x, 2.0):
+		failures.append("contact constraints should allow motion away from a surface")
 
 	receiver.queue_free()
 

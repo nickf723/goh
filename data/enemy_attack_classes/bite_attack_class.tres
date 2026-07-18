@@ -1,26 +1,18 @@
-[gd_resource type="Resource" script_class="EnemyAttackClassDefinition" format=3]
+[gd_resource type="Resource" script_class="EnemyAttackClassDefinition" format=3 uid="uid://dqwg5cvpuch6b"]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_attack_class_definition.gd" id="1_bite"]
+[ext_resource type="Script" uid="uid://bohih2diipy1v" path="res://scripts/enemies/enemy_attack_class_definition.gd" id="1_bite"]
 
 [resource]
 script = ExtResource("1_bite")
 attack_class_id = "bite"
 display_name = "Bite"
 role_tags = Array[String](["enemy_attack", "melee", "physical", "bite"])
-delivery_style = "melee"
 range = 1.25
 cone_angle_degrees = 125.0
 windup_time = 0.22
 active_time = 0.08
 recovery_time = 0.35
 cooldown = 0.85
-interruptible_during_windup = true
-interruptible_during_active = false
-interruptible_during_recovery = false
-payload_amount = 1
-payload_stance_damage = 1
-payload_element = "neutral"
 payload_source_name = "Bite"
-payload_hit_type = "melee"
 payload_tags = Array[String](["physical", "melee", "bite", "enemy_attack"])
 debug_notes = "Fast close-range snap. Good for skirmishers and small creatures."

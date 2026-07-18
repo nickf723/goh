@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="DamagePayload" format=3]
+[gd_resource type="Resource" script_class="DamagePayload" format=3 uid="uid://dhm8r0kih5qb4"]
 
-[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+[ext_resource type="Script" uid="uid://cajn6gipe7r2o" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
 
 [resource]
 script = ExtResource("1_payload")
@@ -11,5 +11,4 @@ source_name = "Dream Trap"
 hit_type = "trigger_field"
 status_effect = "staggered"
 status_duration = 1.2
-status_strength = 1.0
 tags = Array[String](["dreams", "illusion", "mind", "field", "magic", "ground_targeted", "control"])

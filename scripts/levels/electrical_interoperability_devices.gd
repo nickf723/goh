@@ -27,24 +27,24 @@ static func build_excitation_port(
 
 	LabGeometryFactory.add_terminal(port, "TerminalA", "positive", Vector3(0.0, 0.0, 2.5))
 	LabGeometryFactory.add_terminal(port, "TerminalB", "negative", Vector3(0.0, 0.0, -2.5))
-	LabGeometryFactory.add_sphere_area(port, "LightningTargetArea", 0.72, Vector3(0.0, 1.7, 0.0))
+	LabGeometryFactory.add_sphere_area(port, "LightningTargetArea", 1.25, Vector3(0.0, 1.7, 0.0))
 
 	var rod := MeshInstance3D.new()
 	rod.name = "InputRod"
 	var rod_mesh := CylinderMesh.new()
-	rod_mesh.top_radius = 0.16
-	rod_mesh.bottom_radius = 0.16
-	rod_mesh.height = 2.6
-	rod_mesh.radial_segments = 12
+	rod_mesh.top_radius = 0.24
+	rod_mesh.bottom_radius = 0.24
+	rod_mesh.height = 2.8
+	rod_mesh.radial_segments = 14
 	rod.mesh = rod_mesh
-	rod.material_override = LabGeometryFactory.make_material(Color(0.45, 0.28, 0.95, 1.0), true, 2.8)
+	rod.material_override = LabGeometryFactory.make_material(Color(0.45, 0.28, 0.95, 1.0), true, 3.4)
 	rod.position = Vector3(0.0, 1.7, 0.0)
 	port.add_child(rod)
 	LabGeometryFactory.add_label(
 		port,
 		"InputLabel",
-		"LIGHTNING INPUT\nSTRIKE HERE",
-		Vector3(0.0, 3.35, 0.0),
+		"LIGHTNING INPUT\nSHOOT VIOLET ROD",
+		Vector3(0.0, 3.45, 0.0),
 		25,
 		Color(0.72, 0.66, 1.0, 1.0)
 	)

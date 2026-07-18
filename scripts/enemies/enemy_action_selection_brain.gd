@@ -123,7 +123,7 @@ func score_action_option(option: EnemyActionOption, distance: float) -> float:
 
 
 func commit_selected_action(delta: float, option: EnemyActionOption) -> void:
-	if option == null or option.attack == null:
+	if option == null or option.get_action() == null:
 		reset_attack_commit()
 		return
 
@@ -137,27 +137,45 @@ func commit_selected_action(delta: float, option: EnemyActionOption) -> void:
 	commit_time *= get_personality_number("attack_commit_time_multiplier", 1.0)
 
 	if attack_commit_timer >= commit_time:
-		start_attack()
+		start_selected_action()
 
 
 func start_attack() -> void:
-	if selected_option == null or selected_option.attack == null:
+	start_selected_action()
+
+
+func start_selected_action() -> void:
+	if selected_option == null:
+		return
+
+	var combat_action: EnemyCombatActionDefinition = selected_option.get_action()
+	if combat_action == null:
 		return
 
 	committed_option = selected_option
 	committed_option.apply_presentation(telegraph)
-	super.start_attack()
+	super.start_combat_action(combat_action)
 
 	if action_runner == null or not action_runner.is_running():
 		committed_option = null
 
 
-func get_current_attack() -> EnemyAttackDefinition:
+func get_current_combat_action() -> EnemyCombatActionDefinition:
 	if action_runner != null and action_runner.is_running() and committed_option != null:
-		return committed_option.attack
+		return committed_option.get_action()
 
-	if selected_option != null and selected_option.attack != null:
-		return selected_option.attack
+	if selected_option != null:
+		var selected_action: EnemyCombatActionDefinition = selected_option.get_action()
+		if selected_action != null:
+			return selected_action
+
+	return default_attack
+
+
+func get_current_attack() -> EnemyAttackDefinition:
+	var combat_action: EnemyCombatActionDefinition = get_current_combat_action()
+	if combat_action is EnemyAttackDefinition:
+		return combat_action as EnemyAttackDefinition
 
 	return default_attack
 
@@ -167,7 +185,7 @@ func is_player_in_locked_attack_shape(attack: EnemyAttackDefinition) -> bool:
 		return false
 
 	var contact_range: float = attack.get_range()
-	if committed_option != null:
+	if committed_option != null and committed_option.is_attack_option():
 		contact_range = committed_option.get_contact_range()
 
 	var to_player: Vector3 = player.global_position - actor.global_position
@@ -178,7 +196,7 @@ func is_player_in_locked_attack_shape(attack: EnemyAttackDefinition) -> bool:
 	if to_player.length() <= 0.01:
 		return true
 
-	var attack_direction: Vector3 = action_runner.get_locked_direction()
+	var attack_direction: Vector3 = action_runner.get_locked_target_direction()
 	attack_direction.y = 0.0
 	if attack_direction.length() <= 0.01:
 		return true
@@ -190,6 +208,7 @@ func is_player_in_locked_attack_shape(attack: EnemyAttackDefinition) -> bool:
 func apply_action_movement() -> void:
 	if (
 		committed_option != null
+		and committed_option.is_attack_option()
 		and committed_option.stop_movement_on_hit
 		and action_runner != null
 		and action_runner.hit_registered
@@ -200,18 +219,18 @@ func apply_action_movement() -> void:
 	super.apply_action_movement()
 
 
-func register_attack_miss() -> void:
-	super.register_attack_miss()
+func register_attack_miss(attack_override: EnemyAttackDefinition = null) -> void:
+	super.register_attack_miss(attack_override)
 	post_miss_retreat_timer = get_personality_number("post_miss_retreat_time", 0.0)
 
 
-func on_action_completed(_attack: EnemyAttackDefinition) -> void:
+func on_action_completed(_action: EnemyCombatActionDefinition) -> void:
 	if committed_option != null:
 		start_option_cooldown(committed_option)
 
 
 func get_shared_cooldown_after_action(
-	_attack: EnemyAttackDefinition,
+	_action: EnemyCombatActionDefinition,
 	_default_cooldown: float
 ) -> float:
 	return max(shared_decision_cooldown, 0.0)
@@ -377,6 +396,7 @@ func get_debug_data() -> Dictionary:
 	var debug_data: Dictionary = super.get_debug_data()
 	debug_data["selected"] = last_selection_summary
 	debug_data["selection_score"] = snapped(last_selection_score, 0.01)
+	debug_data["selected_kind"] = selected_option.get_action_kind() if selected_option != null else "none"
 	debug_data["committed_option"] = committed_option.get_display_name() if committed_option != null else "none"
 	debug_data["retreat"] = snapped(post_miss_retreat_timer, 0.01)
 	debug_data["option_cooldowns"] = get_option_cooldown_summary()

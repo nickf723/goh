@@ -1,7 +1,7 @@
-extends Resource
+extends EnemyCombatActionDefinition
 class_name EnemyAttackDefinition
 
-# Keep this as a generic Resource so Godot does not need to resolve the new
+# Keep this as a generic Resource so Godot does not need to resolve the
 # EnemyAttackClassDefinition class before this script can parse.
 @export var attack_class: Resource
 
@@ -11,31 +11,20 @@ class_name EnemyAttackDefinition
 @export var use_class_timing: bool = true
 @export var use_class_payload: bool = false
 
-@export var display_name: String = "Enemy Attack"
-@export var role_tags: Array[String] = ["enemy_attack", "melee"]
-
 @export var payload: DamagePayload
 
+@export_group("Attack Shape")
 @export var range: float = 1.5
 @export var cone_angle_degrees: float = 110.0
-
-@export var windup_time: float = 0.35
-@export var active_time: float = 0.10
-@export var recovery_time: float = 0.45
-@export var cooldown: float = 1.0
-
-@export_group("Phase Movement")
-@export var windup_move_speed_multiplier: float = 0.0
-@export var active_move_speed_multiplier: float = 0.0
-@export var recovery_move_speed_multiplier: float = 0.0
-
-@export_group("Interrupts")
-@export var interruptible_during_windup: bool = true
-@export var interruptible_during_active: bool = false
-@export var interruptible_during_recovery: bool = false
-
-@export_group("")
 @export var show_miss_message: bool = false
+
+
+func _init() -> void:
+	action_id = "enemy_attack"
+	action_kind = "attack"
+	display_name = "Enemy Attack"
+	role_tags = ["enemy_action", "enemy_attack", "melee"]
+	movement_mode = "toward_target"
 
 
 func get_display_name() -> String:
@@ -46,8 +35,7 @@ func get_display_name() -> String:
 
 
 func get_role_tags() -> Array[String]:
-	var merged_tags: Array[String] = []
-	append_unique_strings(merged_tags, role_tags)
+	var merged_tags: Array[String] = super.get_role_tags()
 
 	if has_attack_class():
 		var class_tags: Variant = attack_class.get("role_tags")
@@ -57,14 +45,17 @@ func get_role_tags() -> Array[String]:
 				if tag != "" and not merged_tags.has(tag):
 					merged_tags.append(tag)
 
+	if not merged_tags.has("enemy_attack"):
+		merged_tags.append("enemy_attack")
+
 	return merged_tags
 
 
 func get_range() -> float:
 	if use_class_timing and has_attack_class():
-		return get_class_float("range", range)
+		return max(get_class_float("range", range), 0.0)
 
-	return range
+	return max(range, 0.0)
 
 
 func get_cone_angle_degrees() -> float:
@@ -76,72 +67,99 @@ func get_cone_angle_degrees() -> float:
 
 func get_windup_time() -> float:
 	if use_class_timing and has_attack_class():
-		return get_class_float("windup_time", windup_time)
+		return max(get_class_float("windup_time", windup_time), 0.0)
 
-	return windup_time
+	return super.get_windup_time()
 
 
 func get_active_time() -> float:
 	if use_class_timing and has_attack_class():
-		return get_class_float("active_time", active_time)
+		return max(get_class_float("active_time", active_time), 0.0)
 
-	return active_time
+	return super.get_active_time()
 
 
 func get_recovery_time() -> float:
 	if use_class_timing and has_attack_class():
-		return get_class_float("recovery_time", recovery_time)
+		return max(get_class_float("recovery_time", recovery_time), 0.0)
 
-	return recovery_time
+	return super.get_recovery_time()
 
 
 func get_cooldown() -> float:
 	if use_class_timing and has_attack_class():
-		return get_class_float("cooldown", cooldown)
+		return max(get_class_float("cooldown", cooldown), 0.0)
 
-	return cooldown
+	return super.get_cooldown()
 
 
 func get_windup_move_speed_multiplier() -> float:
 	if use_class_timing and has_attack_class():
-		return get_class_float("windup_move_speed_multiplier", windup_move_speed_multiplier)
+		return max(
+			get_class_float(
+				"windup_move_speed_multiplier",
+				windup_move_speed_multiplier
+			),
+			0.0
+		)
 
-	return windup_move_speed_multiplier
+	return super.get_windup_move_speed_multiplier()
 
 
 func get_active_move_speed_multiplier() -> float:
 	if use_class_timing and has_attack_class():
-		return get_class_float("active_move_speed_multiplier", active_move_speed_multiplier)
+		return max(
+			get_class_float(
+				"active_move_speed_multiplier",
+				active_move_speed_multiplier
+			),
+			0.0
+		)
 
-	return active_move_speed_multiplier
+	return super.get_active_move_speed_multiplier()
 
 
 func get_recovery_move_speed_multiplier() -> float:
 	if use_class_timing and has_attack_class():
-		return get_class_float("recovery_move_speed_multiplier", recovery_move_speed_multiplier)
+		return max(
+			get_class_float(
+				"recovery_move_speed_multiplier",
+				recovery_move_speed_multiplier
+			),
+			0.0
+		)
 
-	return recovery_move_speed_multiplier
+	return super.get_recovery_move_speed_multiplier()
 
 
 func get_interruptible_during_windup() -> bool:
 	if use_class_timing and has_attack_class():
-		return get_class_bool("interruptible_during_windup", interruptible_during_windup)
+		return get_class_bool(
+			"interruptible_during_windup",
+			interruptible_during_windup
+		)
 
-	return interruptible_during_windup
+	return super.get_interruptible_during_windup()
 
 
 func get_interruptible_during_active() -> bool:
 	if use_class_timing and has_attack_class():
-		return get_class_bool("interruptible_during_active", interruptible_during_active)
+		return get_class_bool(
+			"interruptible_during_active",
+			interruptible_during_active
+		)
 
-	return interruptible_during_active
+	return super.get_interruptible_during_active()
 
 
 func get_interruptible_during_recovery() -> bool:
 	if use_class_timing and has_attack_class():
-		return get_class_bool("interruptible_during_recovery", interruptible_during_recovery)
+		return get_class_bool(
+			"interruptible_during_recovery",
+			interruptible_during_recovery
+		)
 
-	return interruptible_during_recovery
+	return super.get_interruptible_during_recovery()
 
 
 func should_show_miss_message() -> bool:
@@ -154,7 +172,6 @@ func should_show_miss_message() -> bool:
 func get_payload() -> DamagePayload:
 	if use_class_payload and has_attack_class():
 		var class_payload: DamagePayload = get_class_payload()
-
 		if class_payload != null:
 			return class_payload
 
@@ -163,7 +180,6 @@ func get_payload() -> DamagePayload:
 
 	if has_attack_class():
 		var fallback_class_payload: DamagePayload = get_class_payload()
-
 		if fallback_class_payload != null:
 			return fallback_class_payload
 
@@ -174,7 +190,6 @@ func get_payload() -> DamagePayload:
 	fallback_payload.source_name = get_display_name()
 	fallback_payload.hit_type = "melee"
 	fallback_payload.tags = ["physical", "melee", "enemy_attack"]
-
 	return fallback_payload
 
 
@@ -189,10 +204,12 @@ func get_attack_class_summary() -> String:
 
 
 func get_debug_notes() -> String:
-	if not has_attack_class():
-		return ""
+	if has_attack_class():
+		var class_notes: String = get_class_string("debug_notes", "")
+		if class_notes != "":
+			return class_notes
 
-	return get_class_string("debug_notes", "")
+	return super.get_debug_notes()
 
 
 func has_attack_class() -> bool:
@@ -204,11 +221,7 @@ func get_class_value(property_name: String, fallback: Variant) -> Variant:
 		return fallback
 
 	var value: Variant = attack_class.get(property_name)
-
-	if value == null:
-		return fallback
-
-	return value
+	return fallback if value == null else value
 
 
 func get_class_string(property_name: String, fallback: String) -> String:
@@ -224,26 +237,8 @@ func get_class_bool(property_name: String, fallback: bool) -> bool:
 
 
 func get_class_payload() -> DamagePayload:
-	if not has_attack_class():
-		return null
-
-	if not attack_class.has_method("make_payload"):
+	if not has_attack_class() or not attack_class.has_method("make_payload"):
 		return null
 
 	var payload_variant: Variant = attack_class.call("make_payload", get_display_name())
-
-	if payload_variant is DamagePayload:
-		return payload_variant as DamagePayload
-
-	return null
-
-
-func append_unique_strings(target: Array[String], source: Array[String]) -> void:
-	for value: String in source:
-		if value == "":
-			continue
-
-		if target.has(value):
-			continue
-
-		target.append(value)
+	return payload_variant as DamagePayload if payload_variant is DamagePayload else null

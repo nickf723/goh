@@ -31,8 +31,11 @@ func resolve_action_runner() -> void:
 
 
 func start_attack() -> void:
-	var attack: EnemyAttackDefinition = get_current_attack()
-	if attack == null:
+	start_combat_action(get_current_combat_action())
+
+
+func start_combat_action(action: EnemyCombatActionDefinition) -> void:
+	if action == null:
 		return
 
 	if action_runner == null:
@@ -41,17 +44,22 @@ func start_attack() -> void:
 	if action_runner == null or action_runner.is_running():
 		return
 
-	var locked_direction: Vector3 = get_direction_to_player()
-	if not action_runner.begin_action(attack, locked_direction):
+	var target_direction: Vector3 = get_direction_to_player()
+	var movement_direction: Vector3 = resolve_action_movement_direction(
+		action,
+		target_direction
+	)
+	if not action_runner.begin_action(action, target_direction, movement_direction):
 		return
 
 	reset_attack_commit()
 	recover_visual_started = false
-	last_action_summary = "windup: " + attack.get_display_name()
+	last_action_summary = "windup: " + action.get_display_name()
 
 	if telegraph != null and telegraph.has_method("start_windup"):
 		telegraph.start_windup()
 
+	on_action_started(action)
 	change_state(EnemyState.ATTACK_WINDUP)
 
 
@@ -68,19 +76,24 @@ func process_attack_windup(delta: float) -> void:
 	face_action_direction(delta)
 	action_runner.tick(delta)
 
+	var action: EnemyCombatActionDefinition = action_runner.get_current_action()
+
 	if action_runner.consume_impact_request():
 		last_action_summary = "active: " + action_runner.get_action_display_name()
 
 		if telegraph != null and telegraph.has_method("start_active"):
 			telegraph.start_active()
 
-	if action_runner.get_phase_name() == "ACTIVE" and not action_runner.hit_registered:
-		perform_attack()
+		on_action_active_started(action)
+
+	if action_runner.get_phase_name() == "ACTIVE":
+		process_active_action(action)
 
 	if action_runner.get_phase_name() == "RECOVERY":
-		if not action_runner.hit_registered:
-			register_attack_miss()
+		if action is EnemyAttackDefinition and not action_runner.hit_registered:
+			register_attack_miss(action as EnemyAttackDefinition)
 
+		on_action_recovery_started(action)
 		start_recovery_visual()
 		change_state(EnemyState.ATTACK_RECOVER)
 
@@ -90,7 +103,7 @@ func process_attack_recover(delta: float) -> void:
 		finish_action_state()
 		return
 
-	var committed_action: EnemyAttackDefinition = action_runner.get_current_action()
+	var committed_action: EnemyCombatActionDefinition = action_runner.get_current_action()
 
 	apply_action_movement()
 	face_action_direction(delta)
@@ -124,11 +137,20 @@ func process_dead(delta: float) -> void:
 	super.process_dead(delta)
 
 
-func perform_attack() -> void:
+func process_active_action(action: EnemyCombatActionDefinition) -> void:
+	if action is EnemyAttackDefinition:
+		perform_attack(action as EnemyAttackDefinition)
+	elif action is EnemyDefenseDefinition:
+		perform_defense(action as EnemyDefenseDefinition)
+
+
+func perform_attack(attack_override: EnemyAttackDefinition = null) -> void:
 	if action_runner == null or action_runner.hit_registered:
 		return
 
-	var attack: EnemyAttackDefinition = action_runner.get_current_action()
+	var attack: EnemyAttackDefinition = attack_override
+	if attack == null:
+		attack = action_runner.get_current_action() as EnemyAttackDefinition
 	if attack == null:
 		return
 
@@ -141,11 +163,20 @@ func perform_attack() -> void:
 	apply_attack_to_player(payload)
 
 
-func register_attack_miss() -> void:
+func perform_defense(defense: EnemyDefenseDefinition) -> void:
+	if defense == null:
+		return
+
+	last_action_summary = "defending: " + defense.get_display_name()
+
+
+func register_attack_miss(attack_override: EnemyAttackDefinition = null) -> void:
 	if action_runner == null:
 		return
 
-	var attack: EnemyAttackDefinition = action_runner.get_current_action()
+	var attack: EnemyAttackDefinition = attack_override
+	if attack == null:
+		attack = action_runner.get_current_action() as EnemyAttackDefinition
 	if attack == null:
 		return
 
@@ -167,7 +198,7 @@ func is_player_in_locked_attack_shape(attack: EnemyAttackDefinition) -> bool:
 	if to_player.length() <= 0.01:
 		return true
 
-	var attack_direction: Vector3 = action_runner.get_locked_direction()
+	var attack_direction: Vector3 = action_runner.get_locked_target_direction()
 	attack_direction.y = 0.0
 	if attack_direction.length() <= 0.01:
 		return true
@@ -181,11 +212,11 @@ func apply_action_movement() -> void:
 		return
 
 	var multiplier: float = action_runner.get_move_speed_multiplier()
-	if multiplier <= 0.0:
+	var direction: Vector3 = action_runner.get_locked_movement_direction()
+	if multiplier <= 0.0 or direction.length() <= 0.01:
 		clear_horizontal_velocity()
 		return
 
-	var direction: Vector3 = action_runner.get_locked_direction()
 	var speed: float = get_definition().get_move_speed()
 	speed *= get_status_move_multiplier()
 	speed *= multiplier
@@ -198,7 +229,41 @@ func face_action_direction(delta: float) -> void:
 	if action_runner == null:
 		return
 
-	face_direction(action_runner.get_locked_direction(), delta)
+	var action: EnemyCombatActionDefinition = action_runner.get_current_action()
+	if action == null:
+		return
+
+	if action.should_face_target_during_action():
+		face_direction(action_runner.get_locked_target_direction(), delta)
+	else:
+		face_direction(action_runner.get_locked_movement_direction(), delta)
+
+
+func resolve_action_movement_direction(
+	action: EnemyCombatActionDefinition,
+	target_direction: Vector3
+) -> Vector3:
+	if action == null:
+		return Vector3.ZERO
+
+	var direction: Vector3 = target_direction
+	direction.y = 0.0
+	if direction.length() <= 0.01:
+		direction = Vector3.FORWARD
+	else:
+		direction = direction.normalized()
+
+	match action.get_movement_mode():
+		"away_from_target":
+			return -direction
+		"strafe_left":
+			return Vector3(-direction.z, 0.0, direction.x).normalized()
+		"strafe_right":
+			return Vector3(direction.z, 0.0, -direction.x).normalized()
+		"none":
+			return Vector3.ZERO
+		_:
+			return direction
 
 
 func should_interrupt_for_force() -> bool:
@@ -249,7 +314,7 @@ func start_recovery_visual() -> void:
 		return
 
 	recover_visual_started = true
-	last_action_summary = "recovery: " + get_current_attack_name()
+	last_action_summary = "recovery: " + get_current_action_name()
 
 	if telegraph != null and telegraph.has_method("start_recover"):
 		telegraph.start_recover()
@@ -267,12 +332,24 @@ func finish_action_state() -> void:
 		change_state(EnemyState.IDLE)
 
 
-func on_action_completed(_attack: EnemyAttackDefinition) -> void:
+func on_action_started(_action: EnemyCombatActionDefinition) -> void:
+	pass
+
+
+func on_action_active_started(_action: EnemyCombatActionDefinition) -> void:
+	pass
+
+
+func on_action_recovery_started(_action: EnemyCombatActionDefinition) -> void:
+	pass
+
+
+func on_action_completed(_action: EnemyCombatActionDefinition) -> void:
 	pass
 
 
 func get_shared_cooldown_after_action(
-	_attack: EnemyAttackDefinition,
+	_action: EnemyCombatActionDefinition,
 	default_cooldown: float
 ) -> float:
 	return max(default_cooldown, 0.0)
@@ -294,34 +371,49 @@ func get_direction_to_player() -> Vector3:
 	return direction.normalized()
 
 
-func get_current_attack_name() -> String:
+func get_current_combat_action() -> EnemyCombatActionDefinition:
+	return get_current_attack()
+
+
+func get_current_action_name() -> String:
 	if action_runner != null and action_runner.is_running():
 		return action_runner.get_action_display_name()
 
-	var attack: EnemyAttackDefinition = get_current_attack()
-	return attack.get_display_name() if attack != null else "attack"
+	var action: EnemyCombatActionDefinition = get_current_combat_action()
+	return action.get_display_name() if action != null else "action"
+
+
+func get_current_attack_name() -> String:
+	return get_current_action_name()
 
 
 func get_debug_data() -> Dictionary:
 	var debug_data: Dictionary = super.get_debug_data()
 
 	if action_runner != null and action_runner.is_running():
+		var action: EnemyCombatActionDefinition = action_runner.get_current_action()
 		debug_data["phase"] = action_runner.get_phase_name()
 		debug_data["phase_time"] = snapped(action_runner.get_phase_time_remaining(), 0.01)
 		debug_data["interruptible"] = action_runner.is_interruptible()
 		debug_data["hit"] = action_runner.hit_registered
 		debug_data["action"] = action_runner.get_action_display_name()
+		debug_data["action_kind"] = action.get_action_kind() if action != null else "none"
+		debug_data["movement_mode"] = action.get_movement_mode() if action != null else "none"
 	elif attack_cooldown_timer > 0.0:
 		debug_data["phase"] = "COOLDOWN"
 		debug_data["phase_time"] = snapped(attack_cooldown_timer, 0.01)
 		debug_data["interruptible"] = false
 		debug_data["hit"] = false
-		debug_data["action"] = get_current_attack_name()
+		debug_data["action"] = get_current_action_name()
+		debug_data["action_kind"] = "none"
+		debug_data["movement_mode"] = "none"
 	else:
 		debug_data["phase"] = "DECIDING"
 		debug_data["phase_time"] = 0.0
 		debug_data["interruptible"] = false
 		debug_data["hit"] = false
-		debug_data["action"] = get_current_attack_name()
+		debug_data["action"] = get_current_action_name()
+		debug_data["action_kind"] = "none"
+		debug_data["movement_mode"] = "none"
 
 	return debug_data

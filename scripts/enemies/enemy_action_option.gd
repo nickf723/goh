@@ -1,6 +1,9 @@
 extends Resource
 class_name EnemyActionOption
 
+# New actions should use `action`. `attack` remains as a compatibility bridge for
+# existing option resources created before defensive actions existed.
+@export var action: EnemyCombatActionDefinition
 @export var attack: EnemyAttackDefinition
 @export var presentation: EnemyActionPresentation
 
@@ -22,8 +25,15 @@ class_name EnemyActionOption
 @export var debug_label: String = ""
 
 
+func get_action() -> EnemyCombatActionDefinition:
+	if action != null:
+		return action
+
+	return attack
+
+
 func is_valid_at_distance(distance: float) -> bool:
-	if attack == null:
+	if get_action() == null:
 		return false
 
 	return distance >= get_minimum_start_distance() and distance <= get_maximum_start_distance()
@@ -42,7 +52,8 @@ func get_contact_range() -> float:
 	if contact_range_override > 0.0:
 		return contact_range_override
 
-	return attack.get_range() if attack != null else 0.0
+	var attack_action: EnemyAttackDefinition = get_action() as EnemyAttackDefinition
+	return attack_action.get_range() if attack_action != null else 0.0
 
 
 func get_selection_weight() -> float:
@@ -53,22 +64,38 @@ func get_reuse_cooldown() -> float:
 	if reuse_cooldown_override >= 0.0:
 		return reuse_cooldown_override
 
-	return attack.get_cooldown() if attack != null else 0.0
+	var combat_action: EnemyCombatActionDefinition = get_action()
+	return combat_action.get_cooldown() if combat_action != null else 0.0
 
 
 func get_display_name() -> String:
 	if debug_label != "":
 		return debug_label
 
-	return attack.get_display_name() if attack != null else "No Action"
+	var combat_action: EnemyCombatActionDefinition = get_action()
+	return combat_action.get_display_name() if combat_action != null else "No Action"
+
+
+func get_action_kind() -> String:
+	var combat_action: EnemyCombatActionDefinition = get_action()
+	return combat_action.get_action_kind() if combat_action != null else "none"
+
+
+func is_attack_option() -> bool:
+	return get_action() is EnemyAttackDefinition
+
+
+func is_defensive_option() -> bool:
+	return get_action() is EnemyDefenseDefinition
 
 
 func get_role_tags() -> Array[String]:
-	if attack == null:
+	var combat_action: EnemyCombatActionDefinition = get_action()
+	if combat_action == null:
 		var empty_tags: Array[String] = []
 		return empty_tags
 
-	return attack.get_role_tags()
+	return combat_action.get_role_tags()
 
 
 func apply_presentation(telegraph: Node) -> void:

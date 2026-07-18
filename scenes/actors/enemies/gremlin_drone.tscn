@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="4_aomjw"]
 [ext_resource type="Script" uid="uid://dl7cjack4ydjg" path="res://scripts/combat/payload_receiver.gd" id="5_gkn5l"]
 [ext_resource type="Script" uid="uid://c2xu2guuvxg5l" path="res://scripts/combat/force_receiver.gd" id="6_pqsi1"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_zone_aware_brain.gd" id="7_f6t4f"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_combat_action_brain.gd" id="7_f6t4f"]
 [ext_resource type="Resource" uid="uid://podpgujkw8qg" path="res://data/enemies/gremlin_definition.tres" id="8_6vf88"]
 [ext_resource type="Resource" uid="uid://dkvtfch44sst7" path="res://data/enemy_attacks/gremlin_bite_attack.tres" id="9_fu54f"]
 [ext_resource type="Script" uid="uid://qt8ipxix0ltk" path="res://scripts/enemies/enemy_telegraph.gd" id="10_a3vpn"]

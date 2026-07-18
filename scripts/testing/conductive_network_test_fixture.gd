@@ -56,6 +56,11 @@ static func run(host: Node) -> Array[String]:
 	fixture.add_child(solver)
 	await host.get_tree().process_frame
 
+	var generic_contacts: Array = ["fixture:test_contact"]
+	source.get_terminal_a().set_contact_debug(generic_contacts)
+	if source.get_terminal_a().last_contact_keys != ["fixture:test_contact"]:
+		failures.append("circuit: terminal debug should normalize generic string arrays")
+
 	solver.solve_network()
 	if solver.circuit_closed:
 		failures.append("circuit: spatial gap should leave the loop open")
@@ -73,6 +78,8 @@ static func run(host: Node) -> Array[String]:
 		failures.append("circuit: current should follow total resistance; found " + str(solver.current_amps))
 	if not coil.energized or not magnetic_field.active:
 		failures.append("circuit: closed loop should energize the coil")
+	if source.get_terminal_a().last_contact_keys.is_empty():
+		failures.append("circuit: solved graph should publish terminal contact debug data")
 
 	circuit_switch.toggle_switch()
 	solver.solve_network()

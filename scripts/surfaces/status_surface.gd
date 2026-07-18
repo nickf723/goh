@@ -38,6 +38,8 @@ var reaction_timer: float = 0.0
 var reaction_tick_timer: float = 0.0
 var visual_elapsed: float = 0.0
 var last_reaction_summary: String = "none"
+var last_area_target_count: int = 0
+var last_area_targets: Array[String] = []
 
 
 func _ready() -> void:
@@ -289,10 +291,28 @@ func receive_damage_payload(payload: DamagePayload) -> Dictionary:
 	for reaction: Dictionary in reactions:
 		var reaction_id: String = str(reaction.get("reaction", "reaction"))
 		last_reaction_summary = reaction_id
+		last_area_target_count = int(reaction.get("area_target_count", 0))
+		last_area_targets.clear()
+
+		var raw_area_targets: Variant = reaction.get("area_targets", [])
+		if raw_area_targets is Array:
+			for raw_target: Variant in raw_area_targets as Array:
+				var target_name: String = str(raw_target)
+				if target_name != "":
+					last_area_targets.append(target_name)
+
 		CombatFeedback.show_reaction_feedback(self, reaction_id, reaction)
 
 		if reaction.has("message"):
 			messages.append(str(reaction["message"]))
+		if last_area_target_count > 0:
+			messages.append(
+				str(reaction.get("reaction_name", "Reaction"))
+				+ " catches "
+				+ str(last_area_target_count)
+				+ " nearby target"
+				+ ("s." if last_area_target_count != 1 else ".")
+			)
 
 	if messages.is_empty():
 		return {
@@ -384,6 +404,8 @@ func reset_surface() -> void:
 	reaction_timer = 0.0
 	reaction_tick_timer = 0.0
 	last_reaction_summary = "none"
+	last_area_target_count = 0
+	last_area_targets.clear()
 	ElementVisuals.configure_surface_visual(self, visual_profile, reaction_state)
 	refresh_active_targets()
 
@@ -434,6 +456,8 @@ func get_debug_data() -> Dictionary:
 		"reaction_state": reaction_state,
 		"reaction_time": snapped(reaction_timer, 0.1),
 		"last_reaction": last_reaction_summary,
+		"area_target_count": last_area_target_count,
+		"area_targets": last_area_targets.duplicate(),
 		"hazard_tags": get_hazard_tags(),
 	}
 

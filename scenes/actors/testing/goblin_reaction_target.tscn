@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/combat/status_receiver.gd" id="4_status"]
 [ext_resource type="Script" path="res://scripts/combat/payload_receiver.gd" id="5_payload"]
 [ext_resource type="Script" path="res://scripts/core/tag_component.gd" id="6_tags"]
+[ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="7_force"]
 
 [sub_resource type="SphereShape3D" id="SphereShape_target"]
 radius = 0.58
@@ -34,6 +35,11 @@ script = ExtResource("4_status")
 
 [node name="PayloadReceiver" type="Node" parent="."]
 script = ExtResource("5_payload")
+
+[node name="ForceReceiver" type="Node" parent="."]
+script = ExtResource("7_force")
+drag = 7.5
+max_force_speed = 5.5
 
 [node name="TagComponent" type="Node" parent="."]
 script = ExtResource("6_tags")

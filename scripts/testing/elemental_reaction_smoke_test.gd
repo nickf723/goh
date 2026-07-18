@@ -1,11 +1,17 @@
 extends Node
 
 const ComboRuleRegistryScript = preload("res://scripts/systems/combo_rule_registry.gd")
+const ReactionBurstResolverScript = preload("res://scripts/systems/reaction_burst_resolver.gd")
 const StatusReceiverScript = preload("res://scripts/combat/status_receiver.gd")
+const HitReceiverScript = preload("res://scripts/combat/hit_receiver.gd")
+const ForceReceiverScript = preload("res://scripts/combat/force_receiver.gd")
+const FireFrozenSteamRule: Resource = preload("res://data/combo_rules/fire_frozen_steam.tres")
 
 var failures: Array[String] = []
 var fixture: Node3D
 var status_receiver: Node
+var hit_receiver: Node
+var force_receiver: Node
 
 
 func _ready() -> void:
@@ -16,6 +22,18 @@ func _ready() -> void:
 	status_receiver = StatusReceiverScript.new()
 	status_receiver.name = "StatusReceiver"
 	fixture.add_child(status_receiver)
+
+	hit_receiver = HitReceiverScript.new()
+	hit_receiver.name = "HitReceiver"
+	hit_receiver.set("target_name", "Reaction Smoke Fixture")
+	hit_receiver.set("hit_mode", 1)
+	hit_receiver.set("max_stance", 10)
+	hit_receiver.set("current_stance", 10)
+	fixture.add_child(hit_receiver)
+
+	force_receiver = ForceReceiverScript.new()
+	force_receiver.name = "ForceReceiver"
+	fixture.add_child(force_receiver)
 
 	await get_tree().process_frame
 	run_tests()
@@ -37,6 +55,7 @@ func run_tests() -> void:
 	test_freeze()
 	test_shatter()
 	test_steam()
+	test_steam_area_effect()
 	test_debug_matrix()
 
 
@@ -98,6 +117,36 @@ func test_steam() -> void:
 	assert_status("steamed", true)
 
 
+func test_steam_area_effect() -> void:
+	reset_statuses()
+	hit_receiver.call("reset_stance")
+	force_receiver.set("external_velocity", Vector3.ZERO)
+
+	var test_rule: Resource = FireFrozenSteamRule.duplicate(true)
+	test_rule.set("area_show_status_feedback", false)
+	var result: Dictionary = ReactionBurstResolverScript.apply_effect_to_target(
+		test_rule,
+		fixture,
+		fixture.global_position - Vector3.RIGHT
+	)
+
+	assert_status("steamed", true)
+
+	if int(hit_receiver.get("current_stance")) != 9:
+		failures.append(
+			"Steam Burst area effect should deal 1 stance damage; stance was "
+			+ str(hit_receiver.get("current_stance"))
+		)
+
+	if not bool(force_receiver.call("has_force")):
+		failures.append("Steam Burst area effect should apply outward force")
+
+	if str(result.get("status", "")) != "steamed":
+		failures.append("Steam Burst area result should report steamed status")
+	if int(result.get("stance_damage", 0)) != 1:
+		failures.append("Steam Burst area result should report 1 stance damage")
+
+
 func test_debug_matrix() -> void:
 	var rows: Array[Dictionary] = ComboRuleRegistryScript.get_debug_matrix_rows()
 
@@ -105,12 +154,23 @@ func test_debug_matrix() -> void:
 		failures.append("expected at least 8 registered combo rules, found " + str(rows.size()))
 
 	var visual_styles: Array[String] = []
+	var steam_row: Dictionary = {}
 	for row: Dictionary in rows:
 		visual_styles.append(str(row.get("visual", "")))
+		if str(row.get("reaction", "")) == "steam_burst":
+			steam_row = row
 
 	for required_style: String in ["ignite", "conduct", "freeze", "shatter", "steam"]:
 		if not visual_styles.has(required_style):
 			failures.append("missing visual style in debug matrix: " + required_style)
+
+	if steam_row.is_empty():
+		failures.append("debug matrix is missing Steam Burst")
+	else:
+		if float(steam_row.get("area_radius", 0.0)) <= 0.0:
+			failures.append("Steam Burst debug row must expose a positive area radius")
+		if str(steam_row.get("area_status", "")) != "steamed":
+			failures.append("Steam Burst debug row must expose steamed area status")
 
 
 func reset_statuses() -> void:
@@ -130,7 +190,6 @@ func assert_reaction(reactions: Array[Dictionary], expected_reaction: String) ->
 	for reaction: Dictionary in reactions:
 		if str(reaction.get("reaction", "")) == expected_reaction:
 			return
-
 	failures.append("expected reaction " + expected_reaction + ", received " + str(reactions))
 
 

@@ -38,14 +38,13 @@ class_name ComboRule
 @export var target_reaction_method: String = ""
 @export var target_reaction_pass_source_position: bool = true
 
-# Status output.
+@export_group("Primary Target Output")
 @export var output_status: String = ""
 @export var output_status_duration: float = 0.0
 @export var output_status_strength: float = 1.0
 @export var output_status_source: String = ""
 @export var remove_statuses: Array[String] = []
 
-# Damage output. This is applied as a follow-up reaction payload.
 @export var output_damage: int = 0
 @export var output_stance_damage: int = 0
 @export var output_element: String = "neutral"
@@ -53,6 +52,24 @@ class_name ComboRule
 @export var output_hit_type: String = "reaction"
 @export var output_tags: Array[String] = ["reaction"]
 
+# Optional radial consequence emitted from the matched target or hazard. This is
+# shared by explosions, shockwaves, steam flashes, resonant breaks, and future
+# area reactions instead of baking one-off overlap code into each surface.
+@export_group("Area Effect")
+@export var area_effect_radius: float = 0.0
+@export var area_output_status: String = ""
+@export var area_output_status_duration: float = 0.0
+@export var area_output_status_strength: float = 1.0
+@export var area_output_status_source: String = ""
+@export var area_output_damage: int = 0
+@export var area_output_stance_damage: int = 0
+@export var area_output_element: String = "neutral"
+@export var area_output_tags: Array[String] = ["reaction", "area"]
+@export var area_force_strength: float = 0.0
+@export var area_force_up_strength: float = 0.0
+@export var area_show_status_feedback: bool = true
+
+@export_group("Debug")
 @export var debug_tags: Array[String] = []
 @export_multiline var design_notes: String = ""
 

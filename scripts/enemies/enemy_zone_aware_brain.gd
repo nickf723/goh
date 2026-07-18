@@ -2,6 +2,10 @@ extends "res://scripts/enemies/enemy_brain.gd"
 class_name EnemyZoneAwareBrain
 
 const ZoneAwareness = preload("res://scripts/enemies/enemy_zone_awareness.gd")
+const PersonalityTraits = preload("res://scripts/enemies/enemy_personality_traits.gd")
+
+@export_group("Personality")
+@export var personality_id: String = "balanced"
 
 @export_group("Zone Awareness")
 @export var enable_zone_awareness: bool = true
@@ -13,10 +17,12 @@ const ZoneAwareness = preload("res://scripts/enemies/enemy_zone_awareness.gd")
 var zone_awareness_data: Dictionary = {}
 var zone_hesitation_timer: float = 0.0
 var last_zone_summary: String = "clear"
+var personality_profile: Dictionary = {}
 
 
 func _ready() -> void:
 	super._ready()
+	personality_profile = PersonalityTraits.get_profile(personality_id)
 	zone_awareness_data = ZoneAwareness.empty_result()
 
 
@@ -33,10 +39,12 @@ func update_zone_awareness(delta: float) -> void:
 		zone_awareness_data = ZoneAwareness.empty_result()
 		return
 
-	zone_awareness_data = ZoneAwareness.evaluate(actor, zone_awareness_radius)
+	var awareness_radius: float = zone_awareness_radius * get_personality_number("zone_awareness_radius_multiplier", 1.0)
+	zone_awareness_data = ZoneAwareness.evaluate(actor, awareness_radius)
 
 	if bool(zone_awareness_data.get("hesitate", false)):
-		zone_hesitation_timer = max(zone_hesitation_timer, zone_hesitation_time)
+		var hesitation: float = zone_hesitation_time * get_personality_number("zone_hesitation_time_multiplier", 1.0)
+		zone_hesitation_timer = max(zone_hesitation_timer, hesitation)
 
 	var summary: String = get_zone_summary()
 	if zone_debug_prints and summary != last_zone_summary:
@@ -53,6 +61,26 @@ func process_chase(delta: float) -> void:
 		return
 
 	super.process_chase(delta)
+
+
+func commit_to_attack(delta: float, distance: float, attack: EnemyAttackDefinition) -> void:
+	if distance > attack.get_range():
+		reset_attack_commit()
+		last_action_summary = "closing: " + attack.get_display_name()
+		move_toward_player(delta)
+		return
+
+	clear_horizontal_velocity()
+	face_player(delta)
+
+	attack_commit_timer += delta
+	last_action_summary = "pressuring: " + attack.get_display_name()
+
+	var commit_time: float = max(get_definition().get_attack_commit_time(), 0.0)
+	commit_time *= get_personality_number("attack_commit_time_multiplier", 1.0)
+
+	if attack_commit_timer >= commit_time:
+		start_attack()
 
 
 func move_toward_player(delta: float) -> void:
@@ -130,8 +158,10 @@ func get_zone_adjusted_direction(desired_direction: Vector3) -> Vector3:
 	if avoid_direction.length() <= 0.01:
 		return desired
 
-	var strength: float = zone_avoid_strength
 	var behavior: String = str(zone_awareness_data.get("behavior", "none"))
+	var strength: float = zone_avoid_strength
+	strength *= get_personality_number("zone_avoid_strength_multiplier", 1.0)
+	strength *= PersonalityTraits.get_behavior_avoid_multiplier(personality_id, behavior, 1.0)
 
 	match behavior:
 		"slow":
@@ -179,8 +209,17 @@ func get_zone_summary() -> String:
 	return summary + " / " + behavior + " / " + str(snapped(distance, 0.1)) + "m"
 
 
+func get_personality_number(key: String, fallback: float = 1.0) -> float:
+	return PersonalityTraits.get_number(personality_id, key, fallback)
+
+
+func get_personality_summary() -> String:
+	return PersonalityTraits.get_debug_summary(personality_id)
+
+
 func get_debug_data() -> Dictionary:
 	var debug_data: Dictionary = super.get_debug_data()
+	debug_data["personality"] = get_personality_summary()
 	debug_data["zone"] = get_zone_summary()
 	debug_data["zone_wait"] = snapped(zone_hesitation_timer, 0.1)
 	return debug_data

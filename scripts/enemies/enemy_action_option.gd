@@ -9,10 +9,14 @@ class_name EnemyActionOption
 @export var minimum_start_distance: float = 0.0
 @export var maximum_start_distance: float = 1.5
 @export var selection_weight: float = 1.0
+@export var can_interrupt_post_miss_retreat: bool = false
 
 @export_group("Contact")
 @export var contact_range_override: float = -1.0
 @export var stop_movement_on_hit: bool = false
+
+@export_group("Cooldown")
+@export var reuse_cooldown_override: float = -1.0
 
 @export_group("Debug")
 @export var debug_label: String = ""
@@ -43,6 +47,13 @@ func get_contact_range() -> float:
 
 func get_selection_weight() -> float:
 	return max(selection_weight, 0.0)
+
+
+func get_reuse_cooldown() -> float:
+	if reuse_cooldown_override >= 0.0:
+		return reuse_cooldown_override
+
+	return attack.get_cooldown() if attack != null else 0.0
 
 
 func get_display_name() -> String:

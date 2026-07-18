@@ -158,6 +158,10 @@ func get_phase_time_remaining() -> float:
 	return phase_timer
 
 
+func get_current_action() -> EnemyAttackDefinition:
+	return current_action
+
+
 func get_action_display_name() -> String:
 	if current_action == null:
 		return "none"

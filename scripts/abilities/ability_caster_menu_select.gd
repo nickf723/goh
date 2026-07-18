@@ -2,35 +2,13 @@ extends "res://scripts/abilities/ability_caster.gd"
 
 # Prototype wrapper for the focus spell menu.
 # The base AbilityCaster still owns casting, loadout, charge logic, and menu data.
-# This wrapper changes the focus menu contract, delegates simple spell upgrade
-# payload hooks to SpellModifierRegistry, and routes ground-targeted spells through
-# GroundTargetingController.
+# This wrapper changes the focus menu contract, delegates spell upgrade payload hooks
+# to SpellModifierRegistry, and routes ground-targeted spells through
+# GroundTargetingController + GroundSpellRegistry.
 
 const SpellModifiers = preload("res://scripts/abilities/spell_modifier_registry.gd")
 const GroundTargeting = preload("res://scripts/abilities/ground_targeting_controller.gd")
-
-const EARTH_SPIKE_SPELL_ID: String = "earth_spike"
-const POISON_BLOOM_SPELL_IDS: Array[String] = ["poison_cloud", "poison_bloom"]
-const GROUND_SPELL_EARTH_SPIKE: String = "earth_spike"
-const GROUND_SPELL_POISON_BLOOM: String = "poison_bloom"
-
-@export_group("Earth Spike Targeting")
-@export var earth_spike_target_radius: float = 2.15
-@export var earth_spike_target_range: float = 12.0
-@export var earth_spike_initial_distance: float = 6.0
-@export var earth_spike_marker_speed: float = 8.5
-@export var earth_spike_marker_deadzone: float = 0.18
-@export var earth_spike_ground_y_offset: float = 0.05
-@export var earth_spike_cast_lock_duration: float = 0.24
-
-@export_group("Poison Bloom Targeting")
-@export var poison_bloom_target_radius: float = 3.0
-@export var poison_bloom_target_range: float = 12.0
-@export var poison_bloom_initial_distance: float = 6.0
-@export var poison_bloom_marker_speed: float = 8.0
-@export var poison_bloom_marker_deadzone: float = 0.18
-@export var poison_bloom_ground_y_offset: float = 0.06
-@export var poison_bloom_cast_lock_duration: float = 0.22
+const GroundSpells = preload("res://scripts/abilities/ground_spell_registry.gd")
 
 var ground_targeting_controller: RefCounted = null
 
@@ -48,11 +26,9 @@ func cast_from_player(player: Node3D, cast_lock_duration: float = 0.18, allow_ch
 	if is_ground_targeting():
 		return confirm_ground_targeting()
 
-	if should_use_poison_bloom_targeting(ability):
-		return begin_ground_targeting(player, ability, get_poison_bloom_target_config(), "Place Poison Bloom. Right stick moves target. Cast confirms. Cancel backs out.")
-
-	if should_use_earth_spike_targeting(ability):
-		return begin_ground_targeting(player, ability, get_earth_spike_target_config(), "Place Earth Spike. Right stick moves target. Cast confirms. Cancel backs out.")
+	var ground_spell: Dictionary = GroundSpells.get_definition_for_ability(ability)
+	if not ground_spell.is_empty():
+		return begin_ground_targeting(player, ability, ground_spell)
 
 	if SpellModifiers.has_active_payload_modifier_for_ability(ability):
 		return cast_with_spell_modifier(player, ability, cast_lock_duration)
@@ -85,49 +61,6 @@ func cast_with_spell_modifier(player: Node3D, ability: AbilityDefinition, cast_l
 	return did_cast
 
 
-func should_use_earth_spike_targeting(ability: AbilityDefinition) -> bool:
-	if ability == null:
-		return false
-
-	if ability.element.to_lower() != "earth":
-		return false
-
-	var spell_id: String = get_ability_spell_id(ability)
-	if spell_id != "":
-		return spell_id == EARTH_SPIKE_SPELL_ID
-
-	return ability.display_name.to_lower() == "earth spike"
-
-
-func should_use_poison_bloom_targeting(ability: AbilityDefinition) -> bool:
-	if ability == null:
-		return false
-
-	if ability.element.to_lower() != "poison":
-		return false
-
-	var spell_id: String = get_ability_spell_id(ability)
-	if spell_id != "":
-		return POISON_BLOOM_SPELL_IDS.has(spell_id)
-
-	var display_name: String = ability.display_name.to_lower()
-	return display_name == "poison cloud" or display_name == "poison bloom"
-
-
-func get_ability_spell_id(ability: AbilityDefinition) -> String:
-	if ability == null:
-		return ""
-
-	if ability.has_method("get_spell_id"):
-		return str(ability.get_spell_id())
-
-	var spell_id_value: Variant = ability.get("spell_id")
-	if spell_id_value != null:
-		return str(spell_id_value)
-
-	return ""
-
-
 func get_ground_targeting_controller() -> RefCounted:
 	if ground_targeting_controller == null:
 		ground_targeting_controller = GroundTargeting.new()
@@ -135,7 +68,7 @@ func get_ground_targeting_controller() -> RefCounted:
 	return ground_targeting_controller
 
 
-func begin_ground_targeting(player: Node3D, ability: AbilityDefinition, target_config: Dictionary, message: String) -> bool:
+func begin_ground_targeting(player: Node3D, ability: AbilityDefinition, ground_spell: Dictionary) -> bool:
 	if player == null or ability == null:
 		return false
 
@@ -144,12 +77,16 @@ func begin_ground_targeting(player: Node3D, ability: AbilityDefinition, target_c
 
 	cancel_charged_firebolt(false)
 
+	var target_config: Dictionary = GroundSpells.get_target_config(ground_spell)
+	if target_config.is_empty():
+		return false
+
 	var controller: RefCounted = get_ground_targeting_controller()
 	if not controller.start(self, player, ability, target_config):
 		return false
 
 	focus_spell_menu_open = true
-	show_feedback(message)
+	show_feedback(GroundSpells.get_begin_message(ground_spell))
 	return true
 
 
@@ -284,8 +221,9 @@ func confirm_ground_targeting() -> bool:
 	var player: Node3D = controller.get_source_player()
 	var spell_key: String = controller.get_spell_key()
 	var target_position: Vector3 = controller.get_target_position()
+	var ground_spell: Dictionary = GroundSpells.get_definition_for_spell_key(spell_key)
 
-	if ability == null or player == null:
+	if ability == null or player == null or ground_spell.is_empty():
 		cancel_ground_targeting(false)
 		return false
 
@@ -299,20 +237,22 @@ func confirm_ground_targeting() -> bool:
 	if action_state != null:
 		action_state.begin_cast(controller.get_cast_lock_duration(0.22))
 
-	if spell_key == GROUND_SPELL_EARTH_SPIKE:
-		var earth_payload: DamagePayload = make_earth_spike_ground_payload(ability)
-		var hit_count: int = erupt_earth_spike(target_position, earth_payload, player)
+	var payload: DamagePayload = GroundSpells.make_payload_for_ability(ability, ground_spell)
+	var effect_type: String = GroundSpells.get_effect_type(ground_spell)
+
+	if effect_type == "instant_aoe":
+		var hit_count: int = erupt_ground_aoe(target_position, payload, player, ground_spell)
 		cancel_ground_targeting(false)
 		if hit_count > 0:
-			show_feedback("Earth Spike erupts and hits " + str(hit_count) + " target(s).")
+			show_feedback(GroundSpells.get_confirm_message(ground_spell, hit_count))
 		else:
-			show_feedback("Earth Spike erupts.")
+			show_feedback(GroundSpells.get_confirm_message(ground_spell))
 		return true
 
-	if spell_key == GROUND_SPELL_POISON_BLOOM:
-		spawn_poison_bloom(target_position, ability, player)
+	if effect_type == "spawn_field":
+		spawn_ground_field(target_position, ability, player, payload, ground_spell)
 		cancel_ground_targeting(false)
-		show_feedback("Poison Bloom unfurls.")
+		show_feedback(GroundSpells.get_confirm_message(ground_spell))
 		return true
 
 	cancel_ground_targeting(false)
@@ -324,6 +264,7 @@ func cancel_ground_targeting(should_show_feedback: bool = true) -> void:
 		return
 
 	var spell_key: String = get_ground_targeting_controller().get_spell_key()
+	var ground_spell: Dictionary = GroundSpells.get_definition_for_spell_key(spell_key)
 	get_ground_targeting_controller().cancel()
 	focus_spell_menu_open = false
 
@@ -331,136 +272,13 @@ func cancel_ground_targeting(should_show_feedback: bool = true) -> void:
 	if ui != null and ui.has_method("hide_spell_focus_menu"):
 		ui.hide_spell_focus_menu()
 
-	if not should_show_feedback:
-		return
-
-	if spell_key == GROUND_SPELL_POISON_BLOOM:
-		show_feedback("Poison Bloom canceled.")
-	else:
-		show_feedback("Earth Spike canceled.")
+	if should_show_feedback:
+		show_feedback(GroundSpells.get_cancel_message(ground_spell))
 
 
-func get_earth_spike_target_config() -> Dictionary:
-	return {
-		"spell_key": GROUND_SPELL_EARTH_SPIKE,
-		"marker_name": "EarthSpikeTargetMarker",
-		"disc_name": "TargetDisc",
-		"center_name": "TargetCenter",
-		"radius": earth_spike_target_radius,
-		"range": earth_spike_target_range,
-		"initial_distance": earth_spike_initial_distance,
-		"speed": earth_spike_marker_speed,
-		"deadzone": earth_spike_marker_deadzone,
-		"ground_y_offset": earth_spike_ground_y_offset,
-		"cast_lock_duration": earth_spike_cast_lock_duration,
-		"disc_color": Color(0.36, 0.27, 0.14, 0.32),
-		"center_color": Color(0.36, 0.27, 0.14, 0.78),
-		"disc_alpha": 0.32,
-		"center_alpha": 0.78,
-		"pulse_speed": 5.5,
-		"pulse_size": 0.035,
-		"emission_energy": 0.55,
-	}
-
-
-func get_poison_bloom_target_config() -> Dictionary:
-	return {
-		"spell_key": GROUND_SPELL_POISON_BLOOM,
-		"marker_name": "PoisonBloomTargetMarker",
-		"disc_name": "PoisonBloomDisc",
-		"center_name": "PoisonBloomCenter",
-		"radius": poison_bloom_target_radius,
-		"range": poison_bloom_target_range,
-		"initial_distance": poison_bloom_initial_distance,
-		"speed": poison_bloom_marker_speed,
-		"deadzone": poison_bloom_marker_deadzone,
-		"ground_y_offset": poison_bloom_ground_y_offset,
-		"cast_lock_duration": poison_bloom_cast_lock_duration,
-		"disc_color": Color(0.22, 0.85, 0.22, 0.34),
-		"center_color": Color(0.22, 0.85, 0.22, 0.78),
-		"disc_alpha": 0.34,
-		"center_alpha": 0.78,
-		"pulse_speed": 4.4,
-		"pulse_size": 0.055,
-		"emission_energy": 0.72,
-	}
-
-
-func make_earth_spike_ground_payload(ability: AbilityDefinition) -> DamagePayload:
-	var base_payload: Resource = get_ability_payload(ability)
-	var payload: DamagePayload = DamagePayload.new()
-
-	if base_payload is DamagePayload:
-		var duplicate_payload: Resource = base_payload.duplicate(true)
-		if duplicate_payload is DamagePayload:
-			payload = duplicate_payload as DamagePayload
-
-	payload.source_name = "Earth Spike"
-	payload.hit_type = "ground_aoe"
-	append_payload_tags(payload, ["earth_spike", "ground_targeted", "aoe"])
-	return payload
-
-
-func make_poison_bloom_payload(ability: AbilityDefinition) -> DamagePayload:
-	var base_payload: Resource = get_ability_payload(ability)
-	var payload: DamagePayload = DamagePayload.new()
-
-	if base_payload is DamagePayload:
-		var duplicate_payload: Resource = base_payload.duplicate(true)
-		if duplicate_payload is DamagePayload:
-			payload = duplicate_payload as DamagePayload
-
-	payload.source_name = "Poison Bloom"
-	payload.hit_type = "ground_field"
-	if payload.status_effect == "":
-		payload.status_effect = "poisoned"
-	if payload.status_duration <= 0.0:
-		payload.status_duration = 1.6
-	if payload.status_strength <= 0.0:
-		payload.status_strength = 1.0
-	append_payload_tags(payload, ["poison_bloom", "ground_targeted", "field", "aoe"])
-	return payload
-
-
-func get_ability_payload(ability: AbilityDefinition) -> Resource:
-	if ability == null:
-		return null
-
-	if ability.has_method("get_action_payload"):
-		var method_payload: Variant = ability.get_action_payload()
-		if method_payload is Resource:
-			return method_payload as Resource
-
-	if ability.payload != null:
-		return ability.payload
-
-	return null
-
-
-func append_payload_tags(payload: DamagePayload, tags_to_add: Array[String]) -> void:
-	if payload == null:
-		return
-
-	var next_tags: Array[String] = []
-	for existing_tag: String in payload.tags:
-		if existing_tag == "":
-			continue
-		if next_tags.has(existing_tag):
-			continue
-		next_tags.append(existing_tag)
-
-	for tag: String in tags_to_add:
-		if tag == "":
-			continue
-		if next_tags.has(tag):
-			continue
-		next_tags.append(tag)
-
-	payload.tags = next_tags
-
-
-func erupt_earth_spike(target_position: Vector3, payload: DamagePayload, source_actor: Node) -> int:
-	show_earth_spike_erupt_visual(target_position)
+func erupt_ground_aoe(target_position: Vector3, payload: DamagePayload, source_actor: Node, ground_spell: Dictionary) -> int:
+	var target_radius: float = GroundSpells.get_target_radius(ground_spell, 2.0)
+	show_earth_spike_erupt_visual(target_position, target_radius)
 
 	var hit_count: int = 0
 	for target_node: Node in get_tree().get_nodes_in_group("enemy"):
@@ -473,7 +291,7 @@ func erupt_earth_spike(target_position: Vector3, payload: DamagePayload, source_
 
 		var offset: Vector3 = target.global_position - target_position
 		offset.y = 0.0
-		if offset.length() > earth_spike_target_radius:
+		if offset.length() > target_radius:
 			continue
 
 		var hit_payload: DamagePayload = payload.duplicate(true) as DamagePayload
@@ -529,7 +347,13 @@ func send_ground_payload_to_target(target: Node, damage_payload: DamagePayload) 
 	return {}
 
 
-func spawn_poison_bloom(target_position: Vector3, ability: AbilityDefinition, source_actor: Node3D) -> void:
+func spawn_ground_field(
+	target_position: Vector3,
+	ability: AbilityDefinition,
+	source_actor: Node3D,
+	payload: DamagePayload,
+	ground_spell: Dictionary
+) -> void:
 	if ability == null or ability.ability_scene == null:
 		return
 
@@ -538,10 +362,9 @@ func spawn_poison_bloom(target_position: Vector3, ability: AbilityDefinition, so
 		return
 
 	var ability_instance: Node = ability.ability_scene.instantiate()
-	var poison_payload: DamagePayload = make_poison_bloom_payload(ability)
 
 	if ability_instance.has_method("set_payload"):
-		ability_instance.set_payload(poison_payload)
+		ability_instance.set_payload(payload)
 
 	if ability_instance.has_method("set_source_actor"):
 		ability_instance.set_source_actor(source_actor)
@@ -556,11 +379,13 @@ func spawn_poison_bloom(target_position: Vector3, ability: AbilityDefinition, so
 		ability_instance.call("configure_area")
 	if ability_instance.has_method("configure_visual"):
 		ability_instance.call("configure_visual")
-	if ability_instance.has_method("apply_cloud_tick"):
-		ability_instance.call_deferred("apply_cloud_tick")
+
+	var post_spawn_method: String = GroundSpells.get_post_spawn_method(ground_spell)
+	if post_spawn_method != "" and ability_instance.has_method(post_spawn_method):
+		ability_instance.call_deferred(post_spawn_method)
 
 
-func show_earth_spike_erupt_visual(target_position: Vector3) -> void:
+func show_earth_spike_erupt_visual(target_position: Vector3, target_radius: float) -> void:
 	var scene_root: Node = get_tree().current_scene
 	if scene_root == null:
 		return
@@ -574,8 +399,8 @@ func show_earth_spike_erupt_visual(target_position: Vector3) -> void:
 	disc.name = "EarthBurstDisc"
 	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var disc_mesh: CylinderMesh = CylinderMesh.new()
-	disc_mesh.top_radius = earth_spike_target_radius
-	disc_mesh.bottom_radius = earth_spike_target_radius
+	disc_mesh.top_radius = target_radius
+	disc_mesh.bottom_radius = target_radius
 	disc_mesh.height = 0.045
 	disc.mesh = disc_mesh
 	disc.material_override = make_earth_spike_marker_material(0.42)

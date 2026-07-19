@@ -1,9 +1,12 @@
 extends FieldResponsiveBody
 class_name BuoyantFieldBody
 
+var buoyancy_receiver: BuoyancyReceiver
+
 
 func _ready() -> void:
 	super._ready()
+	buoyancy_receiver = get_node_or_null("BuoyancyReceiver") as BuoyancyReceiver
 	add_to_group("physical_bodies")
 
 

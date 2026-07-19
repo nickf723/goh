@@ -128,6 +128,7 @@ static func run(host: Node) -> Array[String]:
 	test_zero_energy_baseline(reservoir, turbine, generator_shaft, generator, solver, motor, motor_shaft, conveyor, failures)
 	test_full_energy_chain(state, reservoir, thermal_adapter, turbine, generator_shaft, generator, solver, lamp, motor, motor_shaft, conveyor, failures)
 	test_motor_direction(generator_shaft, generator, solver, motor, motor_shaft, failures)
+	motor_shaft.step_rotation(3.0)
 	test_conveyor_clutch(motor_shaft, conveyor, carriage, failures)
 	test_generator_clutch(generator, solver, motor, motor_shaft, failures)
 	test_condensation_shutdown(state, reservoir, thermal_adapter, turbine, generator_shaft, generator, solver, motor_shaft, failures)

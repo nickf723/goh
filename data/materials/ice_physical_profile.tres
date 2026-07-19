@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PhysicalMaterialProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/physics/physical_material_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+material_id = "ice"
+display_name = "Ice"
+density_kg_m3 = 917.0
+default_mass_kg = 2.0
+electrical_conductivity = 0.02
+electrical_resistivity = 100000.0
+specific_heat_capacity_j_kg_c = 2100.0
+thermal_conductivity_w_m_c = 2.2
+freezing_point_c = 0.0
+melting_point_c = 0.0
+material_tags = Array[String](["ice", "solid", "cold", "lightly_conductive"])

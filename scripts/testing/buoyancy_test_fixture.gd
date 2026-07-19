@@ -152,9 +152,9 @@ static func test_propeller_submersion(
 
 	var shaft := RotationalShaftState.new()
 	shaft.name = "PropellerShaft"
+	root.add_child(shaft)
 	shaft.current_rpm = 1000.0
 	shaft.target_rpm = 1000.0
-	root.add_child(shaft)
 	var propeller := FluidPropellerDrive.new()
 	propeller.name = "Propeller"
 	propeller.propeller_local_position = Vector3(0.0, -0.3, 0.0)

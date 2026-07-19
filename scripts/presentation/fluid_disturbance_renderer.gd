@@ -65,8 +65,8 @@ func spawn_ripple(event: FluidDisturbanceEvent, expansion_scale: float = 1.0) ->
 	ripple.rotation.y = atan2(direction.x, direction.z)
 	var radius: float = max(event.radius, 0.08)
 	ripple.scale = Vector3(radius * 1.15, 0.08, radius * (0.82 + event.strength * 0.08))
-	place_at_surface(ripple, event.world_position, 0.028)
 	add_effect(ripple)
+	place_at_surface(ripple, event.world_position, 0.028)
 	ripple_render_count += 1
 
 	var duration: float = profile.ripple_duration if profile != null else 0.95
@@ -95,7 +95,6 @@ func spawn_splash(event: FluidDisturbanceEvent, intensity_scale: float = 1.0) ->
 	particles.amount = clampi(int(6.0 + event.strength * droplets_per_strength * intensity_scale), 6, 72)
 	particles.lifetime = max(lifetime, 0.2)
 	particles.one_shot = true
-	particles.explosiveness_ratio = 0.92
 	particles.randomness = 0.72
 	particles.visibility_aabb = AABB(Vector3(-5.0, -2.0, -5.0), Vector3(10.0, 9.0, 10.0))
 
@@ -113,8 +112,8 @@ func spawn_splash(event: FluidDisturbanceEvent, intensity_scale: float = 1.0) ->
 	process.color = get_foam_color(event.tint)
 	particles.process_material = process
 	particles.draw_pass_1 = make_droplet_mesh(event.tint)
-	place_at_surface(particles, event.world_position, 0.02)
 	add_effect(particles)
+	place_at_surface(particles, event.world_position, 0.02)
 	splash_render_count += 1
 	particles.emitting = true
 	var tween := particles.create_tween()
@@ -147,8 +146,8 @@ func spawn_wake(event: FluidDisturbanceEvent) -> void:
 	foam.mesh = plane
 	foam.material_override = make_foam_material(event.tint, 0.72)
 	foam.rotation.y = atan2(direction.x, direction.z)
-	place_at_surface(foam, event.world_position - direction * radius * 0.65, 0.034)
 	add_effect(foam)
+	place_at_surface(foam, event.world_position - direction * radius * 0.65, 0.034)
 	wake_render_count += 1
 	var duration: float = profile.wake_duration if profile != null else 1.15
 	var flow: Vector3 = volume.get_flow_velocity_at(event.world_position)
@@ -184,7 +183,6 @@ func spawn_bubble_plume(event: FluidDisturbanceEvent) -> void:
 	particles.amount = clampi(int(8.0 + event.strength * 8.0), 8, 48)
 	particles.lifetime = clampf(0.65 + event.strength * 0.12, 0.65, 1.5)
 	particles.one_shot = true
-	particles.explosiveness_ratio = 0.72
 	particles.randomness = 0.86
 	particles.visibility_aabb = AABB(Vector3(-4.0, -3.0, -4.0), Vector3(8.0, 8.0, 8.0))
 	var process := ParticleProcessMaterial.new()
@@ -198,8 +196,8 @@ func spawn_bubble_plume(event: FluidDisturbanceEvent) -> void:
 	process.color = Color(0.78, 0.96, 1.0, 0.68)
 	particles.process_material = process
 	particles.draw_pass_1 = make_droplet_mesh(Color(0.72, 0.95, 1.0, 0.62))
-	particles.global_position = event.world_position
 	add_effect(particles)
+	particles.global_position = event.world_position
 	particles.emitting = true
 	var tween := particles.create_tween()
 	tween.tween_interval(particles.lifetime + 0.2)
@@ -212,8 +210,8 @@ func spawn_surface_flash(event: FluidDisturbanceEvent) -> void:
 	flash.light_color = Color(0.45, 0.68, 1.0, 1.0)
 	flash.light_energy = 2.0 + event.strength * 1.6
 	flash.omni_range = 2.5 + event.radius * 2.0
-	place_at_surface(flash, event.world_position, 0.16)
 	add_effect(flash)
+	place_at_surface(flash, event.world_position, 0.16)
 	var tween := flash.create_tween()
 	tween.tween_property(flash, "light_energy", 0.0, 0.18 + event.strength * 0.025)
 	tween.tween_callback(Callable(self, "release_effect").bind(flash))

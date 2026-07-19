@@ -9,11 +9,13 @@ signal coupling_changed(is_coupled: bool)
 @export var volts_per_1000_rpm: float = 12.0
 @export var maximum_output_voltage: float = 18.0
 @export var voltage_change_deadband: float = 0.03
+@export var voltage_refresh_interval: float = 0.05
 
 var shaft: RotationalShaftState
 var coupled: bool = true
 var last_shaft_rpm: float = 0.0
 var generated_voltage: float = 0.0
+var refresh_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -29,7 +31,11 @@ func _ready() -> void:
 	add_to_group("lab_resettable")
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	refresh_timer -= delta
+	if refresh_timer > 0.0:
+		return
+	refresh_timer = max(voltage_refresh_interval, 0.02)
 	update_generated_voltage()
 
 
@@ -67,6 +73,7 @@ func set_coupled(next_coupled: bool) -> void:
 	if coupled == next_coupled:
 		return
 	coupled = next_coupled
+	refresh_timer = 0.0
 	update_generated_voltage(true)
 	coupling_changed.emit(coupled)
 
@@ -83,6 +90,7 @@ func reset_target() -> void:
 	coupled = starts_coupled
 	generated_voltage = 0.0
 	last_shaft_rpm = shaft.current_rpm if shaft != null else 0.0
+	refresh_timer = 0.0
 	update_generated_voltage(true)
 	apply_circuit_state(false, 0.0, 0.0, -1)
 	coupling_changed.emit(coupled)

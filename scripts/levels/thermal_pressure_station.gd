@@ -27,8 +27,9 @@ static func build(host: Node3D) -> Dictionary:
 	water.starting_water_temperature_c = 20.0
 	water.water_heat_capacity_j_per_c = 8.0
 	water.water_ambient_conductance = 0.015
-	root.add_child(water)
+	water.ensure_thermal_state()
 	add_spell_capture(water)
+	root.add_child(water)
 	add_boiler_frame(root, water.position)
 
 	var adapter := ThermalPressureAdapter.new()
@@ -37,8 +38,8 @@ static func build(host: Node3D) -> Dictionary:
 	adapter.output_per_superheat_c = 0.55
 	adapter.maximum_output_per_second = 42.0
 	adapter.condensation_per_second = 28.0
-	root.add_child(adapter)
 	adapter.configure(water.thermal_state, reservoir)
+	root.add_child(adapter)
 
 	var platform := AnimatableBody3D.new()
 	platform.name = "LiftPlatform"
@@ -76,9 +77,9 @@ static func build(host: Node3D) -> Dictionary:
 	valve.automatic_threshold_ratio = 0.9
 	valve.automatic_vent_per_second = 36.0
 	valve.manual_vent_amount = 1000.0
-	root.add_child(valve)
-	add_valve_shape(valve)
 	valve.configure(reservoir)
+	add_valve_shape(valve)
+	root.add_child(valve)
 
 	var gauge_pivot := Node3D.new()
 	gauge_pivot.name = "GaugeNeedle"
@@ -138,17 +139,19 @@ static func add_spell_capture(water: ThermalWaterVolume) -> void:
 
 static func add_boiler_frame(root: Node3D, center: Vector3) -> void:
 	var frame_color := Color(0.32, 0.36, 0.42, 1.0)
+	var post_index: int = 0
 	for x_offset: float in [-1.95, 1.95]:
 		for z_offset: float in [-1.35, 1.35]:
 			var post := ThermalLabGeometry.add_box_visual(
 				root,
-				"BoilerPost",
+				"BoilerPost" + str(post_index),
 				Vector3(0.16, 2.2, 0.16),
 				frame_color,
 				true,
 				0.8
 			)
 			post.position = center + Vector3(x_offset, 0.15, z_offset)
+			post_index += 1
 	var top := ThermalLabGeometry.add_box_visual(
 		root,
 		"BoilerTop",
@@ -184,11 +187,13 @@ static func add_valve_shape(valve: PressureReliefValve) -> void:
 
 
 static func add_lift_supports(root: Node3D) -> void:
+	var support_index: int = 0
 	for x_offset: float in [-1.65, 1.65]:
 		var support := ThermalLabGeometry.add_box_visual(
 			root,
-			"LiftSupport",
+			"LiftSupport" + str(support_index),
 			Vector3(0.18, 4.2, 0.18),
 			Color(0.16, 0.2, 0.28, 1.0)
 		)
 		support.position = Vector3(3.5 + x_offset, 1.8, 1.4)
+		support_index += 1

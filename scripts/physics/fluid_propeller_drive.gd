@@ -8,6 +8,8 @@ class_name FluidPropellerDrive
 @export var minimum_effective_rpm: float = 80.0
 @export var thrust_direction_local: Vector3 = Vector3.FORWARD
 @export var visual_path: NodePath
+@export var emit_churn_visuals: bool = true
+@export var churn_strength_scale: float = 1.0
 
 var shaft: RotationalShaftState
 var body: FieldResponsiveBody
@@ -18,6 +20,8 @@ var submerged: bool = false
 var last_thrust_newtons: float = 0.0
 var last_direction_world: Vector3 = Vector3.ZERO
 var total_impulse_newton_seconds: float = 0.0
+var churn_timer: float = 0.0
+var churn_event_count: int = 0
 
 
 func _ready() -> void:
@@ -43,6 +47,7 @@ func configure(
 
 
 func step_propeller(delta: float = 0.0) -> float:
+	churn_timer = max(churn_timer - max(delta, 0.0), 0.0)
 	if not enabled or shaft == null or body == null or buoyancy_receiver == null or force_receiver == null:
 		clear_thrust()
 		return 0.0
@@ -73,8 +78,40 @@ func step_propeller(delta: float = 0.0) -> float:
 	)
 	if delta > 0.0:
 		total_impulse_newton_seconds += last_thrust_newtons * delta
+		emit_churn(volume, propeller_world_position, rpm)
 	rotate_visual(delta, rpm)
 	return last_thrust_newtons
+
+
+func emit_churn(volume: FluidForceVolume, world_position: Vector3, rpm: float) -> void:
+	if not emit_churn_visuals or volume == null or churn_timer > 0.0:
+		return
+	var profile: FluidPresentationProfile = volume.get_presentation_profile()
+	var interval: float = profile.churn_interval_seconds if profile != null else 0.12
+	churn_timer = max(interval, 0.06)
+	var rpm_ratio: float = clampf(absf(rpm) / max(shaft.maximum_abs_rpm, 1.0), 0.0, 1.0)
+	var thrust_ratio: float = clampf(last_thrust_newtons / max(maximum_thrust_newtons, 0.01), 0.0, 1.0)
+	var strength: float = clampf(
+		(0.45 + rpm_ratio * 1.6 + thrust_ratio * 1.2) * max(churn_strength_scale, 0.0),
+		0.35,
+		4.0
+	)
+	volume.emit_disturbance(
+		FluidDisturbanceEvent.KIND_CHURN,
+		world_position,
+		last_direction_world,
+		last_direction_world * last_thrust_newtons,
+		strength,
+		0.28 + rpm_ratio * 0.42,
+		"fluid_propeller:" + str(get_instance_id()),
+		["water", "propeller", "rotation_driven"],
+		{
+			"rpm": rpm,
+			"thrust_newtons": last_thrust_newtons,
+			"body_name": body.name,
+		}
+	)
+	churn_event_count += 1
 
 
 func rotate_visual(delta: float, rpm: float) -> void:
@@ -98,6 +135,8 @@ func get_force_source_id() -> String:
 func reset_target() -> void:
 	clear_thrust()
 	total_impulse_newton_seconds = 0.0
+	churn_timer = 0.0
+	churn_event_count = 0
 
 
 func get_debug_data() -> Dictionary:
@@ -109,4 +148,5 @@ func get_debug_data() -> Dictionary:
 		"thrust_newtons": snapped(last_thrust_newtons, 0.01),
 		"direction": last_direction_world,
 		"total_impulse": snapped(total_impulse_newton_seconds, 0.01),
+		"churn_events": churn_event_count,
 	}

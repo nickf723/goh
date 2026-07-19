@@ -13,6 +13,8 @@ class_name BuoyancyReceiver
 @export var wake_interval_seconds: float = 0.32
 @export var create_entry_ripples: bool = true
 @export var create_wake_ripples: bool = true
+@export var entry_splash_scale: float = 1.0
+@export var wake_strength_scale: float = 1.0
 @export var load_sensor_path: NodePath
 
 var active_volume: FluidForceVolume
@@ -31,6 +33,8 @@ var wake_timer: float = 0.0
 var previous_volume: FluidForceVolume
 var load_sensor: BuoyancyLoadSensor
 var last_surface_distance: float = 0.0
+var emitted_entry_count: int = 0
+var emitted_wake_count: int = 0
 
 
 func _ready() -> void:
@@ -194,17 +198,68 @@ func update_fluid_state(body: FieldResponsiveBody) -> void:
 func update_water_feedback(body: FieldResponsiveBody, body_center: Vector3) -> void:
 	if active_volume == null:
 		return
-	var horizontal_speed: float = Vector2(body.velocity.x, body.velocity.z).length()
+	var flow_velocity: Vector3 = active_volume.get_flow_velocity_at(body_center)
+	var relative_velocity: Vector3 = body.velocity - flow_velocity
+	var horizontal_relative := Vector3(relative_velocity.x, 0.0, relative_velocity.z)
+	var relative_speed: float = horizontal_relative.length()
+	var characteristic_radius: float = clampf(
+		pow(max(effective_volume_m3, 0.0001), 1.0 / 3.0) * 0.72,
+		0.22,
+		2.4
+	)
+	var surface_position := Vector3(body_center.x, active_volume.get_surface_y(), body_center.z)
+	var tags: Array[String] = ["water", "physics_driven", fluid_state]
+	var metadata: Dictionary = {
+		"mass_kg": total_mass_kg,
+		"submerged_fraction": submerged_fraction,
+		"effective_volume_m3": effective_volume_m3,
+		"body_name": body.name,
+	}
+
 	if create_entry_ripples and previous_volume != active_volume:
-		active_volume.spawn_ripple(body_center, clampf(body.velocity.length(), 0.5, 2.5))
+		var impact_speed: float = max(absf(body.velocity.y), body.velocity.length() * 0.42)
+		var entry_strength: float = clampf(
+			(impact_speed * 0.42 + sqrt(max(total_mass_kg, 0.01)) * 0.18)
+			* max(entry_splash_scale, 0.0),
+			0.45,
+			5.0
+		)
+		active_volume.emit_disturbance(
+			FluidDisturbanceEvent.KIND_ENTRY,
+			surface_position,
+			horizontal_relative,
+			body.velocity,
+			entry_strength,
+			characteristic_radius,
+			"buoyancy_entry:" + str(get_instance_id()),
+			tags,
+			metadata
+		)
+		emitted_entry_count += 1
 		wake_timer = max(wake_interval_seconds, 0.08)
 	elif (
 		create_wake_ripples
 		and wake_timer <= 0.0
-		and horizontal_speed >= active_volume.ripple_min_speed
+		and relative_speed >= active_volume.ripple_min_speed
 		and submerged_fraction > 0.08
 	):
-		active_volume.spawn_ripple(body_center, clampf(horizontal_speed * 0.45, 0.35, 1.8))
+		var wake_strength: float = clampf(
+			relative_speed * submerged_fraction * 0.48 * max(wake_strength_scale, 0.0),
+			0.3,
+			3.6
+		)
+		active_volume.emit_disturbance(
+			FluidDisturbanceEvent.KIND_WAKE,
+			surface_position,
+			horizontal_relative,
+			relative_velocity,
+			wake_strength,
+			characteristic_radius,
+			"buoyancy_wake:" + str(get_instance_id()),
+			tags,
+			metadata
+		)
+		emitted_wake_count += 1
 		wake_timer = max(wake_interval_seconds, 0.08)
 
 
@@ -235,6 +290,8 @@ func reset_target() -> void:
 	stability_torque = Vector3.ZERO
 	fluid_state = "air"
 	wake_timer = 0.0
+	emitted_entry_count = 0
+	emitted_wake_count = 0
 
 
 func get_debug_data() -> Dictionary:
@@ -253,4 +310,6 @@ func get_debug_data() -> Dictionary:
 		"horizontal_force": horizontal_fluid_force,
 		"stability_torque": stability_torque,
 		"surface_distance": snapped(last_surface_distance, 0.01),
+		"entry_events": emitted_entry_count,
+		"wake_events": emitted_wake_count,
 	}

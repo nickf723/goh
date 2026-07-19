@@ -239,6 +239,38 @@
       "timeout_seconds": 5
     },
     {
+      "id": "element_vfx_gallery",
+      "order": 45,
+      "display_name": "Element VFX Gallery",
+      "category": "Presentation Laboratory",
+      "version": "v1",
+      "status": "development_tool",
+      "description": "Permanent gallery for procedural elemental presentation. The Water wing demonstrates generated surfaces, waterfall motion, impacts, wakes, churn, bubbles, electrical response, replay controls, and reserved bays for all sixteen core elements.",
+      "scene": "res://scenes/levels/prototypes/prototype_element_vfx_gallery_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_element_vfx_gallery_v1.tscn"
+      ],
+      "automated_tests": [],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "RESET"
+      ],
+      "manual_test": "docs/element_vfx_gallery_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Only the Water wing is populated in v1.",
+        "Advanced reflection, shoreline response, underwater camera treatment, and ocean rendering are deferred.",
+        "The room is a development gallery rather than a story location."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 7
+    },
+    {
       "id": "dev_interaction_sandbox",
       "order": 50,
       "display_name": "Dev Interaction Sandbox",
@@ -300,6 +332,7 @@
         "physical_interaction_lab",
         "weapon_combat_arena",
         "runtime_stat_lab",
+        "element_vfx_gallery",
         "dev_interaction_sandbox"
       ],
       "controls": [

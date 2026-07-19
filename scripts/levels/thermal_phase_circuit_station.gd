@@ -84,6 +84,18 @@ static func build(host: Node3D) -> Dictionary:
 	water.conductivity_scale = 0.28
 	water.resistance_per_meter_ohms = 0.45
 	water.minimum_resistance_ohms = 0.5
+	var spell_capture := Area3D.new()
+	spell_capture.name = "SpellCaptureArea"
+	spell_capture.monitoring = false
+	spell_capture.monitorable = true
+	var spell_capture_collision := CollisionShape3D.new()
+	spell_capture_collision.name = "CollisionShape3D"
+	spell_capture_collision.position = Vector3(0.0, 0.9, 0.0)
+	var spell_capture_shape := BoxShape3D.new()
+	spell_capture_shape.size = Vector3(5.2, 2.6, 2.2)
+	spell_capture_collision.shape = spell_capture_shape
+	spell_capture.add_child(spell_capture_collision)
+	water.add_child(spell_capture)
 	circuit_root.add_child(water)
 
 	var readout := ThermalLabGeometry.add_label(
@@ -102,5 +114,6 @@ static func build(host: Node3D) -> Dictionary:
 		"lamp": lamp,
 		"lamp_light": lamp_light,
 		"water": water,
+		"spell_capture": spell_capture,
 		"readout": readout,
 	}

@@ -113,6 +113,7 @@ static func run(host: Node) -> Array[String]:
 	failures.append_array(await GeneratorTestFixture.run(host))
 	failures.append_array(await MotorTestFixture.run(host))
 	failures.append_array(await BuoyancyTestFixture.run(host))
+	failures.append_array(await WaterPresentationTestFixture.run(host))
 	return failures
 
 

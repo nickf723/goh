@@ -27,10 +27,10 @@ func _ready() -> void:
 
 func ensure_thermal_state() -> void:
 	thermal_state = get_node_or_null("ThermalState") as ThermalState
-	if thermal_state == null:
+	var created_state: bool = thermal_state == null
+	if created_state:
 		thermal_state = ThermalState.new()
 		thermal_state.name = "ThermalState"
-		add_child(thermal_state)
 	thermal_state.material_profile = material_profile
 	thermal_state.starting_temperature_c = starting_water_temperature_c
 	thermal_state.ambient_temperature_c = 20.0
@@ -43,6 +43,8 @@ func ensure_thermal_state() -> void:
 	thermal_state.phase_hysteresis_c = 1.5
 	thermal_state.fire_energy_j_per_intensity = 180.0
 	thermal_state.ice_energy_j_per_intensity = 180.0
+	if created_state:
+		add_child(thermal_state)
 
 
 func ensure_phase_visuals() -> void:

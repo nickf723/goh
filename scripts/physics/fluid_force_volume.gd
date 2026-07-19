@@ -1,6 +1,10 @@
 extends Node3D
 class_name FluidForceVolume
 
+const WaterSurfaceShader: Shader = preload("res://shaders/water_surface_v1.gdshader")
+
+signal disturbance_emitted(event: FluidDisturbanceEvent)
+
 @export var volume_size: Vector3 = Vector3(8.0, 3.0, 8.0)
 @export var fluid_density_kg_m3: float = 1000.0
 @export var buoyancy_multiplier: float = 1.0
@@ -11,7 +15,9 @@ class_name FluidForceVolume
 @export var priority: int = 0
 
 @export_group("Presentation")
+@export var presentation_enabled: bool = true
 @export var create_default_visuals: bool = true
+@export var presentation_profile: FluidPresentationProfile
 @export var shallow_color: Color = Color(0.08, 0.62, 0.88, 0.68)
 @export var deep_color: Color = Color(0.015, 0.12, 0.32, 0.84)
 @export var foam_color: Color = Color(0.62, 0.94, 1.0, 0.85)
@@ -20,17 +26,35 @@ class_name FluidForceVolume
 @export var surface_emission: float = 0.16
 @export var ripple_duration: float = 0.75
 @export var ripple_min_speed: float = 0.7
+@export var starting_temperature_c: float = 20.0
+@export_range(0.0, 1.0, 0.01) var starting_electrical_intensity: float = 0.0
+@export_range(0.0, 1.0, 0.01) var starting_turbulence: float = 0.0
 
 var surface_mesh: MeshInstance3D
 var volume_mesh: MeshInstance3D
+var surface_material: ShaderMaterial
+var presentation_renderer: FluidDisturbanceRenderer
+var runtime_profile: FluidPresentationProfile
 var ripple_count: int = 0
+var disturbance_count: int = 0
+var disturbance_counts: Dictionary = {}
+var visual_temperature_c: float = 20.0
+var visual_electrical_intensity: float = 0.0
+var visual_turbulence: float = 0.0
+var last_disturbance: Dictionary = {}
 
 
 func _ready() -> void:
 	add_to_group("fluid_force_volumes")
 	add_to_group("debuggable")
+	add_to_group("lab_resettable")
+	visual_temperature_c = starting_temperature_c
+	visual_electrical_intensity = clampf(starting_electrical_intensity, 0.0, 1.0)
+	visual_turbulence = clampf(starting_turbulence, 0.0, 1.0)
 	if create_default_visuals:
 		build_default_visuals()
+	ensure_presentation_renderer()
+	refresh_presentation()
 
 
 func get_surface_y() -> float:
@@ -78,6 +102,27 @@ func get_flow_velocity_at(_world_position: Vector3) -> Vector3:
 	return flow_velocity_m_s
 
 
+func get_presentation_profile() -> FluidPresentationProfile:
+	if presentation_profile != null:
+		return presentation_profile
+	if runtime_profile == null:
+		runtime_profile = FluidPresentationProfile.new()
+	sync_runtime_profile()
+	return runtime_profile
+
+
+func sync_runtime_profile() -> void:
+	if runtime_profile == null:
+		return
+	runtime_profile.shallow_color = shallow_color
+	runtime_profile.deep_color = deep_color
+	runtime_profile.foam_color = foam_color
+	runtime_profile.wave_amplitude = wave_amplitude
+	runtime_profile.wave_speed = wave_speed
+	runtime_profile.surface_emission = surface_emission
+	runtime_profile.ripple_duration = ripple_duration
+
+
 func build_default_visuals() -> void:
 	if surface_mesh != null:
 		return
@@ -90,7 +135,6 @@ func build_default_visuals() -> void:
 	var volume_material := StandardMaterial3D.new()
 	volume_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	volume_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	volume_material.albedo_color = Color(deep_color.r, deep_color.g, deep_color.b, 0.14)
 	volume_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	volume_mesh.material_override = volume_material
 	add_child(volume_mesh)
@@ -99,99 +143,166 @@ func build_default_visuals() -> void:
 	surface_mesh.name = "FluidSurface"
 	var plane_mesh := PlaneMesh.new()
 	plane_mesh.size = Vector2(volume_size.x, volume_size.z)
-	plane_mesh.subdivide_width = 32
-	plane_mesh.subdivide_depth = 32
+	plane_mesh.subdivide_width = 56
+	plane_mesh.subdivide_depth = 56
 	surface_mesh.mesh = plane_mesh
 	surface_mesh.position.y = volume_size.y * 0.5
-	surface_mesh.material_override = make_surface_material()
+	surface_material = make_surface_material()
+	surface_mesh.material_override = surface_material
 	surface_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(surface_mesh)
 
 
 func make_surface_material() -> ShaderMaterial:
-	var shader := Shader.new()
-	shader.code = """
-shader_type spatial;
-render_mode blend_mix, depth_draw_alpha_prepass, cull_disabled, diffuse_burley, specular_schlick_ggx;
-
-uniform vec4 shallow_color : source_color = vec4(0.08, 0.62, 0.88, 0.68);
-uniform vec4 deep_color : source_color = vec4(0.015, 0.12, 0.32, 0.84);
-uniform vec4 foam_color : source_color = vec4(0.62, 0.94, 1.0, 0.85);
-uniform float wave_amplitude = 0.08;
-uniform float wave_speed = 1.0;
-uniform vec2 flow_direction = vec2(1.0, 0.0);
-uniform float flow_speed = 0.0;
-uniform float emission_strength = 0.16;
-
-varying float wave_value;
-
-void vertex() {
-	vec2 worldish = VERTEX.xz;
-	float wave_a = sin(worldish.x * 1.45 + TIME * wave_speed);
-	float wave_b = cos(worldish.y * 1.15 - TIME * wave_speed * 0.72);
-	float flow_wave = sin(dot(worldish, normalize(flow_direction + vec2(0.0001))) * 2.2 - TIME * flow_speed);
-	wave_value = (wave_a + wave_b) * 0.5 + flow_wave * 0.22;
-	VERTEX.y += wave_value * wave_amplitude;
-}
-
-void fragment() {
-	float fresnel = pow(1.0 - clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0), 3.0);
-	float moving_band = 0.5 + 0.5 * sin((UV.x * flow_direction.x + UV.y * flow_direction.y) * 48.0 - TIME * flow_speed * 2.0);
-	float foam = smoothstep(0.76, 1.0, moving_band) * clamp(abs(wave_value), 0.0, 1.0) * 0.28;
-	vec3 base_color = mix(deep_color.rgb, shallow_color.rgb, 0.44 + fresnel * 0.42);
-	base_color = mix(base_color, foam_color.rgb, foam);
-	ALBEDO = base_color;
-	EMISSION = base_color * emission_strength + foam_color.rgb * foam * 0.18;
-	ROUGHNESS = 0.08;
-	SPECULAR = 0.92;
-	ALPHA = mix(shallow_color.a, deep_color.a, fresnel * 0.55) + foam * 0.12;
-}
-"""
 	var material := ShaderMaterial.new()
-	material.shader = shader
-	material.set_shader_parameter("shallow_color", shallow_color)
-	material.set_shader_parameter("deep_color", deep_color)
-	material.set_shader_parameter("foam_color", foam_color)
-	material.set_shader_parameter("wave_amplitude", max(wave_amplitude, 0.0))
-	material.set_shader_parameter("wave_speed", max(wave_speed, 0.0))
-	material.set_shader_parameter("emission_strength", max(surface_emission, 0.0))
-	var horizontal_flow := Vector2(flow_velocity_m_s.x, flow_velocity_m_s.z)
-	var flow_direction := horizontal_flow.normalized() if horizontal_flow.length() > 0.01 else Vector2.RIGHT
-	material.set_shader_parameter("flow_direction", flow_direction)
-	material.set_shader_parameter("flow_speed", horizontal_flow.length())
+	material.shader = WaterSurfaceShader
 	return material
 
 
-func spawn_ripple(world_position: Vector3, intensity: float = 1.0) -> void:
-	if not create_default_visuals or not contains_horizontal(world_position, 0.8):
+func ensure_presentation_renderer() -> void:
+	if not presentation_enabled or presentation_renderer != null:
 		return
-	var ripple := MeshInstance3D.new()
-	ripple.name = "WaterRipple"
-	var torus := TorusMesh.new()
-	torus.inner_radius = 0.42
-	torus.outer_radius = 0.48
-	torus.rings = 24
-	torus.ring_segments = 8
-	ripple.mesh = torus
-	var material := StandardMaterial3D.new()
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = foam_color
-	material.emission_enabled = true
-	material.emission = foam_color
-	material.emission_energy_multiplier = 1.4
-	ripple.material_override = material
-	ripple.global_position = Vector3(world_position.x, get_surface_y() + 0.035, world_position.z)
-	ripple.scale = Vector3.ONE * clampf(0.45 + intensity * 0.12, 0.45, 1.15)
-	get_tree().current_scene.add_child(ripple)
-	ripple_count += 1
-	var duration: float = max(ripple_duration, 0.1)
-	var tween := ripple.create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(ripple, "scale", ripple.scale * (2.4 + clampf(intensity, 0.0, 3.0)), duration)
-	tween.tween_property(ripple, "transparency", 1.0, duration)
-	tween.set_parallel(false)
-	tween.tween_callback(ripple.queue_free)
+	presentation_renderer = FluidDisturbanceRenderer.new()
+	presentation_renderer.name = "FluidDisturbanceRenderer"
+	add_child(presentation_renderer)
+	presentation_renderer.configure(self, get_presentation_profile())
+
+
+func refresh_presentation() -> void:
+	var profile: FluidPresentationProfile = get_presentation_profile()
+	if presentation_renderer != null:
+		presentation_renderer.configure(self, profile)
+	if surface_mesh != null:
+		var plane := surface_mesh.mesh as PlaneMesh
+		if plane != null:
+			plane.size = Vector2(volume_size.x, volume_size.z)
+		surface_mesh.position.y = volume_size.y * 0.5
+	if volume_mesh != null:
+		var box := volume_mesh.mesh as BoxMesh
+		if box != null:
+			box.size = volume_size
+		var volume_material := volume_mesh.material_override as StandardMaterial3D
+		if volume_material != null:
+			volume_material.albedo_color = Color(
+				profile.deep_color.r,
+				profile.deep_color.g,
+				profile.deep_color.b,
+				0.12 + profile.deep_color.a * 0.08
+			)
+	if surface_material == null and surface_mesh != null:
+		surface_material = make_surface_material()
+		surface_mesh.material_override = surface_material
+	apply_surface_parameters(profile)
+
+
+func apply_surface_parameters(profile: FluidPresentationProfile) -> void:
+	if surface_material == null or profile == null:
+		return
+	var horizontal_flow := Vector2(flow_velocity_m_s.x, flow_velocity_m_s.z)
+	var flow_direction := horizontal_flow.normalized() if horizontal_flow.length() > 0.01 else Vector2.RIGHT
+	var heat_intensity: float = clampf((visual_temperature_c - 45.0) / 75.0, 0.0, 1.0)
+	surface_material.set_shader_parameter("shallow_color", profile.shallow_color)
+	surface_material.set_shader_parameter("deep_color", profile.deep_color)
+	surface_material.set_shader_parameter("foam_color", profile.foam_color)
+	surface_material.set_shader_parameter("electrical_color", profile.electrical_color)
+	surface_material.set_shader_parameter("hot_color", profile.hot_color)
+	surface_material.set_shader_parameter("wave_amplitude", max(profile.wave_amplitude, 0.0))
+	surface_material.set_shader_parameter("wave_speed", max(profile.wave_speed, 0.0))
+	surface_material.set_shader_parameter("large_wave_scale", max(profile.large_wave_scale, 0.01))
+	surface_material.set_shader_parameter("small_wave_scale", max(profile.small_wave_scale, 0.01))
+	surface_material.set_shader_parameter("normal_strength", max(profile.normal_strength, 0.0))
+	surface_material.set_shader_parameter("flow_direction", flow_direction)
+	surface_material.set_shader_parameter("flow_speed", horizontal_flow.length())
+	surface_material.set_shader_parameter("flow_band_scale", max(profile.flow_band_scale, 0.01))
+	surface_material.set_shader_parameter("flow_band_strength", max(profile.flow_band_strength, 0.0))
+	surface_material.set_shader_parameter("surface_emission", max(profile.surface_emission, 0.0))
+	surface_material.set_shader_parameter("surface_roughness", clampf(profile.roughness, 0.0, 1.0))
+	surface_material.set_shader_parameter("surface_specular", clampf(profile.specular, 0.0, 1.0))
+	surface_material.set_shader_parameter("turbulence", clampf(visual_turbulence, 0.0, 1.0))
+	surface_material.set_shader_parameter("electrical_intensity", clampf(visual_electrical_intensity, 0.0, 1.0))
+	surface_material.set_shader_parameter("heat_intensity", heat_intensity)
+	surface_material.set_shader_parameter("visibility", 1.0)
+
+
+func set_visual_state(
+	temperature_c: float,
+	electrical_intensity: float = 0.0,
+	turbulence: float = 0.0
+) -> void:
+	visual_temperature_c = clampf(temperature_c, -273.15, 2000.0)
+	visual_electrical_intensity = clampf(electrical_intensity, 0.0, 1.0)
+	visual_turbulence = clampf(turbulence, 0.0, 1.0)
+	apply_surface_parameters(get_presentation_profile())
+
+
+func emit_disturbance(
+	kind: String,
+	world_position: Vector3,
+	direction: Vector3 = Vector3.ZERO,
+	velocity: Vector3 = Vector3.ZERO,
+	strength: float = 1.0,
+	radius: float = 0.5,
+	source_id: String = "unknown",
+	tags: Array[String] = [],
+	metadata: Dictionary = {}
+) -> FluidDisturbanceEvent:
+	var event := FluidDisturbanceEvent.make(
+		kind,
+		world_position,
+		direction,
+		velocity,
+		strength,
+		radius,
+		source_id,
+		tags
+	)
+	event.metadata = metadata.duplicate(true)
+	emit_disturbance_event(event)
+	return event
+
+
+func emit_disturbance_event(event: FluidDisturbanceEvent) -> void:
+	if event == null or not event.is_finite_event():
+		return
+	ensure_presentation_renderer()
+	disturbance_count += 1
+	disturbance_counts[event.kind] = int(disturbance_counts.get(event.kind, 0)) + 1
+	last_disturbance = event.get_debug_data()
+	if event.kind in [
+		FluidDisturbanceEvent.KIND_RIPPLE,
+		FluidDisturbanceEvent.KIND_ENTRY,
+		FluidDisturbanceEvent.KIND_IMPACT,
+		FluidDisturbanceEvent.KIND_WAKE,
+		FluidDisturbanceEvent.KIND_CHURN,
+	]:
+		ripple_count += 1
+	disturbance_emitted.emit(event)
+	if presentation_enabled and presentation_renderer != null:
+		presentation_renderer.render_disturbance(event)
+
+
+func spawn_ripple(world_position: Vector3, intensity: float = 1.0) -> void:
+	if not contains_horizontal(world_position, 0.8):
+		return
+	emit_disturbance(
+		FluidDisturbanceEvent.KIND_RIPPLE,
+		world_position,
+		flow_velocity_m_s,
+		Vector3.ZERO,
+		clampf(intensity, 0.0, 4.0),
+		clampf(0.35 + intensity * 0.1, 0.25, 1.2),
+		"legacy_ripple"
+	)
+
+
+func reset_target() -> void:
+	if presentation_renderer != null:
+		presentation_renderer.reset_target()
+	ripple_count = 0
+	disturbance_count = 0
+	disturbance_counts.clear()
+	last_disturbance.clear()
+	set_visual_state(starting_temperature_c, starting_electrical_intensity, starting_turbulence)
 
 
 func get_debug_data() -> Dictionary:
@@ -205,5 +316,13 @@ func get_debug_data() -> Dictionary:
 		"horizontal_drag": snapped(horizontal_drag_coefficient, 0.01),
 		"vertical_drag": snapped(vertical_drag_coefficient, 0.01),
 		"angular_stability": snapped(angular_stability, 0.01),
+		"visual_temperature_c": snapped(visual_temperature_c, 0.1),
+		"electrical_intensity": snapped(visual_electrical_intensity, 0.01),
+		"turbulence": snapped(visual_turbulence, 0.01),
 		"ripple_count": ripple_count,
+		"disturbance_count": disturbance_count,
+		"disturbance_kinds": disturbance_counts.duplicate(),
+		"last_disturbance": last_disturbance.duplicate(true),
+		"profile": get_presentation_profile().get_debug_data(),
+		"renderer": presentation_renderer.get_debug_data() if presentation_renderer != null else {},
 	}

@@ -18,6 +18,7 @@ static func run(host: Node) -> Array[String]:
 	water.volume_size = Vector3(10.0, 3.0, 10.0)
 	water.fluid_density_kg_m3 = 1000.0
 	water.create_default_visuals = false
+	water.presentation_enabled = false
 	water.horizontal_drag_coefficient = 3.0
 	water.vertical_drag_coefficient = 3.5
 	root.add_child(water)

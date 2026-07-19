@@ -119,6 +119,7 @@ static func test_condensation(
 	failures: Array[String]
 ) -> void:
 	reservoir.set_pressure(60.0, "condensation setup")
+	state.set_temperature(110.0, "playable steam state")
 	state.receive_damage_payload(make_payload("ice", "Ice Lance", 1, 1.0, ["ice", "chill"]))
 	if state.is_gas():
 		failures.append("thermal pressure: Ice should condense the tuned steam fixture")

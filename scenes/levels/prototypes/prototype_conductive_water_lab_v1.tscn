@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/conductive_water_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" path="res://scenes/levels/prototypes/prototype_electrical_interoperability_lab_v1.tscn" id="2_electrical"]
+
+[node name="PrototypeConductiveWaterLab" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="ElectricalLab" parent="." instance=ExtResource("2_electrical")]

@@ -25,9 +25,19 @@ func receive_payload(payload: DamagePayload) -> Dictionary:
 	remember_payload(payload)
 	apply_direct_status(target, payload)
 	apply_force(target, payload)
+	var thermal_result: Dictionary = apply_thermal(target, payload)
 
 	var reaction_messages: Array[String] = resolve_reactions(target, payload)
 	var result: Dictionary = apply_hit(target, payload)
+	if not thermal_result.is_empty():
+		var thermal_message: String = str(thermal_result.get("message", ""))
+		if get_component(target, "HitReceiver") == null:
+			result = {
+				"message": thermal_message,
+				"objective": str(thermal_result.get("objective", "")),
+			}
+		elif thermal_message != "":
+			reaction_messages.append(thermal_message)
 
 	return combine_messages(result, reaction_messages)
 
@@ -72,6 +82,16 @@ func apply_direct_status(target: Node, payload: DamagePayload) -> void:
 		payload.status_strength,
 		payload.source_name
 	)
+
+
+func apply_thermal(target: Node, payload: DamagePayload) -> Dictionary:
+	var thermal_state: Node = get_component(target, "ThermalState")
+	if thermal_state == null or not thermal_state.has_method("receive_damage_payload"):
+		return {}
+	var raw_result: Variant = thermal_state.call("receive_damage_payload", payload)
+	if raw_result is Dictionary:
+		return raw_result as Dictionary
+	return {}
 
 
 func resolve_reactions(target: Node, payload: DamagePayload) -> Array[String]:

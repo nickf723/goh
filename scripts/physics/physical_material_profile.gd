@@ -15,6 +15,14 @@ class_name PhysicalMaterialProfile
 @export_range(0.0, 1.0, 0.01) var magnetic_retention: float = 0.0
 @export_range(0.0, 2.0, 0.01) var permanent_magnetic_strength: float = 0.0
 
+@export_group("Thermal")
+@export var specific_heat_capacity_j_kg_c: float = 1000.0
+@export var thermal_conductivity_w_m_c: float = 0.5
+@export var freezing_point_c: float = 0.0
+@export var boiling_point_c: float = 1000000.0
+@export var ignition_temperature_c: float = 1000000.0
+@export var melting_point_c: float = 1000000.0
+
 @export_group("Classification")
 @export var material_tags: Array[String] = []
 
@@ -48,5 +56,11 @@ func get_debug_data() -> Dictionary:
 		"magnetic_susceptibility": snapped(magnetic_susceptibility, 0.01),
 		"magnetic_retention": snapped(magnetic_retention, 0.01),
 		"permanent_magnetic_strength": snapped(permanent_magnetic_strength, 0.01),
+		"specific_heat_capacity": snapped(specific_heat_capacity_j_kg_c, 0.1),
+		"thermal_conductivity": snapped(thermal_conductivity_w_m_c, 0.01),
+		"freezing_point_c": snapped(freezing_point_c, 0.1),
+		"boiling_point_c": snapped(boiling_point_c, 0.1),
+		"ignition_temperature_c": snapped(ignition_temperature_c, 0.1),
+		"melting_point_c": snapped(melting_point_c, 0.1),
 		"tags": material_tags.duplicate(),
 	}

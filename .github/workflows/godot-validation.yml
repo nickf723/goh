@@ -47,19 +47,7 @@ jobs:
         run: godot --headless --path . --quit-after 5
 
       - name: Run registered feature scenes and tests
-        run: |
-          set -o pipefail
-          mkdir -p build/validation
-          python scripts/ci/run_feature_registry.py --godot godot 2>&1 | tee build/validation/feature-registry.log
-
-      - name: Upload feature validation transcript
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: feature-validation-transcript
-          path: build/validation/feature-registry.log
-          if-no-files-found: warn
-          retention-days: 1
+        run: python scripts/ci/run_feature_registry.py --godot godot
 
       - name: Export Windows v0.1 build
         run: |

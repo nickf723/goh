@@ -109,6 +109,7 @@ static func run(host: Node) -> Array[String]:
 	failures.append_array(await ElectricalInteroperabilityTestFixture.run(host))
 	failures.append_array(await ConductiveWaterTestFixture.run(host))
 	failures.append_array(await ThermalStateTestFixture.run(host))
+	failures.append_array(await ThermalPressureTestFixture.run(host))
 	return failures
 
 

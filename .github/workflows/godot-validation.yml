@@ -56,7 +56,7 @@ jobs:
           test -f build/windows/GraceOfHumanity-v0.1.0.exe
 
       - name: Upload Windows v0.1 artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: GraceOfHumanity-v0.1.0-windows
           path: build/windows

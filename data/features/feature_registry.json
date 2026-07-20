@@ -239,6 +239,40 @@
       "timeout_seconds": 5
     },
     {
+      "id": "enemy_personality_lab",
+      "order": 42,
+      "display_name": "Enemy Personality Laboratory",
+      "category": "AI Laboratory",
+      "version": "v1",
+      "status": "development_tool",
+      "description": "Controlled four-lane comparison of the existing cautious, bold, skittish, and brute Goblin personality profiles against identical Poison Bloom hazards.",
+      "scene": "res://scenes/levels/prototypes/prototype_enemy_personality_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_enemy_personality_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/enemy_personality_lab_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "RESET",
+        "DEV VISION"
+      ],
+      "manual_test": "docs/enemy_personality_lab_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "The room is an artificial tuning instrument rather than encounter design.",
+        "Enemy movement uses local steering rather than navigation-mesh pathfinding.",
+        "The smoke test verifies profile initialization; personality readability still requires manual comparison."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 7
+    },
+    {
       "id": "element_vfx_gallery",
       "order": 45,
       "display_name": "Element VFX Gallery",
@@ -366,6 +400,7 @@
         "physical_interaction_lab",
         "weapon_combat_arena",
         "runtime_stat_lab",
+        "enemy_personality_lab",
         "element_vfx_gallery",
         "ice_vfx_lab",
         "dev_interaction_sandbox"

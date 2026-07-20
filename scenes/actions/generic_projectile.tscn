@@ -1,6 +1,7 @@
-[gd_scene format=3 uid="uid://tj563cjynma8"]
+[gd_scene load_steps=3 format=3 uid="uid://tj563cjynma8"]
 
 [ext_resource type="Script" uid="uid://doex2q7uraf81" path="res://scripts/actions/generic_projectile.gd" id="1_y6qbd"]
+[ext_resource type="Script" path="res://scripts/presentation/ice_projectile_vfx.gd" id="2_ice_vfx"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_ydmg5"]
 radius = 0.25
@@ -14,3 +15,6 @@ script = ExtResource("1_y6qbd")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="HitArea" unique_id=1202761400]
 shape = SubResource("SphereShape3D_ydmg5")
+
+[node name="ProceduralIceVfx" type="Node3D" parent="."]
+script = ExtResource("2_ice_vfx")

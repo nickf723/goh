@@ -90,8 +90,10 @@ func _process(delta: float) -> void:
 	elapsed += max(delta, 0.0)
 	rotation.z = elapsed * 2.35
 	var travel_direction: Vector3 = Vector3.FORWARD
-	if projectile != null and "direction" in projectile:
-		travel_direction = projectile.direction
+	if projectile != null:
+		var raw_direction: Variant = projectile.get("direction")
+		if raw_direction is Vector3 and (raw_direction as Vector3).length() > 0.001:
+			travel_direction = raw_direction as Vector3
 	if trail_particles != null:
 		var process := trail_particles.process_material as ParticleProcessMaterial
 		if process != null:

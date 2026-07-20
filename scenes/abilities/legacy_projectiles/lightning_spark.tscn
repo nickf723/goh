@@ -1,7 +1,8 @@
-[gd_scene format=3 uid="uid://cmrsxr1xjckvf"]
+[gd_scene load_steps=5 format=3 uid="uid://cmrsxr1xjckvf"]
 
 [ext_resource type="Script" uid="uid://88nk6no1wtlv" path="res://scripts/abilities/arcane_spark.gd" id="1_u5w1p"]
 [ext_resource type="Resource" uid="uid://btmw4r7ihn7hk" path="res://data/damage_payloads/lightning_spark_payload.tres" id="2_u5w1p"]
+[ext_resource type="Script" path="res://scripts/presentation/lightning_projectile_vfx.gd" id="3_lightning_vfx"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_6n1nv"]
 radius = 0.2
@@ -20,3 +21,6 @@ shape = SubResource("SphereShape3D_6n1nv")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=195292620]
 mesh = SubResource("SphereMesh_u5w1p")
+
+[node name="ProceduralLightningVfx" type="Node3D" parent="."]
+script = ExtResource("3_lightning_vfx")

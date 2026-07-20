@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/element_vfx_gallery.gd" id="1_gallery"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/levels/lightning_gallery_wing.gd" id="4_lightning"]
+[ext_resource type="Script" path="res://scripts/levels/fire_gallery_wing.gd" id="5_fire"]
 
 [node name="PrototypeElementVfxGallery" type="Node3D"]
 script = ExtResource("1_gallery")
@@ -16,3 +17,6 @@ rotation_degrees = Vector3(0, 180, 0)
 
 [node name="LightningGalleryWing" type="Node3D" parent="."]
 script = ExtResource("4_lightning")
+
+[node name="FireGalleryWing" type="Node3D" parent="."]
+script = ExtResource("5_fire")

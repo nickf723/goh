@@ -55,10 +55,11 @@ jobs:
           godot --headless --path . --export-release "Windows Desktop" build/windows/GraceOfHumanity-v0.1.0.exe
           test -f build/windows/GraceOfHumanity-v0.1.0.exe
 
-      - name: Upload Windows v0.1 artifact
+      - name: Upload Windows v0.1 artifact (best effort)
+        continue-on-error: true
         uses: actions/upload-artifact@v6
         with:
           name: GraceOfHumanity-v0.1.0-windows
           path: build/windows
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 3

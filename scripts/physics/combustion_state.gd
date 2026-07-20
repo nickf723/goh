@@ -98,11 +98,7 @@ func step_combustion(delta: float) -> void:
 		set_intensity(0.0)
 		set_state(STATE_COLD)
 		return
-	if fuel_kg <= 0.00001:
-		fuel_kg = 0.0
-		set_burning(false, "Fuel spent")
-		set_intensity(0.0)
-		set_state(STATE_SPENT)
+	if finish_if_spent():
 		return
 
 	extinguish_saturation = max(extinguish_saturation - extinguish_recovery_per_second * safe_delta, 0.0)
@@ -133,15 +129,29 @@ func step_combustion(delta: float) -> void:
 			set_state(STATE_BURNING)
 		set_intensity(next_intensity)
 		consume_fuel(get_burn_rate_kg_per_second() * burn_intensity * safe_delta)
+		if finish_if_spent():
+			return
 		apply_combustion_heat(get_heat_output_j_per_second() * burn_intensity * safe_delta)
 	else:
 		set_intensity(move_toward(burn_intensity, 0.0, safe_delta * 2.8))
 		if state == STATE_SMOLDERING and get_temperature_c() >= sustain_c * 0.68:
 			var smolder_amount: float = get_burn_rate_kg_per_second() * passive_smolder_burn_scale * safe_delta
 			consume_fuel(smolder_amount)
+			if finish_if_spent():
+				return
 			apply_combustion_heat(get_heat_output_j_per_second() * passive_smolder_burn_scale * safe_delta)
 		elif get_temperature_c() < sustain_c * 0.55 and state not in [STATE_EXTINGUISHED, STATE_SPENT]:
 			set_state(STATE_HEATING if get_temperature_c() > 40.0 else STATE_COLD)
+
+
+func finish_if_spent() -> bool:
+	if fuel_kg > 0.00001:
+		return false
+	fuel_kg = 0.0
+	set_burning(false, "Fuel spent")
+	set_intensity(0.0)
+	set_state(STATE_SPENT)
+	return true
 
 
 func force_ignite(source_name: String = "Ignition") -> bool:

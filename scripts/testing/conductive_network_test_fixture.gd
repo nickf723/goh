@@ -116,6 +116,7 @@ static func run(host: Node) -> Array[String]:
 	failures.append_array(await WaterPresentationTestFixture.run(host))
 	failures.append_array(await ElementVfxGalleryTestFixture.run(host))
 	failures.append_array(await ProceduralLightningTestFixture.run(host))
+	failures.append_array(await ProceduralFireTestFixture.run(host))
 	return failures
 
 

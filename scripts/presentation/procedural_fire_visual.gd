@@ -156,10 +156,11 @@ func apply_state(
 	current_intensity = clampf(next_intensity, 0.0, 5.0)
 	wind_velocity = next_wind_velocity if next_wind_velocity.is_finite() else Vector3.ZERO
 	var visible_flame: bool = current_intensity > 0.025
+	var base_scale: float = get_base_flame_scale()
 	for index: int in range(flame_nodes.size()):
 		var lick: MeshInstance3D = flame_nodes[index]
 		lick.visible = visible_flame
-		lick.scale = Vector3.ONE * lerpf(0.35, 1.18, clampf(current_intensity, 0.0, 1.5) / 1.5)
+		lick.scale = Vector3.ONE * base_scale
 		var material := lick.material_override as ShaderMaterial
 		if material != null:
 			material.set_shader_parameter("intensity", current_intensity)
@@ -181,16 +182,22 @@ func apply_state(
 		fire_light.omni_range = max(float(profile.light_range) * sqrt(max(current_intensity, 0.01)), 0.5)
 
 
+func get_base_flame_scale() -> float:
+	return lerpf(0.35, 1.18, clampf(current_intensity, 0.0, 1.5) / 1.5)
+
+
 func _process(delta: float) -> void:
 	age += max(delta, 0.0)
 	var flicker: float = 0.72 + 0.28 * absf(sin(age * float(profile.flicker_speed) + seed_phase))
 	flicker += sin(age * float(profile.flicker_speed) * 0.43 + seed_phase * 2.0) * 0.08
 	if fire_light != null:
 		fire_light.light_energy = base_light_energy * current_intensity * max(flicker, 0.1)
+	var base_scale: float = get_base_flame_scale()
 	for index: int in range(flame_nodes.size()):
 		var lick: MeshInstance3D = flame_nodes[index]
 		lick.rotation.y += delta * (0.1 + float(index % 3) * 0.035)
-		lick.scale.y *= 0.96 + flicker * 0.04
+		var individual_pulse: float = flicker + sin(age * (4.8 + float(index) * 0.31) + seed_phase) * 0.035
+		lick.scale = Vector3(base_scale, base_scale * clampf(0.94 + individual_pulse * 0.1, 0.9, 1.08), base_scale)
 	if not persistent and age >= max(float(event.duration_seconds), float(profile.effect_lifetime)):
 		expired.emit(self)
 		queue_free()

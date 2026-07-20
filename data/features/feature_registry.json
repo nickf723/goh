@@ -271,6 +271,40 @@
       "timeout_seconds": 7
     },
     {
+      "id": "ice_vfx_lab",
+      "order": 47,
+      "display_name": "Cryogenic Observatory",
+      "category": "Presentation Laboratory",
+      "version": "v1",
+      "status": "development_tool",
+      "description": "Dedicated Ice laboratory for temperature-driven freeze fronts, seeded crystal growth, arbitrary-plane frost, stress-driven cracking and shattering, thaw presentation, and procedural Ice Lance visuals.",
+      "scene": "res://scenes/levels/prototypes/prototype_ice_vfx_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_ice_vfx_lab_v1.tscn"
+      ],
+      "automated_tests": [],
+      "dependencies": [
+        "element_vfx_gallery"
+      ],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "RESET"
+      ],
+      "manual_test": "docs/procedural_ice_freezing_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Frozen-water collision, skating friction, and load-bearing thickness are deferred.",
+        "Shards are presentation particles rather than persistent rigid bodies.",
+        "Arbitrary world objects require an authored FreezeState component before they can freeze or fracture."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
       "id": "dev_interaction_sandbox",
       "order": 50,
       "display_name": "Dev Interaction Sandbox",
@@ -333,6 +367,7 @@
         "weapon_combat_arena",
         "runtime_stat_lab",
         "element_vfx_gallery",
+        "ice_vfx_lab",
         "dev_interaction_sandbox"
       ],
       "controls": [

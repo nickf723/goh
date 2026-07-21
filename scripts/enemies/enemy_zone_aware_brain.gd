@@ -99,6 +99,14 @@ func move_toward_player(delta: float) -> void:
 
 	var move_multiplier: float = get_status_move_multiplier()
 	var speed: float = get_definition().get_move_speed() * move_multiplier
+	speed *= get_personality_number("move_speed_multiplier", 1.0)
+
+	if is_zone_active():
+		var max_radius: float = zone_awareness_radius * get_personality_number("zone_awareness_radius_multiplier", 1.0)
+		var zone_distance: float = float(zone_awareness_data.get("distance", 0.0))
+		var closeness: float = 1.0 - clamp(zone_distance / max(max_radius, 0.01), 0.0, 1.0)
+		var slowdown: float = get_personality_number("zone_approach_slowdown", 0.0)
+		speed *= (1.0 - closeness * slowdown)
 
 	actor.velocity.x = direction.x * speed
 	actor.velocity.z = direction.z * speed
@@ -138,6 +146,14 @@ func circle_player(delta: float) -> void:
 
 	var move_multiplier: float = get_status_move_multiplier()
 	var speed: float = get_definition().get_move_speed() * get_definition().get_strafe_speed_multiplier() * move_multiplier
+	speed *= get_personality_number("move_speed_multiplier", 1.0)
+
+	if is_zone_active():
+		var max_radius: float = zone_awareness_radius * get_personality_number("zone_awareness_radius_multiplier", 1.0)
+		var zone_distance: float = float(zone_awareness_data.get("distance", 0.0))
+		var closeness: float = 1.0 - clamp(zone_distance / max(max_radius, 0.01), 0.0, 1.0)
+		var slowdown: float = get_personality_number("zone_approach_slowdown", 0.0)
+		speed *= (1.0 - closeness * slowdown)
 
 	actor.velocity.x = move_direction.x * speed
 	actor.velocity.z = move_direction.z * speed

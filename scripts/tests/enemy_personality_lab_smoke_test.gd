@@ -13,7 +13,7 @@ func _ready() -> void:
 	GameState.set_stat("health", controlled_health)
 
 	var lab: Node3D = LabScene.instantiate() as Node3D
-	add_child(lab)
+	add_child.call_deferred(lab)
 	await get_tree().process_frame
 	await get_tree().physics_frame
 
@@ -27,7 +27,8 @@ func _ready() -> void:
 		var brain: Node = record["brain"] as Node
 		var target: Node3D = record["target"] as Node3D
 		var target_distance: float = goblin.global_position.distance_to(target.global_position)
-		opening_positions.append(goblin.global_position)
+		var opening_transform: Transform3D = record["goblin_transform"] as Transform3D
+		opening_positions.append(opening_transform.origin)
 		assert_true(brain.get("player") == target, "lane %d resolves its own target" % (lane_index + 1))
 		assert_true(brain.get("player") != lab.get_node("Player"), "lane %d does not target Grace" % (lane_index + 1))
 		assert_true(brain.call("get_current_attack") == null, "lane %d has no attack action" % (lane_index + 1))

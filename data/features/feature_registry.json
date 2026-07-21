@@ -198,6 +198,38 @@
       "timeout_seconds": 5
     },
     {
+      "id": "enemy_personality_lab",
+      "order": 35,
+      "display_name": "Enemy Personality Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v0.1",
+      "status": "experimental",
+      "description": "Safe four-lane baseline for observing identical Goblins traverse identical obstacles toward harmless lane-local targets.",
+      "scene": "res://scenes/levels/prototypes/prototype_enemy_personality_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_enemy_personality_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/enemy_personality_lab_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "RESET"
+      ],
+      "manual_test": "docs/enemy_personality_lab_foundation_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Personality profile tuning and comparison are intentionally deferred.",
+        "The lane obstacle and presentation are prototype development geometry."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 7
+    },
+    {
       "id": "runtime_stat_lab",
       "order": 40,
       "display_name": "Runtime Stat Laboratory",
@@ -365,6 +397,7 @@
         "elemental_reaction_lab",
         "physical_interaction_lab",
         "weapon_combat_arena",
+        "enemy_personality_lab",
         "runtime_stat_lab",
         "element_vfx_gallery",
         "ice_vfx_lab",

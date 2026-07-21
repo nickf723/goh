@@ -201,25 +201,25 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 15, 0.85, -5.2)
 [node name="Hazards" type="Node3D" parent="." unique_id=1714670509]
 
 [node name="Lane1Obstacle" parent="Hazards" unique_id=1793300099 instance=ExtResource("6_poison")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.12, 0.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.12, 3)
 radius = 1.65
 lifetime = 999.0
 show_debug_prints = false
 
 [node name="Lane2Obstacle" parent="Hazards" unique_id=1048066669 instance=ExtResource("6_poison")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.12, 0.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.12, 3)
 radius = 1.65
 lifetime = 999.0
 show_debug_prints = false
 
 [node name="Lane3Obstacle" parent="Hazards" unique_id=1238976535 instance=ExtResource("6_poison")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.12, 0.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.12, 3)
 radius = 1.65
 lifetime = 999.0
 show_debug_prints = false
 
 [node name="Lane4Obstacle" parent="Hazards" unique_id=1808732682 instance=ExtResource("6_poison")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.12, 0.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.12, 3)
 radius = 1.65
 lifetime = 999.0
 show_debug_prints = false

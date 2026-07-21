@@ -3,7 +3,6 @@
 [ext_resource type="Script" path="res://scripts/levels/prototype_enemy_personality_lab.gd" id="1_lab"]
 [ext_resource type="PackedScene" uid="uid://6raaty2e36ko" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" uid="uid://j44g36yeu58k" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
-[ext_resource type="Script" uid="uid://d4c66lkqs3ac6" path="res://scripts/systems/focus_time.gd" id="4_focus"]
 [ext_resource type="PackedScene" uid="uid://dgprwdbmbpuqk" path="res://scenes/actors/enemies/goblin_drone.tscn" id="5_goblin"]
 [ext_resource type="PackedScene" path="res://scenes/actions/poison_cloud.tscn" id="6_poison"]
 
@@ -122,9 +121,6 @@ mesh = SubResource("BoxMesh_lane_divider")
 
 [node name="GameUI" parent="." unique_id=1474936640 instance=ExtResource("3_ui")]
 
-[node name="FocusTime" type="Node" parent="." unique_id=1198374104]
-script = ExtResource("4_focus")
-
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1468424921]
 transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, 0, 0, 0)
 light_energy = 1.8
@@ -135,99 +131,95 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 9.25)
 [node name="TitleSign" type="Label3D" parent="." unique_id=1073585122]
 transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, 3, 8.2)
 billboard = 1
-text = "Enemy Personality Lab
-Same goblin, same lane, same poison cloud
-Compare steering: cautious / bold / skittish / brute"
+text = "Enemy Personality Lab Foundation
+Four identical Goblins, lanes, obstacles, and harmless targets
+Personality tuning is deferred"
 font_size = 54
 
 [node name="ResetSign" type="Label3D" parent="." unique_id=2069525383]
 transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, 2.3, 6.6)
 billboard = 1
-text = "Use RESET / F8 to rerun the race. Watch debug: personality, zone, zone_wait."
+text = "Use RESET / F8 to restore the exact opening baseline. Grace is safe here."
 font_size = 34
 
 [node name="Targets" type="Node3D" parent="." unique_id=1884158455]
 
-[node name="CautiousTarget" type="Node3D" parent="Targets" unique_id=143185825 groups=["personality_lab_cautious_target"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.8, 4.7)
+[node name="Lane1Target" type="Node3D" parent="Targets" unique_id=143185825]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.8, 3.5)
 
-[node name="BoldTarget" type="Node3D" parent="Targets" unique_id=11542155 groups=["personality_lab_bold_target"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.8, 4.7)
+[node name="Lane2Target" type="Node3D" parent="Targets" unique_id=11542155]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.8, 3.5)
 
-[node name="SkittishTarget" type="Node3D" parent="Targets" unique_id=1312530064 groups=["personality_lab_skittish_target"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.8, 4.7)
+[node name="Lane3Target" type="Node3D" parent="Targets" unique_id=1312530064]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.8, 3.5)
 
-[node name="BruteTarget" type="Node3D" parent="Targets" unique_id=149318167 groups=["personality_lab_brute_target"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.8, 4.7)
+[node name="Lane4Target" type="Node3D" parent="Targets" unique_id=149318167]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.8, 3.5)
 
 [node name="Lanes" type="Node3D" parent="." unique_id=165938964]
 
-[node name="CautiousLabel" type="Label3D" parent="Lanes" unique_id=1327281557]
+[node name="Lane1Label" type="Label3D" parent="Lanes" unique_id=1327281557]
 transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, -15, 2.25, 5.8)
 billboard = 1
-text = "CAUTIOUS
-strong danger avoidance
-longer commit"
+text = "LANE 1
+neutral baseline"
 font_size = 34
 
-[node name="BoldLabel" type="Label3D" parent="Lanes" unique_id=1169583512]
+[node name="Lane2Label" type="Label3D" parent="Lanes" unique_id=1169583512]
 transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, -5, 2.25, 5.8)
 billboard = 1
-text = "BOLD
-less avoidance
-faster commitment"
+text = "LANE 2
+neutral baseline"
 font_size = 34
 
-[node name="SkittishLabel" type="Label3D" parent="Lanes" unique_id=1967505294]
+[node name="Lane3Label" type="Label3D" parent="Lanes" unique_id=1967505294]
 transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 5, 2.25, 5.8)
 billboard = 1
-text = "SKITTISH
-widest avoidance
-more hesitation"
+text = "LANE 3
+neutral baseline"
 font_size = 34
 
-[node name="BruteLabel" type="Label3D" parent="Lanes" unique_id=1658519628]
+[node name="Lane4Label" type="Label3D" parent="Lanes" unique_id=1658519628]
 transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 15, 2.25, 5.8)
 billboard = 1
-text = "BRUTE
-low trap/slow concern
-only respects danger"
+text = "LANE 4
+neutral baseline"
 font_size = 34
 
-[node name="CautiousGoblin" parent="Lanes" unique_id=1649306927 instance=ExtResource("5_goblin")]
+[node name="Lane1Goblin" parent="Lanes" unique_id=1649306927 instance=ExtResource("5_goblin")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -15, 0.85, -5.2)
 
-[node name="BoldGoblin" parent="Lanes" unique_id=1608649292 instance=ExtResource("5_goblin")]
+[node name="Lane2Goblin" parent="Lanes" unique_id=1608649292 instance=ExtResource("5_goblin")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -5, 0.85, -5.2)
 
-[node name="SkittishGoblin" parent="Lanes" unique_id=793555218 instance=ExtResource("5_goblin")]
+[node name="Lane3Goblin" parent="Lanes" unique_id=793555218 instance=ExtResource("5_goblin")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 5, 0.85, -5.2)
 
-[node name="BruteGoblin" parent="Lanes" unique_id=929135139 instance=ExtResource("5_goblin")]
+[node name="Lane4Goblin" parent="Lanes" unique_id=929135139 instance=ExtResource("5_goblin")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 15, 0.85, -5.2)
 
 [node name="Hazards" type="Node3D" parent="." unique_id=1714670509]
 
-[node name="CautiousPoison" parent="Hazards" unique_id=1793300099 instance=ExtResource("6_poison")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.12, 0.1)
+[node name="Lane1Obstacle" parent="Hazards" unique_id=1793300099 instance=ExtResource("6_poison")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.12, 3)
 radius = 1.65
 lifetime = 999.0
 show_debug_prints = false
 
-[node name="BoldPoison" parent="Hazards" unique_id=1048066669 instance=ExtResource("6_poison")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.12, 0.1)
+[node name="Lane2Obstacle" parent="Hazards" unique_id=1048066669 instance=ExtResource("6_poison")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.12, 3)
 radius = 1.65
 lifetime = 999.0
 show_debug_prints = false
 
-[node name="SkittishPoison" parent="Hazards" unique_id=1238976535 instance=ExtResource("6_poison")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.12, 0.1)
+[node name="Lane3Obstacle" parent="Hazards" unique_id=1238976535 instance=ExtResource("6_poison")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.12, 3)
 radius = 1.65
 lifetime = 999.0
 show_debug_prints = false
 
-[node name="BrutePoison" parent="Hazards" unique_id=1808732682 instance=ExtResource("6_poison")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.12, 0.1)
+[node name="Lane4Obstacle" parent="Hazards" unique_id=1808732682 instance=ExtResource("6_poison")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.12, 3)
 radius = 1.65
 lifetime = 999.0
 show_debug_prints = false

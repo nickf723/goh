@@ -53,6 +53,9 @@ func _process(delta: float) -> void:
 		release_grip()
 		return
 
+	if held_target != null and not held_target.is_being_manipulated():
+		release_grip()
+
 	if Input.is_action_just_pressed(grip_action):
 		try_begin_grip()
 
@@ -307,9 +310,10 @@ func ensure_input_map() -> void:
 	ensure_key(rotate_left_action, KEY_Z)
 	ensure_key(rotate_right_action, KEY_X)
 
-	# Controller-first layout: hold LB, aim with the normal right stick, then use
-	# the D-pad for distance and yaw. These D-pad actions only matter while LB is held.
-	ensure_joy_button(grip_action, 4)
+	# Reserve the left shoulder for Soul Grip. Light attack still has its normal X
+	# binding, while heavy attack remains on the right shoulder.
+	remove_joy_button("weapon_light_attack", 9)
+	ensure_joy_button(grip_action, 9)
 	ensure_joy_button(push_action, 11)
 	ensure_joy_button(pull_action, 12)
 	ensure_joy_button(rotate_left_action, 13)
@@ -341,6 +345,16 @@ func ensure_joy_button(action_name: String, button_index: int) -> void:
 	var new_button_event := InputEventJoypadButton.new()
 	new_button_event.button_index = button_index
 	InputMap.action_add_event(action_name, new_button_event)
+
+
+func remove_joy_button(action_name: String, button_index: int) -> void:
+	if not InputMap.has_action(action_name):
+		return
+	for event: InputEvent in InputMap.action_get_events(action_name):
+		if event is InputEventJoypadButton:
+			var button_event: InputEventJoypadButton = event as InputEventJoypadButton
+			if button_event.button_index == button_index:
+				InputMap.action_erase_event(action_name, event)
 
 
 func show_message(text: String) -> void:

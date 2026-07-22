@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/abilities/flight_concentration_spell.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Flight"
+description = "Reserve 75 percent of Grace's mana capacity to fly. Jump ascends, Dodge descends, and neutral vertical input holds altitude. Cast again to release Flight."
+element = "air"
+category = 4
+mana_cost = 0
+spell_id = "flight_concentration"
+short_label = "Fly"
+icon_text = "Fl"
+roles = Array[String](["concentration", "traversal", "movement", "flight", "utility"])
+targeting_style = "self_centered"
+delivery_type = "sustained_movement"
+combo_tags = Array[String](["air", "flight", "concentration", "traversal"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["concentration", "toggle", "late_game"])
+debug_tags = Array[String](["prototype", "flight_v1"])
+design_notes = "Flight I is deliberately movement-only. Combat, ordinary casting, interaction, dodging, and Soul Grip are disabled while airborne. Future upgrades can reduce reservation and selectively restore actions."
+ability_scene = ExtResource("1_scene")

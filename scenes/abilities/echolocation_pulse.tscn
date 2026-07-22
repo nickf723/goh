@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/echolocation_pulse.gd" id="1_pulse"]
+[ext_resource type="Resource" path="res://data/detection_payloads/echolocation_payload.tres" id="2_payload"]
+
+[node name="EcholocationPulse" type="Node3D"]
+script = ExtResource("1_pulse")
+detection_payload = ExtResource("2_payload")
+wave_speed_meters_per_second = 18.0
+minimum_visual_lifetime = 0.35
+cleanup_padding = 0.4
+show_reveal_messages = true

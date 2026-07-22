@@ -193,6 +193,8 @@ func find_best_target() -> SoulManipulable:
 		var forward_dot: float = camera_forward.normalized().dot(offset.normalized())
 		if forward_dot < minimum_dot:
 			continue
+		if not has_clear_line_of_sight(camera, candidate):
+			continue
 		var score: float = (1.0 - forward_dot) * 22.0 + distance * 0.035
 		if score < best_score:
 			best_score = score
@@ -215,6 +217,23 @@ func raycast_target(camera: Camera3D) -> SoulManipulable:
 		return null
 	var collider: Node = result.get("collider") as Node
 	return find_manipulable_from_node(collider)
+
+
+func has_clear_line_of_sight(camera: Camera3D, candidate: SoulManipulable) -> bool:
+	if player == null or candidate == null:
+		return false
+	var from: Vector3 = camera.global_position
+	var to: Vector3 = candidate.get_anchor_global_position()
+	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(from, to)
+	query.collide_with_areas = true
+	query.collide_with_bodies = true
+	query.exclude = [player.get_rid()]
+
+	var result: Dictionary = player.get_world_3d().direct_space_state.intersect_ray(query)
+	if result.is_empty():
+		return true
+	var collider: Node = result.get("collider") as Node
+	return find_manipulable_from_node(collider) == candidate
 
 
 func find_manipulable_from_node(start_node: Node) -> SoulManipulable:

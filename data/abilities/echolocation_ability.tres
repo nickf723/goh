@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_definition"]
+[ext_resource type="PackedScene" path="res://scenes/abilities/echolocation_pulse.tscn" id="2_scene"]
+[ext_resource type="Resource" path="res://data/detection_payloads/echolocation_payload.tres" id="3_payload"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/detection_pulse_profile.tres" id="4_profile"]
+
+[resource]
+script = ExtResource("1_definition")
+display_name = "Echolocation"
+description = "Release a traveling resonance wave that briefly outlines nearby structures and hidden objects."
+element = "sound"
+category = 4
+mana_cost = 0
+trait_profile = ExtResource("4_profile")
+spell_id = "echolocation"
+short_label = "Echo"
+icon_text = "Ec"
+roles = Array[String](["detection", "navigation", "reveal", "exploration"])
+targeting_style = "self_centered"
+delivery_type = "traveling_pulse"
+combo_tags = Array[String](["sound", "echo", "resonance", "information"])
+ui_tags = Array[String](["utility", "reveal", "area", "exploration"])
+debug_tags = Array[String](["prototype", "echolocation_room"])
+design_notes = "A core Sound exploration spell. The pulse has real travel time, and targets reveal only when the wave reaches them."
+ability_scene = ExtResource("2_scene")
+action_payload = ExtResource("3_payload")

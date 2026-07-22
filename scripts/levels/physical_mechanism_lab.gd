@@ -10,6 +10,7 @@ class_name PhysicalMechanismLab
 @onready var motor: ElectricMotorComponent = get_node_or_null("Circuit/MotorizedDoor/Motor") as ElectricMotorComponent
 @onready var fuse_component: CircuitComponent = get_node_or_null("MovableFuse/CircuitComponent") as CircuitComponent
 @onready var player: Node3D = get_node_or_null("Player") as Node3D
+@onready var soul_grip_controller: Node = get_node_or_null("Player/SoulGripController")
 @onready var readout: Label3D = get_node_or_null("MechanismReadout") as Label3D
 
 var refresh_timer: float = 0.0
@@ -22,7 +23,7 @@ func _ready() -> void:
 	if player != null:
 		player.add_to_group("player")
 		initial_player_transform = player.transform
-	GameState.set_objective("Stand on the pressure plate and trace power through the physical circuit to the door motor.")
+	GameState.set_objective("Use Soul Grip to place a weight on the plate or precisely align the copper return fuse.")
 	if solver != null:
 		solver.request_solve()
 	update_presentation()
@@ -63,8 +64,8 @@ func update_presentation() -> void:
 
 	if not completion_announced and door != null and door.open_fraction >= 0.95:
 		completion_announced = true
-		GameState.set_objective("Step off the plate to let the counterweight close the door, or knock the copper fuse out of contact.")
-		show_message("The complete physical circuit powers the motor and lifts the door.")
+		GameState.set_objective("Release Soul Grip to leave a weight in place, or remove the fuse to interrupt the physical circuit.")
+		show_message("Soul Grip positioned real mechanism parts and the powered motor lifted the door.")
 
 
 func get_scoped_components() -> Array[CircuitComponent]:
@@ -76,6 +77,9 @@ func get_scoped_components() -> Array[CircuitComponent]:
 
 
 func reset_lab() -> void:
+	if soul_grip_controller != null and soul_grip_controller.has_method("release_grip"):
+		soul_grip_controller.call("release_grip")
+
 	if player != null:
 		player.transform = initial_player_transform
 		if player is CharacterBody3D:
@@ -90,8 +94,8 @@ func reset_lab() -> void:
 	if solver != null:
 		solver.request_solve()
 	call_deferred("update_presentation")
-	GameState.set_objective("Stand on the pressure plate and trace power through the physical circuit to the door motor.")
-	show_message("Physical mechanism laboratory reset.")
+	GameState.set_objective("Use Soul Grip to place a weight on the plate or precisely align the copper return fuse.")
+	show_message("Physical mechanism and Soul Grip laboratory reset.")
 
 
 func show_message(text: String) -> void:
@@ -110,4 +114,5 @@ func get_debug_data() -> Dictionary:
 		"motor": motor.get_debug_data() if motor != null else {},
 		"door": door.get_debug_data() if door != null else {},
 		"fuse": fuse_component.get_debug_data() if fuse_component != null else {},
+		"soul_grip": soul_grip_controller.get_debug_data() if soul_grip_controller != null and soul_grip_controller.has_method("get_debug_data") else {},
 	}

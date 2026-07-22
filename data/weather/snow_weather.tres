@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="WeatherDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/weather/weather_definition.gd" id="1_weather"]
+
+[resource]
+script = ExtResource("1_weather")
+effect_id = "snow_weather"
+display_name = "Snowfall"
+description = "Sustain snowfall by reserving nearly half of Grace's mana capacity. Ice spells become free while the atmosphere supplies an infinite Ice source."
+mana_reservation_fraction = 0.45
+free_elements = Array[String](["ice"])
+effect_tags = Array[String](["concentration", "weather", "snow", "ice_source"])
+weather_kind = "snow"
+generated_elements = Array[String](["ice"])
+weather_tags = Array[String](["snow", "ice", "cold", "weather", "element_source"])
+exposure_interval = 0.65
+status_duration = 4.2
+exposure_strength = 0.45
+snowflake_count = 112
+snow_radius = 10.5
+snow_height = 8.5
+snow_fall_speed = 4.5
+snow_sway_strength = 0.9
+snow_accumulation_rate = 0.14
+wind_velocity = Vector3(0.55, 0, 0.25)

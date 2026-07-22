@@ -10,6 +10,7 @@ class_name FieldResponsiveBody
 
 @onready var force_receiver: ForceReceiver = get_node_or_null("ForceReceiver") as ForceReceiver
 @onready var field_receiver: PhysicalFieldReceiver = get_node_or_null("PhysicalFieldReceiver") as PhysicalFieldReceiver
+@onready var soul_manipulable: SoulManipulable = get_node_or_null("SoulManipulable") as SoulManipulable
 
 var initial_transform: Transform3D
 var gravity_velocity: float = 0.0
@@ -26,6 +27,10 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if soul_manipulable != null and soul_manipulable.is_being_manipulated():
+		update_soul_manipulation(delta)
+		return
+
 	if field_receiver != null and force_receiver != null:
 		field_receiver.update_field_response(self, force_receiver, delta)
 
@@ -70,6 +75,23 @@ func _physics_process(delta: float) -> void:
 		force_receiver.constrain_continuous_velocity(contact_normals)
 
 
+func update_soul_manipulation(delta: float) -> void:
+	gravity_velocity = 0.0
+	velocity = soul_manipulable.get_commanded_velocity(
+		velocity,
+		get_effective_mass(),
+		delta
+	)
+	move_and_slide()
+	soul_manipulable.apply_rotation_step(delta)
+	refresh_contact_normals()
+
+	# Do not let old spell impacts or field forces accumulate invisibly while held.
+	if force_receiver != null:
+		force_receiver.consume_external_velocity(delta)
+		force_receiver.constrain_continuous_velocity(contact_normals)
+
+
 func refresh_contact_normals() -> void:
 	contact_normals.clear()
 	for collision_index: int in get_slide_collision_count():
@@ -107,6 +129,8 @@ func receive_damage_payload(payload: DamagePayload) -> Dictionary:
 
 
 func reset_body() -> void:
+	if soul_manipulable != null:
+		soul_manipulable.end_manipulation()
 	transform = initial_transform
 	velocity = Vector3.ZERO
 	gravity_velocity = 0.0
@@ -126,8 +150,8 @@ func interact() -> Dictionary:
 	if material_profile != null:
 		material_name = material_profile.display_name
 	return {
-		"message": body_label + " | " + material_name + " | responds to physical fields.",
-		"objective": "Compare attraction, polarity alignment, and nonmagnetic conductivity.",
+		"message": body_label + " | " + material_name + " | responds to physical fields and Soul Grip.",
+		"objective": "Use the object's material and mass as part of the puzzle.",
 	}
 
 
@@ -141,4 +165,5 @@ func get_debug_data() -> Dictionary:
 		"contact_normals": contact_normals.duplicate(),
 		"force": force_receiver.get_debug_data() if force_receiver != null else {},
 		"field_response": field_receiver.get_debug_data() if field_receiver != null else {},
+		"soul": soul_manipulable.get_debug_data() if soul_manipulable != null else {},
 	}

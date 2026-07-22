@@ -3,7 +3,7 @@ class_name AirflowMath
 
 
 static func compute_drag_force(
-	hair_velocity: Vector3,
+	air_velocity: Vector3,
 	body_velocity: Vector3,
 	mass_kg: float,
 	drag_coefficient: float,
@@ -34,7 +34,7 @@ static func compute_drag_force(
 
 
 static func compute_drag_acceleration(
-	hair_velocity: Vector3,
+	air_velocity: Vector3,
 	body_velocity: Vector3,
 	mass_kg: float,
 	drag_coefficient: float,

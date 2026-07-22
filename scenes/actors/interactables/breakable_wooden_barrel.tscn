@@ -1,0 +1,176 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/interaction/breakable_prop.gd" id="1_breakable"]
+[ext_resource type="Script" uid="uid://bmu7g8680htm1" path="res://scripts/combat/hit_receiver.gd" id="2_hit"]
+[ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="3_tags"]
+[ext_resource type="Script" uid="uid://dfd618a4fsswa" path="res://scripts/combat/status_receiver.gd" id="4_status"]
+[ext_resource type="Script" uid="uid://dl7cjack4ydjg" path="res://scripts/combat/payload_receiver.gd" id="5_payload"]
+[ext_resource type="Script" path="res://scripts/physics/thermal_state.gd" id="6_thermal"]
+[ext_resource type="Script" path="res://scripts/physics/combustion_state.gd" id="7_combustion"]
+[ext_resource type="Script" path="res://scripts/presentation/combustion_presenter.gd" id="8_presenter"]
+[ext_resource type="Script" path="res://scripts/interaction/combustion_break_adapter.gd" id="9_burn_break"]
+[ext_resource type="Script" path="res://scripts/core/component_reset_adapter.gd" id="10_reset_adapter"]
+[ext_resource type="Resource" path="res://data/materials/wood_physical_profile.tres" id="11_wood_profile"]
+
+[sub_resource type="StandardMaterial3D" id="Material_wood"]
+albedo_color = Color(0.42, 0.2, 0.055, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Material_wood_dark"]
+albedo_color = Color(0.19, 0.065, 0.018, 1)
+roughness = 0.96
+
+[sub_resource type="StandardMaterial3D" id="Material_band"]
+albedo_color = Color(0.12, 0.13, 0.15, 1)
+metallic = 0.58
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Material_crack"]
+albedo_color = Color(0.02, 0.008, 0.003, 1)
+emission_enabled = true
+emission = Color(0.12, 0.03, 0.005, 1)
+emission_energy_multiplier = 0.35
+roughness = 1.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_body"]
+top_radius = 0.57
+bottom_radius = 0.57
+height = 1.35
+radial_segments = 18
+rings = 5
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_band"]
+top_radius = 0.61
+bottom_radius = 0.61
+height = 0.11
+radial_segments = 18
+
+[sub_resource type="BoxMesh" id="BoxMesh_crack"]
+size = Vector3(0.04, 0.52, 0.03)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape_barrel"]
+radius = 0.62
+height = 1.38
+
+[node name="BreakableWoodenBarrel" type="Area3D" groups=["breakable", "interactable_target"]]
+script = ExtResource("1_breakable")
+hit_wobble_degrees = 7.0
+fragment_material = SubResource("Material_wood")
+fragment_count = 11
+fragment_base_size = Vector3(0.44, 0.12, 0.16)
+fragment_spawn_radius = 0.38
+fragment_impulse = 5.6
+fragment_upward_impulse = 3.5
+fragment_lifetime = 3.5
+auto_reset_seconds = 5.0
+
+[node name="VisualAnchor" type="Node3D" parent="."]
+position = Vector3(0, 0.69, 0)
+
+[node name="IntactVisual" type="Node3D" parent="VisualAnchor"]
+
+[node name="Body" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+material_override = SubResource("Material_wood")
+mesh = SubResource("CylinderMesh_body")
+
+[node name="BandTop" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+position = Vector3(0, 0.46, 0)
+material_override = SubResource("Material_band")
+mesh = SubResource("CylinderMesh_band")
+
+[node name="BandMiddle" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+material_override = SubResource("Material_band")
+mesh = SubResource("CylinderMesh_band")
+
+[node name="BandBottom" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+position = Vector3(0, -0.46, 0)
+material_override = SubResource("Material_band")
+mesh = SubResource("CylinderMesh_band")
+
+[node name="CrackedVisual" type="Node3D" parent="VisualAnchor"]
+visible = false
+
+[node name="Body" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+rotation = Vector3(0.03, 0.04, -0.02)
+material_override = SubResource("Material_wood_dark")
+mesh = SubResource("CylinderMesh_body")
+
+[node name="BandTop" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+position = Vector3(0.02, 0.43, -0.01)
+rotation = Vector3(0.03, 0.02, 0.06)
+material_override = SubResource("Material_band")
+mesh = SubResource("CylinderMesh_band")
+
+[node name="BandMiddle" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+position = Vector3(-0.03, 0.01, 0.02)
+rotation = Vector3(-0.02, 0.04, -0.05)
+material_override = SubResource("Material_band")
+mesh = SubResource("CylinderMesh_band")
+
+[node name="BandBottom" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+position = Vector3(0.03, -0.44, 0.01)
+rotation = Vector3(0.02, -0.03, 0.04)
+material_override = SubResource("Material_band")
+mesh = SubResource("CylinderMesh_band")
+
+[node name="CrackA" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+position = Vector3(0.33, 0.12, -0.47)
+rotation = Vector3(0.04, -0.62, 0.46)
+material_override = SubResource("Material_crack")
+mesh = SubResource("BoxMesh_crack")
+
+[node name="CrackB" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+position = Vector3(-0.29, -0.18, -0.49)
+rotation = Vector3(-0.03, 0.58, -0.55)
+material_override = SubResource("Material_crack")
+mesh = SubResource("BoxMesh_crack")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.69, 0)
+shape = SubResource("CylinderShape_barrel")
+
+[node name="HitReceiver" type="Node" parent="."]
+script = ExtResource("2_hit")
+target_name = "Wooden Barrel"
+hit_mode = 2
+max_health = 2
+current_health = 2
+disappears_when_defeated = false
+
+[node name="TagComponent" type="Node" parent="."]
+script = ExtResource("3_tags")
+tags = Array[String](["prop", "container", "wood", "organic", "breakable", "flammable"])
+
+[node name="StatusReceiver" type="Node" parent="."]
+script = ExtResource("4_status")
+
+[node name="ThermalState" type="Node" parent="."]
+script = ExtResource("6_thermal")
+material_profile = ExtResource("11_wood_profile")
+mass_kg = 0.55
+gameplay_heat_capacity_scale = 0.001
+starting_temperature_c = 20.0
+ambient_temperature_c = 20.0
+ambient_conductance_j_per_second_c = 0.32
+ignition_enabled = true
+
+[node name="CombustionState" type="Node" parent="."]
+script = ExtResource("7_combustion")
+material_profile = ExtResource("11_wood_profile")
+initial_fuel_kg_override = 0.42
+
+[node name="CombustionPresenter" type="Node3D" parent="."]
+script = ExtResource("8_presenter")
+profile_kind = "bonfire"
+visual_offset = Vector3(0, 0.86, 0)
+visual_scale = 0.68
+
+[node name="PayloadReceiver" type="Node" parent="."]
+script = ExtResource("5_payload")
+
+[node name="CombustionBreakAdapter" type="Node" parent="."]
+script = ExtResource("9_burn_break")
+
+[node name="ComponentResetAdapter" type="Node" parent="."]
+script = ExtResource("10_reset_adapter")
+component_paths = Array[NodePath]([NodePath("../ThermalState"), NodePath("../CombustionState"), NodePath("../CombustionPresenter")])

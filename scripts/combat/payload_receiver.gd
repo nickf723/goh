@@ -27,23 +27,13 @@ func receive_payload(payload: DamagePayload) -> Dictionary:
 	apply_force(target, payload)
 	var thermal_result: Dictionary = apply_thermal(target, payload)
 	var combustion_result: Dictionary = apply_combustion(target, payload)
+	var electrical_result: Dictionary = apply_electrical_material_response(target, payload)
 
 	var reaction_messages: Array[String] = resolve_reactions(target, payload)
 	var result: Dictionary = apply_hit(target, payload)
-	if not thermal_result.is_empty():
-		var thermal_message: String = str(thermal_result.get("message", ""))
-		if get_component(target, "HitReceiver") == null:
-			result = {
-				"message": thermal_message,
-				"objective": str(thermal_result.get("objective", "")),
-			}
-		elif thermal_message != "":
-			reaction_messages.append(thermal_message)
-
-	if not combustion_result.is_empty():
-		var combustion_message: String = str(combustion_result.get("message", ""))
-		if combustion_message != "":
-			reaction_messages.append(combustion_message)
+	append_component_result(target, result, reaction_messages, thermal_result)
+	append_component_result(target, result, reaction_messages, combustion_result)
+	append_component_result(target, result, reaction_messages, electrical_result)
 
 	return combine_messages(result, reaction_messages)
 
@@ -91,23 +81,50 @@ func apply_direct_status(target: Node, payload: DamagePayload) -> void:
 
 
 func apply_thermal(target: Node, payload: DamagePayload) -> Dictionary:
-	var thermal_state: Node = get_component(target, "ThermalState")
-	if thermal_state == null or not thermal_state.has_method("receive_damage_payload"):
-		return {}
-	var raw_result: Variant = thermal_state.call("receive_damage_payload", payload)
-	if raw_result is Dictionary:
-		return raw_result as Dictionary
-	return {}
+	return call_payload_component(target, "ThermalState", payload)
 
 
 func apply_combustion(target: Node, payload: DamagePayload) -> Dictionary:
-	var combustion_state: Node = get_component(target, "CombustionState")
-	if combustion_state == null or not combustion_state.has_method("receive_damage_payload"):
+	return call_payload_component(target, "CombustionState", payload)
+
+
+func apply_electrical_material_response(target: Node, payload: DamagePayload) -> Dictionary:
+	return call_payload_component(target, "ElectricalMaterialResponse", payload)
+
+
+func call_payload_component(
+	target: Node,
+	component_name: String,
+	payload: DamagePayload
+) -> Dictionary:
+	var component: Node = get_component(target, component_name)
+	if component == null or not component.has_method("receive_damage_payload"):
 		return {}
-	var raw_result: Variant = combustion_state.call("receive_damage_payload", payload)
+	var raw_result: Variant = component.call("receive_damage_payload", payload)
 	if raw_result is Dictionary:
 		return raw_result as Dictionary
 	return {}
+
+
+func append_component_result(
+	target: Node,
+	result: Dictionary,
+	reaction_messages: Array[String],
+	component_result: Dictionary
+) -> void:
+	if component_result.is_empty():
+		return
+
+	var component_message: String = str(component_result.get("message", ""))
+	if component_message == "":
+		return
+
+	if get_component(target, "HitReceiver") == null and str(result.get("message", "")) == "":
+		result["message"] = component_message
+		result["objective"] = str(component_result.get("objective", ""))
+		return
+
+	reaction_messages.append(component_message)
 
 
 func resolve_reactions(target: Node, payload: DamagePayload) -> Array[String]:

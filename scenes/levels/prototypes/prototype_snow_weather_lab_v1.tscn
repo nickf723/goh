@@ -1,0 +1,47 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_snow_weather_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/concentration/concentration_manager.gd" id="4_concentration"]
+[ext_resource type="Script" path="res://scripts/weather/snow_weather_controller.gd" id="5_weather"]
+[ext_resource type="Resource" path="res://data/weather/snow_weather.tres" id="6_snow"]
+
+[sub_resource type="Environment" id="Environment_snow_lab"]
+background_mode = 1
+background_color = Color(0.34, 0.42, 0.52, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.72, 0.8, 0.9, 1)
+ambient_light_energy = 0.92
+reflected_light_source = 2
+tonemap_mode = 2
+
+[node name="PrototypeSnowWeatherLab" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_snow_lab")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -32, 0)
+light_color = Color(0.78, 0.86, 1, 1)
+light_energy = 0.88
+shadow_enabled = true
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, 6.2)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="ConcentrationManager" type="Node" parent="."]
+script = ExtResource("4_concentration")
+passive_mana_regeneration_per_second = 1.0
+show_hud = true
+
+[node name="SnowWeatherController" type="Node3D" parent="."]
+script = ExtResource("5_weather")
+weather_definition = ExtResource("6_snow")
+concentration_manager_path = NodePath("../ConcentrationManager")
+player_path = NodePath("../Player")
+environment_path = NodePath("../WorldEnvironment")

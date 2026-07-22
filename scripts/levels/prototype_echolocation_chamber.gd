@@ -202,6 +202,7 @@ func create_resonant_beacon() -> void:
 	receiver.hide_visuals_when_hidden = true
 	receiver.disable_collision_when_hidden = false
 	receiver.reveal_message = "A resonant beacon answers from the far side of the chamber."
+	receiver.show_reveal_feedback = true
 	beacon.add_child(receiver)
 	geometry_root.add_child(beacon)
 
@@ -316,6 +317,7 @@ func add_reveal_receiver(target: Node, reveal_duration: float = -1.0) -> void:
 	receiver.hide_visuals_when_hidden = true
 	receiver.disable_collision_when_hidden = false
 	receiver.reveal_message = ""
+	receiver.show_reveal_feedback = false
 	target.add_child(receiver)
 
 
@@ -333,6 +335,10 @@ func _on_exit_body_entered(body: Node3D) -> void:
 
 func reset_chamber() -> void:
 	reset_count += 1
+
+	for pulse: Node in get_tree().get_nodes_in_group("echolocation_pulses"):
+		if pulse != null and is_instance_valid(pulse) and is_ancestor_of(pulse):
+			pulse.queue_free()
 
 	for receiver: Node in get_tree().get_nodes_in_group("detectable"):
 		if receiver == null or not is_instance_valid(receiver):

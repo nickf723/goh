@@ -15,7 +15,9 @@ signal grip_released(target: SoulManipulable)
 @export_range(1.0, 40.0, 0.5) var maximum_target_range: float = 18.0
 @export_range(1.0, 30.0, 0.5) var minimum_hold_distance: float = 2.2
 @export_range(1.0, 40.0, 0.5) var maximum_hold_distance: float = 15.0
-@export_range(1.0, 45.0, 1.0) var targeting_cone_degrees: float = 16.0
+@export_range(1.0, 45.0, 1.0) var targeting_cone_degrees: float = 24.0
+@export_range(0.02, 0.3, 0.01) var acquisition_retry_interval: float = 0.08
+@export_range(0.2, 1.2, 0.05) var preview_marker_scale: float = 0.7
 @export var placement_vertical_offset: float = -0.22
 
 @export_group("Feel")
@@ -27,8 +29,10 @@ signal grip_released(target: SoulManipulable)
 var player: CharacterBody3D = null
 var action_state: PlayerActionState = null
 var held_target: SoulManipulable = null
+var preview_target: SoulManipulable = null
 var hold_distance: float = 5.0
 var desired_basis: Basis = Basis.IDENTITY
+var acquisition_retry_timer: float = 0.0
 var tether_visual: MeshInstance3D = null
 var tether_mesh: BoxMesh = null
 var target_marker: MeshInstance3D = null
@@ -51,19 +55,29 @@ func _process(delta: float) -> void:
 
 	if player.has_method("is_focus_spell_menu_open") and bool(player.call("is_focus_spell_menu_open")):
 		release_grip()
+		clear_target_preview()
 		return
 
 	if held_target != null and not held_target.is_being_manipulated():
 		release_grip()
 
-	if Input.is_action_just_pressed(grip_action):
-		try_begin_grip()
+	if held_target == null:
+		update_target_preview()
+
+		if Input.is_action_pressed(grip_action):
+			acquisition_retry_timer -= delta
+			var first_attempt: bool = Input.is_action_just_pressed(grip_action)
+			if first_attempt or acquisition_retry_timer <= 0.0:
+				try_begin_grip(first_attempt)
+				acquisition_retry_timer = max(acquisition_retry_interval, 0.02)
+		else:
+			acquisition_retry_timer = 0.0
+
+		if held_target == null:
+			return
 
 	if not Input.is_action_pressed(grip_action):
 		release_grip()
-		return
-
-	if held_target == null:
 		return
 
 	update_hold_controls(delta)
@@ -75,27 +89,31 @@ func _exit_tree() -> void:
 	release_grip()
 
 
-func try_begin_grip() -> void:
+func try_begin_grip(show_failure_message: bool = true) -> void:
 	if held_target != null:
 		return
-	if action_state != null and action_state.has_method("can_manipulate"):
-		if not bool(action_state.call("can_manipulate")):
-			return
+	if action_state != null and not action_state.can_manipulate():
+		return
 
-	var candidate: SoulManipulable = find_best_target()
+	var candidate: SoulManipulable = preview_target
+	if candidate == null or not candidate.can_begin_manipulation():
+		candidate = find_best_target()
+
 	if candidate == null:
-		show_message("No Soul-manipulable object in focus.")
+		if show_failure_message:
+			show_message("Aim toward a visible Soul-marked object, then keep holding Soul Grip.")
 		return
 	if not candidate.begin_manipulation(self):
-		show_message("That object's Soul is resisting manipulation.")
+		if show_failure_message:
+			show_message("That object's Soul is resisting manipulation.")
 		return
 
-	if action_state != null and action_state.has_method("begin_manipulation"):
-		if not bool(action_state.call("begin_manipulation")):
-			candidate.end_manipulation()
-			return
+	if action_state != null and not action_state.begin_manipulation():
+		candidate.end_manipulation()
+		return
 
 	held_target = candidate
+	preview_target = null
 	var camera: Camera3D = get_viewport().get_camera_3d()
 	if camera != null:
 		hold_distance = clampf(
@@ -117,6 +135,8 @@ func try_begin_grip() -> void:
 
 func release_grip() -> void:
 	if held_target == null:
+		if action_state != null and action_state.is_manipulating:
+			action_state.end_manipulation()
 		hide_feedback_visuals()
 		return
 
@@ -127,8 +147,9 @@ func release_grip() -> void:
 		released_body.velocity *= release_velocity_retention
 
 	held_target = null
-	if action_state != null and action_state.has_method("end_manipulation"):
-		action_state.call("end_manipulation")
+	preview_target = null
+	if action_state != null:
+		action_state.end_manipulation()
 	GameFeedback.play("light_tick", {"source": "soul_release"})
 	hide_feedback_visuals()
 	grip_released.emit(released_target)
@@ -166,13 +187,32 @@ func update_target_pose() -> void:
 	held_target.set_target_pose(target_position, desired_basis)
 
 
+func update_target_preview() -> void:
+	preview_target = find_best_target()
+	if preview_target == null or target_marker == null:
+		if target_marker != null:
+			target_marker.visible = false
+		return
+
+	target_marker.visible = true
+	target_marker.global_position = preview_target.get_anchor_global_position()
+	var pulse: float = 1.0 + sin(float(Time.get_ticks_msec()) * 0.008) * 0.1
+	target_marker.scale = Vector3.ONE * preview_marker_scale * pulse
+
+
+func clear_target_preview() -> void:
+	preview_target = null
+	if held_target == null and target_marker != null:
+		target_marker.visible = false
+
+
 func find_best_target() -> SoulManipulable:
 	var camera: Camera3D = get_viewport().get_camera_3d()
 	if camera == null:
 		return null
 
 	var direct_target: SoulManipulable = raycast_target(camera)
-	if direct_target != null:
+	if direct_target != null and direct_target.can_begin_manipulation():
 		return direct_target
 
 	var camera_forward: Vector3 = -camera.global_basis.z
@@ -186,21 +226,106 @@ func find_best_target() -> SoulManipulable:
 		var candidate: SoulManipulable = candidate_node as SoulManipulable
 		if not candidate.can_begin_manipulation():
 			continue
-		var offset: Vector3 = candidate.get_anchor_global_position() - camera.global_position
+
+		var visibility: Dictionary = get_candidate_visibility(camera, candidate, minimum_dot)
+		if not bool(visibility.get("visible", false)):
+			continue
+
+		var forward_dot: float = float(visibility.get("forward_dot", -1.0))
+		var distance: float = float(visibility.get("distance", maximum_target_range))
+		var score: float = (1.0 - forward_dot) * 18.0 + distance * 0.035
+		if score < best_score:
+			best_score = score
+			best_target = candidate
+
+	return best_target
+
+
+func get_candidate_visibility(
+	camera: Camera3D,
+	candidate: SoulManipulable,
+	minimum_dot: float
+) -> Dictionary:
+	var camera_forward: Vector3 = -camera.global_basis.z
+	var best_dot: float = -1.0
+	var best_distance: float = INF
+
+	for sample_point: Vector3 in get_candidate_sample_points(candidate):
+		var offset: Vector3 = sample_point - camera.global_position
 		var distance: float = offset.length()
 		if distance <= 0.01 or distance > maximum_target_range:
 			continue
 		var forward_dot: float = camera_forward.normalized().dot(offset.normalized())
 		if forward_dot < minimum_dot:
 			continue
-		if not has_clear_line_of_sight(camera, candidate):
+		if not is_sample_visible(camera, candidate, sample_point):
 			continue
-		var score: float = (1.0 - forward_dot) * 22.0 + distance * 0.035
-		if score < best_score:
-			best_score = score
-			best_target = candidate
+		if forward_dot > best_dot or (is_equal_approx(forward_dot, best_dot) and distance < best_distance):
+			best_dot = forward_dot
+			best_distance = distance
 
-	return best_target
+	return {
+		"visible": best_dot >= minimum_dot,
+		"forward_dot": best_dot,
+		"distance": best_distance,
+	}
+
+
+func get_candidate_sample_points(candidate: SoulManipulable) -> Array[Vector3]:
+	var points: Array[Vector3] = []
+	if candidate == null:
+		return points
+
+	points.append(candidate.get_anchor_global_position())
+	var body: CharacterBody3D = candidate.body
+	if body == null:
+		return points
+
+	points.append(body.global_position + Vector3.UP * 0.35)
+	for collision_shape: CollisionShape3D in find_collision_shapes(body):
+		if collision_shape.shape == null or collision_shape.disabled:
+			continue
+		var center: Vector3 = collision_shape.global_position
+		var dimensions: Vector3 = get_shape_dimensions(collision_shape.shape)
+		var basis: Basis = collision_shape.global_basis.orthonormalized()
+		var axis_x: Vector3 = basis.x.normalized()
+		var axis_y: Vector3 = basis.y.normalized()
+		var axis_z: Vector3 = basis.z.normalized()
+		points.append(center)
+		points.append(center + axis_y * dimensions.y * 0.28)
+		points.append(center - axis_y * dimensions.y * 0.22)
+		points.append(center + axis_x * dimensions.x * 0.28)
+		points.append(center - axis_x * dimensions.x * 0.28)
+		points.append(center + axis_z * dimensions.z * 0.28)
+		points.append(center - axis_z * dimensions.z * 0.28)
+
+	return points
+
+
+func find_collision_shapes(root: Node) -> Array[CollisionShape3D]:
+	var shapes: Array[CollisionShape3D] = []
+	if root == null:
+		return shapes
+	for child: Node in root.get_children():
+		if child is CollisionShape3D:
+			shapes.append(child as CollisionShape3D)
+		shapes.append_array(find_collision_shapes(child))
+	return shapes
+
+
+func get_shape_dimensions(shape: Shape3D) -> Vector3:
+	if shape is BoxShape3D:
+		return (shape as BoxShape3D).size
+	if shape is SphereShape3D:
+		var sphere_diameter: float = (shape as SphereShape3D).radius * 2.0
+		return Vector3.ONE * sphere_diameter
+	if shape is CylinderShape3D:
+		var cylinder: CylinderShape3D = shape as CylinderShape3D
+		return Vector3(cylinder.radius * 2.0, cylinder.height, cylinder.radius * 2.0)
+	if shape is CapsuleShape3D:
+		var capsule: CapsuleShape3D = shape as CapsuleShape3D
+		return Vector3(capsule.radius * 2.0, capsule.height, capsule.radius * 2.0)
+	return Vector3.ONE
 
 
 func raycast_target(camera: Camera3D) -> SoulManipulable:
@@ -219,12 +344,17 @@ func raycast_target(camera: Camera3D) -> SoulManipulable:
 	return find_manipulable_from_node(collider)
 
 
-func has_clear_line_of_sight(camera: Camera3D, candidate: SoulManipulable) -> bool:
+func is_sample_visible(
+	camera: Camera3D,
+	candidate: SoulManipulable,
+	sample_point: Vector3
+) -> bool:
 	if player == null or candidate == null:
 		return false
-	var from: Vector3 = camera.global_position
-	var to: Vector3 = candidate.get_anchor_global_position()
-	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(from, to)
+	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(
+		camera.global_position,
+		sample_point
+	)
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
 	query.exclude = [player.get_rid()]
@@ -388,6 +518,7 @@ func get_debug_data() -> Dictionary:
 	return {
 		"soul_grip": true,
 		"active": held_target != null,
+		"preview": preview_target.body.name if preview_target != null and preview_target.body != null else "none",
 		"target": held_target.body.name if held_target != null and held_target.body != null else "none",
 		"hold_distance": snapped(hold_distance, 0.01),
 	}

@@ -35,12 +35,19 @@ const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
 @export var controlled_descent_acceleration: float = 8.0
 @export var activation_lift_speed: float = 0.75
 
+@export_group("Airflow")
+@export var body_mass_kg: float = 65.0
+@export_range(0.0, 2.0, 0.01) var grounded_airflow_response: float = 0.42
+@export_range(0.0, 2.0, 0.01) var airborne_airflow_response: float = 0.9
+@export_range(0.0, 2.0, 0.01) var flight_airflow_response: float = 0.65
+
 @export_group("Presentation")
 @export var show_messages: bool = true
 @export var flight_visual_spin_speed: float = 1.8
 
 var actor: CharacterBody3D = null
 var action_state: PlayerActionState = null
+var airflow_response: AirflowResponse = null
 var concentration_manager: Node = null
 var active_flight_definition: Resource = null
 
@@ -55,12 +62,14 @@ var controlled_descent_active: bool = false
 
 var flight_visual_root: Node3D = null
 var visual_elapsed: float = 0.0
+var last_airflow_acceleration: Vector3 = Vector3.ZERO
 
 
 func _ready() -> void:
 	actor = get_parent() as CharacterBody3D
 	if actor != null:
 		action_state = actor.get_node_or_null("PlayerActionState") as PlayerActionState
+		airflow_response = actor.get_node_or_null("AirflowResponse") as AirflowResponse
 	add_to_group("debuggable")
 	ensure_flight_input_map()
 	build_flight_visual()
@@ -87,7 +96,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func should_handle_locomotion() -> bool:
-	return flight_active or controlled_descent_active or double_jump_unlocked or hover_unlocked
+	if flight_active or controlled_descent_active or double_jump_unlocked or hover_unlocked:
+		return true
+	return airflow_response != null and actor != null and airflow_response.has_active_airflow(actor.global_position)
 
 
 func process_locomotion(delta: float) -> bool:
@@ -177,6 +188,7 @@ func process_jump_hover(delta: float) -> void:
 			if not was_on_floor and traversal_state not in ["jumping", "double_jump"]:
 				set_traversal_state("falling")
 
+	apply_airflow(delta, grounded_airflow_response if was_on_floor else airborne_airflow_response)
 	actor.move_and_slide()
 
 	if actor.is_on_floor():
@@ -214,8 +226,22 @@ func process_flight(delta: float) -> void:
 		flight_vertical_acceleration * delta
 	)
 
+	apply_airflow(delta, flight_airflow_response)
 	actor.move_and_slide()
 	set_traversal_state("flying")
+
+
+func apply_airflow(delta: float, response_multiplier: float) -> void:
+	last_airflow_acceleration = Vector3.ZERO
+	if airflow_response == null or actor == null:
+		return
+	last_airflow_acceleration = airflow_response.get_airflow_acceleration(
+		actor.global_position,
+		actor.velocity,
+		body_mass_kg,
+		response_multiplier
+	)
+	actor.velocity += last_airflow_acceleration * max(delta, 0.0)
 
 
 func activate_flight(definition: Resource) -> bool:
@@ -248,7 +274,7 @@ func activate_flight(definition: Resource) -> bool:
 	set_flight_visual_visible(true)
 	set_traversal_state("flying")
 	flight_started.emit(float(definition.get("mana_reservation_fraction")))
-	show_message("Flight sustained. Jump ascends, Dodge descends, and neutral input holds altitude.")
+	show_message("Flight sustained. Jump ascends, Dodge descends, and local airflow shapes the route.")
 	return true
 
 
@@ -441,4 +467,6 @@ func get_debug_data() -> Dictionary:
 		"flight_active": flight_active,
 		"controlled_descent": controlled_descent_active,
 		"velocity": actor.velocity if actor != null else Vector3.ZERO,
+		"airflow_acceleration": last_airflow_acceleration,
+		"airflow": airflow_response.get_debug_data() if airflow_response != null else {},
 	}

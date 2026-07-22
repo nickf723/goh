@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="AbilityLoadout" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_loadout.gd" id="1_loadout"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+[ext_resource type="Resource" path="res://data/abilities/flight_concentration_ability.tres" id="3_flight"]
+
+[resource]
+script = ExtResource("1_loadout")
+quick_slot_count = 1
+learned_abilities = Array[ExtResource("2_definition")]([ExtResource("3_flight")])
+equipped_abilities = Array[ExtResource("2_definition")]([ExtResource("3_flight")])

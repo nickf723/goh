@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" uid="uid://dw6mih3hc1hq1" path="res://scenes/actors/enemies/gremlin_drone.tscn" id="15_ijhmh"]
 [ext_resource type="Script" uid="uid://bbb78at8demsw" path="res://scripts/systems/dev_audit_manager.gd" id="16_r3vux"]
 [ext_resource type="Script" path="res://scripts/systems/dev_test_scenario_director.gd" id="17_6lkbd"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/breakable_stone_urn.tscn" id="18_breakable_urn"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_3s6yi"]
 size = Vector3(20, 1, 20)
@@ -51,6 +52,22 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09392023, 1.0000005, 8.038
 
 [node name="CrackedCrystal" parent="." unique_id=303540902 instance=ExtResource("6_1ltt4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.927042, 0.5, 3.8659992)
+
+[node name="BreakablePropSign" type="Label3D" parent="."]
+position = Vector3(0, 2.6, -4.2)
+billboard = 1
+text = "BREAKABLE PROPS\nLIGHT: crack then shatter   HEAVY: instant shatter\nFragments reset after 4 seconds"
+font_size = 34
+outline_size = 8
+
+[node name="BreakableUrnA" parent="." instance=ExtResource("18_breakable_urn")]
+position = Vector3(-2.4, 0, -4.2)
+
+[node name="BreakableUrnB" parent="." instance=ExtResource("18_breakable_urn")]
+position = Vector3(0, 0, -4.2)
+
+[node name="BreakableUrnC" parent="." instance=ExtResource("18_breakable_urn")]
+position = Vector3(2.4, 0, -4.2)
 
 [node name="FocusTime" type="Node" parent="." unique_id=1536230861]
 script = ExtResource("7_1ltt4")

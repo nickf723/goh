@@ -1,0 +1,213 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/mechanisms/counterweighted_sliding_door.gd" id="1_door"]
+[ext_resource type="Script" path="res://scripts/physics/electric_motor_component.gd" id="2_motor"]
+[ext_resource type="Script" path="res://scripts/physics/rotational_shaft_state.gd" id="3_shaft"]
+[ext_resource type="Script" path="res://scripts/physics/circuit_terminal.gd" id="4_terminal"]
+[ext_resource type="Resource" path="res://data/materials/copper_physical_profile.tres" id="5_copper"]
+
+[sub_resource type="StandardMaterial3D" id="Material_frame"]
+albedo_color = Color(0.16, 0.2, 0.25, 1)
+metallic = 0.86
+roughness = 0.34
+
+[sub_resource type="StandardMaterial3D" id="Material_door"]
+albedo_color = Color(0.24, 0.31, 0.38, 1)
+metallic = 0.78
+roughness = 0.39
+
+[sub_resource type="StandardMaterial3D" id="Material_motor"]
+albedo_color = Color(0.12, 0.16, 0.24, 1)
+metallic = 0.72
+roughness = 0.3
+
+[sub_resource type="StandardMaterial3D" id="Material_copper"]
+albedo_color = Color(0.76, 0.25, 0.055, 1)
+metallic = 0.92
+roughness = 0.22
+
+[sub_resource type="StandardMaterial3D" id="Material_current"]
+albedo_color = Color(1, 0.68, 0.08, 0.36)
+transparency = 1
+emission_enabled = true
+emission = Color(1, 0.35, 0.02, 1)
+emission_energy_multiplier = 3.5
+
+[sub_resource type="StandardMaterial3D" id="Material_chain"]
+albedo_color = Color(0.48, 0.53, 0.6, 1)
+metallic = 0.94
+roughness = 0.2
+
+[sub_resource type="BoxMesh" id="Mesh_door"]
+size = Vector3(3.2, 3.25, 0.38)
+
+[sub_resource type="BoxShape3D" id="Shape_door"]
+size = Vector3(3.2, 3.25, 0.38)
+
+[sub_resource type="BoxMesh" id="Mesh_post"]
+size = Vector3(0.42, 4.0, 0.72)
+
+[sub_resource type="BoxShape3D" id="Shape_post"]
+size = Vector3(0.42, 4.0, 0.72)
+
+[sub_resource type="BoxMesh" id="Mesh_header"]
+size = Vector3(4.25, 0.48, 0.72)
+
+[sub_resource type="BoxShape3D" id="Shape_header"]
+size = Vector3(4.25, 0.48, 0.72)
+
+[sub_resource type="BoxMesh" id="Mesh_motor"]
+size = Vector3(1.45, 1.0, 1.15)
+
+[sub_resource type="CylinderMesh" id="Mesh_rotor"]
+top_radius = 0.28
+bottom_radius = 0.28
+height = 1.25
+radial_segments = 16
+
+[sub_resource type="CylinderMesh" id="Mesh_drive_shaft"]
+top_radius = 0.09
+bottom_radius = 0.09
+height = 2.25
+radial_segments = 12
+
+[sub_resource type="SphereMesh" id="Mesh_terminal"]
+radius = 0.17
+height = 0.34
+radial_segments = 12
+rings = 6
+
+[node name="MotorizedSlidingDoor" type="Node3D"]
+script = ExtResource("1_door")
+shaft_path = NodePath("Motor/Shaft")
+motor_path = NodePath("Motor")
+moving_body_path = NodePath("DoorBody")
+state_label_path = NodePath("StateLabel")
+open_offset = Vector3(0, 3.55, 0)
+revolutions_to_open = 3.0
+counterweight_return_rpm = 62.0
+
+[node name="DoorBody" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.72, 3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DoorBody"]
+shape = SubResource("Shape_door")
+
+[node name="Panel" type="MeshInstance3D" parent="DoorBody"]
+material_override = SubResource("Material_door")
+mesh = SubResource("Mesh_door")
+
+[node name="PanelInset" type="MeshInstance3D" parent="DoorBody"]
+position = Vector3(0, 0, -0.22)
+scale = Vector3(0.76, 0.78, 0.18)
+material_override = SubResource("Material_frame")
+mesh = SubResource("Mesh_door")
+
+[node name="LeftFrame" type="StaticBody3D" parent="."]
+position = Vector3(-1.88, 2, 3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftFrame"]
+shape = SubResource("Shape_post")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftFrame"]
+material_override = SubResource("Material_frame")
+mesh = SubResource("Mesh_post")
+
+[node name="RightFrame" type="StaticBody3D" parent="."]
+position = Vector3(1.88, 2, 3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RightFrame"]
+shape = SubResource("Shape_post")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RightFrame"]
+material_override = SubResource("Material_frame")
+mesh = SubResource("Mesh_post")
+
+[node name="Header" type="StaticBody3D" parent="."]
+position = Vector3(0, 4.08, 3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Header"]
+shape = SubResource("Shape_header")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Header"]
+material_override = SubResource("Material_frame")
+mesh = SubResource("Mesh_header")
+
+[node name="DriveShaftVisual" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.68, 1.5)
+rotation = Vector3(1.5708, 0, 0)
+material_override = SubResource("Material_chain")
+mesh = SubResource("Mesh_drive_shaft")
+
+[node name="Motor" type="Node3D" parent="."]
+position = Vector3(0, 0.65, 0)
+script = ExtResource("2_motor")
+component_id = "door_motor"
+display_name = "Door Winch Motor"
+material_profile = ExtResource("5_copper")
+resistance_ohms = 3.0
+max_current_amps = 6.0
+shaft_path = NodePath("Shaft")
+minimum_activation_amps = 0.08
+rpm_per_amp = 35.0
+maximum_output_rpm = 120.0
+
+[node name="Body" type="MeshInstance3D" parent="Motor"]
+material_override = SubResource("Material_motor")
+mesh = SubResource("Mesh_motor")
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="Motor"]
+visible = false
+scale = Vector3(1.08, 1.08, 1.08)
+material_override = SubResource("Material_current")
+mesh = SubResource("Mesh_motor")
+
+[node name="MotorLabel" type="Label3D" parent="Motor"]
+position = Vector3(0, 1.05, 0)
+text = "DOOR MOTOR"
+font_size = 23
+pixel_size = 0.006
+billboard = 1
+outline_size = 5
+
+[node name="TerminalA" type="Marker3D" parent="Motor"]
+position = Vector3(0, -0.4, 1.1)
+script = ExtResource("4_terminal")
+terminal_id = "input"
+connection_radius = 0.35
+
+[node name="Pad" type="MeshInstance3D" parent="Motor/TerminalA"]
+material_override = SubResource("Material_copper")
+mesh = SubResource("Mesh_terminal")
+
+[node name="TerminalB" type="Marker3D" parent="Motor"]
+position = Vector3(0, -0.4, -1.1)
+script = ExtResource("4_terminal")
+terminal_id = "return"
+connection_radius = 0.35
+
+[node name="Pad" type="MeshInstance3D" parent="Motor/TerminalB"]
+material_override = SubResource("Material_copper")
+mesh = SubResource("Mesh_terminal")
+
+[node name="Shaft" type="Node3D" parent="Motor"]
+position = Vector3(0, 0, 0.68)
+script = ExtResource("3_shaft")
+acceleration_rpm_per_second = 220.0
+deceleration_rpm_per_second = 180.0
+maximum_abs_rpm = 180.0
+rotation_axis = Vector3(0, 0, 1)
+rotor_visual_path = NodePath("Rotor")
+
+[node name="Rotor" type="MeshInstance3D" parent="Motor/Shaft"]
+rotation = Vector3(1.5708, 0, 0)
+material_override = SubResource("Material_copper")
+mesh = SubResource("Mesh_rotor")
+
+[node name="StateLabel" type="Label3D" parent="."]
+position = Vector3(0, 4.9, 3)
+text = "COUNTERWEIGHT DOOR\nCLOSED"
+font_size = 28
+pixel_size = 0.006
+billboard = 1
+outline_size = 6

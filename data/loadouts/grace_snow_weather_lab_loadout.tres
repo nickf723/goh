@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AbilityLoadout" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_loadout.gd" id="1_loadout"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+[ext_resource type="Resource" path="res://data/abilities/snow_weather_ability.tres" id="3_snow"]
+[ext_resource type="Resource" path="res://data/abilities/ice_lance_ability.tres" id="4_ice"]
+[ext_resource type="Resource" path="res://data/abilities/water_jet_ability.tres" id="5_water"]
+[ext_resource type="Resource" path="res://data/abilities/firebolt_ability.tres" id="6_fire"]
+[ext_resource type="Resource" path="res://data/abilities/lightning_spark_ability.tres" id="7_lightning"]
+
+[resource]
+script = ExtResource("1_loadout")
+quick_slot_count = 5
+learned_abilities = Array[ExtResource("2_definition")]([ExtResource("3_snow"), ExtResource("4_ice"), ExtResource("5_water"), ExtResource("6_fire"), ExtResource("7_lightning")])
+equipped_abilities = Array[ExtResource("2_definition")]([ExtResource("3_snow"), ExtResource("4_ice"), ExtResource("5_water"), ExtResource("6_fire"), ExtResource("7_lightning")])

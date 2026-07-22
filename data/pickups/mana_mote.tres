@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="PickupDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/pickup_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+pickup_id = "mana_mote"
+display_name = "Mana Mote"
+resource_type = "mana"
+amount = 3
+primary_color = Color(0.18, 0.52, 1, 1)
+secondary_color = Color(0.74, 0.88, 1, 1)
+visual_scale = 1.0
+hover_height = 0.58
+hover_amplitude = 0.13
+hover_speed = 2.5
+spin_speed_degrees = 120.0
+attraction_radius = 4.8
+collection_radius = 0.58
+attraction_speed = 8.2
+attraction_acceleration = 19.0
+lifetime_seconds = 20.0
+collect_when_full = false

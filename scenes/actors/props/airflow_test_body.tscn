@@ -1,0 +1,45 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/physics/field_responsive_body.gd" id="1_body"]
+[ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="2_force"]
+[ext_resource type="Script" path="res://scripts/airflow/airflow_response.gd" id="3_airflow"]
+
+[sub_resource type="BoxShape3D" id="Shape_body"]
+size = Vector3(1.1, 1.1, 1.1)
+
+[sub_resource type="BoxMesh" id="Mesh_body"]
+size = Vector3(1.1, 1.1, 1.1)
+
+[sub_resource type="StandardMaterial3D" id="Material_body"]
+albedo_color = Color(0.52, 0.62, 0.72, 1)
+roughness = 0.72
+
+[node name="AirflowTestBody" type="CharacterBody3D"]
+script = ExtResource("1_body")
+body_label = "Airflow Test Body"
+mass_override_kg = 4.0
+gravity_strength = 20.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.55, 0)
+shape = SubResource("Shape_body")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.55, 0)
+material_override = SubResource("Material_body")
+mesh = SubResource("Mesh_body")
+
+[node name="ForceReceiver" type="Node" parent="."]
+script = ExtResource("2_force")
+continuous_linear_damping = 0.72
+continuous_angular_damping = 1.5
+max_continuous_speed = 14.0
+max_angular_speed = 7.0
+
+[node name="AirflowResponse" type="Node" parent="."]
+script = ExtResource("3_airflow")
+drag_coefficient = 1.08
+cross_section_area = 1.15
+gameplay_force_scale = 4.2
+maximum_acceleration = 24.0
+torque_response = 0.08

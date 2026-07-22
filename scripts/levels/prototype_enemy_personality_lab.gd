@@ -5,22 +5,22 @@ const EnemyOverheadHud = preload("res://scripts/combat/enemy_overhead_hud.gd")
 
 const LANE_CONFIGS: Array[Dictionary] = [
 	{
-		"enemy_path": "Lanes/CautiousGoblin",
+		"enemy_path": "Lanes/CautiousGremlin",
 		"target_group": "personality_lab_cautious_target",
 		"personality": "cautious",
 	},
 	{
-		"enemy_path": "Lanes/BoldGoblin",
+		"enemy_path": "Lanes/BoldGremlin",
 		"target_group": "personality_lab_bold_target",
 		"personality": "bold",
 	},
 	{
-		"enemy_path": "Lanes/SkittishGoblin",
+		"enemy_path": "Lanes/SkittishGremlin",
 		"target_group": "personality_lab_skittish_target",
 		"personality": "skittish",
 	},
 	{
-		"enemy_path": "Lanes/BruteGoblin",
+		"enemy_path": "Lanes/BruteGremlin",
 		"target_group": "personality_lab_brute_target",
 		"personality": "brute",
 	},
@@ -28,8 +28,8 @@ const LANE_CONFIGS: Array[Dictionary] = [
 
 @export var show_opening_message: bool = true
 @export var opening_message: String = (
-	"Enemy Personality Lab: four goblins pursue harmless lane targets. "
-	+ "Attacks are disabled and Grace is protected."
+	"Enemy Personality Lab: four gremlins steer through poison, then choose "
+	+ "between bite, pounce, and backstep. Grace is protected."
 )
 
 var previous_invulnerable: bool = false
@@ -93,23 +93,24 @@ func configure_enemy_lane(lane_config: Dictionary) -> void:
 		push_warning("Personality lab target not found: " + target_group)
 		return
 
-	# Keep the intended personality assignment.
 	brain.set(
 		"personality_id",
 		str(lane_config.get("personality", "balanced"))
 	)
 
-	# Give this goblin its harmless lane target directly.
+	# Each Gremlin treats its inert lane marker as Grace, allowing all four
+	# combat brains to run simultaneously without surrounding the real player.
 	brain.set("player_group", target_group)
 	brain.set("player", target)
 
-	# Laboratory goblins must never enter an attack.
-	brain.set("default_attack", null)
 	brain.set("attack_cooldown_timer", 0.0)
 	brain.set("attack_commit_timer", 0.0)
+	brain.set("post_miss_retreat_timer", 0.0)
+	brain.set("selected_option", null)
+	brain.set("committed_option", null)
+	brain.set("option_cooldowns", {})
 
-	# Begin chasing immediately, even though the old target placement is
-	# slightly outside the Goblin's normal detection radius.
+	# Begin chasing immediately so the comparison starts as a synchronized race.
 	brain.set("state", EnemyBrainScript.EnemyState.CHASE)
 	brain.set("state_timer", 0.0)
 	brain.set("last_action_summary", "pursuing harmless lane target")

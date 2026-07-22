@@ -1,0 +1,261 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/physical_mechanism_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/lab_reset_console.tscn" id="4_reset"]
+[ext_resource type="Script" path="res://scripts/physics/dc_circuit_solver.gd" id="5_solver"]
+[ext_resource type="PackedScene" path="res://scenes/mechanisms/circuit_battery.tscn" id="6_battery"]
+[ext_resource type="PackedScene" path="res://scenes/mechanisms/pressure_plate_switch.tscn" id="7_plate"]
+[ext_resource type="PackedScene" path="res://scenes/mechanisms/circuit_cable.tscn" id="8_cable"]
+[ext_resource type="PackedScene" path="res://scenes/mechanisms/motorized_sliding_door.tscn" id="9_door"]
+[ext_resource type="Script" path="res://scripts/physics/field_responsive_body.gd" id="10_body"]
+[ext_resource type="Script" path="res://scripts/physics/circuit_component.gd" id="11_component"]
+[ext_resource type="Script" path="res://scripts/physics/circuit_terminal.gd" id="12_terminal"]
+[ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="13_force"]
+[ext_resource type="Script" path="res://scripts/combat/payload_receiver.gd" id="14_payload"]
+[ext_resource type="Resource" path="res://data/materials/copper_physical_profile.tres" id="15_copper"]
+
+[sub_resource type="StandardMaterial3D" id="Material_floor"]
+albedo_color = Color(0.045, 0.055, 0.075, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="Material_wall"]
+albedo_color = Color(0.075, 0.09, 0.12, 1)
+roughness = 0.84
+
+[sub_resource type="StandardMaterial3D" id="Material_copper"]
+albedo_color = Color(0.78, 0.27, 0.055, 1)
+metallic = 0.92
+roughness = 0.22
+
+[sub_resource type="StandardMaterial3D" id="Material_current"]
+albedo_color = Color(1, 0.7, 0.08, 0.42)
+transparency = 1
+emission_enabled = true
+emission = Color(1, 0.35, 0.02, 1)
+emission_energy_multiplier = 3.8
+
+[sub_resource type="BoxShape3D" id="Shape_floor"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="BoxMesh" id="Mesh_floor"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="BoxShape3D" id="Shape_wall_left"]
+size = Vector3(12.3, 4, 0.5)
+
+[sub_resource type="BoxMesh" id="Mesh_wall_left"]
+size = Vector3(12.3, 4, 0.5)
+
+[sub_resource type="BoxShape3D" id="Shape_wall_right"]
+size = Vector3(2.2, 4, 0.5)
+
+[sub_resource type="BoxMesh" id="Mesh_wall_right"]
+size = Vector3(2.2, 4, 0.5)
+
+[sub_resource type="BoxShape3D" id="Shape_side_wall"]
+size = Vector3(0.5, 4, 20)
+
+[sub_resource type="BoxMesh" id="Mesh_side_wall"]
+size = Vector3(0.5, 4, 20)
+
+[sub_resource type="BoxShape3D" id="Shape_fuse"]
+size = Vector3(2.3, 0.18, 0.18)
+
+[sub_resource type="BoxMesh" id="Mesh_fuse"]
+size = Vector3(2.3, 0.18, 0.18)
+
+[node name="PrototypePhysicalMechanismLab" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="DCCircuitSolver" type="Node" parent="."]
+script = ExtResource("5_solver")
+solve_interval = 0.06
+minimum_total_resistance = 0.05
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-58, -28, 0)
+light_energy = 1.35
+shadow_enabled = true
+
+[node name="MechanismGlow" type="OmniLight3D" parent="."]
+position = Vector3(0, 4.5, 0)
+light_color = Color(0.46, 0.28, 1, 1)
+light_energy = 2.1
+omni_range = 15.0
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("Shape_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+material_override = SubResource("Material_floor")
+mesh = SubResource("Mesh_floor")
+
+[node name="BackWallLeft" type="StaticBody3D" parent="."]
+position = Vector3(-3, 2, 3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWallLeft"]
+shape = SubResource("Shape_wall_left")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWallLeft"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("Mesh_wall_left")
+
+[node name="BackWallRight" type="StaticBody3D" parent="."]
+position = Vector3(8, 2, 3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWallRight"]
+shape = SubResource("Shape_wall_right")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWallRight"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("Mesh_wall_right")
+
+[node name="LeftWall" type="StaticBody3D" parent="."]
+position = Vector3(-9.2, 2, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftWall"]
+shape = SubResource("Shape_side_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftWall"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("Mesh_side_wall")
+
+[node name="RightWall" type="StaticBody3D" parent="."]
+position = Vector3(9.2, 2, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RightWall"]
+shape = SubResource("Shape_side_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RightWall"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("Mesh_side_wall")
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, -6.2)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="LabResetConsole" parent="." instance=ExtResource("4_reset")]
+position = Vector3(-7.8, 0, -6.8)
+
+[node name="Title" type="Label3D" parent="."]
+position = Vector3(0, 4.25, -5.8)
+text = "PHYSICAL MECHANISM KIT"
+font_size = 48
+pixel_size = 0.008
+billboard = 1
+modulate = Color(0.88, 0.78, 1, 1)
+outline_size = 7
+
+[node name="Instructions" type="Label3D" parent="."]
+position = Vector3(0, 3.45, -5.55)
+text = "BATTERY → COPPER CABLE → PRESSURE SWITCH → MOTOR → RETURN FUSE\nSTAND ON THE PLATE • STEP OFF TO RELEASE • KNOCK THE FUSE LOOSE • F8 RESETS"
+font_size = 23
+pixel_size = 0.006
+billboard = 1
+modulate = Color(1, 0.84, 0.42, 1)
+outline_size = 5
+
+[node name="MechanismReadout" type="Label3D" parent="."]
+position = Vector3(-5.8, 2.55, -4.0)
+text = "PHYSICAL MECHANISM\nCIRCUIT: OPEN"
+font_size = 24
+pixel_size = 0.006
+billboard = 1
+modulate = Color(0.72, 0.9, 1, 1)
+outline_size = 5
+
+[node name="Circuit" type="Node3D" parent="."]
+
+[node name="Battery" parent="Circuit" groups=["lab_resettable"] instance=ExtResource("6_battery")]
+position = Vector3(-5, 0.6, 0)
+
+[node name="PressurePlate" parent="Circuit" instance=ExtResource("7_plate")]
+position = Vector3(0, 0, 1.1)
+
+[node name="TopLeftCable" parent="Circuit" instance=ExtResource("8_cable")]
+component_id = "top_left_cable"
+endpoint_a = Vector3(-5, 0.25, 1.1)
+endpoint_b = Vector3(-1.2, 0.25, 1.1)
+
+[node name="TopRightCable" parent="Circuit" instance=ExtResource("8_cable")]
+component_id = "top_right_cable"
+endpoint_a = Vector3(1.2, 0.25, 1.1)
+endpoint_b = Vector3(5, 0.25, 1.1)
+
+[node name="BottomRightCable" parent="Circuit" instance=ExtResource("8_cable")]
+component_id = "bottom_right_cable"
+endpoint_a = Vector3(5, 0.25, -1.1)
+endpoint_b = Vector3(1.15, 0.1, -1.1)
+
+[node name="BottomLeftCable" parent="Circuit" instance=ExtResource("8_cable")]
+component_id = "bottom_left_cable"
+endpoint_a = Vector3(-1.15, 0.1, -1.1)
+endpoint_b = Vector3(-5, 0.25, -1.1)
+
+[node name="MotorizedDoor" parent="Circuit" instance=ExtResource("9_door")]
+position = Vector3(5, 0, 0)
+
+[node name="MovableFuse" type="CharacterBody3D" parent="."]
+position = Vector3(0, 0.1, -1.1)
+script = ExtResource("10_body")
+body_label = "Movable Copper Return Fuse"
+material_profile = ExtResource("15_copper")
+mass_override_kg = 2.4
+gravity_strength = 20.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MovableFuse"]
+shape = SubResource("Shape_fuse")
+
+[node name="Body" type="MeshInstance3D" parent="MovableFuse"]
+material_override = SubResource("Material_copper")
+mesh = SubResource("Mesh_fuse")
+
+[node name="PayloadReceiver" type="Node" parent="MovableFuse"]
+script = ExtResource("14_payload")
+
+[node name="ForceReceiver" type="Node" parent="MovableFuse"]
+script = ExtResource("13_force")
+drag = 7.0
+max_force_speed = 5.0
+impulse_momentum_retention = 0.12
+
+[node name="CircuitComponent" type="Node3D" parent="MovableFuse"]
+script = ExtResource("11_component")
+component_id = "movable_return_fuse"
+display_name = "Copper Return Fuse"
+material_profile = ExtResource("15_copper")
+resistance_ohms = 0.18
+max_current_amps = 8.0
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="MovableFuse/CircuitComponent"]
+visible = false
+scale = Vector3(1.05, 1.7, 1.7)
+material_override = SubResource("Material_current")
+mesh = SubResource("Mesh_fuse")
+
+[node name="TerminalA" type="Marker3D" parent="MovableFuse/CircuitComponent"]
+position = Vector3(-1.15, 0, 0)
+script = ExtResource("12_terminal")
+terminal_id = "left"
+connection_radius = 0.38
+
+[node name="TerminalB" type="Marker3D" parent="MovableFuse/CircuitComponent"]
+position = Vector3(1.15, 0, 0)
+script = ExtResource("12_terminal")
+terminal_id = "right"
+connection_radius = 0.38
+
+[node name="FuseLabel" type="Label3D" parent="MovableFuse"]
+position = Vector3(0, 0.8, 0)
+text = "MOVABLE COPPER FUSE\nPHYSICAL RETURN PATH"
+font_size = 21
+pixel_size = 0.006
+billboard = 1
+outline_size = 5

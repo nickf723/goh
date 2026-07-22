@@ -166,18 +166,31 @@ func circle_player(delta: float) -> void:
 
 func get_zone_adjusted_direction(desired_direction: Vector3) -> Vector3:
 	desired_direction.y = 0.0
+
 	if desired_direction.length() <= 0.01:
 		return Vector3.ZERO
 
 	var desired: Vector3 = desired_direction.normalized()
 	var avoid_direction: Vector3 = get_zone_avoid_direction()
+
 	if avoid_direction.length() <= 0.01:
 		return desired
 
-	var behavior: String = str(zone_awareness_data.get("behavior", "none"))
+	var away: Vector3 = avoid_direction.normalized()
+	var behavior: String = str(
+		zone_awareness_data.get("behavior", "none")
+	)
+
 	var strength: float = zone_avoid_strength
-	strength *= get_personality_number("zone_avoid_strength_multiplier", 1.0)
-	strength *= PersonalityTraits.get_behavior_avoid_multiplier(personality_id, behavior, 1.0)
+	strength *= get_personality_number(
+		"zone_avoid_strength_multiplier",
+		1.0
+	)
+	strength *= PersonalityTraits.get_behavior_avoid_multiplier(
+		personality_id,
+		behavior,
+		1.0
+	)
 
 	match behavior:
 		"slow":
@@ -187,14 +200,61 @@ func get_zone_adjusted_direction(desired_direction: Vector3) -> Vector3:
 		"danger":
 			strength *= 1.15
 
-	var mixed: Vector3 = desired + avoid_direction.normalized() * strength
+	# Preserve forward progress while allowing a gentle outward push.
+	var outward_strength: float = clamp(
+		strength,
+		0.0,
+		0.65
+	)
+
+	# Convert stronger avoidance into sideways steering rather than retreat.
+	var lateral_strength: float = clamp(
+		(strength - 0.65) * 0.35,
+		0.0,
+		2.5
+	)
+
+	var tangent_a: Vector3 = Vector3(
+		-away.z,
+		0.0,
+		away.x
+	)
+	var tangent_b: Vector3 = -tangent_a
+
+	# Prefer the side that maintains the most progress toward the target.
+	var tangent: Vector3 = tangent_a
+
+	if tangent_b.dot(desired) > tangent_a.dot(desired):
+		tangent = tangent_b
+
+	# Choose a stable side when the hazard is perfectly centered.
+	if abs(
+		tangent_a.dot(desired)
+		- tangent_b.dot(desired)
+	) < 0.01:
+		tangent = tangent_a
+
+	var mixed: Vector3 = (
+		desired
+		+ away * outward_strength
+		+ tangent * lateral_strength
+	)
+
 	mixed.y = 0.0
 
 	if mixed.length() <= 0.01:
-		return avoid_direction.normalized()
+		return desired
 
-	return mixed.normalized()
+	mixed = mixed.normalized()
 
+	# Avoidance may bend travel, but it may never reverse travel.
+	if mixed.dot(desired) < 0.15:
+		mixed = (
+			desired * 0.5
+			+ tangent * max(lateral_strength, 0.5)
+		).normalized()
+
+	return mixed
 
 func should_hesitate_for_zone() -> bool:
 	return zone_hesitation_timer > 0.0 and is_zone_active()

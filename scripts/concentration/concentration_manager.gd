@@ -29,9 +29,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if active_effect == null:
-		return
-	enforce_mana_cap()
+	if active_effect != null:
+		enforce_mana_cap()
 	regenerate_mana(delta)
 	refresh_hud()
 

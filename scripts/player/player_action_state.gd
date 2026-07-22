@@ -85,11 +85,18 @@ func can_move() -> bool:
 	return true
 
 
+func flight_restrictions_apply() -> bool:
+	if not is_flying:
+		return false
+	var actor: CharacterBody3D = get_parent() as CharacterBody3D
+	return actor == null or not actor.is_on_floor()
+
+
 func can_attack() -> bool:
 	if is_defeated or is_manipulating:
 		return false
 
-	if is_flying and not allow_attacking_during_flight:
+	if flight_restrictions_apply() and not allow_attacking_during_flight:
 		return false
 
 	if is_attacking or is_casting or is_interacting or is_dodging:
@@ -105,7 +112,7 @@ func can_cast() -> bool:
 	if is_defeated or is_manipulating:
 		return false
 
-	if is_flying and not allow_casting_during_flight:
+	if flight_restrictions_apply() and not allow_casting_during_flight:
 		return false
 
 	if is_attacking and not attack_allows_cast_cancel:
@@ -124,7 +131,7 @@ func can_interact() -> bool:
 	if is_defeated or is_manipulating:
 		return false
 
-	if is_flying and not allow_interaction_during_flight:
+	if flight_restrictions_apply() and not allow_interaction_during_flight:
 		return false
 
 	if is_attacking or is_casting or is_interacting or is_dodging:
@@ -140,7 +147,7 @@ func can_dodge() -> bool:
 	if is_defeated or is_manipulating:
 		return false
 
-	if is_flying and not allow_dodging_during_flight:
+	if flight_restrictions_apply() and not allow_dodging_during_flight:
 		return false
 
 	if is_attacking and not attack_allows_dodge_cancel:
@@ -158,7 +165,7 @@ func can_dodge() -> bool:
 func can_manipulate() -> bool:
 	if is_defeated or is_focus_menu_open:
 		return false
-	if is_flying and not allow_manipulation_during_flight:
+	if flight_restrictions_apply() and not allow_manipulation_during_flight:
 		return false
 	return not (is_attacking or is_casting or is_interacting or is_dodging or is_manipulating)
 
@@ -275,6 +282,7 @@ func get_debug_data() -> Dictionary:
 		"interact": is_interacting,
 		"manipulating": is_manipulating,
 		"flying": is_flying,
+		"flight_restrictions": flight_restrictions_apply(),
 		"cast_cancel": attack_allows_cast_cancel,
 		"dodge_cancel": attack_allows_dodge_cancel,
 	}

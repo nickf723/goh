@@ -1,0 +1,178 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/interaction/breakable_prop.gd" id="1_breakable"]
+[ext_resource type="Script" uid="uid://bmu7g8680htm1" path="res://scripts/combat/hit_receiver.gd" id="2_hit"]
+[ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="3_tags"]
+[ext_resource type="Script" uid="uid://dfd618a4fsswa" path="res://scripts/combat/status_receiver.gd" id="4_status"]
+[ext_resource type="Script" uid="uid://dl7cjack4ydjg" path="res://scripts/combat/payload_receiver.gd" id="5_payload"]
+[ext_resource type="Script" path="res://scripts/physics/thermal_state.gd" id="6_thermal"]
+[ext_resource type="Script" path="res://scripts/physics/electrical_material_response.gd" id="7_electrical"]
+[ext_resource type="Script" path="res://scripts/core/component_reset_adapter.gd" id="8_reset_adapter"]
+[ext_resource type="Resource" path="res://data/materials/iron_physical_profile.tres" id="9_iron_profile"]
+
+[sub_resource type="StandardMaterial3D" id="Material_iron"]
+albedo_color = Color(0.24, 0.29, 0.34, 1)
+metallic = 0.82
+roughness = 0.34
+
+[sub_resource type="StandardMaterial3D" id="Material_iron_dark"]
+albedo_color = Color(0.08, 0.11, 0.14, 1)
+metallic = 0.9
+roughness = 0.28
+
+[sub_resource type="StandardMaterial3D" id="Material_dent"]
+albedo_color = Color(0.03, 0.05, 0.07, 1)
+emission_enabled = true
+emission = Color(0.08, 0.18, 0.28, 1)
+emission_energy_multiplier = 0.28
+metallic = 0.7
+roughness = 0.42
+
+[sub_resource type="BoxMesh" id="BoxMesh_body"]
+size = Vector3(1.55, 1.05, 1.25)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rail_h"]
+size = Vector3(1.67, 0.12, 1.37)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rail_v"]
+size = Vector3(0.13, 1.17, 1.37)
+
+[sub_resource type="BoxMesh" id="BoxMesh_latch"]
+size = Vector3(0.38, 0.3, 0.12)
+
+[sub_resource type="SphereMesh" id="SphereMesh_dent"]
+radius = 0.28
+height = 0.12
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxShape3D" id="BoxShape_box"]
+size = Vector3(1.62, 1.1, 1.32)
+
+[node name="BreakableMetalBox" type="Area3D" groups=["breakable", "interactable_target"]]
+script = ExtResource("1_breakable")
+cracked_health_ratio = 0.7
+hit_wobble_degrees = 4.0
+hit_wobble_time = 0.12
+crack_scale_pulse = 1.035
+fragment_material = SubResource("Material_iron")
+fragment_count = 8
+fragment_base_size = Vector3(0.5, 0.1, 0.34)
+fragment_spawn_radius = 0.46
+fragment_impulse = 4.2
+fragment_upward_impulse = 2.6
+fragment_lifetime = 4.0
+impact_direction_bias = 0.5
+auto_reset_seconds = 5.0
+
+[node name="VisualAnchor" type="Node3D" parent="."]
+position = Vector3(0, 0.56, 0)
+
+[node name="IntactVisual" type="Node3D" parent="VisualAnchor"]
+
+[node name="Body" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+material_override = SubResource("Material_iron")
+mesh = SubResource("BoxMesh_body")
+
+[node name="TopRail" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+position = Vector3(0, 0.49, 0)
+material_override = SubResource("Material_iron_dark")
+mesh = SubResource("BoxMesh_rail_h")
+
+[node name="BottomRail" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+position = Vector3(0, -0.49, 0)
+material_override = SubResource("Material_iron_dark")
+mesh = SubResource("BoxMesh_rail_h")
+
+[node name="LeftRail" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+position = Vector3(-0.72, 0, 0)
+material_override = SubResource("Material_iron_dark")
+mesh = SubResource("BoxMesh_rail_v")
+
+[node name="RightRail" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+position = Vector3(0.72, 0, 0)
+material_override = SubResource("Material_iron_dark")
+mesh = SubResource("BoxMesh_rail_v")
+
+[node name="Latch" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+position = Vector3(0, 0.05, -0.67)
+material_override = SubResource("Material_iron_dark")
+mesh = SubResource("BoxMesh_latch")
+
+[node name="CrackedVisual" type="Node3D" parent="VisualAnchor"]
+visible = false
+
+[node name="Body" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+rotation = Vector3(0.02, -0.025, 0.018)
+material_override = SubResource("Material_iron")
+mesh = SubResource("BoxMesh_body")
+
+[node name="TopRail" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+position = Vector3(0.03, 0.46, -0.02)
+rotation = Vector3(0.02, 0.01, 0.04)
+material_override = SubResource("Material_iron_dark")
+mesh = SubResource("BoxMesh_rail_h")
+
+[node name="BottomRail" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+position = Vector3(-0.04, -0.47, 0.03)
+rotation = Vector3(-0.02, -0.02, -0.035)
+material_override = SubResource("Material_iron_dark")
+mesh = SubResource("BoxMesh_rail_h")
+
+[node name="DentFrontA" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+position = Vector3(0.28, 0.14, -0.64)
+rotation = Vector3(1.5708, 0, 0.3)
+scale = Vector3(1.0, 0.34, 1.0)
+material_override = SubResource("Material_dent")
+mesh = SubResource("SphereMesh_dent")
+
+[node name="DentFrontB" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+position = Vector3(-0.34, -0.18, -0.64)
+rotation = Vector3(1.5708, 0, -0.45)
+scale = Vector3(0.75, 0.25, 0.75)
+material_override = SubResource("Material_dent")
+mesh = SubResource("SphereMesh_dent")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.56, 0)
+shape = SubResource("BoxShape_box")
+
+[node name="HitReceiver" type="Node" parent="."]
+script = ExtResource("2_hit")
+target_name = "Metal Box"
+hit_mode = 2
+max_health = 3
+current_health = 3
+disappears_when_defeated = false
+resistant_elements = Array[String](["fire"])
+resistance_multiplier = 0.5
+
+[node name="TagComponent" type="Node" parent="."]
+script = ExtResource("3_tags")
+tags = Array[String](["prop", "container", "metal", "iron", "conductive", "ferromagnetic", "breakable", "nonflammable"])
+
+[node name="StatusReceiver" type="Node" parent="."]
+script = ExtResource("4_status")
+
+[node name="ThermalState" type="Node" parent="."]
+script = ExtResource("6_thermal")
+material_profile = ExtResource("9_iron_profile")
+mass_kg = 1.0
+gameplay_heat_capacity_scale = 0.002
+starting_temperature_c = 20.0
+ambient_temperature_c = 20.0
+ambient_conductance_j_per_second_c = 0.45
+ignition_enabled = false
+
+[node name="ElectricalMaterialResponse" type="Node" parent="."]
+script = ExtResource("7_electrical")
+material_profile = ExtResource("9_iron_profile")
+reaction_name = "CONDUCT"
+feedback_radius = 1.65
+
+[node name="PayloadReceiver" type="Node" parent="."]
+script = ExtResource("5_payload")
+
+[node name="ComponentResetAdapter" type="Node" parent="."]
+script = ExtResource("8_reset_adapter")
+component_paths = Array[NodePath]([NodePath("../ThermalState"), NodePath("../ElectricalMaterialResponse")])

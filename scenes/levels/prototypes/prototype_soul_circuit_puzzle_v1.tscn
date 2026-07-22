@@ -1,0 +1,328 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_soul_circuit_puzzle.gd" id="1_puzzle"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/lab_reset_console.tscn" id="4_reset"]
+[ext_resource type="Script" path="res://scripts/physics/dc_circuit_solver.gd" id="5_solver"]
+[ext_resource type="PackedScene" path="res://scenes/mechanisms/circuit_battery.tscn" id="6_battery"]
+[ext_resource type="PackedScene" path="res://scenes/mechanisms/pressure_plate_switch.tscn" id="7_plate"]
+[ext_resource type="PackedScene" path="res://scenes/mechanisms/circuit_cable.tscn" id="8_cable"]
+[ext_resource type="PackedScene" path="res://scenes/mechanisms/motorized_sliding_door.tscn" id="9_door"]
+[ext_resource type="PackedScene" path="res://scenes/actors/props/soul_copper_fuse.tscn" id="10_fuse"]
+[ext_resource type="PackedScene" path="res://scenes/actors/props/soul_stone_weight.tscn" id="11_weight"]
+[ext_resource type="PackedScene" path="res://scenes/actors/props/soul_giant_slab.tscn" id="12_slab"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/breakable_wooden_crate.tscn" id="13_crate"]
+
+[sub_resource type="StandardMaterial3D" id="Material_floor"]
+albedo_color = Color(0.04, 0.052, 0.071, 1)
+roughness = 0.94
+
+[sub_resource type="StandardMaterial3D" id="Material_wall"]
+albedo_color = Color(0.095, 0.11, 0.14, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Material_shelf"]
+albedo_color = Color(0.17, 0.2, 0.25, 1)
+metallic = 0.55
+roughness = 0.46
+
+[sub_resource type="StandardMaterial3D" id="Material_copper_marker"]
+albedo_color = Color(0.78, 0.27, 0.055, 1)
+metallic = 0.9
+roughness = 0.24
+emission_enabled = true
+emission = Color(0.38, 0.07, 0.01, 1)
+emission_energy_multiplier = 0.65
+
+[sub_resource type="StandardMaterial3D" id="Material_soul_marker"]
+albedo_color = Color(0.06, 0.63, 0.83, 0.62)
+transparency = 1
+emission_enabled = true
+emission = Color(0.02, 0.52, 0.9, 1)
+emission_energy_multiplier = 1.7
+
+[sub_resource type="BoxShape3D" id="Shape_floor"]
+size = Vector3(22, 1, 24)
+
+[sub_resource type="BoxMesh" id="Mesh_floor"]
+size = Vector3(22, 1, 24)
+
+[sub_resource type="BoxShape3D" id="Shape_back_left"]
+size = Vector3(12.5, 4, 0.6)
+
+[sub_resource type="BoxMesh" id="Mesh_back_left"]
+size = Vector3(12.5, 4, 0.6)
+
+[sub_resource type="BoxShape3D" id="Shape_back_right"]
+size = Vector3(2.5, 4, 0.6)
+
+[sub_resource type="BoxMesh" id="Mesh_back_right"]
+size = Vector3(2.5, 4, 0.6)
+
+[sub_resource type="BoxShape3D" id="Shape_side_wall"]
+size = Vector3(0.6, 4, 24)
+
+[sub_resource type="BoxMesh" id="Mesh_side_wall"]
+size = Vector3(0.6, 4, 24)
+
+[sub_resource type="BoxShape3D" id="Shape_alcove_side"]
+size = Vector3(0.5, 3, 4.7)
+
+[sub_resource type="BoxMesh" id="Mesh_alcove_side"]
+size = Vector3(0.5, 3, 4.7)
+
+[sub_resource type="BoxShape3D" id="Shape_alcove_back"]
+size = Vector3(5.2, 3, 0.5)
+
+[sub_resource type="BoxMesh" id="Mesh_alcove_back"]
+size = Vector3(5.2, 3, 0.5)
+
+[sub_resource type="BoxShape3D" id="Shape_shelf"]
+size = Vector3(3.2, 0.3, 2.0)
+
+[sub_resource type="BoxMesh" id="Mesh_shelf"]
+size = Vector3(3.2, 0.3, 2.0)
+
+[sub_resource type="BoxMesh" id="Mesh_gap_marker"]
+size = Vector3(2.5, 0.045, 0.36)
+
+[sub_resource type="TorusMesh" id="Mesh_soul_ring"]
+inner_radius = 0.62
+outer_radius = 0.72
+rings = 28
+ring_segments = 10
+
+[sub_resource type="BoxShape3D" id="Shape_exit"]
+size = Vector3(3.0, 2.7, 2.0)
+
+[node name="PrototypeSoulCircuitPuzzle" type="Node3D"]
+script = ExtResource("1_puzzle")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="DCCircuitSolver" type="Node" parent="."]
+script = ExtResource("5_solver")
+solve_interval = 0.06
+minimum_total_resistance = 0.05
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-58, -28, 0)
+light_energy = 1.35
+shadow_enabled = true
+
+[node name="SoulLight" type="OmniLight3D" parent="."]
+position = Vector3(-5.2, 3.4, -1.4)
+light_color = Color(0.12, 0.58, 1, 1)
+light_energy = 2.2
+omni_range = 8.5
+
+[node name="MechanismLight" type="OmniLight3D" parent="."]
+position = Vector3(2.2, 3.5, 0)
+light_color = Color(1, 0.42, 0.08, 1)
+light_energy = 1.8
+omni_range = 9.0
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("Shape_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+material_override = SubResource("Material_floor")
+mesh = SubResource("Mesh_floor")
+
+[node name="BackWallLeft" type="StaticBody3D" parent="."]
+position = Vector3(-3, 2, 3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWallLeft"]
+shape = SubResource("Shape_back_left")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWallLeft"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("Mesh_back_left")
+
+[node name="BackWallRight" type="StaticBody3D" parent="."]
+position = Vector3(8, 2, 3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWallRight"]
+shape = SubResource("Shape_back_right")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWallRight"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("Mesh_back_right")
+
+[node name="LeftWall" type="StaticBody3D" parent="."]
+position = Vector3(-10.7, 2, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftWall"]
+shape = SubResource("Shape_side_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftWall"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("Mesh_side_wall")
+
+[node name="RightWall" type="StaticBody3D" parent="."]
+position = Vector3(10.7, 2, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RightWall"]
+shape = SubResource("Shape_side_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RightWall"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("Mesh_side_wall")
+
+[node name="AlcoveLeftWall" type="StaticBody3D" parent="."]
+position = Vector3(-8, 1.5, -1.1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="AlcoveLeftWall"]
+shape = SubResource("Shape_alcove_side")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="AlcoveLeftWall"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("Mesh_alcove_side")
+
+[node name="AlcoveRightWall" type="StaticBody3D" parent="."]
+position = Vector3(-2.4, 1.5, -1.1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="AlcoveRightWall"]
+shape = SubResource("Shape_alcove_side")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="AlcoveRightWall"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("Mesh_alcove_side")
+
+[node name="AlcoveBackWall" type="StaticBody3D" parent="."]
+position = Vector3(-5.2, 1.5, 1.25)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="AlcoveBackWall"]
+shape = SubResource("Shape_alcove_back")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="AlcoveBackWall"]
+material_override = SubResource("Material_wall")
+mesh = SubResource("Mesh_alcove_back")
+
+[node name="WeightShelf" type="StaticBody3D" parent="."]
+position = Vector3(1.8, 1.4, -3.6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WeightShelf"]
+shape = SubResource("Shape_shelf")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WeightShelf"]
+material_override = SubResource("Material_shelf")
+mesh = SubResource("Mesh_shelf")
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, -7.5)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="LabResetConsole" parent="." instance=ExtResource("4_reset")]
+position = Vector3(-8.8, 0, -7.7)
+
+[node name="Title" type="Label3D" parent="."]
+position = Vector3(0, 4.25, -6.5)
+text = "THE SILENT GATE"
+font_size = 52
+pixel_size = 0.008
+billboard = 1
+modulate = Color(0.82, 0.92, 1, 1)
+outline_size = 7
+
+[node name="Clue" type="Label3D" parent="."]
+position = Vector3(0, 3.45, -6.2)
+text = "A WEIGHT CLOSES THE SWITCH.  A COPPER PATH FEEDS THE MOTOR."
+font_size = 23
+pixel_size = 0.006
+billboard = 1
+modulate = Color(1, 0.82, 0.42, 1)
+outline_size = 5
+
+[node name="AlcoveLabel" type="Label3D" parent="."]
+position = Vector3(-5.2, 2.55, -4.35)
+text = "SEALED ALCOVE"
+font_size = 24
+pixel_size = 0.006
+billboard = 1
+modulate = Color(0.38, 0.88, 1, 1)
+outline_size = 5
+
+[node name="ReturnGapLabel" type="Label3D" parent="."]
+position = Vector3(1.8, 1.0, -1.1)
+text = "COPPER RETURN GAP"
+font_size = 21
+pixel_size = 0.0055
+billboard = 1
+modulate = Color(1, 0.52, 0.18, 1)
+outline_size = 5
+
+[node name="ReturnGapMarker" type="MeshInstance3D" parent="."]
+position = Vector3(1.8, 0.035, -1.1)
+material_override = SubResource("Material_copper_marker")
+mesh = SubResource("Mesh_gap_marker")
+
+[node name="WeightSoulRing" type="MeshInstance3D" parent="."]
+position = Vector3(1.8, 1.6, -3.6)
+rotation = Vector3(1.5708, 0, 0)
+material_override = SubResource("Material_soul_marker")
+mesh = SubResource("Mesh_soul_ring")
+
+[node name="Circuit" type="Node3D" parent="."]
+
+[node name="Battery" parent="Circuit" instance=ExtResource("6_battery")]
+position = Vector3(-1.5, 0.6, 0)
+
+[node name="PressurePlate" parent="Circuit" instance=ExtResource("7_plate")]
+position = Vector3(1.8, 0, 1.1)
+
+[node name="TopLeftCable" parent="Circuit" instance=ExtResource("8_cable")]
+component_id = "puzzle_top_left_cable"
+endpoint_a = Vector3(-1.5, 0.25, 1.1)
+endpoint_b = Vector3(0.6, 0.25, 1.1)
+
+[node name="TopRightCable" parent="Circuit" instance=ExtResource("8_cable")]
+component_id = "puzzle_top_right_cable"
+endpoint_a = Vector3(3, 0.25, 1.1)
+endpoint_b = Vector3(5, 0.25, 1.1)
+
+[node name="BottomRightCable" parent="Circuit" instance=ExtResource("8_cable")]
+component_id = "puzzle_bottom_right_cable"
+endpoint_a = Vector3(5, 0.25, -1.1)
+endpoint_b = Vector3(2.95, 0.1, -1.1)
+
+[node name="BottomLeftCable" parent="Circuit" instance=ExtResource("8_cable")]
+component_id = "puzzle_bottom_left_cable"
+endpoint_a = Vector3(0.65, 0.1, -1.1)
+endpoint_b = Vector3(-1.5, 0.25, -1.1)
+
+[node name="MotorizedDoor" parent="Circuit" instance=ExtResource("9_door")]
+position = Vector3(5, 0, 0)
+
+[node name="GiantSlab" parent="." instance=ExtResource("12_slab")]
+position = Vector3(-5.2, 0, -3.2)
+
+[node name="CopperFuse" parent="." instance=ExtResource("10_fuse")]
+position = Vector3(-5.2, 0, 0.35)
+rotation_degrees = Vector3(0, 22, 0)
+
+[node name="StoneWeight" parent="." instance=ExtResource("11_weight")]
+position = Vector3(1.8, 1.55, -3.6)
+
+[node name="ExitTrigger" type="Area3D" parent="."]
+position = Vector3(5, 1.35, 5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ExitTrigger"]
+shape = SubResource("Shape_exit")
+
+[node name="RewardCrate" parent="." instance=ExtResource("13_crate")]
+position = Vector3(5, 0, 6.7)
+auto_reset_seconds = 0.0
+
+[node name="RewardLabel" type="Label3D" parent="."]
+position = Vector3(5, 2.2, 6.7)
+text = "SUPPLY CACHE"
+font_size = 24
+pixel_size = 0.006
+billboard = 1
+modulate = Color(0.66, 1, 0.72, 1)
+outline_size = 5

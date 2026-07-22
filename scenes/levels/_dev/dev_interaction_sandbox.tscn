@@ -19,6 +19,9 @@
 [ext_resource type="Script" path="res://scripts/systems/dev_test_scenario_director.gd" id="17_6lkbd"]
 [ext_resource type="PackedScene" path="res://scenes/actors/interactables/breakable_stone_urn.tscn" id="18_breakable_urn"]
 [ext_resource type="PackedScene" path="res://scenes/actors/interactables/breakable_wooden_crate.tscn" id="19_breakable_crate"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/breakable_metal_box.tscn" id="20_metal_box"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/breakable_wooden_barrel.tscn" id="21_wood_barrel"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/breakable_glass_jar.tscn" id="22_glass_jar"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_3s6yi"]
 size = Vector3(20, 1, 20)
@@ -69,6 +72,22 @@ position = Vector3(-1.4, 0, -4.2)
 
 [node name="BreakableWoodenCrate" parent="." instance=ExtResource("19_breakable_crate")]
 position = Vector3(1.5, 0, -4.2)
+
+[node name="CommonPropPackSign" type="Label3D" parent="."]
+position = Vector3(0, 2.8, -1.25)
+billboard = 1
+text = "COMMON PROP PACK\nMETAL: sturdy + conductive   WOOD: breakable + flammable   GLASS: one-hit shatter"
+font_size = 30
+outline_size = 8
+
+[node name="BreakableMetalBox" parent="." instance=ExtResource("20_metal_box")]
+position = Vector3(-3.1, 0, -1.25)
+
+[node name="BreakableWoodenBarrel" parent="." instance=ExtResource("21_wood_barrel")]
+position = Vector3(0, 0, -1.25)
+
+[node name="BreakableGlassJar" parent="." instance=ExtResource("22_glass_jar")]
+position = Vector3(3.0, 0, -1.25)
 
 [node name="FocusTime" type="Node" parent="." unique_id=1536230861]
 script = ExtResource("7_1ltt4")

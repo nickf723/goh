@@ -17,6 +17,14 @@ class_name WeatherDefinition
 @export_range(1.0, 40.0, 0.5) var fall_speed: float = 18.0
 @export var wind_velocity: Vector3 = Vector3(1.2, 0.0, 0.4)
 
+@export_group("Snow Presentation")
+@export_range(8, 256, 1) var snowflake_count: int = 108
+@export_range(2.0, 30.0, 0.5) var snow_radius: float = 10.0
+@export_range(2.0, 20.0, 0.5) var snow_height: float = 8.5
+@export_range(0.5, 15.0, 0.25) var snow_fall_speed: float = 4.5
+@export_range(0.0, 4.0, 0.05) var snow_sway_strength: float = 0.8
+@export_range(0.0, 1.0, 0.01) var snow_accumulation_rate: float = 0.14
+
 
 func generates_element(element: String) -> bool:
 	return generated_elements.has(element.to_lower().strip_edges())

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/abilities/snow_weather_spell.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Snowfall"
+description = "Reserve nearly half of Grace's mana capacity to sustain snowfall. Ice spells become free while the frozen sky supplies an infinite Ice source. Cast again to dismiss it."
+element = "ice"
+category = 4
+mana_cost = 0
+spell_id = "snow_weather"
+short_label = "Snow"
+icon_text = "Sn"
+roles = Array[String](["weather", "concentration", "element_source", "support", "control", "setup"])
+targeting_style = "self_centered"
+delivery_type = "sustained_weather"
+combo_tags = Array[String](["snow", "ice", "cold", "weather", "infinite_source", "freeze_setup"])
+status_tags = Array[String](["frozen"])
+ui_tags = Array[String](["weather", "concentration", "toggle"])
+debug_tags = Array[String](["prototype", "snow_weather"])
+design_notes = "Snowfall reserves mana capacity instead of paying a fixed cost. It makes Ice spells free, accumulates on authored terrain, freezes exposed objects over repeated pulses, and weakens exposed fire."
+ability_scene = ExtResource("1_scene")

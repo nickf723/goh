@@ -1,0 +1,149 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/interaction/breakable_prop.gd" id="1_breakable"]
+[ext_resource type="Script" uid="uid://bmu7g8680htm1" path="res://scripts/combat/hit_receiver.gd" id="2_hit"]
+[ext_resource type="Script" uid="uid://ccwj2lbfbneky" path="res://scripts/core/tag_component.gd" id="3_tags"]
+[ext_resource type="Script" uid="uid://dfd618a4fsswa" path="res://scripts/combat/status_receiver.gd" id="4_status"]
+[ext_resource type="Script" uid="uid://dl7cjack4ydjg" path="res://scripts/combat/payload_receiver.gd" id="5_payload"]
+[ext_resource type="Script" path="res://scripts/physics/thermal_state.gd" id="6_thermal"]
+[ext_resource type="Script" path="res://scripts/core/component_reset_adapter.gd" id="7_reset_adapter"]
+[ext_resource type="Resource" path="res://data/materials/glass_physical_profile.tres" id="8_glass_profile"]
+
+[sub_resource type="StandardMaterial3D" id="Material_glass"]
+albedo_color = Color(0.38, 0.75, 0.86, 0.38)
+transparency = 1
+metallic = 0.08
+roughness = 0.12
+refraction_enabled = true
+refraction_scale = 0.04
+
+[sub_resource type="StandardMaterial3D" id="Material_glass_cracked"]
+albedo_color = Color(0.2, 0.52, 0.62, 0.48)
+transparency = 1
+metallic = 0.04
+roughness = 0.28
+emission_enabled = true
+emission = Color(0.08, 0.24, 0.3, 1)
+emission_energy_multiplier = 0.35
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_body"]
+top_radius = 0.34
+bottom_radius = 0.48
+height = 0.92
+radial_segments = 20
+rings = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_neck"]
+top_radius = 0.22
+bottom_radius = 0.28
+height = 0.34
+radial_segments = 20
+
+[sub_resource type="TorusMesh" id="TorusMesh_rim"]
+inner_radius = 0.2
+outer_radius = 0.29
+rings = 16
+ring_segments = 8
+
+[sub_resource type="BoxMesh" id="BoxMesh_crack"]
+size = Vector3(0.025, 0.42, 0.018)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape_jar"]
+radius = 0.5
+height = 1.25
+
+[node name="BreakableGlassJar" type="Area3D" groups=["breakable", "interactable_target"]]
+script = ExtResource("1_breakable")
+hit_wobble_degrees = 11.0
+hit_wobble_time = 0.1
+crack_scale_pulse = 1.12
+fragment_material = SubResource("Material_glass")
+fragment_count = 14
+fragment_base_size = Vector3(0.18, 0.07, 0.11)
+fragment_spawn_radius = 0.32
+fragment_impulse = 6.8
+fragment_upward_impulse = 4.2
+fragment_lifetime = 3.0
+impact_direction_bias = 0.72
+auto_reset_seconds = 4.0
+
+[node name="VisualAnchor" type="Node3D" parent="."]
+position = Vector3(0, 0.62, 0)
+
+[node name="IntactVisual" type="Node3D" parent="VisualAnchor"]
+
+[node name="Body" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+material_override = SubResource("Material_glass")
+mesh = SubResource("CylinderMesh_body")
+
+[node name="Neck" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+position = Vector3(0, 0.58, 0)
+material_override = SubResource("Material_glass")
+mesh = SubResource("CylinderMesh_neck")
+
+[node name="Rim" type="MeshInstance3D" parent="VisualAnchor/IntactVisual"]
+position = Vector3(0, 0.77, 0)
+rotation = Vector3(1.5708, 0, 0)
+material_override = SubResource("Material_glass")
+mesh = SubResource("TorusMesh_rim")
+
+[node name="CrackedVisual" type="Node3D" parent="VisualAnchor"]
+visible = false
+
+[node name="Body" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+material_override = SubResource("Material_glass_cracked")
+mesh = SubResource("CylinderMesh_body")
+
+[node name="Neck" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+position = Vector3(0.02, 0.56, -0.01)
+rotation = Vector3(0.03, 0.02, 0.04)
+material_override = SubResource("Material_glass_cracked")
+mesh = SubResource("CylinderMesh_neck")
+
+[node name="CrackA" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+position = Vector3(0.26, 0.08, -0.37)
+rotation = Vector3(0.04, -0.55, 0.6)
+material_override = SubResource("Material_glass_cracked")
+mesh = SubResource("BoxMesh_crack")
+
+[node name="CrackB" type="MeshInstance3D" parent="VisualAnchor/CrackedVisual"]
+position = Vector3(-0.24, -0.14, -0.38)
+rotation = Vector3(-0.03, 0.6, -0.52)
+material_override = SubResource("Material_glass_cracked")
+mesh = SubResource("BoxMesh_crack")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.62, 0)
+shape = SubResource("CylinderShape_jar")
+
+[node name="HitReceiver" type="Node" parent="."]
+script = ExtResource("2_hit")
+target_name = "Glass Jar"
+hit_mode = 2
+max_health = 1
+current_health = 1
+disappears_when_defeated = false
+
+[node name="TagComponent" type="Node" parent="."]
+script = ExtResource("3_tags")
+tags = Array[String](["prop", "container", "glass", "fragile", "breakable", "insulator", "nonflammable"])
+
+[node name="StatusReceiver" type="Node" parent="."]
+script = ExtResource("4_status")
+
+[node name="ThermalState" type="Node" parent="."]
+script = ExtResource("6_thermal")
+material_profile = ExtResource("8_glass_profile")
+mass_kg = 0.25
+gameplay_heat_capacity_scale = 0.002
+starting_temperature_c = 20.0
+ambient_temperature_c = 20.0
+ambient_conductance_j_per_second_c = 0.2
+ignition_enabled = false
+
+[node name="PayloadReceiver" type="Node" parent="."]
+script = ExtResource("5_payload")
+
+[node name="ComponentResetAdapter" type="Node" parent="."]
+script = ExtResource("7_reset_adapter")
+component_paths = Array[NodePath]([NodePath("../ThermalState")])

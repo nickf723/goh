@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://scripts/weapons/weapon_input_bootstrap.gd" id="10_weapon_input"]
 [ext_resource type="Script" path="res://scripts/weapons/weapon_threat_broadcaster.gd" id="11_threat"]
 [ext_resource type="Script" path="res://scripts/player/soul_grip_controller.gd" id="12_soul_grip"]
+[ext_resource type="Script" path="res://scripts/player/player_aerial_locomotion.gd" id="13_aerial"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -99,3 +100,6 @@ metadata/_custom_type_script = "uid://dmp5o1qjlca1n"
 
 [node name="SoulGripController" type="Node3D" parent="."]
 script = ExtResource("12_soul_grip")
+
+[node name="AerialLocomotion" type="Node" parent="."]
+script = ExtResource("13_aerial")

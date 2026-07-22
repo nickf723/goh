@@ -1,0 +1,103 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/physics/circuit_voltage_source.gd" id="1_source"]
+[ext_resource type="Script" path="res://scripts/physics/circuit_terminal.gd" id="2_terminal"]
+
+[sub_resource type="StandardMaterial3D" id="Material_battery"]
+albedo_color = Color(0.1, 0.15, 0.23, 1)
+metallic = 0.58
+roughness = 0.3
+
+[sub_resource type="StandardMaterial3D" id="Material_terminal_positive"]
+albedo_color = Color(0.92, 0.2, 0.08, 1)
+emission_enabled = true
+emission = Color(0.55, 0.04, 0.01, 1)
+emission_energy_multiplier = 1.4
+metallic = 0.72
+roughness = 0.24
+
+[sub_resource type="StandardMaterial3D" id="Material_terminal_negative"]
+albedo_color = Color(0.12, 0.22, 0.4, 1)
+emission_enabled = true
+emission = Color(0.02, 0.08, 0.35, 1)
+emission_energy_multiplier = 1.2
+metallic = 0.72
+roughness = 0.24
+
+[sub_resource type="StandardMaterial3D" id="Material_current"]
+albedo_color = Color(1, 0.68, 0.08, 0.34)
+transparency = 1
+emission_enabled = true
+emission = Color(1, 0.34, 0.02, 1)
+emission_energy_multiplier = 3.5
+
+[sub_resource type="BoxMesh" id="Mesh_body"]
+size = Vector3(1.45, 1.05, 1.35)
+
+[sub_resource type="BoxMesh" id="Mesh_cap"]
+size = Vector3(1.1, 0.14, 1.0)
+
+[sub_resource type="SphereMesh" id="Mesh_terminal"]
+radius = 0.18
+height = 0.36
+radial_segments = 12
+rings = 6
+
+[sub_resource type="BoxShape3D" id="Shape_body"]
+size = Vector3(1.5, 1.1, 1.4)
+
+[node name="CircuitBattery" type="Area3D" groups=["lab_resettable"]]
+script = ExtResource("1_source")
+component_id = "battery"
+display_name = "12 V Battery"
+resistance_ohms = 0.1
+max_current_amps = 8.0
+source_internal_resistance_ohms = 0.2
+nominal_voltage_volts = 12.0
+reversible = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("Shape_body")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+material_override = SubResource("Material_battery")
+mesh = SubResource("Mesh_body")
+
+[node name="Cap" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.57, 0)
+material_override = SubResource("Material_battery")
+mesh = SubResource("Mesh_cap")
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="."]
+visible = false
+scale = Vector3(1.08, 1.08, 1.08)
+material_override = SubResource("Material_current")
+mesh = SubResource("Mesh_body")
+
+[node name="StateLabel" type="Label3D" parent="."]
+position = Vector3(0, 1.2, 0)
+text = "12 V BATTERY"
+font_size = 25
+pixel_size = 0.006
+billboard = 1
+outline_size = 5
+
+[node name="TerminalA" type="Marker3D" parent="."]
+position = Vector3(0, -0.35, 1.1)
+script = ExtResource("2_terminal")
+terminal_id = "positive"
+connection_radius = 0.34
+
+[node name="Pad" type="MeshInstance3D" parent="TerminalA"]
+material_override = SubResource("Material_terminal_positive")
+mesh = SubResource("Mesh_terminal")
+
+[node name="TerminalB" type="Marker3D" parent="."]
+position = Vector3(0, -0.35, -1.1)
+script = ExtResource("2_terminal")
+terminal_id = "negative"
+connection_radius = 0.34
+
+[node name="Pad" type="MeshInstance3D" parent="TerminalB"]
+material_override = SubResource("Material_terminal_negative")
+mesh = SubResource("Mesh_terminal")

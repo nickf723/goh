@@ -15,6 +15,16 @@ const PRESETS: Dictionary = {
 		},
 		"tags": ["ui", "light"],
 	},
+	"pickup_collect": {
+		"label": "Pickup Collect",
+		"haptic": {
+			"weak": 0.16,
+			"strong": 0.08,
+			"duration": 0.07,
+			"device": 0,
+		},
+		"tags": ["pickup", "resource", "collect"],
+	},
 	"full_charge": {
 		"label": "Full Charge",
 		"haptic": {

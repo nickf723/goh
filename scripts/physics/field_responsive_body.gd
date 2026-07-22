@@ -11,6 +11,7 @@ class_name FieldResponsiveBody
 @onready var force_receiver: ForceReceiver = get_node_or_null("ForceReceiver") as ForceReceiver
 @onready var field_receiver: PhysicalFieldReceiver = get_node_or_null("PhysicalFieldReceiver") as PhysicalFieldReceiver
 @onready var soul_manipulable: SoulManipulable = get_node_or_null("SoulManipulable") as SoulManipulable
+@onready var airflow_response: AirflowResponse = get_node_or_null("AirflowResponse") as AirflowResponse
 
 var initial_transform: Transform3D
 var gravity_velocity: float = 0.0
@@ -31,6 +32,8 @@ func _physics_process(delta: float) -> void:
 		update_soul_manipulation(delta)
 		return
 
+	if airflow_response != null and force_receiver != null:
+		airflow_response.update_force_response(self, force_receiver, get_effective_mass())
 	if field_receiver != null and force_receiver != null:
 		field_receiver.update_field_response(self, force_receiver, delta)
 
@@ -90,6 +93,8 @@ func update_soul_manipulation(delta: float) -> void:
 	if force_receiver != null:
 		force_receiver.consume_external_velocity(delta)
 		force_receiver.constrain_continuous_velocity(contact_normals)
+	if airflow_response != null:
+		airflow_response.clear_force_response(force_receiver)
 
 
 func refresh_contact_normals() -> void:
@@ -135,6 +140,8 @@ func reset_body() -> void:
 	velocity = Vector3.ZERO
 	gravity_velocity = 0.0
 	contact_normals.clear()
+	if airflow_response != null:
+		airflow_response.clear_force_response(force_receiver)
 	if force_receiver != null:
 		force_receiver.reset_forces()
 	if field_receiver != null:
@@ -150,7 +157,7 @@ func interact() -> Dictionary:
 	if material_profile != null:
 		material_name = material_profile.display_name
 	return {
-		"message": body_label + " | " + material_name + " | responds to physical fields and Soul Grip.",
+		"message": body_label + " | " + material_name + " | responds to physical fields, airflow, and Soul Grip.",
 		"objective": "Use the object's material and mass as part of the puzzle.",
 	}
 
@@ -165,5 +172,6 @@ func get_debug_data() -> Dictionary:
 		"contact_normals": contact_normals.duplicate(),
 		"force": force_receiver.get_debug_data() if force_receiver != null else {},
 		"field_response": field_receiver.get_debug_data() if field_receiver != null else {},
+		"airflow": airflow_response.get_debug_data() if airflow_response != null else {},
 		"soul": soul_manipulable.get_debug_data() if soul_manipulable != null else {},
 	}

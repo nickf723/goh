@@ -158,6 +158,44 @@
       "timeout_seconds": 7
     },
     {
+      "id": "soul_circuit_puzzle",
+      "order": 27,
+      "display_name": "The Silent Gate",
+      "category": "Integrated Puzzle Prototype",
+      "version": "v1",
+      "status": "experimental",
+      "description": "A compact player-led puzzle combining Soul Grip, physical occlusion, mass-sensitive manipulation, a pressure switch, movable copper circuit topology, a motorized counterweight gate, and a breakable pickup reward.",
+      "scene": "res://scenes/levels/prototypes/prototype_soul_circuit_puzzle_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_soul_circuit_puzzle_v1.tscn"
+      ],
+      "automated_tests": [],
+      "dependencies": [
+        "physical_interaction_lab"
+      ],
+      "controls": [
+        "MOVE",
+        "SOUL GRIP",
+        "LIGHT",
+        "HEAVY",
+        "CAST",
+        "RESET"
+      ],
+      "manual_test": "docs/soul_circuit_puzzle_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "The room uses procedural prototype geometry and explicit clue labels.",
+        "Soul Grip rotation is yaw-only in this version.",
+        "The copper fuse uses forgiving contact radii for controller placement.",
+        "Puzzle completion is not saved or connected to story progression."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
       "id": "weapon_combat_arena",
       "order": 30,
       "display_name": "Weapon Combat Arena",
@@ -398,6 +436,7 @@
         "church_trial",
         "elemental_reaction_lab",
         "physical_interaction_lab",
+        "soul_circuit_puzzle",
         "weapon_combat_arena",
         "runtime_stat_lab",
         "enemy_personality_lab",

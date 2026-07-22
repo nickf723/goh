@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_echolocation_chamber.gd" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+
+[node name="PrototypeEcholocationChamber" type="Node3D"]
+script = ExtResource("1_room")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, 11.7)
+rotation_degrees = Vector3(0, 0, 0)

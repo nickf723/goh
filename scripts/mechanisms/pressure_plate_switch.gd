@@ -30,15 +30,19 @@ func _ready() -> void:
 	if plate_visual != null:
 		plate_up_position = plate_visual.position
 
-	var sensing_area: Area3D = self as Area3D
-	if sensing_area != null:
-		if not sensing_area.body_entered.is_connected(_on_body_entered):
-			sensing_area.body_entered.connect(_on_body_entered)
-		if not sensing_area.body_exited.is_connected(_on_body_exited):
-			sensing_area.body_exited.connect(_on_body_exited)
-
+	connect_body_detection_signals()
 	set_pressed(false, true)
 	refresh_energized_visual()
+
+
+func connect_body_detection_signals() -> void:
+	var entered_callback: Callable = Callable(self, "_on_body_entered")
+	var exited_callback: Callable = Callable(self, "_on_body_exited")
+
+	if has_signal("body_entered") and not is_connected("body_entered", entered_callback):
+		connect("body_entered", entered_callback)
+	if has_signal("body_exited") and not is_connected("body_exited", exited_callback):
+		connect("body_exited", exited_callback)
 
 
 func _on_body_entered(body: Node3D) -> void:

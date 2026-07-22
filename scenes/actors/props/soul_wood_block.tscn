@@ -1,0 +1,96 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/physics/field_responsive_body.gd" id="1_body"]
+[ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="2_force"]
+[ext_resource type="Script" path="res://scripts/combat/payload_receiver.gd" id="3_payload"]
+[ext_resource type="Script" path="res://scripts/core/tag_component.gd" id="4_tags"]
+[ext_resource type="Script" path="res://scripts/combat/status_receiver.gd" id="5_status"]
+[ext_resource type="Script" path="res://scripts/physics/thermal_state.gd" id="6_thermal"]
+[ext_resource type="Script" path="res://scripts/physics/combustion_state.gd" id="7_combustion"]
+[ext_resource type="Script" path="res://scripts/presentation/combustion_presenter.gd" id="8_presenter"]
+[ext_resource type="Script" path="res://scripts/soul/soul_manipulable.gd" id="9_soul"]
+[ext_resource type="Resource" path="res://data/materials/wood_physical_profile.tres" id="10_wood"]
+
+[sub_resource type="StandardMaterial3D" id="Material_wood"]
+albedo_color = Color(0.45, 0.23, 0.07, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Material_soul_mark"]
+albedo_color = Color(0.08, 0.72, 0.9, 0.7)
+transparency = 1
+emission_enabled = true
+emission = Color(0.04, 0.6, 1, 1)
+emission_energy_multiplier = 1.7
+
+[sub_resource type="BoxMesh" id="Mesh_body"]
+size = Vector3(1.25, 1.25, 1.25)
+
+[sub_resource type="TorusMesh" id="Mesh_mark"]
+inner_radius = 0.27
+outer_radius = 0.36
+rings = 20
+ring_segments = 8
+
+[sub_resource type="BoxShape3D" id="Shape_body"]
+size = Vector3(1.25, 1.25, 1.25)
+
+[node name="SoulWoodBlock" type="CharacterBody3D"]
+script = ExtResource("1_body")
+body_label = "Soul-Grippable Wooden Block"
+material_profile = ExtResource("10_wood")
+mass_override_kg = 3.0
+gravity_strength = 20.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.625, 0)
+shape = SubResource("Shape_body")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.625, 0)
+material_override = SubResource("Material_wood")
+mesh = SubResource("Mesh_body")
+
+[node name="SoulMark" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.27, 0)
+rotation = Vector3(1.5708, 0, 0)
+material_override = SubResource("Material_soul_mark")
+mesh = SubResource("Mesh_mark")
+
+[node name="ForceReceiver" type="Node" parent="."]
+script = ExtResource("2_force")
+drag = 5.0
+max_force_speed = 7.0
+
+[node name="PayloadReceiver" type="Node" parent="."]
+script = ExtResource("3_payload")
+
+[node name="TagComponent" type="Node" parent="."]
+script = ExtResource("4_tags")
+tags = Array[String](["prop", "wood", "organic", "flammable", "soul_manipulable"])
+
+[node name="StatusReceiver" type="Node" parent="."]
+script = ExtResource("5_status")
+
+[node name="ThermalState" type="Node" parent="."]
+script = ExtResource("6_thermal")
+material_profile = ExtResource("10_wood")
+mass_kg = 0.5
+gameplay_heat_capacity_scale = 0.001
+ignition_enabled = true
+
+[node name="CombustionState" type="Node" parent="."]
+script = ExtResource("7_combustion")
+material_profile = ExtResource("10_wood")
+
+[node name="CombustionPresenter" type="Node3D" parent="."]
+script = ExtResource("8_presenter")
+profile_kind = "bonfire"
+visual_offset = Vector3(0, 0.8, 0)
+visual_scale = 0.62
+
+[node name="SoulManipulable" type="Node" parent="."]
+script = ExtResource("9_soul")
+anchor_offset = Vector3(0, 0.62, 0)
+maximum_speed = 13.0
+minimum_speed = 2.4
+rotation_response_degrees = 340.0

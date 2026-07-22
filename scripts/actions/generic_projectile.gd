@@ -5,6 +5,7 @@ const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
 const ChargedFireboltImpactFeedback = preload("res://scripts/combat/charged_firebolt_impact_feedback.gd")
 const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
 const SpellModifiers = preload("res://scripts/abilities/spell_modifier_registry.gd")
+const AirflowMathScript = preload("res://scripts/airflow/airflow_math.gd")
 
 @export var speed: float = 18.0
 @export var max_lifetime: float = 2.6
@@ -16,11 +17,22 @@ const SpellModifiers = preload("res://scripts/abilities/spell_modifier_registry.
 @export var show_miss_feedback: bool = true
 @export var trail_interval: float = 0.045
 
+@export_group("Airflow")
+@export var respond_to_airflow: bool = true
+@export var aerodynamic_mass_kg: float = 0.32
+@export var aerodynamic_drag_coefficient: float = 0.72
+@export var aerodynamic_cross_section_area: float = 0.055
+@export var aerodynamic_force_scale: float = 2.4
+@export var maximum_airflow_acceleration: float = 14.0
+
 @export var payload: DamagePayload
 
 var runtime_payload: DamagePayload
 var source_actor: Node
 var direction: Vector3 = Vector3.FORWARD
+var motion_velocity: Vector3 = Vector3.ZERO
+var airflow_manager: Node = null
+var last_air_velocity: Vector3 = Vector3.ZERO
 var lifetime_timer: float = 0.0
 var ignore_timer: float = 0.0
 var is_launched: bool = false
@@ -40,6 +52,7 @@ func _ready() -> void:
 	lifetime_timer = max_lifetime
 	ignore_timer = ignore_source_for_seconds
 	apply_payload_projectile_modifiers(get_payload())
+	resolve_airflow_manager()
 
 	if hit_area != null:
 		hit_area.body_entered.connect(_on_body_entered)
@@ -66,8 +79,44 @@ func _process(delta: float) -> void:
 		queue_free()
 		return
 
-	global_position += direction * speed * delta
+	update_airflow_motion(delta)
+	global_position += motion_velocity * delta
 	update_element_trail(delta)
+
+
+func update_airflow_motion(delta: float) -> void:
+	if motion_velocity.length() <= 0.001:
+		motion_velocity = direction * speed
+	last_air_velocity = Vector3.ZERO
+	if respond_to_airflow:
+		var manager: Node = resolve_airflow_manager()
+		if manager != null and manager.has_method("sample_total_airflow"):
+			var sampled_value: Variant = manager.call("sample_total_airflow", global_position)
+			if sampled_value is Vector3:
+				last_air_velocity = sampled_value as Vector3
+				var acceleration: Vector3 = AirflowMathScript.compute_drag_acceleration(
+					last_air_velocity,
+					motion_velocity,
+					max(aerodynamic_mass_kg, 0.01),
+					aerodynamic_drag_coefficient,
+					aerodynamic_cross_section_area,
+					1.225,
+					aerodynamic_force_scale,
+					maximum_airflow_acceleration
+				)
+				motion_velocity += acceleration * max(delta, 0.0)
+	if motion_velocity.length() > 0.001:
+		direction = motion_velocity.normalized()
+		if rotate_to_direction:
+			look_at(global_position + direction, Vector3.UP)
+
+
+func resolve_airflow_manager() -> Node:
+	if airflow_manager != null and is_instance_valid(airflow_manager):
+		return airflow_manager
+	if get_tree() != null:
+		airflow_manager = get_tree().get_first_node_in_group("airflow_manager")
+	return airflow_manager
 
 
 func update_element_trail(delta: float) -> void:
@@ -107,7 +156,6 @@ func apply_payload_projectile_modifiers(active_payload: DamagePayload) -> void:
 			continue
 
 		apply_projectile_modifier(modifier)
-
 		if modifier_id != "":
 			applied_projectile_modifier_ids[modifier_id] = true
 
@@ -187,6 +235,7 @@ func launch(cast_direction: Vector3) -> void:
 	else:
 		direction = Vector3.FORWARD
 
+	motion_velocity = direction * speed
 	is_launched = true
 	configure_element_visual()
 
@@ -334,3 +383,12 @@ func show_message(text: String) -> void:
 
 	if ui != null and ui.has_method("show_message"):
 		ui.show_message(text)
+
+
+func get_airflow_debug_data() -> Dictionary:
+	return {
+		"responds_to_airflow": respond_to_airflow,
+		"motion_velocity": motion_velocity,
+		"air_velocity": last_air_velocity,
+		"air_speed": snapped(last_air_velocity.length(), 0.01),
+	}

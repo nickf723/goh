@@ -11,6 +11,38 @@
 [ext_resource type="Script" path="res://scripts/interaction/combustion_break_adapter.gd" id="9_burn_break"]
 [ext_resource type="Script" path="res://scripts/core/component_reset_adapter.gd" id="10_reset_adapter"]
 [ext_resource type="Resource" path="res://data/materials/wood_physical_profile.tres" id="11_wood_profile"]
+[ext_resource type="Script" path="res://scripts/items/drop_table_component.gd" id="12_drop_table"]
+[ext_resource type="Script" path="res://scripts/items/pickup_drop_entry.gd" id="13_drop_entry"]
+[ext_resource type="Resource" path="res://data/pickups/health_mote.tres" id="14_health"]
+[ext_resource type="Resource" path="res://data/pickups/mana_mote.tres" id="15_mana"]
+[ext_resource type="Resource" path="res://data/pickups/stamina_mote.tres" id="16_stamina"]
+
+[sub_resource type="Resource" id="PickupDropEntry_health"]
+script = ExtResource("13_drop_entry")
+pickup_definition = ExtResource("14_health")
+chance = 1.0
+minimum_count = 1
+maximum_count = 1
+guaranteed = true
+random_weight = 1.0
+
+[sub_resource type="Resource" id="PickupDropEntry_mana"]
+script = ExtResource("13_drop_entry")
+pickup_definition = ExtResource("15_mana")
+chance = 0.55
+minimum_count = 1
+maximum_count = 1
+guaranteed = false
+random_weight = 1.0
+
+[sub_resource type="Resource" id="PickupDropEntry_stamina"]
+script = ExtResource("13_drop_entry")
+pickup_definition = ExtResource("16_stamina")
+chance = 0.55
+minimum_count = 1
+maximum_count = 1
+guaranteed = false
+random_weight = 1.0
 
 [sub_resource type="StandardMaterial3D" id="Material_wood"]
 albedo_color = Color(0.47, 0.245, 0.085, 1)
@@ -169,3 +201,11 @@ script = ExtResource("9_burn_break")
 [node name="ComponentResetAdapter" type="Node" parent="."]
 script = ExtResource("10_reset_adapter")
 component_paths = Array[NodePath]([NodePath("../ThermalState"), NodePath("../CombustionState"), NodePath("../CombustionPresenter")])
+
+[node name="DropTableComponent" type="Node" parent="."]
+script = ExtResource("12_drop_table")
+drop_entries = Array[ExtResource("13_drop_entry")]([SubResource("PickupDropEntry_health"), SubResource("PickupDropEntry_mana"), SubResource("PickupDropEntry_stamina")])
+random_rolls = 0
+roll_non_guaranteed_independently = true
+spawn_height = 0.45
+spawn_radius = 0.3

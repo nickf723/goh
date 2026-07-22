@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_airflow_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/concentration/concentration_manager.gd" id="4_concentration"]
+[ext_resource type="Script" path="res://scripts/airflow/airflow_manager.gd" id="5_airflow"]
+
+[sub_resource type="Environment" id="Environment_airflow_lab"]
+background_mode = 1
+background_color = Color(0.025, 0.065, 0.11, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.38, 0.58, 0.76, 1)
+ambient_light_energy = 0.78
+reflected_light_source = 2
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.15, 0.34, 0.5, 1)
+fog_light_energy = 0.55
+fog_density = 0.0045
+
+[node name="PrototypeAirflowLab" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_airflow_lab")
+
+[node name="DirectionalLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -28, 0)
+light_color = Color(0.62, 0.8, 1, 1)
+light_energy = 1.05
+shadow_enabled = true
+
+[node name="AirGlow" type="OmniLight3D" parent="."]
+position = Vector3(0, 8, -2)
+omni_range = 34.0
+light_color = Color(0.18, 0.62, 1, 1)
+light_energy = 2.4
+shadow_enabled = true
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, 16.2)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="ConcentrationManager" type="Node" parent="."]
+script = ExtResource("4_concentration")
+passive_mana_regeneration_per_second = 1.0
+show_hud = true
+
+[node name="AirflowManager" type="Node" parent="."]
+script = ExtResource("5_airflow")
+maximum_combined_velocity = 32.0

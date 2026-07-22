@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/abilities/gust_spell.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Gust"
+description = "Create a short-lived moving Air vector field that accelerates props, bends projectiles, advects tracers, and powers airflow mechanisms."
+element = "air"
+category = 2
+mana_cost = 1
+spell_id = "gust"
+short_label = "Gust"
+icon_text = "Gu"
+roles = Array[String](["control", "force", "airflow", "utility", "puzzle"])
+targeting_style = "forward"
+delivery_type = "moving_vector_field"
+combo_tags = Array[String](["air", "force", "weather", "projectile_redirect", "mechanism"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["air", "field", "physics"])
+debug_tags = Array[String](["airflow", "analytic_field", "prototype"])
+design_notes = "Gust is not a one-frame impulse. It spawns a temporary analytic airflow field, so every airflow-aware system receives the same sampled world velocity."
+ability_scene = ExtResource("1_scene")

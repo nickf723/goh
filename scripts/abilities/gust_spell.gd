@@ -95,7 +95,6 @@ func update_visuals(life_ratio: float, delta: float) -> void:
 		return
 	visual_root.rotate_z(delta * 2.4)
 	visual_root.scale = Vector3.ONE * lerpf(1.35, 0.72, life_ratio)
-	visual_root.modulate = Color(1.0, 1.0, 1.0, clampf(life_ratio * 1.4, 0.0, 1.0))
 
 
 func show_message(text: String) -> void:

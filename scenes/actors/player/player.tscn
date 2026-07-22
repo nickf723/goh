@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://scripts/weapons/weapon_threat_broadcaster.gd" id="11_threat"]
 [ext_resource type="Script" path="res://scripts/player/soul_grip_controller.gd" id="12_soul_grip"]
 [ext_resource type="Script" path="res://scripts/player/player_aerial_locomotion.gd" id="13_aerial"]
+[ext_resource type="Script" path="res://scripts/airflow/airflow_response.gd" id="14_airflow"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -103,3 +104,11 @@ script = ExtResource("12_soul_grip")
 
 [node name="AerialLocomotion" type="Node" parent="."]
 script = ExtResource("13_aerial")
+
+[node name="AirflowResponse" type="Node" parent="."]
+script = ExtResource("14_airflow")
+mass_override_kg = 65.0
+drag_coefficient = 1.0
+cross_section_area = 0.78
+gameplay_force_scale = 3.2
+maximum_acceleration = 10.0

@@ -5,6 +5,8 @@ extends "res://scripts/player/player_controller.gd"
 var combat_motion_velocity: Vector3 = Vector3.ZERO
 var combat_motion_timer: float = 0.0
 
+@onready var aerial_locomotion: PlayerAerialLocomotion = get_node_or_null("AerialLocomotion") as PlayerAerialLocomotion
+
 
 func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
 	if has_lock_on_target():
@@ -51,12 +53,19 @@ func cancel_combat_motion() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if aerial_locomotion != null and aerial_locomotion.flight_active:
+		cancel_combat_motion()
+		if aerial_locomotion.process_locomotion(delta):
+			return
+
 	if dodge_controller != null and dodge_controller.is_dodge_active():
 		cancel_combat_motion()
 		super._physics_process(delta)
 		return
 
 	if combat_motion_timer <= 0.0:
+		if aerial_locomotion != null and aerial_locomotion.process_locomotion(delta):
+			return
 		super._physics_process(delta)
 		return
 

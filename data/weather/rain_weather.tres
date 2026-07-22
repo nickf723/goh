@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="WeatherDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/weather/weather_definition.gd" id="1_weather"]
+
+[resource]
+script = ExtResource("1_weather")
+effect_id = "rain_weather"
+display_name = "Rain"
+description = "Sustain rainfall by reserving part of Grace's mana capacity. Water spells become free while the sky supplies an infinite Water source."
+mana_reservation_fraction = 0.4
+free_elements = Array[String](["water"])
+effect_tags = Array[String](["concentration", "weather", "rain", "water_source"])
+weather_kind = "rain"
+generated_elements = Array[String](["water"])
+weather_tags = Array[String](["rain", "wet", "water", "weather", "element_source"])
+exposure_interval = 0.55
+status_duration = 3.2
+exposure_strength = 1.0
+rain_drop_count = 88
+rain_radius = 10.0
+rain_height = 8.5
+fall_speed = 19.0
+wind_velocity = Vector3(1.15, 0, 0.35)

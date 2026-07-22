@@ -1,6 +1,7 @@
 extends Node3D
 
 const EnemyBrainScript = preload("res://scripts/enemies/enemy_brain.gd")
+const EnemyOverheadHud = preload("res://scripts/combat/enemy_overhead_hud.gd")
 
 const LANE_CONFIGS: Array[Dictionary] = [
 	{
@@ -38,6 +39,10 @@ var previous_invulnerability_timer: float = 0.0
 func _ready() -> void:
 	protect_grace()
 	configure_lanes()
+
+	# Enemy brains create their HUDs during child _ready() calls. Refresh all
+	# four once the lab has finished assigning its lane-specific personalities.
+	refresh_lab_huds.call_deferred()
 
 	if show_opening_message:
 		show_message(opening_message)
@@ -111,6 +116,25 @@ func configure_enemy_lane(lane_config: Dictionary) -> void:
 
 	brain.set("zone_debug_prints", false)
 	brain.set("zone_awareness_radius", 7.0)
+
+
+func refresh_lab_huds() -> void:
+	for lane_config: Dictionary in LANE_CONFIGS:
+		var enemy_path: String = str(lane_config.get("enemy_path", ""))
+		var enemy: Node3D = get_node_or_null(enemy_path) as Node3D
+
+		if enemy == null:
+			continue
+
+		var hud: EnemyOverheadHud = EnemyOverheadHud.ensure_for_target(enemy)
+
+		if hud == null:
+			push_warning("Personality lab HUD missing from: " + enemy_path)
+			continue
+
+		hud.show_personality_debug = true
+		hud.bind_target(enemy)
+		hud.refresh_now()
 
 
 func show_message(message: String) -> void:

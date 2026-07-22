@@ -1,0 +1,104 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/mechanisms/pressure_plate_switch.gd" id="1_plate"]
+[ext_resource type="Script" path="res://scripts/physics/circuit_terminal.gd" id="2_terminal"]
+[ext_resource type="Resource" path="res://data/materials/copper_physical_profile.tres" id="3_copper"]
+
+[sub_resource type="StandardMaterial3D" id="Material_base"]
+albedo_color = Color(0.1, 0.12, 0.17, 1)
+metallic = 0.7
+roughness = 0.38
+
+[sub_resource type="StandardMaterial3D" id="Material_plate"]
+albedo_color = Color(0.52, 0.19, 0.68, 1)
+metallic = 0.42
+roughness = 0.32
+emission_enabled = true
+emission = Color(0.15, 0.015, 0.3, 1)
+emission_energy_multiplier = 0.65
+
+[sub_resource type="StandardMaterial3D" id="Material_current"]
+albedo_color = Color(1, 0.7, 0.08, 0.4)
+transparency = 1
+emission_enabled = true
+emission = Color(1, 0.35, 0.02, 1)
+emission_energy_multiplier = 3.4
+
+[sub_resource type="StandardMaterial3D" id="Material_terminal"]
+albedo_color = Color(0.76, 0.26, 0.06, 1)
+metallic = 0.9
+roughness = 0.22
+
+[sub_resource type="BoxMesh" id="Mesh_base"]
+size = Vector3(2.0, 0.18, 1.7)
+
+[sub_resource type="BoxMesh" id="Mesh_plate"]
+size = Vector3(1.55, 0.18, 1.35)
+
+[sub_resource type="SphereMesh" id="Mesh_terminal"]
+radius = 0.16
+height = 0.32
+radial_segments = 12
+rings = 6
+
+[sub_resource type="BoxShape3D" id="Shape_detection"]
+size = Vector3(1.75, 0.55, 1.55)
+
+[node name="PressurePlateSwitch" type="Area3D"]
+script = ExtResource("1_plate")
+component_id = "pressure_plate_switch"
+display_name = "Pressure Plate Switch"
+material_profile = ExtResource("3_copper")
+resistance_ohms = 0.12
+max_current_amps = 10.0
+starts_closed = false
+accept_any_physics_body = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.18, 0)
+shape = SubResource("Shape_detection")
+
+[node name="Base" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.09, 0)
+material_override = SubResource("Material_base")
+mesh = SubResource("Mesh_base")
+
+[node name="PlateVisual" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.24, 0)
+material_override = SubResource("Material_plate")
+mesh = SubResource("Mesh_plate")
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="."]
+visible = false
+position = Vector3(0, 0.245, 0)
+scale = Vector3(1.05, 1.08, 1.05)
+material_override = SubResource("Material_current")
+mesh = SubResource("Mesh_plate")
+
+[node name="StateLabel" type="Label3D" parent="."]
+position = Vector3(0, 1.25, 0)
+text = "PRESSURE PLATE\nRELEASED"
+font_size = 24
+pixel_size = 0.006
+billboard = 1
+outline_size = 5
+
+[node name="TerminalA" type="Marker3D" parent="."]
+position = Vector3(-1.2, 0.25, 0)
+script = ExtResource("2_terminal")
+terminal_id = "input"
+connection_radius = 0.35
+
+[node name="Pad" type="MeshInstance3D" parent="TerminalA"]
+material_override = SubResource("Material_terminal")
+mesh = SubResource("Mesh_terminal")
+
+[node name="TerminalB" type="Marker3D" parent="."]
+position = Vector3(1.2, 0.25, 0)
+script = ExtResource("2_terminal")
+terminal_id = "output"
+connection_radius = 0.35
+
+[node name="Pad" type="MeshInstance3D" parent="TerminalB"]
+material_override = SubResource("Material_terminal")
+mesh = SubResource("Mesh_terminal")

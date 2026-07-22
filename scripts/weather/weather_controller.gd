@@ -29,6 +29,9 @@ var original_background_color: Color = Color.BLACK
 var original_ambient_color: Color = Color.WHITE
 var original_ambient_energy: float = 1.0
 var original_fog_enabled: bool = false
+var original_fog_light_color: Color = Color.WHITE
+var original_fog_light_energy: float = 1.0
+var original_fog_density: float = 0.0
 var environment_snapshot_valid: bool = false
 
 
@@ -132,7 +135,7 @@ func stop_weather(show_feedback: bool = true) -> void:
 	set_rain_visuals_visible(false)
 	restore_weather_environment()
 	if concentration_manager != null and concentration_manager.has_method("deactivate_effect"):
-		concentration_manager.call("deactivate_effect", show_feedback)
+		concentration_manager.call("deactivate_effect", false)
 	weather_stopped.emit(get_weather_id())
 
 	if show_feedback and show_messages:
@@ -281,7 +284,7 @@ func deliver_weather_payload(target: Node, payload: DamagePayload) -> bool:
 	if status_receiver != null:
 		if status_receiver.has_method("sustain_status"):
 			status_receiver.call(
-				"/root/placeholder" if false else "sustain_status",
+				"sustain_status",
 				"wet",
 				payload.status_duration,
 				payload.status_strength,
@@ -324,6 +327,9 @@ func apply_weather_environment() -> void:
 		original_ambient_color = environment.ambient_light_color
 		original_ambient_energy = environment.ambient_light_energy
 		original_fog_enabled = environment.fog_enabled
+		original_fog_light_color = environment.fog_light_color
+		original_fog_light_energy = environment.fog_light_energy
+		original_fog_density = environment.fog_density
 		environment_snapshot_valid = true
 
 	environment.background_color = Color(0.075, 0.11, 0.16, 1.0)
@@ -343,6 +349,9 @@ func restore_weather_environment() -> void:
 	environment.ambient_light_color = original_ambient_color
 	environment.ambient_light_energy = original_ambient_energy
 	environment.fog_enabled = original_fog_enabled
+	environment.fog_light_color = original_fog_light_color
+	environment.fog_light_energy = original_fog_light_energy
+	environment.fog_density = original_fog_density
 
 
 func find_world_environment(root: Node) -> WorldEnvironment:
@@ -372,7 +381,7 @@ func get_definition_vector(field_name: String, fallback: Vector3) -> Vector3:
 	if weather_definition == null:
 		return fallback
 	var value: Variant = weather_definition.get(field_name)
-	return value as Vector3 if value is Vector3 else fallback
+	return value if value is Vector3 else fallback
 
 
 func show_message(text: String) -> void:

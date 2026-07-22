@@ -74,7 +74,7 @@ script = ExtResource("10_weapon_input")
 script = ExtResource("11_threat")
 
 [node name="HandAnchor" type="Node3D" parent="WeaponController" unique_id=984196414]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.65, 0.15, 0, -0.45)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.43, -0.16, -0.02)
 
 [node name="WeaponVisualPivot" type="Node3D" parent="WeaponController/HandAnchor" unique_id=1406066353]
 

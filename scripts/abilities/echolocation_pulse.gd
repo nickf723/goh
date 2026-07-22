@@ -84,7 +84,11 @@ func deliver_detection(receiver: Node) -> void:
 		return
 	delivered_receiver_ids[receiver_id] = true
 
-	var result: Dictionary = receiver.call("receive_detection", detection_payload) as Dictionary
+	var raw_result: Variant = receiver.call("receive_detection", detection_payload)
+	if not (raw_result is Dictionary):
+		return
+	var result: Dictionary = raw_result
+
 	if not show_reveal_messages:
 		return
 

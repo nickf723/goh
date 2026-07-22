@@ -56,6 +56,16 @@ func build_visuals() -> void:
 	snow_layer.material_override = snow_material
 	add_child(snow_layer)
 
+	var collision_body := StaticBody3D.new()
+	collision_body.name = "SpellCollisionBody"
+	var collision := CollisionShape3D.new()
+	var collision_shape := BoxShape3D.new()
+	collision_shape.size = Vector3(field_size.x, 0.08, field_size.y)
+	collision.shape = collision_shape
+	collision.position = Vector3(0.0, 0.04, 0.0)
+	collision_body.add_child(collision)
+	add_child(collision_body)
+
 	footprint_root = Node3D.new()
 	footprint_root.name = "Footprints"
 	add_child(footprint_root)

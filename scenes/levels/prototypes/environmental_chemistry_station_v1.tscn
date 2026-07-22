@@ -1,11 +1,11 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://dlr8ii2pxp6p0"]
 
-[ext_resource type="Script" path="res://scripts/levels/environmental_chemistry_station.gd" id="1_station"]
-[ext_resource type="PackedScene" path="res://scenes/surfaces/water_patch.tscn" id="2_water"]
+[ext_resource type="Script" uid="uid://d0r0xfymq7mkf" path="res://scripts/levels/environmental_chemistry_station.gd" id="1_station"]
+[ext_resource type="PackedScene" uid="uid://dq6m8gaf1u2b7" path="res://scenes/surfaces/water_patch.tscn" id="2_water"]
 [ext_resource type="PackedScene" path="res://scenes/environment/frost_crystal_source.tscn" id="3_frost"]
 [ext_resource type="PackedScene" path="res://scenes/environment/pushable_brazier_source.tscn" id="4_brazier"]
 [ext_resource type="PackedScene" path="res://scenes/actors/testing/gremlin_reaction_target.tscn" id="5_target"]
-[ext_resource type="Material" path="res://art/materials/church/church_warm_stone_v1.tres" id="6_floor"]
+[ext_resource type="Material" uid="uid://cus0fxhktfmpx" path="res://art/materials/church/church_warm_stone_v1.tres" id="6_floor"]
 [ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="7_gold"]
 [ext_resource type="Material" path="res://art/materials/prototype/mana_cyan_glow.tres" id="8_ice"]
 [ext_resource type="Material" path="res://art/materials/prototype/exit_gold_glow.tres" id="9_fire"]
@@ -26,105 +26,107 @@ size = Vector3(1.1, 0.06, 0.12)
 [sub_resource type="BoxMesh" id="BoxMesh_goal"]
 size = Vector3(0.12, 0.08, 1.7)
 
-[node name="EnvironmentalChemistryStation" type="Node3D"]
+[node name="EnvironmentalChemistryStation" type="Node3D" unique_id=720710063]
 script = ExtResource("1_station")
 
-[node name="Platform" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.02, 0.5)
+[node name="Platform" type="MeshInstance3D" parent="." unique_id=301795316]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0.5)
 material_override = ExtResource("6_floor")
 mesh = SubResource("BoxMesh_platform")
 
-[node name="ReactionRadius" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.16, 0)
+[node name="ReactionRadius" type="MeshInstance3D" parent="." unique_id=514437862]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)
 material_override = ExtResource("7_gold")
 mesh = SubResource("TorusMesh_reaction")
 
-[node name="Title" type="Label3D" parent="."]
-position = Vector3(0, 2.92, -2.72)
-text = "ENVIRONMENT CHEMISTRY → MECHANICAL WORK"
-font_size = 40
+[node name="Title" type="Label3D" parent="." unique_id=1018484759]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.92, -2.72)
 pixel_size = 0.007
 billboard = 1
 modulate = Color(0.88, 0.94, 1, 1)
+text = "ENVIRONMENT CHEMISTRY → MECHANICAL WORK"
+font_size = 40
 outline_size = 7
 
-[node name="Instruction" type="Label3D" parent="."]
-position = Vector3(0, 2.32, -2.65)
-text = "Freeze water • Push brazier into ice • Repeat 3 Steam Bursts • Ride the pressure lift"
-font_size = 24
+[node name="Instruction" type="Label3D" parent="." unique_id=326548849]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.32, -2.65)
 pixel_size = 0.0065
 billboard = 1
 modulate = Color(1, 0.88, 0.62, 1)
+text = "Freeze water • Push brazier into ice • Repeat 3 Steam Bursts • Ride the pressure lift"
+font_size = 24
 outline_size = 5
 
-[node name="FrostLabel" type="Label3D" parent="."]
-position = Vector3(-2.55, 1.86, 0)
-text = "INFINITE ICE\nFrost Crystal"
-font_size = 28
+[node name="FrostLabel" type="Label3D" parent="." unique_id=1858878362]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, 1.86, 0)
 pixel_size = 0.0065
 billboard = 1
 modulate = Color(0.58, 0.94, 1, 1)
+text = "INFINITE ICE
+Frost Crystal"
+font_size = 28
 outline_size = 5
 
-[node name="BrazierLabel" type="Label3D" parent="."]
-position = Vector3(3.35, 1.9, 0)
-text = "FINITE FIRE\nPushable Brazier"
-font_size = 28
+[node name="BrazierLabel" type="Label3D" parent="." unique_id=1485631546]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.35, 1.9, 0)
 pixel_size = 0.0065
 billboard = 1
 modulate = Color(1, 0.42, 0.12, 1)
+text = "FINITE FIRE
+Pushable Brazier"
+font_size = 28
 outline_size = 5
 
-[node name="GoalLabel" type="Label3D" parent="."]
-position = Vector3(0, 0.58, -1.5)
-text = "FROZEN WATER\nFEED STEAM INTAKE"
-font_size = 25
+[node name="GoalLabel" type="Label3D" parent="." unique_id=1661840628]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -1.5)
 pixel_size = 0.0065
 billboard = 1
 modulate = Color(0.82, 0.96, 1, 1)
+text = "FROZEN WATER
+FEED STEAM INTAKE"
+font_size = 25
 outline_size = 5
 
-[node name="PushArrowA" type="MeshInstance3D" parent="."]
-position = Vector3(2.55, 0.18, 0)
+[node name="PushArrowA" type="MeshInstance3D" parent="." unique_id=328126496]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, 0.18, 0)
 material_override = ExtResource("9_fire")
 mesh = SubResource("BoxMesh_arrow")
 
-[node name="PushArrowB" type="MeshInstance3D" parent="."]
-position = Vector3(1.65, 0.18, 0)
+[node name="PushArrowB" type="MeshInstance3D" parent="." unique_id=533493845]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.65, 0.18, 0)
 material_override = ExtResource("9_fire")
 mesh = SubResource("BoxMesh_arrow")
 
-[node name="GoalCrossA" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.17, 0)
+[node name="GoalCrossA" type="MeshInstance3D" parent="." unique_id=1954754331]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.17, 0)
 material_override = ExtResource("8_ice")
 mesh = SubResource("BoxMesh_goal")
 
-[node name="GoalCrossB" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.17, 0)
-rotation_degrees = Vector3(0, 90, 0)
+[node name="GoalCrossB" type="MeshInstance3D" parent="." unique_id=1136459375]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.17, 0)
 material_override = ExtResource("8_ice")
 mesh = SubResource("BoxMesh_goal")
 
-[node name="WaterPatch" parent="." instance=ExtResource("2_water")]
-position = Vector3(0, 0.13, 0)
+[node name="WaterPatch" parent="." unique_id=685507057 instance=ExtResource("2_water")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
 
-[node name="FrostCrystalSource" parent="." instance=ExtResource("3_frost")]
-position = Vector3(-2.55, 0.14, 0)
+[node name="FrostCrystalSource" parent="." unique_id=1920871885 instance=ExtResource("3_frost")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, 0.14, 0)
 
-[node name="PushableBrazierSource" parent="." instance=ExtResource("4_brazier")]
-position = Vector3(3.4, 0.08, 0)
+[node name="PushableBrazierSource" parent="." unique_id=1594639584 instance=ExtResource("4_brazier")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.4, 0.08, 0)
 
-[node name="ReactionTarget" parent="." instance=ExtResource("5_target")]
-position = Vector3(2.35, 0.5, 1.0)
+[node name="ReactionTarget" parent="." unique_id=148887804 instance=ExtResource("5_target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.35, 0.5, 1)
 
-[node name="SteamPressureLift" parent="." instance=ExtResource("10_lift")]
-position = Vector3(0, 0, 2.2)
+[node name="SteamPressureLift" parent="." unique_id=1371348597 instance=ExtResource("10_lift")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.2)
 
-[node name="StateReadout" type="Label3D" parent="."]
-position = Vector3(3.42, 1.42, 2.65)
-text = "SURFACE: INITIALIZING"
-font_size = 24
+[node name="StateReadout" type="Label3D" parent="." unique_id=643320253]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.42, 1.42, 2.65)
 pixel_size = 0.0062
 billboard = 1
 modulate = Color(0.9, 0.9, 0.95, 1)
+text = "SURFACE: INITIALIZING"
+font_size = 24
 outline_size = 6

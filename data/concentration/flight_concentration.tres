@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ConcentrationEffectDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/concentration/concentration_effect_definition.gd" id="1_concentration"]
+
+[resource]
+script = ExtResource("1_concentration")
+effect_id = "flight_concentration"
+display_name = "Flight"
+description = "Reserve most of Grace's mana capacity to sustain unrestricted aerial movement. Early Flight disables combat, casting, interaction, dodging, and Soul manipulation until Grace lands or releases concentration."
+mana_reservation_fraction = 0.75
+free_elements = Array[String]([])
+discounted_elements = {}
+effect_tags = Array[String](["concentration", "traversal", "flight", "air", "late_game"])

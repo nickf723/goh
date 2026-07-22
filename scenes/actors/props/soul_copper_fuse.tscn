@@ -1,0 +1,118 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/physics/field_responsive_body.gd" id="1_body"]
+[ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="2_force"]
+[ext_resource type="Script" path="res://scripts/combat/payload_receiver.gd" id="3_payload"]
+[ext_resource type="Script" path="res://scripts/core/tag_component.gd" id="4_tags"]
+[ext_resource type="Script" path="res://scripts/soul/soul_manipulable.gd" id="5_soul"]
+[ext_resource type="Script" path="res://scripts/physics/circuit_component.gd" id="6_component"]
+[ext_resource type="Script" path="res://scripts/physics/circuit_terminal.gd" id="7_terminal"]
+[ext_resource type="Resource" path="res://data/materials/copper_physical_profile.tres" id="8_copper"]
+
+[sub_resource type="StandardMaterial3D" id="Material_copper"]
+albedo_color = Color(0.78, 0.27, 0.055, 1)
+metallic = 0.92
+roughness = 0.22
+
+[sub_resource type="StandardMaterial3D" id="Material_current"]
+albedo_color = Color(1, 0.7, 0.08, 0.42)
+transparency = 1
+emission_enabled = true
+emission = Color(1, 0.35, 0.02, 1)
+emission_energy_multiplier = 3.8
+
+[sub_resource type="StandardMaterial3D" id="Material_soul"]
+albedo_color = Color(0.08, 0.72, 0.9, 0.7)
+transparency = 1
+emission_enabled = true
+emission = Color(0.04, 0.6, 1, 1)
+emission_energy_multiplier = 1.8
+
+[sub_resource type="BoxMesh" id="Mesh_fuse"]
+size = Vector3(2.3, 0.18, 0.18)
+
+[sub_resource type="BoxShape3D" id="Shape_fuse"]
+size = Vector3(2.3, 0.18, 0.18)
+
+[sub_resource type="TorusMesh" id="Mesh_soul_mark"]
+inner_radius = 0.24
+outer_radius = 0.33
+rings = 18
+ring_segments = 8
+
+[node name="SoulCopperFuse" type="CharacterBody3D"]
+script = ExtResource("1_body")
+body_label = "Soul-Grippable Copper Fuse"
+material_profile = ExtResource("8_copper")
+mass_override_kg = 2.4
+gravity_strength = 20.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.1, 0)
+shape = SubResource("Shape_fuse")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.1, 0)
+material_override = SubResource("Material_copper")
+mesh = SubResource("Mesh_fuse")
+
+[node name="SoulMark" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.24, 0)
+rotation = Vector3(1.5708, 0, 0)
+material_override = SubResource("Material_soul")
+mesh = SubResource("Mesh_soul_mark")
+
+[node name="PayloadReceiver" type="Node" parent="."]
+script = ExtResource("3_payload")
+
+[node name="ForceReceiver" type="Node" parent="."]
+script = ExtResource("2_force")
+drag = 7.0
+max_force_speed = 5.0
+impulse_momentum_retention = 0.12
+
+[node name="TagComponent" type="Node" parent="."]
+script = ExtResource("4_tags")
+tags = Array[String](["prop", "copper", "conductive", "fuse", "circuit", "soul_manipulable"])
+
+[node name="SoulManipulable" type="Node" parent="."]
+script = ExtResource("5_soul")
+anchor_offset = Vector3(0, 0.1, 0)
+maximum_speed = 13.0
+minimum_speed = 2.8
+rotation_response_degrees = 360.0
+
+[node name="CircuitComponent" type="Node3D" parent="."]
+script = ExtResource("6_component")
+component_id = "movable_copper_fuse"
+display_name = "Copper Return Fuse"
+material_profile = ExtResource("8_copper")
+resistance_ohms = 0.18
+max_current_amps = 8.0
+
+[node name="CurrentGlow" type="MeshInstance3D" parent="CircuitComponent"]
+visible = false
+position = Vector3(0, 0.1, 0)
+scale = Vector3(1.05, 1.7, 1.7)
+material_override = SubResource("Material_current")
+mesh = SubResource("Mesh_fuse")
+
+[node name="TerminalA" type="Marker3D" parent="CircuitComponent"]
+position = Vector3(-1.15, 0.1, 0)
+script = ExtResource("7_terminal")
+terminal_id = "left"
+connection_radius = 0.38
+
+[node name="TerminalB" type="Marker3D" parent="CircuitComponent"]
+position = Vector3(1.15, 0.1, 0)
+script = ExtResource("7_terminal")
+terminal_id = "right"
+connection_radius = 0.38
+
+[node name="Label3D" type="Label3D" parent="."]
+position = Vector3(0, 0.82, 0)
+text = "COPPER FUSE"
+font_size = 21
+pixel_size = 0.006
+billboard = 1
+outline_size = 5

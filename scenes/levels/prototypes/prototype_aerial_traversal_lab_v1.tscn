@@ -42,6 +42,7 @@ shadow_enabled = true
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1, 11.2)
 rotation_degrees = Vector3(0, 180, 0)
+jump_velocity = 7.9
 
 [node name="ConcentrationManager" type="Node" parent="."]
 script = ExtResource("4_concentration")

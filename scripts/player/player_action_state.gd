@@ -13,6 +13,7 @@ var is_attacking: bool = false
 var is_casting: bool = false
 var is_interacting: bool = false
 var is_dodging: bool = false
+var is_manipulating: bool = false
 
 var attack_allows_cast_cancel: bool = false
 var attack_allows_dodge_cancel: bool = false
@@ -77,7 +78,7 @@ func can_move() -> bool:
 
 
 func can_attack() -> bool:
-	if is_defeated:
+	if is_defeated or is_manipulating:
 		return false
 
 	if is_attacking or is_casting or is_interacting or is_dodging:
@@ -90,7 +91,7 @@ func can_attack() -> bool:
 
 
 func can_cast() -> bool:
-	if is_defeated:
+	if is_defeated or is_manipulating:
 		return false
 
 	if is_attacking and not attack_allows_cast_cancel:
@@ -106,7 +107,7 @@ func can_cast() -> bool:
 
 
 func can_interact() -> bool:
-	if is_defeated:
+	if is_defeated or is_manipulating:
 		return false
 
 	if is_attacking or is_casting or is_interacting or is_dodging:
@@ -119,7 +120,7 @@ func can_interact() -> bool:
 
 
 func can_dodge() -> bool:
-	if is_defeated:
+	if is_defeated or is_manipulating:
 		return false
 
 	if is_attacking and not attack_allows_dodge_cancel:
@@ -132,6 +133,12 @@ func can_dodge() -> bool:
 		return false
 
 	return true
+
+
+func can_manipulate() -> bool:
+	if is_defeated or is_focus_menu_open:
+		return false
+	return not (is_attacking or is_casting or is_interacting or is_dodging or is_manipulating)
 
 
 func begin_attack(lock_duration: float = 0.25) -> void:
@@ -179,8 +186,21 @@ func begin_dodge(lock_duration: float = 0.28) -> void:
 	dodge_lock_timer = max(lock_duration, 0.01)
 
 
+func begin_manipulation() -> bool:
+	if not can_manipulate():
+		return false
+	is_manipulating = true
+	return true
+
+
+func end_manipulation() -> void:
+	is_manipulating = false
+
+
 func set_focus_menu_open(value: bool) -> void:
 	is_focus_menu_open = value
+	if value:
+		end_manipulation()
 
 
 func clear_action_locks() -> void:
@@ -188,6 +208,7 @@ func clear_action_locks() -> void:
 	is_casting = false
 	is_interacting = false
 	is_dodging = false
+	is_manipulating = false
 	cast_lock_timer = 0.0
 	interact_lock_timer = 0.0
 	dodge_lock_timer = 0.0
@@ -212,6 +233,7 @@ func get_debug_data() -> Dictionary:
 		"cast": is_casting,
 		"dodge": is_dodging,
 		"interact": is_interacting,
+		"manipulating": is_manipulating,
 		"cast_cancel": attack_allows_cast_cancel,
 		"dodge_cancel": attack_allows_dodge_cancel,
 	}

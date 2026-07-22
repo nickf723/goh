@@ -94,10 +94,12 @@ func configure_player() -> void:
 func connect_weather_signals() -> void:
 	if weather_controller == null:
 		return
-	if weather_controller.has_signal("weather_started") and not weather_controller.weather_started.is_connected(_on_weather_started):
-		weather_controller.weather_started.connect(_on_weather_started)
-	if weather_controller.has_signal("weather_stopped") and not weather_controller.weather_stopped.is_connected(_on_weather_stopped):
-		weather_controller.weather_stopped.connect(_on_weather_stopped)
+	var started_callable := Callable(self, "_on_weather_started")
+	var stopped_callable := Callable(self, "_on_weather_stopped")
+	if weather_controller.has_signal("weather_started") and not weather_controller.is_connected("weather_started", started_callable):
+		weather_controller.connect("weather_started", started_callable)
+	if weather_controller.has_signal("weather_stopped") and not weather_controller.is_connected("weather_stopped", stopped_callable):
+		weather_controller.connect("weather_stopped", stopped_callable)
 
 
 func build_arena() -> void:

@@ -41,17 +41,63 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 	var wave_speed: float = max(wave_speed_meters_per_second, 0.1)
 	var travel_time: float = max(radius / wave_speed, minimum_visual_lifetime)
 
-	ElementVisuals.spawn_sound_pulse(
-		get_tree(),
-		origin_position + Vector3.UP * 0.12,
-		radius,
-		travel_time
-	)
+	spawn_wave_visual(radius, travel_time)
 	schedule_detection(wave_speed)
 	show_message("Echolocation pulse released.")
 
 	var cleanup_timer: SceneTreeTimer = get_tree().create_timer(travel_time + cleanup_padding)
 	cleanup_timer.timeout.connect(Callable(self, "queue_free"))
+
+
+func spawn_wave_visual(radius: float, lifetime: float) -> void:
+	var sound_color: Color = ElementVisuals.get_element_color("sound")
+
+	for index: int in range(3):
+		var ring := ElementVisuals.add_torus(
+			self,
+			"SoundRing" + str(index),
+			0.2,
+			0.235,
+			sound_color.lightened(float(index) * 0.12),
+			Vector3(0.0, 0.2 + float(index) * 0.08, 0.0),
+			Vector3.ZERO,
+			2.0,
+			0.62 - float(index) * 0.1
+		)
+		ring.scale = Vector3.ONE * (0.18 + float(index) * 0.08)
+
+		var ring_tween := ring.create_tween()
+		var delay: float = float(index) * 0.055
+		if delay > 0.0:
+			ring_tween.tween_interval(delay)
+		ring_tween.tween_property(ring, "scale", Vector3.ONE * radius, lifetime)
+
+	var vertical_a := ElementVisuals.add_torus(
+		self,
+		"ResonanceA",
+		0.16,
+		0.2,
+		sound_color,
+		Vector3(0.0, 0.47, 0.0),
+		Vector3(90.0, 0.0, 0.0),
+		2.4,
+		0.54
+	)
+	var vertical_b := ElementVisuals.add_torus(
+		self,
+		"ResonanceB",
+		0.16,
+		0.2,
+		sound_color,
+		Vector3(0.0, 0.47, 0.0),
+		Vector3(0.0, 0.0, 90.0),
+		2.4,
+		0.54
+	)
+	vertical_a.scale = Vector3.ONE * 0.2
+	vertical_b.scale = Vector3.ONE * 0.2
+	vertical_a.create_tween().tween_property(vertical_a, "scale", Vector3.ONE * radius * 0.72, lifetime)
+	vertical_b.create_tween().tween_property(vertical_b, "scale", Vector3.ONE * radius * 0.72, lifetime)
 
 
 func schedule_detection(wave_speed: float) -> void:

@@ -4,9 +4,6 @@ class_name SnowWeatherController
 const SnowElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
 
 var snow_elapsed: float = 0.0
-var original_fog_light_color: Color = Color.WHITE
-var original_fog_light_energy: float = 1.0
-var original_fog_density: float = 0.0
 
 
 func start_weather(source_player: Node3D = null) -> bool:

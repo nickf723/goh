@@ -49,7 +49,7 @@ func _process(delta: float) -> void:
 	if player == null:
 		return
 
-	if player.has_method("is_focus_spell_menu_open") and player.call("is_focus_spell_menu_open"):
+	if player.has_method("is_focus_spell_menu_open") and bool(player.call("is_focus_spell_menu_open")):
 		release_grip()
 		return
 
@@ -75,15 +75,22 @@ func _exit_tree() -> void:
 func try_begin_grip() -> void:
 	if held_target != null:
 		return
+	if action_state != null and action_state.has_method("can_manipulate"):
+		if not bool(action_state.call("can_manipulate")):
+			return
 
 	var candidate: SoulManipulable = find_best_target()
 	if candidate == null:
 		show_message("No Soul-manipulable object in focus.")
 		return
-
 	if not candidate.begin_manipulation(self):
 		show_message("That object's Soul is resisting manipulation.")
 		return
+
+	if action_state != null and action_state.has_method("begin_manipulation"):
+		if not bool(action_state.call("begin_manipulation")):
+			candidate.end_manipulation()
+			return
 
 	held_target = candidate
 	var camera: Camera3D = get_viewport().get_camera_3d()
@@ -98,11 +105,8 @@ func try_begin_grip() -> void:
 
 	var body: CharacterBody3D = candidate.body
 	desired_basis = body.global_basis if body != null else Basis.IDENTITY
-	if action_state != null and action_state.has_method("begin_manipulation"):
-		action_state.call("begin_manipulation")
-
 	GameFeedback.play("light_tick", {"source": "soul_grip"})
-	show_message("Soul Grip: right stick aims, D-pad up/down adjusts distance, left/right rotates.")
+	show_message("Soul Grip: right stick aims, D-pad up/down changes distance, left/right rotates.")
 	grip_started.emit(candidate)
 	update_target_pose()
 	update_feedback_visuals()
@@ -122,40 +126,31 @@ func release_grip() -> void:
 	held_target = null
 	if action_state != null and action_state.has_method("end_manipulation"):
 		action_state.call("end_manipulation")
-
 	GameFeedback.play("light_tick", {"source": "soul_release"})
 	hide_feedback_visuals()
 	grip_released.emit(released_target)
 
 
 func update_hold_controls(delta: float) -> void:
-	var distance_input: float = (
-		Input.get_action_strength(push_action)
-		- Input.get_action_strength(pull_action)
-	)
+	var distance_input: float = Input.get_action_strength(push_action) - Input.get_action_strength(pull_action)
 	hold_distance = clampf(
 		hold_distance + distance_input * distance_change_speed * delta,
 		minimum_hold_distance,
 		maximum_hold_distance
 	)
 
-	var rotation_input: float = (
-		Input.get_action_strength(rotate_right_action)
-		- Input.get_action_strength(rotate_left_action)
-	)
+	var rotation_input: float = Input.get_action_strength(rotate_right_action) - Input.get_action_strength(rotate_left_action)
 	if absf(rotation_input) > 0.01:
-		var rotation_radians: float = deg_to_rad(rotation_speed_degrees) * rotation_input * delta
-		desired_basis = Basis(Vector3.UP, rotation_radians) * desired_basis
+		var angle: float = deg_to_rad(rotation_speed_degrees) * rotation_input * delta
+		desired_basis = Basis(Vector3.UP, angle) * desired_basis
 
 
 func update_target_pose() -> void:
 	if held_target == null:
 		return
-
 	var camera: Camera3D = get_viewport().get_camera_3d()
 	if camera == null:
 		return
-
 	var forward: Vector3 = -camera.global_basis.z
 	if forward.length() <= 0.01:
 		return
@@ -206,7 +201,7 @@ func find_best_target() -> SoulManipulable:
 func raycast_target(camera: Camera3D) -> SoulManipulable:
 	var from: Vector3 = camera.global_position
 	var to: Vector3 = from + (-camera.global_basis.z).normalized() * maximum_target_range
-	var query := PhysicsRayQueryParameters3D.create(from, to)
+	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(from, to)
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
 	if player != null:
@@ -215,7 +210,8 @@ func raycast_target(camera: Camera3D) -> SoulManipulable:
 	var result: Dictionary = player.get_world_3d().direct_space_state.intersect_ray(query)
 	if result.is_empty():
 		return null
-	return find_manipulable_from_node(result.get("collider") as Node)
+	var collider: Node = result.get("collider") as Node
+	return find_manipulable_from_node(collider)
 
 
 func find_manipulable_from_node(start_node: Node) -> SoulManipulable:
@@ -231,7 +227,7 @@ func find_manipulable_from_node(start_node: Node) -> SoulManipulable:
 
 
 func create_feedback_visuals() -> void:
-	var soul_color := Color(0.18, 0.92, 1.0, 0.82)
+	var soul_color: Color = Color(0.18, 0.92, 1.0, 0.82)
 	var material := StandardMaterial3D.new()
 	material.albedo_color = soul_color
 	material.emission_enabled = true
@@ -311,6 +307,8 @@ func ensure_input_map() -> void:
 	ensure_key(rotate_left_action, KEY_Z)
 	ensure_key(rotate_right_action, KEY_X)
 
+	# Controller-first layout: hold LB, aim with the normal right stick, then use
+	# the D-pad for distance and yaw. These D-pad actions only matter while LB is held.
 	ensure_joy_button(grip_action, 4)
 	ensure_joy_button(push_action, 11)
 	ensure_joy_button(pull_action, 12)
@@ -325,20 +323,24 @@ func ensure_action(action_name: String, deadzone: float) -> void:
 
 func ensure_key(action_name: String, physical_keycode: Key) -> void:
 	for event: InputEvent in InputMap.action_get_events(action_name):
-		if event is InputEventKey and (event as InputEventKey).physical_keycode == physical_keycode:
-			return
-	var key_event := InputEventKey.new()
-	key_event.physical_keycode = physical_keycode
-	InputMap.action_add_event(action_name, key_event)
+		if event is InputEventKey:
+			var key_event: InputEventKey = event as InputEventKey
+			if key_event.physical_keycode == physical_keycode:
+				return
+	var new_key_event := InputEventKey.new()
+	new_key_event.physical_keycode = physical_keycode
+	InputMap.action_add_event(action_name, new_key_event)
 
 
 func ensure_joy_button(action_name: String, button_index: int) -> void:
 	for event: InputEvent in InputMap.action_get_events(action_name):
-		if event is InputEventJoypadButton and (event as InputEventJoypadButton).button_index == button_index:
-			return
-	var joy_event := InputEventJoypadButton.new()
-	joy_event.button_index = button_index
-	InputMap.action_add_event(action_name, joy_event)
+		if event is InputEventJoypadButton:
+			var button_event: InputEventJoypadButton = event as InputEventJoypadButton
+			if button_event.button_index == button_index:
+				return
+	var new_button_event := InputEventJoypadButton.new()
+	new_button_event.button_index = button_index
+	InputMap.action_add_event(action_name, new_button_event)
 
 
 func show_message(text: String) -> void:

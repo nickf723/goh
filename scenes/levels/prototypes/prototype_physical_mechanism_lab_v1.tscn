@@ -15,6 +15,10 @@
 [ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="13_force"]
 [ext_resource type="Script" path="res://scripts/combat/payload_receiver.gd" id="14_payload"]
 [ext_resource type="Resource" path="res://data/materials/copper_physical_profile.tres" id="15_copper"]
+[ext_resource type="Script" path="res://scripts/soul/soul_manipulable.gd" id="16_soul"]
+[ext_resource type="PackedScene" path="res://scenes/actors/props/soul_wood_block.tscn" id="17_wood_block"]
+[ext_resource type="PackedScene" path="res://scenes/actors/props/soul_stone_weight.tscn" id="18_stone_weight"]
+[ext_resource type="PackedScene" path="res://scenes/actors/props/soul_giant_slab.tscn" id="19_giant_slab"]
 
 [sub_resource type="StandardMaterial3D" id="Material_floor"]
 albedo_color = Color(0.045, 0.055, 0.075, 1)
@@ -146,18 +150,18 @@ position = Vector3(-7.8, 0, -6.8)
 
 [node name="Title" type="Label3D" parent="."]
 position = Vector3(0, 4.25, -5.8)
-text = "PHYSICAL MECHANISM KIT"
-font_size = 48
+text = "PHYSICAL MECHANISMS + SOUL GRIP"
+font_size = 44
 pixel_size = 0.008
 billboard = 1
 modulate = Color(0.88, 0.78, 1, 1)
 outline_size = 7
 
 [node name="Instructions" type="Label3D" parent="."]
-position = Vector3(0, 3.45, -5.55)
-text = "BATTERY → COPPER CABLE → PRESSURE SWITCH → MOTOR → RETURN FUSE\nSTAND ON THE PLATE • STEP OFF TO RELEASE • KNOCK THE FUSE LOOSE • F8 RESETS"
-font_size = 23
-pixel_size = 0.006
+position = Vector3(0, 3.35, -5.55)
+text = "HOLD LB: SOUL GRIP   RIGHT STICK: AIM   D-PAD ↑↓: DISTANCE   D-PAD ←→: ROTATE\nPLACE WEIGHT ON PLATE • ALIGN COPPER FUSE • COMPARE WOOD, STONE, AND GIANT SLAB • F8 RESETS"
+font_size = 21
+pixel_size = 0.0057
 billboard = 1
 modulate = Color(1, 0.84, 0.42, 1)
 outline_size = 5
@@ -226,6 +230,12 @@ drag = 7.0
 max_force_speed = 5.0
 impulse_momentum_retention = 0.12
 
+[node name="SoulManipulable" type="Node" parent="MovableFuse"]
+script = ExtResource("16_soul")
+maximum_speed = 13.0
+minimum_speed = 2.8
+rotation_response_degrees = 360.0
+
 [node name="CircuitComponent" type="Node3D" parent="MovableFuse"]
 script = ExtResource("11_component")
 component_id = "movable_return_fuse"
@@ -254,8 +264,18 @@ connection_radius = 0.38
 
 [node name="FuseLabel" type="Label3D" parent="MovableFuse"]
 position = Vector3(0, 0.8, 0)
-text = "MOVABLE COPPER FUSE\nPHYSICAL RETURN PATH"
+text = "COPPER FUSE\nSOUL-GRIPPABLE RETURN PATH"
 font_size = 21
 pixel_size = 0.006
 billboard = 1
 outline_size = 5
+
+[node name="SoulWoodBlock" parent="." instance=ExtResource("17_wood_block")]
+position = Vector3(-3.6, 0, -3.7)
+
+[node name="SoulStoneWeight" parent="." instance=ExtResource("18_stone_weight")]
+position = Vector3(0, 0, -3.7)
+
+[node name="SoulGiantSlab" parent="." instance=ExtResource("19_giant_slab")]
+position = Vector3(5.3, 0, -4.3)
+rotation_degrees = Vector3(0, -12, 0)

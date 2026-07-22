@@ -11,6 +11,8 @@ const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
 @export var hide_visuals_when_hidden: bool = true
 @export var disable_collision_when_hidden: bool = false
 @export var reveal_message: String = "Something hidden is revealed."
+@export var show_reveal_feedback: bool = true
+@export var show_debug_prints: bool = false
 
 var is_revealed: bool = false
 var reveal_timer: float = 0.0
@@ -97,18 +99,22 @@ func reveal_target(duration: float, source_name: String = "unknown") -> void:
 		set_collision_enabled(target, true)
 
 	apply_revealed_status(target, duration, source_name)
-	CombatFeedback.show_reaction_feedback(
-		target,
-		"sound_reveal",
-		{
-			"reaction_name": "Reveal",
-			"visual_style": "reveal",
-			"visual_color": ElementVisuals.get_element_color("sound"),
-			"visual_radius": 1.35,
-			"visual_duration": 0.52,
-		}
-	)
-	print(target.name, " revealed by ", source_name)
+
+	if show_reveal_feedback:
+		CombatFeedback.show_reaction_feedback(
+			target,
+			"sound_reveal",
+			{
+				"reaction_name": "Reveal",
+				"visual_style": "reveal",
+				"visual_color": ElementVisuals.get_element_color("sound"),
+				"visual_radius": 1.35,
+				"visual_duration": 0.52,
+			}
+		)
+
+	if show_debug_prints:
+		print(target.name, " revealed by ", source_name)
 
 
 func hide_target() -> void:
@@ -124,7 +130,8 @@ func hide_target() -> void:
 	if disable_collision_when_hidden:
 		set_collision_enabled(target, false)
 
-	print(target.name, " hidden again.")
+	if show_debug_prints:
+		print(target.name, " hidden again.")
 
 
 func reset_reveal() -> void:
@@ -189,4 +196,5 @@ func get_debug_data() -> Dictionary:
 		"time": snapped(reveal_timer, 0.1),
 		"needs": required_detection_tags,
 		"last": last_detection_summary,
+		"feedback": show_reveal_feedback,
 	}

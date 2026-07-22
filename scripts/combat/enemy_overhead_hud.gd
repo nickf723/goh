@@ -49,6 +49,7 @@ var last_status_signature: String = ""
 var debug_label: Label3D = null
 var last_debug_text: String = ""
 
+
 static func ensure_for_target(target: Node) -> EnemyOverheadHud:
 	var target_3d: Node3D = get_target_node_3d(target)
 
@@ -72,6 +73,7 @@ static func ensure_for_target(target: Node) -> EnemyOverheadHud:
 	hud.bind_target(target_3d)
 	return hud
 
+
 static func get_target_node_3d(target: Node) -> Node3D:
 	if target == null:
 		return null
@@ -86,6 +88,7 @@ static func get_target_node_3d(target: Node) -> Node3D:
 
 	return null
 
+
 static func should_show_for_target(target_3d: Node3D) -> bool:
 	if target_3d == null:
 		return false
@@ -99,15 +102,18 @@ static func should_show_for_target(target_3d: Node3D) -> bool:
 	var lower_name: String = target_3d.name.to_lower()
 	return lower_name.contains("dummy") or lower_name.contains("goblin") or lower_name.contains("gremlin") or lower_name.contains("zombie")
 
+
 func _ready() -> void:
 	top_level = true
 	create_bar_nodes()
 	refresh_now()
 
+
 func bind_target(new_target: Node3D) -> void:
 	target_node = new_target
 	refresh_component_refs()
 	refresh_now()
+
 
 func refresh_component_refs() -> void:
 	if target_node == null or not is_instance_valid(target_node):
@@ -121,15 +127,7 @@ func refresh_component_refs() -> void:
 	status_receiver = target_node.get_node_or_null("StatusReceiver")
 	tag_component = target_node.get_node_or_null("TagComponent")
 	brain = target_node.get_node_or_null("EnemyBrain")
-	if target_node == null or not is_instance_valid(target_node):
-		hit_receiver = null
-		status_receiver = null
-		tag_component = null
-		return
 
-	hit_receiver = target_node.get_node_or_null("HitReceiver")
-	status_receiver = target_node.get_node_or_null("StatusReceiver")
-	tag_component = target_node.get_node_or_null("TagComponent")
 
 func _process(delta: float) -> void:
 	if target_node == null or not is_instance_valid(target_node):
@@ -154,6 +152,7 @@ func _process(delta: float) -> void:
 	face_camera(delta)
 	refresh_now()
 
+
 func create_bar_nodes() -> void:
 	if health_back != null:
 		return
@@ -172,6 +171,7 @@ func create_bar_nodes() -> void:
 	icon_container.name = "StatusIcons"
 	icon_container.position = Vector3(0.0, icon_y_offset, 0.02)
 	add_child(icon_container)
+
 	debug_label = create_debug_label()
 	debug_label.position = Vector3(
 		0.0,
@@ -179,6 +179,7 @@ func create_bar_nodes() -> void:
 		0.03
 	)
 	add_child(debug_label)
+
 
 func create_debug_label() -> Label3D:
 	var label: Label3D = Label3D.new()
@@ -197,6 +198,7 @@ func create_debug_label() -> Label3D:
 
 	return label
 
+
 func create_quad(node_name: String, width: float, height: float, color: Color) -> MeshInstance3D:
 	var mesh_instance: MeshInstance3D = MeshInstance3D.new()
 	mesh_instance.name = node_name
@@ -210,6 +212,7 @@ func create_quad(node_name: String, width: float, height: float, color: Color) -
 	add_child(mesh_instance)
 	return mesh_instance
 
+
 func make_material(color: Color) -> StandardMaterial3D:
 	var material: StandardMaterial3D = StandardMaterial3D.new()
 	material.albedo_color = color
@@ -222,6 +225,7 @@ func make_material(color: Color) -> StandardMaterial3D:
 	material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	return material
 
+
 func refresh_now() -> void:
 	if health_back == null:
 		return
@@ -229,11 +233,7 @@ func refresh_now() -> void:
 	update_bars()
 	update_status_icons()
 	update_personality_debug()
-	if health_back == null:
-		return
 
-	update_bars()
-	update_status_icons()
 
 func update_personality_debug() -> void:
 	if debug_label == null:
@@ -315,14 +315,17 @@ func update_personality_debug() -> void:
 
 	debug_label.visible = true
 
+
 func update_world_position() -> void:
 	var target_height: float = estimate_target_height(target_node)
 	global_position = target_node.global_position + Vector3.UP * (target_height + vertical_padding)
+
 
 func face_camera(_delta: float) -> void:
 	# Bar quads and icon labels use built-in billboarding. Keeping this node unrotated
 	# avoids mirrored letters while the HUD still faces the camera.
 	return
+
 
 func update_bars() -> void:
 	if hit_receiver == null or not is_instance_valid(hit_receiver):
@@ -351,11 +354,13 @@ func update_bars() -> void:
 		var stance_ratio: float = clamp(float(current_stance) / float(max_stance), 0.0, 1.0)
 		set_bar_ratio(stance_fill, stance_ratio, stance_bar_height)
 
+
 func set_bar_visible(is_visible: bool) -> void:
 	health_back.visible = is_visible
 	health_fill.visible = is_visible
 	stance_back.visible = is_visible
 	stance_fill.visible = is_visible
+
 
 func set_bar_ratio(bar: MeshInstance3D, ratio: float, height: float) -> void:
 	if bar == null or bar.mesh == null:
@@ -370,6 +375,7 @@ func set_bar_ratio(bar: MeshInstance3D, ratio: float, height: float) -> void:
 	quad_mesh.size = Vector2(width, height)
 	bar.position.x = -bar_width * 0.5 + width * 0.5
 
+
 func set_material_color(mesh_instance: MeshInstance3D, color: Color) -> void:
 	if mesh_instance == null:
 		return
@@ -382,6 +388,7 @@ func set_material_color(mesh_instance: MeshInstance3D, color: Color) -> void:
 	material.albedo_color = color
 	material.emission = Color(color.r, color.g, color.b, 1.0)
 
+
 func get_health_color(ratio: float) -> Color:
 	if ratio <= 0.3:
 		return HEALTH_LOW_COLOR
@@ -390,6 +397,7 @@ func get_health_color(ratio: float) -> Color:
 		return HEALTH_MID_COLOR
 
 	return HEALTH_GOOD_COLOR
+
 
 func update_status_icons() -> void:
 	var statuses: Array[String] = get_active_status_names()
@@ -413,12 +421,14 @@ func update_status_icons() -> void:
 		icon_container.add_child(label)
 		status_icon_labels.append(label)
 
+
 func clear_status_icons() -> void:
 	for label: Label3D in status_icon_labels:
 		if label != null and is_instance_valid(label):
 			label.queue_free()
 
 	status_icon_labels.clear()
+
 
 func create_status_icon(status_name: String) -> Label3D:
 	var label: Label3D = Label3D.new()
@@ -434,12 +444,14 @@ func create_status_icon(status_name: String) -> Label3D:
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return label
 
+
 func get_active_status_names() -> Array[String]:
 	var names: Array[String] = []
 	append_status_receiver_names(names)
 	append_tag_component_status_names(names)
 	names.sort()
 	return names
+
 
 func append_status_receiver_names(names: Array[String]) -> void:
 	if status_receiver == null or not is_instance_valid(status_receiver):
@@ -452,6 +464,7 @@ func append_status_receiver_names(names: Array[String]) -> void:
 
 		for status_name: Variant in status_dictionary.keys():
 			add_status_name(names, str(status_name))
+
 
 func append_tag_component_status_names(names: Array[String]) -> void:
 	if tag_component == null or not is_instance_valid(tag_component):
@@ -471,6 +484,7 @@ func append_tag_component_status_names(names: Array[String]) -> void:
 			if STATUS_TAG_NAMES.has(tag_name):
 				add_status_name(names, tag_name)
 
+
 func add_status_name(names: Array[String], status_name: String) -> void:
 	if status_name == "":
 		return
@@ -482,6 +496,7 @@ func add_status_name(names: Array[String], status_name: String) -> void:
 		return
 
 	names.append(status_name)
+
 
 func get_status_icon_text(status_name: String) -> String:
 	match status_name:
@@ -504,6 +519,7 @@ func get_status_icon_text(status_name: String) -> String:
 		_:
 			return status_name.left(1).to_upper()
 
+
 func get_status_icon_color(status_name: String) -> Color:
 	match status_name:
 		"burning":
@@ -523,6 +539,7 @@ func get_status_icon_color(status_name: String) -> Color:
 		_:
 			return Color(0.72, 1.0, 0.72, 1.0)
 
+
 func is_target_defeated() -> bool:
 	if hit_receiver == null or not is_instance_valid(hit_receiver):
 		return false
@@ -531,6 +548,7 @@ func is_target_defeated() -> bool:
 	var current_health: int = int(hit_receiver.get("current_health"))
 	return max_health > 0 and current_health <= 0
 
+
 func estimate_target_height(root: Node) -> float:
 	var height: float = estimate_height_from_collision_shapes(root)
 
@@ -538,6 +556,7 @@ func estimate_target_height(root: Node) -> float:
 		return height
 
 	return fallback_target_height
+
 
 func estimate_height_from_collision_shapes(root: Node) -> float:
 	if root == null:
@@ -553,6 +572,7 @@ func estimate_height_from_collision_shapes(root: Node) -> float:
 		height = max(height, estimate_height_from_collision_shapes(child))
 
 	return height
+
 
 func get_shape_height(shape: Shape3D) -> float:
 	if shape == null:

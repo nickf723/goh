@@ -15,6 +15,14 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 		queue_free()
 		return
 
+	# AbilityCaster has already approved and paid for this cast before execute() runs.
+	# Hand the action lock off to the sustained Flight state so activation is not
+	# rejected by the brief generic cast timer that was just started.
+	var action_state: Node = player.get_node_or_null("PlayerActionState")
+	if action_state != null:
+		action_state.set("is_casting", false)
+		action_state.set("cast_lock_timer", 0.0)
+
 	aerial_locomotion.call("activate_flight", FlightDefinition)
 	queue_free()
 

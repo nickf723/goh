@@ -66,11 +66,16 @@ func connect_receiver_signals() -> void:
 		push_warning(name + " has no HitReceiver at " + str(hit_receiver_path))
 		return
 
+	var health_changed_callable: Callable = Callable(self, "_on_health_changed")
+	var health_depleted_callable: Callable = Callable(self, "_on_health_depleted")
+
 	if hit_receiver.has_signal("health_changed"):
-		hit_receiver.health_changed.connect(_on_health_changed)
+		if not hit_receiver.is_connected("health_changed", health_changed_callable):
+			hit_receiver.connect("health_changed", health_changed_callable)
 
 	if hit_receiver.has_signal("health_depleted"):
-		hit_receiver.health_depleted.connect(_on_health_depleted)
+		if not hit_receiver.is_connected("health_depleted", health_depleted_callable):
+			hit_receiver.connect("health_depleted", health_depleted_callable)
 
 
 func _on_health_changed(current_health: int, max_health: int) -> void:
@@ -83,10 +88,13 @@ func _on_health_changed(current_health: int, max_health: int) -> void:
 	)
 
 	if current_health <= crack_threshold:
-		enter_cracked_state()
-	else:
-		exit_cracked_state()
+		if is_cracked:
+			play_hit_reaction()
+		else:
+			enter_cracked_state()
+		return
 
+	exit_cracked_state()
 	play_hit_reaction()
 
 
@@ -173,7 +181,7 @@ func reset_prop() -> void:
 
 	if hit_receiver != null:
 		if hit_receiver.has_method("reset_health"):
-			hit_receiver.reset_health()
+			hit_receiver.call("reset_health")
 		else:
 			hit_receiver.set("current_health", hit_receiver.get("max_health"))
 
@@ -191,6 +199,7 @@ func play_hit_reaction() -> void:
 
 	var tilt_radians: float = deg_to_rad(hit_wobble_degrees)
 	var tilt_direction: float = -1.0 if is_cracked else 1.0
+	var starting_rotation_z: float = starting_anchor_transform.basis.get_euler().z
 
 	reaction_tween = create_tween()
 	reaction_tween.set_trans(Tween.TRANS_BACK)
@@ -198,13 +207,13 @@ func play_hit_reaction() -> void:
 	reaction_tween.tween_property(
 		visual_anchor,
 		"rotation:z",
-		starting_anchor_transform.basis.get_euler().z + tilt_radians * tilt_direction,
+		starting_rotation_z + tilt_radians * tilt_direction,
 		hit_wobble_time * 0.45
 	)
 	reaction_tween.tween_property(
 		visual_anchor,
 		"rotation:z",
-		starting_anchor_transform.basis.get_euler().z,
+		starting_rotation_z,
 		hit_wobble_time * 0.55
 	)
 
@@ -216,19 +225,21 @@ func play_crack_reaction() -> void:
 	stop_reaction_tween()
 	visual_anchor.transform = starting_anchor_transform
 
+	var starting_scale: Vector3 = starting_anchor_transform.basis.get_scale()
+
 	reaction_tween = create_tween()
 	reaction_tween.set_trans(Tween.TRANS_BACK)
 	reaction_tween.set_ease(Tween.EASE_OUT)
 	reaction_tween.tween_property(
 		visual_anchor,
 		"scale",
-		starting_anchor_transform.basis.get_scale() * crack_scale_pulse,
+		starting_scale * crack_scale_pulse,
 		hit_wobble_time * 0.5
 	)
 	reaction_tween.tween_property(
 		visual_anchor,
 		"scale",
-		starting_anchor_transform.basis.get_scale(),
+		starting_scale,
 		hit_wobble_time * 0.5
 	)
 
@@ -252,8 +263,8 @@ func set_collision_enabled(enabled: bool) -> void:
 	if collision_shape != null:
 		collision_shape.set_deferred("disabled", not enabled)
 
-	monitorable = enabled
-	monitoring = enabled
+	set_deferred("monitorable", enabled)
+	set_deferred("monitoring", enabled)
 
 
 func spawn_fragments() -> void:
@@ -297,10 +308,11 @@ func spawn_fragments() -> void:
 		active_fragments.append(fragment)
 
 		if fragment_lifetime > 0.0:
+			var fragment_to_free: RigidBody3D = fragment
 			get_tree().create_timer(fragment_lifetime).timeout.connect(
 				func() -> void:
-					if is_instance_valid(fragment):
-						fragment.queue_free()
+					if is_instance_valid(fragment_to_free):
+						fragment_to_free.queue_free()
 			)
 
 
@@ -352,8 +364,14 @@ func clear_fragments() -> void:
 
 
 func get_debug_data() -> Dictionary:
+	var live_fragment_count: int = 0
+
+	for fragment: RigidBody3D in active_fragments:
+		if is_instance_valid(fragment):
+			live_fragment_count += 1
+
 	return {
 		"state": "broken" if is_broken else ("cracked" if is_cracked else "intact"),
-		"fragments": active_fragments.size(),
+		"fragments": live_fragment_count,
 		"auto_reset": auto_reset_seconds,
 	}

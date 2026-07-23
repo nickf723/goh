@@ -1,0 +1,43 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/traversal/metal_tether_anchor_3d.gd" id="1_anchor"]
+
+[sub_resource type="SphereShape3D" id="Shape_anchor"]
+radius = 0.48
+
+[sub_resource type="SphereMesh" id="Mesh_core"]
+radius = 0.22
+height = 0.44
+radial_segments = 12
+rings = 6
+
+[sub_resource type="TorusMesh" id="Mesh_ring"]
+inner_radius = 0.34
+outer_radius = 0.44
+rings = 16
+ring_segments = 8
+
+[sub_resource type="StandardMaterial3D" id="Material_anchor"]
+albedo_color = Color(0.72, 0.76, 0.84, 1)
+metallic = 0.94
+roughness = 0.2
+emission_enabled = true
+emission = Color(1, 0.55, 0.05, 1)
+emission_energy_multiplier = 1.35
+
+[node name="MetalTetherAnchorBody" type="StaticBody3D"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("Shape_anchor")
+
+[node name="MetalTetherAnchor" type="Node3D" parent="."]
+script = ExtResource("1_anchor")
+
+[node name="AnchorCore" type="MeshInstance3D" parent="MetalTetherAnchor"]
+material_override = SubResource("Material_anchor")
+mesh = SubResource("Mesh_core")
+
+[node name="AnchorRing" type="MeshInstance3D" parent="MetalTetherAnchor"]
+rotation_degrees = Vector3(90, 0, 0)
+material_override = SubResource("Material_anchor")
+mesh = SubResource("Mesh_ring")

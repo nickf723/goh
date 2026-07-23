@@ -65,6 +65,7 @@ func _test_tension_and_breakage() -> void:
 	tether.apply_endpoint_forces = false
 	add_child(tether)
 	await get_tree().physics_frame
+	await get_tree().physics_frame
 	if tether.peak_tension < 99.0:
 		failures.append("A stretched tether must calculate spring tension")
 	if not tether.is_broken or tether.break_reason != "overload":

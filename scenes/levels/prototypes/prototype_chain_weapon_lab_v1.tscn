@@ -126,7 +126,7 @@ position = Vector3(0, 2.3, 4.2)
 pixel_size = 0.007
 billboard = 1
 modulate = Color(1, 0.82, 0.5, 1)
-text = "J / LMB / LB  LIGHT       K / RMB / RB  HEAVY       F8  RESET"
+text = "J / LMB / L  LIGHT       K / M4 / R  HEAVY       F8  RESET"
 font_size = 32
 outline_size = 6
 
@@ -173,4 +173,4 @@ text = "TIP SPEED 0.0 m/s  |  MOMENTUM 0.0  |  TENSION 0.0 N"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.82, 0.78, 0.72, 1)
 theme_override_font_sizes/font_size = 14
-text = "LIGHT: ORBIT → RETURN → RECALL    HEAVY: METEOR DROP\nJ / LMB / LB = LIGHT    K / RMB / RB = HEAVY    F8 RESET"
+text = "LIGHT: ORBIT → RETURN → RECALL    HEAVY: METEOR DROP\nJ / LMB / L = LIGHT    K / M4 / R = HEAVY    F8 RESET"

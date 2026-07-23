@@ -52,6 +52,8 @@ var replan_count: int = 0
 var last_route_summary: String = "unplanned"
 var last_next_position: Vector3 = Vector3.ZERO
 var last_move_direction: Vector3 = Vector3.ZERO
+var last_agent_target: Vector3 = Vector3.ZERO
+var agent_target_initialized: bool = false
 
 
 func _ready() -> void:
@@ -132,6 +134,7 @@ func clear_destination() -> void:
 	last_route_summary = "cleared"
 	last_move_direction = Vector3.ZERO
 	stuck_timer = 0.0
+	agent_target_initialized = false
 	if navigation_agent != null and actor != null:
 		navigation_agent.target_position = actor.global_position
 
@@ -185,7 +188,8 @@ func plan_route(force_reset: bool = false) -> void:
 	chosen_route_distance = float(best_candidate.get("distance", 0.0))
 	chosen_hazard_cost = float(best_candidate.get("hazard_cost", 0.0))
 	chosen_route_bias = float(best_candidate.get("bias", 0.0))
-	planned_path = best_candidate.get("path", PackedVector3Array()) as PackedVector3Array
+	var path_value: Variant = best_candidate.get("path", PackedVector3Array())
+	planned_path = path_value as PackedVector3Array if path_value is PackedVector3Array else PackedVector3Array()
 	last_route_summary = (
 		chosen_route_id
 		+ " score " + str(snapped(chosen_route_score, 0.1))
@@ -205,7 +209,7 @@ func plan_route(force_reset: bool = false) -> void:
 		route_waypoints.append((anchor_value as TacticalRouteAnchor).global_position)
 	route_waypoints.append(current_destination)
 	current_waypoint_index = 0
-	set_agent_target(route_waypoints[0])
+	set_agent_target(route_waypoints[0], true)
 	stuck_timer = 0.0
 
 
@@ -331,9 +335,13 @@ func collect_hazards() -> Array[TacticalNavigationHazard]:
 	return results
 
 
-func set_agent_target(target: Vector3) -> void:
+func set_agent_target(target: Vector3, force: bool = false) -> void:
 	if navigation_agent == null:
 		return
+	if not force and agent_target_initialized and last_agent_target.distance_to(target) <= 0.05:
+		return
+	last_agent_target = target
+	agent_target_initialized = true
 	navigation_agent.target_position = target
 
 
@@ -344,23 +352,19 @@ func get_next_direction(destination: Vector3, delta: float) -> Vector3:
 	advance_waypoint_if_reached()
 	if route_waypoints.is_empty():
 		return Vector3.ZERO
-	if navigation_agent.is_navigation_finished():
-		advance_waypoint_if_reached()
-		if navigation_agent.is_navigation_finished():
-			last_move_direction = Vector3.ZERO
-			update_stuck_recovery(delta, Vector3.ZERO)
-			return Vector3.ZERO
 
 	last_next_position = navigation_agent.get_next_path_position()
 	var direction: Vector3 = last_next_position - actor.global_position
 	direction.y = 0.0
-	if direction.length_squared() <= 0.0001:
+	if direction.length_squared() <= 0.0001 and not navigation_agent.is_navigation_finished():
 		var current_target: Vector3 = route_waypoints[current_waypoint_index]
 		direction = current_target - actor.global_position
 		direction.y = 0.0
 	if direction.length_squared() > 0.0001:
 		direction = direction.normalized()
 		direction = apply_local_separation(direction)
+	else:
+		direction = Vector3.ZERO
 	last_move_direction = direction
 	update_stuck_recovery(delta, direction)
 	return direction
@@ -376,7 +380,7 @@ func advance_waypoint_if_reached() -> void:
 		return
 	if current_waypoint_index < route_waypoints.size() - 1:
 		current_waypoint_index += 1
-		set_agent_target(route_waypoints[current_waypoint_index])
+		set_agent_target(route_waypoints[current_waypoint_index], true)
 
 
 func apply_local_separation(direction: Vector3) -> Vector3:

@@ -1,7 +1,7 @@
 extends Node
 
-const SmokeGas: Resource = preload("res://data/gas/smoke_gas.tres")
-const PoisonGas: Resource = preload("res://data/gas/poison_gas.tres")
+const SmokeGas: GasDefinition = preload("res://data/gas/smoke_gas.tres")
+const PoisonGas: GasDefinition = preload("res://data/gas/poison_gas.tres")
 const GasVolumeGridScript = preload("res://scripts/gas/gas_volume_grid.gd")
 const GasManagerScript = preload("res://scripts/gas/gas_manager.gd")
 const AirflowManagerScript = preload("res://scripts/airflow/airflow_manager.gd")
@@ -29,21 +29,21 @@ func test_gas_definitions() -> void:
 	if SmokeGas == null:
 		failures.append("Smoke Gas definition failed to load")
 	else:
-		if str(SmokeGas.get("gas_id")) != "smoke":
+		if SmokeGas.gas_id != "smoke":
 			failures.append("Smoke Gas id must be smoke")
-		if float((SmokeGas.get("buoyancy_velocity") as Vector3).y) <= 0.0:
+		if SmokeGas.buoyancy_velocity.y <= 0.0:
 			failures.append("Smoke must have upward buoyancy")
-		if bool(SmokeGas.get("harmful")):
+		if SmokeGas.harmful:
 			failures.append("Smoke v1 should obscure rather than damage")
 
 	if PoisonGas == null:
 		failures.append("Poison Gas definition failed to load")
 	else:
-		if str(PoisonGas.get("gas_id")) != "poison":
+		if PoisonGas.gas_id != "poison":
 			failures.append("Poison Gas id must be poison")
-		if float((PoisonGas.get("buoyancy_velocity") as Vector3).y) >= 0.0:
+		if PoisonGas.buoyancy_velocity.y >= 0.0:
 			failures.append("Poison Gas must settle downward")
-		if not bool(PoisonGas.get("harmful")):
+		if not PoisonGas.harmful:
 			failures.append("Poison Gas must be harmful")
 
 

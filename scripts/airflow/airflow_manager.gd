@@ -80,24 +80,7 @@ func sample_total_airflow_fast(world_position: Vector3, sample_time: float = -1.
 
 
 func sample_total_airflow(world_position: Vector3, sample_time: float = -1.0) -> Vector3:
-	ensure_field_registry()
-	var total_velocity: Vector3 = Vector3.ZERO
-	last_contributors.clear()
-	for field_node: Node in registered_fields:
-		if field_node == null or not is_instance_valid(field_node):
-			continue
-		if not field_node.has_method("sample_air_velocity"):
-			continue
-		var contribution: Variant = field_node.call("sample_air_velocity", world_position, sample_time)
-		if not (contribution is Vector3):
-			continue
-		var velocity: Vector3 = contribution as Vector3
-		if velocity.length_squared() <= 0.000001:
-			continue
-		total_velocity += velocity
-		last_contributors.append(str(field_node.get("field_id")) if field_node.get("field_id") != null else field_node.name)
-
-	total_velocity = clamp_combined_velocity(total_velocity)
+	var total_velocity: Vector3 = sample_total_airflow_fast(world_position, sample_time)
 	sample_count += 1
 	last_sample_position = world_position
 	last_total_velocity = total_velocity
@@ -116,6 +99,7 @@ func clamp_combined_velocity(total_velocity: Vector3) -> Vector3:
 func sample_breakdown(world_position: Vector3, sample_time: float = -1.0) -> Array[Dictionary]:
 	ensure_field_registry()
 	var breakdown: Array[Dictionary] = []
+	last_contributors.clear()
 	for field_node: Node in registered_fields:
 		if field_node == null or not is_instance_valid(field_node):
 			continue
@@ -127,8 +111,10 @@ func sample_breakdown(world_position: Vector3, sample_time: float = -1.0) -> Arr
 		var velocity: Vector3 = contribution as Vector3
 		if velocity.length_squared() <= 0.000001:
 			continue
+		var contributor_id: String = str(field_node.get("field_id")) if field_node.get("field_id") != null else field_node.name
+		last_contributors.append(contributor_id)
 		breakdown.append({
-			"field_id": str(field_node.get("field_id")) if field_node.get("field_id") != null else field_node.name,
+			"field_id": contributor_id,
 			"velocity": velocity,
 			"speed": velocity.length(),
 		})

@@ -21,8 +21,8 @@ The controller hook is generic. A future whip, flail, or living tendril may prov
 
 ## Controls
 
-- `J` / left mouse / controller left shoulder: Light orbit
-- `K` / right mouse / controller right shoulder: Heavy branch
+- `J` / left mouse / controller `L`: Light orbit
+- `K` / mouse side button / controller `R`: Heavy branch
 - `F8`: Reset the laboratory in editor builds
 
 ## Manual route
@@ -43,7 +43,7 @@ The controller hook is generic. A future whip, flail, or living tendril may prov
 
 `scenes/tests/chain_weapon_smoke_test.tscn`
 
-It validates the chain resource identity, seven-node combo graph, payload tags, runtime rig construction, shared flexible tether, and laboratory instantiation.
+It validates the chain resource identity, seven-node combo graph, payload tags, runtime rig construction, shared flexible tether, laboratory instantiation, the `L`/`R` attack pair, and the rule that Soul Grip cannot steal the Light shoulder.
 
 ## Deferred
 

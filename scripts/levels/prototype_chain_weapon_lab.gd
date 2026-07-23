@@ -161,7 +161,7 @@ func refresh_hud() -> void:
 	if route_label != null:
 		route_label.text = (
 			"LIGHT: ORBIT → RETURN → RECALL    HEAVY: METEOR DROP\n"
-			+ "J / LMB / LB = LIGHT    K / RMB / RB = HEAVY    F8 RESET"
+			+ "J / LMB / L = LIGHT    K / M4 / R = HEAVY    F8 RESET"
 		)
 
 

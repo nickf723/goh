@@ -67,7 +67,15 @@ func run_tests() -> void:
 	if lab == null:
 		failures.append("chain weapon laboratory failed to instantiate")
 	else:
+		if float(lab.get("stamina_regeneration_per_second")) <= 0.0:
+			failures.append("chain laboratory must regenerate practice stamina")
 		lab.queue_free()
+
+	var input_bootstrap: WeaponInputBootstrap = WeaponInputBootstrap.new()
+	add_child(input_bootstrap)
+	assert_attack_binding("weapon_light_attack", KEY_J, MOUSE_BUTTON_LEFT, JOY_BUTTON_LEFT_SHOULDER)
+	assert_attack_binding("weapon_heavy_attack", KEY_K, MOUSE_BUTTON_RIGHT, JOY_BUTTON_RIGHT_SHOULDER)
+	input_bootstrap.queue_free()
 
 
 func assert_attack(
@@ -83,3 +91,23 @@ func assert_attack(
 		failures.append(attack_id + " light link mismatch")
 	if attack.next_heavy_attack_id != expected_heavy:
 		failures.append(attack_id + " heavy link mismatch")
+
+
+func assert_attack_binding(
+	action_name: String,
+	expected_key: Key,
+	expected_mouse: MouseButton,
+	expected_joypad: JoyButton
+) -> void:
+	var has_key: bool = false
+	var has_mouse: bool = false
+	var has_joypad: bool = false
+	for event: InputEvent in InputMap.action_get_events(action_name):
+		if event is InputEventKey and (event as InputEventKey).physical_keycode == expected_key:
+			has_key = true
+		elif event is InputEventMouseButton and (event as InputEventMouseButton).button_index == expected_mouse:
+			has_mouse = true
+		elif event is InputEventJoypadButton and (event as InputEventJoypadButton).button_index == expected_joypad:
+			has_joypad = true
+	if not has_key or not has_mouse or not has_joypad:
+		failures.append(action_name + " must provide matching keyboard, mouse, and controller bindings")

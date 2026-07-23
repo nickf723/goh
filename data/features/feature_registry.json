@@ -406,7 +406,7 @@
       "category": "Systems Laboratory",
       "version": "v1",
       "status": "experimental",
-      "description": "Shared constraint-based substrate for environmental rope, iron chain, chain weapons, and future whips, proving sag, endpoint tension, momentum, overload failure, elemental material response, and counterweight load transfer.",
+      "description": "Shared constraint-based substrate for environmental rope, iron chain, chain weapons, and whips, proving sag, endpoint tension, momentum, overload failure, elemental material response, and counterweight load transfer.",
       "scene": "res://scenes/levels/prototypes/prototype_flexible_tether_lab_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/prototype_flexible_tether_lab_v1.tscn"
@@ -435,7 +435,7 @@
         "Tether segments do not yet collide with level geometry or wrap around arbitrary obstacles.",
         "The pulley uses a stable shared-length force model rather than wheel inertia or bearing friction.",
         "Elemental reactions are direct laboratory inputs until production Fire and Ice payload receivers are connected.",
-        "Persistent latching, binding, grappling, obstacle wrapping, and whip wave propagation are intentionally deferred."
+        "Persistent latching, binding, grappling, full free-ended whip propagation, and obstacle wrapping are intentionally deferred."
       ],
       "launchable": true,
       "visible_in_launcher": true,
@@ -475,7 +475,47 @@
         "The weighted tip uses authored hybrid trajectories and swept queries; the chain does not yet wrap around arbitrary level geometry.",
         "Persistent latching, pulling, binding, and entanglement are deferred.",
         "Elemental conduction through the combat chain is deferred.",
-        "Whip wave propagation remains a separate weapon-class layer over the same runtime-rig hook."
+        "Whips now use a separate tip-speed and wave layer over the same runtime-rig hook; chains remain weighted momentum weapons."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
+      "id": "whip_weapon_lab",
+      "order": 36,
+      "display_name": "Whip Weapon Laboratory",
+      "category": "Combat Laboratory",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Distinct flexible weapon class using a shared leather tether, visible traveling-wave timing, swept tip-only contacts, speed-scaled sonic cracks, airflow deflection, and a material wrap-and-pull interaction.",
+      "scene": "res://scenes/levels/prototypes/prototype_whip_weapon_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_whip_weapon_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/whip_weapon_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "chain_weapon_lab",
+        "airflow_foundation"
+      ],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "LIGHT",
+        "HEAVY",
+        "RESET"
+      ],
+      "manual_test": "docs/whip_weapon_lab_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "The handle and tip use authored hybrid trajectories; the flexible body between them remains physically solved.",
+        "Wrap contact latches only for the current attack and does not yet persist as an actor-binding state.",
+        "The whip does not yet wrap around arbitrary level geometry or collide along every flexible segment.",
+        "Production elemental lash, burning, freezing, disarming, and item-retrieval behaviors are deferred."
       ],
       "launchable": true,
       "visible_in_launcher": true,
@@ -690,6 +730,7 @@
         "airflow_foundation",
         "flexible_tether_foundation",
         "chain_weapon_lab",
+        "whip_weapon_lab",
         "weapon_combat_arena",
         "runtime_stat_lab",
         "enemy_personality_lab",

@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_definition.gd" id="1_definition"]
+[ext_resource type="Resource" path="res://data/damage_payloads/training_whip_payload.tres" id="2_payload"]
+[ext_resource type="Resource" path="res://data/weapon_movesets/training_whip_moveset.tres" id="3_moveset"]
+[ext_resource type="PackedScene" path="res://scenes/weapons/whip_weapon_rig.tscn" id="4_rig"]
+
+[resource]
+script = ExtResource("1_definition")
+weapon_class = "whip"
+display_name = "Training Crackwhip"
+description = "A light flexible weapon that turns authored hand intent into a traveling wave, concentrating speed and damage at its tip."
+damage = 2
+stance_damage = 1
+range = 4.6
+attack_speed = 1.16
+cooldown = 0.42
+cone_angle_degrees = 130.0
+max_targets = 3
+stamina_cost = 0
+moveset = ExtResource("3_moveset")
+visual_primary_color = Color(0.34, 0.07, 0.03, 1)
+visual_secondary_color = Color(0.08, 0.025, 0.05, 1)
+visual_accent_color = Color(0.78, 0.22, 1, 1)
+visual_scale = 1.0
+runtime_rig_scene = ExtResource("4_rig")
+scaling_stats = Array[String](["dexterity", "skill"])
+scaling_note = "Dexterity controls wave timing while Skill represents spacing and tip accuracy."
+light_payload = ExtResource("2_payload")

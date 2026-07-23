@@ -22,6 +22,7 @@ func _ready() -> void:
 	manager = get_tree().get_first_node_in_group("perception_stimulus_manager") as PerceptionStimulusManager
 	add_to_group("perception_emitters")
 	add_to_group("debuggable")
+	add_to_group("lab_resettable")
 
 
 func _physics_process(delta: float) -> void:

@@ -1,0 +1,161 @@
+[gd_resource type="Resource" script_class="WeaponMovesetDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon_moveset_definition.gd" id="2_moveset"]
+
+[sub_resource type="Resource" id="Attack_whip_l1"]
+script = ExtResource("1_attack")
+attack_id = "whip_l1"
+display_name = "Outward Snap"
+startup_time = 0.2
+active_time = 0.06
+recovery_time = 0.18
+combo_timeout = 0.58
+cancel_window_start_normalized = 0.56
+allow_spell_cancel = true
+damage_multiplier = 0.85
+stance_multiplier = 0.58
+knockback_multiplier = 0.7
+extra_tags = Array[String](["whip", "flexible_weapon", "tip_focused", "snap"])
+attack_range = 4.15
+cone_angle_degrees = 125.0
+attack_center_forward_offset = 2.0
+max_targets = 3
+movement_distance = 0.08
+movement_duration = 0.1
+next_light_attack_id = "whip_l2"
+next_heavy_attack_id = "whip_h1"
+hit_stop_duration = 0.045
+trail_color = Color(0.82, 0.3, 1, 0.88)
+
+[sub_resource type="Resource" id="Attack_whip_l2"]
+script = ExtResource("1_attack")
+attack_id = "whip_l2"
+display_name = "Returning Snap"
+startup_time = 0.21
+active_time = 0.06
+recovery_time = 0.19
+combo_timeout = 0.6
+cancel_window_start_normalized = 0.58
+allow_spell_cancel = true
+damage_multiplier = 0.92
+stance_multiplier = 0.62
+knockback_multiplier = 0.72
+extra_tags = Array[String](["whip", "flexible_weapon", "tip_focused", "snap", "reverse"])
+attack_range = 4.25
+cone_angle_degrees = 130.0
+attack_center_forward_offset = 2.0
+max_targets = 3
+movement_distance = 0.08
+movement_duration = 0.1
+next_light_attack_id = "whip_l3"
+next_heavy_attack_id = "whip_h2"
+hit_stop_duration = 0.048
+trail_color = Color(0.7, 0.34, 1, 0.9)
+
+[sub_resource type="Resource" id="Attack_whip_l3"]
+script = ExtResource("1_attack")
+attack_id = "whip_l3"
+display_name = "Needle Crack"
+startup_time = 0.24
+active_time = 0.055
+recovery_time = 0.24
+combo_timeout = 0.64
+cancel_window_start_normalized = 0.66
+allow_spell_cancel = true
+damage_multiplier = 1.25
+stance_multiplier = 0.72
+knockback_multiplier = 0.84
+extra_tags = Array[String](["whip", "flexible_weapon", "tip_focused", "precision", "crack"])
+attack_range = 4.75
+cone_angle_degrees = 34.0
+attack_center_forward_offset = 2.5
+max_targets = 1
+movement_distance = 0.12
+movement_duration = 0.12
+hit_stop_duration = 0.065
+trail_color = Color(0.9, 0.42, 1, 0.96)
+
+[sub_resource type="Resource" id="Attack_whip_h0"]
+script = ExtResource("1_attack")
+attack_id = "whip_h0"
+display_name = "Thunderclap"
+input_kind = "heavy"
+startup_time = 0.38
+active_time = 0.08
+recovery_time = 0.4
+combo_timeout = 0.18
+cancel_window_start_normalized = 0.88
+allow_dodge_cancel = false
+stamina_cost = 2
+damage_multiplier = 1.72
+stance_multiplier = 1.25
+knockback_multiplier = 1.05
+knockback_up_add = 0.35
+extra_tags = Array[String](["whip", "flexible_weapon", "tip_focused", "overhead", "crack", "sonic"])
+attack_range = 4.6
+cone_angle_degrees = 48.0
+attack_center_forward_offset = 2.35
+max_targets = 2
+movement_distance = 0.16
+movement_duration = 0.14
+hit_stop_duration = 0.085
+trail_color = Color(0.9, 0.2, 1, 1)
+
+[sub_resource type="Resource" id="Attack_whip_h1"]
+script = ExtResource("1_attack")
+attack_id = "whip_h1"
+display_name = "Coiling Catch"
+input_kind = "heavy"
+startup_time = 0.31
+active_time = 0.1
+recovery_time = 0.42
+combo_timeout = 0.2
+cancel_window_start_normalized = 0.86
+allow_dodge_cancel = false
+stamina_cost = 2
+damage_multiplier = 0.72
+stance_multiplier = 0.9
+knockback_multiplier = 0.2
+extra_tags = Array[String](["whip", "flexible_weapon", "tip_focused", "wrap", "pull"])
+attack_range = 4.4
+cone_angle_degrees = 72.0
+attack_center_forward_offset = 2.3
+max_targets = 1
+movement_distance = 0.12
+movement_duration = 0.14
+hit_stop_duration = 0.05
+trail_color = Color(0.6, 0.18, 1, 0.96)
+
+[sub_resource type="Resource" id="Attack_whip_h2"]
+script = ExtResource("1_attack")
+attack_id = "whip_h2"
+display_name = "Reversal Snare"
+input_kind = "heavy"
+startup_time = 0.33
+active_time = 0.1
+recovery_time = 0.44
+combo_timeout = 0.2
+cancel_window_start_normalized = 0.88
+allow_dodge_cancel = false
+stamina_cost = 2
+damage_multiplier = 0.78
+stance_multiplier = 0.96
+knockback_multiplier = 0.2
+extra_tags = Array[String](["whip", "flexible_weapon", "tip_focused", "wrap", "pull", "reverse"])
+attack_range = 4.5
+cone_angle_degrees = 78.0
+attack_center_forward_offset = 2.3
+max_targets = 1
+movement_distance = 0.12
+movement_duration = 0.14
+hit_stop_duration = 0.052
+trail_color = Color(0.52, 0.24, 1, 0.98)
+
+[resource]
+script = ExtResource("2_moveset")
+moveset_id = "training_whip"
+display_name = "Crack and Coil Forms"
+entry_light_attack_id = "whip_l1"
+entry_heavy_attack_id = "whip_h0"
+attacks = Array[ExtResource("1_attack")]([SubResource("Attack_whip_l1"), SubResource("Attack_whip_l2"), SubResource("Attack_whip_l3"), SubResource("Attack_whip_h0"), SubResource("Attack_whip_h1"), SubResource("Attack_whip_h2")])

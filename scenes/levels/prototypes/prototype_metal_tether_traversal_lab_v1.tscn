@@ -1,0 +1,93 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_metal_tether_traversal_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/airflow/airflow_manager.gd" id="4_air_manager"]
+[ext_resource type="Script" path="res://scripts/airflow/airflow_field_3d.gd" id="5_air_field"]
+
+[sub_resource type="Environment" id="Environment_foundry"]
+background_mode = 1
+background_color = Color(0.025, 0.03, 0.04, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.46, 0.34, 0.22, 1)
+ambient_light_energy = 0.74
+reflected_light_source = 2
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.2, 0.15, 0.1, 1)
+fog_light_energy = 0.38
+fog_density = 0.008
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_hud"]
+bg_color = Color(0.025, 0.03, 0.04, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.95, 0.62, 0.16, 0.92)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="PrototypeMetalTetherTraversalLab" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_foundry")
+
+[node name="FoundryLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -26, 0)
+light_color = Color(1, 0.68, 0.34, 1)
+light_energy = 1.18
+shadow_enabled = true
+
+[node name="MetalGlow" type="OmniLight3D" parent="."]
+position = Vector3(0, 8, -4)
+light_color = Color(1, 0.48, 0.08, 1)
+light_energy = 2.8
+omni_range = 28.0
+shadow_enabled = true
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, 10)
+rotation_degrees = Vector3(0, 180, 0)
+jump_velocity = 7.2
+
+[node name="AirflowManager" type="Node" parent="."]
+script = ExtResource("4_air_manager")
+
+[node name="FoundryCrosswind" type="Node3D" parent="."]
+position = Vector3(0, 5, -6.5)
+script = ExtResource("5_air_field")
+field_id = "foundry_tether_crosswind"
+box_extents = Vector3(6, 6, 5)
+local_direction = Vector3(1, 0, 0)
+strength = 4.0
+turbulence_strength = 0.45
+
+[node name="TetherHUD" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="Panel" type="PanelContainer" parent="TetherHUD"]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 1060.0
+offset_bottom = 158.0
+theme_override_styles/panel = SubResource("StyleBox_hud")
+
+[node name="Margin" type="MarginContainer" parent="TetherHUD/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="Readout" type="Label" parent="TetherHUD/Panel/Margin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.42, 1)
+theme_override_font_sizes/font_size = 15
+text = "METAL TETHER READY"

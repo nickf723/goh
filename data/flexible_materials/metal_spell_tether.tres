@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="FlexibleMaterialProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/flexible/flexible_material_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+material_id = "metal_spell_tether"
+display_name = "Conjured Metal Filament"
+visual_style = 2
+linear_density = 0.72
+stiffness = 3100.0
+tension_damping = 68.0
+break_strength = 5200.0
+radius = 0.045
+base_color = Color(0.74, 0.8, 0.88, 1)
+metallic = 0.96
+roughness = 0.18
+burnable = false
+ignition_threshold = 1.0
+burn_rate = 0.0
+conductive = true
+frozen_stiffness_multiplier = 1.35
+frozen_break_strength_multiplier = 0.68
+frozen_color = Color(0.68, 0.9, 1, 1)

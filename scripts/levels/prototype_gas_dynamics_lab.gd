@@ -13,7 +13,7 @@ const PoisonGas = preload("res://data/gas/poison_gas.tres")
 const GasLabLoadout: Resource = preload("res://data/loadouts/grace_gas_lab_loadout.tres")
 
 @export var enable_editor_f8_reset: bool = true
-@export_range(0.04, 1.0, 0.01) var readout_refresh_interval: float = 0.12
+@export_range(0.04, 1.0, 0.01) var readout_refresh_interval: float = 0.2
 @export var safety_reset_height: float = -5.0
 
 @onready var player: CharacterBody3D = get_node_or_null("Player") as CharacterBody3D
@@ -160,7 +160,7 @@ func create_instruction_board() -> void:
 	add_child(board)
 	ElementVisuals.add_box(board, "Board", Vector3(16.5, 3.6, 0.18), Color(0.02, 0.04, 0.065, 1.0), Vector3.ZERO, Vector3.ZERO, 0.32, 0.96)
 	var label := make_label(
-		"REACTIVE GAS DYNAMICS LAB\nSMOKE rises  •  POISON settles  •  AIRFLOW advects both  •  GUST relocates density\nWalk through sensors and watch exposure  •  V vectors  •  B density voxels  •  F8 reset",
+		"REACTIVE GAS DYNAMICS LAB\nSMOKE rises  •  POISON settles  •  AIRFLOW advects both  •  GUST relocates density\nOptimized active grids  •  V vectors  •  B density voxels  •  F8 reset",
 		Vector3(0.0, 0.0, 0.11),
 		Color(0.72, 0.94, 1.0, 1.0),
 		27,
@@ -217,18 +217,30 @@ func create_gas_volumes() -> void:
 	smoke_volume.name = "SmokeDensityGrid"
 	smoke_volume.position = Vector3(-6.0, 4.2, -5.0)
 	smoke_volume.gas_definition = SmokeGas
-	smoke_volume.grid_size = Vector3i(20, 10, 20)
-	smoke_volume.cell_size = 0.85
-	smoke_volume.simulation_interval = 0.12
+	smoke_volume.grid_size = Vector3i(14, 8, 14)
+	smoke_volume.cell_size = 1.2
+	smoke_volume.simulation_interval = 0.18
+	smoke_volume.maximum_steps_per_frame = 1
+	smoke_volume.simulation_phase_offset = 0.0
+	smoke_volume.visual_stride = 2
+	smoke_volume.visual_update_interval = 0.28
+	smoke_volume.visual_radius_scale = 0.48
+	smoke_volume.active_padding_cells = 3
 	add_child(smoke_volume)
 
 	poison_volume = GasVolumeGridScript.new() as GasVolumeGrid
 	poison_volume.name = "PoisonDensityGrid"
 	poison_volume.position = Vector3(8.5, 3.0, -1.5)
 	poison_volume.gas_definition = PoisonGas
-	poison_volume.grid_size = Vector3i(16, 8, 14)
-	poison_volume.cell_size = 0.85
-	poison_volume.simulation_interval = 0.12
+	poison_volume.grid_size = Vector3i(12, 6, 10)
+	poison_volume.cell_size = 1.15
+	poison_volume.simulation_interval = 0.18
+	poison_volume.maximum_steps_per_frame = 1
+	poison_volume.simulation_phase_offset = 0.09
+	poison_volume.visual_stride = 2
+	poison_volume.visual_update_interval = 0.28
+	poison_volume.visual_radius_scale = 0.48
+	poison_volume.active_padding_cells = 3
 	add_child(poison_volume)
 
 
@@ -315,7 +327,8 @@ func create_vector_visualization() -> void:
 	vector_visualizer.name = "VectorVisualizer"
 	vector_visualizer.position = Vector3(0.0, 4.0, -3.0)
 	vector_visualizer.set("sample_extents", Vector3(17.0, 4.5, 14.0))
-	vector_visualizer.set("sample_spacing", Vector3(3.4, 2.4, 3.4))
+	vector_visualizer.set("sample_spacing", Vector3(4.5, 3.0, 4.5))
+	vector_visualizer.set("refresh_interval", 0.35)
 	add_child(vector_visualizer)
 
 
@@ -398,11 +411,14 @@ func update_readout() -> void:
 			air_velocity = air_sample as Vector3
 	var smoke_mass: float = smoke_volume.get_total_density_mass() if smoke_volume != null else 0.0
 	var poison_mass: float = poison_volume.get_total_density_mass() if poison_volume != null else 0.0
+	var smoke_cells: int = int(smoke_volume.get_debug_data().get("simulated_cells", 0)) if smoke_volume != null else 0
+	var poison_cells: int = int(poison_volume.get_debug_data().get("simulated_cells", 0)) if poison_volume != null else 0
 	readout.text = (
 		"LOCAL ATMOSPHERE\nSmoke " + str(snapped(smoke_density, 0.01)) + "  •  Dose " + str(snapped(smoke_dose, 0.01))
 		+ "\nPoison " + str(snapped(poison_density, 0.01)) + "  •  Dose " + str(snapped(poison_dose, 0.01))
 		+ "\nAir " + format_vector(air_velocity) + "  •  " + str(snapped(air_velocity.length(), 0.1)) + " m/s"
 		+ "\nGrid mass Smoke " + str(snapped(smoke_mass, 0.1)) + "  •  Poison " + str(snapped(poison_mass, 0.1))
+		+ "\nSimulated cells " + str(smoke_cells) + " + " + str(poison_cells)
 		+ "\nHealth " + str(GameState.get_stat("health")) + " / " + str(GameState.get_stat("max_health"))
 	)
 
@@ -454,6 +470,8 @@ func get_debug_data() -> Dictionary:
 		"gas_lab": true,
 		"smoke_mass": smoke_volume.get_total_density_mass() if smoke_volume != null else 0.0,
 		"poison_mass": poison_volume.get_total_density_mass() if poison_volume != null else 0.0,
+		"smoke_grid": smoke_volume.get_debug_data() if smoke_volume != null else {},
+		"poison_grid": poison_volume.get_debug_data() if poison_volume != null else {},
 		"player_exposure": exposure_receiver.get_debug_data() if exposure_receiver != null else {},
 		"sensor_count": sensors.size(),
 		"gas_visuals_visible": gas_visuals_visible,

@@ -8,8 +8,8 @@ const GasVolumeGridScript = preload("res://scripts/gas/gas_volume_grid.gd")
 const GasEmitterScript = preload("res://scripts/gas/gas_emitter_3d.gd")
 const GasSensorScript = preload("res://scripts/gas/gas_density_sensor.gd")
 const GasExposureReceiverScript = preload("res://scripts/gas/gas_exposure_receiver.gd")
-const SmokeGas: GasDefinition = preload("res://data/gas/smoke_gas.tres")
-const PoisonGas: GasDefinition = preload("res://data/gas/poison_gas.tres")
+const SmokeGas = preload("res://data/gas/smoke_gas.tres")
+const PoisonGas = preload("res://data/gas/poison_gas.tres")
 const GasLabLoadout: Resource = preload("res://data/loadouts/grace_gas_lab_loadout.tres")
 
 @export var enable_editor_f8_reset: bool = true
@@ -17,7 +17,6 @@ const GasLabLoadout: Resource = preload("res://data/loadouts/grace_gas_lab_loado
 @export var safety_reset_height: float = -5.0
 
 @onready var player: CharacterBody3D = get_node_or_null("Player") as CharacterBody3D
-@onready var concentration_manager: Node = get_node_or_null("ConcentrationManager")
 @onready var airflow_manager: Node = get_node_or_null("AirflowManager")
 @onready var gas_manager: Node = get_node_or_null("GasManager")
 
@@ -40,13 +39,13 @@ func _ready() -> void:
 	add_to_group("debuggable")
 	stat_snapshot = GameState.get_stat_snapshot()
 	build_laboratory()
+	if player != null:
+		player.add_to_group("player")
+		initial_player_transform = player.transform
 	configure_player()
 	attach_player_exposure_receiver()
-	if player != null:
-		initial_player_transform = player.transform
-		player.add_to_group("player")
-	GameState.set_objective("Watch Smoke rise, read Poison density by height, use Gust to ventilate both fields, and inspect the vortex.")
-	show_message("Gas Dynamics Laboratory ready. Density has memory, airflow transports it, and exposure samples the field at Grace's position.")
+	GameState.set_objective("Watch Smoke rise, compare Poison density by height, use Gust to ventilate the fields, and inspect the vortex.")
+	show_message("Gas Dynamics Laboratory ready. Density has memory and airflow transports it through space.")
 	update_readout()
 
 
@@ -73,8 +72,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not key_event.pressed or key_event.echo:
 		return
 	if enable_editor_f8_reset and OS.has_feature("editor") and key_event.physical_keycode == KEY_F8:
-		get_viewport().set_input_as_handled()
 		reset_lab()
+		get_viewport().set_input_as_handled()
 	elif key_event.physical_keycode == KEY_V and vector_visualizer != null:
 		vector_visualizer.visible = not vector_visualizer.visible
 		show_message("Airflow vectors " + ("visible." if vector_visualizer.visible else "hidden."))
@@ -93,8 +92,7 @@ func configure_player() -> void:
 		return
 	var ability_caster: Node = player.get_node_or_null("AbilityCaster")
 	if ability_caster != null:
-		var runtime_loadout: Resource = GasLabLoadout.duplicate(true)
-		ability_caster.set("loadout", runtime_loadout)
+		ability_caster.set("loadout", GasLabLoadout.duplicate(true))
 		ability_caster.set("current_ability_index", 0)
 		if ability_caster.has_method("align_focus_menu_to_current_ability"):
 			ability_caster.call("align_focus_menu_to_current_ability")
@@ -123,12 +121,12 @@ func attach_player_exposure_receiver() -> void:
 	var existing: Node = player.get_node_or_null("GasExposureReceiver")
 	if existing is GasExposureReceiver:
 		exposure_receiver = existing as GasExposureReceiver
-	else:
-		exposure_receiver = GasExposureReceiverScript.new() as GasExposureReceiver
-		exposure_receiver.name = "GasExposureReceiver"
-		exposure_receiver.effect_dose_threshold = 0.32
-		exposure_receiver.show_messages = true
-		player.add_child(exposure_receiver)
+		return
+	exposure_receiver = GasExposureReceiverScript.new() as GasExposureReceiver
+	exposure_receiver.name = "GasExposureReceiver"
+	exposure_receiver.effect_dose_threshold = 0.32
+	exposure_receiver.show_messages = true
+	player.add_child(exposure_receiver)
 
 
 func build_laboratory() -> void:
@@ -161,13 +159,13 @@ func create_instruction_board() -> void:
 	board.position = Vector3(0.0, 2.55, 16.2)
 	add_child(board)
 	ElementVisuals.add_box(board, "Board", Vector3(16.5, 3.6, 0.18), Color(0.02, 0.04, 0.065, 1.0), Vector3.ZERO, Vector3.ZERO, 0.32, 0.96)
-	var label := Label3D.new()
-	label.text = "REACTIVE GAS DYNAMICS LAB\nSMOKE rises  •  POISON settles  •  AIRFLOW advects both  •  GUST relocates density\nWalk through sensors and watch local exposure  •  V vectors  •  B density voxels  •  F8 reset"
-	label.position = Vector3(0.0, 0.0, 0.11)
-	label.font_size = 27
-	label.pixel_size = 0.0049
-	label.outline_size = 6
-	label.modulate = Color(0.72, 0.94, 1.0, 1.0)
+	var label := make_label(
+		"REACTIVE GAS DYNAMICS LAB\nSMOKE rises  •  POISON settles  •  AIRFLOW advects both  •  GUST relocates density\nWalk through sensors and watch exposure  •  V vectors  •  B density voxels  •  F8 reset",
+		Vector3(0.0, 0.0, 0.11),
+		Color(0.72, 0.94, 1.0, 1.0),
+		27,
+		0.0049
+	)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	board.add_child(label)
 
@@ -222,7 +220,6 @@ func create_gas_volumes() -> void:
 	smoke_volume.grid_size = Vector3i(20, 10, 20)
 	smoke_volume.cell_size = 0.85
 	smoke_volume.simulation_interval = 0.12
-	smoke_volume.visual_stride = 1
 	add_child(smoke_volume)
 
 	poison_volume = GasVolumeGridScript.new() as GasVolumeGrid
@@ -232,7 +229,6 @@ func create_gas_volumes() -> void:
 	poison_volume.grid_size = Vector3i(16, 8, 14)
 	poison_volume.cell_size = 0.85
 	poison_volume.simulation_interval = 0.12
-	poison_volume.visual_stride = 1
 	add_child(poison_volume)
 
 
@@ -260,39 +256,29 @@ func create_emitter(
 	emitter.pulse_frequency = 0.32
 	emitter.pulse_depth = 0.18
 	add_child(emitter)
-	ElementVisuals.add_cylinder if false else null
 	ElementVisuals.add_sphere(emitter, "EmitterCore", 0.42, color, Vector3.ZERO, Vector3(1.0, 0.65, 1.0), 1.8, 0.55)
 	ElementVisuals.add_torus(emitter, "EmitterRing", 0.55, 0.68, color, Vector3(0.0, 0.08, 0.0), Vector3.ZERO, 1.2, 0.38)
-	var label := Label3D.new()
-	label.text = label_text
-	label.position = Vector3(0.0, 1.15, 0.0)
-	label.font_size = 24
-	label.pixel_size = 0.006
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.outline_size = 5
-	label.modulate = color
-	emitter.add_child(label)
+	emitter.add_child(make_label(label_text, Vector3(0.0, 1.15, 0.0), color, 24, 0.006))
 	return emitter
 
 
 func create_architecture() -> void:
 	var smoke_color := Color(0.2, 0.28, 0.34, 1.0)
 	for index: int in range(4):
-		var height: float = 1.3 + float(index) * 1.7
 		var ring_root := Node3D.new()
 		ring_root.name = "SmokeRiseRing" + str(index)
-		ring_root.position = Vector3(-8.5, height, -1.5)
+		ring_root.position = Vector3(-8.5, 1.3 + float(index) * 1.7, -1.5)
 		add_child(ring_root)
 		ElementVisuals.add_torus(ring_root, "Ring", 1.55, 1.78, smoke_color.lightened(float(index) * 0.08), Vector3.ZERO, Vector3.ZERO, 0.85, 0.2)
 	create_static_box("SmokeCrown", Vector3(-8.5, 7.4, -1.5), Vector3(5.2, 0.42, 5.2), Color(0.28, 0.38, 0.44, 1.0), 0.18, 0.55)
-
 	create_static_box("PoisonLowShelf", Vector3(11.4, 0.3, -1.5), Vector3(3.8, 0.6, 8.0), Color(0.16, 0.32, 0.1, 1.0), 0.15, 0.72)
+
 	for index: int in range(4):
 		var marker := Node3D.new()
 		marker.name = "PoisonFlowMarker" + str(index)
 		marker.position = Vector3(4.7 + float(index) * 2.3, 0.7, -4.9)
 		add_child(marker)
-		ElementVisuals.add_torus(marker, "Ring", 0.48, 0.62, Color(0.34, 0.84, 0.18, 1.0), Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 90.0), 1.1, 0.25)
+		ElementVisuals.add_torus(marker, "Ring", 0.48, 0.62, Color(0.34, 0.84, 0.18, 1.0), Vector3.ZERO, Vector3(0.0, 0.0, 90.0), 1.1, 0.25)
 
 	for index: int in range(4):
 		var angle: float = TAU * float(index) / 4.0
@@ -312,12 +298,12 @@ func create_sensors() -> void:
 	create_sensor("Vortex", Vector3(-2.5, 2.4, -11.0), ["smoke", "poison"], Color(0.78, 0.62, 1.0, 1.0))
 
 
-func create_sensor(sensor_name: String, position_value: Vector3, gas_ids: Array[String], color: Color) -> GasDensitySensor:
+func create_sensor(sensor_name: String, position_value: Vector3, gas_ids_value: Array[String], color: Color) -> GasDensitySensor:
 	var sensor: GasDensitySensor = GasSensorScript.new() as GasDensitySensor
 	sensor.name = sensor_name.replace(" ", "") + "Sensor"
 	sensor.position = position_value
 	sensor.sensor_label = sensor_name.to_upper()
-	sensor.gas_ids = gas_ids
+	sensor.gas_ids = gas_ids_value
 	sensor.label_color = color
 	add_child(sensor)
 	sensors.append(sensor)
@@ -334,15 +320,21 @@ func create_vector_visualization() -> void:
 
 
 func create_readout() -> void:
-	readout = Label3D.new()
+	readout = make_label("LOCAL ATMOSPHERE", Vector3(-17.2, 3.4, 15.0), Color(0.72, 0.94, 1.0, 1.0), 26, 0.0058)
 	readout.name = "GasReadout"
-	readout.position = Vector3(-17.2, 3.4, 15.0)
-	readout.font_size = 26
-	readout.pixel_size = 0.0058
-	readout.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	readout.outline_size = 6
-	readout.modulate = Color(0.72, 0.94, 1.0, 1.0)
 	add_child(readout)
+
+
+func make_label(text_value: String, position_value: Vector3, color: Color, font_size_value: int, pixel_size_value: float) -> Label3D:
+	var label := Label3D.new()
+	label.text = text_value
+	label.position = position_value
+	label.font_size = font_size_value
+	label.pixel_size = pixel_size_value
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.outline_size = 5
+	label.modulate = color
+	return label
 
 
 func create_zone_floor(position_value: Vector3, size_value: Vector3, color: Color, label_text: String) -> void:
@@ -355,14 +347,9 @@ func create_zone_floor(position_value: Vector3, size_value: Vector3, color: Colo
 	panel.material_override = ElementVisuals.make_material(color, 0.3, 0.38, true)
 	panel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(panel)
-	var label := Label3D.new()
-	label.text = label_text
-	label.position = position_value + Vector3(0.0, 0.18, 0.0)
+	var label := make_label(label_text, position_value + Vector3(0.0, 0.18, 0.0), color.lightened(0.3), 24, 0.006)
 	label.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
-	label.font_size = 24
-	label.pixel_size = 0.006
-	label.outline_size = 4
-	label.modulate = color.lightened(0.3)
+	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 	add_child(label)
 
 
@@ -444,7 +431,7 @@ func reset_lab() -> void:
 		player.transform = initial_player_transform
 		player.velocity = Vector3.ZERO
 	configure_player()
-	GameState.set_objective("Watch Smoke rise, read Poison density by height, use Gust to ventilate both fields, and inspect the vortex.")
+	GameState.set_objective("Watch Smoke rise, compare Poison density by height, use Gust to ventilate the fields, and inspect the vortex.")
 	show_message("Gas Dynamics Laboratory reset #" + str(reset_count) + ".")
 	update_readout()
 

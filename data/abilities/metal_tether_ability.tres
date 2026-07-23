@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+display_name = "Metal Tether"
+description = "Conjure a conductive metal filament to grapple marked anchors, swing under real tension, reel its length, and pull lighter mechanisms."
+element = "metal"
+category = 4
+mana_cost = 0
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "metal_tether"
+short_label = "Tether"
+icon_text = "MT"
+roles = Array[String](["traversal", "movement", "utility", "control", "force", "grapple"])
+targeting_style = "aimed_anchor"
+delivery_type = "channeled_tether"
+combo_tags = Array[String](["metal", "tether", "conductive", "force", "traversal"])
+ui_tags = Array[String](["utility", "channeled", "traversal"])
+debug_tags = Array[String](["player_ability_channel", "tension_solver", "swing_prediction"])
+scaling_stats = Array[String](["dexterity", "metal", "skill"])
+scaling_note = "Dexterity may improve reeling and release control; Metal may increase tether strength; Skill may widen anchor acquisition."
+design_notes = "Equip through Focus. Hold Cast to attach to a visible marked anchor. Move to pump the swing, use Reel In or Out to alter length, and release Cast to preserve launch momentum."

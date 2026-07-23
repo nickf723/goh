@@ -1,1 +1,719 @@
-{"schema_version":1,"features":[{"id":"ruined_village_approach","order":5,"display_name":"Ruined Village Approach","category":"Integrated Story Level","version":"v0.9","status":"vertical_slice","description":"Outdoor Italy approach combining exploration, environmental storytelling, weapon combat, elemental route solving, optional Sound discovery, checkpointing, and direct entry into the Church Trial.","scene":"res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn"],"automated_tests":["res://scenes/tests/ruined_village_approach_smoke_test.tscn"],"dependencies":["church_trial","elemental_reaction_lab","weapon_combat_arena"],"controls":["MOVE","INTERACT","LIGHT","HEAVY","FOCUS","CAST","DODGE","LOCK-ON","RESET"],"manual_test":"docs/ruined_village_approach_v0_9_test.md","temporary_state":"persistent","story_integrated":true,"limitations":["Procedural terrain, ruins, vegetation, props, and church architecture remain replacement-ready.","The playable footprint is compressed while implying a broader village region.","Current Goblin and Gremlin archetypes stand in for future location-specific enemies."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":8},{"id":"church_trial","order":10,"display_name":"Church Trial","category":"Playable Vertical Slice","version":"v0.1+","status":"vertical_slice","description":"The integrated Church of Angels trial: exploration, elemental tests, combat rooms, Sound reveal, Animated Armor boss, reward, save flow, and exit.","scene":"res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn"],"automated_tests":[],"dependencies":[],"controls":["MOVE","INTERACT","LIGHT","HEAVY","FOCUS","CAST","DODGE","LOCK-ON"],"manual_test":"docs/church_trial_vertical_slice_test.md","temporary_state":"persistent","story_integrated":true,"limitations":["Prototype geometry and procedural art remain replacement-ready.","Only the first Church Trial slice is integrated into progression.","Final animation, audio, cinematics, and balance are not represented."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":5},{"id":"elemental_reaction_lab","order":20,"display_name":"Elemental Reaction Laboratory","category":"Systems Laboratory","version":"v0.8","status":"prototype_verified","description":"Permanent laboratory for elemental reactions, environmental element sources, Steam Burst pressure accumulation, and a mechanical lift that converts repeated chemistry into physical work.","scene":"res://scenes/levels/prototypes/prototype_environmental_chemistry_lab_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_environmental_chemistry_lab_v1.tscn"],"automated_tests":["res://scenes/tests/elemental_reaction_smoke_test.tscn","res://scenes/tests/mechanical_consumer_smoke_test.tscn"],"dependencies":[],"controls":["MOVE","INTERACT","FOCUS","CAST","LIGHT","HEAVY","RESET"],"manual_test":"docs/mechanical_consumers_pressure_lift_v1_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["Only five of sixteen core elements receive the refreshed visual pass.","Effects, sources, and machinery are procedural prototypes rather than final authored assets.","Pressure is a scalar resource and does not simulate gas temperature, volume, sealing, or pipe flow.","Laboratory targets and machinery prioritize deterministic systems testing over encounter design."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":7},{"id":"physical_interaction_lab","order":25,"display_name":"Physical Interaction Laboratory","category":"Systems Laboratory","version":"v0.1","status":"experimental","description":"Shared physical substrate for material properties, vector fields, continuous force, torque, induced magnetization, polarity reversal, and material-specific magnetic response.","scene":"res://scenes/levels/prototypes/prototype_physical_interaction_lab_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_physical_interaction_lab_v1.tscn"],"automated_tests":["res://scenes/tests/physical_interaction_foundation_smoke_test.tscn"],"dependencies":[],"controls":["MOVE","INTERACT","RESET"],"manual_test":"docs/physical_interaction_foundation_v1_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["This slice proves field and material infrastructure rather than a complete circuit or electromagnetism engine.","Magnetic translation uses a stable gameplay approximation of field-gradient response.","Copper eddy currents, induction, circuit current, and charged-particle behavior are intentionally out of scope.","Geometry, materials, field visualization, and tuning remain replacement-ready."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":7},{"id":"soul_circuit_puzzle","order":27,"display_name":"The Silent Gate","category":"Integrated Puzzle Prototype","version":"v1","status":"experimental","description":"A compact player-led puzzle combining Soul Grip, physical occlusion, mass-sensitive manipulation, a pressure switch, movable copper circuit topology, a motorized counterweight gate, and a breakable pickup reward.","scene":"res://scenes/levels/prototypes/prototype_soul_circuit_puzzle_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_soul_circuit_puzzle_v1.tscn"],"automated_tests":[],"dependencies":["physical_interaction_lab"],"controls":["MOVE","SOUL GRIP","LIGHT","HEAVY","CAST","RESET"],"manual_test":"docs/soul_circuit_puzzle_v1_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["The room uses procedural prototype geometry and explicit clue labels.","Soul Grip rotation is yaw-only in this version.","The copper fuse uses forgiving contact radii for controller placement.","Puzzle completion is not saved or connected to story progression."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":8},{"id":"rain_concentration_weather","order":29,"display_name":"Rain Concentration Laboratory","category":"Systems Laboratory","version":"v1","status":"experimental","description":"First sustained concentration and weather prototype. Rain reserves 40 percent of maximum mana, makes Water spells free, supplies infinite atmospheric Water, wets authored outdoor targets, extinguishes exposed fire, and releases the full mana ceiling when dismissed.","scene":"res://scenes/levels/prototypes/prototype_rain_weather_lab_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_rain_weather_lab_v1.tscn"],"automated_tests":["res://scenes/tests/rain_concentration_weather_smoke_test.tscn"],"dependencies":["elemental_reaction_lab"],"controls":["MOVE","FOCUS","CAST","RESET"],"manual_test":"docs/rain_concentration_weather_v1_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["Weather exposure is authored through the weather_exposed group; roof and interior occlusion are deferred.","Rain streaks are procedural prototype geometry rather than a final particle or screen-space renderer.","Rain, Snowfall, and Flight concentration are implemented; Thunderstorm, Smog, and Heatwave remain future effects.","Equipped ability costs are temporarily overridden and restored until a final spell-cost query layer exists."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":8},{"id":"weapon_combat_arena","order":30,"display_name":"Weapon Combat Arena","category":"Systems Arena","version":"v0.6","status":"prototype_verified","description":"Three-class combat arena for buffered Light/Heavy branch testing with Sword, Hammer, and Spear, plus target geometry and live enemy pressure.","scene":"res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn"],"automated_tests":["res://scenes/tests/weapon_moveset_smoke_test.tscn"],"dependencies":[],"controls":["MOVE","INTERACT","LIGHT","HEAVY","FOCUS","CAST","DODGE","LOCK-ON","RESET"],"manual_test":"docs/weapon_combat_arena_v0_6_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["Only Sword, Hammer, and Spear are represented.","Presentation is procedural and transform-driven rather than skeletal animation.","Blocking, parrying, aerial combat, and final balance are out of scope."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":5},{"id":"snow_concentration_weather","order":31,"display_name":"Snowfall Concentration Laboratory","category":"Systems Laboratory","version":"v1","status":"experimental","description":"Second sustained weather prototype. Snowfall reserves 45 percent of maximum mana, makes Ice spells free, supplies infinite atmospheric Ice, accumulates across authored terrain, freezes exposed objects and water, weakens fire, and leaves temporary tracks.","scene":"res://scenes/levels/prototypes/prototype_snow_weather_lab_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_snow_weather_lab_v1.tscn"],"automated_tests":["res://scenes/tests/snow_concentration_weather_smoke_test.tscn"],"dependencies":["rain_concentration_weather","ice_vfx_lab"],"controls":["MOVE","FOCUS","CAST","RESET"],"manual_test":"docs/snow_concentration_weather_v1_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["Weather exposure is authored through the weather_exposed group; roof and interior occlusion are deferred.","Snow accumulation is a gameplay field rather than deformable terrain.","Slippery movement and load-bearing snow depth are deferred.","Equipped ability costs are temporarily overridden and restored until a final spell-cost query layer exists."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":8},{"id":"aerial_traversal_concentration","order":32,"display_name":"Vertical Traversal Laboratory","category":"Systems Laboratory","version":"v1","status":"experimental","description":"Shared aerial locomotion prototype spanning Double Jump, timed Hover, 75-percent Flight concentration, camera-relative six-direction movement, stable altitude braking, action restrictions, landing, and controlled descent.","scene":"res://scenes/levels/prototypes/prototype_aerial_traversal_lab_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_aerial_traversal_lab_v1.tscn"],"automated_tests":["res://scenes/tests/aerial_traversal_concentration_smoke_test.tscn"],"dependencies":["rain_concentration_weather"],"controls":["MOVE","CAMERA","JUMP","HOVER","ASCEND","DESCEND","CAST","RESET"],"manual_test":"docs/aerial_traversal_concentration_v1_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["Flight I permits movement only; aerial combat, ordinary casting, interaction, Soul Grip, and aerial Dodge are deferred to upgrades.","Hover duration and Flight reservation use fixed prototype tuning values.","Flight has no boost, dash, banking animation, speed tiers, or stamina interaction yet.","The chamber uses procedural geometry and visual route markers rather than scored checkpoints."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":8},{"id":"airflow_foundation","order":33,"display_name":"Analytic Airflow Laboratory","category":"Systems Laboratory","version":"v1","status":"experimental","description":"Composable three-dimensional airflow foundation using analytic vector fields, quadratic aerodynamic response, Gust, projectile deflection, traversal drift, updrafts, downdrafts, vortices, advected tracers and cloud particles, and a turbine consumer.","scene":"res://scenes/levels/prototypes/prototype_airflow_lab_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_airflow_lab_v1.tscn"],"automated_tests":["res://scenes/tests/airflow_foundation_smoke_test.tscn"],"dependencies":["physical_interaction_lab","aerial_traversal_concentration"],"controls":["MOVE","CAMERA","JUMP","HOVER","ASCEND","DESCEND","FOCUS","CAST","VECTORS","RESET"],"manual_test":"docs/airflow_foundation_v1_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["Analytic fields are gameplay vector functions rather than a full computational-fluid-dynamics pressure solver.","Solid geometry does not yet occlude or redirect airflow.","Drag uses gameplay scaling and acceleration caps for stable control.","Cloud particles are visual samples and the turbine is not yet connected to the circuit graph."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":8},{"id":"flexible_tether_foundation","order":34,"display_name":"Flexible Physics Laboratory","category":"Systems Laboratory","version":"v1","status":"experimental","description":"Shared constraint-based substrate for environmental rope, iron chain, future chain weapons, and future whips, proving sag, endpoint tension, momentum, overload failure, elemental material response, and counterweight load transfer.","scene":"res://scenes/levels/prototypes/prototype_flexible_tether_lab_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_flexible_tether_lab_v1.tscn"],"automated_tests":["res://scenes/tests/flexible_tether_foundation_smoke_test.tscn"],"dependencies":["physical_interaction_lab"],"controls":["MOVE","CAMERA","SWING","ADD LOAD","HEAT","FREEZE","SWAP COUNTERWEIGHT","TENSION VIEW","RESET"],"manual_test":"docs/flexible_tether_foundation_v1_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["Tether segments do not yet collide with level geometry or wrap around arbitrary obstacles.","The pulley uses a stable shared-length force model rather than wheel inertia or bearing friction.","Elemental reactions are direct laboratory inputs until production Fire and Ice payload receivers are connected.","Chain and whip weapon controllers, latching, binding, grappling, and tip-speed damage are intentionally deferred."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":8},{"id":"runtime_stat_lab","order":40,"display_name":"Runtime Stat Laboratory","category":"Systems Laboratory","version":"v0.7","status":"prototype_verified","description":"Safe runtime chamber for resource overcharge, Infinite Stamina and Mana, Focus slowdown comparison, stat inspection, and exact snapshot restoration.","scene":"res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn"],"automated_tests":["res://scenes/tests/runtime_stat_lab_smoke_test.tscn"],"dependencies":["weapon_combat_arena"],"controls":["MOVE","INTERACT","LIGHT","HEAVY","FOCUS","CAST","DODGE","RESET"],"manual_test":"docs/runtime_stat_lab_v0_7_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["Most non-resource stats remain Partial or Dormant by design.","The chamber is a development instrument, not a player allocation menu.","No leveling, equipment bonuses, respec, or permanent cheat state is included."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":5},{"id":"enemy_personality_lab","order":42,"display_name":"Enemy Personality Laboratory","category":"AI Laboratory","version":"v1","status":"development_tool","description":"Controlled four-lane comparison of the existing cautious, bold, skittish, and brute Goblin personality profiles against identical Poison Bloom hazards.","scene":"res://scenes/levels/prototypes/prototype_enemy_personality_lab_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_enemy_personality_lab_v1.tscn"],"automated_tests":["res://scenes/tests/enemy_personality_lab_smoke_test.tscn"],"dependencies":[],"controls":["MOVE","RESET","DEV VISION"],"manual_test":"docs/enemy_personality_lab_v1_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["The room is an artificial tuning instrument rather than encounter design.","Enemy movement uses local steering rather than navigation-mesh pathfinding.","The smoke test verifies profile initialization; personality readability still requires manual comparison."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":7},{"id":"element_vfx_gallery","order":45,"display_name":"Element VFX Gallery","category":"Presentation Laboratory","version":"v1","status":"development_tool","description":"Permanent gallery for procedural elemental presentation. The Water wing demonstrates generated surfaces, waterfall motion, impacts, wakes, churn, bubbles, electrical response, replay controls, and reserved bays for all sixteen core elements.","scene":"res://scenes/levels/prototypes/prototype_element_vfx_gallery_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_element_vfx_gallery_v1.tscn"],"automated_tests":[],"dependencies":[],"controls":["MOVE","INTERACT","RESET"],"manual_test":"docs/element_vfx_gallery_v1_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["Only the Water wing is populated in v1.","Advanced reflection, shoreline response, underwater camera treatment, and ocean rendering are deferred.","The room is a development gallery rather than a story location."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":7},{"id":"ice_vfx_lab","order":47,"display_name":"Cryogenic Observatory","category":"Presentation Laboratory","version":"v1","status":"development_tool","description":"Dedicated Ice laboratory for temperature-driven freeze fronts, seeded crystal growth, arbitrary-plane frost, stress-driven cracking and shattering, thaw presentation, and procedural Ice Lance visuals.","scene":"res://scenes/levels/prototypes/prototype_ice_vfx_lab_v1.tscn","validation_scenes":["res://scenes/levels/prototypes/prototype_ice_vfx_lab_v1.tscn"],"automated_tests":[],"dependencies":["element_vfx_gallery"],"controls":["MOVE","INTERACT","RESET"],"manual_test":"docs/procedural_ice_freezing_v1_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["Frozen-water collision, skating friction, and load-bearing thickness are deferred.","Shards are presentation particles rather than persistent rigid bodies.","Arbitrary world objects require an authored FreezeState component before they can freeze or fracture."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":8},{"id":"dev_interaction_sandbox","order":50,"display_name":"Dev Interaction Sandbox","category":"Development Sandbox","version":"ongoing","status":"development_tool","description":"General-purpose playground for interactables, receivers, surfaces, enemy waves, developer vision, audits, and rapid scenario experiments.","scene":"res://scenes/levels/_dev/dev_interaction_sandbox.tscn","validation_scenes":["res://scenes/levels/_dev/dev_interaction_sandbox.tscn"],"automated_tests":[],"dependencies":[],"controls":["MOVE","INTERACT","LIGHT","HEAVY","FOCUS","CAST","DODGE","DEV VISION","SPAWN WAVE","CLEAR WAVE","AUDIT"],"manual_test":"docs/dev_interaction_sandbox_test.md","temporary_state":"runtime_only","story_integrated":false,"limitations":["The sandbox is intentionally eclectic rather than a designed encounter.","Objects may represent older and newer prototype generations side by side.","Sandbox state is disposable and is not a progression contract."],"launchable":true,"visible_in_launcher":true,"ci_validate":true,"timeout_seconds":5},{"id":"development_control_center","order":100,"display_name":"Development Control Center","category":"Infrastructure","version":"v0.8","status":"infrastructure","description":"Registry-driven controller-first launcher and health dashboard for permanent development scenes and their validation contracts.","scene":"res://scenes/ui/development_control_center_v1.tscn","validation_scenes":["res://scenes/ui/development_control_center_v1.tscn"],"automated_tests":["res://scenes/tests/architecture_contract_smoke_test.tscn"],"dependencies":["ruined_village_approach","church_trial","elemental_reaction_lab","physical_interaction_lab","soul_circuit_puzzle","rain_concentration_weather","snow_concentration_weather","aerial_traversal_concentration","airflow_foundation","flexible_tether_foundation","weapon_combat_arena","runtime_stat_lab","enemy_personality_lab","element_vfx_gallery","ice_vfx_lab","dev_interaction_sandbox"],"controls":["NAVIGATE","SELECT","BACK"],"manual_test":"docs/development_control_center_v0_8_test.md","temporary_state":"none","story_integrated":false,"limitations":["This is a developer launcher, not a production level-select menu.","It does not inspect open pull requests or resolve branch conflicts.","It reports registry and local resource health, not creative quality."],"launchable":true,"visible_in_launcher":false,"ci_validate":true,"timeout_seconds":5}]}
+{
+  "schema_version": 1,
+  "features": [
+    {
+      "id": "ruined_village_approach",
+      "order": 5,
+      "display_name": "Ruined Village Approach",
+      "category": "Integrated Story Level",
+      "version": "v0.9",
+      "status": "vertical_slice",
+      "description": "Outdoor Italy approach combining exploration, environmental storytelling, weapon combat, elemental route solving, optional Sound discovery, checkpointing, and direct entry into the Church Trial.",
+      "scene": "res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/ruined_village_approach_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "church_trial",
+        "elemental_reaction_lab",
+        "weapon_combat_arena"
+      ],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON",
+        "RESET"
+      ],
+      "manual_test": "docs/ruined_village_approach_v0_9_test.md",
+      "temporary_state": "persistent",
+      "story_integrated": true,
+      "limitations": [
+        "Procedural terrain, ruins, vegetation, props, and church architecture remain replacement-ready.",
+        "The playable footprint is compressed while implying a broader village region.",
+        "Current Goblin and Gremlin archetypes stand in for future location-specific enemies."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
+      "id": "church_trial",
+      "order": 10,
+      "display_name": "Church Trial",
+      "category": "Playable Vertical Slice",
+      "version": "v0.1+",
+      "status": "vertical_slice",
+      "description": "The integrated Church of Angels trial: exploration, elemental tests, combat rooms, Sound reveal, Animated Armor boss, reward, save flow, and exit.",
+      "scene": "res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn"
+      ],
+      "automated_tests": [],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON"
+      ],
+      "manual_test": "docs/church_trial_vertical_slice_test.md",
+      "temporary_state": "persistent",
+      "story_integrated": true,
+      "limitations": [
+        "Prototype geometry and procedural art remain replacement-ready.",
+        "Only the first Church Trial slice is integrated into progression.",
+        "Final animation, audio, cinematics, and balance are not represented."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 5
+    },
+    {
+      "id": "elemental_reaction_lab",
+      "order": 20,
+      "display_name": "Elemental Reaction Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v0.8",
+      "status": "prototype_verified",
+      "description": "Permanent laboratory for elemental reactions, environmental element sources, Steam Burst pressure accumulation, and a mechanical lift that converts repeated chemistry into physical work.",
+      "scene": "res://scenes/levels/prototypes/prototype_environmental_chemistry_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_environmental_chemistry_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/elemental_reaction_smoke_test.tscn",
+        "res://scenes/tests/mechanical_consumer_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "FOCUS",
+        "CAST",
+        "LIGHT",
+        "HEAVY",
+        "RESET"
+      ],
+      "manual_test": "docs/mechanical_consumers_pressure_lift_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Only five of sixteen core elements receive the refreshed visual pass.",
+        "Effects, sources, and machinery are procedural prototypes rather than final authored assets.",
+        "Pressure is a scalar resource and does not simulate gas temperature, volume, sealing, or pipe flow.",
+        "Laboratory targets and machinery prioritize deterministic systems testing over encounter design."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 7
+    },
+    {
+      "id": "physical_interaction_lab",
+      "order": 25,
+      "display_name": "Physical Interaction Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v0.1",
+      "status": "experimental",
+      "description": "Shared physical substrate for material properties, vector fields, continuous force, torque, induced magnetization, polarity reversal, and material-specific magnetic response.",
+      "scene": "res://scenes/levels/prototypes/prototype_physical_interaction_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_physical_interaction_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/physical_interaction_foundation_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "RESET"
+      ],
+      "manual_test": "docs/physical_interaction_foundation_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "This slice proves field and material infrastructure rather than a complete circuit or electromagnetism engine.",
+        "Magnetic translation uses a stable gameplay approximation of field-gradient response.",
+        "Copper eddy currents, induction, circuit current, and charged-particle behavior are intentionally out of scope.",
+        "Geometry, materials, field visualization, and tuning remain replacement-ready."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 7
+    },
+    {
+      "id": "soul_circuit_puzzle",
+      "order": 27,
+      "display_name": "The Silent Gate",
+      "category": "Integrated Puzzle Prototype",
+      "version": "v1",
+      "status": "experimental",
+      "description": "A compact player-led puzzle combining Soul Grip, physical occlusion, mass-sensitive manipulation, a pressure switch, movable copper circuit topology, a motorized counterweight gate, and a breakable pickup reward.",
+      "scene": "res://scenes/levels/prototypes/prototype_soul_circuit_puzzle_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_soul_circuit_puzzle_v1.tscn"
+      ],
+      "automated_tests": [],
+      "dependencies": [
+        "physical_interaction_lab"
+      ],
+      "controls": [
+        "MOVE",
+        "SOUL GRIP",
+        "LIGHT",
+        "HEAVY",
+        "CAST",
+        "RESET"
+      ],
+      "manual_test": "docs/soul_circuit_puzzle_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "The room uses procedural prototype geometry and explicit clue labels.",
+        "Soul Grip rotation is yaw-only in this version.",
+        "The copper fuse uses forgiving contact radii for controller placement.",
+        "Puzzle completion is not saved or connected to story progression."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
+      "id": "rain_concentration_weather",
+      "order": 29,
+      "display_name": "Rain Concentration Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v1",
+      "status": "experimental",
+      "description": "First sustained concentration and weather prototype. Rain reserves 40 percent of maximum mana, makes Water spells free, supplies infinite atmospheric Water, wets authored outdoor targets, extinguishes exposed fire, and releases the full mana ceiling when dismissed.",
+      "scene": "res://scenes/levels/prototypes/prototype_rain_weather_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_rain_weather_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/rain_concentration_weather_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "elemental_reaction_lab"
+      ],
+      "controls": [
+        "MOVE",
+        "FOCUS",
+        "CAST",
+        "RESET"
+      ],
+      "manual_test": "docs/rain_concentration_weather_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Weather exposure is authored through the weather_exposed group; roof and interior occlusion are deferred.",
+        "Rain streaks are procedural prototype geometry rather than a final particle or screen-space renderer.",
+        "Rain, Snowfall, and Flight concentration are implemented; Thunderstorm, Smog, and Heatwave remain future effects.",
+        "Equipped ability costs are temporarily overridden and restored until a final spell-cost query layer exists."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
+      "id": "weapon_combat_arena",
+      "order": 30,
+      "display_name": "Weapon Combat Arena",
+      "category": "Systems Arena",
+      "version": "v0.6",
+      "status": "prototype_verified",
+      "description": "Three-class combat arena for buffered Light/Heavy branch testing with Sword, Hammer, and Spear, plus target geometry and live enemy pressure.",
+      "scene": "res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/weapon_moveset_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON",
+        "RESET"
+      ],
+      "manual_test": "docs/weapon_combat_arena_v0_6_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Only Sword, Hammer, and Spear are represented.",
+        "Presentation is procedural and transform-driven rather than skeletal animation.",
+        "Blocking, parrying, aerial combat, and final balance are out of scope."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 5
+    },
+    {
+      "id": "snow_concentration_weather",
+      "order": 31,
+      "display_name": "Snowfall Concentration Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Second sustained weather prototype. Snowfall reserves 45 percent of maximum mana, makes Ice spells free, supplies infinite atmospheric Ice, accumulates across authored terrain, freezes exposed objects and water, weakens fire, and leaves temporary tracks.",
+      "scene": "res://scenes/levels/prototypes/prototype_snow_weather_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_snow_weather_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/snow_concentration_weather_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "rain_concentration_weather",
+        "ice_vfx_lab"
+      ],
+      "controls": [
+        "MOVE",
+        "FOCUS",
+        "CAST",
+        "RESET"
+      ],
+      "manual_test": "docs/snow_concentration_weather_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Weather exposure is authored through the weather_exposed group; roof and interior occlusion are deferred.",
+        "Snow accumulation is a gameplay field rather than deformable terrain.",
+        "Slippery movement and load-bearing snow depth are deferred.",
+        "Equipped ability costs are temporarily overridden and restored until a final spell-cost query layer exists."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
+      "id": "aerial_traversal_concentration",
+      "order": 32,
+      "display_name": "Vertical Traversal Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Shared aerial locomotion prototype spanning Double Jump, timed Hover, 75-percent Flight concentration, camera-relative six-direction movement, stable altitude braking, action restrictions, landing, and controlled descent.",
+      "scene": "res://scenes/levels/prototypes/prototype_aerial_traversal_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_aerial_traversal_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/aerial_traversal_concentration_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "rain_concentration_weather"
+      ],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "JUMP",
+        "HOVER",
+        "ASCEND",
+        "DESCEND",
+        "CAST",
+        "RESET"
+      ],
+      "manual_test": "docs/aerial_traversal_concentration_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Flight I permits movement only; aerial combat, ordinary casting, interaction, Soul Grip, and aerial Dodge are deferred to upgrades.",
+        "Hover duration and Flight reservation use fixed prototype tuning values.",
+        "Flight has no boost, dash, banking animation, speed tiers, or stamina interaction yet.",
+        "The chamber uses procedural geometry and visual route markers rather than scored checkpoints."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
+      "id": "airflow_foundation",
+      "order": 33,
+      "display_name": "Analytic Airflow Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Composable three-dimensional airflow foundation using analytic vector fields, quadratic aerodynamic response, Gust, projectile deflection, traversal drift, updrafts, downdrafts, vortices, advected tracers and cloud particles, and a turbine consumer.",
+      "scene": "res://scenes/levels/prototypes/prototype_airflow_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_airflow_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/airflow_foundation_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "physical_interaction_lab",
+        "aerial_traversal_concentration"
+      ],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "JUMP",
+        "HOVER",
+        "ASCEND",
+        "DESCEND",
+        "FOCUS",
+        "CAST",
+        "VECTORS",
+        "RESET"
+      ],
+      "manual_test": "docs/airflow_foundation_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Analytic fields are gameplay vector functions rather than a full computational-fluid-dynamics pressure solver.",
+        "Solid geometry does not yet occlude or redirect airflow.",
+        "Drag uses gameplay scaling and acceleration caps for stable control.",
+        "Cloud particles are visual samples and the turbine is not yet connected to the circuit graph."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
+      "id": "flexible_tether_foundation",
+      "order": 34,
+      "display_name": "Flexible Physics Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Shared constraint-based substrate for environmental rope, iron chain, chain weapons, and future whips, proving sag, endpoint tension, momentum, overload failure, elemental material response, and counterweight load transfer.",
+      "scene": "res://scenes/levels/prototypes/prototype_flexible_tether_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_flexible_tether_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/flexible_tether_foundation_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "physical_interaction_lab"
+      ],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "SWING",
+        "ADD LOAD",
+        "HEAT",
+        "FREEZE",
+        "SWAP COUNTERWEIGHT",
+        "TENSION VIEW",
+        "RESET"
+      ],
+      "manual_test": "docs/flexible_tether_foundation_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Tether segments do not yet collide with level geometry or wrap around arbitrary obstacles.",
+        "The pulley uses a stable shared-length force model rather than wheel inertia or bearing friction.",
+        "Elemental reactions are direct laboratory inputs until production Fire and Ice payload receivers are connected.",
+        "Persistent latching, binding, grappling, obstacle wrapping, and whip wave propagation are intentionally deferred."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
+      "id": "chain_weapon_lab",
+      "order": 35,
+      "display_name": "Chain Weapon Laboratory",
+      "category": "Combat Laboratory",
+      "version": "v1",
+      "status": "experimental",
+      "description": "First flexible weapon class, combining authored orbit and slam intent with the shared iron-chain solver, swept weighted-tip contacts, momentum-scaled impact, and a seven-attack branching moveset.",
+      "scene": "res://scenes/levels/prototypes/prototype_chain_weapon_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_chain_weapon_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/chain_weapon_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "weapon_combat_arena",
+        "flexible_tether_foundation"
+      ],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "LIGHT",
+        "HEAVY",
+        "RESET"
+      ],
+      "manual_test": "docs/chain_weapon_lab_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "The weighted tip uses authored hybrid trajectories and swept queries; the chain does not yet wrap around arbitrary level geometry.",
+        "Persistent latching, pulling, binding, and entanglement are deferred.",
+        "Elemental conduction through the combat chain is deferred.",
+        "Whip wave propagation remains a separate weapon-class layer over the same runtime-rig hook."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
+      "id": "runtime_stat_lab",
+      "order": 40,
+      "display_name": "Runtime Stat Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v0.7",
+      "status": "prototype_verified",
+      "description": "Safe runtime chamber for resource overcharge, Infinite Stamina and Mana, Focus slowdown comparison, stat inspection, and exact snapshot restoration.",
+      "scene": "res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/runtime_stat_lab_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "weapon_combat_arena"
+      ],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "RESET"
+      ],
+      "manual_test": "docs/runtime_stat_lab_v0_7_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Most non-resource stats remain Partial or Dormant by design.",
+        "The chamber is a development instrument, not a player allocation menu.",
+        "No leveling, equipment bonuses, respec, or permanent cheat state is included."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 5
+    },
+    {
+      "id": "enemy_personality_lab",
+      "order": 42,
+      "display_name": "Enemy Personality Laboratory",
+      "category": "AI Laboratory",
+      "version": "v1",
+      "status": "development_tool",
+      "description": "Controlled four-lane comparison of the existing cautious, bold, skittish, and brute Goblin personality profiles against identical Poison Bloom hazards.",
+      "scene": "res://scenes/levels/prototypes/prototype_enemy_personality_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_enemy_personality_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/enemy_personality_lab_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "RESET",
+        "DEV VISION"
+      ],
+      "manual_test": "docs/enemy_personality_lab_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "The room is an artificial tuning instrument rather than encounter design.",
+        "Enemy movement uses local steering rather than navigation-mesh pathfinding.",
+        "The smoke test verifies profile initialization; personality readability still requires manual comparison."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 7
+    },
+    {
+      "id": "element_vfx_gallery",
+      "order": 45,
+      "display_name": "Element VFX Gallery",
+      "category": "Presentation Laboratory",
+      "version": "v1",
+      "status": "development_tool",
+      "description": "Permanent gallery for procedural elemental presentation. The Water wing demonstrates generated surfaces, waterfall motion, impacts, wakes, churn, bubbles, electrical response, replay controls, and reserved bays for all sixteen core elements.",
+      "scene": "res://scenes/levels/prototypes/prototype_element_vfx_gallery_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_element_vfx_gallery_v1.tscn"
+      ],
+      "automated_tests": [],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "RESET"
+      ],
+      "manual_test": "docs/element_vfx_gallery_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Only the Water wing is populated in v1.",
+        "Advanced reflection, shoreline response, underwater camera treatment, and ocean rendering are deferred.",
+        "The room is a development gallery rather than a story location."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 7
+    },
+    {
+      "id": "ice_vfx_lab",
+      "order": 47,
+      "display_name": "Cryogenic Observatory",
+      "category": "Presentation Laboratory",
+      "version": "v1",
+      "status": "development_tool",
+      "description": "Dedicated Ice laboratory for temperature-driven freeze fronts, seeded crystal growth, arbitrary-plane frost, stress-driven cracking and shattering, thaw presentation, and procedural Ice Lance visuals.",
+      "scene": "res://scenes/levels/prototypes/prototype_ice_vfx_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_ice_vfx_lab_v1.tscn"
+      ],
+      "automated_tests": [],
+      "dependencies": [
+        "element_vfx_gallery"
+      ],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "RESET"
+      ],
+      "manual_test": "docs/procedural_ice_freezing_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Frozen-water collision, skating friction, and load-bearing thickness are deferred.",
+        "Shards are presentation particles rather than persistent rigid bodies.",
+        "Arbitrary world objects require an authored FreezeState component before they can freeze or fracture."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
+      "id": "dev_interaction_sandbox",
+      "order": 50,
+      "display_name": "Dev Interaction Sandbox",
+      "category": "Development Sandbox",
+      "version": "ongoing",
+      "status": "development_tool",
+      "description": "General-purpose playground for interactables, receivers, surfaces, enemy waves, developer vision, audits, and rapid scenario experiments.",
+      "scene": "res://scenes/levels/_dev/dev_interaction_sandbox.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/_dev/dev_interaction_sandbox.tscn"
+      ],
+      "automated_tests": [],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "DEV VISION",
+        "SPAWN WAVE",
+        "CLEAR WAVE",
+        "AUDIT"
+      ],
+      "manual_test": "docs/dev_interaction_sandbox_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "The sandbox is intentionally eclectic rather than a designed encounter.",
+        "Objects may represent older and newer prototype generations side by side.",
+        "Sandbox state is disposable and is not a progression contract."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 5
+    },
+    {
+      "id": "development_control_center",
+      "order": 100,
+      "display_name": "Development Control Center",
+      "category": "Infrastructure",
+      "version": "v0.8",
+      "status": "infrastructure",
+      "description": "Registry-driven controller-first launcher and health dashboard for permanent development scenes and their validation contracts.",
+      "scene": "res://scenes/ui/development_control_center_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/ui/development_control_center_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/architecture_contract_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "ruined_village_approach",
+        "church_trial",
+        "elemental_reaction_lab",
+        "physical_interaction_lab",
+        "soul_circuit_puzzle",
+        "rain_concentration_weather",
+        "snow_concentration_weather",
+        "aerial_traversal_concentration",
+        "airflow_foundation",
+        "flexible_tether_foundation",
+        "chain_weapon_lab",
+        "weapon_combat_arena",
+        "runtime_stat_lab",
+        "enemy_personality_lab",
+        "element_vfx_gallery",
+        "ice_vfx_lab",
+        "dev_interaction_sandbox"
+      ],
+      "controls": [
+        "NAVIGATE",
+        "SELECT",
+        "BACK"
+      ],
+      "manual_test": "docs/development_control_center_v0_8_test.md",
+      "temporary_state": "none",
+      "story_integrated": false,
+      "limitations": [
+        "This is a developer launcher, not a production level-select menu.",
+        "It does not inspect open pull requests or resolve branch conflicts.",
+        "It reports registry and local resource health, not creative quality."
+      ],
+      "launchable": true,
+      "visible_in_launcher": false,
+      "ci_validate": true,
+      "timeout_seconds": 5
+    }
+  ]
+}

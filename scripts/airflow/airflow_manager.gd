@@ -13,6 +13,7 @@ var last_sample_position: Vector3 = Vector3.ZERO
 var last_total_velocity: Vector3 = Vector3.ZERO
 var last_contributors: Array[String] = []
 var registered_fields: Array[Node] = []
+var registry_initialized: bool = false
 var prune_timer: float = 0.0
 
 
@@ -33,6 +34,7 @@ func _process(delta: float) -> void:
 func register_field(field_node: Node) -> void:
 	if field_node == null or not is_instance_valid(field_node):
 		return
+	registry_initialized = true
 	if not registered_fields.has(field_node):
 		registered_fields.append(field_node)
 
@@ -43,6 +45,7 @@ func unregister_field(field_node: Node) -> void:
 
 func refresh_registered_fields() -> void:
 	registered_fields.clear()
+	registry_initialized = true
 	for field_node: Node in get_tree().get_nodes_in_group("airflow_fields"):
 		register_field(field_node)
 
@@ -55,7 +58,7 @@ func prune_invalid_fields() -> void:
 
 
 func ensure_field_registry() -> void:
-	if registered_fields.is_empty():
+	if not registry_initialized:
 		refresh_registered_fields()
 
 

@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://scripts/player/soul_grip_spell_controller.gd" id="12_soul_grip"]
 [ext_resource type="Script" path="res://scripts/player/player_aerial_locomotion.gd" id="13_aerial"]
 [ext_resource type="Script" path="res://scripts/airflow/airflow_response.gd" id="14_airflow"]
+[ext_resource type="Script" path="res://scripts/player/metal_tether_spell_controller.gd" id="15_metal_tether"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -101,6 +102,9 @@ metadata/_custom_type_script = "uid://dmp5o1qjlca1n"
 
 [node name="SoulGripController" type="Node3D" parent="."]
 script = ExtResource("12_soul_grip")
+
+[node name="MetalTetherController" type="Node3D" parent="."]
+script = ExtResource("15_metal_tether")
 
 [node name="AerialLocomotion" type="Node" parent="."]
 script = ExtResource("13_aerial")

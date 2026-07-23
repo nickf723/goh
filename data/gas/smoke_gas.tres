@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="GasDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/gas/gas_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+gas_id = "smoke"
+display_name = "Smoke"
+description = "Warm particulate gas that rises, diffuses, follows airflow, and obscures vision at sustained local density."
+maximum_density = 1.0
+advection_scale = 0.92
+diffusion_rate = 0.18
+decay_rate_per_second = 0.035
+buoyancy_velocity = Vector3(0, 1.35, 0)
+exposure_threshold = 0.16
+exposure_gain_rate = 0.7
+exposure_decay_rate = 0.85
+harmful = false
+damage_interval = 1.0
+damage_per_tick = 0
+status_name = ""
+status_duration = 0.0
+status_strength = 0.0
+obscures_vision = true
+visual_color = Color(0.48, 0.56, 0.62, 0.24)
+emission_energy = 0.28
+visual_density_threshold = 0.025
+tags = Array[String](["gas", "smoke", "airborne", "obscurant", "buoyant"])

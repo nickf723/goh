@@ -53,13 +53,18 @@ func prune_invalid_fields() -> void:
 			registered_fields.remove_at(index)
 
 
-func get_registered_field_snapshot() -> Array[Node]:
+func ensure_field_registry() -> void:
 	if registered_fields.is_empty():
 		refresh_registered_fields()
+
+
+func get_registered_field_snapshot() -> Array[Node]:
+	ensure_field_registry()
 	return registered_fields.duplicate()
 
 
 func sample_total_airflow(world_position: Vector3, sample_time: float = -1.0) -> Vector3:
+	ensure_field_registry()
 	var total_velocity: Vector3 = Vector3.ZERO
 	last_contributors.clear()
 	for field_node: Node in registered_fields:
@@ -89,6 +94,7 @@ func sample_total_airflow(world_position: Vector3, sample_time: float = -1.0) ->
 
 
 func sample_breakdown(world_position: Vector3, sample_time: float = -1.0) -> Array[Dictionary]:
+	ensure_field_registry()
 	var breakdown: Array[Dictionary] = []
 	for field_node: Node in registered_fields:
 		if field_node == null or not is_instance_valid(field_node):

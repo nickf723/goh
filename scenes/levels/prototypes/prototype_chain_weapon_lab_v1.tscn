@@ -121,10 +121,6 @@ target_label = "METEOR LINE"
 position = Vector3(2.5, 0, -4.2)
 target_label = "RIGHT ORBIT"
 
-[node name="SlamTarget" parent="." instance=ExtResource("5_target")]
-position = Vector3(0, 0, -0.8)
-target_label = "HEAVY SLAM"
-
 [node name="Instructions" type="Label3D" parent="."]
 position = Vector3(0, 2.3, 4.2)
 pixel_size = 0.007

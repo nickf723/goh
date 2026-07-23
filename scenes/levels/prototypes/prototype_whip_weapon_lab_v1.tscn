@@ -1,0 +1,269 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_whip_weapon_lab.gd" id="1_director"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="PackedScene" path="res://scenes/actors/testing/combat_training_target.tscn" id="5_target"]
+[ext_resource type="PackedScene" path="res://scenes/actors/testing/whip_pull_switch.tscn" id="6_pull_switch"]
+[ext_resource type="Material" path="res://art/materials/prototype/floor_stone_gray.tres" id="7_floor"]
+[ext_resource type="Material" path="res://art/materials/prototype/wall_dark_stone.tres" id="8_wall"]
+[ext_resource type="Script" path="res://scripts/airflow/airflow_manager.gd" id="9_air_manager"]
+[ext_resource type="Script" path="res://scripts/airflow/airflow_field_3d.gd" id="10_air_field"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_floor"]
+size = Vector3(26, 1, 30)
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(26, 1, 30)
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall"]
+size = Vector3(26, 4.5, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall"]
+size = Vector3(26, 4.5, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_range"]
+size = Vector3(11, 0.035, 0.09)
+
+[sub_resource type="StandardMaterial3D" id="Material_near"]
+albedo_color = Color(0.34, 0.18, 0.52, 1)
+emission_enabled = true
+emission = Color(0.2, 0.04, 0.5, 1)
+emission_energy_multiplier = 0.75
+
+[sub_resource type="StandardMaterial3D" id="Material_crack"]
+albedo_color = Color(0.82, 0.24, 1, 1)
+emission_enabled = true
+emission = Color(0.58, 0.04, 1, 1)
+emission_energy_multiplier = 1.4
+
+[sub_resource type="StandardMaterial3D" id="Material_wind"]
+albedo_color = Color(0.12, 0.78, 1, 0.42)
+transparency = 1
+emission_enabled = true
+emission = Color(0.03, 0.5, 1, 1)
+emission_energy_multiplier = 1.15
+
+[sub_resource type="BoxMesh" id="BoxMesh_wind"]
+size = Vector3(5.5, 0.04, 8)
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_hud"]
+bg_color = Color(0.028, 0.018, 0.052, 0.93)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72, 0.2, 1, 0.9)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="PrototypeWhipWeaponLab" type="Node3D"]
+script = ExtResource("1_director")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="AirflowManager" type="Node" parent="."]
+script = ExtResource("9_air_manager")
+
+[node name="Crosswind" type="Node3D" parent="."]
+position = Vector3(5, 2.2, -0.5)
+script = ExtResource("10_air_field")
+field_id = "whip_crosswind"
+box_extents = Vector3(3, 2.6, 4.5)
+local_direction = Vector3(1, 0, 0)
+strength = 7.0
+turbulence_strength = 0.8
+turbulence_spatial_frequency = 0.8
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -24, 0)
+light_energy = 1.35
+shadow_enabled = true
+
+[node name="WhipGlow" type="OmniLight3D" parent="."]
+position = Vector3(0, 3.8, -1)
+light_color = Color(0.72, 0.18, 1, 1)
+light_energy = 2.2
+omni_range = 14.0
+
+[node name="LabFloor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 2)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LabFloor"]
+shape = SubResource("BoxShape_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LabFloor"]
+material_override = ExtResource("7_floor")
+mesh = SubResource("BoxMesh_floor")
+
+[node name="BackWall" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.75, 17)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWall"]
+shape = SubResource("BoxShape_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWall"]
+material_override = ExtResource("8_wall")
+mesh = SubResource("BoxMesh_wall")
+
+[node name="Title" type="Label3D" parent="."]
+position = Vector3(0, 3.7, -10.5)
+pixel_size = 0.008
+billboard = 1
+modulate = Color(0.9, 0.58, 1, 1)
+text = "WHIP WEAPON LABORATORY"
+font_size = 68
+outline_size = 8
+
+[node name="Subtitle" type="Label3D" parent="."]
+position = Vector3(0, 2.95, -10.4)
+pixel_size = 0.007
+billboard = 1
+modulate = Color(0.82, 0.78, 0.94, 1)
+text = "TRAVELING WAVE • TIP-SPEED DAMAGE • WRAP & PULL • AIRFLOW DEFLECTION"
+font_size = 31
+outline_size = 6
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, -7.5)
+
+[node name="NearRangeBand" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.025, -4.6)
+material_override = SubResource("Material_near")
+mesh = SubResource("BoxMesh_range")
+
+[node name="CrackRangeBand" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.03, -3.25)
+material_override = SubResource("Material_crack")
+mesh = SubResource("BoxMesh_range")
+
+[node name="PrecisionRangeBand" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.035, -1.9)
+material_override = SubResource("Material_crack")
+mesh = SubResource("BoxMesh_range")
+
+[node name="NearRangeLabel" type="Label3D" parent="."]
+position = Vector3(-5.9, 0.32, -4.6)
+text = "2.9 m"
+font_size = 20
+pixel_size = 0.006
+billboard = 1
+modulate = Color(0.7, 0.54, 0.9, 1)
+outline_size = 4
+
+[node name="CrackRangeLabel" type="Label3D" parent="."]
+position = Vector3(-5.9, 0.32, -3.25)
+text = "4.2 m"
+font_size = 20
+pixel_size = 0.006
+billboard = 1
+modulate = Color(0.9, 0.5, 1, 1)
+outline_size = 4
+
+[node name="PrecisionRangeLabel" type="Label3D" parent="."]
+position = Vector3(-5.9, 0.32, -1.9)
+text = "4.8 m"
+font_size = 20
+pixel_size = 0.006
+billboard = 1
+modulate = Color(0.96, 0.7, 1, 1)
+outline_size = 4
+
+[node name="LeftSnapTarget" parent="." instance=ExtResource("5_target")]
+position = Vector3(-2.6, 0, -3.4)
+target_label = "LEFT SNAP"
+
+[node name="PrecisionTarget" parent="." instance=ExtResource("5_target")]
+position = Vector3(0, 0, -2.2)
+target_label = "TIP PRECISION"
+
+[node name="RightSnapTarget" parent="." instance=ExtResource("5_target")]
+position = Vector3(2.6, 0, -3.4)
+target_label = "RIGHT SNAP"
+
+[node name="CrosswindFloor" type="MeshInstance3D" parent="."]
+position = Vector3(5, 0.02, -0.5)
+material_override = SubResource("Material_wind")
+mesh = SubResource("BoxMesh_wind")
+
+[node name="CrosswindTarget" parent="." instance=ExtResource("5_target")]
+position = Vector3(5, 0, -0.5)
+target_label = "CROSSWIND TIP TEST"
+
+[node name="CrosswindLabel" type="Label3D" parent="."]
+position = Vector3(5, 2.8, 2.8)
+text = "7 m/s CROSSWIND\nLIGHT WHIP TAIL DEFLECTS"
+font_size = 26
+pixel_size = 0.006
+billboard = 1
+modulate = Color(0.36, 0.84, 1, 1)
+outline_size = 5
+
+[node name="PullSwitch" parent="." instance=ExtResource("6_pull_switch")]
+position = Vector3(0, 0, 2.5)
+
+[node name="Instructions" type="Label3D" parent="."]
+position = Vector3(0, 2.4, 6.2)
+pixel_size = 0.007
+billboard = 1
+modulate = Color(0.94, 0.68, 1, 1)
+text = "L / J / LMB  LIGHT CRACK       R / K / M4  HEAVY       LIGHT → HEAVY  WRAP & PULL       F8  RESET"
+font_size = 29
+outline_size = 6
+
+[node name="WhipHUD" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="Panel" type="PanelContainer" parent="WhipHUD"]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 885.0
+offset_bottom = 238.0
+theme_override_styles/panel = SubResource("StyleBox_hud")
+
+[node name="Margin" type="MarginContainer" parent="WhipHUD/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="WhipHUD/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="WeaponLabel" type="Label" parent="WhipHUD/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.55, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "WEAPON  Training Crackwhip  [WHIP]"
+
+[node name="AttackLabel" type="Label" parent="WhipHUD/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "ATTACK none  |  IDLE  |  BUFFER NONE  |  STAMINA 10/10"
+
+[node name="PhysicsLabel" type="Label" parent="WhipHUD/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.42, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "WAVE 0.0 m @ 0.0 m/s  |  TIP 0.0 m/s  |  CRACK NO"
+
+[node name="InteractionLabel" type="Label" parent="WhipHUD/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.82, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "WRAPPED none  |  TENSION 0.0 N  |  AIR 0.0 m/s"
+
+[node name="RouteLabel" type="Label" parent="WhipHUD/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.76, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "LIGHT ×3: SNAP → RETURN → NEEDLE    LIGHT → HEAVY: WRAP & PULL\nJ / LMB / L = LIGHT    K / M4 / R = HEAVY    F8 RESET"

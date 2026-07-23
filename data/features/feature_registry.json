@@ -406,7 +406,7 @@
       "category": "Systems Laboratory",
       "version": "v1",
       "status": "experimental",
-      "description": "Shared constraint-based substrate for environmental rope, iron chain, chain weapons, and whips, proving sag, endpoint tension, momentum, overload failure, elemental material response, and counterweight load transfer.",
+      "description": "Shared constraint-based substrate for environmental rope, iron chain, chain and whip weapons, and Metal Tether traversal, proving sag, endpoint tension, momentum, overload failure, elemental material response, and counterweight load transfer.",
       "scene": "res://scenes/levels/prototypes/prototype_flexible_tether_lab_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/prototype_flexible_tether_lab_v1.tscn"
@@ -435,7 +435,7 @@
         "Tether segments do not yet collide with level geometry or wrap around arbitrary obstacles.",
         "The pulley uses a stable shared-length force model rather than wheel inertia or bearing friction.",
         "Elemental reactions are direct laboratory inputs until production Fire and Ice payload receivers are connected.",
-        "Persistent latching, binding, grappling, full free-ended whip propagation, and obstacle wrapping are intentionally deferred."
+        "Persistent actor binding, simultaneous multi-tethers, full free-ended whip propagation, and obstacle wrapping are intentionally deferred."
       ],
       "launchable": true,
       "visible_in_launcher": true,
@@ -516,6 +516,51 @@
         "Wrap contact latches only for the current attack and does not yet persist as an actor-binding state.",
         "The whip does not yet wrap around arbitrary level geometry or collide along every flexible segment.",
         "Production elemental lash, burning, freezing, disarming, and item-retrieval behaviors are deferred."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
+      "id": "metal_tether_traversal",
+      "order": 37,
+      "display_name": "Metal Tether Traversal",
+      "category": "Traversal Laboratory",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Equippable Metal grapple spell with visible anchor acquisition, radial and tangential swing dynamics, reeling, momentum-preserving release, anchor overload, rigid-load transfer, airflow response, and a shared flexible conductive filament.",
+      "scene": "res://scenes/levels/prototypes/prototype_metal_tether_traversal_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_metal_tether_traversal_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/metal_tether_traversal_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "aerial_traversal_concentration",
+        "airflow_foundation",
+        "flexible_tether_foundation"
+      ],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "FOCUS",
+        "CAST",
+        "JUMP",
+        "REEL IN",
+        "REEL OUT",
+        "DODGE RELEASE",
+        "RESET"
+      ],
+      "manual_test": "docs/metal_tether_traversal_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "The tether constrains one player and one anchor; multiple simultaneous filaments are deferred.",
+        "The gameplay constraint is analytic CharacterBody locomotion while FlexibleTether3D provides the shared segmented material presentation.",
+        "The filament does not yet wrap around arbitrary level geometry.",
+        "Enemy binding, Lightning conduction, Flight integration, camera assistance, and accessibility auto-release are deferred."
       ],
       "launchable": true,
       "visible_in_launcher": true,
@@ -731,6 +776,7 @@
         "flexible_tether_foundation",
         "chain_weapon_lab",
         "whip_weapon_lab",
+        "metal_tether_traversal",
         "weapon_combat_arena",
         "runtime_stat_lab",
         "enemy_personality_lab",

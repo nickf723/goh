@@ -22,10 +22,13 @@ func _ready() -> void:
 	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mesh_instance)
 	visible = visible_by_default
-	refresh_vectors()
+	if visible:
+		refresh_vectors()
 
 
 func _process(delta: float) -> void:
+	if not visible:
+		return
 	refresh_timer -= delta
 	if refresh_timer > 0.0:
 		return

@@ -7,7 +7,7 @@ class_name PerceptionNoiseBeacon
 @export var stimulus_display_name: String = "Noise beacon"
 @export_range(0.5, 40.0, 0.25) var loudness: float = 13.0
 @export_range(0.1, 4.0, 0.05) var stimulus_duration: float = 1.25
-@export_range(0.1, 4.0, 0.05) var priority: float = 1.2
+@export_range(0.1, 4.0, 0.05) var stimulus_priority: float = 1.2
 @export_range(0.0, 10.0, 0.1) var cooldown: float = 1.0
 @export var stimulus_offset: Vector3 = Vector3.ZERO
 
@@ -43,7 +43,7 @@ func interact() -> Dictionary:
 			stimulus_duration,
 			self,
 			stimulus_display_name,
-			priority,
+			stimulus_priority,
 			["distraction", "authored"]
 		)
 	cooldown_timer = cooldown
@@ -83,4 +83,5 @@ func get_debug_data() -> Dictionary:
 		"triggers": trigger_count,
 		"cooldown": snapped(cooldown_timer, 0.01),
 		"loudness": loudness,
+		"stimulus_priority": stimulus_priority,
 	}

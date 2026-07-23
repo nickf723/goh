@@ -139,7 +139,7 @@ func update_attack_pose(
 	tip_endpoint.global_position = target
 	_update_tip_kinematics(maxf(elapsed - _last_attack_elapsed, 0.001))
 	_last_attack_elapsed = elapsed
-	is_cracking = (
+	is_cracking = is_cracking or (
 		current_tip_speed >= crack_speed_threshold
 		and (attack.extra_tags.has("crack") or attack.extra_tags.has("snap"))
 	)
@@ -207,7 +207,8 @@ func modify_attack_payload(payload: DamagePayload, attack: WeaponAttackDefinitio
 	if payload == null or attack == null:
 		return
 
-	var speed_ratio: float = clampf(current_tip_speed / maxf(crack_speed_threshold, 1.0), 0.35, 1.7)
+	var impact_tip_speed: float = maxf(current_tip_speed, peak_tip_speed)
+	var speed_ratio: float = clampf(impact_tip_speed / maxf(crack_speed_threshold, 1.0), 0.35, 1.7)
 	var damage_scale: float = lerpf(0.62, 1.52, speed_ratio / 1.7)
 	if attack.extra_tags.has("wrap"):
 		damage_scale = minf(damage_scale, 0.78)

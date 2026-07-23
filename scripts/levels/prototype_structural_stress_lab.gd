@@ -169,7 +169,7 @@ func create_burn_release_station() -> void:
 	tether.endpoint_a_path = NodePath("../BurnRopeAnchor")
 	tether.endpoint_b_path = NodePath("../BurnLoad")
 	tether.material_profile = HempRope
-	tether.rest_length = 3.15
+	tether.rest_length = 4.0
 	tether.segment_count = 14
 	tether.constraint_iterations = 8
 	tether.apply_endpoint_forces = false

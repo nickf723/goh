@@ -40,6 +40,7 @@ enum VolumeShape {
 @export var turbulence_time_frequency: float = 1.2
 
 var elapsed: float = 0.0
+var airflow_manager: Node = null
 
 
 func _ready() -> void:
@@ -47,10 +48,29 @@ func _ready() -> void:
 	add_to_group("debuggable")
 	if field_id.strip_edges() == "":
 		field_id = name
+	call_deferred("register_with_manager")
+
+
+func _exit_tree() -> void:
+	unregister_from_manager()
 
 
 func _process(delta: float) -> void:
 	elapsed += max(delta, 0.0)
+
+
+func register_with_manager() -> void:
+	if not is_inside_tree():
+		return
+	airflow_manager = get_tree().get_first_node_in_group("airflow_manager")
+	if airflow_manager != null and airflow_manager.has_method("register_field"):
+		airflow_manager.call("register_field", self)
+
+
+func unregister_from_manager() -> void:
+	if airflow_manager != null and is_instance_valid(airflow_manager) and airflow_manager.has_method("unregister_field"):
+		airflow_manager.call("unregister_field", self)
+	airflow_manager = null
 
 
 func sample_air_velocity(world_position: Vector3, sample_time: float = -1.0) -> Vector3:
@@ -144,8 +164,8 @@ func sample_turbulence(world_position: Vector3, sample_time: float) -> Vector3:
 
 
 func safe_normalized(vector: Vector3, fallback: Vector3) -> Vector3:
-	if vector.length() <= 0.001:
-		return fallback.normalized() if fallback.length() > 0.001 else Vector3.ZERO
+	if vector.length_squared() <= 0.000001:
+		return fallback.normalized() if fallback.length_squared() > 0.000001 else Vector3.ZERO
 	return vector.normalized()
 
 

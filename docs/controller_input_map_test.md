@@ -1,57 +1,59 @@
-# Controller Input Map Test
+# Canonical Player Control Map
 
-This branch adds a first controller pass directly in `project.godot` and routes the focus spell selector through InputMap actions.
+This is the runtime control contract for Grace. Controller labels use Nintendo-style names, with Godot's standard physical positions underneath.
 
-## Goal
+## Controller
 
-Make the Switch controller usable without manually configuring Godot's Input Map first.
+| Input | Action |
+|---|---|
+| Left stick | Move |
+| Right stick | Camera / aim |
+| `L` | Light attack |
+| `R` | Heavy attack |
+| `ZL` | Hold Focus spell selector |
+| `ZR` | Cast equipped spell / confirm Focus selection |
+| Bottom face | Dodge; descend while flying |
+| Right face | Interact |
+| Top face | Jump; ascend while flying |
+| Left face | Reserved |
+| D-pad | Navigate Focus; manipulate distance/rotation while Soul Grip is active |
+| Right stick click | Lock on |
+| Start | Full menu |
 
-## Expected controller layout
+Light and Heavy are deliberately a matched shoulder pair. Focus and Cast are deliberately a matched trigger pair. Soul Grip does not own a global controller button.
 
-This uses Godot's standard controller button positions. Switch labels may display differently depending on driver/Steam/Input settings, so treat this as a physical-position map first.
+## Keyboard and mouse
 
-- Left stick: move.
-- ZL / left trigger: hold focus spell selector.
-- ZR / right trigger: confirm highlighted spell in focus selector, cast equipped spell outside focus.
-- D-pad left/right: change element in the focus selector.
-- D-pad up/down: change spell in the selected element.
-- Bottom face button: dodge.
-- Right face button: interact.
-- Left face button: light attack.
-- Top face button: jump.
+| Input | Action |
+|---|---|
+| `WASD` | Move |
+| Mouse | Camera / aim |
+| Left mouse or `J` | Light attack |
+| Mouse side button or `K` | Heavy attack |
+| Right mouse or `Shift` | Hold Focus spell selector |
+| `Q` | Cast equipped spell / confirm Focus selection |
+| `Space` | Jump; ascend while flying |
+| `C` | Dodge; descend while flying |
+| `E` | Interact |
+| `T` | Lock on |
+| `Tab` or `M` | Full menu |
 
-Fallbacks:
+## Soul Grip
 
-- Left shoulder also opens focus if Godot reports ZL differently.
-- Right shoulder also casts/confirms if Godot reports ZR differently.
+1. Hold Focus.
+2. Select **Soul Grip** from the Soul element.
+3. Release Focus.
+4. Aim at a Soul-marked object and hold Cast.
+5. Use D-pad up/down or the mouse wheel to change distance.
+6. Use D-pad left/right or `Z`/`X` to rotate.
+7. Release Cast to drop the object.
 
-## Keyboard/mouse still works
+Confirming Soul Grip inside Focus equips it only. The player must release and press Cast again to begin manipulation, preventing an accidental grab while closing the menu.
 
-- Shift or right mouse: focus.
-- Arrow keys: navigate focus selector.
-- Mouse wheel: change spell.
-- Q / Enter / Space / click: confirm highlighted spell.
-- Q outside focus: cast equipped spell.
+## Regression test
 
-## Test path
+Run:
 
-1. Pull `agent/hazard-reactions-v1`.
-2. Connect the Switch controller before running the scene.
-3. Run the usual dev scene.
-4. Confirm left stick moves Grace.
-5. Hold ZL. If it does not open focus, try L.
-6. Use D-pad to navigate elements/spells.
-7. Press ZR. If it does not confirm/cast, try R.
-8. Release focus and press ZR again to cast the equipped spell.
-9. Test bottom face button for dodge, left face button for attack, right face button for interact.
+`scenes/tests/chain_weapon_smoke_test.tscn`
 
-## What to report back
-
-If a button is wrong, report it by physical position, not just label. Example:
-
-- "ZL does nothing, but L opens focus."
-- "ZR does nothing, but R casts."
-- "Bottom button jumps instead of dodging."
-- "D-pad left/right does not move the selector."
-
-That will let us patch the map quickly without guessing which driver labels the Switch controller is using.
+The test verifies the complete Light/Heavy keyboard, mouse, and controller bindings; rejects right mouse as Heavy; rejects the left face button as Light; confirms Soul Grip is learned through the ability loadout; and confirms Soul Grip cannot remove `L` from Light Attack.

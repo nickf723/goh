@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 2
+stance_damage = 2
+element = "neutral"
+source_name = "Training Meteor Chain"
+hit_type = "melee"
+status_effect = "staggered"
+status_duration = 0.3
+status_strength = 1.0
+tags = Array[String](["physical", "melee", "weapon", "blunt", "force", "chain", "weighted_tip"])
+knockback_strength = 3.6
+knockback_up_strength = 0.18

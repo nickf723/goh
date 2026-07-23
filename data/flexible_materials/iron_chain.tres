@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="FlexibleMaterialProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/flexible/flexible_material_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+material_id = "iron_chain"
+display_name = "Iron Chain"
+visual_style = 1
+linear_density = 2.4
+stiffness = 2400.0
+tension_damping = 52.0
+break_strength = 4200.0
+radius = 0.095
+base_color = Color(0.3, 0.34, 0.4, 1)
+metallic = 0.92
+roughness = 0.3
+burnable = false
+ignition_threshold = 0.55
+burn_rate = 0.0
+conductive = true
+frozen_stiffness_multiplier = 1.25
+frozen_break_strength_multiplier = 0.72
+frozen_color = Color(0.56, 0.78, 0.92, 1)
+

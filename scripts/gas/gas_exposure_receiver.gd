@@ -11,6 +11,8 @@ signal gas_effect_applied(gas_id: String, dose: float)
 @export_range(0.0, 1.0, 0.01) var effect_dose_threshold: float = 0.35
 @export_range(0.0, 4.0, 0.01) var exposure_response_multiplier: float = 1.0
 @export var apply_player_damage: bool = true
+@export var create_player_obscuration_overlay: bool = true
+@export_range(0.0, 0.8, 0.01) var maximum_obscuration_alpha: float = 0.36
 @export var show_messages: bool = true
 @export var resettable: bool = true
 
@@ -20,6 +22,8 @@ var densities: Dictionary = {}
 var doses: Dictionary = {}
 var damage_timers: Dictionary = {}
 var active_exposures: Dictionary = {}
+var obscuration_layer: CanvasLayer = null
+var obscuration_rect: ColorRect = null
 
 
 func _ready() -> void:
@@ -28,6 +32,7 @@ func _ready() -> void:
 	if resettable:
 		add_to_group("lab_resettable")
 	resolve_manager()
+	call_deferred("build_obscuration_overlay")
 
 
 func _process(delta: float) -> void:
@@ -90,6 +95,8 @@ func update_exposure(delta: float) -> void:
 		exposure_changed.emit(gas_id, density, dose)
 		update_exposure_boundary(gas_id, previous_dose, dose)
 		update_gas_effect(gas_id, definition, dose, delta)
+
+	update_obscuration_overlay()
 
 
 func update_exposure_boundary(gas_id: String, previous_dose: float, dose: float) -> void:
@@ -157,6 +164,50 @@ func find_definition(gas_id: String) -> GasDefinition:
 	return null
 
 
+func build_obscuration_overlay() -> void:
+	if not create_player_obscuration_overlay:
+		return
+	var actor: Node = get_parent()
+	if actor == null or not actor.is_in_group("player"):
+		return
+	if obscuration_layer != null:
+		return
+	obscuration_layer = CanvasLayer.new()
+	obscuration_layer.name = "GasObscurationLayer"
+	obscuration_layer.layer = 80
+	add_child(obscuration_layer)
+	obscuration_rect = ColorRect.new()
+	obscuration_rect.name = "GasObscuration"
+	obscuration_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	obscuration_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	obscuration_rect.color = Color(0.42, 0.48, 0.52, 0.0)
+	obscuration_layer.add_child(obscuration_rect)
+
+
+func update_obscuration_overlay() -> void:
+	if obscuration_rect == null:
+		return
+	var strongest_dose: float = 0.0
+	var overlay_color: Color = Color(0.42, 0.48, 0.52, 1.0)
+	for raw_id: Variant in doses.keys():
+		var gas_id: String = str(raw_id)
+		var definition: GasDefinition = find_definition(gas_id)
+		if definition == null or not definition.obscures_vision:
+			continue
+		var dose: float = float(doses.get(gas_id, 0.0))
+		if dose <= strongest_dose:
+			continue
+		strongest_dose = dose
+		overlay_color = Color(
+			definition.visual_color.r,
+			definition.visual_color.g,
+			definition.visual_color.b,
+			1.0
+		)
+	overlay_color.a = clampf(strongest_dose * maximum_obscuration_alpha, 0.0, maximum_obscuration_alpha)
+	obscuration_rect.color = overlay_color
+
+
 func get_density(gas_id: String) -> float:
 	return float(densities.get(gas_id, 0.0))
 
@@ -182,6 +233,7 @@ func clear_exposure() -> void:
 	damage_timers.clear()
 	active_exposures.clear()
 	sample_timer = 0.0
+	update_obscuration_overlay()
 
 
 func reset_target() -> void:
@@ -206,4 +258,5 @@ func get_debug_data() -> Dictionary:
 		"doses": doses.duplicate(true),
 		"active": active_exposures.duplicate(true),
 		"total_dose": snapped(get_total_dose(), 0.01),
+		"obscuration_alpha": obscuration_rect.color.a if obscuration_rect != null else 0.0,
 	}

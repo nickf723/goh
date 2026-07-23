@@ -21,8 +21,8 @@ The controller hook is generic. A future whip, flail, or living tendril may prov
 
 ## Controls
 
-- `J` / left mouse: Light orbit
-- `K` / controller right shoulder: Heavy branch
+- `J` / left mouse / controller left shoulder: Light orbit
+- `K` / right mouse / controller right shoulder: Heavy branch
 - `F8`: Reset the laboratory in editor builds
 
 ## Manual route
@@ -35,8 +35,9 @@ The controller hook is generic. A future whip, flail, or living tendril may prov
 6. Press Light, Light, then Heavy. Confirm Reversal Breaker uses the opposite sweep direction.
 7. Press Light three times, then Heavy. Confirm Cathedral Meteor is the slowest and most committed finisher.
 8. Watch the HUD during attacks. Tip speed, momentum, tension, phase, and buffered input should update live.
-9. Stand just outside the glowing tip path. Confirm the chain does not hit merely because a target is inside a broad character-centered cone.
-10. Press F8. Confirm Grace, stamina, combo state, chain pose, and all training targets reset.
+9. Spend stamina on several Heavy attacks. After 0.8 seconds without another stamina spend, confirm the HUD restores roughly 4 stamina per second.
+10. Stand just outside the glowing tip path. Confirm the chain does not hit merely because a target is inside a broad character-centered cone.
+11. Press F8. Confirm Grace, stamina, combo state, chain pose, and all training targets reset.
 
 ## Automated scene
 

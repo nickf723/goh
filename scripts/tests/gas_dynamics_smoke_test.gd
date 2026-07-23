@@ -63,8 +63,9 @@ func test_density_grid_contract() -> void:
 	var volume: GasVolumeGrid = GasVolumeGridScript.new() as GasVolumeGrid
 	volume.name = "TestSmokeVolume"
 	volume.gas_definition = SmokeGas
-	volume.grid_size = Vector3i(6, 4, 6)
+	volume.grid_size = Vector3i(12, 8, 12)
 	volume.cell_size = 1.0
+	volume.active_padding_cells = 2
 	volume.show_density_visuals = false
 	foundation.add_child(volume)
 
@@ -83,6 +84,16 @@ func test_density_grid_contract() -> void:
 		failures.append("Gas grid must expose inject_density")
 	if float(gas_manager.call("sample_density", volume.global_position, "smoke")) <= 0.0:
 		failures.append("GasManager must sample registered Gas volumes")
+
+	var debug_data: Dictionary = volume.get_debug_data()
+	var total_cells: int = int(debug_data.get("total_cells", 0))
+	var simulated_cells: int = int(debug_data.get("simulated_cells", total_cells))
+	if simulated_cells <= 0:
+		failures.append("Active Gas simulation must process a nonzero region")
+	if simulated_cells >= total_cells:
+		failures.append("Localized Gas must simulate fewer cells than the full grid")
+	if not bool(volume.get("use_active_bounds")):
+		failures.append("Gas grids must support active-region simulation")
 
 	foundation.queue_free()
 	await get_tree().process_frame
@@ -111,6 +122,8 @@ func test_laboratory_contract() -> void:
 
 	if airflow_manager == null or not airflow_manager.has_method("sample_total_airflow"):
 		failures.append("Gas laboratory requires the shared AirflowManager")
+	elif int(airflow_manager.get_debug_data().get("field_count", 0)) < 4:
+		failures.append("AirflowManager must cache the laboratory fields")
 	if gas_manager == null or not gas_manager.has_method("sample_breakdown"):
 		failures.append("Gas laboratory requires GasManager sampling")
 	if smoke_volume == null or str(smoke_volume.get("gas_id")) != "smoke":
@@ -123,6 +136,21 @@ func test_laboratory_contract() -> void:
 		failures.append("Gas laboratory must contain Smoke and Poison emitters")
 	if get_tree().get_nodes_in_group("gas_sensors").size() < 4:
 		failures.append("Gas laboratory must contain density sensors")
+
+	if smoke_volume != null:
+		if int(smoke_volume.call("get_total_cell_count")) > 1600:
+			failures.append("Smoke laboratory grid exceeds its v1 performance budget")
+		if int(smoke_volume.get("visual_stride")) < 2:
+			failures.append("Smoke debug visualization must be decimated")
+		if int(smoke_volume.get("maximum_steps_per_frame")) != 1:
+			failures.append("Smoke grid must cap catch-up work to one step per frame")
+	if poison_volume != null:
+		if int(poison_volume.call("get_total_cell_count")) > 800:
+			failures.append("Poison laboratory grid exceeds its v1 performance budget")
+		if int(poison_volume.get("visual_stride")) < 2:
+			failures.append("Poison debug visualization must be decimated")
+		if float(poison_volume.get("simulation_phase_offset")) <= 0.0:
+			failures.append("Poison simulation must be staggered away from Smoke")
 
 	lab.queue_free()
 	await get_tree().process_frame

@@ -224,6 +224,11 @@ func create_redundant_scaffold_station() -> void:
 		true,
 		false
 	)
+	var reinforced_profile: StructuralMaterialProfile = WoodProfile.duplicate(true)
+	reinforced_profile.material_id = "reinforced_wood_support"
+	reinforced_profile.display_name = "Reinforced Wood Support"
+	reinforced_profile.base_capacity_n = 900.0
+	scaffold_right.integrity.material_profile = reinforced_profile
 	add_world_label(
 		"REDUNDANT SCAFFOLD\nINTERACT / H adds 30 kg\nOne support fails → load shifts → cascade",
 		Vector3(-3.4, 6.1, -4.5),

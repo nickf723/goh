@@ -71,6 +71,13 @@ func _test_tension_and_breakage() -> void:
 	if not tether.is_broken or tether.break_reason != "overload":
 		failures.append("Tension above material strength must break the tether")
 
+	tether.reset_tether()
+	profile.break_strength = 1000.0
+	endpoint.sleeping = true
+	tether.cut()
+	if endpoint.sleeping:
+		failures.append("Releasing a tether must wake a sleeping RigidBody endpoint")
+
 	tether.queue_free()
 	endpoint.queue_free()
 	anchor.queue_free()

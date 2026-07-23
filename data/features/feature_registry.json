@@ -568,6 +568,53 @@
       "timeout_seconds": 8
     },
     {
+      "id": "structural_stress_lab",
+      "order": 38,
+      "display_name": "Structural Stress Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Authored support-graph physics connecting sustained weight, redundant load paths, payload impacts, combustion weakening, cold brittleness, flexible-tether release, and Metal Tether extraction to visible structural collapse.",
+      "scene": "res://scenes/levels/prototypes/prototype_structural_stress_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_structural_stress_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/structural_stress_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "physical_interaction_lab",
+        "flexible_tether_foundation",
+        "metal_tether_traversal"
+      ],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "REEL IN",
+        "REEL OUT",
+        "RESET"
+      ],
+      "manual_test": "docs/structural_stress_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Connections are authored support edges rather than automatically generated finite-element meshes.",
+        "Supported members remain frozen until disconnected instead of flexing continuously.",
+        "Falling debris uses normal rigid-body collision but does not procedurally fracture into smaller persistent pieces.",
+        "Stress distribution uses member weight and active connection count rather than beam angle, torque, or cross-section.",
+        "Metal Tether extracts one authored brace at a time."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
       "id": "runtime_stat_lab",
       "order": 40,
       "display_name": "Runtime Stat Laboratory",
@@ -777,6 +824,7 @@
         "chain_weapon_lab",
         "whip_weapon_lab",
         "metal_tether_traversal",
+        "structural_stress_lab",
         "weapon_combat_arena",
         "runtime_stat_lab",
         "enemy_personality_lab",

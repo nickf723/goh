@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="FlexibleMaterialProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/flexible/flexible_material_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+material_id = "leather_whip"
+display_name = "Braided Leather Whip"
+visual_style = 0
+linear_density = 0.19
+stiffness = 720.0
+tension_damping = 18.0
+break_strength = 760.0
+radius = 0.035
+base_color = Color(0.27, 0.07, 0.035, 1)
+metallic = 0.0
+roughness = 0.76
+burnable = true
+ignition_threshold = 0.48
+burn_rate = 0.42
+conductive = false
+frozen_stiffness_multiplier = 2.15
+frozen_break_strength_multiplier = 0.32
+frozen_color = Color(0.58, 0.84, 1, 1)

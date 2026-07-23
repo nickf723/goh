@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="GasDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/gas/gas_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+gas_id = "poison"
+display_name = "Poison Gas"
+description = "A dense toxic gas that settles, follows airflow, accumulates in low spaces, and damages Grace after sustained exposure."
+maximum_density = 1.0
+advection_scale = 0.82
+diffusion_rate = 0.1
+decay_rate_per_second = 0.018
+buoyancy_velocity = Vector3(0, -0.38, 0)
+exposure_threshold = 0.1
+exposure_gain_rate = 1.15
+exposure_decay_rate = 0.52
+harmful = true
+damage_interval = 1.0
+damage_per_tick = 1
+status_name = "poisoned"
+status_duration = 1.35
+status_strength = 1.0
+obscures_vision = false
+visual_color = Color(0.38, 0.82, 0.18, 0.27)
+emission_energy = 0.52
+visual_density_threshold = 0.02
+tags = Array[String](["gas", "poison", "toxic", "hazard", "dense"])

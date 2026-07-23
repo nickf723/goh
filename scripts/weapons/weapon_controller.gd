@@ -43,6 +43,7 @@ var combo_history: Array[String] = []
 var swing_tween: Tween
 var sweep_tween: Tween
 var model_materials: Array[StandardMaterial3D] = []
+var runtime_weapon_rig: Node3D
 
 @onready var weapon_visual_pivot: Node3D = get_node_or_null("HandAnchor/WeaponVisualPivot")
 @onready var weapon_model_root: Node3D = get_node_or_null("HandAnchor/WeaponVisualPivot/WeaponModelRoot")
@@ -169,6 +170,14 @@ func update_current_attack(delta: float) -> void:
 	var startup_duration: float = current_attack.get_startup_duration(attack_speed)
 	var active_end: float = startup_duration + current_attack.get_active_duration(attack_speed)
 	var total_duration: float = current_attack.get_total_duration(attack_speed)
+
+	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("update_attack_pose"):
+		runtime_weapon_rig.call(
+			"update_attack_pose",
+			current_attack,
+			current_attack_elapsed,
+			attack_speed
+		)
 
 	var next_phase: String = "recovery"
 	if current_attack_elapsed < startup_duration:
@@ -394,6 +403,9 @@ func execute_current_attack_hit() -> void:
 		return
 
 	var payload: DamagePayload = current_attack.build_payload(equipped_weapon)
+	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("modify_attack_payload"):
+		runtime_weapon_rig.call("modify_attack_payload", payload, current_attack)
+
 	var targets: Array[Node] = find_targets(current_attack)
 	var messages: Array[String] = []
 
@@ -419,6 +431,22 @@ func execute_current_attack_hit() -> void:
 
 
 func find_targets(attack: WeaponAttackDefinition) -> Array[Node]:
+	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("find_weapon_targets"):
+		var runtime_targets: Variant = runtime_weapon_rig.call(
+			"find_weapon_targets",
+			self,
+			attack,
+			hit_mask
+		)
+		if runtime_targets is Array:
+			var resolved_targets: Array[Node] = []
+			for candidate: Variant in runtime_targets as Array:
+				if candidate is Node and not resolved_targets.has(candidate as Node):
+					resolved_targets.append(candidate as Node)
+				if resolved_targets.size() >= max(attack.max_targets, 1):
+					break
+			return resolved_targets
+
 	var actor: Node3D = get_actor()
 
 	if actor == null or attack == null:
@@ -630,6 +658,11 @@ func play_attack_visual(attack: WeaponAttackDefinition) -> void:
 	if weapon_visual_pivot == null or attack == null:
 		return
 
+	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("begin_attack"):
+		reset_visual_pose()
+		runtime_weapon_rig.call("begin_attack", attack, get_attack_speed())
+		return
+
 	if swing_tween != null:
 		swing_tween.kill()
 
@@ -685,6 +718,9 @@ func reset_visual_pose() -> void:
 
 	if slash_trail != null:
 		slash_trail.visible = false
+
+	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("end_attack"):
+		runtime_weapon_rig.call("end_attack")
 
 
 func setup_slash_trail() -> void:
@@ -775,6 +811,16 @@ func refresh_weapon_visual() -> void:
 	clear_weapon_model()
 	weapon_model_root.scale = Vector3.ONE * max(equipped_weapon.visual_scale, 0.1)
 
+	if equipped_weapon.runtime_rig_scene != null:
+		var rig_instance: Node = equipped_weapon.runtime_rig_scene.instantiate()
+		if rig_instance is Node3D:
+			runtime_weapon_rig = rig_instance as Node3D
+			weapon_model_root.add_child(runtime_weapon_rig)
+			if runtime_weapon_rig.has_method("configure_weapon"):
+				runtime_weapon_rig.call("configure_weapon", equipped_weapon, self)
+			return
+		rig_instance.queue_free()
+
 	match equipped_weapon.weapon_class:
 		"hammer":
 			build_hammer_visual()
@@ -792,6 +838,7 @@ func clear_weapon_model() -> void:
 		weapon_model_root.remove_child(child)
 		child.queue_free()
 
+	runtime_weapon_rig = null
 	model_materials.clear()
 
 
@@ -949,6 +996,12 @@ func get_debug_data() -> Dictionary:
 		cast_cancel = action_state.attack_allows_cast_cancel
 		dodge_cancel = action_state.attack_allows_dodge_cancel
 
+	var runtime_data: Dictionary = {}
+	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("get_debug_data"):
+		var rig_data: Variant = runtime_weapon_rig.call("get_debug_data")
+		if rig_data is Dictionary:
+			runtime_data = rig_data as Dictionary
+
 	return {
 		"weapon": weapon_name,
 		"class": equipped_weapon.weapon_class if equipped_weapon != null else "none",
@@ -963,4 +1016,5 @@ func get_debug_data() -> Dictionary:
 		"chain": combo_history.duplicate(),
 		"cast_cancel": cast_cancel,
 		"dodge_cancel": dodge_cancel,
+		"runtime_rig": runtime_data,
 	}

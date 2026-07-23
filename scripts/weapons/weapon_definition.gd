@@ -42,6 +42,7 @@ var weapon_class: String = "sword"
 @export var visual_secondary_color: Color = Color(0.22, 0.18, 0.28, 1.0)
 @export var visual_accent_color: Color = Color(1.0, 0.78, 0.28, 1.0)
 @export var visual_scale: float = 1.0
+@export var runtime_rig_scene: PackedScene
 
 # Pure metadata for build identity. These do not alter weapon damage yet.
 @export_group("Scaling Identity")

@@ -122,8 +122,11 @@ func test_laboratory_contract() -> void:
 
 	if airflow_manager == null or not airflow_manager.has_method("sample_total_airflow"):
 		failures.append("Gas laboratory requires the shared AirflowManager")
-	elif int(airflow_manager.get_debug_data().get("field_count", 0)) < 4:
-		failures.append("AirflowManager must cache the laboratory fields")
+	elif airflow_manager.has_method("get_debug_data"):
+		var airflow_debug_value: Variant = airflow_manager.call("get_debug_data")
+		var airflow_debug: Dictionary = airflow_debug_value as Dictionary if airflow_debug_value is Dictionary else {}
+		if int(airflow_debug.get("field_count", 0)) < 4:
+			failures.append("AirflowManager must cache the laboratory fields")
 	if gas_manager == null or not gas_manager.has_method("sample_breakdown"):
 		failures.append("Gas laboratory requires GasManager sampling")
 	if smoke_volume == null or str(smoke_volume.get("gas_id")) != "smoke":

@@ -6,6 +6,7 @@ var combat_motion_velocity: Vector3 = Vector3.ZERO
 var combat_motion_timer: float = 0.0
 
 @onready var aerial_locomotion: PlayerAerialLocomotion = get_node_or_null("AerialLocomotion") as PlayerAerialLocomotion
+@onready var metal_tether_controller: Node = get_node_or_null("MetalTetherController")
 
 
 func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
@@ -53,6 +54,15 @@ func cancel_combat_motion() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if (
+		metal_tether_controller != null
+		and metal_tether_controller.has_method("should_handle_locomotion")
+		and bool(metal_tether_controller.call("should_handle_locomotion"))
+	):
+		cancel_combat_motion()
+		if bool(metal_tether_controller.call("process_locomotion", delta)):
+			return
+
 	if aerial_locomotion != null and aerial_locomotion.flight_active:
 		cancel_combat_motion()
 		if aerial_locomotion.process_locomotion(delta):

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+display_name = "Soul Grip"
+description = "Channel Soul magic to lift, place, and rotate marked physical objects."
+element = "soul"
+category = 4
+mana_cost = 0
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "soul_grip"
+short_label = "Grip"
+icon_text = "GRIP"
+roles = Array[String](["utility", "control", "force", "manipulation", "puzzle"])
+targeting_style = "aimed_object"
+delivery_type = "channel"
+combo_tags = Array[String](["soul", "force", "physical"])
+ui_tags = Array[String](["utility", "channeled"])
+debug_tags = Array[String](["player_ability_channel", "soul_manipulation"])
+scaling_stats = Array[String](["intelligence", "soul"])
+scaling_note = "Soul Grip manipulation strength and maximum mass may scale with Intelligence and Soul later."
+design_notes = "Equipped through Focus. Hold Cast to acquire and manipulate a visible Soul-marked object; release Cast to drop it."

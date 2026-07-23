@@ -454,21 +454,20 @@ func refresh_readout() -> void:
 		if tether_controller != null
 		else {}
 	)
-	var velocity: Vector3 = data.get("velocity", Vector3.ZERO)
 	var airflow: Vector3 = data.get("airflow_acceleration", Vector3.ZERO)
+	var is_active: bool = bool(data.get("active", false))
+	var anchor_name: String = str(data.get("preview_anchor", "none"))
+	if is_active:
+		anchor_name = str(data.get("anchor", "none"))
 	readout.text = (
-		"METAL TETHER  " + ("ATTACHED" if bool(data.get("active", false)) else "READY")
-		+ "  •  Anchor: " + str(data.get("anchor", data.get("preview_anchor", "none")))
-		+ "\nLength " + str(data.get("length", 0.0)) + " m"
-		+ "  •  Distance " + str(data.get("distance", 0.0)) + " m"
-		+ "  •  Tension " + str(data.get("tension", 0.0)) + " N"
+		"TETHER " + ("ATTACHED" if is_active else "READY")
+		+ "  •  " + anchor_name
+		+ "  •  L " + str(data.get("length", 0.0))
+		+ " / " + str(data.get("distance", 0.0)) + " m"
+		+ "\nT " + str(data.get("tension", 0.0)) + " N"
 		+ "  •  Peak " + str(data.get("peak_tension", 0.0)) + " N"
-		+ "\nRadial " + str(data.get("radial_speed", 0.0)) + " m/s"
-		+ "  •  Tangential " + str(data.get("tangential_speed", 0.0)) + " m/s"
-		+ "  •  Speed " + str(snapped(velocity.length(), 0.1)) + " m/s"
+		+ "  •  Swing " + str(data.get("tangential_speed", 0.0)) + " m/s"
 		+ "  •  Air " + str(snapped(airflow.length(), 0.1)) + " m/s²"
-		+ "\nHold ZR / Q to tether  •  D-pad Up/Down or R/F reels"
-		+ "  •  Release Cast to launch  •  F8 resets"
 	)
 
 

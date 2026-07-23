@@ -73,21 +73,23 @@ turbulence_strength = 0.45
 layer = 20
 
 [node name="Panel" type="PanelContainer" parent="TetherHUD"]
-offset_left = 24.0
-offset_top = 24.0
-offset_right = 1060.0
-offset_bottom = 158.0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -510.0
+offset_top = 18.0
+offset_right = -18.0
+offset_bottom = 92.0
 theme_override_styles/panel = SubResource("StyleBox_hud")
 
 [node name="Margin" type="MarginContainer" parent="TetherHUD/Panel"]
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 12
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
 
 [node name="Readout" type="Label" parent="TetherHUD/Panel/Margin"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.82, 0.42, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 13
 text = "METAL TETHER READY"

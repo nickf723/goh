@@ -15,12 +15,12 @@ Validate that Soul Grip, physical occlusion, mass-sensitive manipulation, pressu
 ```txt
 MOVE                 Left stick
 AIM                  Right stick
-SOUL GRIP            Hold LB
+FOCUS / EQUIP         Hold ZL; navigate D-pad; confirm ZR
+SOUL GRIP            Hold ZR after equipping Soul Grip
 DISTANCE              D-pad Up / Down
 ROTATE                D-pad Left / Right
-CAST                  RT
-LIGHT                 X
-HEAVY                 RB
+LIGHT                 L
+HEAVY                 R
 RESET                 F8 in this development scene
 ```
 
@@ -28,7 +28,7 @@ RESET                 F8 in this development scene
 
 1. Approach the sealed left alcove.
 2. Confirm that the copper fuse cannot be selected through the giant stone slab.
-3. Hold Soul Grip and move the slab clear of the alcove entrance.
+3. Equip Soul Grip through Focus, then hold Cast and move the slab clear of the alcove entrance.
 4. Recover the copper fuse from the alcove.
 5. Pull the stone weight down from the raised shelf.
 6. Leave the stone weight on the pressure plate.

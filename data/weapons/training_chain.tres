@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_definition.gd" id="1_definition"]
+[ext_resource type="Resource" path="res://data/damage_payloads/training_chain_payload.tres" id="2_payload"]
+[ext_resource type="Resource" path="res://data/weapon_movesets/training_chain_moveset.tres" id="3_moveset"]
+[ext_resource type="PackedScene" path="res://scenes/weapons/chain_weapon_rig.tscn" id="4_rig"]
+
+[resource]
+script = ExtResource("1_definition")
+weapon_class = "chains"
+display_name = "Training Meteor Chain"
+description = "A heavy flexible weapon whose authored orbits drive a simulated iron chain and swept weighted-tip contacts."
+damage = 2
+stance_damage = 2
+range = 3.6
+attack_speed = 0.92
+cooldown = 0.62
+cone_angle_degrees = 230.0
+max_targets = 7
+stamina_cost = 0
+moveset = ExtResource("3_moveset")
+visual_primary_color = Color(0.19, 0.22, 0.3, 1)
+visual_secondary_color = Color(0.16, 0.07, 0.04, 1)
+visual_accent_color = Color(1, 0.36, 0.04, 1)
+visual_scale = 1.0
+runtime_rig_scene = ExtResource("4_rig")
+scaling_stats = Array[String](["power", "dexterity"])
+scaling_note = "Power carries the weighted impact while Dexterity represents orbit control and recovery."
+light_payload = ExtResource("2_payload")

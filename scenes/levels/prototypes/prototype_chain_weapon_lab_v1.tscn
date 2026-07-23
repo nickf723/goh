@@ -1,0 +1,180 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_chain_weapon_lab.gd" id="1_director"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="PackedScene" path="res://scenes/actors/testing/combat_training_target.tscn" id="5_target"]
+[ext_resource type="Material" path="res://art/materials/prototype/floor_stone_gray.tres" id="6_floor"]
+[ext_resource type="Material" path="res://art/materials/prototype/wall_dark_stone.tres" id="7_wall"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_floor"]
+size = Vector3(22, 1, 26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(22, 1, 26)
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall"]
+size = Vector3(22, 4.5, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall"]
+size = Vector3(22, 4.5, 1)
+
+[sub_resource type="StandardMaterial3D" id="Material_orbit"]
+albedo_color = Color(1, 0.24, 0.04, 1)
+emission_enabled = true
+emission = Color(0.62, 0.08, 0.01, 1)
+emission_energy_multiplier = 1.2
+
+[sub_resource type="TorusMesh" id="TorusMesh_orbit"]
+inner_radius = 3.05
+outer_radius = 3.12
+rings = 64
+ring_segments = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_hud"]
+bg_color = Color(0.035, 0.025, 0.045, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.28, 0.04, 0.85)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="PrototypeChainWeaponLab" type="Node3D"]
+script = ExtResource("1_director")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -28, 0)
+light_energy = 1.35
+shadow_enabled = true
+
+[node name="MeteorGlow" type="OmniLight3D" parent="."]
+position = Vector3(0, 3.5, -1)
+light_color = Color(1, 0.22, 0.03, 1)
+light_energy = 2.2
+omni_range = 13.0
+
+[node name="LabFloor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LabFloor"]
+shape = SubResource("BoxShape_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LabFloor"]
+material_override = ExtResource("6_floor")
+mesh = SubResource("BoxMesh_floor")
+
+[node name="BackWall" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.75, 14.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BackWall"]
+shape = SubResource("BoxShape_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BackWall"]
+material_override = ExtResource("7_wall")
+mesh = SubResource("BoxMesh_wall")
+
+[node name="Title" type="Label3D" parent="."]
+position = Vector3(0, 3.6, -9.5)
+pixel_size = 0.008
+billboard = 1
+modulate = Color(1, 0.66, 0.28, 1)
+text = "CHAIN WEAPON LABORATORY"
+font_size = 68
+outline_size = 8
+
+[node name="Subtitle" type="Label3D" parent="."]
+position = Vector3(0, 2.9, -9.4)
+pixel_size = 0.007
+billboard = 1
+modulate = Color(0.9, 0.82, 0.72, 1)
+text = "AUTHORED INTENT • FLEXIBLE LINKS • SWEPT WEIGHTED-TIP CONTACT"
+font_size = 31
+outline_size = 6
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, -7)
+
+[node name="OrbitGuide" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.045, -4.7)
+material_override = SubResource("Material_orbit")
+mesh = SubResource("TorusMesh_orbit")
+
+[node name="LeftOrbitTarget" parent="." instance=ExtResource("5_target")]
+position = Vector3(-2.5, 0, -4.2)
+target_label = "LEFT ORBIT"
+
+[node name="CenterOrbitTarget" parent="." instance=ExtResource("5_target")]
+position = Vector3(0, 0, -3.4)
+target_label = "METEOR LINE"
+
+[node name="RightOrbitTarget" parent="." instance=ExtResource("5_target")]
+position = Vector3(2.5, 0, -4.2)
+target_label = "RIGHT ORBIT"
+
+[node name="SlamTarget" parent="." instance=ExtResource("5_target")]
+position = Vector3(0, 0, -0.8)
+target_label = "HEAVY SLAM"
+
+[node name="Instructions" type="Label3D" parent="."]
+position = Vector3(0, 2.3, 4.2)
+pixel_size = 0.007
+billboard = 1
+modulate = Color(1, 0.82, 0.5, 1)
+text = "J / LMB  LIGHT ORBIT       K / R1  HEAVY BRANCH       F8  RESET"
+font_size = 35
+outline_size = 6
+
+[node name="ChainHUD" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="Panel" type="PanelContainer" parent="ChainHUD"]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 825.0
+offset_bottom = 205.0
+theme_override_styles/panel = SubResource("StyleBox_hud")
+
+[node name="Margin" type="MarginContainer" parent="ChainHUD/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="ChainHUD/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="WeaponLabel" type="Label" parent="ChainHUD/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.68, 0.32, 1)
+theme_override_font_sizes/font_size = 20
+text = "WEAPON  Training Meteor Chain  [CHAIN]"
+
+[node name="AttackLabel" type="Label" parent="ChainHUD/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "ATTACK none  |  IDLE  |  BUFFER NONE"
+
+[node name="PhysicsLabel" type="Label" parent="ChainHUD/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.48, 0.2, 1)
+theme_override_font_sizes/font_size = 16
+text = "TIP SPEED 0.0 m/s  |  MOMENTUM 0.0  |  TENSION 0.0 N"
+
+[node name="RouteLabel" type="Label" parent="ChainHUD/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.78, 0.72, 1)
+theme_override_font_sizes/font_size = 14
+text = "LIGHT: ORBIT → RETURN → RECALL    HEAVY: METEOR DROP\nBranch HEAVY after any LIGHT for a stronger orbit or finisher.    F8 RESET"

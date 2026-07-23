@@ -239,7 +239,18 @@ func _break_tether(reason: String) -> void:
 	break_reason = reason
 	current_tension = 0.0
 	_broken_segment_index = maxi(1, int(float(_points.size() - 1) / 2.0))
+	_wake_endpoint(_endpoint_a)
+	_wake_endpoint(_endpoint_b)
 	tether_broken.emit(reason, peak_tension)
+
+
+func _wake_endpoint(endpoint: Node3D) -> void:
+	if not is_instance_valid(endpoint):
+		return
+	if endpoint is RigidBody3D:
+		(endpoint as RigidBody3D).sleeping = false
+	elif endpoint.has_method("wake_from_tether_release"):
+		endpoint.call("wake_from_tether_release")
 
 
 func _create_visuals() -> void:

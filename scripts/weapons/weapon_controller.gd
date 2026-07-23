@@ -415,6 +415,9 @@ func execute_current_attack_hit() -> void:
 		if result.has("message") and result["message"] != "":
 			messages.append(str(result["message"]))
 
+	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("on_weapon_targets_hit"):
+		runtime_weapon_rig.call("on_weapon_targets_hit", targets, current_attack)
+
 	if targets.size() > 0:
 		HitStop.request(
 			max(current_attack.hit_stop_duration, 0.0),

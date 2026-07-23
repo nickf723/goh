@@ -3,6 +3,10 @@ extends Node
 const Chain: WeaponDefinition = preload("res://data/weapons/training_chain.tres")
 const RigScene: PackedScene = preload("res://scenes/weapons/chain_weapon_rig.tscn")
 const LabScene: PackedScene = preload("res://scenes/levels/prototypes/prototype_chain_weapon_lab_v1.tscn")
+const SoulGripAbility: AbilityDefinition = preload("res://data/abilities/soul_grip_ability.tres")
+const StartingLoadout: AbilityLoadout = preload("res://data/loadouts/grace_starting_loadout.tres")
+const SoulGripSpellControllerScript: Script = preload("res://scripts/player/soul_grip_spell_controller.gd")
+const PlayerChannelCasterScript: Script = preload("res://scripts/abilities/ability_caster_player_channels.gd")
 
 var failures: Array[String] = []
 
@@ -74,8 +78,38 @@ func run_tests() -> void:
 	var input_bootstrap: WeaponInputBootstrap = WeaponInputBootstrap.new()
 	add_child(input_bootstrap)
 	assert_attack_binding("weapon_light_attack", KEY_J, MOUSE_BUTTON_LEFT, JOY_BUTTON_LEFT_SHOULDER)
-	assert_attack_binding("weapon_heavy_attack", KEY_K, MOUSE_BUTTON_RIGHT, JOY_BUTTON_RIGHT_SHOULDER)
+	assert_attack_binding("weapon_heavy_attack", KEY_K, MOUSE_BUTTON_XBUTTON1, JOY_BUTTON_RIGHT_SHOULDER)
+	if action_has_joypad("weapon_light_attack", JOY_BUTTON_X):
+		failures.append("light attack must use L, not the left face button")
+	if action_has_mouse("weapon_heavy_attack", MOUSE_BUTTON_RIGHT):
+		failures.append("heavy attack must not steal right mouse from Focus")
 	input_bootstrap.queue_free()
+
+	if SoulGripAbility == null or SoulGripAbility.get_spell_id() != "soul_grip":
+		failures.append("Soul Grip ability definition is missing")
+	elif not StartingLoadout.learned_abilities.has(SoulGripAbility):
+		failures.append("Grace must learn Soul Grip through the normal ability loadout")
+
+	var dummy_player: CharacterBody3D = CharacterBody3D.new()
+	var ability_caster: Node3D = PlayerChannelCasterScript.new() as Node3D
+	ability_caster.name = "AbilityCaster"
+	ability_caster.set("loadout", StartingLoadout)
+	ability_caster.set("current_ability_index", StartingLoadout.equipped_abilities.find(SoulGripAbility))
+	var soul_grip_controller: Node3D = SoulGripSpellControllerScript.new() as Node3D
+	dummy_player.add_child(ability_caster)
+	dummy_player.add_child(soul_grip_controller)
+	add_child(dummy_player)
+	if not bool(soul_grip_controller.call("can_handle_ability", SoulGripAbility)):
+		failures.append("Soul Grip spell controller must claim the Soul Grip ability")
+	if not bool(ability_caster.call("cast_from_player", dummy_player)):
+		failures.append("Cast must delegate equipped Soul Grip to its player channel")
+	elif not bool(soul_grip_controller.get("channel_requested")):
+		failures.append("Soul Grip channel did not begin through the Cast action")
+	if action_has_joypad("soul_grip", JOY_BUTTON_LEFT_SHOULDER):
+		failures.append("Soul Grip must not own the Light shoulder")
+	if not action_has_joypad("weapon_light_attack", JOY_BUTTON_LEFT_SHOULDER):
+		failures.append("Soul Grip setup removed the Light shoulder attack")
+	dummy_player.queue_free()
 
 
 func assert_attack(
@@ -111,3 +145,23 @@ func assert_attack_binding(
 			has_joypad = true
 	if not has_key or not has_mouse or not has_joypad:
 		failures.append(action_name + " must provide matching keyboard, mouse, and controller bindings")
+
+
+func action_has_mouse(action_name: String, expected_mouse: MouseButton) -> bool:
+	if not InputMap.has_action(action_name):
+		return false
+	for event: InputEvent in InputMap.action_get_events(action_name):
+		if event is InputEventMouseButton:
+			if (event as InputEventMouseButton).button_index == expected_mouse:
+				return true
+	return false
+
+
+func action_has_joypad(action_name: String, expected_joypad: JoyButton) -> bool:
+	if not InputMap.has_action(action_name):
+		return false
+	for event: InputEvent in InputMap.action_get_events(action_name):
+		if event is InputEventJoypadButton:
+			if (event as InputEventJoypadButton).button_index == expected_joypad:
+				return true
+	return false

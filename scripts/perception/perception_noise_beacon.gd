@@ -7,7 +7,11 @@ class_name PerceptionNoiseBeacon
 @export var stimulus_display_name: String = "Noise beacon"
 @export_range(0.5, 40.0, 0.25) var loudness: float = 13.0
 @export_range(0.1, 4.0, 0.05) var stimulus_duration: float = 1.25
+<<<<<<< Updated upstream
 @export_range(0.1, 4.0, 0.05) var stimulus_priority: float = 1.2
+=======
+
+>>>>>>> Stashed changes
 @export_range(0.0, 10.0, 0.1) var cooldown: float = 1.0
 @export var stimulus_offset: Vector3 = Vector3.ZERO
 

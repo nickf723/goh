@@ -18,8 +18,9 @@ func _ready() -> void:
 	if resettable_in_lab:
 		add_to_group("lab_resettable")
 	if hit_receiver != null and hit_receiver.has_signal("health_depleted"):
-		if not hit_receiver.health_depleted.is_connected(_on_health_depleted):
-			hit_receiver.health_depleted.connect(_on_health_depleted)
+		var callback: Callable = Callable(self, "_on_health_depleted")
+		if not hit_receiver.is_connected("health_depleted", callback):
+			hit_receiver.connect("health_depleted", callback)
 	reset_container()
 
 

@@ -136,6 +136,23 @@ Outside Focus and the paused Field Kit, the D-pad directly uses Up, Left, Right,
 
 A committed item use slows movement, blocks attacks, casting, Dodge, Guard, jumping, and interaction, and is interrupted by enemy stagger without consuming stock. Rest refills only definitions marked `refill_on_rest`. Inventory, assignments, and persistent pickup IDs participate in the normal save contract.
 
+Loot rewards use the same pickup and inventory path as authored supplies:
+
+```txt
+HitReceiver.health_depleted
+→ LootDropper
+→ LootTable + LootEntry
+→ WorldItemPickup
+→ GameState inventory
+
+RewardChoiceChest
+→ three WorldItemPickup choices
+→ collect one
+→ remove the other two
+```
+
+Runtime drops may scatter and magnetize toward Grace. Breakable supply containers and defeated actors both consume the same authored loot-table resources; neither writes inventory directly.
+
 Thrown items use one delivery scene and data-selected impact scenes:
 
 ```txt
@@ -152,6 +169,11 @@ Key files:
 ```txt
 scripts/items/quick_item_definition.gd
 scripts/items/quick_item_catalog.gd
+scripts/items/loot_entry.gd
+scripts/items/loot_table.gd
+scripts/items/loot_dropper.gd
+scripts/items/breakable_supply_container.gd
+scripts/items/reward_choice_chest.gd
 scripts/items/thrown_quick_item.gd
 scripts/items/world_item_pickup.gd
 scripts/items/noise_maker_impact.gd
@@ -164,6 +186,7 @@ scenes/ui/quick_item_belt_ui.tscn
 data/items/healing_flask.tres
 data/items/oil_flask.tres
 data/items/noise_maker.tres
+data/loot/
 ```
 
 ### Weapon combat

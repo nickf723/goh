@@ -5,6 +5,7 @@ const ComboRuleRegistryScript = preload("res://scripts/systems/combo_rule_regist
 const TAB_DEFS: Array[Dictionary] = [
 	{"id": "loadout", "title": "Loadout", "icon": "⚔"},
 	{"id": "magic", "title": "Magic", "icon": "✦"},
+	{"id": "items", "title": "Items", "icon": "🧪"},
 	{"id": "relics", "title": "Relics", "icon": "🔑"},
 	{"id": "grace", "title": "Grace", "icon": "◇"},
 	{"id": "journal", "title": "Journal", "icon": "📜"},
@@ -32,6 +33,7 @@ var selectable_actions: Array = []
 
 var assignment_mode: String = ""
 var pending_spell_slot_index: int = -1
+var pending_item_slot_index: int = -1
 
 var title_label: Label
 var subtitle_label: Label
@@ -75,7 +77,7 @@ func handle_menu_input(event: InputEvent) -> bool:
 		return false
 
 	if event.is_action_pressed("ui_cancel"):
-		if is_assigning_spell():
+		if is_assigning_spell() or is_assigning_item():
 			cancel_assignment()
 			return true
 		return false
@@ -121,6 +123,8 @@ func handle_menu_input(event: InputEvent) -> bool:
 				select_tab(5)
 			KEY_7:
 				select_tab(6)
+			KEY_8:
+				select_tab(7)
 			KEY_W, KEY_UP:
 				select_action(selected_action_index - 1)
 			KEY_S, KEY_DOWN:
@@ -173,6 +177,10 @@ func activate_action(action: Dictionary) -> void:
 			start_spell_assignment(int(action.get("slot", -1)))
 		"assign_spell":
 			complete_spell_assignment(int(action.get("learned_index", -1)))
+		"choose_item_slot":
+			start_item_assignment(int(action.get("slot", -1)))
+		"assign_item":
+			complete_item_assignment(str(action.get("item_id", "")))
 		_:
 			return
 
@@ -222,9 +230,37 @@ func complete_spell_assignment(learned_index: int) -> void:
 	rebuild_menu()
 
 
+func start_item_assignment(slot_index: int) -> void:
+	if slot_index < 0 or slot_index >= 4:
+		return
+	assignment_mode = "item"
+	pending_item_slot_index = slot_index
+	selected_tab_index = get_tab_index("items")
+	selected_action_index = 0
+	rebuild_menu()
+
+
+func complete_item_assignment(item_id: String) -> void:
+	if not is_assigning_item():
+		return
+	var controller: Node = find_first_node_named(get_tree().current_scene, "PlayerQuickItemController")
+	if controller == null or not controller.has_method("assign_slot_by_item_id"):
+		return
+	if not bool(controller.call("assign_slot_by_item_id", pending_item_slot_index, item_id)):
+		return
+	var assigned_slot: int = pending_item_slot_index
+	assignment_mode = ""
+	pending_item_slot_index = -1
+	selected_tab_index = get_tab_index("loadout")
+	selected_action_index = assigned_slot
+	refresh_menu_data()
+	rebuild_menu()
+
+
 func cancel_assignment(should_rebuild: bool = true) -> void:
 	assignment_mode = ""
 	pending_spell_slot_index = -1
+	pending_item_slot_index = -1
 
 	if should_rebuild:
 		rebuild_menu()
@@ -232,6 +268,10 @@ func cancel_assignment(should_rebuild: bool = true) -> void:
 
 func is_assigning_spell() -> bool:
 	return assignment_mode == "spell" and pending_spell_slot_index >= 0
+
+
+func is_assigning_item() -> bool:
+	return assignment_mode == "item" and pending_item_slot_index >= 0
 
 
 func refresh_menu_data() -> void:
@@ -399,6 +439,8 @@ func rebuild_content() -> void:
 			render_loadout()
 		"magic":
 			render_magic()
+		"items":
+			render_items()
 		"relics":
 			render_relics()
 		"grace":
@@ -442,9 +484,48 @@ func render_loadout() -> void:
 			if slot_variant is Dictionary:
 				render_equipped_slot_card(slot_variant as Dictionary)
 
-	add_section_header("Tools")
-	add_compact_card("🧪 Items  ·  4 empty quick slots", false, "Future")
+	add_section_header("Quick Items")
+	var item_slots: Array = menu_data.get("quick_item_slots", [])
+	if item_slots.size() <= 0:
+		add_text_card("No item belt found", "The Field Kit could not find Grace's quick-item controller.", "🧪", "Unavailable")
+	else:
+		for slot_variant in item_slots:
+			if slot_variant is Dictionary:
+				render_quick_item_slot_card(slot_variant as Dictionary)
 	add_compact_card("🛠 Gadgets  ·  vehicle / summon / device slots later", false, "Future")
+
+
+func render_items() -> void:
+	var inventory_rows: Array = menu_data.get("inventory_items", [])
+	var total_count: int = 0
+	for row_variant in inventory_rows:
+		if row_variant is Dictionary:
+			total_count += int((row_variant as Dictionary).get("count", 0))
+
+	if is_assigning_item():
+		var directions: Array[String] = ["Up", "Left", "Right", "Down"]
+		add_text_card("Assign Quick Item", "Choose an owned item for D-pad " + directions[pending_item_slot_index] + ".", "🧪", "Enter assigns")
+		add_action_row("Clear this quick slot", {"kind": "assign_item", "item_id": ""}, "Empty")
+	else:
+		add_summary_card(["Types " + str(inventory_rows.size()), "Carried " + str(total_count), "D-pad ready"])
+
+	if inventory_rows.size() <= 0:
+		add_text_card("No usable items", "Explore containers, enemies, and hidden supply caches.", "🧪", "Empty")
+		return
+
+	for row_variant in inventory_rows:
+		if not (row_variant is Dictionary):
+			continue
+		var row: Dictionary = row_variant as Dictionary
+		var item_id: String = str(row.get("id", ""))
+		var count: int = int(row.get("count", 0))
+		var title: String = str(row.get("icon", "◇")) + " " + str(row.get("name", item_id.capitalize()))
+		var line: String = title + "  ×" + str(count) + "  ·  " + str(row.get("description", ""))
+		var subtitle: String = "Refills at rest" if bool(row.get("refill_on_rest", false)) else "Consumable"
+		if is_assigning_item():
+			add_action_row(line, {"kind": "assign_item", "item_id": item_id}, subtitle)
+		else:
+			add_compact_card(line, false, subtitle)
 
 
 func render_magic() -> void:
@@ -542,7 +623,7 @@ func render_codex() -> void:
 
 func render_system() -> void:
 	add_text_card("Controls", "Tab/M toggles menu  ·  A/D switches tabs  ·  W/S moves rows  ·  Enter chooses  ·  Esc backs out", "⚙", "Input")
-	add_text_card("Prototype", "Spell hotkeys can be assigned. Relics now show progression unlocks. Settings and save slots come later.", "🛠", "Build note")
+	add_text_card("Prototype", "Spell hotkeys and the four-slot quick-item belt can be assigned. Relics show progression unlocks. Settings come later.", "🛠", "Build note")
 
 
 func add_section_header(title: String) -> void:
@@ -677,6 +758,18 @@ func make_chip_label(text: String) -> Label:
 	label.add_theme_font_size_override("font_size", 11)
 	label.add_theme_stylebox_override("normal", make_panel_style(CHIP_BACKGROUND, CHIP_BORDER, 1, 8))
 	return label
+
+
+func render_quick_item_slot_card(item_slot: Dictionary) -> void:
+	var slot_index: int = int(item_slot.get("slot", 0))
+	var direction: String = str(item_slot.get("direction", "Slot"))
+	var line: String = "D-pad " + direction + "  ·  "
+	if bool(item_slot.get("is_empty", true)):
+		line += "Empty  ·  choose to assign"
+	else:
+		line += str(item_slot.get("icon", "◇")) + " " + str(item_slot.get("name", "Item"))
+		line += " ×" + str(item_slot.get("count", 0))
+	add_action_row(line, {"kind": "choose_item_slot", "slot": slot_index}, "Item")
 
 
 func render_equipped_slot_card(spell: Dictionary) -> void:
@@ -958,8 +1051,10 @@ func get_unlock_type_label(unlock_type: String) -> String:
 func get_footer_text() -> String:
 	if is_assigning_spell():
 		return "Assigning Hotkey " + str(pending_spell_slot_index + 1) + "   W/S or ↑/↓: spell rows   Enter/click: assign   Esc: cancel"
+	if is_assigning_item():
+		return "Assigning D-pad slot   W/S or ↑/↓: item rows   Enter/click: assign   Esc: cancel"
 
-	return "A/D or ←/→: tabs   W/S or ↑/↓: rows   Enter/click: choose   1-7: jump tabs"
+	return "A/D or ←/→: tabs   W/S or ↑/↓: rows   Enter/click: choose   1-8: jump tabs"
 
 
 func join_values(values: Variant) -> String:

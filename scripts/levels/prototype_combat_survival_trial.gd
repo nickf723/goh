@@ -4,7 +4,7 @@ class_name PrototypeCombatSurvivalTrial
 const GoblinScene: PackedScene = preload("res://scenes/actors/enemies/goblin_drone.tscn")
 const GremlinScene: PackedScene = preload("res://scenes/actors/enemies/gremlin_drone.tscn")
 
-@export var opening_objective: String = "Survive two rounds. Defend, create space, and commit to a Healing Flask only during a safe opening."
+@export var opening_objective: String = "Collect the field supplies, assign them from the Field Kit, and survive two rounds with defense, healing, oil, and distractions."
 @export var enable_editor_f8_reset: bool = true
 @export_range(0.2, 5.0, 0.1) var between_round_seconds: float = 1.25
 
@@ -90,6 +90,11 @@ func reset_trial() -> void:
 	last_defense_message = "READY — tap Guard on the red windup for a Perfect Guard."
 
 	GameState.restore_rest_resources()
+	GameState.set_inventory_count("oil_flask", 0)
+	GameState.set_inventory_count("noise_maker", 0)
+	for pickup: Node in get_tree().get_nodes_in_group("world_item_pickup"):
+		if pickup.has_method("reset_pickup"):
+			pickup.call("reset_pickup")
 	GameState.player_invulnerable = false
 	GameState.player_invulnerability_timer = 0.0
 	if action_state != null:
@@ -103,7 +108,7 @@ func reset_trial() -> void:
 		player.velocity = Vector3.ZERO
 
 	GameState.set_objective(opening_objective)
-	show_message("Round 1: one readable Goblin. Take a hit, create space, then use Quick Item Up to drink.")
+	show_message("Collect both supply caches. Open Tab / Menu, choose a D-pad slot under Loadout, then assign Oil or Noise from Items.")
 	advance_round()
 
 
@@ -113,7 +118,7 @@ func advance_round() -> void:
 		0:
 			spawn_combatant(GoblinScene, Vector3(0.0, 0.7, -4.5), "Lesson Goblin", 5, 3)
 			round_active = true
-			show_message("ROUND 1 — Defend first. Quick Item Up heals only after the Flask use window completes.")
+			show_message("ROUND 1 — Defend first. Oil prepares Fire combos; Noise creates evidence where it lands.")
 		1:
 			spawn_combatant(GoblinScene, Vector3(-3.0, 0.7, -4.8), "Pressure Goblin", 6, 3)
 			spawn_combatant(GremlinScene, Vector3(3.0, 0.7, -3.5), "Flanking Gremlin", 4, 2)
@@ -215,11 +220,13 @@ func refresh_hud() -> void:
 			"HEALTH " + resource_pair("health")
 			+ "    STAMINA " + resource_pair("stamina")
 			+ "    STANCE " + resource_pair("stance")
-			+ "    FLASK ×" + str(get_flask_charges())
+			+ "    FLASK ×" + str(GameState.get_inventory_count("healing_flask"))
+			+ "    OIL ×" + str(GameState.get_inventory_count("oil_flask"))
+			+ "    NOISE ×" + str(GameState.get_inventory_count("noise_maker"))
 		)
 
 	if result_label != null:
-		result_label.text = "QUICK ITEM • GUARD • DODGE • LIGHT • HEAVY • LOCK-ON • RESET"
+		result_label.text = "COLLECT • MENU • ASSIGN • QUICK ITEM • GUARD • DODGE • ATTACK • RESET"
 
 
 func resource_pair(resource_name: String) -> String:

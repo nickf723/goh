@@ -821,14 +821,15 @@
       "category": "Combat Trial",
       "version": "v1",
       "status": "experimental",
-      "description": "Two-round survival exchange connecting readable enemy telegraphs, directional Guard, Perfect Guard counter-pressure, Dodge invulnerability, player hit reactions, stamina and stance recovery, guard break, enemy stance break, critical punishment, defeat/reset flow, and a committed four-slot quick-item belt with Healing Flask.",
+      "description": "Two-round survival exchange connecting world pickups, saved consumable inventory, paused Field Kit assignment, a four-slot quick-item belt, Healing Flask commitment, thrown Oil and Noise Maker delivery, readable telegraphs, Guard, Dodge, stance breaks, critical punishment, and defeat/reset flow.",
       "scene": "res://scenes/levels/prototypes/prototype_combat_survival_trial_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/prototype_combat_survival_trial_v1.tscn"
       ],
       "automated_tests": [
         "res://scenes/tests/player_defense_smoke_test.tscn",
-        "res://scenes/tests/quick_item_belt_smoke_test.tscn"
+        "res://scenes/tests/quick_item_belt_smoke_test.tscn",
+        "res://scenes/tests/field_inventory_smoke_test.tscn"
       ],
       "dependencies": [
         "weapon_combat_arena",
@@ -843,6 +844,9 @@
         "DODGE",
         "LOCK-ON",
         "QUICK ITEM",
+        "INTERACT",
+        "MENU",
+        "INVENTORY",
         "RESET"
       ],
       "manual_test": "docs/combat_survival_trial_v1_test.md",
@@ -853,7 +857,9 @@
         "Perfect Guard timing and defense costs are first-pass tuning values.",
         "Bespoke hazards and bosses that bypass EnemyBrain still need to opt into the common defense resolver.",
         "Production animation, audio, hit stop, controller rumble, and accessibility timing assists are deferred.",
-        "Healing Flask is the only authored consumable; the other quick slots, inventory assignment, pickups, and persistent quantities are deferred."
+        "Healing Flask, Oil Flask, and Noise Maker are the first three authored quick items.",
+        "Enemy drops, treasure containers, crafting, shops, and production pickup animation remain deferred.",
+        "The survival-trial combat brains do not investigate Noise Maker stimuli; the Perception Laboratory remains the authoritative AI-response test."
       ],
       "launchable": true,
       "visible_in_launcher": true,

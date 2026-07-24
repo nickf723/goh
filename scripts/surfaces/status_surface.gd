@@ -21,6 +21,7 @@ const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
 @export var show_feedback: bool = true
 
 @export var refresh_interval: float = 0.1
+@export_range(0.0, 120.0, 0.5) var lifetime: float = 0.0
 
 @export_group("Reaction Surface")
 @export var reactive_enabled: bool = false
@@ -64,6 +65,12 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if lifetime > 0.0:
+		lifetime -= delta
+		if lifetime <= 0.0:
+			queue_free()
+			return
+
 	visual_elapsed += delta
 
 	if reactive_enabled:

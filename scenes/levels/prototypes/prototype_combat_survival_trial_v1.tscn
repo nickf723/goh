@@ -4,6 +4,9 @@
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="PackedScene" path="res://scenes/items/world_item_pickup.tscn" id="5_pickup"]
+[ext_resource type="Resource" path="res://data/items/oil_flask.tres" id="6_oil"]
+[ext_resource type="Resource" path="res://data/items/noise_maker.tres" id="7_noise"]
 
 [sub_resource type="BoxShape3D" id="FloorShape"]
 size = Vector3(20, 1, 22)
@@ -157,6 +160,22 @@ outline_size = 6
 
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1, 7)
+
+[node name="SupplyPickups" type="Node3D" parent="."]
+
+[node name="OilFlaskPickup" parent="SupplyPickups" instance=ExtResource("5_pickup")]
+position = Vector3(-2.4, 0.55, 6.0)
+item_definition = ExtResource("6_oil")
+quantity = 2
+prompt_text = "Collect Oil Flasks"
+resettable_in_lab = true
+
+[node name="NoiseMakerPickup" parent="SupplyPickups" instance=ExtResource("5_pickup")]
+position = Vector3(2.4, 0.55, 6.0)
+item_definition = ExtResource("7_noise")
+quantity = 2
+prompt_text = "Collect Noise Makers"
+resettable_in_lab = true
 
 [node name="Enemies" type="Node3D" parent="."]
 

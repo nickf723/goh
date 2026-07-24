@@ -7,6 +7,8 @@ const PlayerScene: PackedScene = preload("res://scenes/actors/player/player.tscn
 
 var failures: Array[String] = []
 var original_snapshot: Dictionary
+var original_inventory: Dictionary
+var original_slots: Array[String]
 
 
 func _ready() -> void:
@@ -15,6 +17,8 @@ func _ready() -> void:
 
 func run_tests() -> void:
 	original_snapshot = GameState.get_stat_snapshot()
+	original_inventory = GameState.get_inventory_snapshot()
+	original_slots = GameState.get_quick_item_slots_snapshot()
 	set_resource_pair("health", 2, 5)
 	set_resource_pair("stamina", 5, 5)
 	set_resource_pair("mana", 5, 5)
@@ -39,6 +43,9 @@ func run_tests() -> void:
 	flask.requires_grounded = false
 	flask.restore_resource_id = "health"
 	flask.restore_amount = 2
+
+	GameState.set_inventory_count(flask.item_id, 3)
+	GameState.set_quick_item_slot(PlayerQuickItemController.SLOT_UP, flask.item_id)
 
 	var controller: PlayerQuickItemController = QuickItemControllerScript.new() as PlayerQuickItemController
 	controller.name = "PlayerQuickItemController"
@@ -81,6 +88,7 @@ func run_tests() -> void:
 	assert_true(not controller.try_use_slot(PlayerQuickItemController.SLOT_UP), "full-health player cannot waste flask")
 
 	assert_input_contract()
+	GameState.set_quick_item_slot(PlayerQuickItemController.SLOT_UP, "healing_flask")
 	assert_player_scene_contract()
 
 	actor.queue_free()
@@ -149,6 +157,13 @@ func set_resource_pair(resource_name: String, current: int, maximum: int) -> voi
 
 func restore_snapshot() -> void:
 	GameState.stats = original_snapshot.duplicate(true)
+	GameState.inventory = original_inventory.duplicate(true)
+	GameState.quick_item_slots = original_slots.duplicate()
+	for item_id_variant: Variant in GameState.inventory.keys():
+		var item_id: String = str(item_id_variant)
+		GameState.inventory_changed.emit(item_id, int(GameState.inventory[item_id_variant]))
+	for slot_index: int in range(GameState.quick_item_slots.size()):
+		GameState.quick_item_slot_changed.emit(slot_index, GameState.quick_item_slots[slot_index])
 	for stat_variant: Variant in GameState.stats.keys():
 		var stat_id: String = str(stat_variant)
 		GameState.stat_changed.emit(stat_id, int(GameState.stats[stat_variant]))

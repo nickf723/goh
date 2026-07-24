@@ -5,8 +5,11 @@ class_name QuickItemDefinition
 @export var display_name: String = "Quick Item"
 @export var short_label: String = "ITEM"
 @export_multiline var description: String = "A reusable quick-slot item."
+@export var icon_symbol: String = "◇"
+@export var use_visual_color: Color = Color(0.45, 0.82, 1.0, 1.0)
 
-@export_group("Charges")
+@export_group("Inventory")
+@export_range(1, 99, 1) var max_stack: int = 1
 @export_range(0, 99, 1) var max_charges: int = 1
 @export var refill_on_rest: bool = true
 
@@ -16,17 +19,30 @@ class_name QuickItemDefinition
 @export var requires_grounded: bool = true
 @export var can_use_at_maximum: bool = false
 
-@export_group("Resource Effect")
+@export_group("Effect")
+@export_enum("restore_resource", "delivery_scene") var effect_type: String = "restore_resource"
 @export_enum("health", "mana", "stamina", "stance") var restore_resource_id: String = "health"
 @export_range(0, 99, 1) var restore_amount: int = 1
+@export var delivery_scene: PackedScene
+@export var impact_scene: PackedScene
+@export_range(1.0, 30.0, 0.5) var throw_speed: float = 12.0
+@export_range(0.0, 12.0, 0.25) var throw_vertical_boost: float = 3.0
+@export_range(0.0, 30.0, 0.5) var throw_gravity: float = 12.0
+@export_range(0.2, 6.0, 0.1) var delivery_lifetime: float = 2.0
+@export_range(0.0, 60.0, 0.5) var impact_lifetime: float = 12.0
+@export_range(0.1, 3.0, 0.05) var impact_scale: float = 1.0
 
 @export_group("Identity")
 @export var element: String = "neutral"
 @export var tags: Array[String] = ["consumable", "quick_item"]
 
 
+func get_max_stack() -> int:
+	return maxi(max_stack, 1)
+
+
 func get_max_charges() -> int:
-	return maxi(max_charges, 0)
+	return mini(maxi(max_charges, 0), get_max_stack())
 
 
 func get_use_duration() -> float:
@@ -35,6 +51,10 @@ func get_use_duration() -> float:
 
 func get_movement_multiplier() -> float:
 	return clampf(movement_multiplier, 0.0, 1.0)
+
+
+func is_delivery_item() -> bool:
+	return effect_type == "delivery_scene"
 
 
 func get_current_resource() -> int:
@@ -46,6 +66,8 @@ func get_maximum_resource() -> int:
 
 
 func can_apply() -> bool:
+	if is_delivery_item():
+		return delivery_scene != null and impact_scene != null
 	if restore_amount <= 0:
 		return false
 	if can_use_at_maximum:
@@ -53,7 +75,9 @@ func can_apply() -> bool:
 	return get_current_resource() < get_maximum_resource()
 
 
-func apply_effect() -> int:
+func apply_resource_effect() -> int:
+	if is_delivery_item():
+		return 0
 	var before: int = get_current_resource()
 	match restore_resource_id:
 		"health":
@@ -69,14 +93,22 @@ func apply_effect() -> int:
 	return GameState.get_stat(restore_resource_id) - before
 
 
+func apply_effect() -> int:
+	return apply_resource_effect()
+
+
 func get_debug_data() -> Dictionary:
 	return {
 		"id": item_id,
 		"name": display_name,
+		"effect": effect_type,
+		"stack": get_max_stack(),
 		"charges": get_max_charges(),
 		"duration": get_use_duration(),
 		"movement": get_movement_multiplier(),
 		"restore_resource": restore_resource_id,
 		"restore_amount": restore_amount,
 		"refill_on_rest": refill_on_rest,
+		"delivery_scene": delivery_scene.resource_path if delivery_scene != null else "",
+		"impact_scene": impact_scene.resource_path if impact_scene != null else "",
 	}

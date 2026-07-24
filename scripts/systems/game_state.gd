@@ -10,14 +10,19 @@ signal save_completed(save_data: Dictionary)
 signal save_loaded(save_data: Dictionary)
 signal key_item_changed(item_id: String, value: bool)
 signal unlock_changed(unlock_id: String, value: bool)
+signal inventory_changed(item_id: String, count: int)
+signal quick_item_slot_changed(slot_index: int, item_id: String)
 
 const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
 const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
-const SAVE_VERSION: int = 4
+const QuickItemCatalogScript = preload("res://scripts/items/quick_item_catalog.gd")
+const SAVE_VERSION: int = 5
 const SAVE_SLOT_PATH: String = "user://goh_save_slot_1.json"
 const ARMOR_TRIAL_BLESSING_ID: String = "armor_trial_blessing"
 const GUARD_STAT: String = "guard"
 const MAX_GUARD_STAT: String = "max_guard"
+const DEFAULT_INVENTORY: Dictionary = {"healing_flask": 3}
+const DEFAULT_QUICK_ITEM_SLOTS: Array[String] = ["healing_flask", "", "", ""]
 
 const KEY_ITEM_DEFS: Dictionary = {
 	"church_trial_sigil": {
@@ -34,6 +39,9 @@ var stats: Dictionary = StatCatalogScript.get_default_stats()
 var last_save_data: Dictionary = {}
 var key_items: Dictionary = {}
 var unlocks: Dictionary = {}
+var inventory: Dictionary = DEFAULT_INVENTORY.duplicate(true)
+var quick_item_slots: Array[String] = DEFAULT_QUICK_ITEM_SLOTS.duplicate()
+var collected_pickups: Dictionary = {}
 
 var story_flags: Dictionary = {
 	"inspected_stone": false,
@@ -92,6 +100,99 @@ func get_stat_snapshot() -> Dictionary:
 
 func get_story_flags_snapshot() -> Dictionary:
 	return story_flags.duplicate(true)
+
+
+func add_inventory_item(item_id: String, amount: int = 1) -> int:
+	if item_id == "" or amount <= 0:
+		return 0
+	var item: QuickItemDefinition = QuickItemCatalogScript.get_item(item_id)
+	var maximum: int = item.get_max_stack() if item != null else 99
+	var before: int = get_inventory_count(item_id)
+	var after: int = clampi(before + amount, 0, maximum)
+	inventory[item_id] = after
+	inventory_changed.emit(item_id, after)
+	return after - before
+
+
+func consume_inventory_item(item_id: String, amount: int = 1) -> bool:
+	if item_id == "" or amount <= 0:
+		return false
+	var before: int = get_inventory_count(item_id)
+	if before < amount:
+		return false
+	var after: int = before - amount
+	inventory[item_id] = after
+	inventory_changed.emit(item_id, after)
+	return true
+
+
+func set_inventory_count(item_id: String, amount: int) -> void:
+	if item_id == "":
+		return
+	var item: QuickItemDefinition = QuickItemCatalogScript.get_item(item_id)
+	var maximum: int = item.get_max_stack() if item != null else 99
+	var value: int = clampi(amount, 0, maximum)
+	inventory[item_id] = value
+	inventory_changed.emit(item_id, value)
+
+
+func get_inventory_count(item_id: String) -> int:
+	return int(inventory.get(item_id, 0))
+
+
+func get_inventory_snapshot() -> Dictionary:
+	return inventory.duplicate(true)
+
+
+func get_inventory_rows() -> Array[Dictionary]:
+	return QuickItemCatalogScript.get_inventory_rows(inventory)
+
+
+func set_quick_item_slot(slot_index: int, item_id: String) -> bool:
+	if slot_index < 0 or slot_index >= DEFAULT_QUICK_ITEM_SLOTS.size():
+		return false
+	if item_id != "" and QuickItemCatalogScript.get_item(item_id) == null and not inventory.has(item_id):
+		return false
+	while quick_item_slots.size() < DEFAULT_QUICK_ITEM_SLOTS.size():
+		quick_item_slots.append("")
+	quick_item_slots[slot_index] = item_id
+	quick_item_slot_changed.emit(slot_index, item_id)
+	return true
+
+
+func get_quick_item_slot(slot_index: int) -> String:
+	if slot_index < 0 or slot_index >= quick_item_slots.size():
+		return ""
+	return quick_item_slots[slot_index]
+
+
+func get_quick_item_slots_snapshot() -> Array[String]:
+	return quick_item_slots.duplicate()
+
+
+func reset_inventory_to_defaults(emit_signals: bool = true) -> void:
+	inventory = DEFAULT_INVENTORY.duplicate(true)
+	quick_item_slots = DEFAULT_QUICK_ITEM_SLOTS.duplicate()
+	collected_pickups.clear()
+	if not emit_signals:
+		return
+	for item_id: String in QuickItemCatalogScript.ITEM_IDS:
+		inventory_changed.emit(item_id, get_inventory_count(item_id))
+	for slot_index: int in range(quick_item_slots.size()):
+		quick_item_slot_changed.emit(slot_index, quick_item_slots[slot_index])
+
+
+func mark_collected_pickup(pickup_id: String) -> void:
+	if pickup_id != "":
+		collected_pickups[pickup_id] = true
+
+
+func has_collected_pickup(pickup_id: String) -> bool:
+	return pickup_id != "" and bool(collected_pickups.get(pickup_id, false))
+
+
+func clear_collected_pickup(pickup_id: String) -> void:
+	collected_pickups.erase(pickup_id)
 
 
 func grant_unlock(unlock_id: String, unlock_data: Dictionary = {}) -> void:
@@ -459,6 +560,7 @@ func reset_run() -> void:
 	reset_stats_to_defaults(false)
 	key_items.clear()
 	unlocks.clear()
+	reset_inventory_to_defaults(true)
 
 	for flag_name: String in story_flags.keys():
 		story_flags[flag_name] = false
@@ -512,6 +614,9 @@ func save_at_bed(bed_id: String, bed_name: String, bed_position: Vector3) -> Dic
 		"story_flags": get_story_flags_snapshot(),
 		"key_items": get_key_item_snapshot(),
 		"unlocks": get_unlock_snapshot(),
+		"inventory": get_inventory_snapshot(),
+		"quick_item_slots": get_quick_item_slots_snapshot(),
+		"collected_pickups": collected_pickups.duplicate(true),
 		"objective": current_objective,
 		"saved_at": Time.get_datetime_string_from_system(false, true),
 	}
@@ -586,6 +691,7 @@ func apply_save_data(save_data: Dictionary) -> bool:
 	apply_saved_flags(save_data)
 	apply_saved_unlocks(save_data)
 	apply_saved_key_items(save_data)
+	apply_saved_inventory(save_data)
 	sync_legacy_progression_state()
 
 	if save_data.has("objective"):
@@ -648,6 +754,30 @@ func apply_saved_unlocks(save_data: Dictionary) -> void:
 			grant_unlock(str(unlock_id), unlock_data)
 		elif bool(saved_unlocks[unlock_id]):
 			grant_unlock(str(unlock_id))
+
+
+func apply_saved_inventory(save_data: Dictionary) -> void:
+	inventory = DEFAULT_INVENTORY.duplicate(true)
+	quick_item_slots = DEFAULT_QUICK_ITEM_SLOTS.duplicate()
+	collected_pickups.clear()
+
+	if save_data.has("inventory") and save_data["inventory"] is Dictionary:
+		var saved_inventory: Dictionary = save_data["inventory"] as Dictionary
+		for item_id_variant: Variant in saved_inventory.keys():
+			set_inventory_count(str(item_id_variant), int(saved_inventory[item_id_variant]))
+
+	if save_data.has("quick_item_slots") and save_data["quick_item_slots"] is Array:
+		var saved_slots: Array = save_data["quick_item_slots"] as Array
+		for slot_index: int in range(mini(saved_slots.size(), DEFAULT_QUICK_ITEM_SLOTS.size())):
+			set_quick_item_slot(slot_index, str(saved_slots[slot_index]))
+
+	if save_data.has("collected_pickups") and save_data["collected_pickups"] is Dictionary:
+		collected_pickups = (save_data["collected_pickups"] as Dictionary).duplicate(true)
+
+	for item_id: String in QuickItemCatalogScript.ITEM_IDS:
+		inventory_changed.emit(item_id, get_inventory_count(item_id))
+	for slot_index: int in range(quick_item_slots.size()):
+		quick_item_slot_changed.emit(slot_index, quick_item_slots[slot_index])
 
 
 func apply_saved_key_items(save_data: Dictionary) -> void:

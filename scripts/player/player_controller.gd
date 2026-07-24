@@ -32,6 +32,7 @@ extends CharacterBody3D
 @onready var spell_label: Label = $SpellLabel
 
 var dodge_controller: PlayerDodgeController
+var quick_item_controller: Node
 
 var camera_pitch: float = deg_to_rad(-15.0)
 var min_pitch: float = deg_to_rad(-60.0)
@@ -48,6 +49,7 @@ var lock_on_switch_timer: float = 0.0
 
 func _ready() -> void:
 	dodge_controller = find_dodge_controller()
+	quick_item_controller = get_node_or_null("PlayerQuickItemController")
 	print("Player found dodge controller: ", dodge_controller.get_path() if dodge_controller != null else "none")
 
 	ensure_runtime_lock_on_input_map()
@@ -219,13 +221,20 @@ func _physics_process(delta: float) -> void:
 		direction.y = 0.0
 		direction = direction.normalized()
 
-	velocity.x = direction.x * move_speed
-	velocity.z = direction.z * move_speed
+	var movement_multiplier: float = 1.0
+	if quick_item_controller != null and quick_item_controller.has_method("get_movement_multiplier"):
+		movement_multiplier = float(quick_item_controller.call("get_movement_multiplier"))
+
+	velocity.x = direction.x * move_speed * movement_multiplier
+	velocity.z = direction.z * move_speed * movement_multiplier
 
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	else:
-		if Input.is_action_just_pressed("jump"):
+		var item_allows_jump: bool = true
+		if quick_item_controller != null and quick_item_controller.has_method("allows_jump"):
+			item_allows_jump = bool(quick_item_controller.call("allows_jump"))
+		if item_allows_jump and Input.is_action_just_pressed("jump"):
 			velocity.y = jump_velocity
 
 	move_and_slide()

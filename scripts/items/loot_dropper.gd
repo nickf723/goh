@@ -28,8 +28,9 @@ func bind_hit_receiver() -> void:
 	if receiver == null or not receiver.has_signal("health_depleted"):
 		last_reason = "no HitReceiver health_depleted signal"
 		return
-	if not receiver.health_depleted.is_connected(_on_health_depleted):
-		receiver.health_depleted.connect(_on_health_depleted)
+	var callback: Callable = Callable(self, "_on_health_depleted")
+	if not receiver.is_connected("health_depleted", callback):
+		receiver.connect("health_depleted", callback)
 	last_reason = "armed"
 
 

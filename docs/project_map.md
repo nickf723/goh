@@ -68,6 +68,7 @@ weapon_heavy_attack
 ability_slot_1 ... ability_slot_0
 next_ability
 spell_menu
+quick_item_up / quick_item_left / quick_item_right / quick_item_down
 restart_scene
 toggle_dev_vision
 lock_on / lock_on_previous / lock_on_next
@@ -83,6 +84,7 @@ HEAVY
 FOCUS
 CAST
 DODGE
+QUICK ITEM
 LOCK-ON
 RESET
 NAVIGATE
@@ -105,7 +107,9 @@ Player
 ├── AbilityCaster
 ├── WeaponController
 │   └── WeaponInputBootstrap
-└── PlayerDodgeController
+├── PlayerDodgeController
+├── PlayerQuickItemController
+└── QuickItemBeltUI
 ```
 
 Key folders:
@@ -119,6 +123,21 @@ scripts/weapons/
 `PlayerActionState` owns action locks. Weapon attacks may open data-driven late spell or dodge cancel windows without bypassing casting, dodge, interaction, defeat, or Focus-menu restrictions.
 
 `player_controller_free_aim.gd` also owns temporary collision-respecting combat motion requested by advancing weapon attacks.
+
+
+#### Quick items
+
+`PlayerQuickItemController` owns four freely assignable Up, Left, Right, and Down slots. Outside Focus, the D-pad uses those slots directly; while Focus is open, the same directions retain their spell-navigation role. Arrow keys mirror the four directions on keyboard, and H is an additional shortcut for Up.
+
+A committed item use slows movement, blocks attacks, casting, Dodge, Guard, jumping, and interaction, and is interrupted by enemy stagger. Charges are consumed only after the use completes. Rest recovery refills item definitions marked for refill.
+
+```txt
+scripts/items/quick_item_definition.gd
+scripts/player/player_quick_item_controller.gd
+scripts/ui/quick_item_belt_ui.gd
+scenes/ui/quick_item_belt_ui.tscn
+data/items/healing_flask.tres
+```
 
 ### Weapon combat
 

@@ -262,6 +262,12 @@ func activate_action(action: Dictionary) -> void:
 			start_item_assignment(int(action.get("slot", -1)))
 		"assign_item":
 			complete_item_assignment(str(action.get("item_id", "")))
+		"choose_item_for_belt":
+			start_item_slot_assignment(str(action.get("item_id", "")))
+		"assign_item_slot":
+			complete_item_slot_assignment(int(action.get("slot", -1)))
+		"inspect_spell":
+			return
 		_:
 			return
 
@@ -347,16 +353,60 @@ func complete_item_assignment(item_id: String) -> void:
 	rebuild_menu()
 
 
+func start_item_slot_assignment(item_id: String) -> void:
+	if item_id == "" or GameState.get_inventory_count(item_id) <= 0:
+		return
+	pending_inventory_item_id = item_id
+	pending_item_grid_return_action_index = selected_action_index
+	assignment_mode = "item_slot"
+	selected_action_index = 0
+	rebuild_menu()
+
+
+func complete_item_slot_assignment(slot_index: int) -> void:
+	if not is_assigning_item_slot() or slot_index < 0 or slot_index >= 4:
+		return
+	var controller: Node = find_first_node_named(get_tree().current_scene, "PlayerQuickItemController")
+	if controller == null or not controller.has_method("assign_slot_by_item_id"):
+		return
+	if not bool(controller.call("assign_slot_by_item_id", slot_index, pending_inventory_item_id)):
+		return
+	var return_action_index: int = pending_item_grid_return_action_index
+	assignment_mode = ""
+	pending_inventory_item_id = ""
+	pending_item_grid_return_action_index = -1
+	selected_tab_index = get_tab_index("items")
+	selected_action_index = max(return_action_index, 0)
+	tab_action_memory["items"] = selected_action_index
+	refresh_menu_data()
+	rebuild_menu()
+
+
 func cancel_assignment(should_rebuild: bool = true) -> void:
-	var was_assigning: bool = is_assigning_spell() or is_assigning_item()
-	var return_action_index: int = pending_spell_return_action_index if is_assigning_spell() else pending_item_return_action_index
+	var was_spell_assignment: bool = is_assigning_spell()
+	var was_item_assignment: bool = is_assigning_item()
+	var was_item_slot_assignment: bool = is_assigning_item_slot()
+	var return_action_index: int = -1
+	if was_spell_assignment:
+		return_action_index = pending_spell_return_action_index
+	elif was_item_assignment:
+		return_action_index = pending_item_return_action_index
+	elif was_item_slot_assignment:
+		return_action_index = pending_item_grid_return_action_index
+
 	assignment_mode = ""
 	pending_spell_slot_index = -1
 	pending_item_slot_index = -1
 	pending_spell_return_action_index = -1
 	pending_item_return_action_index = -1
+	pending_inventory_item_id = ""
+	pending_item_grid_return_action_index = -1
 
-	if was_assigning:
+	if was_item_slot_assignment:
+		selected_tab_index = get_tab_index("items")
+		selected_action_index = max(return_action_index, 0)
+		tab_action_memory["items"] = selected_action_index
+	elif was_spell_assignment or was_item_assignment:
 		selected_tab_index = get_tab_index("loadout")
 		selected_action_index = max(return_action_index, 0)
 		tab_action_memory["loadout"] = selected_action_index
@@ -365,12 +415,21 @@ func cancel_assignment(should_rebuild: bool = true) -> void:
 		rebuild_menu()
 
 
+
 func is_assigning_spell() -> bool:
 	return assignment_mode == "spell" and pending_spell_slot_index >= 0
 
 
 func is_assigning_item() -> bool:
 	return assignment_mode == "item" and pending_item_slot_index >= 0
+
+
+func is_assigning_item_slot() -> bool:
+	return assignment_mode == "item_slot" and pending_inventory_item_id != ""
+
+
+func is_assignment_active() -> bool:
+	return is_assigning_spell() or is_assigning_item() or is_assigning_item_slot()
 
 
 func refresh_menu_data() -> void:
@@ -562,42 +621,77 @@ func rebuild_content() -> void:
 
 
 func render_loadout() -> void:
+	action_grid_columns = 4
+	action_layout_mode = "grid"
+
 	var summary: Dictionary = menu_data.get("loadout_summary", {})
 	add_summary_card([
-		"Spell slots " + str(summary.get("quick_slots", 0)),
-		"Known " + str(summary.get("learned_count", 0)),
-		"Active " + str(summary.get("active_ring_count", 0)),
+		"Known spells " + str(summary.get("learned_count", 0)),
+		"Active ring " + str(summary.get("active_ring_count", 0)),
+		"Four quick-item directions",
 	])
 
 	var weapon: Dictionary = menu_data.get("weapon", {})
 	if not weapon.is_empty():
-		render_weapon_card(weapon)
+		var weapon_body: String = "Damage " + str(weapon.get("damage", 0))
+		weapon_body += "   Stance " + str(weapon.get("stance_damage", 0))
+		weapon_body += "   Scaling " + get_scaling_label(weapon.get("scaling_stats", []))
+		add_visual_info_card("⚔", str(weapon.get("name", "Weapon")), weapon_body, str(weapon.get("class", "weapon")).capitalize())
 	else:
-		add_text_card("Weapon", "No weapon equipped yet.", "⚔", "Empty")
+		add_visual_info_card("⚔", "No Weapon", "Grace's hands are currently empty.", "Weapon")
 
-	add_section_header("Spell Hotkeys")
+	add_section_header("SPELL RING")
+	var spell_grid: GridContainer = GridContainer.new()
+	spell_grid.columns = 4
+	spell_grid.add_theme_constant_override("h_separation", 10)
+	spell_grid.add_theme_constant_override("v_separation", 10)
+	content_box.add_child(spell_grid)
 	var equipped_slots: Array = menu_data.get("equipped_spell_slots", [])
+	for slot_variant in equipped_slots:
+		if not (slot_variant is Dictionary):
+			continue
+		var spell: Dictionary = slot_variant as Dictionary
+		var slot_index: int = int(spell.get("slot", 0))
+		var is_empty: bool = bool(spell.get("is_empty", false))
+		var icon_text: String = "✦" if is_empty else get_spell_icon(str(spell.get("element", "neutral")))
+		var spell_name: String = "Empty" if is_empty else str(spell.get("name", "Spell"))
+		var badge: String = "HOTKEY " + str(slot_index + 1)
+		if not is_empty:
+			badge += "  •  " + get_spell_cost_label(spell)
+		add_visual_action_tile(spell_grid, icon_text, spell_name, badge, {"kind": "choose_spell_slot", "slot": slot_index}, str(spell.get("description", "")))
 
-	if equipped_slots.size() <= 0:
-		add_text_card("No spell slots found", "The loadout could not find Grace's spell belt.", "✦", "Hotkeys")
-	else:
-		for slot_variant in equipped_slots:
-			if slot_variant is Dictionary:
-				render_equipped_slot_card(slot_variant as Dictionary)
-
-	add_section_header("Quick Items")
+	add_section_header("QUICK BELT")
+	var belt_grid: GridContainer = GridContainer.new()
+	belt_grid.columns = 4
+	belt_grid.add_theme_constant_override("h_separation", 10)
+	belt_grid.add_theme_constant_override("v_separation", 10)
+	content_box.add_child(belt_grid)
 	var item_slots: Array = menu_data.get("quick_item_slots", [])
-	if item_slots.size() <= 0:
-		add_text_card("No item belt found", "The Field Kit could not find Grace's quick-item controller.", "🧪", "Unavailable")
-	else:
-		for slot_variant in item_slots:
-			if slot_variant is Dictionary:
-				render_quick_item_slot_card(slot_variant as Dictionary)
-	add_compact_card("🛠 Gadgets  ·  vehicle / summon / device slots later", false, "Future")
+	for slot_variant in item_slots:
+		if not (slot_variant is Dictionary):
+			continue
+		var item_slot: Dictionary = slot_variant as Dictionary
+		var item_name: String = "Empty" if bool(item_slot.get("is_empty", true)) else str(item_slot.get("name", "Item"))
+		var item_icon: String = "◇" if bool(item_slot.get("is_empty", true)) else str(item_slot.get("icon", "◇"))
+		var direction: String = str(item_slot.get("direction", "Slot"))
+		var badge: String = get_direction_symbol(direction) + "  D-PAD " + direction.to_upper()
+		if not bool(item_slot.get("is_empty", true)):
+			badge += "  •  ×" + str(item_slot.get("count", 0))
+		add_visual_action_tile(belt_grid, item_icon, item_name, badge, {"kind": "choose_item_slot", "slot": int(item_slot.get("slot", 0))})
+
+	add_visual_info_card("🛠", "Gadgets", "Vehicles, summons, and deployable devices will occupy this bay later.", "Future")
+
 
 
 func render_items() -> void:
 	var inventory_rows: Array = menu_data.get("inventory_items", [])
+	if is_assigning_item_slot():
+		render_item_slot_picker(inventory_rows)
+		return
+
+	action_grid_columns = 3
+	action_layout_mode = "grid"
+
 	var total_count: int = 0
 	for row_variant in inventory_rows:
 		if row_variant is Dictionary:
@@ -605,15 +699,36 @@ func render_items() -> void:
 
 	if is_assigning_item():
 		var directions: Array[String] = ["Up", "Left", "Right", "Down"]
-		add_text_card("Assign Quick Item", "Choose an owned item for D-pad " + directions[pending_item_slot_index] + ".", "🧪", "A / Enter assigns")
+		add_assignment_banner("Choose an item for " + get_direction_symbol(directions[pending_item_slot_index]) + " D-pad " + directions[pending_item_slot_index], "Confirm assigns it. Cancel returns to the belt.")
 	else:
-		add_summary_card(["Types " + str(inventory_rows.size()), "Carried " + str(total_count), "D-pad ready"])
+		add_summary_card(["Carried " + str(total_count), "Item types " + str(inventory_rows.size()), "Select an item to assign"])
 
-	if inventory_rows.size() <= 0:
-		add_text_card("No usable items", "Explore containers, enemies, and hidden supply caches.", "🧪", "Empty")
+	if inventory_rows.is_empty():
+		add_visual_info_card("◇", "No Supplies", "Explore containers, enemies, and hidden caches to fill this pouch.", "Empty")
 		if is_assigning_item():
-			add_action_row("Clear this quick slot", {"kind": "assign_item", "item_id": ""}, "Empty")
+			var empty_grid: GridContainer = make_visual_grid(3)
+			content_box.add_child(empty_grid)
+			add_visual_action_tile(empty_grid, "×", "Clear Slot", "EMPTY", {"kind": "assign_item", "item_id": ""})
 		return
+
+	selected_action_index = clamp(selected_action_index, 0, inventory_rows.size() - 1 + (1 if is_assigning_item() else 0))
+	var workspace: HBoxContainer = HBoxContainer.new()
+	workspace.add_theme_constant_override("separation", 16)
+	workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_box.add_child(workspace)
+
+	var grid_panel: PanelContainer = PanelContainer.new()
+	grid_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid_panel.add_theme_stylebox_override("panel", make_panel_style(Color(0.025, 0.035, 0.05, 0.72), CARD_BORDER, 1, 12))
+	workspace.add_child(grid_panel)
+	var grid_margin: MarginContainer = MarginContainer.new()
+	grid_margin.add_theme_constant_override("margin_left", 12)
+	grid_margin.add_theme_constant_override("margin_top", 12)
+	grid_margin.add_theme_constant_override("margin_right", 12)
+	grid_margin.add_theme_constant_override("margin_bottom", 12)
+	grid_panel.add_child(grid_margin)
+	var item_grid: GridContainer = make_visual_grid(3)
+	grid_margin.add_child(item_grid)
 
 	for row_variant in inventory_rows:
 		if not (row_variant is Dictionary):
@@ -621,38 +736,104 @@ func render_items() -> void:
 		var row: Dictionary = row_variant as Dictionary
 		var item_id: String = str(row.get("id", ""))
 		var count: int = int(row.get("count", 0))
-		var title: String = str(row.get("icon", "◇")) + " " + str(row.get("name", item_id.capitalize()))
-		var line: String = title + "  ×" + str(count) + "  ·  " + str(row.get("description", ""))
-		var subtitle: String = "Refills at rest" if bool(row.get("refill_on_rest", false)) else "Consumable"
+		var badge: String = "×" + str(count)
 		var assigned_label: String = get_item_assignment_label(item_id)
 		if assigned_label != "":
-			subtitle += "  ·  " + assigned_label
-		if is_assigning_item():
-			add_action_row(line, {"kind": "assign_item", "item_id": item_id}, subtitle)
-		else:
-			add_compact_card(line, false, subtitle)
+			badge += "  •  " + assigned_label.replace("Assigned: ", "")
+		var action: Dictionary = {"kind": "assign_item", "item_id": item_id} if is_assigning_item() else {"kind": "choose_item_for_belt", "item_id": item_id}
+		add_visual_action_tile(item_grid, str(row.get("icon", "◇")), str(row.get("name", item_id.capitalize())), badge, action, str(row.get("description", "")))
 
 	if is_assigning_item():
-		add_section_header("Slot Options")
-		add_action_row("Clear this quick slot", {"kind": "assign_item", "item_id": ""}, "Empty")
+		add_visual_action_tile(item_grid, "×", "Clear Slot", "EMPTY", {"kind": "assign_item", "item_id": ""})
+
+	var detail_row: Dictionary = {}
+	if selected_action_index >= 0 and selected_action_index < inventory_rows.size():
+		detail_row = inventory_rows[selected_action_index] as Dictionary
+	add_item_detail_panel(workspace, detail_row)
+
+
+func render_item_slot_picker(inventory_rows: Array) -> void:
+	action_layout_mode = "cross"
+	action_grid_columns = 3
+	var item_row: Dictionary = find_inventory_row(pending_inventory_item_id, inventory_rows)
+	add_assignment_banner("Place " + str(item_row.get("name", pending_inventory_item_id.capitalize())) + " on the quick belt", "Choose a direction. Existing assignments are replaced, but no stock is consumed.")
+	add_visual_info_card(str(item_row.get("icon", "◇")), str(item_row.get("name", "Item")), str(item_row.get("description", "")), "×" + str(item_row.get("count", 0)))
+
+	var center: CenterContainer = CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_box.add_child(center)
+	var cross_grid: GridContainer = make_visual_grid(3)
+	cross_grid.custom_minimum_size = Vector2(560.0, 360.0)
+	center.add_child(cross_grid)
+
+	add_cross_spacer(cross_grid)
+	add_item_slot_choice(cross_grid, 0, "Up")
+	add_cross_spacer(cross_grid)
+	add_item_slot_choice(cross_grid, 1, "Left")
+	add_cross_spacer(cross_grid)
+	add_item_slot_choice(cross_grid, 2, "Right")
+	add_cross_spacer(cross_grid)
+	add_item_slot_choice(cross_grid, 3, "Down")
+	add_cross_spacer(cross_grid)
+
+
+func add_item_slot_choice(parent: Container, slot_index: int, direction: String) -> void:
+	var slots: Array = menu_data.get("quick_item_slots", [])
+	var current_name: String = "Empty"
+	if slot_index >= 0 and slot_index < slots.size() and slots[slot_index] is Dictionary:
+		current_name = str((slots[slot_index] as Dictionary).get("name", "Empty"))
+	add_visual_action_tile(parent, get_direction_symbol(direction), "D-pad " + direction, "Currently: " + current_name, {"kind": "assign_item_slot", "slot": slot_index})
+
+
+func add_cross_spacer(parent: Container) -> void:
+	var spacer: Control = Control.new()
+	spacer.custom_minimum_size = Vector2(150.0, 108.0)
+	parent.add_child(spacer)
+
+
+func find_inventory_row(item_id: String, inventory_rows: Array) -> Dictionary:
+	for row_variant in inventory_rows:
+		if row_variant is Dictionary and str((row_variant as Dictionary).get("id", "")) == item_id:
+			return row_variant as Dictionary
+	return {}
 
 
 
 func render_magic() -> void:
+	action_grid_columns = 4
+	action_layout_mode = "grid"
 	if is_assigning_spell():
-		add_text_card("Assign Spell", "Choose a learned spell for Hotkey " + str(pending_spell_slot_index + 1) + ".", "✦", "Enter assigns")
+		add_assignment_banner("Choose a spell for Hotkey " + str(pending_spell_slot_index + 1), "Confirm assigns it. Cancel returns to the ring.")
 	else:
-		add_summary_card(["Elements 16", "Assign from Loadout", "Focus ring ready"])
+		add_summary_card(["Sixteen elements", "Four active hotkeys", "Select a spell to inspect"])
 
 	var library_sections: Array = menu_data.get("learned_spell_sections", [])
-
-	if library_sections.size() <= 0:
-		add_text_card("No learned spells found", "The menu could not find learned spell data yet.", "✦", "Magic")
+	if library_sections.is_empty():
+		add_visual_info_card("✦", "No Learned Spells", "New magic will appear here as Grace learns it.", "Spellbook")
 		return
 
 	for section_variant in library_sections:
-		if section_variant is Dictionary:
-			render_library_section(section_variant as Dictionary)
+		if not (section_variant is Dictionary):
+			continue
+		var section: Dictionary = section_variant as Dictionary
+		var spells: Array = section.get("spells", [])
+		if spells.is_empty():
+			continue
+		var element_id: String = str(section.get("element", "neutral"))
+		add_section_header(get_spell_icon(element_id) + "  " + str(section.get("title", "Element")).to_upper())
+		var spell_grid: GridContainer = make_visual_grid(4)
+		content_box.add_child(spell_grid)
+		for spell_variant in spells:
+			if not (spell_variant is Dictionary):
+				continue
+			var spell: Dictionary = spell_variant as Dictionary
+			var action: Dictionary = {"kind": "assign_spell", "learned_index": int(spell.get("learned_index", -1))} if is_assigning_spell() else {"kind": "inspect_spell"}
+			var badge: String = get_spell_cost_label(spell)
+			var equipped: String = get_spell_equipped_subtitle(spell)
+			if equipped != "Spellbook":
+				badge += "  •  " + equipped
+			add_visual_action_tile(spell_grid, get_spell_icon(str(spell.get("element", element_id))), str(spell.get("name", "Spell")), badge, action, get_short_list_label(spell.get("roles", []), 3, "Utility"))
+
 
 
 func render_relics() -> void:
@@ -783,6 +964,174 @@ func add_compact_card(line: String, selected: bool = false, subtitle: String = "
 	line_label.add_theme_color_override("font_color", TEXT_MAIN if selected else TEXT_SOFT)
 	line_label.add_theme_font_size_override("font_size", 12)
 	row_box.add_child(line_label)
+
+
+func make_visual_grid(columns: int) -> GridContainer:
+	var grid: GridContainer = GridContainer.new()
+	grid.columns = columns
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return grid
+
+
+func add_visual_action_tile(parent: Container, icon_text: String, title: String, badge: String, action: Dictionary, tooltip: String = "") -> void:
+	var action_index: int = selectable_actions.size()
+	selectable_actions.append(action.duplicate(true))
+	var is_selected: bool = action_index == selected_action_index
+	var button: Button = Button.new()
+	button.text = icon_text + "\n" + title + "\n" + badge
+	button.tooltip_text = tooltip
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.custom_minimum_size = Vector2(150.0, 108.0)
+	button.focus_mode = Control.FOCUS_ALL
+	button.add_theme_font_size_override("font_size", 14 if is_selected else 13)
+	button.add_theme_color_override("font_color", TEXT_MAIN if is_selected else TEXT_SOFT)
+	button.add_theme_stylebox_override("normal", make_panel_style(ACTIVE_SELECTION_BACKGROUND if is_selected else CARD_BACKGROUND, ACTIVE_SELECTION_BORDER if is_selected else CARD_BORDER, 3 if is_selected else 1, 12))
+	button.add_theme_stylebox_override("focus", make_panel_style(ACTIVE_SELECTION_BACKGROUND, ACTIVE_SELECTION_BORDER, 3, 12))
+	button.add_theme_stylebox_override("hover", make_panel_style(Color(0.15, 0.105, 0.08, 0.92), ACTIVE_SELECTION_BORDER, 2, 12))
+	button.add_theme_stylebox_override("pressed", make_panel_style(ACTIVE_SELECTION_BACKGROUND, ACTIVE_SELECTION_BORDER, 3, 12))
+	button.mouse_entered.connect(_on_action_row_hovered.bind(action_index))
+	button.pressed.connect(_on_action_row_pressed.bind(action_index))
+	parent.add_child(button)
+	if is_selected:
+		button.call_deferred("grab_focus")
+
+
+func add_visual_info_card(icon_text: String, title: String, body: String, badge: String = "") -> void:
+	var panel: PanelContainer = PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", make_panel_style(Color(0.055, 0.07, 0.095, 0.88), CARD_BORDER, 1, 12))
+	content_box.add_child(panel)
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	panel.add_child(margin)
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	margin.add_child(row)
+	var icon_label: Label = Label.new()
+	icon_label.text = icon_text
+	icon_label.custom_minimum_size = Vector2(54.0, 0.0)
+	icon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	icon_label.add_theme_font_size_override("font_size", 34)
+	icon_label.add_theme_color_override("font_color", ACTIVE_SELECTION_BORDER)
+	row.add_child(icon_label)
+	var copy: VBoxContainer = VBoxContainer.new()
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(copy)
+	var title_line: Label = Label.new()
+	title_line.text = title
+	title_line.add_theme_font_size_override("font_size", 18)
+	title_line.add_theme_color_override("font_color", TEXT_MAIN)
+	copy.add_child(title_line)
+	var body_line: Label = Label.new()
+	body_line.text = body
+	body_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body_line.add_theme_font_size_override("font_size", 12)
+	body_line.add_theme_color_override("font_color", TEXT_SOFT)
+	copy.add_child(body_line)
+	if badge != "":
+		var badge_label: Label = make_chip_label(badge)
+		row.add_child(badge_label)
+
+
+func add_assignment_banner(title: String, instruction: String) -> void:
+	var panel: PanelContainer = PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", make_panel_style(Color(0.16, 0.095, 0.025, 0.96), ACTIVE_SELECTION_BORDER, 2, 12))
+	content_box.add_child(panel)
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_top", 9)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_bottom", 9)
+	panel.add_child(margin)
+	var box: VBoxContainer = VBoxContainer.new()
+	margin.add_child(box)
+	var title_label_local: Label = Label.new()
+	title_label_local.text = title
+	title_label_local.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label_local.add_theme_font_size_override("font_size", 18)
+	title_label_local.add_theme_color_override("font_color", ACTIVE_SELECTION_BORDER)
+	box.add_child(title_label_local)
+	var instruction_label: Label = Label.new()
+	instruction_label.text = instruction
+	instruction_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	instruction_label.add_theme_font_size_override("font_size", 12)
+	instruction_label.add_theme_color_override("font_color", TEXT_MAIN)
+	box.add_child(instruction_label)
+
+
+func add_item_detail_panel(parent: Container, row: Dictionary) -> void:
+	var panel: PanelContainer = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(300.0, 0.0)
+	panel.add_theme_stylebox_override("panel", make_panel_style(Color(0.055, 0.07, 0.095, 0.92), CARD_BORDER, 1, 12))
+	parent.add_child(panel)
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	panel.add_child(margin)
+	var box: VBoxContainer = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	margin.add_child(box)
+	var icon_label: Label = Label.new()
+	icon_label.text = str(row.get("icon", "◇"))
+	icon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon_label.add_theme_font_size_override("font_size", 56)
+	icon_label.add_theme_color_override("font_color", ACTIVE_SELECTION_BORDER)
+	box.add_child(icon_label)
+	var name_label: Label = Label.new()
+	name_label.text = str(row.get("name", "Empty Slot"))
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.add_theme_font_size_override("font_size", 21)
+	name_label.add_theme_color_override("font_color", TEXT_MAIN)
+	box.add_child(name_label)
+	var count_label: Label = Label.new()
+	count_label.text = "Carried  ×" + str(row.get("count", 0))
+	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	count_label.add_theme_font_size_override("font_size", 14)
+	count_label.add_theme_color_override("font_color", ACTIVE_SELECTION_BORDER)
+	box.add_child(count_label)
+	var description_label: Label = Label.new()
+	description_label.text = str(row.get("description", "Select an item to see its details."))
+	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description_label.add_theme_font_size_override("font_size", 13)
+	description_label.add_theme_color_override("font_color", TEXT_SOFT)
+	box.add_child(description_label)
+	var item_id: String = str(row.get("id", ""))
+	if item_id != "":
+		var assigned: String = get_item_assignment_label(item_id)
+		var rule: String = "Refills at rest" if bool(row.get("refill_on_rest", false)) else "Consumed on use"
+		var rule_label: Label = make_chip_label(rule)
+		box.add_child(rule_label)
+		if assigned != "":
+			var assigned_label: Label = make_chip_label(assigned)
+			box.add_child(assigned_label)
+	var prompt: Label = Label.new()
+	prompt.text = "A / Enter  •  Assign to quick belt" if not is_assigning_item() else "A / Enter  •  Assign to selected direction"
+	prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	prompt.add_theme_font_size_override("font_size", 12)
+	prompt.add_theme_color_override("font_color", TEXT_DIM)
+	box.add_child(prompt)
+
+
+func get_direction_symbol(direction: String) -> String:
+	match direction.to_lower():
+		"up":
+			return "↑"
+		"left":
+			return "←"
+		"right":
+			return "→"
+		"down":
+			return "↓"
+	return "◇"
 
 
 func add_action_row(line: String, action: Dictionary, subtitle: String = "") -> void:

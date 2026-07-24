@@ -5,7 +5,7 @@ class_name PlayerDodgeController
 @export var dodge_duration: float = 0.24
 @export var dodge_cooldown: float = 0.15
 @export var invulnerability_duration: float = 0.18
-@export var stamina_cost: int = 0
+@export_range(0, 5, 1) var stamina_cost: int = 1
 
 @export var use_camera_relative_direction: bool = true
 @export var fallback_to_forward_when_no_input: bool = true

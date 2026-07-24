@@ -98,8 +98,8 @@ func run_tests() -> void:
 	if lab == null:
 		failures.append("whip weapon laboratory failed to instantiate")
 	else:
-		if float(lab.get("stamina_regeneration_per_second")) <= 0.0:
-			failures.append("whip laboratory must regenerate practice stamina")
+		if lab.get_node_or_null("Player/PlayerResourceController") == null:
+			failures.append("whip laboratory player must use the shared resource loop")
 		if lab.get_node_or_null("Crosswind") == null:
 			failures.append("whip laboratory is missing its airflow station")
 		if lab.get_node_or_null("PullSwitch") == null:

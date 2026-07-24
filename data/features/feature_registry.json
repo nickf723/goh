@@ -675,7 +675,8 @@
         "res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn"
       ],
       "automated_tests": [
-        "res://scenes/tests/runtime_stat_lab_smoke_test.tscn"
+        "res://scenes/tests/runtime_stat_lab_smoke_test.tscn",
+        "res://scenes/tests/player_resource_loop_smoke_test.tscn"
       ],
       "dependencies": [
         "weapon_combat_arena"

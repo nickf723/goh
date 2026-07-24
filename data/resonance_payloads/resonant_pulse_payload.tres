@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ResonancePayload" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resonance/resonance_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+source_name = "Resonant Pulse"
+frequency_hz = 220.0
+energy = 18.0
+radius = 9.0
+minimum_distance_factor = 0.2
+tags = Array[String](["sound", "resonance", "frequency", "pulse", "control"])
+

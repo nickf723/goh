@@ -7,6 +7,8 @@
 [ext_resource type="PackedScene" path="res://scenes/items/world_item_pickup.tscn" id="5_pickup"]
 [ext_resource type="Resource" path="res://data/items/oil_flask.tres" id="6_oil"]
 [ext_resource type="Resource" path="res://data/items/noise_maker.tres" id="7_noise"]
+[ext_resource type="PackedScene" path="res://scenes/items/breakable_supply_container.tscn" id="8_crate"]
+[ext_resource type="PackedScene" path="res://scenes/items/reward_choice_chest.tscn" id="9_chest"]
 
 [sub_resource type="BoxShape3D" id="FloorShape"]
 size = Vector3(20, 1, 22)
@@ -151,7 +153,7 @@ outline_size = 8
 
 [node name="Subtitle" type="Label3D" parent="."]
 position = Vector3(0, 2.55, -10.65)
-text = "READ • DEFEND • BREAK STANCE • PUNISH"
+text = "BREAK • FIGHT • LOOT • CHOOSE • PREPARE"
 font_size = 34
 pixel_size = 0.007
 billboard = 1
@@ -176,6 +178,17 @@ item_definition = ExtResource("7_noise")
 quantity = 2
 prompt_text = "Collect Noise Makers"
 resettable_in_lab = true
+
+[node name="SupplyContainers" type="Node3D" parent="."]
+
+[node name="LeftSupplyCrate" parent="SupplyContainers" instance=ExtResource("8_crate")]
+position = Vector3(-7.0, 0, 2.0)
+
+[node name="RightSupplyCrate" parent="SupplyContainers" instance=ExtResource("8_crate")]
+position = Vector3(7.0, 0, 0.5)
+
+[node name="RewardChoiceChest" parent="." instance=ExtResource("9_chest")]
+position = Vector3(0, 0, -8.5)
 
 [node name="Enemies" type="Node3D" parent="."]
 
@@ -223,4 +236,4 @@ text = "HEALTH 5 / 5    STAMINA 5 / 5    STANCE 5 / 5"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.76, 0.88, 1)
 theme_override_font_sizes/font_size = 12
-text = "GUARD • DODGE • LIGHT • HEAVY • LOCK-ON • RESET"
+text = "BREAK CRATE • DEFEAT • COLLECT DROP • OPEN CHEST • CHOOSE ONE"

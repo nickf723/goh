@@ -169,8 +169,8 @@ func assert_guard_bindings() -> void:
 	assert_true(InputMap.has_action("guard"), "guard input action exists")
 	assert_true(action_has_key("guard", KEY_F), "guard includes keyboard F")
 	assert_true(action_has_mouse_button("guard", MOUSE_BUTTON_XBUTTON2), "guard includes Mouse 5")
-	assert_true(action_has_joy_button("guard", 2), "guard includes controller face X")
-	assert_true(not action_has_joy_button("weapon_light_attack", 2), "controller face X is exclusive to guard")
+	assert_true(action_has_joy_button("guard", JOY_BUTTON_X), "guard includes left face button (Switch Y / Xbox X)")
+	assert_true(not action_has_joy_button("weapon_light_attack", JOY_BUTTON_X), "left face button is exclusive to guard")
 
 
 func action_has_key(action_name: StringName, keycode: Key) -> bool:

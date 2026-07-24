@@ -27,6 +27,12 @@ bottom_radius = 0.37
 height = 0.13
 radial_segments = 12
 
+[sub_resource type="CylinderMesh" id="Mesh_collar"]
+top_radius = 0.255
+bottom_radius = 0.29
+height = 0.085
+radial_segments = 12
+
 [sub_resource type="SphereMesh" id="Mesh_head"]
 radius = 0.29
 height = 0.58
@@ -51,6 +57,12 @@ height = 0.68
 radial_segments = 8
 rings = 3
 
+[sub_resource type="CylinderMesh" id="Mesh_cuff"]
+top_radius = 0.105
+bottom_radius = 0.105
+height = 0.12
+radial_segments = 10
+
 [sub_resource type="SphereMesh" id="Mesh_hand"]
 radius = 0.105
 height = 0.21
@@ -59,6 +71,9 @@ rings = 5
 
 [sub_resource type="BoxMesh" id="Mesh_boot"]
 size = Vector3(0.24, 0.22, 0.42)
+
+[sub_resource type="BoxMesh" id="Mesh_boot_sole"]
+size = Vector3(0.265, 0.055, 0.445)
 
 [sub_resource type="BoxMesh" id="Mesh_sash_tail"]
 size = Vector3(0.17, 0.58, 0.055)
@@ -69,120 +84,227 @@ height = 0.064
 radial_segments = 8
 rings = 4
 
+[sub_resource type="SphereMesh" id="Mesh_eye_highlight"]
+radius = 0.012
+height = 0.024
+radial_segments = 8
+rings = 4
+
 [sub_resource type="SphereMesh" id="Mesh_brooch"]
 radius = 0.07
 height = 0.14
 radial_segments = 10
 rings = 5
 
+[sub_resource type="SphereMesh" id="Mesh_sash_knot"]
+radius = 0.095
+height = 0.19
+radial_segments = 10
+rings = 5
+
 [sub_resource type="BoxMesh" id="Mesh_hair_ribbon"]
 size = Vector3(0.34, 0.09, 0.1)
+
+[sub_resource type="BoxMesh" id="Mesh_brow"]
+size = Vector3(0.105, 0.018, 0.018)
+
+[sub_resource type="BoxMesh" id="Mesh_mouth"]
+size = Vector3(0.075, 0.012, 0.012)
+
+[sub_resource type="StandardMaterial3D" id="Material_eye_highlight"]
+shading_mode = 0
+albedo_color = Color(0.95, 0.91, 0.78, 1)
 
 [node name="GraceVisualV1" type="Node3D"]
 script = ExtResource("1_motion")
 
 [node name="VisualRoot" type="Node3D" parent="."]
 
-[node name="LeftBoot" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(-0.19, 0.11, -0.07)
+[node name="LeftLegPivot" type="Node3D" parent="VisualRoot"]
+position = Vector3(-0.19, 0.24, -0.07)
+
+[node name="LeftBoot" type="MeshInstance3D" parent="VisualRoot/LeftLegPivot"]
+position = Vector3(0, -0.13, 0)
 material_override = ExtResource("7_leather")
 mesh = SubResource("Mesh_boot")
 
-[node name="RightBoot" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0.19, 0.11, -0.07)
+[node name="LeftSole" type="MeshInstance3D" parent="VisualRoot/LeftLegPivot"]
+position = Vector3(0, -0.255, -0.005)
+material_override = ExtResource("3_hair")
+mesh = SubResource("Mesh_boot_sole")
+
+[node name="RightLegPivot" type="Node3D" parent="VisualRoot"]
+position = Vector3(0.19, 0.24, -0.07)
+
+[node name="RightBoot" type="MeshInstance3D" parent="VisualRoot/RightLegPivot"]
+position = Vector3(0, -0.13, 0)
 material_override = ExtResource("7_leather")
 mesh = SubResource("Mesh_boot")
 
-[node name="RobeSkirt" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0, 0.61, 0)
+[node name="RightSole" type="MeshInstance3D" parent="VisualRoot/RightLegPivot"]
+position = Vector3(0, -0.255, -0.005)
+material_override = ExtResource("3_hair")
+mesh = SubResource("Mesh_boot_sole")
+
+[node name="BodyRoot" type="Node3D" parent="VisualRoot"]
+position = Vector3(0, 1, 0)
+
+[node name="RobeSkirt" type="MeshInstance3D" parent="VisualRoot/BodyRoot"]
+position = Vector3(0, -0.39, 0)
 material_override = ExtResource("4_robe")
 mesh = SubResource("Mesh_robe_skirt")
 
-[node name="Torso" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0, 1.18, 0)
+[node name="Torso" type="MeshInstance3D" parent="VisualRoot/BodyRoot"]
+position = Vector3(0, 0.18, 0)
 scale = Vector3(1, 1, 0.78)
 material_override = ExtResource("4_robe")
 mesh = SubResource("Mesh_torso")
 
-[node name="WaistSash" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0, 0.98, 0)
+[node name="WaistSash" type="MeshInstance3D" parent="VisualRoot/BodyRoot"]
+position = Vector3(0, -0.02, 0)
 scale = Vector3(1, 1, 0.82)
 material_override = ExtResource("5_sash")
 mesh = SubResource("Mesh_sash")
 
-[node name="SashTail" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0.28, 0.71, -0.3)
+[node name="Collar" type="MeshInstance3D" parent="VisualRoot/BodyRoot"]
+position = Vector3(0, 0.43, -0.015)
+scale = Vector3(1, 1, 0.82)
+material_override = ExtResource("6_gold")
+mesh = SubResource("Mesh_collar")
+
+[node name="Brooch" type="MeshInstance3D" parent="VisualRoot/BodyRoot"]
+position = Vector3(0, 0.34, -0.28)
+material_override = ExtResource("6_gold")
+mesh = SubResource("Mesh_brooch")
+
+[node name="SashKnot" type="MeshInstance3D" parent="VisualRoot/BodyRoot"]
+position = Vector3(0.28, -0.01, -0.3)
+scale = Vector3(0.8, 0.8, 0.62)
+material_override = ExtResource("6_gold")
+mesh = SubResource("Mesh_sash_knot")
+
+[node name="SashTailPivot" type="Node3D" parent="VisualRoot"]
+position = Vector3(0.28, 0.98, -0.3)
 rotation_degrees = Vector3(0, 0, -8)
+
+[node name="SashTail" type="MeshInstance3D" parent="VisualRoot/SashTailPivot"]
+position = Vector3(0, -0.29, 0)
 material_override = ExtResource("5_sash")
 mesh = SubResource("Mesh_sash_tail")
 
-[node name="LeftArm" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(-0.38, 1.15, 0)
+[node name="LeftShoulderPivot" type="Node3D" parent="VisualRoot"]
+position = Vector3(-0.36, 1.39, 0)
 rotation_degrees = Vector3(0, 0, -8)
+
+[node name="LeftArm" type="MeshInstance3D" parent="VisualRoot/LeftShoulderPivot"]
+position = Vector3(-0.02, -0.25, 0)
 material_override = ExtResource("4_robe")
 mesh = SubResource("Mesh_arm")
 
-[node name="RightArm" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0.38, 1.15, 0)
+[node name="LeftCuff" type="MeshInstance3D" parent="VisualRoot/LeftShoulderPivot"]
+position = Vector3(-0.055, -0.5, 0)
+material_override = ExtResource("6_gold")
+mesh = SubResource("Mesh_cuff")
+
+[node name="LeftHand" type="MeshInstance3D" parent="VisualRoot/LeftShoulderPivot"]
+position = Vector3(-0.075, -0.59, 0)
+material_override = ExtResource("2_skin")
+mesh = SubResource("Mesh_hand")
+
+[node name="RightShoulderPivot" type="Node3D" parent="VisualRoot"]
+position = Vector3(0.36, 1.39, 0)
 rotation_degrees = Vector3(0, 0, 8)
+
+[node name="RightArm" type="MeshInstance3D" parent="VisualRoot/RightShoulderPivot"]
+position = Vector3(0.02, -0.25, 0)
 material_override = ExtResource("4_robe")
 mesh = SubResource("Mesh_arm")
 
-[node name="LeftHand" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(-0.43, 0.83, 0)
+[node name="RightCuff" type="MeshInstance3D" parent="VisualRoot/RightShoulderPivot"]
+position = Vector3(0.055, -0.5, 0)
+material_override = ExtResource("6_gold")
+mesh = SubResource("Mesh_cuff")
+
+[node name="RightHand" type="MeshInstance3D" parent="VisualRoot/RightShoulderPivot"]
+position = Vector3(0.075, -0.59, 0)
 material_override = ExtResource("2_skin")
 mesh = SubResource("Mesh_hand")
 
-[node name="RightHand" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0.43, 0.83, 0)
-material_override = ExtResource("2_skin")
-mesh = SubResource("Mesh_hand")
+[node name="HeadRoot" type="Node3D" parent="VisualRoot"]
+position = Vector3(0, 1.67, -0.035)
 
-[node name="HairBack" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0, 1.7, 0.13)
+[node name="HairBack" type="MeshInstance3D" parent="VisualRoot/HeadRoot"]
+position = Vector3(0, 0.03, 0.165)
 scale = Vector3(1.08, 1.13, 0.95)
 material_override = ExtResource("3_hair")
 mesh = SubResource("Mesh_hair_mass")
 
-[node name="Head" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0, 1.67, -0.035)
+[node name="Head" type="MeshInstance3D" parent="VisualRoot/HeadRoot"]
 scale = Vector3(0.96, 1.04, 0.9)
 material_override = ExtResource("2_skin")
 mesh = SubResource("Mesh_head")
 
-[node name="LeftHairLock" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(-0.245, 1.52, 0.01)
-rotation_degrees = Vector3(4, 0, -5)
-material_override = ExtResource("3_hair")
-mesh = SubResource("Mesh_hair_lock")
-
-[node name="RightHairLock" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0.245, 1.52, 0.01)
-rotation_degrees = Vector3(4, 0, 5)
-material_override = ExtResource("3_hair")
-mesh = SubResource("Mesh_hair_lock")
-
-[node name="HairRibbon" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0, 1.83, 0.28)
+[node name="HairRibbon" type="MeshInstance3D" parent="VisualRoot/HeadRoot"]
+position = Vector3(0, 0.16, 0.315)
 material_override = ExtResource("5_sash")
 mesh = SubResource("Mesh_hair_ribbon")
 
-[node name="LeftEye" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(-0.09, 1.7, -0.286)
+[node name="LeftEye" type="MeshInstance3D" parent="VisualRoot/HeadRoot"]
+position = Vector3(-0.09, 0.03, -0.251)
 scale = Vector3(0.85, 1.15, 0.55)
 material_override = ExtResource("3_hair")
 mesh = SubResource("Mesh_eye")
 
-[node name="RightEye" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0.09, 1.7, -0.286)
+[node name="RightEye" type="MeshInstance3D" parent="VisualRoot/HeadRoot"]
+position = Vector3(0.09, 0.03, -0.251)
 scale = Vector3(0.85, 1.15, 0.55)
 material_override = ExtResource("3_hair")
 mesh = SubResource("Mesh_eye")
 
-[node name="Brooch" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0, 1.34, -0.28)
-material_override = ExtResource("6_gold")
-mesh = SubResource("Mesh_brooch")
+[node name="LeftEyeHighlight" type="MeshInstance3D" parent="VisualRoot/HeadRoot"]
+position = Vector3(-0.081, 0.045, -0.275)
+material_override = SubResource("Material_eye_highlight")
+mesh = SubResource("Mesh_eye_highlight")
+
+[node name="RightEyeHighlight" type="MeshInstance3D" parent="VisualRoot/HeadRoot"]
+position = Vector3(0.099, 0.045, -0.275)
+material_override = SubResource("Material_eye_highlight")
+mesh = SubResource("Mesh_eye_highlight")
+
+[node name="LeftBrow" type="MeshInstance3D" parent="VisualRoot/HeadRoot"]
+position = Vector3(-0.09, 0.103, -0.271)
+rotation_degrees = Vector3(0, 0, -5)
+material_override = ExtResource("3_hair")
+mesh = SubResource("Mesh_brow")
+
+[node name="RightBrow" type="MeshInstance3D" parent="VisualRoot/HeadRoot"]
+position = Vector3(0.09, 0.103, -0.271)
+rotation_degrees = Vector3(0, 0, 5)
+material_override = ExtResource("3_hair")
+mesh = SubResource("Mesh_brow")
+
+[node name="Mouth" type="MeshInstance3D" parent="VisualRoot/HeadRoot"]
+position = Vector3(0, -0.085, -0.278)
+material_override = ExtResource("7_leather")
+mesh = SubResource("Mesh_mouth")
+
+[node name="LeftHairLockPivot" type="Node3D" parent="VisualRoot"]
+position = Vector3(-0.245, 1.76, 0.01)
+rotation_degrees = Vector3(4, 0, -5)
+
+[node name="LeftHairLock" type="MeshInstance3D" parent="VisualRoot/LeftHairLockPivot"]
+position = Vector3(0, -0.24, 0)
+material_override = ExtResource("3_hair")
+mesh = SubResource("Mesh_hair_lock")
+
+[node name="RightHairLockPivot" type="Node3D" parent="VisualRoot"]
+position = Vector3(0.245, 1.76, 0.01)
+rotation_degrees = Vector3(4, 0, 5)
+
+[node name="RightHairLock" type="MeshInstance3D" parent="VisualRoot/RightHairLockPivot"]
+position = Vector3(0, -0.24, 0)
+material_override = ExtResource("3_hair")
+mesh = SubResource("Mesh_hair_lock")
 
 [node name="HeadAnchor" type="Marker3D" parent="."]
 position = Vector3(0, 1.72, -0.08)

@@ -10,7 +10,7 @@ script = ExtResource("2_entry")
 item_definition = ExtResource("3_oil")
 minimum_quantity = 1
 maximum_quantity = 1
-weight = 1.0
+weight = 2.0
 
 [sub_resource type="Resource" id="LootEntry_noise"]
 script = ExtResource("2_entry")
@@ -21,7 +21,7 @@ weight = 1.0
 
 [resource]
 script = ExtResource("1_table")
-display_name = "Survival Enemy Supplies"
+display_name = "Goblin Field Supplies"
 rolls = 1
 entries = Array[Resource]([SubResource("LootEntry_oil"), SubResource("LootEntry_noise")])
 allow_duplicate_rolls = false

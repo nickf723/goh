@@ -3,8 +3,10 @@ class_name PrototypeCombatSurvivalTrial
 
 const GoblinScene: PackedScene = preload("res://scenes/actors/enemies/goblin_drone.tscn")
 const GremlinScene: PackedScene = preload("res://scenes/actors/enemies/gremlin_drone.tscn")
+const LootDropperScript = preload("res://scripts/items/loot_dropper.gd")
+const EnemyLootTable: LootTable = preload("res://data/loot/survival_enemy_supplies.tres")
 
-@export var opening_objective: String = "Collect the field supplies, assign them from the Field Kit, and survive two rounds with defense, healing, oil, and distractions."
+@export var opening_objective: String = "Break supply crates, defeat enemies for drops, survive two rounds, then choose one reward from the unlocked chest."
 @export var enable_editor_f8_reset: bool = true
 @export_range(0.2, 5.0, 0.1) var between_round_seconds: float = 1.25
 
@@ -18,6 +20,7 @@ const GremlinScene: PackedScene = preload("res://scenes/actors/enemies/gremlin_d
 @onready var action_state: PlayerActionState = get_node_or_null("Player/PlayerActionState") as PlayerActionState
 @onready var resource_controller: PlayerResourceController = get_node_or_null("Player/PlayerResourceController") as PlayerResourceController
 @onready var quick_item_controller: PlayerQuickItemController = get_node_or_null("Player/PlayerQuickItemController") as PlayerQuickItemController
+@onready var reward_chest: RewardChoiceChest = get_node_or_null("RewardChoiceChest") as RewardChoiceChest
 
 var initial_player_transform: Transform3D
 var round_index: int = -1
@@ -93,8 +96,15 @@ func reset_trial() -> void:
 	GameState.set_inventory_count("oil_flask", 0)
 	GameState.set_inventory_count("noise_maker", 0)
 	for pickup: Node in get_tree().get_nodes_in_group("world_item_pickup"):
-		if pickup.has_method("reset_pickup"):
+		if bool(pickup.get("runtime_drop")):
+			pickup.queue_free()
+		elif pickup.has_method("reset_pickup"):
 			pickup.call("reset_pickup")
+	for container: Node in get_tree().get_nodes_in_group("breakable_supply_container"):
+		if container.has_method("reset_container"):
+			container.call("reset_container")
+	if reward_chest != null:
+		reward_chest.reset_chest()
 	GameState.player_invulnerable = false
 	GameState.player_invulnerability_timer = 0.0
 	if action_state != null:
@@ -108,7 +118,7 @@ func reset_trial() -> void:
 		player.velocity = Vector3.ZERO
 
 	GameState.set_objective(opening_objective)
-	show_message("Collect both supply caches. Open Tab / Menu, choose a D-pad slot under Loadout, then assign Oil or Noise from Items.")
+	show_message("BREAK • FIGHT • LOOT — smash the side crates, defeat enemies for drops, and claim the chest after Round 2.")
 	advance_round()
 
 
@@ -127,8 +137,10 @@ func advance_round() -> void:
 		_:
 			victory = true
 			round_active = false
-			GameState.set_objective("Trial complete. RESET to run the defensive exchange again.")
-			show_message("SURVIVED — defense, stamina, stance breaks, and counter-pressure completed one loop.")
+			if reward_chest != null:
+				reward_chest.unlock_chest()
+			GameState.set_objective("Reward unlocked. Open the gold chest and choose one supply cache.")
+			show_message("SURVIVED — the reward chest is unlocked. Open it and choose ONE supply cache.")
 
 
 func spawn_combatant(
@@ -163,6 +175,26 @@ func spawn_combatant(
 		receiver.set("disappears_when_defeated", true)
 		if receiver.has_method("refresh_overhead_hud"):
 			receiver.call("refresh_overhead_hud")
+
+	var dropper: LootDropper = LootDropperScript.new() as LootDropper
+	dropper.name = "LootDropper"
+	dropper.loot_table = EnemyLootTable
+	dropper.auto_collect_drops = true
+	dropper.scatter_radius = 0.9
+	dropper.loot_spawned.connect(_on_loot_spawned.bind(display_name))
+	enemy.add_child(dropper)
+
+
+func _on_loot_spawned(results: Array[Dictionary], _pickups: Array[WorldItemPickup], source_name: String) -> void:
+	var summaries: Array[String] = []
+	for result: Dictionary in results:
+		var item: QuickItemDefinition = result.get("item_definition") as QuickItemDefinition
+		if item != null:
+			summaries.append(item.short_label + " ×" + str(result.get("quantity", 0)))
+	if summaries.is_empty():
+		last_defense_message = source_name + " dropped nothing."
+	else:
+		last_defense_message = source_name + " dropped " + ", ".join(summaries) + "."
 
 
 func clear_enemies() -> void:
@@ -226,7 +258,7 @@ func refresh_hud() -> void:
 		)
 
 	if result_label != null:
-		result_label.text = "COLLECT • MENU • ASSIGN • QUICK ITEM • GUARD • DODGE • ATTACK • RESET"
+		result_label.text = "BREAK CRATE • DEFEAT • COLLECT DROP • OPEN CHEST • CHOOSE ONE"
 
 
 func resource_pair(resource_name: String) -> String:
@@ -252,4 +284,5 @@ func get_debug_data() -> Dictionary:
 		"victory": victory,
 		"defeat": defeat,
 		"last_defense": last_defense_message,
+		"reward_chest": reward_chest.get_debug_data() if reward_chest != null else {},
 	}

@@ -266,6 +266,22 @@ func apply_attack_to_player(payload: DamagePayload) -> void:
 	if payload == null:
 		return
 
+	if player != null:
+		var defense_controller: Node = player.get_node_or_null("PlayerDefenseController")
+		if defense_controller != null and defense_controller.has_method("resolve_incoming_attack"):
+			var result_variant: Variant = defense_controller.call(
+				"resolve_incoming_attack",
+				payload,
+				actor
+			)
+			if result_variant is Dictionary:
+				var result: Dictionary = result_variant as Dictionary
+				last_action_summary = str(result.get("outcome", "resolved")) + ": " + payload.source_name
+				var defense_message: String = str(result.get("message", ""))
+				if defense_message != "":
+					show_message(defense_message)
+			return
+
 	GameState.take_damage(payload.amount)
 
 	show_message(

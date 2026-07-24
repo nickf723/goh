@@ -132,7 +132,7 @@ scripts/weapons/
 
 `GameState` owns consumable counts, the four assigned item IDs, and collected persistent-pickup IDs. `PlayerQuickItemController` resolves those IDs through `QuickItemCatalog`, executes committed use, and consumes shared stock only after a successful effect or delivery. Two slots assigned to the same item therefore share one count.
 
-Outside Focus and the paused Field Kit, the D-pad directly uses Up, Left, Right, and Down. Focus reserves those directions for spell navigation; the Field Kit reserves them for menu navigation. Arrow keys mirror quick-item directions during ordinary keyboard play, and H additionally uses Up.
+Outside Focus and the paused Field Kit, the D-pad directly uses Up, Left, Right, and Down. Focus reserves those directions for spell navigation; the Field Kit reserves them for a spatial tile cursor. The Field Kit presents horizontal icon tabs, visual Loadout/Magic/Items grids, an item detail pane, and a four-direction belt placement cross. Players may assign slot-first from Loadout or item-first from Items. Arrow keys mirror quick-item directions during ordinary keyboard play, and H additionally uses Up.
 
 A committed item use slows movement, blocks attacks, casting, Dodge, Guard, jumping, and interaction, and is interrupted by enemy stagger without consuming stock. Rest refills only definitions marked `refill_on_rest`. Inventory, assignments, and persistent pickup IDs participate in the normal save contract.
 

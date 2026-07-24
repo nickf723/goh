@@ -25,6 +25,8 @@ var visual_root: Node3D
 var label: Label3D
 var drop_age: float = 0.0
 var player_target: Node3D
+var waiting_for_inventory_space: bool = false
+var resume_attraction_after_space: bool = false
 
 
 func _ready() -> void:
@@ -86,6 +88,9 @@ func reset_pickup() -> void:
 	transform = initial_transform
 	drop_age = 0.0
 	player_target = null
+	waiting_for_inventory_space = false
+	resume_attraction_after_space = false
+	restore_label_text()
 	set_collected_state(false)
 
 
@@ -97,15 +102,56 @@ func process_runtime_drop(delta: float) -> void:
 	if player_target == null:
 		return
 
+	if waiting_for_inventory_space:
+		if not has_inventory_space():
+			return
+		waiting_for_inventory_space = false
+		attract_to_player = resume_attraction_after_space
+		restore_label_text()
+
 	var target_position: Vector3 = player_target.global_position + Vector3.UP * 0.55
 	var distance: float = global_position.distance_to(target_position)
 	if auto_collect_when_near and distance <= auto_collect_distance:
 		var result: Dictionary = interact()
 		if collected:
 			show_auto_collect_message(str(result.get("message", "")))
+		else:
+			settle_beside_player()
 		return
 	if attract_to_player:
 		global_position = global_position.move_toward(target_position, attraction_speed * delta)
+
+
+func has_inventory_space() -> bool:
+	if item_definition == null:
+		return false
+	return GameState.get_inventory_count(item_definition.item_id) < maxi(item_definition.max_stack, 1)
+
+
+func settle_beside_player() -> void:
+	if player_target == null:
+		return
+	waiting_for_inventory_space = true
+	resume_attraction_after_space = attract_to_player
+	attract_to_player = false
+	var away: Vector3 = global_position - player_target.global_position
+	away.y = 0.0
+	if away.length_squared() <= 0.01:
+		var angle: float = float(get_instance_id() % 360) * PI / 180.0
+		away = Vector3(cos(angle), 0.0, sin(angle))
+	away = away.normalized()
+	global_position = player_target.global_position + away * 1.2 + Vector3.UP * 0.35
+	if label != null:
+		label.text = (item_definition.display_name if item_definition != null else "Item") + " ×" + str(quantity) + "\nINVENTORY FULL"
+		label.modulate = Color(1.0, 0.5, 0.22)
+
+
+func restore_label_text() -> void:
+	if label == null:
+		return
+	var color: Color = item_definition.use_visual_color if item_definition != null else Color(0.5, 0.8, 1.0)
+	label.text = (item_definition.display_name if item_definition != null else "Item") + " ×" + str(quantity)
+	label.modulate = color
 
 
 func resolve_player_target() -> Node3D:
@@ -191,4 +237,5 @@ func get_debug_data() -> Dictionary:
 		"runtime_drop": runtime_drop,
 		"attracting": attract_to_player,
 		"auto_collect": auto_collect_when_near,
+		"waiting_for_inventory_space": waiting_for_inventory_space,
 	}

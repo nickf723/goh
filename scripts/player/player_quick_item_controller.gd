@@ -1,10 +1,12 @@
 extends Node3D
 class_name PlayerQuickItemController
 
+const QuickItemCatalogScript = preload("res://scripts/items/quick_item_catalog.gd")
+
 signal belt_changed
 signal item_use_started(slot_index: int, item: QuickItemDefinition, duration: float)
 signal item_use_progress(slot_index: int, progress: float)
-signal item_use_completed(slot_index: int, item: QuickItemDefinition, restored_amount: int)
+signal item_use_completed(slot_index: int, item: QuickItemDefinition, effect_amount: int)
 signal item_use_cancelled(slot_index: int, item: QuickItemDefinition, reason: String)
 
 const SLOT_UP: int = 0
@@ -36,12 +38,12 @@ const SLOT_KEYBOARD_KEYS: Array[Key] = [KEY_UP, KEY_LEFT, KEY_RIGHT, KEY_DOWN]
 @export_group("Keyboard Convenience")
 @export var healing_shortcut_key: Key = KEY_H
 
-var charges: Array[int] = [0, 0, 0, 0]
 var active_slot: int = -1
 var active_item: QuickItemDefinition
 var use_timer: float = 0.0
 var use_total_duration: float = 0.0
 var use_visual: Node3D
+var use_visual_material: StandardMaterial3D
 
 @onready var actor: CharacterBody3D = get_parent() as CharacterBody3D
 @onready var action_state: PlayerActionState = get_parent().get_node_or_null("PlayerActionState") as PlayerActionState
@@ -49,18 +51,25 @@ var use_visual: Node3D
 
 func _ready() -> void:
 	ensure_quick_item_input_map()
-	initialize_charges()
+	sync_slots_from_game_state()
+	initialize_missing_inventory()
 	create_use_visual()
 	add_to_group("debuggable")
-	if GameState.has_signal("rest_resources_restored"):
-		if not GameState.rest_resources_restored.is_connected(_on_rest_resources_restored):
-			GameState.rest_resources_restored.connect(_on_rest_resources_restored)
+	if not GameState.rest_resources_restored.is_connected(_on_rest_resources_restored):
+		GameState.rest_resources_restored.connect(_on_rest_resources_restored)
+	if not GameState.inventory_changed.is_connected(_on_inventory_changed):
+		GameState.inventory_changed.connect(_on_inventory_changed)
+	if not GameState.quick_item_slot_changed.is_connected(_on_quick_item_slot_changed):
+		GameState.quick_item_slot_changed.connect(_on_quick_item_slot_changed)
 
 
 func _exit_tree() -> void:
-	if GameState.has_signal("rest_resources_restored"):
-		if GameState.rest_resources_restored.is_connected(_on_rest_resources_restored):
-			GameState.rest_resources_restored.disconnect(_on_rest_resources_restored)
+	if GameState.rest_resources_restored.is_connected(_on_rest_resources_restored):
+		GameState.rest_resources_restored.disconnect(_on_rest_resources_restored)
+	if GameState.inventory_changed.is_connected(_on_inventory_changed):
+		GameState.inventory_changed.disconnect(_on_inventory_changed)
+	if GameState.quick_item_slot_changed.is_connected(_on_quick_item_slot_changed):
+		GameState.quick_item_slot_changed.disconnect(_on_quick_item_slot_changed)
 
 
 func _process(delta: float) -> void:
@@ -86,7 +95,7 @@ func try_use_slot(slot_index: int) -> bool:
 	if item == null:
 		return false
 	if get_slot_charges(slot_index) <= 0:
-		show_message(item.display_name + " is empty. Rest to refill it.")
+		show_message(item.display_name + " is empty.")
 		return false
 	if action_state == null or not action_state.can_use_item():
 		return false
@@ -104,6 +113,7 @@ func try_use_slot(slot_index: int) -> bool:
 	active_slot = slot_index
 	active_item = item
 	use_timer = use_total_duration
+	configure_use_visual(item)
 	set_use_visual_visible(true)
 	update_use_visual(0.0)
 	item_use_started.emit(active_slot, active_item, use_total_duration)
@@ -133,25 +143,61 @@ func complete_active_use() -> void:
 		return
 	var completed_slot: int = active_slot
 	var completed_item: QuickItemDefinition = active_item
-	var restored_amount: int = completed_item.apply_effect()
+	var effect_amount: int = 0
+	var applied: bool = false
 
-	if restored_amount <= 0:
-		cancel_active_use("no longer needed", false)
-		show_message(completed_item.display_name + " is no longer needed.")
+	if completed_item.is_delivery_item():
+		applied = launch_delivery_item(completed_item)
+		effect_amount = 1 if applied else 0
+	else:
+		effect_amount = completed_item.apply_resource_effect()
+		applied = effect_amount > 0
+
+	if not applied:
+		cancel_active_use("could not be used", false)
+		show_message(completed_item.display_name + " could not be used.")
 		return
 
-	charges[completed_slot] = maxi(charges[completed_slot] - 1, 0)
+	if not GameState.consume_inventory_item(completed_item.item_id, 1):
+		cancel_active_use("is empty", false)
+		show_message(completed_item.display_name + " is empty.")
+		return
+
 	clear_active_use_state()
-	item_use_completed.emit(completed_slot, completed_item, restored_amount)
+	item_use_completed.emit(completed_slot, completed_item, effect_amount)
 	belt_changed.emit()
-	show_message(
-		completed_item.display_name
-		+ " restores "
-		+ str(restored_amount)
-		+ " "
-		+ completed_item.restore_resource_id.capitalize()
-		+ "."
-	)
+
+	if completed_item.is_delivery_item():
+		show_message("Threw " + completed_item.display_name + ".")
+	else:
+		show_message(
+			completed_item.display_name
+			+ " restores "
+			+ str(effect_amount)
+			+ " "
+			+ completed_item.restore_resource_id.capitalize()
+			+ "."
+		)
+
+
+func launch_delivery_item(item: QuickItemDefinition) -> bool:
+	if item.delivery_scene == null or actor == null:
+		return false
+	var delivery: Node = item.delivery_scene.instantiate()
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		scene_root = actor.get_parent()
+	scene_root.add_child(delivery)
+	if not delivery.has_method("launch"):
+		delivery.queue_free()
+		return false
+	var throw_direction: Vector3 = -actor.global_transform.basis.z
+	if actor.has_method("get_lock_on_cast_direction"):
+		throw_direction = actor.call("get_lock_on_cast_direction", actor.global_position + Vector3.UP)
+	var launched: bool = bool(delivery.call("launch", actor, item, throw_direction))
+	if not launched:
+		delivery.queue_free()
+	return launched
 
 
 func cancel_active_use(reason: String = "cancelled", show_feedback: bool = true) -> void:
@@ -190,27 +236,71 @@ func allows_jump() -> bool:
 	return not is_using_item()
 
 
-func initialize_charges() -> void:
+func initialize_missing_inventory() -> void:
 	for slot_index: int in range(SLOT_COUNT):
 		var item: QuickItemDefinition = get_slot_item(slot_index)
-		charges[slot_index] = item.get_max_charges() if item != null else 0
+		if item != null and not GameState.inventory.has(item.item_id):
+			GameState.set_inventory_count(item.item_id, item.get_max_charges())
+	belt_changed.emit()
+
+
+func sync_slots_from_game_state() -> void:
+	for slot_index: int in range(SLOT_COUNT):
+		var item_id: String = GameState.get_quick_item_slot(slot_index)
+		if item_id == "":
+			set_local_slot_item(slot_index, null)
+			continue
+		var catalog_item: QuickItemDefinition = QuickItemCatalogScript.get_item(item_id)
+		if catalog_item != null:
+			set_local_slot_item(slot_index, catalog_item)
+			continue
+		var current_item: QuickItemDefinition = get_slot_item(slot_index)
+		if current_item == null or current_item.item_id != item_id:
+			set_local_slot_item(slot_index, null)
 	belt_changed.emit()
 
 
 func refill_rest_items() -> void:
+	var visited: Dictionary = {}
+	for item: QuickItemDefinition in QuickItemCatalogScript.get_all_items():
+		if item == null or not item.refill_on_rest:
+			continue
+		GameState.set_inventory_count(item.item_id, item.get_max_charges())
+		visited[item.item_id] = true
 	for slot_index: int in range(SLOT_COUNT):
-		var item: QuickItemDefinition = get_slot_item(slot_index)
-		if item != null and item.refill_on_rest:
-			charges[slot_index] = item.get_max_charges()
+		var slotted: QuickItemDefinition = get_slot_item(slot_index)
+		if slotted != null and slotted.refill_on_rest and not visited.has(slotted.item_id):
+			GameState.set_inventory_count(slotted.item_id, slotted.get_max_charges())
 	belt_changed.emit()
 
 
 func reset_belt() -> void:
 	cancel_active_use("reset", false)
-	initialize_charges()
+	sync_slots_from_game_state()
 
 
-func set_slot_item(slot_index: int, item: QuickItemDefinition, refill: bool = true) -> void:
+func set_slot_item(slot_index: int, item: QuickItemDefinition, refill: bool = false) -> void:
+	if slot_index < 0 or slot_index >= SLOT_COUNT:
+		return
+	set_local_slot_item(slot_index, item)
+	var item_id: String = item.item_id if item != null else ""
+	GameState.set_quick_item_slot(slot_index, item_id)
+	if refill and item != null:
+		GameState.set_inventory_count(item.item_id, item.get_max_charges())
+	belt_changed.emit()
+
+
+func assign_slot_by_item_id(slot_index: int, item_id: String) -> bool:
+	if slot_index < 0 or slot_index >= SLOT_COUNT:
+		return false
+	var item: QuickItemDefinition = QuickItemCatalogScript.get_item(item_id) if item_id != "" else null
+	if item_id != "" and item == null:
+		return false
+	set_slot_item(slot_index, item, false)
+	return true
+
+
+func set_local_slot_item(slot_index: int, item: QuickItemDefinition) -> void:
 	match slot_index:
 		SLOT_UP:
 			up_item = item
@@ -220,10 +310,6 @@ func set_slot_item(slot_index: int, item: QuickItemDefinition, refill: bool = tr
 			right_item = item
 		SLOT_DOWN:
 			down_item = item
-		_:
-			return
-	charges[slot_index] = item.get_max_charges() if refill and item != null else 0
-	belt_changed.emit()
 
 
 func get_slot_item(slot_index: int) -> QuickItemDefinition:
@@ -241,9 +327,10 @@ func get_slot_item(slot_index: int) -> QuickItemDefinition:
 
 
 func get_slot_charges(slot_index: int) -> int:
-	if slot_index < 0 or slot_index >= charges.size():
+	var item: QuickItemDefinition = get_slot_item(slot_index)
+	if item == null:
 		return 0
-	return charges[slot_index]
+	return GameState.get_inventory_count(item.item_id)
 
 
 func get_slot_debug_data(slot_index: int) -> Dictionary:
@@ -254,13 +341,21 @@ func get_slot_debug_data(slot_index: int) -> Dictionary:
 		"item_id": item.item_id if item != null else "empty",
 		"label": item.short_label if item != null else "—",
 		"charges": get_slot_charges(slot_index),
-		"maximum": item.get_max_charges() if item != null else 0,
+		"maximum": item.get_max_stack() if item != null else 0,
 	}
 
 
 func _on_rest_resources_restored() -> void:
 	cancel_active_use("rested", false)
 	refill_rest_items()
+
+
+func _on_inventory_changed(_item_id: String, _count: int) -> void:
+	belt_changed.emit()
+
+
+func _on_quick_item_slot_changed(_slot_index: int, _item_id: String) -> void:
+	sync_slots_from_game_state()
 
 
 func ensure_quick_item_input_map() -> void:
@@ -306,15 +401,15 @@ func create_use_visual() -> void:
 	bottle_mesh.radial_segments = 12
 	bottle.mesh = bottle_mesh
 
-	var bottle_material: StandardMaterial3D = StandardMaterial3D.new()
-	bottle_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	bottle_material.albedo_color = Color(0.18, 0.82, 1.0, 0.82)
-	bottle_material.metallic = 0.25
-	bottle_material.roughness = 0.2
-	bottle_material.emission_enabled = true
-	bottle_material.emission = Color(0.02, 0.35, 0.8)
-	bottle_material.emission_energy_multiplier = 1.25
-	bottle.material_override = bottle_material
+	use_visual_material = StandardMaterial3D.new()
+	use_visual_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	use_visual_material.albedo_color = Color(0.18, 0.82, 1.0, 0.82)
+	use_visual_material.metallic = 0.25
+	use_visual_material.roughness = 0.2
+	use_visual_material.emission_enabled = true
+	use_visual_material.emission = Color(0.02, 0.35, 0.8)
+	use_visual_material.emission_energy_multiplier = 1.25
+	bottle.material_override = use_visual_material
 	use_visual.add_child(bottle)
 
 	var cap: MeshInstance3D = MeshInstance3D.new()
@@ -334,6 +429,15 @@ func create_use_visual() -> void:
 
 	add_child(use_visual)
 	set_use_visual_visible(false)
+
+
+func configure_use_visual(item: QuickItemDefinition) -> void:
+	if use_visual_material == null or item == null:
+		return
+	var color: Color = item.use_visual_color
+	color.a = 0.86
+	use_visual_material.albedo_color = color
+	use_visual_material.emission = item.use_visual_color.darkened(0.4)
 
 
 func set_use_visual_visible(value: bool) -> void:
@@ -369,5 +473,6 @@ func get_debug_data() -> Dictionary:
 		"remaining": snapped(use_timer, 0.01),
 		"duration": snapped(use_total_duration, 0.01),
 		"movement": get_movement_multiplier(),
+		"inventory": GameState.get_inventory_snapshot(),
 		"slots": slot_rows,
 	}

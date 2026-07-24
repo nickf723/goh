@@ -1,6 +1,7 @@
 extends Node
 
 const EnemyLootTable: LootTable = preload("res://data/loot/survival_enemy_supplies.tres")
+const GremlinLootTable: LootTable = preload("res://data/loot/survival_gremlin_supplies.tres")
 const CrateScene: PackedScene = preload("res://scenes/items/breakable_supply_container.tscn")
 const ChestScene: PackedScene = preload("res://scenes/items/reward_choice_chest.tscn")
 
@@ -22,6 +23,12 @@ func run_tests() -> void:
 	random.seed = 723
 	var rolled: Array[Dictionary] = EnemyLootTable.roll_loot(random)
 	assert_equal(rolled.size(), 1, "enemy table resolves one weighted stack")
+	var goblin_oil: LootEntry = EnemyLootTable.entries[0] as LootEntry
+	var goblin_noise: LootEntry = EnemyLootTable.entries[1] as LootEntry
+	var gremlin_oil: LootEntry = GremlinLootTable.entries[0] as LootEntry
+	var gremlin_noise: LootEntry = GremlinLootTable.entries[1] as LootEntry
+	assert_true(goblin_oil.weight > goblin_noise.weight, "Goblin table favors Oil")
+	assert_true(gremlin_noise.weight > gremlin_oil.weight, "Gremlin table favors Noise Makers")
 	if not rolled.is_empty():
 		assert_true(["oil_flask", "noise_maker"].has(str(rolled[0].get("item_id", ""))), "enemy table resolves an authored supply")
 		assert_equal(int(rolled[0].get("quantity", 0)), 1, "enemy supply quantity is authored")

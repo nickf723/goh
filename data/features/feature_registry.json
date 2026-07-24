@@ -615,6 +615,53 @@
       "timeout_seconds": 8
     },
     {
+      "id": "foundry_sabotage",
+      "order": 39,
+      "display_name": "Foundry Sabotage",
+      "category": "Playable Sandbox Encounter",
+      "version": "v1",
+      "status": "vertical_slice",
+      "description": "Compact objective encounter combining world-aware guards, optimized Smoke concealment, Gust, Firebolt, Metal Tether, Hammer impacts, authored structural collapse, debris hazards, reusable sound evidence, and a shared escape consequence.",
+      "scene": "res://scenes/levels/prototypes/prototype_foundry_sabotage_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_foundry_sabotage_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/foundry_sabotage_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "airflow_foundation",
+        "structural_stress_lab",
+        "weapon_combat_arena"
+      ],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "REEL IN",
+        "REEL OUT",
+        "DODGE",
+        "RESET"
+      ],
+      "manual_test": "docs/foundry_sabotage_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Prototype geometry and procedural materials do not imply final foundry art direction.",
+        "Structural collapses use authored support graphs rather than automatic mesh decomposition.",
+        "Collapse damage is a radial gameplay consequence layered over physical debris collision.",
+        "Guards use perception and local movement without a navigation mesh.",
+        "Encounter completion is not saved or connected to story progression."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 9
+    },
+    {
       "id": "runtime_stat_lab",
       "order": 40,
       "display_name": "Runtime Stat Laboratory",
@@ -825,6 +872,7 @@
         "whip_weapon_lab",
         "metal_tether_traversal",
         "structural_stress_lab",
+        "foundry_sabotage",
         "weapon_combat_arena",
         "runtime_stat_lab",
         "enemy_personality_lab",

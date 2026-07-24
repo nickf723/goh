@@ -1,0 +1,17 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/reward_choice_chest.gd" id="1_chest"]
+[ext_resource type="Resource" path="res://data/items/oil_flask.tres" id="2_oil"]
+[ext_resource type="Resource" path="res://data/items/noise_maker.tres" id="3_noise"]
+[ext_resource type="Resource" path="res://data/items/healing_flask.tres" id="4_heal"]
+
+[node name="RewardChoiceChest" type="Area3D"]
+script = ExtResource("1_chest")
+option_a = ExtResource("2_oil")
+option_b = ExtResource("3_noise")
+option_c = ExtResource("4_heal")
+option_a_quantity = 2
+option_b_quantity = 2
+option_c_quantity = 1
+starts_locked = true
+resettable_in_lab = true

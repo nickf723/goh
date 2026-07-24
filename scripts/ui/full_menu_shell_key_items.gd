@@ -1542,7 +1542,9 @@ func get_footer_text() -> String:
 	if is_assigning_spell():
 		return "D-pad/Stick or W/S: spells  •  A/Enter: assign  •  B/Esc: back"
 	if is_assigning_item():
-		return "D-pad/Stick or W/S: items  •  A/Enter: assign  •  B/Esc: back"
+		return "D-pad/Stick or WASD: items  •  A/Enter: assign  •  B/Esc: back"
+	if is_assigning_item_slot():
+		return "D-pad/Stick or WASD: choose direction  •  A/Enter: equip  •  B/Esc: back"
 
 	return "LB/RB or Q/E: tabs  •  D-pad/Stick or WASD: move  •  A/Enter: choose  •  B/Esc: back"
 

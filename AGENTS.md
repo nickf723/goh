@@ -82,7 +82,7 @@ Planning work does not modify production code.
 
 ### Build
 
-Building work may create a feature branch, modify files, run validation, and open a draft pull request. It must remain inside the approved issue and document how Nick can playtest the result.
+Building work may modify `main` directly when Nick's standing direct-main authorization applies, or it may create a feature branch and open a draft pull request when review isolation is useful. It must remain inside the approved issue and document how Nick can playtest the result.
 
 When a build creates or promotes a permanent development scene, it must add the scene, its tests, its manual test path, its dependencies, and its state policy to the feature registry in the same pull request.
 
@@ -108,12 +108,11 @@ Do not add another specialist merely because the project has grown. Add a role o
 
 ## Branch and pull request rules
 
-- Branch from `main` using `agent/<short-description>`.
-- Never push directly to `main`.
-- Open a draft pull request by default.
-- Keep unrelated cleanup out of feature pull requests.
+- Nick has granted standing permission for agents to commit and push directly to `main` during solo development work. Direct-to-main is the default when he asks to build or fix something without requesting a branch or review.
+- Use an `agent/<short-description>` branch and a draft pull request instead when Nick requests review, multiple contributors may overlap, or the work is destructive, unusually risky, experimental, or difficult to reverse.
+- Before direct-main work, confirm the latest `main`, keep the change bounded, use concise commits, and run the relevant validation. Never force-push or rewrite `main` history.
+- Keep unrelated cleanup out of every commit and feature pull request.
 - Do not merge your own pull request.
-- Use concise commits that describe intentional units of work.
 - Pull requests must include player-facing results, changed systems, validation, manual test steps, known limitations, creative review points, and explicitly unchanged behavior.
 
 ## Definition of done

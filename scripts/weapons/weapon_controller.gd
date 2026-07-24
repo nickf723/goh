@@ -161,7 +161,12 @@ func update_current_attack(delta: float) -> void:
 		return
 
 	if action_state != null:
-		if action_state.is_defeated or action_state.is_casting or action_state.is_dodging:
+		if (
+			action_state.is_defeated
+			or action_state.is_casting
+			or action_state.is_dodging
+			or action_state.is_staggered
+		):
 			cancel_current_attack("cancelled")
 			return
 

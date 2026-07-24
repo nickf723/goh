@@ -82,7 +82,7 @@ Outside the Field Kit and Focus, the D-pad uses items directly. While Focus is o
 
 ## Expected presentation
 
-- Authored caches and reward choices rotate and hover with colored labels; defeated-enemy and crate drops scatter, pause briefly, then magnetize toward Grace.
+- Authored caches and reward choices rotate and hover with colored labels; defeated-enemy and crate drops scatter, pause briefly, then magnetize toward Grace. If that item's stack is full, the drop settles beside Grace with an `INVENTORY FULL` label and resumes attraction automatically after space opens.
 - Supply crates burst into visible fragments when their Health is depleted.
 - The gold reward chest visibly changes from locked to openable, reveals three world-space choices, and removes the two unchosen rewards.
 - The bottom-right quick belt remains compact and updates immediately after collection, use, or assignment.

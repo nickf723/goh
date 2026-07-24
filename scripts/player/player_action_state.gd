@@ -24,6 +24,7 @@ var is_manipulating: bool = false
 var is_flying: bool = false
 var is_guarding: bool = false
 var is_staggered: bool = false
+var is_using_item: bool = false
 
 var attack_allows_cast_cancel: bool = false
 var attack_allows_dodge_cancel: bool = false
@@ -33,6 +34,7 @@ var cast_lock_timer: float = 0.0
 var interact_lock_timer: float = 0.0
 var dodge_lock_timer: float = 0.0
 var stagger_lock_timer: float = 0.0
+var item_use_lock_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -77,6 +79,12 @@ func update_locks(delta: float) -> void:
 		if stagger_lock_timer <= 0.0:
 			end_stagger()
 
+	if item_use_lock_timer > 0.0:
+		item_use_lock_timer -= delta
+
+		if item_use_lock_timer <= 0.0:
+			end_item_use()
+
 
 func can_move() -> bool:
 	if is_defeated or is_staggered:
@@ -102,7 +110,7 @@ func flight_restrictions_apply() -> bool:
 
 
 func can_attack() -> bool:
-	if is_defeated or is_manipulating or is_staggered or is_guarding:
+	if is_defeated or is_manipulating or is_staggered or is_guarding or is_using_item:
 		return false
 
 	if flight_restrictions_apply() and not allow_attacking_during_flight:
@@ -118,7 +126,7 @@ func can_attack() -> bool:
 
 
 func can_cast() -> bool:
-	if is_defeated or is_manipulating or is_staggered or is_guarding:
+	if is_defeated or is_manipulating or is_staggered or is_guarding or is_using_item:
 		return false
 
 	if flight_restrictions_apply() and not allow_casting_during_flight:
@@ -137,7 +145,7 @@ func can_cast() -> bool:
 
 
 func can_interact() -> bool:
-	if is_defeated or is_manipulating or is_staggered or is_guarding:
+	if is_defeated or is_manipulating or is_staggered or is_guarding or is_using_item:
 		return false
 
 	if flight_restrictions_apply() and not allow_interaction_during_flight:
@@ -153,7 +161,7 @@ func can_interact() -> bool:
 
 
 func can_dodge() -> bool:
-	if is_defeated or is_manipulating or is_staggered:
+	if is_defeated or is_manipulating or is_staggered or is_using_item:
 		return false
 
 	if flight_restrictions_apply() and not allow_dodging_during_flight:
@@ -172,7 +180,7 @@ func can_dodge() -> bool:
 
 
 func can_manipulate() -> bool:
-	if is_defeated or is_focus_menu_open or is_staggered or is_guarding:
+	if is_defeated or is_focus_menu_open or is_staggered or is_guarding or is_using_item:
 		return false
 	if flight_restrictions_apply() and not allow_manipulation_during_flight:
 		return false
@@ -180,6 +188,7 @@ func can_manipulate() -> bool:
 
 
 func begin_attack(lock_duration: float = 0.25) -> void:
+	end_item_use()
 	end_guard()
 	is_attacking = true
 	attack_lock_timer = max(lock_duration, 0.01)
@@ -205,6 +214,7 @@ func end_attack() -> void:
 
 
 func begin_cast(lock_duration: float = 0.18) -> void:
+	end_item_use()
 	end_guard()
 	if is_attacking and attack_allows_cast_cancel:
 		end_attack()
@@ -214,12 +224,14 @@ func begin_cast(lock_duration: float = 0.18) -> void:
 
 
 func begin_interact(lock_duration: float = 0.25) -> void:
+	end_item_use()
 	end_guard()
 	is_interacting = true
 	interact_lock_timer = max(lock_duration, 0.01)
 
 
 func begin_dodge(lock_duration: float = 0.28) -> void:
+	end_item_use()
 	end_guard()
 	if is_attacking and attack_allows_dodge_cancel:
 		end_attack()
@@ -234,7 +246,7 @@ func end_dodge() -> void:
 
 
 func can_guard() -> bool:
-	if is_defeated or is_staggered or is_focus_menu_open:
+	if is_defeated or is_staggered or is_focus_menu_open or is_using_item:
 		return false
 	if flight_restrictions_apply():
 		return false
@@ -268,6 +280,27 @@ func end_stagger() -> void:
 	stagger_lock_timer = 0.0
 
 
+func can_use_item() -> bool:
+	if is_defeated or is_staggered or is_focus_menu_open or is_guarding or is_manipulating:
+		return false
+	if flight_restrictions_apply():
+		return false
+	return not (is_attacking or is_casting or is_interacting or is_dodging or is_using_item)
+
+
+func begin_item_use(lock_duration: float = 0.8) -> bool:
+	if not can_use_item():
+		return false
+	is_using_item = true
+	item_use_lock_timer = maxf(lock_duration, 0.05)
+	return true
+
+
+func end_item_use() -> void:
+	is_using_item = false
+	item_use_lock_timer = 0.0
+
+
 func begin_manipulation() -> bool:
 	if not can_manipulate():
 		return false
@@ -280,6 +313,7 @@ func end_manipulation() -> void:
 
 
 func begin_flight() -> void:
+	end_item_use()
 	end_guard()
 	is_flying = true
 	end_attack()
@@ -299,11 +333,13 @@ func end_flight() -> void:
 func set_focus_menu_open(value: bool) -> void:
 	is_focus_menu_open = value
 	if value:
+		end_item_use()
 		end_guard()
 		end_manipulation()
 
 
 func clear_action_locks() -> void:
+	end_item_use()
 	end_guard()
 	end_attack()
 	is_casting = false
@@ -343,6 +379,8 @@ func get_debug_data() -> Dictionary:
 		"guarding": is_guarding,
 		"staggered": is_staggered,
 		"stagger_timer": snapped(stagger_lock_timer, 0.01),
+		"using_item": is_using_item,
+		"item_use_timer": snapped(item_use_lock_timer, 0.01),
 		"flight_restrictions": flight_restrictions_apply(),
 		"cast_cancel": attack_allows_cast_cancel,
 		"dodge_cancel": attack_allows_dodge_cancel,

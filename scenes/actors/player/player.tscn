@@ -17,6 +17,9 @@
 [ext_resource type="Script" path="res://scripts/player/metal_tether_spell_controller.gd" id="15_metal_tether"]
 [ext_resource type="Script" path="res://scripts/player/player_resource_controller.gd" id="16_resources"]
 [ext_resource type="Script" path="res://scripts/player/player_defense_controller.gd" id="17_defense"]
+[ext_resource type="Script" path="res://scripts/player/player_quick_item_controller.gd" id="18_quick_items"]
+[ext_resource type="Resource" path="res://data/items/healing_flask.tres" id="19_flask"]
+[ext_resource type="PackedScene" path="res://scenes/ui/quick_item_belt_ui.tscn" id="20_quick_ui"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -103,6 +106,12 @@ script = ExtResource("16_resources")
 
 [node name="PlayerDefenseController" type="Node" parent="."]
 script = ExtResource("17_defense")
+
+[node name="PlayerQuickItemController" type="Node3D" parent="."]
+script = ExtResource("18_quick_items")
+up_item = ExtResource("19_flask")
+
+[node name="QuickItemBeltUI" parent="." instance=ExtResource("20_quick_ui")]
 
 [node name="PlayerDodgeController" type="Node" parent="." unique_id=1337799175]
 script = ExtResource("8_fp13k")

@@ -55,7 +55,7 @@ func run_tests() -> void:
 	add_child(pickup)
 	var pickup_result: Dictionary = pickup.interact()
 	assert_equal(GameState.get_inventory_count("noise_maker"), 2, "world pickup adds inventory stock")
-	assert_true(bool(pickup_result.get("message", "").contains("Noise Maker")), "pickup reports collected item")
+	assert_true(str(pickup_result.get("message", "")).contains("Noise Maker"), "pickup reports collected item")
 	assert_true(GameState.has_collected_pickup("field_inventory_smoke_noise"), "unique pickup records collection")
 	assert_true(pickup.collected, "collected world pickup disables itself")
 

@@ -703,6 +703,44 @@
       "timeout_seconds": 5
     },
     {
+      "id": "spatial_portal_lab",
+      "order": 41,
+      "display_name": "Spatial Portal Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Linked spatial surfaces that transform relative position, orientation, CharacterBody and rigid-body momentum, angular velocity, and GenericProjectile trajectories through one reusable orthonormal mapping.",
+      "scene": "res://scenes/levels/prototypes/prototype_spatial_portal_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_spatial_portal_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/spatial_portal_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "INTERACT",
+        "CAST",
+        "RESET"
+      ],
+      "manual_test": "docs/spatial_portal_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Portal interiors are emissive indicators rather than recursive rendered views.",
+        "Portals are authored whole surfaces and do not cut arbitrary openings into level meshes.",
+        "Characters remain upright because the current controller assumes world-up gravity.",
+        "Flexible tethers, gas volumes, navigation, and enemies do not cross portal boundaries in v1.",
+        "Objects teleport as a whole and cannot straddle both spaces."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
       "id": "enemy_personality_lab",
       "order": 42,
       "display_name": "Enemy Personality Laboratory",
@@ -875,6 +913,7 @@
         "foundry_sabotage",
         "weapon_combat_arena",
         "runtime_stat_lab",
+        "spatial_portal_lab",
         "enemy_personality_lab",
         "element_vfx_gallery",
         "ice_vfx_lab",

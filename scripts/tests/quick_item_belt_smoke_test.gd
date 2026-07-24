@@ -47,6 +47,9 @@ func run_tests() -> void:
 	controller.set_process(false)
 
 	assert_equal(controller.get_slot_charges(PlayerQuickItemController.SLOT_UP), 3, "belt initializes flask charges")
+	action_state.set_focus_menu_open(true)
+	assert_true(not controller.try_use_slot(PlayerQuickItemController.SLOT_UP), "Focus reserves D-pad navigation and blocks quick items")
+	action_state.set_focus_menu_open(false)
 	assert_true(controller.try_use_slot(PlayerQuickItemController.SLOT_UP), "damaged player can begin flask use")
 	assert_true(action_state.is_using_item, "flask owns committed action state")
 	assert_true(not action_state.can_attack(), "flask blocks weapon attacks")

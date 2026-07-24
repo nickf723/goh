@@ -101,6 +101,7 @@ Expected player component stack:
 ```txt
 Player
 ├── PlayerActionState
+├── PlayerResourceController
 ├── AbilityCaster
 ├── WeaponController
 │   └── WeaponInputBootstrap
@@ -173,7 +174,7 @@ Add future weapon classes through data first. Do not add class-specific conditio
 
 ### Stats and runtime resources
 
-`StatCatalog` owns stable IDs, defaults, grouping, descriptions, and elemental-affinity hooks. `GameState` owns current runtime values and emits `stat_changed`.
+`StatCatalog` owns stable IDs, defaults, grouping, descriptions, and elemental-affinity hooks. `GameState` owns current runtime values and emits `stat_changed` plus `resource_depleted`. `PlayerResourceController` turns those shared values into the in-game recovery loop: stamina returns after physical-action expenditure, stance recovers after pressure, and health/mana remain pickup-, rest-, or system-driven.
 
 Current action-resource pairs:
 
@@ -219,6 +220,7 @@ Key files:
 ```txt
 scripts/systems/stat_catalog.gd
 scripts/systems/game_state.gd
+scripts/player/player_resource_controller.gd
 scripts/systems/runtime_stat_lab_session.gd
 scripts/interaction/stat_lab_station.gd
 scripts/levels/prototype_runtime_stat_lab.gd

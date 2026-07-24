@@ -71,8 +71,8 @@ func run_tests() -> void:
 	if lab == null:
 		failures.append("chain weapon laboratory failed to instantiate")
 	else:
-		if float(lab.get("stamina_regeneration_per_second")) <= 0.0:
-			failures.append("chain laboratory must regenerate practice stamina")
+		if lab.get_node_or_null("Player/PlayerResourceController") == null:
+			failures.append("chain laboratory player must use the shared resource loop")
 		lab.queue_free()
 
 	var input_bootstrap: WeaponInputBootstrap = WeaponInputBootstrap.new()

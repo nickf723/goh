@@ -6,10 +6,6 @@ const TrainingWhip: WeaponDefinition = preload("res://data/weapons/training_whip
 @export var opening_objective: String = "Build a Light crack chain, branch Light → Heavy to wrap and pull, then test the precision lane and crosswind."
 @export var enable_editor_f8_reset: bool = true
 @export var hud_refresh_interval: float = 0.05
-@export_group("Practice Stamina")
-@export_range(0.0, 20.0, 0.25) var stamina_regeneration_per_second: float = 4.0
-@export_range(0.0, 5.0, 0.05) var stamina_regeneration_delay: float = 0.8
-
 @onready var player: CharacterBody3D = get_node_or_null("Player") as CharacterBody3D
 @onready var weapon_controller: WeaponController = get_node_or_null("Player/WeaponController") as WeaponController
 @onready var weapon_label: Label = get_node_or_null("WhipHUD/Panel/Margin/VBox/WeaponLabel") as Label
@@ -21,9 +17,6 @@ const TrainingWhip: WeaponDefinition = preload("res://data/weapons/training_whip
 var initial_player_transform: Transform3D
 var reset_count: int = 0
 var hud_refresh_timer: float = 0.0
-var stamina_regeneration_cooldown: float = 0.0
-var stamina_regeneration_accumulator: float = 0.0
-var last_stamina: int = 0
 
 
 func _ready() -> void:
@@ -35,16 +28,12 @@ func _ready() -> void:
 	if weapon_controller != null:
 		weapon_controller.show_debug_hitboxes = false
 		weapon_controller.combo_state_changed.connect(_on_combo_state_changed)
-	last_stamina = GameState.get_stat("stamina")
-	if not GameState.stat_changed.is_connected(_on_stat_changed):
-		GameState.stat_changed.connect(_on_stat_changed)
 	set_objective(opening_objective)
 	show_message("Whip Laboratory online. The violet bead is the damaging tip; the bright ring is the traveling wave front.")
 	call_deferred("reset_lab")
 
 
 func _process(delta: float) -> void:
-	update_stamina_regeneration(delta)
 	hud_refresh_timer -= delta
 	if hud_refresh_timer <= 0.0:
 		hud_refresh_timer = maxf(hud_refresh_interval, 0.02)
@@ -89,9 +78,6 @@ func reset_lab() -> void:
 	for resource_name: String in ["health", "stamina", "mana", "stance"]:
 		GameState.set_stat(resource_name, GameState.get_stat("max_" + resource_name))
 
-	last_stamina = GameState.get_stat("stamina")
-	stamina_regeneration_cooldown = 0.0
-	stamina_regeneration_accumulator = 0.0
 	set_objective(opening_objective)
 	show_message("Whip lab reset #" + str(reset_count) + ". Crackwhip restored.")
 	refresh_hud()
@@ -99,34 +85,6 @@ func reset_lab() -> void:
 
 func _on_combo_state_changed(_debug_data: Dictionary) -> void:
 	refresh_hud()
-
-
-func _on_stat_changed(stat_name: String, value: int) -> void:
-	if stat_name != "stamina":
-		return
-	if value < last_stamina:
-		stamina_regeneration_cooldown = stamina_regeneration_delay
-		stamina_regeneration_accumulator = 0.0
-	last_stamina = value
-
-
-func update_stamina_regeneration(delta: float) -> void:
-	if stamina_regeneration_per_second <= 0.0:
-		return
-	var current_stamina: int = GameState.get_stat("stamina")
-	var maximum_stamina: int = GameState.get_stat("max_stamina")
-	if current_stamina >= maximum_stamina:
-		stamina_regeneration_accumulator = 0.0
-		return
-	if stamina_regeneration_cooldown > 0.0:
-		stamina_regeneration_cooldown = maxf(stamina_regeneration_cooldown - delta, 0.0)
-		return
-	stamina_regeneration_accumulator += stamina_regeneration_per_second * delta
-	var whole_points: int = floori(stamina_regeneration_accumulator)
-	if whole_points <= 0:
-		return
-	stamina_regeneration_accumulator -= float(whole_points)
-	GameState.restore_stamina(whole_points)
 
 
 func refresh_hud() -> void:

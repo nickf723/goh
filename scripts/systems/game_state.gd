@@ -3,6 +3,7 @@ extends Node
 signal objective_changed(new_objective: String)
 signal flag_changed(flag_name: String, value: bool)
 signal stat_changed(stat_name: String, value: int)
+signal resource_depleted(resource_name: String, amount: int)
 signal player_defeated
 signal save_completed(save_data: Dictionary)
 signal save_loaded(save_data: Dictionary)
@@ -333,12 +334,16 @@ func heal(amount: int) -> void:
 
 
 func spend_stamina(amount: int) -> bool:
+	if amount <= 0:
+		return true
+
 	var current_stamina: int = get_stat("stamina")
 
 	if current_stamina < amount:
 		return false
 
 	set_stat("stamina", current_stamina - amount)
+	resource_depleted.emit("stamina", amount)
 	return true
 
 
@@ -351,12 +356,16 @@ func restore_stamina(amount: int) -> void:
 
 
 func spend_mana(amount: int) -> bool:
+	if amount <= 0:
+		return true
+
 	var current_mana: int = get_stat("mana")
 
 	if current_mana < amount:
 		return false
 
 	set_stat("mana", current_mana - amount)
+	resource_depleted.emit("mana", amount)
 	return true
 
 
@@ -369,10 +378,17 @@ func restore_mana(amount: int) -> void:
 
 
 func damage_stance(amount: int) -> void:
+	if amount <= 0:
+		return
+
 	var current_stance: int = get_stat("stance")
 	var new_stance: int = clamp(current_stance - amount, 0, get_stat("max_stance"))
+	var depleted_amount: int = current_stance - new_stance
 
 	set_stat("stance", new_stance)
+
+	if depleted_amount > 0:
+		resource_depleted.emit("stance", depleted_amount)
 
 
 func restore_stance(amount: int) -> void:

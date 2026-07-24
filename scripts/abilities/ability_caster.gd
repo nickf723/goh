@@ -409,10 +409,10 @@ func pay_ability_cost(ability: AbilityDefinition, extra_mana_cost: int = 0) -> b
 		return false
 
 	if required_mana > 0:
-		GameState.set_stat("mana", GameState.get_stat("mana") - required_mana)
+		GameState.spend_mana(required_mana)
 
 	if ability.stamina_cost > 0:
-		GameState.set_stat("stamina", GameState.get_stat("stamina") - ability.stamina_cost)
+		GameState.spend_stamina(ability.stamina_cost)
 
 	if ability.focus_cost > 0:
 		GameState.set_stat("focus", GameState.get_stat("focus") - ability.focus_cost)

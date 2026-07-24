@@ -13,7 +13,9 @@ signal defense_state_changed(debug_data: Dictionary)
 @export var guard_action_name: StringName = &"guard"
 @export var guard_keyboard_key: Key = KEY_F
 @export var guard_mouse_button: MouseButton = MOUSE_BUTTON_XBUTTON2
-@export_range(0, 20, 1) var guard_joypad_button: int = 2
+# Godot uses Xbox-style names: button 2 is the physical left face button,
+# labeled Y on Switch controllers and X on Xbox controllers.
+@export var guard_joypad_button: JoyButton = JOY_BUTTON_X
 
 @export_group("Guard")
 @export_range(30.0, 180.0, 1.0) var guard_angle_degrees: float = 150.0

@@ -53,9 +53,9 @@ Outside the Field Kit and Focus, the D-pad uses items directly. While Focus is o
 
 1. Break either side supply crate with weapon attacks. Confirm it bursts visibly and resolves two distinct weighted supply rolls.
 2. Move toward the released pickups. Confirm runtime loot begins drifting toward Grace after a short delay and collects into the same inventory used by the Field Kit.
-3. Defeat the Round 1 Goblin. Confirm exactly one Oil or Noise stack scatters from its defeat position before the enemy disappears.
+3. Defeat the Round 1 Goblin. Confirm exactly one Oil or Noise stack scatters from its defeat position before the enemy disappears. Goblin weighting favors Oil.
 4. Confirm the drop readout names the defeated enemy and resulting item. A single defeated actor must never roll its table twice.
-5. Defeat both Round 2 enemies. Confirm each independently resolves its enemy-supply table.
+5. Defeat both Round 2 enemies. Confirm each independently resolves its species table; the Gremlin's weighting favors Noise Makers.
 6. Approach the gold chest before victory and interact. Confirm it remains locked.
 7. After Round 2, confirm the objective changes to the reward and the chest reports `OPEN REWARD`.
 8. Open it. Confirm three physical choices appear: Oil ×2, Noise ×2, and Healing Flask ×1.

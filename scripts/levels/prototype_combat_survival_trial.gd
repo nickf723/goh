@@ -4,7 +4,7 @@ class_name PrototypeCombatSurvivalTrial
 const GoblinScene: PackedScene = preload("res://scenes/actors/enemies/goblin_drone.tscn")
 const GremlinScene: PackedScene = preload("res://scenes/actors/enemies/gremlin_drone.tscn")
 
-@export var opening_objective: String = "Survive two rounds. Read the red windup, Guard or Dodge, then punish the opening."
+@export var opening_objective: String = "Survive two rounds. Defend, create space, and commit to a Healing Flask only during a safe opening."
 @export var enable_editor_f8_reset: bool = true
 @export_range(0.2, 5.0, 0.1) var between_round_seconds: float = 1.25
 
@@ -17,6 +17,7 @@ const GremlinScene: PackedScene = preload("res://scenes/actors/enemies/gremlin_d
 @onready var defense_controller: PlayerDefenseController = get_node_or_null("Player/PlayerDefenseController") as PlayerDefenseController
 @onready var action_state: PlayerActionState = get_node_or_null("Player/PlayerActionState") as PlayerActionState
 @onready var resource_controller: PlayerResourceController = get_node_or_null("Player/PlayerResourceController") as PlayerResourceController
+@onready var quick_item_controller: PlayerQuickItemController = get_node_or_null("Player/PlayerQuickItemController") as PlayerQuickItemController
 
 var initial_player_transform: Transform3D
 var round_index: int = -1
@@ -102,7 +103,7 @@ func reset_trial() -> void:
 		player.velocity = Vector3.ZERO
 
 	GameState.set_objective(opening_objective)
-	show_message("Round 1: one readable Goblin. Red is windup; gold is impact.")
+	show_message("Round 1: one readable Goblin. Take a hit, create space, then use Quick Item Up to drink.")
 	advance_round()
 
 
@@ -112,12 +113,12 @@ func advance_round() -> void:
 		0:
 			spawn_combatant(GoblinScene, Vector3(0.0, 0.7, -4.5), "Lesson Goblin", 5, 3)
 			round_active = true
-			show_message("ROUND 1 — Hold Guard to block, or tap it late for a Perfect Guard.")
+			show_message("ROUND 1 — Defend first. Quick Item Up heals only after the Flask use window completes.")
 		1:
 			spawn_combatant(GoblinScene, Vector3(-3.0, 0.7, -4.8), "Pressure Goblin", 6, 3)
 			spawn_combatant(GremlinScene, Vector3(3.0, 0.7, -3.5), "Flanking Gremlin", 4, 2)
 			round_active = true
-			show_message("ROUND 2 — Manage two threats. Guard is directional; Dodge escapes the flank.")
+			show_message("ROUND 2 — Manage two threats. A hit interrupts the Flask without consuming a charge.")
 		_:
 			victory = true
 			round_active = false
@@ -214,14 +215,21 @@ func refresh_hud() -> void:
 			"HEALTH " + resource_pair("health")
 			+ "    STAMINA " + resource_pair("stamina")
 			+ "    STANCE " + resource_pair("stance")
+			+ "    FLASK ×" + str(get_flask_charges())
 		)
 
 	if result_label != null:
-		result_label.text = "GUARD • DODGE • LIGHT • HEAVY • LOCK-ON • RESET"
+		result_label.text = "QUICK ITEM • GUARD • DODGE • LIGHT • HEAVY • LOCK-ON • RESET"
 
 
 func resource_pair(resource_name: String) -> String:
 	return str(GameState.get_stat(resource_name)) + " / " + str(GameState.get_stat("max_" + resource_name))
+
+
+func get_flask_charges() -> int:
+	if quick_item_controller == null:
+		return 0
+	return quick_item_controller.get_slot_charges(PlayerQuickItemController.SLOT_UP)
 
 
 func show_message(message: String) -> void:

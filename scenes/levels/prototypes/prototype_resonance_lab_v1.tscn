@@ -1,0 +1,80 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_resonance_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+
+[sub_resource type="Environment" id="Environment_resonance"]
+background_mode = 1
+background_color = Color(0.035, 0.015, 0.055, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.6, 0.24, 0.68, 1)
+ambient_light_energy = 0.68
+reflected_light_source = 2
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.18, 0.05, 0.22, 1)
+fog_light_energy = 0.36
+fog_density = 0.005
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_hud"]
+bg_color = Color(0.045, 0.018, 0.065, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.32, 0.76, 0.94)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="PrototypeResonanceLab" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_resonance")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -26, 0)
+light_color = Color(0.92, 0.54, 1, 1)
+light_energy = 1.08
+shadow_enabled = true
+
+[node name="PulseLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 6, -2)
+light_color = Color(1, 0.22, 0.72, 1)
+light_energy = 2.4
+omni_range = 28.0
+shadow_enabled = true
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, 10.5)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="ResonanceHUD" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="Panel" type="PanelContainer" parent="ResonanceHUD"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -690.0
+offset_top = 18.0
+offset_right = -18.0
+offset_bottom = 92.0
+theme_override_styles/panel = SubResource("StyleBox_hud")
+
+[node name="Margin" type="MarginContainer" parent="ResonanceHUD/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="Readout" type="Label" parent="ResonanceHUD/Panel/Margin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.72, 0.92, 1)
+theme_override_font_sizes/font_size = 13
+text = "RESONANCE READY"

@@ -775,6 +775,44 @@
       "timeout_seconds": 7
     },
     {
+      "id": "resonance_lab",
+      "order": 43,
+      "display_name": "Resonance Laboratory",
+      "category": "Systems Laboratory",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Frequency-selective Sound physics with energy accumulation, damping, sympathetic coupling, mechanism activation, fracture thresholds, and an adjustable Resonant Pulse spell using a dedicated ResonancePayload.",
+      "scene": "res://scenes/levels/prototypes/prototype_resonance_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_resonance_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/resonance_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "INTERACT",
+        "CAST",
+        "RESET"
+      ],
+      "manual_test": "docs/resonance_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Frequency bands are gameplay-scaled rather than acoustic-material measurements.",
+        "Propagation is radial and does not yet model occlusion, reflection, diffraction, or room acoustics.",
+        "Natural frequencies are authored instead of derived from mesh geometry and material dimensions.",
+        "Sympathetic transfer is local energy coupling rather than a full wave equation.",
+        "Final audio synthesis, controller rumble, and production animation are deferred."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
       "id": "element_vfx_gallery",
       "order": 45,
       "display_name": "Element VFX Gallery",
@@ -915,6 +953,7 @@
         "runtime_stat_lab",
         "spatial_portal_lab",
         "enemy_personality_lab",
+        "resonance_lab",
         "element_vfx_gallery",
         "ice_vfx_lab",
         "dev_interaction_sandbox"

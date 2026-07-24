@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="QuickItemDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/quick_item_definition.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://scenes/items/thrown_quick_item.tscn" id="2_delivery"]
+[ext_resource type="PackedScene" path="res://scenes/items/noise_maker_impact.tscn" id="3_impact"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "noise_maker"
+display_name = "Noise Maker"
+short_label = "NOISE"
+description = "A thrown mechanical chime that creates reusable perception evidence where it lands."
+icon_symbol = "♪"
+use_visual_color = Color(1, 0.58, 0.12, 1)
+max_stack = 6
+max_charges = 0
+refill_on_rest = false
+use_duration = 0.3
+movement_multiplier = 0.75
+requires_grounded = false
+can_use_at_maximum = true
+effect_type = "delivery_scene"
+restore_amount = 0
+delivery_scene = ExtResource("2_delivery")
+impact_scene = ExtResource("3_impact")
+throw_speed = 14.0
+throw_vertical_boost = 3.4
+throw_gravity = 13.5
+delivery_lifetime = 2.2
+impact_lifetime = 2.4
+impact_scale = 1.0
+element = "sound"
+tags = Array[String](["consumable", "quick_item", "thrown", "sound", "distraction", "perception"])

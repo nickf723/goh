@@ -1,0 +1,55 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/breakable_supply_container.gd" id="1_container"]
+[ext_resource type="Script" path="res://scripts/combat/hit_receiver.gd" id="2_hit"]
+[ext_resource type="Script" path="res://scripts/items/loot_dropper.gd" id="3_dropper"]
+[ext_resource type="Resource" path="res://data/loot/survival_crate_supplies.tres" id="4_loot"]
+
+[sub_resource type="BoxMesh" id="CrateMesh"]
+size = Vector3(1.35, 1.15, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="CrateMaterial"]
+albedo_color = Color(0.3, 0.145, 0.055, 1)
+roughness = 0.82
+
+[sub_resource type="BoxShape3D" id="CrateShape"]
+size = Vector3(1.35, 1.15, 1.2)
+
+[node name="BreakableSupplyContainer" type="StaticBody3D"]
+script = ExtResource("1_container")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.575, 0)
+material_override = SubResource("CrateMaterial")
+mesh = SubResource("CrateMesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.575, 0)
+shape = SubResource("CrateShape")
+
+[node name="HitReceiver" type="Node" parent="."]
+script = ExtResource("2_hit")
+target_name = "Supply Crate"
+hit_mode = 2
+max_health = 2
+current_health = 2
+max_stance = 1
+current_stance = 1
+regenerates_stance = false
+disappears_when_defeated = false
+
+[node name="LootDropper" type="Node" parent="."]
+script = ExtResource("3_dropper")
+loot_table = ExtResource("4_loot")
+drop_on_health_depleted = false
+auto_collect_drops = true
+scatter_radius = 1.1
+
+[node name="Label3D" type="Label3D" parent="."]
+position = Vector3(0, 1.55, 0)
+text = "SUPPLY CRATE"
+font_size = 30
+pixel_size = 0.007
+billboard = 1
+modulate = Color(1, 0.66, 0.24, 1)
+outline_size = 6

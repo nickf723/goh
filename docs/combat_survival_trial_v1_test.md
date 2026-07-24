@@ -16,7 +16,8 @@ Verify the first complete survival-and-supplies exchange: world pickup collectio
 | Camera | Mouse | Right stick |
 | Interact / collect | E | Face B |
 | Full Field Kit | Tab / M | Menu / Start |
-| Menu navigate | WASD / arrows | D-pad |
+| Menu rows | W / S or Up / Down | D-pad Up / Down or left stick |
+| Menu tabs | Q / E, A / D, or Left / Right | Left / Right shoulder |
 | Menu choose / back | Enter / Esc | Confirm / Cancel |
 | Light attack | Left mouse / J | Left shoulder |
 | Heavy attack | Mouse 4 / K | Right shoulder |
@@ -27,22 +28,25 @@ Verify the first complete survival-and-supplies exchange: world pickup collectio
 | Lock-on | T | Right-stick click |
 | Reset trial | F8 in editor | — |
 
-Outside the Field Kit and Focus, the D-pad uses items directly. While Focus is open it navigates spells; while the paused Field Kit is open it navigates menu rows and tabs.
+Outside the Field Kit and Focus, the D-pad uses items directly. While Focus is open it navigates spells. While the paused Field Kit is open, vertical D-pad or stick input navigates rows and the shoulder buttons change tabs; horizontal controller input no longer changes tabs accidentally.
 
 ## Inventory and assignment route
 
 1. Launch the scene. Confirm the compact belt shows `Flask ×3` in Up and empty Left, Right, and Down slots.
 2. Collect the dark Oil Flask cache on Grace's left and the orange Noise Maker cache on her right. Confirm each pickup disappears and the trial HUD reports `OIL ×2` and `NOISE ×2`.
 3. Open the Field Kit with Tab, M, or the controller Menu button.
-4. On Loadout, select the D-pad Left item slot. The menu moves to Items in assignment mode.
-5. Assign Oil Flask. Return to Loadout and assign Noise Maker to D-pad Right.
-6. Close the menu. Confirm the compact belt now shows Flask Up, Oil Left, Noise Right, and the correct shared counts.
-7. Throw Oil with D-pad Left. Confirm Grace performs the short committed use, a dark flask follows the current aim, an oil patch appears where it lands, and Oil decreases to one.
-8. Move an enemy through the Oil and hit the patch or oily enemy with Fire. Confirm the existing oily + fire reaction can ignite it.
-9. Throw the Noise Maker with D-pad Right. Confirm an orange projectile lands, expands a visible sound pulse, emits shared distraction evidence, and Noise decreases to one.
-10. For the complete investigation response, carry a Noise Maker into the Perception and Investigation Laboratory and throw it out of sight of an observer. The observer should hear the shared stimulus at the landing point rather than at Grace's position.
-11. Reopen the Field Kit and reassign either item to Down. Confirm the belt changes immediately without changing inventory counts.
-12. Clear a quick slot from assignment mode. Confirm the slot becomes empty and no item is lost.
+4. On Loadout, select the D-pad Left item slot. The menu moves directly to Items in assignment mode with the first owned item highlighted.
+5. Confirm the gold cursor is obvious, the focused row scrolls into view, and each item reports any directions where it is already assigned.
+6. Press Cancel once. Confirm the menu returns to the original Loadout belt row rather than leaving Grace on the Items tab.
+7. Select the Left slot again and assign Oil Flask. Confirm the menu returns to that exact belt row, then assign Noise Maker to D-pad Right.
+8. Change tabs with the controller shoulder buttons or Q/E. Return to Loadout and confirm each tab remembers its last selected row.
+9. Close the menu. Confirm the compact belt now shows Flask Up, Oil Left, Noise Right, and the correct shared counts.
+10. Throw Oil with D-pad Left. Confirm Grace performs the short committed use, a dark flask follows the current aim, an oil patch appears where it lands, and Oil decreases to one.
+11. Move an enemy through the Oil and hit the patch or oily enemy with Fire. Confirm the existing oily + fire reaction can ignite it.
+12. Throw the Noise Maker with D-pad Right. Confirm an orange projectile lands, expands a visible sound pulse, emits shared distraction evidence, and Noise decreases to one.
+13. For the complete investigation response, carry a Noise Maker into the Perception and Investigation Laboratory and throw it out of sight of an observer. The observer should hear the shared stimulus at the landing point rather than at Grace's position.
+14. Reopen the Field Kit and reassign either item to Down. Confirm the belt changes immediately without changing inventory counts.
+15. Clear a quick slot from assignment mode. Confirm the slot becomes empty and no item is lost.
 
 ## Survival route
 
@@ -65,7 +69,8 @@ Outside the Field Kit and Focus, the D-pad uses items directly. While Focus is o
 
 - Pickups rotate and hover with a colored item label.
 - The bottom-right quick belt remains compact and updates immediately after collection, use, or assignment.
-- The Field Kit Items tab shows item descriptions, quantities, refill rules, and an explicit Clear Slot choice.
+- The Field Kit uses a high-contrast gold cursor, keeps the focused row visible, remembers each tab's last row, and returns assignment cancellation/completion to the originating belt slot.
+- The Items tab shows item descriptions, quantities, refill rules, current D-pad assignments, and an explicit Clear Slot choice.
 - Thrown items follow the camera or lock-on aim.
 - Oil reuses the existing reactive Status Surface rather than creating a second elemental reaction path.
 - Noise Maker reuses the shared perception stimulus manager and shows a brief expanding sound ring.

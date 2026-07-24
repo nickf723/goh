@@ -1,0 +1,97 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/quick_item_belt_ui.gd" id="1_ui"]
+
+[sub_resource type="StyleBoxFlat" id="PanelStyle"]
+bg_color = Color(0.025, 0.035, 0.06, 0.88)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.12, 0.55, 0.82, 0.86)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="QuickItemBeltUI" type="CanvasLayer"]
+layer = 24
+script = ExtResource("1_ui")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -292.0
+offset_top = -190.0
+offset_right = -18.0
+offset_bottom = -18.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("PanelStyle")
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Title" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.36, 0.78, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "QUICK BELT"
+horizontal_alignment = 1
+
+[node name="UpLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "↑  FLASK ×3"
+horizontal_alignment = 1
+
+[node name="Middle" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="LeftLabel" type="Label" parent="Panel/Margin/VBox/Middle"]
+custom_minimum_size = Vector2(78, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "←  —"
+horizontal_alignment = 1
+
+[node name="CenterLabel" type="Label" parent="Panel/Margin/VBox/Middle"]
+custom_minimum_size = Vector2(68, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.78, 0.9, 1)
+theme_override_font_sizes/font_size = 12
+text = "ITEMS"
+horizontal_alignment = 1
+
+[node name="RightLabel" type="Label" parent="Panel/Margin/VBox/Middle"]
+custom_minimum_size = Vector2(78, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "→  —"
+horizontal_alignment = 1
+
+[node name="DownLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "↓  —"
+horizontal_alignment = 1
+
+[node name="ProgressLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.62, 0.74, 1)
+theme_override_font_sizes/font_size = 11
+text = "D-PAD • H USES UP"
+horizontal_alignment = 1

@@ -43,12 +43,31 @@ func run_tests() -> void:
 	dropper.fixed_seed = 723
 	dropper.scatter_radius = 0.0
 	source.add_child(dropper)
+	var player_target: Node3D = Node3D.new()
+	player_target.name = "Player"
+	player_target.add_to_group("player")
+	add_child(player_target)
+
 	var spawned: Array[WorldItemPickup] = dropper.drop_now()
 	assert_equal(spawned.size(), 1, "LootDropper converts a result into a world pickup")
 	assert_true(dropper.has_dropped, "LootDropper prevents duplicate defeat rewards")
 	if not spawned.is_empty():
 		var pickup: WorldItemPickup = spawned[0]
 		var item_id: String = pickup.item_definition.item_id
+		player_target.global_position = pickup.global_position - Vector3.UP * 0.55
+		pickup.player_target = player_target
+		pickup.drop_age = 1.0
+		pickup.attract_to_player = true
+		pickup.auto_collect_when_near = true
+		GameState.set_inventory_count(item_id, pickup.item_definition.max_stack)
+		pickup.process_runtime_drop(0.1)
+		assert_true(pickup.waiting_for_inventory_space, "full inventory drop enters settled overflow state")
+		assert_true(not pickup.attract_to_player, "full inventory drop stops magnetizing")
+		assert_true(pickup.global_position.distance_to(player_target.global_position) >= 1.0, "full inventory drop settles beside Grace")
+		GameState.set_inventory_count(item_id, pickup.item_definition.max_stack - 1)
+		pickup.process_runtime_drop(0.1)
+		assert_true(not pickup.waiting_for_inventory_space, "settled drop notices newly available space")
+		assert_true(pickup.attract_to_player, "settled drop resumes attraction when space opens")
 		var before_count: int = GameState.get_inventory_count(item_id)
 		var result: Dictionary = pickup.interact()
 		assert_true(str(result.get("message", "")).contains("Collected"), "runtime drop uses normal pickup interaction")
@@ -84,6 +103,7 @@ func run_tests() -> void:
 	for pickup_node: Node in get_tree().get_nodes_in_group("world_item_pickup"):
 		pickup_node.queue_free()
 	source.queue_free()
+	player_target.queue_free()
 	crate.queue_free()
 	chest.queue_free()
 

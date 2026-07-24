@@ -1,6 +1,8 @@
 extends Area3D
 class_name WorldItemPickup
 
+signal item_collected(item_id: String, quantity: int, pickup: WorldItemPickup)
+
 @export var item_definition: QuickItemDefinition
 @export_range(1, 99, 1) var quantity: int = 1
 @export var pickup_id: String = ""
@@ -8,10 +10,21 @@ class_name WorldItemPickup
 @export var objective_after_pickup: String = ""
 @export var resettable_in_lab: bool = false
 
+@export_group("Runtime Drop")
+@export var runtime_drop: bool = false
+@export var free_after_collect: bool = false
+@export var attract_to_player: bool = false
+@export var auto_collect_when_near: bool = false
+@export_range(0.0, 3.0, 0.05) var attraction_delay: float = 0.35
+@export_range(0.5, 20.0, 0.25) var attraction_speed: float = 6.5
+@export_range(0.2, 2.0, 0.05) var auto_collect_distance: float = 0.8
+
 var collected: bool = false
 var initial_transform: Transform3D
 var visual_root: Node3D
 var label: Label3D
+var drop_age: float = 0.0
+var player_target: Node3D
 
 
 func _ready() -> void:
@@ -32,6 +45,9 @@ func _process(delta: float) -> void:
 		return
 	visual_root.rotate_y(delta * 1.2)
 	visual_root.position.y = 0.18 + sin(Time.get_ticks_msec() * 0.003) * 0.05
+	drop_age += delta
+	if attract_to_player or auto_collect_when_near:
+		process_runtime_drop(delta)
 
 
 func interact() -> Dictionary:
@@ -46,6 +62,7 @@ func interact() -> Dictionary:
 	if pickup_id != "":
 		GameState.mark_collected_pickup(pickup_id)
 	set_collected_state(true)
+	item_collected.emit(item_definition.item_id, added, self)
 	return {
 		"message": "Collected " + item_definition.display_name + " ×" + str(added) + ". Open the Field Kit to assign it.",
 		"objective": objective_after_pickup,
@@ -57,6 +74,8 @@ func set_collected_state(value: bool) -> void:
 	monitoring = not value
 	monitorable = not value
 	visible = not value
+	if value and free_after_collect:
+		call_deferred("queue_free")
 
 
 func reset_pickup() -> void:
@@ -65,7 +84,46 @@ func reset_pickup() -> void:
 	if pickup_id != "":
 		GameState.clear_collected_pickup(pickup_id)
 	transform = initial_transform
+	drop_age = 0.0
+	player_target = null
 	set_collected_state(false)
+
+
+func process_runtime_drop(delta: float) -> void:
+	if drop_age < attraction_delay:
+		return
+	if player_target == null or not is_instance_valid(player_target):
+		player_target = resolve_player_target()
+	if player_target == null:
+		return
+
+	var target_position: Vector3 = player_target.global_position + Vector3.UP * 0.55
+	var distance: float = global_position.distance_to(target_position)
+	if auto_collect_when_near and distance <= auto_collect_distance:
+		var result: Dictionary = interact()
+		if collected:
+			show_auto_collect_message(str(result.get("message", "")))
+		return
+	if attract_to_player:
+		global_position = global_position.move_toward(target_position, attraction_speed * delta)
+
+
+func resolve_player_target() -> Node3D:
+	var grouped_player: Node3D = get_tree().get_first_node_in_group("player") as Node3D
+	if grouped_player != null:
+		return grouped_player
+	var current_scene: Node = get_tree().current_scene
+	if current_scene != null:
+		return current_scene.find_child("Player", true, false) as Node3D
+	return null
+
+
+func show_auto_collect_message(message: String) -> void:
+	if message == "":
+		return
+	var ui: Node = get_tree().get_first_node_in_group("game_ui")
+	if ui != null and ui.has_method("show_message"):
+		ui.call("show_message", message)
 
 
 func ensure_collision() -> void:
@@ -130,4 +188,7 @@ func get_debug_data() -> Dictionary:
 		"item": item_definition.item_id if item_definition != null else "none",
 		"quantity": quantity,
 		"collected": collected,
+		"runtime_drop": runtime_drop,
+		"attracting": attract_to_player,
+		"auto_collect": auto_collect_when_near,
 	}

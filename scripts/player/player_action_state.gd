@@ -153,7 +153,7 @@ func can_interact() -> bool:
 
 
 func can_dodge() -> bool:
-	if is_defeated or is_manipulating or is_staggered or is_guarding:
+	if is_defeated or is_manipulating or is_staggered:
 		return false
 
 	if flight_restrictions_apply() and not allow_dodging_during_flight:
@@ -299,6 +299,7 @@ func end_flight() -> void:
 func set_focus_menu_open(value: bool) -> void:
 	is_focus_menu_open = value
 	if value:
+		end_guard()
 		end_manipulation()
 
 

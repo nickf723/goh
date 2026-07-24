@@ -65,7 +65,18 @@ func _process(delta: float) -> void:
 	hit_reaction_remaining = maxf(hit_reaction_remaining - delta, 0.0)
 	feedback_flash_remaining = maxf(feedback_flash_remaining - delta, 0.0)
 
-	if is_guarding and (action_state == null or action_state.is_defeated or action_state.is_staggered):
+	if is_guarding and (
+		action_state == null
+		or action_state.is_defeated
+		or action_state.is_staggered
+		or action_state.is_focus_menu_open
+		or action_state.is_attacking
+		or action_state.is_casting
+		or action_state.is_interacting
+		or action_state.is_dodging
+		or action_state.is_manipulating
+		or action_state.is_flying
+	):
 		end_guard()
 
 	if is_guarding and not Input.is_action_pressed(guard_action_name):

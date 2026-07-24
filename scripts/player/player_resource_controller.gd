@@ -73,6 +73,7 @@ func can_regenerate_stamina() -> bool:
 		or action_state.is_manipulating
 		or action_state.is_guarding
 		or action_state.is_staggered
+		or action_state.is_using_item
 	)
 
 

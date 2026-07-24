@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="QuickItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/quick_item_definition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "healing_flask"
+display_name = "Healing Flask"
+short_label = "FLASK"
+description = "A refillable restorative flask. Grace must create a safe opening before drinking."
+max_charges = 3
+refill_on_rest = true
+use_duration = 0.9
+movement_multiplier = 0.35
+requires_grounded = true
+can_use_at_maximum = false
+restore_resource_id = "health"
+restore_amount = 2
+element = "life"
+tags = Array[String](["consumable", "quick_item", "healing", "flask", "life"])

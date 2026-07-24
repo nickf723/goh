@@ -68,6 +68,7 @@ weapon_heavy_attack
 ability_slot_1 ... ability_slot_0
 next_ability
 spell_menu
+full_menu
 quick_item_up / quick_item_left / quick_item_right / quick_item_down
 restart_scene
 toggle_dev_vision
@@ -84,6 +85,8 @@ HEAVY
 FOCUS
 CAST
 DODGE
+MENU
+INVENTORY
 QUICK ITEM
 LOCK-ON
 RESET
@@ -125,18 +128,42 @@ scripts/weapons/
 `player_controller_free_aim.gd` also owns temporary collision-respecting combat motion requested by advancing weapon attacks.
 
 
-#### Quick items
+#### Quick items and field inventory
 
-`PlayerQuickItemController` owns four freely assignable Up, Left, Right, and Down slots. Outside Focus, the D-pad uses those slots directly; while Focus is open, the same directions retain their spell-navigation role. Arrow keys mirror the four directions on keyboard, and H is an additional shortcut for Up.
+`GameState` owns consumable counts, the four assigned item IDs, and collected persistent-pickup IDs. `PlayerQuickItemController` resolves those IDs through `QuickItemCatalog`, executes committed use, and consumes shared stock only after a successful effect or delivery. Two slots assigned to the same item therefore share one count.
 
-A committed item use slows movement, blocks attacks, casting, Dodge, Guard, jumping, and interaction, and is interrupted by enemy stagger. Charges are consumed only after the use completes. Rest recovery refills item definitions marked for refill.
+Outside Focus and the paused Field Kit, the D-pad directly uses Up, Left, Right, and Down. Focus reserves those directions for spell navigation; the Field Kit reserves them for menu navigation. Arrow keys mirror quick-item directions during ordinary keyboard play, and H additionally uses Up.
+
+A committed item use slows movement, blocks attacks, casting, Dodge, Guard, jumping, and interaction, and is interrupted by enemy stagger without consuming stock. Rest refills only definitions marked `refill_on_rest`. Inventory, assignments, and persistent pickup IDs participate in the normal save contract.
+
+Thrown items use one delivery scene and data-selected impact scenes:
+
+```txt
+QuickItemDefinition
+├── resource restore
+└── delivery scene
+    └── ThrownQuickItem
+        ├── Oil StatusSurface impact
+        └── Noise Maker perception stimulus
+```
+
+Key files:
 
 ```txt
 scripts/items/quick_item_definition.gd
+scripts/items/quick_item_catalog.gd
+scripts/items/thrown_quick_item.gd
+scripts/items/world_item_pickup.gd
+scripts/items/noise_maker_impact.gd
 scripts/player/player_quick_item_controller.gd
 scripts/ui/quick_item_belt_ui.gd
+scripts/ui/full_menu_director.gd
+scripts/ui/full_menu_shell_key_items.gd
+scenes/items/
 scenes/ui/quick_item_belt_ui.tscn
 data/items/healing_flask.tres
+data/items/oil_flask.tres
+data/items/noise_maker.tres
 ```
 
 ### Weapon combat

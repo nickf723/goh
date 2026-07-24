@@ -176,6 +176,8 @@ func handle_menu_input(event: InputEvent) -> bool:
 
 
 func select_tab(index: int) -> void:
+	if is_assigning_spell() or is_assigning_item():
+		return
 	remember_current_action()
 	selected_tab_index = (index + TAB_DEFS.size()) % TAB_DEFS.size()
 	selected_action_index = int(tab_action_memory.get(get_current_tab_id(), 0))
@@ -1147,9 +1149,9 @@ func get_item_assignment_label(item_id: String) -> String:
 
 func get_footer_text() -> String:
 	if is_assigning_spell():
-		return "LB/RB: tabs  •  D-pad/Stick or W/S: spells  •  A/Enter: assign  •  B/Esc: back"
+		return "D-pad/Stick or W/S: spells  •  A/Enter: assign  •  B/Esc: back"
 	if is_assigning_item():
-		return "LB/RB: tabs  •  D-pad/Stick or W/S: items  •  A/Enter: assign  •  B/Esc: back"
+		return "D-pad/Stick or W/S: items  •  A/Enter: assign  •  B/Esc: back"
 
 	return "LB/RB or Q/E: tabs  •  D-pad/Stick or W/S: rows  •  A/Enter: choose  •  B/Esc: close"
 

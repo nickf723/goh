@@ -6,7 +6,7 @@
 
 ## Purpose
 
-Verify the first complete survival-and-supplies exchange: world pickup collection, saved inventory counts, paused Field Kit assignment, four direct quick-item slots, committed Healing Flask use, thrown Oil and Noise Maker delivery, readable enemy attacks, directional Guard, Dodge, stamina and stance recovery, stance break, critical punishment, and defeat/reset flow.
+Verify the first complete combat-and-reward exchange: breakable supply containers, authored enemy loot tables, magnetic world drops, a three-choice victory chest, saved inventory counts, visual Field Kit assignment, committed item use, readable enemy attacks, Guard, Dodge, stance breaks, and reset flow.
 
 ## Controls
 
@@ -49,14 +49,28 @@ Outside the Field Kit and Focus, the D-pad uses items directly. While Focus is o
 15. For the complete investigation response, carry a Noise Maker into the Perception and Investigation Laboratory and throw it out of sight of an observer.
 16. Verify the alternate slot-first flow still works: Loadout belt tile → item grid → assignment. Use the final Clear Slot tile to empty a direction without losing stock.
 
+## Loot and reward route
+
+1. Break either side supply crate with weapon attacks. Confirm it bursts visibly and resolves two distinct weighted supply rolls.
+2. Move toward the released pickups. Confirm runtime loot begins drifting toward Grace after a short delay and collects into the same inventory used by the Field Kit.
+3. Defeat the Round 1 Goblin. Confirm exactly one Oil or Noise stack scatters from its defeat position before the enemy disappears.
+4. Confirm the drop readout names the defeated enemy and resulting item. A single defeated actor must never roll its table twice.
+5. Defeat both Round 2 enemies. Confirm each independently resolves its enemy-supply table.
+6. Approach the gold chest before victory and interact. Confirm it remains locked.
+7. After Round 2, confirm the objective changes to the reward and the chest reports `OPEN REWARD`.
+8. Open it. Confirm three physical choices appear: Oil ×2, Noise ×2, and Healing Flask ×1.
+9. Collect one choice. Confirm it enters inventory, the other two vanish, and the chest reports `REWARD CLAIMED`.
+10. Confirm interacting again cannot duplicate the reward.
+11. Press F8. Confirm runtime drops and unchosen rewards disappear, crates rebuild, the chest locks and closes, authored starter caches reappear, and Round 1 restarts.
+
 ## Survival route
 
 1. Let the Round 1 Goblin hit Grace. Confirm Health and Stance fall and any active item use is interrupted without consuming stock.
 2. Create space and use the Healing Flask. Confirm Grace slows, the bottle moves toward her face, two Health restore only after about 0.9 seconds, and Flask stock falls by one.
 3. Guard normally, Perfect Guard late in the red windup, Dodge through an impact, and break enemy Stance.
-4. Defeat Round 1. Confirm Round 2 spawns two enemies without restoring Health or consumable stock.
-5. Defeat both enemies and confirm the objective reports completion.
-6. Press F8. Confirm Health, Mana, Stamina, Stance, and Flask refill; Oil and Noise return to zero; both supply pickups reappear; and Round 1 restarts.
+4. Defeat Round 1. Confirm its loot resolves, then Round 2 spawns two enemies without restoring Health or consumable stock.
+5. Defeat both enemies and confirm the objective points to the unlocked reward chest.
+6. Claim one reward, then press F8. Confirm Health, Mana, Stamina, Stance, and Flask refill; Oil and Noise return to zero; runtime loot clears; crates rebuild; the chest relocks; and Round 1 restarts.
 
 ## Persistence contract
 
@@ -68,7 +82,9 @@ Outside the Field Kit and Focus, the D-pad uses items directly. While Focus is o
 
 ## Expected presentation
 
-- Pickups rotate and hover with a colored item label.
+- Authored caches and reward choices rotate and hover with colored labels; defeated-enemy and crate drops scatter, pause briefly, then magnetize toward Grace.
+- Supply crates burst into visible fragments when their Health is depleted.
+- The gold reward chest visibly changes from locked to openable, reveals three world-space choices, and removes the two unchosen rewards.
 - The bottom-right quick belt remains compact and updates immediately after collection, use, or assignment.
 - The Field Kit uses horizontal icon tabs, spacious visual tiles, a high-contrast gold cursor, and remembered positions instead of a sidebar of text rows.
 - Loadout presents the weapon, Spell Ring, and Quick Belt as distinct visual bays.
@@ -83,7 +99,8 @@ Outside the Field Kit and Focus, the D-pad uses items directly. While Focus is o
 
 - Healing Flask, Oil Flask, and Noise Maker are the first three authored quick items.
 - The survival-trial combat brains do not investigate perception stimuli; use the Perception Laboratory for the full Noise Maker AI response.
-- Enemy drop tables, treasure-container opening, crafting, shops, item sorting, and pickup animation are deferred.
+- Loot v1 uses weighted consumable tables; currencies, rarity tiers, equipment affixes, crafting materials, shops, pity rules, and item sorting are deferred.
+- Reward choices are physical pickups rather than a cinematic treasure presentation.
 - Production levels must give unique persistent pickups a stable `pickup_id`; the trial caches are deliberately resettable.
 - Oil uses a temporary scaled instance of the existing prototype oil patch.
 - Controller rumble, final animation, audio, icons, and item-belt accessibility options are deferred.

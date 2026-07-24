@@ -821,13 +821,14 @@
       "category": "Combat Trial",
       "version": "v1",
       "status": "experimental",
-      "description": "Two-round survival exchange connecting readable enemy telegraphs, directional Guard, Perfect Guard counter-pressure, Dodge invulnerability, player hit reactions, stamina and stance recovery, guard break, enemy stance break, critical punishment, and defeat/reset flow.",
+      "description": "Two-round survival exchange connecting readable enemy telegraphs, directional Guard, Perfect Guard counter-pressure, Dodge invulnerability, player hit reactions, stamina and stance recovery, guard break, enemy stance break, critical punishment, defeat/reset flow, and a committed four-slot quick-item belt with Healing Flask.",
       "scene": "res://scenes/levels/prototypes/prototype_combat_survival_trial_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/prototype_combat_survival_trial_v1.tscn"
       ],
       "automated_tests": [
-        "res://scenes/tests/player_defense_smoke_test.tscn"
+        "res://scenes/tests/player_defense_smoke_test.tscn",
+        "res://scenes/tests/quick_item_belt_smoke_test.tscn"
       ],
       "dependencies": [
         "weapon_combat_arena",
@@ -841,6 +842,7 @@
         "GUARD",
         "DODGE",
         "LOCK-ON",
+        "QUICK ITEM",
         "RESET"
       ],
       "manual_test": "docs/combat_survival_trial_v1_test.md",
@@ -850,7 +852,8 @@
         "Guard uses a universal magical-metal surface rather than weapon-specific block animations.",
         "Perfect Guard timing and defense costs are first-pass tuning values.",
         "Bespoke hazards and bosses that bypass EnemyBrain still need to opt into the common defense resolver.",
-        "Production animation, audio, hit stop, controller rumble, and accessibility timing assists are deferred."
+        "Production animation, audio, hit stop, controller rumble, and accessibility timing assists are deferred.",
+        "Healing Flask is the only authored consumable; the other quick slots, inventory assignment, pickups, and persistent quantities are deferred."
       ],
       "launchable": true,
       "visible_in_launcher": true,

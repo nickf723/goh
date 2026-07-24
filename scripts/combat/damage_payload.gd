@@ -15,3 +15,7 @@ class_name DamagePayload
 
 @export var knockback_strength: float = 0.0
 @export var knockback_up_strength: float = 0.0
+
+# Weapon attacks copy their equipped weapon's critical identity into the payload.
+# Receivers decide whether a valid stance-break window may consume it.
+@export_range(1.0, 6.0, 0.05) var critical_multiplier: float = 2.0

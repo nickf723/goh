@@ -5,8 +5,8 @@ const PracticeSword: WeaponDefinition = preload("res://data/weapons/practice_swo
 const GoblinScene: PackedScene = preload("res://scenes/actors/enemies/goblin_drone.tscn")
 const GremlinScene: PackedScene = preload("res://scenes/actors/enemies/gremlin_drone.tscn")
 
-@export var opening_objective: String = "Equip Sword, Hammer, or Spear. Chain LIGHT attacks and branch into HEAVY finishers."
-@export var opening_message: String = "Weapon Combat Arena online. Use LIGHT for chains and HEAVY for branching finishers."
+@export var opening_objective: String = "Break enemy STANCE, then land one weapon attack during the golden CRITICAL opening."
+@export var opening_message: String = "Stance & Critical Combat online. Hammer breaks quickly; Spear delivers the strongest critical."
 @export var enable_editor_f8_reset: bool = true
 @export var hud_refresh_interval: float = 0.05
 
@@ -220,7 +220,7 @@ func set_objective(text: String) -> void:
 
 func get_debug_data() -> Dictionary:
 	return {
-		"arena": "weapon_combat_v0_6",
+		"arena": "weapon_combat_v0_7",
 		"resets": reset_count,
 		"spawned_enemies": get_tree().get_nodes_in_group("combat_arena_spawned").size(),
 		"weapon": weapon_controller.call("get_debug_data") if weapon_controller != null and weapon_controller.has_method("get_debug_data") else {},

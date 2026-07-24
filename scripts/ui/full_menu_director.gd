@@ -166,8 +166,33 @@ func build_menu_data() -> Dictionary:
 		"learned_spell_sections": get_learned_spell_sections(),
 		"loadout_summary": get_loadout_summary(),
 		"weapon": get_weapon_data(),
+		"quick_item_slots": get_quick_item_slot_rows(),
+		"inventory_items": GameState.get_inventory_rows(),
 		"key_items": GameState.get_key_item_rows(),
 	}
+
+
+func get_quick_item_slot_rows() -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	var controller: Node = find_first_node_named(get_tree().current_scene, "PlayerQuickItemController")
+	for slot_index: int in range(4):
+		var item: QuickItemDefinition = null
+		var count: int = 0
+		if controller != null and controller.has_method("get_slot_item"):
+			item = controller.call("get_slot_item", slot_index) as QuickItemDefinition
+		if controller != null and controller.has_method("get_slot_charges"):
+			count = int(controller.call("get_slot_charges", slot_index))
+		rows.append({
+			"slot": slot_index,
+			"direction": ["Up", "Left", "Right", "Down"][slot_index],
+			"item_id": item.item_id if item != null else "",
+			"name": item.display_name if item != null else "Empty Slot",
+			"short_label": item.short_label if item != null else "—",
+			"icon": item.icon_symbol if item != null else "◇",
+			"count": count,
+			"is_empty": item == null,
+		})
+	return rows
 
 
 func get_current_objective_text() -> String:

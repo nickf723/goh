@@ -20,6 +20,8 @@ const CARD_BACKGROUND: Color = Color(0.07, 0.085, 0.115, 0.76)
 const CARD_SELECTED_BACKGROUND: Color = Color(0.12, 0.09, 0.22, 0.86)
 const CARD_BORDER: Color = Color(0.28, 0.34, 0.5, 0.5)
 const CARD_SELECTED_BORDER: Color = Color(0.72, 0.48, 1.0, 0.95)
+const ACTIVE_SELECTION_BACKGROUND: Color = Color(0.2, 0.115, 0.035, 0.98)
+const ACTIVE_SELECTION_BORDER: Color = Color(1.0, 0.74, 0.2, 1.0)
 const CHIP_BACKGROUND: Color = Color(0.12, 0.14, 0.19, 0.86)
 const CHIP_BORDER: Color = Color(0.36, 0.42, 0.56, 0.68)
 const TEXT_MAIN: Color = Color(0.93, 0.96, 1.0, 0.98)
@@ -34,6 +36,9 @@ var selectable_actions: Array = []
 var assignment_mode: String = ""
 var pending_spell_slot_index: int = -1
 var pending_item_slot_index: int = -1
+var pending_spell_return_action_index: int = -1
+var pending_item_return_action_index: int = -1
+var tab_action_memory: Dictionary = {}
 
 var title_label: Label
 var subtitle_label: Label
@@ -59,6 +64,7 @@ func _ready() -> void:
 func show_menu(new_menu_data: Dictionary) -> void:
 	menu_data = new_menu_data.duplicate(true)
 	selected_tab_index = clamp(selected_tab_index, 0, TAB_DEFS.size() - 1)
+	selected_action_index = int(tab_action_memory.get(get_current_tab_id(), selected_action_index))
 	visible = true
 	rebuild_menu()
 
@@ -82,6 +88,22 @@ func handle_menu_input(event: InputEvent) -> bool:
 			return true
 		return false
 
+	if event is InputEventJoypadButton:
+		var joy_button: InputEventJoypadButton = event as InputEventJoypadButton
+		if not joy_button.pressed:
+			return true
+		match joy_button.button_index:
+			JOY_BUTTON_LEFT_SHOULDER:
+				select_tab(selected_tab_index - 1)
+				return true
+			JOY_BUTTON_RIGHT_SHOULDER:
+				select_tab(selected_tab_index + 1)
+				return true
+			JOY_BUTTON_DPAD_LEFT, JOY_BUTTON_DPAD_RIGHT:
+				return true
+			_:
+				pass
+
 	if event.is_action_pressed("ui_up"):
 		select_action(selected_action_index - 1)
 		return true
@@ -93,6 +115,11 @@ func handle_menu_input(event: InputEvent) -> bool:
 	if event.is_action_pressed("ui_accept"):
 		activate_selected_action()
 		return true
+
+	if event is InputEventJoypadMotion:
+		var joy_motion: InputEventJoypadMotion = event as InputEventJoypadMotion
+		if joy_motion.axis == JOY_AXIS_LEFT_X or joy_motion.axis == JOY_AXIS_RIGHT_X:
+			return true
 
 	if event.is_action_pressed("ui_left"):
 		select_tab(selected_tab_index - 1)
@@ -149,8 +176,9 @@ func handle_menu_input(event: InputEvent) -> bool:
 
 
 func select_tab(index: int) -> void:
+	remember_current_action()
 	selected_tab_index = (index + TAB_DEFS.size()) % TAB_DEFS.size()
-	selected_action_index = 0
+	selected_action_index = int(tab_action_memory.get(get_current_tab_id(), 0))
 	rebuild_menu()
 
 
@@ -160,7 +188,18 @@ func select_action(index: int) -> void:
 		return
 
 	selected_action_index = (index + selectable_actions.size()) % selectable_actions.size()
+	tab_action_memory[get_current_tab_id()] = selected_action_index
 	rebuild_menu()
+
+
+func get_current_tab_id() -> String:
+	if selected_tab_index < 0 or selected_tab_index >= TAB_DEFS.size():
+		return "loadout"
+	return str(TAB_DEFS[selected_tab_index].get("id", "loadout"))
+
+
+func remember_current_action() -> void:
+	tab_action_memory[get_current_tab_id()] = selected_action_index
 
 
 func activate_selected_action() -> void:
@@ -189,6 +228,8 @@ func start_spell_assignment(slot_index: int) -> void:
 	if slot_index < 0:
 		return
 
+	pending_spell_return_action_index = selected_action_index
+	tab_action_memory["loadout"] = selected_action_index
 	assignment_mode = "spell"
 	pending_spell_slot_index = slot_index
 	selected_tab_index = get_tab_index("magic")
@@ -217,6 +258,7 @@ func complete_spell_assignment(learned_index: int) -> void:
 		return
 
 	var assigned_slot: int = pending_spell_slot_index
+	var return_action_index: int = pending_spell_return_action_index
 	loadout.equip_ability(assigned_slot, ability)
 
 	if ability_caster != null and ability_caster.has_method("select_ability"):
@@ -224,8 +266,10 @@ func complete_spell_assignment(learned_index: int) -> void:
 
 	assignment_mode = ""
 	pending_spell_slot_index = -1
+	pending_spell_return_action_index = -1
 	selected_tab_index = get_tab_index("loadout")
-	selected_action_index = assigned_slot
+	selected_action_index = max(return_action_index, 0)
+	tab_action_memory["loadout"] = selected_action_index
 	refresh_menu_data()
 	rebuild_menu()
 
@@ -233,6 +277,8 @@ func complete_spell_assignment(learned_index: int) -> void:
 func start_item_assignment(slot_index: int) -> void:
 	if slot_index < 0 or slot_index >= 4:
 		return
+	pending_item_return_action_index = selected_action_index
+	tab_action_memory["loadout"] = selected_action_index
 	assignment_mode = "item"
 	pending_item_slot_index = slot_index
 	selected_tab_index = get_tab_index("items")
@@ -248,19 +294,30 @@ func complete_item_assignment(item_id: String) -> void:
 		return
 	if not bool(controller.call("assign_slot_by_item_id", pending_item_slot_index, item_id)):
 		return
-	var assigned_slot: int = pending_item_slot_index
+	var return_action_index: int = pending_item_return_action_index
 	assignment_mode = ""
 	pending_item_slot_index = -1
+	pending_item_return_action_index = -1
 	selected_tab_index = get_tab_index("loadout")
-	selected_action_index = assigned_slot
+	selected_action_index = max(return_action_index, 0)
+	tab_action_memory["loadout"] = selected_action_index
 	refresh_menu_data()
 	rebuild_menu()
 
 
 func cancel_assignment(should_rebuild: bool = true) -> void:
+	var was_assigning: bool = is_assigning_spell() or is_assigning_item()
+	var return_action_index: int = pending_spell_return_action_index if is_assigning_spell() else pending_item_return_action_index
 	assignment_mode = ""
 	pending_spell_slot_index = -1
 	pending_item_slot_index = -1
+	pending_spell_return_action_index = -1
+	pending_item_return_action_index = -1
+
+	if was_assigning:
+		selected_tab_index = get_tab_index("loadout")
+		selected_action_index = max(return_action_index, 0)
+		tab_action_memory["loadout"] = selected_action_index
 
 	if should_rebuild:
 		rebuild_menu()
@@ -408,14 +465,14 @@ func rebuild_tabs() -> void:
 		var tab_def: Dictionary = TAB_DEFS[i]
 		var is_selected: bool = i == selected_tab_index
 		var tab_button: Button = Button.new()
-		tab_button.text = str(tab_def.get("icon", "")) + "  " + str(tab_def.get("title", "Tab"))
+		tab_button.text = ("▶  " if is_selected else "    ") + str(tab_def.get("icon", "")) + "  " + str(tab_def.get("title", "Tab"))
 		tab_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		tab_button.custom_minimum_size = Vector2(0.0, 42.0)
 		tab_button.add_theme_font_size_override("font_size", 15)
 		tab_button.add_theme_color_override("font_color", TEXT_MAIN if is_selected else TEXT_SOFT)
 		tab_button.add_theme_stylebox_override(
 			"normal",
-			make_panel_style(CARD_SELECTED_BACKGROUND if is_selected else Color(0.06, 0.072, 0.095, 0.62), CARD_SELECTED_BORDER if is_selected else CARD_BORDER, 2 if is_selected else 1, 10)
+			make_panel_style(ACTIVE_SELECTION_BACKGROUND if is_selected else Color(0.06, 0.072, 0.095, 0.62), ACTIVE_SELECTION_BORDER if is_selected else CARD_BORDER, 3 if is_selected else 1, 10)
 		)
 		tab_button.add_theme_stylebox_override("hover", make_panel_style(Color(0.11, 0.1, 0.17, 0.78), CARD_SELECTED_BORDER, 2, 10))
 		tab_button.pressed.connect(_on_tab_pressed.bind(i))
@@ -504,13 +561,14 @@ func render_items() -> void:
 
 	if is_assigning_item():
 		var directions: Array[String] = ["Up", "Left", "Right", "Down"]
-		add_text_card("Assign Quick Item", "Choose an owned item for D-pad " + directions[pending_item_slot_index] + ".", "🧪", "Enter assigns")
-		add_action_row("Clear this quick slot", {"kind": "assign_item", "item_id": ""}, "Empty")
+		add_text_card("Assign Quick Item", "Choose an owned item for D-pad " + directions[pending_item_slot_index] + ".", "🧪", "A / Enter assigns")
 	else:
 		add_summary_card(["Types " + str(inventory_rows.size()), "Carried " + str(total_count), "D-pad ready"])
 
 	if inventory_rows.size() <= 0:
 		add_text_card("No usable items", "Explore containers, enemies, and hidden supply caches.", "🧪", "Empty")
+		if is_assigning_item():
+			add_action_row("Clear this quick slot", {"kind": "assign_item", "item_id": ""}, "Empty")
 		return
 
 	for row_variant in inventory_rows:
@@ -522,10 +580,18 @@ func render_items() -> void:
 		var title: String = str(row.get("icon", "◇")) + " " + str(row.get("name", item_id.capitalize()))
 		var line: String = title + "  ×" + str(count) + "  ·  " + str(row.get("description", ""))
 		var subtitle: String = "Refills at rest" if bool(row.get("refill_on_rest", false)) else "Consumable"
+		var assigned_label: String = get_item_assignment_label(item_id)
+		if assigned_label != "":
+			subtitle += "  ·  " + assigned_label
 		if is_assigning_item():
 			add_action_row(line, {"kind": "assign_item", "item_id": item_id}, subtitle)
 		else:
 			add_compact_card(line, false, subtitle)
+
+	if is_assigning_item():
+		add_section_header("Slot Options")
+		add_action_row("Clear this quick slot", {"kind": "assign_item", "item_id": ""}, "Empty")
+
 
 
 func render_magic() -> void:
@@ -681,17 +747,23 @@ func add_action_row(line: String, action: Dictionary, subtitle: String = "") -> 
 
 	var button: Button = Button.new()
 	var is_selected: bool = action_index == selected_action_index
-	button.text = (subtitle + "  ·  " if subtitle != "" else "") + line
+	var row_text: String = (subtitle + "  ·  " if subtitle != "" else "") + line
+	button.text = ("▶  " if is_selected else "    ") + row_text
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.custom_minimum_size = Vector2(0.0, 32.0)
-	button.add_theme_font_size_override("font_size", 12)
+	button.custom_minimum_size = Vector2(0.0, 36.0)
+	button.focus_mode = Control.FOCUS_ALL
+	button.add_theme_font_size_override("font_size", 13 if is_selected else 12)
 	button.add_theme_color_override("font_color", TEXT_MAIN if is_selected else TEXT_SOFT)
-	button.add_theme_stylebox_override("normal", make_panel_style(CARD_SELECTED_BACKGROUND if is_selected else CARD_BACKGROUND, CARD_SELECTED_BORDER if is_selected else CARD_BORDER, 2 if is_selected else 1, 10))
-	button.add_theme_stylebox_override("hover", make_panel_style(Color(0.11, 0.1, 0.17, 0.76), CARD_SELECTED_BORDER, 2, 10))
-	button.add_theme_stylebox_override("pressed", make_panel_style(CARD_SELECTED_BACKGROUND, CARD_SELECTED_BORDER, 2, 10))
+	button.add_theme_stylebox_override("normal", make_panel_style(ACTIVE_SELECTION_BACKGROUND if is_selected else CARD_BACKGROUND, ACTIVE_SELECTION_BORDER if is_selected else CARD_BORDER, 3 if is_selected else 1, 10))
+	button.add_theme_stylebox_override("focus", make_panel_style(ACTIVE_SELECTION_BACKGROUND, ACTIVE_SELECTION_BORDER, 3, 10))
+	button.add_theme_stylebox_override("hover", make_panel_style(Color(0.15, 0.105, 0.08, 0.9), ACTIVE_SELECTION_BORDER, 2, 10))
+	button.add_theme_stylebox_override("pressed", make_panel_style(ACTIVE_SELECTION_BACKGROUND, ACTIVE_SELECTION_BORDER, 3, 10))
+	button.mouse_entered.connect(_on_action_row_hovered.bind(action_index))
 	button.pressed.connect(_on_action_row_pressed.bind(action_index))
 	content_box.add_child(button)
+	if is_selected:
+		button.call_deferred("grab_focus")
 
 
 func _on_action_row_pressed(action_index: int) -> void:
@@ -699,7 +771,18 @@ func _on_action_row_pressed(action_index: int) -> void:
 		return
 
 	selected_action_index = action_index
+	tab_action_memory[get_current_tab_id()] = selected_action_index
 	activate_action(selectable_actions[action_index])
+
+
+func _on_action_row_hovered(action_index: int) -> void:
+	if action_index < 0 or action_index >= selectable_actions.size():
+		return
+	if action_index == selected_action_index:
+		return
+	selected_action_index = action_index
+	tab_action_memory[get_current_tab_id()] = selected_action_index
+	rebuild_menu()
 
 
 func add_text_card(title: String, body: String, icon: String = "", subtitle: String = "", selected: bool = false) -> void:
@@ -1048,13 +1131,27 @@ func get_unlock_type_label(unlock_type: String) -> String:
 			return unlock_type.capitalize()
 
 
+func get_item_assignment_label(item_id: String) -> String:
+	var directions: Array[String] = []
+	var slots: Array = menu_data.get("quick_item_slots", [])
+	for slot_variant in slots:
+		if not (slot_variant is Dictionary):
+			continue
+		var slot: Dictionary = slot_variant as Dictionary
+		if str(slot.get("item_id", "")) == item_id:
+			directions.append(str(slot.get("direction", "Slot")))
+	if directions.is_empty():
+		return ""
+	return "Assigned: " + ", ".join(directions)
+
+
 func get_footer_text() -> String:
 	if is_assigning_spell():
-		return "Assigning Hotkey " + str(pending_spell_slot_index + 1) + "   W/S or ↑/↓: spell rows   Enter/click: assign   Esc: cancel"
+		return "LB/RB: tabs  •  D-pad/Stick or W/S: spells  •  A/Enter: assign  •  B/Esc: back"
 	if is_assigning_item():
-		return "Assigning D-pad slot   W/S or ↑/↓: item rows   Enter/click: assign   Esc: cancel"
+		return "LB/RB: tabs  •  D-pad/Stick or W/S: items  •  A/Enter: assign  •  B/Esc: back"
 
-	return "A/D or ←/→: tabs   W/S or ↑/↓: rows   Enter/click: choose   1-8: jump tabs"
+	return "LB/RB or Q/E: tabs  •  D-pad/Stick or W/S: rows  •  A/Enter: choose  •  B/Esc: close"
 
 
 func join_values(values: Variant) -> String:

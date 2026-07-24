@@ -4,7 +4,8 @@ class_name PrototypeCombatSurvivalTrial
 const GoblinScene: PackedScene = preload("res://scenes/actors/enemies/goblin_drone.tscn")
 const GremlinScene: PackedScene = preload("res://scenes/actors/enemies/gremlin_drone.tscn")
 const LootDropperScript = preload("res://scripts/items/loot_dropper.gd")
-const EnemyLootTable: LootTable = preload("res://data/loot/survival_enemy_supplies.tres")
+const GoblinLootTable: LootTable = preload("res://data/loot/survival_enemy_supplies.tres")
+const GremlinLootTable: LootTable = preload("res://data/loot/survival_gremlin_supplies.tres")
 
 @export var opening_objective: String = "Break supply crates, defeat enemies for drops, survive two rounds, then choose one reward from the unlocked chest."
 @export var enable_editor_f8_reset: bool = true
@@ -178,7 +179,7 @@ func spawn_combatant(
 
 	var dropper: LootDropper = LootDropperScript.new() as LootDropper
 	dropper.name = "LootDropper"
-	dropper.loot_table = EnemyLootTable
+	dropper.loot_table = GremlinLootTable if scene == GremlinScene else GoblinLootTable
 	dropper.auto_collect_drops = true
 	dropper.scatter_radius = 0.9
 	dropper.loot_spawned.connect(_on_loot_spawned.bind(display_name))

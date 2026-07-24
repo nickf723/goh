@@ -4,6 +4,7 @@ signal objective_changed(new_objective: String)
 signal flag_changed(flag_name: String, value: bool)
 signal stat_changed(stat_name: String, value: int)
 signal resource_depleted(resource_name: String, amount: int)
+signal rest_resources_restored
 signal player_defeated
 signal save_completed(save_data: Dictionary)
 signal save_loaded(save_data: Dictionary)
@@ -404,6 +405,7 @@ func restore_rest_resources() -> void:
 	set_stat("mana", get_stat("max_mana"))
 	set_stat("stamina", get_stat("max_stamina"))
 	set_stat("stance", get_stat("max_stance"))
+	rest_resources_restored.emit()
 
 
 func apply_rest_unlocks() -> Array[String]:

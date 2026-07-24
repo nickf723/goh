@@ -4,6 +4,7 @@ const PlayerScene: PackedScene = preload("res://scenes/actors/player/player.tscn
 const PickupScene: PackedScene = preload("res://scenes/items/world_item_pickup.tscn")
 const OilFlask: QuickItemDefinition = preload("res://data/items/oil_flask.tres")
 const NoiseMaker: QuickItemDefinition = preload("res://data/items/noise_maker.tres")
+const FullMenuShellScript = preload("res://scripts/ui/full_menu_shell_key_items.gd")
 
 var failures: Array[String] = []
 var original_inventory: Dictionary
@@ -72,9 +73,22 @@ func run_tests() -> void:
 	assert_true(inventory_rows.size() >= 3, "Field Kit receives owned inventory rows")
 	assert_equal(slot_rows.size(), 4, "Field Kit receives four quick-item slots")
 
+	var menu_shell: Node = FullMenuShellScript.new()
+	add_child(menu_shell)
+	menu_shell.call("show_menu", menu_data)
+	menu_shell.set("selected_action_index", 3)
+	menu_shell.call("start_item_assignment", PlayerQuickItemController.SLOT_RIGHT)
+	assert_equal(str(menu_shell.get("assignment_mode")), "item", "belt choice opens item assignment mode")
+	assert_equal(int(menu_shell.get("selected_tab_index")), int(menu_shell.call("get_tab_index", "items")), "belt choice jumps directly to Items")
+	assert_true(str(menu_shell.call("get_item_assignment_label", "oil_flask")).contains("Left"), "Items list reports existing belt assignments")
+	menu_shell.call("cancel_assignment")
+	assert_equal(int(menu_shell.get("selected_tab_index")), int(menu_shell.call("get_tab_index", "loadout")), "Cancel returns one level to Loadout")
+	assert_equal(int(menu_shell.get("selected_action_index")), 3, "Cancel restores the originating belt row")
+
 	restore_state()
 	player.queue_free()
 	pickup.queue_free()
+	menu_shell.queue_free()
 
 	if failures.is_empty():
 		print("FIELD_INVENTORY_SMOKE_TEST: PASS")

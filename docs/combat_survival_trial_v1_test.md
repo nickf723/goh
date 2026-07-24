@@ -6,7 +6,7 @@
 
 ## Purpose
 
-Verify the first complete player survival exchange: readable enemy windups, directional Guard, Perfect Guard timing, stamina and stance pressure, guard break, Dodge invulnerability, hit reactions, player defeat, enemy stance break, critical punishment, resource recovery, and the four-slot quick-item belt's committed Healing Flask use.
+Verify the first complete survival-and-supplies exchange: world pickup collection, saved inventory counts, paused Field Kit assignment, four direct quick-item slots, committed Healing Flask use, thrown Oil and Noise Maker delivery, readable enemy attacks, directional Guard, Dodge, stamina and stance recovery, stance break, critical punishment, and defeat/reset flow.
 
 ## Controls
 
@@ -14,54 +14,68 @@ Verify the first complete player survival exchange: readable enemy windups, dire
 |---|---|---|
 | Move | WASD | Left stick |
 | Camera | Mouse | Right stick |
+| Interact / collect | E | Face B |
+| Full Field Kit | Tab / M | Menu / Start |
+| Menu navigate | WASD / arrows | D-pad |
+| Menu choose / back | Enter / Esc | Confirm / Cancel |
 | Light attack | Left mouse / J | Left shoulder |
 | Heavy attack | Mouse 4 / K | Right shoulder |
 | Guard | F / Mouse 5 | Left face (Switch Y / Xbox X) |
 | Dodge | C | Face A |
 | Quick Item Up | H / Up arrow | D-pad Up |
+| Other quick slots | Arrow directions | D-pad directions |
 | Lock-on | T | Right-stick click |
 | Reset trial | F8 in editor | — |
 
-The four quick-item slots use D-pad Up, Left, Right, and Down, with the arrow keys as keyboard mirrors. Only Up is equipped in this slice. While Focus is open, those same directions navigate the spell menu instead of using items. Focus and Cast keep their established trigger bindings. Guard deliberately uses the free physical left-face slot (Switch Y / Xbox X) so Jump remains on the top face button and Light and Heavy remain a consistent shoulder pair.
+Outside the Field Kit and Focus, the D-pad uses items directly. While Focus is open it navigates spells; while the paused Field Kit is open it navigates menu rows and tabs.
 
-## Test route
+## Inventory and assignment route
 
-1. Launch the scene and confirm the compact HUD reports Round 1, one enemy, Health, Stamina, Stance, and `DEFENSE READY`.
-2. Confirm the compact bottom-right belt shows `Flask ×3` in Up and `Empty` in the other three slots.
-3. Let the Goblin approach without defending. Confirm the red windup becomes a gold impact, Grace loses Health and Stance, her current action is interrupted, and she recoils briefly.
-4. Create space and press D-pad Up or H. Confirm Grace slows, a small flask moves from her hand toward her face, the use meter fills for about 0.9 seconds, two Health are restored only at completion, and the charge count falls to two.
-5. Begin another Flask use and let the Goblin hit Grace before it completes. Confirm the use is cancelled, no Health is restored, and no charge is consumed.
-6. Restore full Health and attempt another Flask. Confirm it does not begin and no charge is wasted.
-7. Reset with F8. Confirm the Flask refills to three charges together with Health, Mana, Stamina, and Stance.
-8. Hold Guard well before the windup. Confirm the blue guard surface appears, the hit removes Stamina and Stance but no Health, and both resources stop regenerating until Guard is released.
-9. Release Guard. Confirm Stamina waits for its short delay and Stance waits for its longer delay before both recover to their maximums.
-10. Tap Guard during the final red windup. Confirm the shield flashes gold, the HUD reports `Perfect Guard`, Grace spends no Health, Stamina, or Stance, and the enemy is staggered and loses Stance.
-11. Break the enemy's Stance with attacks or Perfect Guards. Confirm its critical window opens and a melee weapon hit converts that opening into Health damage.
-12. Hold Guard through repeated attacks until Stamina or Stance reaches zero. Confirm the shield flashes red, Guard ends, Grace is pushed back and staggered, and she cannot attack, cast, dodge, guard, or use an item during the break.
-13. Face away from the enemy while guarding. Confirm a rear hit bypasses Guard and damages Grace.
-14. Dodge through an impact. Confirm no Health or Stance is lost during the invulnerability window.
-15. Defeat the Round 1 Goblin. Confirm Round 2 spawns a Goblin and Gremlin without healing Grace or refilling Flask charges.
-16. Use Lock-on, Dodge, Guard, attacks, and Flask timing to manage both directions. Confirm directional Guard does not protect Grace from an attacker behind her.
-17. Defeat both enemies. Confirm the objective changes to trial complete and no further wave spawns.
-18. Allow Grace's Health to reach zero in a fresh run. Confirm defeat locks actions and F8 restores the Player transform, all rest resources, defense state, item state and charges, recovery timers, and Round 1.
+1. Launch the scene. Confirm the compact belt shows `Flask ×3` in Up and empty Left, Right, and Down slots.
+2. Collect the dark Oil Flask cache on Grace's left and the orange Noise Maker cache on her right. Confirm each pickup disappears and the trial HUD reports `OIL ×2` and `NOISE ×2`.
+3. Open the Field Kit with Tab, M, or the controller Menu button.
+4. On Loadout, select the D-pad Left item slot. The menu moves to Items in assignment mode.
+5. Assign Oil Flask. Return to Loadout and assign Noise Maker to D-pad Right.
+6. Close the menu. Confirm the compact belt now shows Flask Up, Oil Left, Noise Right, and the correct shared counts.
+7. Throw Oil with D-pad Left. Confirm Grace performs the short committed use, a dark flask follows the current aim, an oil patch appears where it lands, and Oil decreases to one.
+8. Move an enemy through the Oil and hit the patch or oily enemy with Fire. Confirm the existing oily + fire reaction can ignite it.
+9. Throw the Noise Maker with D-pad Right. Confirm an orange projectile lands, expands a visible sound pulse, emits shared distraction evidence, and Noise decreases to one.
+10. For the complete investigation response, carry a Noise Maker into the Perception and Investigation Laboratory and throw it out of sight of an observer. The observer should hear the shared stimulus at the landing point rather than at Grace's position.
+11. Reopen the Field Kit and reassign either item to Down. Confirm the belt changes immediately without changing inventory counts.
+12. Clear a quick slot from assignment mode. Confirm the slot becomes empty and no item is lost.
+
+## Survival route
+
+1. Let the Round 1 Goblin hit Grace. Confirm Health and Stance fall and any active item use is interrupted without consuming stock.
+2. Create space and use the Healing Flask. Confirm Grace slows, the bottle moves toward her face, two Health restore only after about 0.9 seconds, and Flask stock falls by one.
+3. Guard normally, Perfect Guard late in the red windup, Dodge through an impact, and break enemy Stance.
+4. Defeat Round 1. Confirm Round 2 spawns two enemies without restoring Health or consumable stock.
+5. Defeat both enemies and confirm the objective reports completion.
+6. Press F8. Confirm Health, Mana, Stamina, Stance, and Flask refill; Oil and Noise return to zero; both supply pickups reappear; and Round 1 restarts.
+
+## Persistence contract
+
+- Inventory counts and four assigned item IDs live in `GameState`, not individual belt slots.
+- A successful use consumes shared stock only after its committed effect or delivery succeeds.
+- Rest refills definitions marked refillable, currently Healing Flask, without manufacturing Oil or Noise Makers.
+- Saved games include inventory, belt assignments, and unique collected-pickup IDs.
+- Two slots assigned to the same ordinary item share one count.
 
 ## Expected presentation
 
-- Guard is a translucent blue surface directly in front of Grace.
-- The Perfect Guard window briefly enlarges the surface and a successful deflection flashes gold.
-- A normal blocked hit flashes blue and produces a short recoil.
-- Guard break and direct damage flash red.
-- Enemy red/gold telegraphs remain the primary timing language.
-- The four-slot item belt stays compact in the bottom-right corner and shows the active use progress without covering play.
-- The Healing Flask is represented by a small procedural bottle in Grace's hand during the committed use.
-- The trial HUD remains confined to a compact panel and does not cover the center of the arena.
+- Pickups rotate and hover with a colored item label.
+- The bottom-right quick belt remains compact and updates immediately after collection, use, or assignment.
+- The Field Kit Items tab shows item descriptions, quantities, refill rules, and an explicit Clear Slot choice.
+- Thrown items follow the camera or lock-on aim.
+- Oil reuses the existing reactive Status Surface rather than creating a second elemental reaction path.
+- Noise Maker reuses the shared perception stimulus manager and shows a brief expanding sound ring.
+- Enemy red/gold telegraphs remain the primary defense timing language.
 
 ## Known v1 limits
 
-- Guard uses a universal magical-metal surface rather than weapon-specific block animations.
-- Guarding is directional but does not yet rotate Grace toward nearby attackers automatically.
-- Perfect Guard timing and stamina/stance costs are first-pass tuning values.
-- Healing Flask is the only authored consumable; inventory assignment, pickups, persistent quantities, and production animations are deferred.
-- Quick-item effects currently restore one runtime resource; broader item behaviors will extend the shared definition/controller contract.
-- Bespoke hazards and bosses that call `GameState.take_damage()` directly still need to opt into the common defense resolver.
-- Controller rumble, hit stop, production animation, audio, and accessibility timing assists are deferred.
+- Healing Flask, Oil Flask, and Noise Maker are the first three authored quick items.
+- The survival-trial combat brains do not investigate perception stimuli; use the Perception Laboratory for the full Noise Maker AI response.
+- Enemy drop tables, treasure-container opening, crafting, shops, item sorting, and pickup animation are deferred.
+- Production levels must give unique persistent pickups a stable `pickup_id`; the trial caches are deliberately resettable.
+- Oil uses a temporary scaled instance of the existing prototype oil patch.
+- Controller rumble, final animation, audio, icons, and item-belt accessibility options are deferred.

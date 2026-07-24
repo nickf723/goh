@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="StructuralMaterialProfile" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/physics/structural_material_profile.gd" id="1_profile"]
+[ext_resource type="Resource" path="res://data/materials/wood_physical_profile.tres" id="2_physical"]
+
+[resource]
+script = ExtResource("1_profile")
+material_id = "wood_support"
+display_name = "Load-bearing Wood"
+physical_material = ExtResource("2_physical")
+base_capacity_n = 550.0
+minimum_damage_multiplier = 0.1
+cold_capacity_multiplier = 0.58
+overload_grace_seconds = 0.14
+stress_per_damage_point_n = 140.0
+stress_per_stance_point_n = 105.0
+stress_per_knockback_n = 60.0
+force_tag_multiplier = 1.35
+heavy_tag_multiplier = 1.18
+damage_per_payload_point = 0.04
+burnable = true
+burn_weakening_per_second = 0.7
+burned_capacity_multiplier = 0.06
+brittle_temperature_c = -18.0
+intact_color = Color(0.46, 0.25, 0.09, 1)
+stressed_color = Color(1, 0.46, 0.08, 1)
+failed_color = Color(0.12, 0.07, 0.035, 1)

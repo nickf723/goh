@@ -73,7 +73,7 @@ func spawn_break_burst() -> void:
 	fragment_material.albedo_color = Color(0.34, 0.18, 0.07)
 	fragment_material.roughness = 0.86
 	fragment_mesh.material = fragment_material
-	particles.draw_pass_1 = fragment_mesh
+	particles.mesh = fragment_mesh
 	var world_parent: Node = get_tree().current_scene
 	world_parent.add_child(particles)
 	particles.global_position = global_position + Vector3.UP * 0.65

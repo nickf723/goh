@@ -16,12 +16,12 @@ Verify the first complete player survival exchange: readable enemy windups, dire
 | Camera | Mouse | Right stick |
 | Light attack | Left mouse / J | Left shoulder |
 | Heavy attack | Mouse 4 / K | Right shoulder |
-| Guard | F / Mouse 5 | Face X |
+| Guard | F / Mouse 5 | Left face (Switch Y / Xbox X) |
 | Dodge | C | Face A |
 | Lock-on | T | Right-stick click |
 | Reset trial | F8 in editor | — |
 
-Focus and Cast keep their established trigger bindings. Guard deliberately uses the free controller face X slot so Light and Heavy remain a consistent shoulder pair.
+Focus and Cast keep their established trigger bindings. Guard deliberately uses the free physical left-face slot (Switch Y / Xbox X) so Jump remains on the top face button and Light and Heavy remain a consistent shoulder pair.
 
 ## Test route
 

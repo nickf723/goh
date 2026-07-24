@@ -39,10 +39,14 @@ var pending_item_slot_index: int = -1
 var pending_spell_return_action_index: int = -1
 var pending_item_return_action_index: int = -1
 var tab_action_memory: Dictionary = {}
+var action_grid_columns: int = 1
+var action_layout_mode: String = "list"
+var pending_inventory_item_id: String = ""
+var pending_item_grid_return_action_index: int = -1
 
 var title_label: Label
 var subtitle_label: Label
-var tab_box: VBoxContainer
+var tab_box: HBoxContainer
 var content_title_label: Label
 var content_box: VBoxContainer
 var footer_label: Label
@@ -83,7 +87,7 @@ func handle_menu_input(event: InputEvent) -> bool:
 		return false
 
 	if event.is_action_pressed("ui_cancel"):
-		if is_assigning_spell() or is_assigning_item():
+		if is_assignment_active():
 			cancel_assignment()
 			return true
 		return false
@@ -99,39 +103,37 @@ func handle_menu_input(event: InputEvent) -> bool:
 			JOY_BUTTON_RIGHT_SHOULDER:
 				select_tab(selected_tab_index + 1)
 				return true
-			JOY_BUTTON_DPAD_LEFT, JOY_BUTTON_DPAD_RIGHT:
+			JOY_BUTTON_DPAD_LEFT:
+				select_action_direction(-1, 0)
+				return true
+			JOY_BUTTON_DPAD_RIGHT:
+				select_action_direction(1, 0)
 				return true
 			_:
 				pass
 
 	if event.is_action_pressed("ui_up"):
-		select_action(selected_action_index - 1)
+		select_action_direction(0, -1)
 		return true
 
 	if event.is_action_pressed("ui_down"):
-		select_action(selected_action_index + 1)
+		select_action_direction(0, 1)
 		return true
 
 	if event.is_action_pressed("ui_accept"):
 		activate_selected_action()
 		return true
 
-	if event is InputEventJoypadMotion:
-		var joy_motion: InputEventJoypadMotion = event as InputEventJoypadMotion
-		if joy_motion.axis == JOY_AXIS_LEFT_X or joy_motion.axis == JOY_AXIS_RIGHT_X:
-			return true
-
 	if event.is_action_pressed("ui_left"):
-		select_tab(selected_tab_index - 1)
+		select_action_direction(-1, 0)
 		return true
 
 	if event.is_action_pressed("ui_right"):
-		select_tab(selected_tab_index + 1)
+		select_action_direction(1, 0)
 		return true
 
 	if event is InputEventKey:
 		var key_event: InputEventKey = event as InputEventKey
-
 		if not key_event.pressed or key_event.echo:
 			return true
 
@@ -152,16 +154,20 @@ func handle_menu_input(event: InputEvent) -> bool:
 				select_tab(6)
 			KEY_8:
 				select_tab(7)
+			KEY_Q:
+				select_tab(selected_tab_index - 1)
+			KEY_E:
+				select_tab(selected_tab_index + 1)
 			KEY_W, KEY_UP:
-				select_action(selected_action_index - 1)
+				select_action_direction(0, -1)
 			KEY_S, KEY_DOWN:
-				select_action(selected_action_index + 1)
+				select_action_direction(0, 1)
+			KEY_A, KEY_LEFT:
+				select_action_direction(-1, 0)
+			KEY_D, KEY_RIGHT:
+				select_action_direction(1, 0)
 			KEY_ENTER, KEY_KP_ENTER, KEY_SPACE:
 				activate_selected_action()
-			KEY_A, KEY_Q, KEY_LEFT:
-				select_tab(selected_tab_index - 1)
-			KEY_D, KEY_E, KEY_RIGHT:
-				select_tab(selected_tab_index + 1)
 			_:
 				pass
 		return true
@@ -176,7 +182,7 @@ func handle_menu_input(event: InputEvent) -> bool:
 
 
 func select_tab(index: int) -> void:
-	if is_assigning_spell() or is_assigning_item():
+	if is_assignment_active():
 		return
 	remember_current_action()
 	selected_tab_index = (index + TAB_DEFS.size()) % TAB_DEFS.size()
@@ -192,6 +198,40 @@ func select_action(index: int) -> void:
 	selected_action_index = (index + selectable_actions.size()) % selectable_actions.size()
 	tab_action_memory[get_current_tab_id()] = selected_action_index
 	rebuild_menu()
+
+
+func select_action_direction(horizontal: int, vertical: int) -> void:
+	if selectable_actions.is_empty():
+		return
+
+	if action_layout_mode == "cross":
+		var cross_target: int = selected_action_index
+		if horizontal < 0:
+			cross_target = 1
+		elif horizontal > 0:
+			cross_target = 2
+		elif vertical < 0:
+			cross_target = 0
+		elif vertical > 0:
+			cross_target = 3
+		select_action(cross_target)
+		return
+
+	if action_grid_columns <= 1:
+		if vertical != 0:
+			select_action(selected_action_index + vertical)
+		return
+
+	var row: int = selected_action_index / action_grid_columns
+	var column: int = selected_action_index % action_grid_columns
+	var target_row: int = row + vertical
+	var target_column: int = column + horizontal
+	target_row = max(target_row, 0)
+	target_column = clamp(target_column, 0, action_grid_columns - 1)
+	var target_index: int = target_row * action_grid_columns + target_column
+	if target_index >= selectable_actions.size():
+		target_index = selectable_actions.size() - 1
+	select_action(target_index)
 
 
 func get_current_tab_id() -> String:
@@ -356,14 +396,14 @@ func get_tab_index(tab_id: String) -> int:
 
 func build_layout() -> void:
 	var margin: MarginContainer = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_right", 22)
 	margin.add_theme_constant_override("margin_bottom", 14)
 	add_child(margin)
 
 	var root_box: VBoxContainer = VBoxContainer.new()
-	root_box.add_theme_constant_override("separation", 12)
+	root_box.add_theme_constant_override("separation", 10)
 	margin.add_child(root_box)
 
 	var header_box: HBoxContainer = HBoxContainer.new()
@@ -375,56 +415,50 @@ func build_layout() -> void:
 	header_box.add_child(header_text_box)
 
 	title_label = Label.new()
-	title_label.text = "Grace Field Kit"
+	title_label.text = "GRACE'S FIELD KIT"
 	title_label.add_theme_color_override("font_color", TEXT_MAIN)
-	title_label.add_theme_font_size_override("font_size", 24)
+	title_label.add_theme_font_size_override("font_size", 27)
 	header_text_box.add_child(title_label)
 
 	subtitle_label = Label.new()
-	subtitle_label.text = "Loadout, magic, relics, growth, notes, and rules."
+	subtitle_label.text = "Equipment  •  Magic  •  Supplies  •  Records"
 	subtitle_label.add_theme_color_override("font_color", TEXT_SOFT)
 	subtitle_label.add_theme_font_size_override("font_size", 12)
 	header_text_box.add_child(subtitle_label)
 
 	var close_label: Label = Label.new()
-	close_label.text = "Tab / M / Esc: close"
+	close_label.text = "Tab / M / Menu: close"
 	close_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	close_label.add_theme_color_override("font_color", TEXT_DIM)
 	close_label.add_theme_font_size_override("font_size", 12)
 	header_box.add_child(close_label)
 
-	var body_box: HBoxContainer = HBoxContainer.new()
-	body_box.add_theme_constant_override("separation", 14)
-	body_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root_box.add_child(body_box)
+	var tab_panel: PanelContainer = PanelContainer.new()
+	tab_panel.add_theme_stylebox_override("panel", make_panel_style(SIDE_BACKGROUND, CARD_BORDER, 1, 12))
+	root_box.add_child(tab_panel)
 
-	var side_panel: PanelContainer = PanelContainer.new()
-	side_panel.custom_minimum_size = Vector2(190.0, 0.0)
-	side_panel.add_theme_stylebox_override("panel", make_panel_style(SIDE_BACKGROUND, CARD_BORDER, 1, 14))
-	body_box.add_child(side_panel)
+	var tab_margin: MarginContainer = MarginContainer.new()
+	tab_margin.add_theme_constant_override("margin_left", 8)
+	tab_margin.add_theme_constant_override("margin_top", 7)
+	tab_margin.add_theme_constant_override("margin_right", 8)
+	tab_margin.add_theme_constant_override("margin_bottom", 7)
+	tab_panel.add_child(tab_margin)
 
-	var side_margin: MarginContainer = MarginContainer.new()
-	side_margin.add_theme_constant_override("margin_left", 9)
-	side_margin.add_theme_constant_override("margin_top", 9)
-	side_margin.add_theme_constant_override("margin_right", 9)
-	side_margin.add_theme_constant_override("margin_bottom", 9)
-	side_panel.add_child(side_margin)
-
-	tab_box = VBoxContainer.new()
-	tab_box.add_theme_constant_override("separation", 8)
-	side_margin.add_child(tab_box)
+	tab_box = HBoxContainer.new()
+	tab_box.add_theme_constant_override("separation", 7)
+	tab_margin.add_child(tab_box)
 
 	var content_panel: PanelContainer = PanelContainer.new()
 	content_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	content_panel.add_theme_stylebox_override("panel", make_panel_style(Color(0.04, 0.05, 0.068, 0.74), CARD_BORDER, 1, 14))
-	body_box.add_child(content_panel)
+	content_panel.add_theme_stylebox_override("panel", make_panel_style(Color(0.035, 0.045, 0.062, 0.9), CARD_BORDER, 1, 14))
+	root_box.add_child(content_panel)
 
 	var content_margin: MarginContainer = MarginContainer.new()
-	content_margin.add_theme_constant_override("margin_left", 13)
-	content_margin.add_theme_constant_override("margin_top", 12)
-	content_margin.add_theme_constant_override("margin_right", 13)
-	content_margin.add_theme_constant_override("margin_bottom", 12)
+	content_margin.add_theme_constant_override("margin_left", 18)
+	content_margin.add_theme_constant_override("margin_top", 14)
+	content_margin.add_theme_constant_override("margin_right", 18)
+	content_margin.add_theme_constant_override("margin_bottom", 14)
 	content_panel.add_child(content_margin)
 
 	var content_root: VBoxContainer = VBoxContainer.new()
@@ -433,25 +467,29 @@ func build_layout() -> void:
 
 	content_title_label = Label.new()
 	content_title_label.text = "Loadout"
-	content_title_label.add_theme_color_override("font_color", TEXT_MAIN)
+	content_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	content_title_label.add_theme_color_override("font_color", ACTIVE_SELECTION_BORDER)
 	content_title_label.add_theme_font_size_override("font_size", 20)
 	content_root.add_child(content_title_label)
 
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content_root.add_child(scroll)
 
 	content_box = VBoxContainer.new()
-	content_box.add_theme_constant_override("separation", 7)
+	content_box.add_theme_constant_override("separation", 10)
 	content_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(content_box)
 
 	footer_label = Label.new()
 	footer_label.text = get_footer_text()
-	footer_label.add_theme_color_override("font_color", TEXT_DIM)
-	footer_label.add_theme_font_size_override("font_size", 11)
+	footer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	footer_label.add_theme_color_override("font_color", TEXT_SOFT)
+	footer_label.add_theme_font_size_override("font_size", 12)
 	root_box.add_child(footer_label)
+
 
 
 func rebuild_menu() -> void:
@@ -467,18 +505,20 @@ func rebuild_tabs() -> void:
 		var tab_def: Dictionary = TAB_DEFS[i]
 		var is_selected: bool = i == selected_tab_index
 		var tab_button: Button = Button.new()
-		tab_button.text = ("▶  " if is_selected else "    ") + str(tab_def.get("icon", "")) + "  " + str(tab_def.get("title", "Tab"))
-		tab_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		tab_button.custom_minimum_size = Vector2(0.0, 42.0)
-		tab_button.add_theme_font_size_override("font_size", 15)
+		tab_button.text = str(tab_def.get("icon", "")) + "\n" + str(tab_def.get("title", "Tab"))
+		tab_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		tab_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab_button.custom_minimum_size = Vector2(96.0, 58.0)
+		tab_button.add_theme_font_size_override("font_size", 13)
 		tab_button.add_theme_color_override("font_color", TEXT_MAIN if is_selected else TEXT_SOFT)
 		tab_button.add_theme_stylebox_override(
 			"normal",
-			make_panel_style(ACTIVE_SELECTION_BACKGROUND if is_selected else Color(0.06, 0.072, 0.095, 0.62), ACTIVE_SELECTION_BORDER if is_selected else CARD_BORDER, 3 if is_selected else 1, 10)
+			make_panel_style(ACTIVE_SELECTION_BACKGROUND if is_selected else Color(0.045, 0.06, 0.083, 0.72), ACTIVE_SELECTION_BORDER if is_selected else CARD_BORDER, 3 if is_selected else 1, 9)
 		)
-		tab_button.add_theme_stylebox_override("hover", make_panel_style(Color(0.11, 0.1, 0.17, 0.78), CARD_SELECTED_BORDER, 2, 10))
+		tab_button.add_theme_stylebox_override("hover", make_panel_style(Color(0.13, 0.105, 0.08, 0.9), ACTIVE_SELECTION_BORDER, 2, 9))
 		tab_button.pressed.connect(_on_tab_pressed.bind(i))
 		tab_box.add_child(tab_button)
+
 
 
 func _on_tab_pressed(index: int) -> void:
@@ -487,6 +527,8 @@ func _on_tab_pressed(index: int) -> void:
 
 func rebuild_content() -> void:
 	selectable_actions.clear()
+	action_grid_columns = 1
+	action_layout_mode = "list"
 	clear_children(content_box)
 
 	var tab_def: Dictionary = TAB_DEFS[selected_tab_index]
@@ -1153,7 +1195,7 @@ func get_footer_text() -> String:
 	if is_assigning_item():
 		return "D-pad/Stick or W/S: items  •  A/Enter: assign  •  B/Esc: back"
 
-	return "LB/RB or Q/E: tabs  •  D-pad/Stick or W/S: rows  •  A/Enter: choose  •  B/Esc: close"
+	return "LB/RB or Q/E: tabs  •  D-pad/Stick or WASD: move  •  A/Enter: choose  •  B/Esc: back"
 
 
 func join_values(values: Variant) -> String:

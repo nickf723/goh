@@ -19,7 +19,7 @@ func _ready() -> void:
 	add_to_group("loot_dropper")
 	add_to_group("debuggable")
 	if drop_on_health_depleted:
-		call_deferred("bind_hit_receiver")
+		bind_hit_receiver()
 
 
 func bind_hit_receiver() -> void:

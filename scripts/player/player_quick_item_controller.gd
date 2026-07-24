@@ -193,7 +193,9 @@ func launch_delivery_item(item: QuickItemDefinition) -> bool:
 		return false
 	var throw_direction: Vector3 = -actor.global_transform.basis.z
 	if actor.has_method("get_lock_on_cast_direction"):
-		throw_direction = actor.call("get_lock_on_cast_direction", actor.global_position + Vector3.UP)
+		var direction_result: Variant = actor.call("get_lock_on_cast_direction", actor.global_position + Vector3.UP)
+		if direction_result is Vector3:
+			throw_direction = direction_result as Vector3
 	var launched: bool = bool(delivery.call("launch", actor, item, throw_direction))
 	if not launched:
 		delivery.queue_free()

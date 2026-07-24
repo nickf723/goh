@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StructuralMaterialProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/physics/structural_material_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+material_id = "masonry_joint"
+display_name = "Aged Masonry Joint"
+base_capacity_n = 1050.0
+minimum_damage_multiplier = 0.08
+cold_capacity_multiplier = 0.62
+overload_grace_seconds = 0.08
+stress_per_damage_point_n = 190.0
+stress_per_stance_point_n = 165.0
+stress_per_knockback_n = 85.0
+force_tag_multiplier = 1.45
+heavy_tag_multiplier = 1.3
+damage_per_payload_point = 0.065
+burnable = false
+brittle_temperature_c = -12.0
+intact_color = Color(0.42, 0.39, 0.36, 1)
+stressed_color = Color(1, 0.5, 0.1, 1)
+failed_color = Color(0.16, 0.14, 0.13, 1)

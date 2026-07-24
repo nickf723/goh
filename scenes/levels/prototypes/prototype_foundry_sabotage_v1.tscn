@@ -1,0 +1,98 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_foundry_sabotage.gd" id="1_encounter"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/perception/perception_stimulus_manager.gd" id="4_stimuli"]
+[ext_resource type="Script" path="res://scripts/airflow/airflow_manager.gd" id="5_airflow"]
+
+[sub_resource type="Environment" id="Environment_foundry"]
+background_mode = 1
+background_color = Color(0.015, 0.012, 0.012, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.42, 0.24, 0.13, 1)
+ambient_light_energy = 0.52
+reflected_light_source = 2
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.2, 0.11, 0.06, 1)
+fog_light_energy = 0.42
+fog_density = 0.009
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_hud"]
+bg_color = Color(0.018, 0.018, 0.022, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.48, 0.12, 0.9)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="BoxShape3D" id="BoxShape_exit"]
+size = Vector3(4, 3, 2)
+
+[node name="PrototypeFoundrySabotage" type="Node3D"]
+script = ExtResource("1_encounter")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_foundry")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -28, 0)
+light_color = Color(1, 0.5, 0.22, 1)
+light_energy = 1.1
+shadow_enabled = true
+
+[node name="FurnaceGlow" type="OmniLight3D" parent="."]
+position = Vector3(0, 3.5, -4)
+light_color = Color(1, 0.2, 0.03, 1)
+light_energy = 4.2
+omni_range = 18.0
+shadow_enabled = true
+
+[node name="PerceptionStimulusManager" type="Node" parent="."]
+script = ExtResource("4_stimuli")
+
+[node name="AirflowManager" type="Node" parent="."]
+script = ExtResource("5_airflow")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, 13)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="EncounterHUD" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="Panel" type="PanelContainer" parent="EncounterHUD"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -610.0
+offset_top = 18.0
+offset_right = -18.0
+offset_bottom = 92.0
+theme_override_styles/panel = SubResource("StyleBox_hud")
+
+[node name="Margin" type="MarginContainer" parent="EncounterHUD/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="Readout" type="Label" parent="EncounterHUD/Panel/Margin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.78, 0.38, 1)
+theme_override_font_sizes/font_size = 13
+text = "FOUNDRY SABOTAGE READY"
+
+[node name="EscapeZone" type="Area3D" parent="."]
+position = Vector3(0, 1.5, -15)
+monitoring = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EscapeZone"]
+shape = SubResource("BoxShape_exit")

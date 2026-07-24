@@ -28,12 +28,14 @@ func receive_payload(payload: DamagePayload) -> Dictionary:
 	var thermal_result: Dictionary = apply_thermal(target, payload)
 	var combustion_result: Dictionary = apply_combustion(target, payload)
 	var electrical_result: Dictionary = apply_electrical_material_response(target, payload)
+	var structural_result: Dictionary = apply_structural_integrity(target, payload)
 
 	var reaction_messages: Array[String] = resolve_reactions(target, payload)
 	var result: Dictionary = apply_hit(target, payload)
 	append_component_result(target, result, reaction_messages, thermal_result)
 	append_component_result(target, result, reaction_messages, combustion_result)
 	append_component_result(target, result, reaction_messages, electrical_result)
+	append_component_result(target, result, reaction_messages, structural_result)
 
 	return combine_messages(result, reaction_messages)
 
@@ -90,6 +92,10 @@ func apply_combustion(target: Node, payload: DamagePayload) -> Dictionary:
 
 func apply_electrical_material_response(target: Node, payload: DamagePayload) -> Dictionary:
 	return call_payload_component(target, "ElectricalMaterialResponse", payload)
+
+
+func apply_structural_integrity(target: Node, payload: DamagePayload) -> Dictionary:
+	return call_payload_component(target, "StructuralIntegrity", payload)
 
 
 func call_payload_component(

@@ -11,6 +11,7 @@ signal resource_recovered(resource_name: String, amount: int)
 @export_group("Stance Recovery")
 @export_range(0.0, 8.0, 0.05) var stance_regeneration_delay: float = 2.0
 @export_range(0.5, 15.0, 0.1) var stance_empty_to_full_seconds: float = 4.0
+@export var pause_stance_during_defense: bool = true
 
 var stamina_delay_remaining: float = 0.0
 var stance_delay_remaining: float = 0.0
@@ -52,7 +53,7 @@ func advance_resources(delta: float) -> void:
 			delta
 		)
 
-	if stance_delay_remaining <= 0.0:
+	if stance_delay_remaining <= 0.0 and can_regenerate_stance():
 		stance_accumulator = recover_resource(
 			"stance",
 			stance_empty_to_full_seconds,
@@ -70,7 +71,15 @@ func can_regenerate_stamina() -> bool:
 		or action_state.is_casting
 		or action_state.is_dodging
 		or action_state.is_manipulating
+		or action_state.is_guarding
+		or action_state.is_staggered
 	)
+
+
+func can_regenerate_stance() -> bool:
+	if not pause_stance_during_defense or action_state == null:
+		return true
+	return not (action_state.is_guarding or action_state.is_staggered)
 
 
 func recover_resource(
@@ -126,6 +135,6 @@ func get_debug_data() -> Dictionary:
 		"stamina_regenerating": stamina_delay_remaining <= 0.0 and can_regenerate_stamina(),
 		"stamina_empty_to_full_seconds": stamina_empty_to_full_seconds,
 		"stance_delay": snapped(stance_delay_remaining, 0.01),
-		"stance_regenerating": stance_delay_remaining <= 0.0,
+		"stance_regenerating": stance_delay_remaining <= 0.0 and can_regenerate_stance(),
 		"stance_empty_to_full_seconds": stance_empty_to_full_seconds,
 	}

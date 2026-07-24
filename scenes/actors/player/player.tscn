@@ -16,6 +16,7 @@
 [ext_resource type="Script" path="res://scripts/airflow/airflow_response.gd" id="14_airflow"]
 [ext_resource type="Script" path="res://scripts/player/metal_tether_spell_controller.gd" id="15_metal_tether"]
 [ext_resource type="Script" path="res://scripts/player/player_resource_controller.gd" id="16_resources"]
+[ext_resource type="Script" path="res://scripts/player/player_defense_controller.gd" id="17_defense"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -99,6 +100,9 @@ metadata/_custom_type_script = "uid://yxbkrqi8ju8j"
 
 [node name="PlayerResourceController" type="Node" parent="."]
 script = ExtResource("16_resources")
+
+[node name="PlayerDefenseController" type="Node" parent="."]
+script = ExtResource("17_defense")
 
 [node name="PlayerDodgeController" type="Node" parent="." unique_id=1337799175]
 script = ExtResource("8_fp13k")

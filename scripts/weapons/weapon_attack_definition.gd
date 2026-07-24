@@ -104,6 +104,8 @@ func build_payload(weapon: WeaponDefinition) -> DamagePayload:
 
 	resolved_payload.amount = max(0, roundi(float(base_damage) * max(damage_multiplier, 0.0)))
 	resolved_payload.stance_damage = max(0, roundi(float(base_stance_damage) * max(stance_multiplier, 0.0)))
+	if weapon != null:
+		resolved_payload.critical_multiplier = maxf(weapon.critical_multiplier, 1.0)
 	resolved_payload.knockback_strength *= max(knockback_multiplier, 0.0)
 	resolved_payload.knockback_up_strength += knockback_up_add
 	resolved_payload.hit_type = "melee"

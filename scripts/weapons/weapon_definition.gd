@@ -33,6 +33,7 @@ var weapon_class: String = "sword"
 @export var cone_angle_degrees: float = 85.0
 @export var max_targets: int = 3
 @export var stamina_cost: int = 0
+@export_range(1.0, 6.0, 0.05) var critical_multiplier: float = 2.0
 
 @export_group("Moveset")
 @export var moveset: WeaponMovesetDefinition
@@ -131,6 +132,8 @@ func get_combat_summary() -> String:
 		+ str(damage)
 		+ " | stance "
 		+ str(stance_damage)
+		+ " | crit x"
+		+ str(snapped(critical_multiplier, 0.05))
 		+ " | speed "
 		+ str(attack_speed)
 		+ " | "

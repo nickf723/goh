@@ -408,9 +408,11 @@ func execute_current_attack_hit() -> void:
 
 	var targets: Array[Node] = find_targets(current_attack)
 	var messages: Array[String] = []
+	var critical_landed: bool = false
 
 	for target: Node in targets:
 		var result: Dictionary = send_payload_to_target(target, payload)
+		critical_landed = critical_landed or bool(result.get("critical", false))
 
 		if result.has("message") and result["message"] != "":
 			messages.append(str(result["message"]))
@@ -420,8 +422,15 @@ func execute_current_attack_hit() -> void:
 
 	if targets.size() > 0:
 		HitStop.request(
-			max(current_attack.hit_stop_duration, 0.0),
-			clampf(current_attack.hit_stop_time_scale, 0.01, 1.0)
+			max(
+				current_attack.hit_stop_duration * (1.85 if critical_landed else 1.0),
+				0.0
+			),
+			clampf(
+				current_attack.hit_stop_time_scale * (0.5 if critical_landed else 1.0),
+				0.01,
+				1.0
+			)
 		)
 	elif show_debug_prints:
 		messages.append(equipped_weapon.display_name + " • " + current_attack.display_name + " misses.")

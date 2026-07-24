@@ -3,6 +3,7 @@ extends Node
 const Sword: WeaponDefinition = preload("res://data/weapons/practice_sword.tres")
 const Hammer: WeaponDefinition = preload("res://data/weapons/training_hammer.tres")
 const Spear: WeaponDefinition = preload("res://data/weapons/training_spear.tres")
+const HitReceiverScript: Script = preload("res://scripts/combat/hit_receiver.gd")
 
 var failures: Array[String] = []
 
@@ -29,6 +30,8 @@ func run_tests() -> void:
 	validate_hammer_identity()
 	validate_spear_identity()
 	validate_payload_contracts()
+	validate_critical_profiles()
+	validate_stance_critical_loop()
 
 
 func validate_weapon(weapon: WeaponDefinition, expected_class: String, expected_attacks: int) -> void:
@@ -153,6 +156,93 @@ func validate_payload_contracts() -> void:
 			failures.append(payload.source_name + " expected melee hit type")
 		if not payload.tags.has("weapon") or not payload.tags.has("melee"):
 			failures.append(payload.source_name + " missing standard weapon/melee tags")
+
+
+func validate_critical_profiles() -> void:
+	if Hammer.critical_multiplier >= Sword.critical_multiplier:
+		failures.append("Hammer critical multiplier must remain below Sword; Hammer already dominates stance pressure")
+
+	if Spear.critical_multiplier <= Sword.critical_multiplier:
+		failures.append("Spear critical multiplier must exceed Sword to reward precision")
+
+	var sword_payload: DamagePayload = Sword.moveset.get_entry_attack("light").build_payload(Sword)
+	var hammer_payload: DamagePayload = Hammer.moveset.get_entry_attack("heavy").build_payload(Hammer)
+	var spear_payload: DamagePayload = Spear.moveset.get_entry_attack("light").build_payload(Spear)
+
+	if not is_equal_approx(sword_payload.critical_multiplier, Sword.critical_multiplier):
+		failures.append("Sword payload did not inherit its weapon critical multiplier")
+
+	if not is_equal_approx(hammer_payload.critical_multiplier, Hammer.critical_multiplier):
+		failures.append("Hammer payload did not inherit its weapon critical multiplier")
+
+	if not is_equal_approx(spear_payload.critical_multiplier, Spear.critical_multiplier):
+		failures.append("Spear payload did not inherit its weapon critical multiplier")
+
+
+func validate_stance_critical_loop() -> void:
+	var receiver: Node = HitReceiverScript.new()
+	receiver.set("target_name", "Test Sentinel")
+	receiver.set("hit_mode", 3)
+	receiver.set("max_health", 20)
+	receiver.set("current_health", 20)
+	receiver.set("max_stance", 5)
+	receiver.set("current_stance", 5)
+	receiver.set("critical_window_seconds", 2.0)
+	add_child(receiver)
+
+	var pressure: DamagePayload = DamagePayload.new()
+	pressure.source_name = "Pressure"
+	pressure.amount = 2
+	pressure.stance_damage = 3
+	pressure.hit_type = "melee"
+	pressure.tags = ["weapon", "melee", "light"]
+
+	var first_result: Dictionary = receiver.call("receive_payload", pressure)
+	if bool(first_result.get("stance_broken", false)):
+		failures.append("Stance broke before the configured five points were depleted")
+
+	var break_result: Dictionary = receiver.call("receive_payload", pressure)
+	if not bool(break_result.get("stance_broken", false)):
+		failures.append("Depleting stance did not report a stance break")
+
+	if not bool(receiver.get("critical_window_open")):
+		failures.append("Stance break did not open a critical window")
+
+	var critical_payload: DamagePayload = DamagePayload.new()
+	critical_payload.source_name = "Precision Test"
+	critical_payload.amount = 2
+	critical_payload.stance_damage = 1
+	critical_payload.hit_type = "melee"
+	critical_payload.tags = ["weapon", "melee", "pierce"]
+	critical_payload.critical_multiplier = 3.0
+
+	var critical_result: Dictionary = receiver.call("receive_payload", critical_payload)
+	if not bool(critical_result.get("critical", false)):
+		failures.append("Weapon melee did not consume the open critical window")
+
+	if int(critical_result.get("damage_dealt", 0)) != 6:
+		failures.append("Critical damage expected 6 but found " + str(critical_result.get("damage_dealt", 0)))
+
+	if int(receiver.get("current_health")) != 14:
+		failures.append("Critical damage did not reduce health from 20 to 14")
+
+	if bool(receiver.get("critical_window_open")):
+		failures.append("Critical window stayed open after a successful critical strike")
+
+	if int(receiver.get("current_stance")) != 5:
+		failures.append("Successful critical did not restore stance for the next combat cycle")
+
+	receiver.call("receive_payload", pressure)
+	receiver.call("receive_payload", pressure)
+	receiver.call("advance_stance_state", 2.1)
+
+	if bool(receiver.get("critical_window_open")):
+		failures.append("Critical window did not expire after its configured duration")
+
+	if int(receiver.get("current_stance")) != 5:
+		failures.append("Expired critical window did not restore stance")
+
+	receiver.queue_free()
 
 
 func assert_follow_up(

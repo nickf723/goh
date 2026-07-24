@@ -238,9 +238,9 @@
       "order": 30,
       "display_name": "Weapon Combat Arena",
       "category": "Systems Arena",
-      "version": "v0.6",
+      "version": "v0.7",
       "status": "prototype_verified",
-      "description": "Three-class combat arena for buffered Light/Heavy branch testing with Sword, Hammer, and Spear, plus target geometry and live enemy pressure.",
+      "description": "Three-class combat arena for buffered Light/Heavy branches, regenerating stance, timed vulnerability, and weapon-specific critical strikes against training targets and live enemies.",
       "scene": "res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn"
@@ -260,13 +260,14 @@
         "LOCK-ON",
         "RESET"
       ],
-      "manual_test": "docs/weapon_combat_arena_v0_6_test.md",
+      "manual_test": "docs/weapon_combat_arena_v0_7_test.md",
       "temporary_state": "runtime_only",
       "story_integrated": false,
       "limitations": [
         "Only Sword, Hammer, and Spear are represented.",
         "Presentation is procedural and transform-driven rather than skeletal animation.",
-        "Blocking, parrying, aerial combat, and final balance are out of scope."
+        "Critical strikes reuse the triggering attack pose; bespoke execution animations are deferred.",
+        "Blocking, parrying, aerial combat, boss-specific break rules, and final balance are out of scope."
       ],
       "launchable": true,
       "visible_in_launcher": true,

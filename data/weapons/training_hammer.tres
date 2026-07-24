@@ -17,6 +17,7 @@ cooldown = 0.72
 cone_angle_degrees = 130.0
 max_targets = 5
 stamina_cost = 0
+critical_multiplier = 1.75
 moveset = ExtResource("3_moveset")
 visual_primary_color = Color(0.36, 0.4, 0.48, 1)
 visual_secondary_color = Color(0.18, 0.1, 0.06, 1)

@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("1_definition")
 description = "Balanced training blade with flexible Light and Heavy branches."
+critical_multiplier = 2.2
 range = 3.0
 cone_angle_degrees = 140.0
 moveset = ExtResource("3_moveset")

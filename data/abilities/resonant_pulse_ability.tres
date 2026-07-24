@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_definition"]
+[ext_resource type="PackedScene" path="res://scenes/abilities/resonant_pulse.tscn" id="2_scene"]
+[ext_resource type="Resource" path="res://data/resonance_payloads/resonant_pulse_payload.tres" id="3_payload"]
+
+[resource]
+script = ExtResource("1_definition")
+display_name = "Resonant Pulse"
+description = "Emit an adjustable Sound frequency that excites matching materials, mechanisms, and structures."
+element = "sound"
+category = 4
+mana_cost = 1
+use_trait_profile = false
+spell_id = "resonant_pulse"
+short_label = "Resonate"
+icon_text = "Hz"
+roles = Array[String](["control", "mechanism", "fracture", "puzzle"])
+targeting_style = "self_centered"
+delivery_type = "frequency_pulse"
+combo_tags = Array[String](["sound", "resonance", "frequency", "vibration", "shatter"])
+ui_tags = Array[String](["utility", "control", "area", "puzzle"])
+debug_tags = Array[String](["prototype", "resonance_lab"])
+scaling_stats = Array[String](["intelligence", "sound"])
+design_notes = "Sound energy accumulates only near a target's natural frequency. Matching objects may vibrate, transfer energy, activate, or fracture."
+ability_scene = ExtResource("2_scene")
+action_payload = ExtResource("3_payload")
+

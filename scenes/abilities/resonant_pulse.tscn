@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/resonant_pulse.gd" id="1_pulse"]
+[ext_resource type="Resource" path="res://data/resonance_payloads/resonant_pulse_payload.tres" id="2_payload"]
+
+[node name="ResonantPulse" type="Node3D"]
+script = ExtResource("1_pulse")
+resonance_payload = ExtResource("2_payload")
+visual_lifetime = 0.55
+show_cast_message = true
+

@@ -79,15 +79,16 @@ func apply_resource_effect() -> int:
 	if is_delivery_item():
 		return 0
 	var before: int = get_current_resource()
+	var effective_amount: int = maxi(GameplayEffects.modify_int(restore_resource_id + "_restore", restore_amount), 0)
 	match restore_resource_id:
 		"health":
-			GameState.heal(restore_amount)
+			GameState.heal(effective_amount)
 		"mana":
-			GameState.restore_mana(restore_amount)
+			GameState.restore_mana(effective_amount)
 		"stamina":
-			GameState.restore_stamina(restore_amount)
+			GameState.restore_stamina(effective_amount)
 		"stance":
-			GameState.restore_stance(restore_amount)
+			GameState.restore_stance(effective_amount)
 		_:
 			return 0
 	return GameState.get_stat(restore_resource_id) - before

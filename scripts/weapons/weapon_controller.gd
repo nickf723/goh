@@ -8,6 +8,7 @@ signal combo_state_changed(debug_data: Dictionary)
 
 const EquipmentCatalogScript = preload("res://scripts/equipment/equipment_catalog.gd")
 const WeaponMasteryCatalogScript = preload("res://scripts/weapons/weapon_mastery_catalog.gd")
+const WeaponInfusionCatalogScript = preload("res://scripts/weapons/weapon_infusion_catalog.gd")
 
 const INPUT_LIGHT: String = "light"
 const INPUT_HEAVY: String = "heavy"
@@ -76,6 +77,8 @@ func _ready() -> void:
 	add_to_group("debuggable")
 	if not GameState.equipment_changed.is_connected(_on_equipment_changed):
 		GameState.equipment_changed.connect(_on_equipment_changed)
+	if not GameState.weapon_infusion_changed.is_connected(_on_weapon_infusion_changed):
+		GameState.weapon_infusion_changed.connect(_on_weapon_infusion_changed)
 	var saved_weapon_id: String = GameState.get_equipped_item("weapon")
 	var saved_weapon: WeaponDefinition = EquipmentCatalogScript.get_weapon(saved_weapon_id)
 	if saved_weapon != null:
@@ -106,6 +109,13 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if GameState.equipment_changed.is_connected(_on_equipment_changed):
 		GameState.equipment_changed.disconnect(_on_equipment_changed)
+	if GameState.weapon_infusion_changed.is_connected(_on_weapon_infusion_changed):
+		GameState.weapon_infusion_changed.disconnect(_on_weapon_infusion_changed)
+
+
+func _on_weapon_infusion_changed(_infusion_id: String) -> void:
+	refresh_weapon_visual()
+	emit_combo_state()
 
 
 func _on_equipment_changed(slot_id: String, item_id: String) -> void:
@@ -469,6 +479,7 @@ func execute_current_attack_hit() -> void:
 		current_attack,
 		combo_history.size()
 	)
+	WeaponInfusionCatalogScript.apply_to_payload(payload, GameState.get_weapon_infusion())
 	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("modify_attack_payload"):
 		runtime_weapon_rig.call("modify_attack_payload", payload, current_attack)
 
@@ -1012,7 +1023,7 @@ func play_slash_trail(attack: WeaponAttackDefinition) -> void:
 
 	slash_trail.visible = true
 	slash_trail.scale = attack.trail_start_scale
-	set_slash_trail_color(attack.trail_color, sweep_start_alpha)
+	set_slash_trail_color(get_infusion_attack_color(attack.trail_color), sweep_start_alpha)
 
 	var duration: float = max(
 		0.08,
@@ -1082,6 +1093,7 @@ func refresh_weapon_visual() -> void:
 			weapon_model_root.add_child(runtime_weapon_rig)
 			if runtime_weapon_rig.has_method("configure_weapon"):
 				runtime_weapon_rig.call("configure_weapon", equipped_weapon, self)
+			apply_infusion_visuals()
 			return
 		rig_instance.queue_free()
 
@@ -1092,6 +1104,29 @@ func refresh_weapon_visual() -> void:
 			build_spear_visual()
 		_:
 			build_sword_visual()
+
+	apply_infusion_visuals()
+
+
+func apply_infusion_visuals() -> void:
+	var infusion_id: String = GameState.get_weapon_infusion()
+	if infusion_id == WeaponInfusionCatalogScript.DEFAULT_INFUSION_ID:
+		return
+	var infusion_color: Color = WeaponInfusionCatalogScript.get_color(infusion_id)
+	for material: StandardMaterial3D in model_materials:
+		var base_color: Color = material.albedo_color
+		var infused_color: Color = base_color.lerp(infusion_color, 0.42)
+		material.albedo_color = infused_color
+		material.emission_enabled = true
+		material.emission = infusion_color
+		material.emission_energy_multiplier = maxf(material.emission_energy_multiplier, 1.15)
+
+
+func get_infusion_attack_color(base_color: Color) -> Color:
+	var infusion_id: String = GameState.get_weapon_infusion()
+	if infusion_id == WeaponInfusionCatalogScript.DEFAULT_INFUSION_ID:
+		return base_color
+	return base_color.lerp(WeaponInfusionCatalogScript.get_color(infusion_id), 0.78)
 
 
 func clear_weapon_model() -> void:
@@ -1289,4 +1324,5 @@ func get_debug_data() -> Dictionary:
 		"cast_cancel": cast_cancel,
 		"dodge_cancel": dodge_cancel,
 		"runtime_rig": runtime_data,
+		"infusion": WeaponInfusionCatalogScript.get_display_name(GameState.get_weapon_infusion()),
 	}

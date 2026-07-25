@@ -41,6 +41,7 @@ var target_angle_degrees: float = 180.0
 var line_of_sight_clear: bool = false
 var smoke_density: float = 0.0
 var smoke_visibility_multiplier: float = 1.0
+var target_stealth_multiplier: float = 1.0
 var last_heard_data: Dictionary = {}
 var last_processed_sample_time: float = 0.0
 
@@ -106,6 +107,7 @@ func sample_vision() -> void:
 	line_of_sight_clear = false
 	smoke_density = 0.0
 	smoke_visibility_multiplier = 1.0
+	target_stealth_multiplier = 1.0
 
 	if actor == null or target == null:
 		emit_visibility_boundary(previous_visible)
@@ -128,7 +130,8 @@ func sample_vision() -> void:
 		minimum_smoke_visibility_multiplier,
 		1.0
 	)
-	var effective_range: float = vision_range * max(vision_multiplier, 0.05) * smoke_visibility_multiplier
+	target_stealth_multiplier = get_target_stealth_multiplier()
+	var effective_range: float = vision_range * max(vision_multiplier, 0.05) * smoke_visibility_multiplier * target_stealth_multiplier
 	if target_distance > effective_range:
 		emit_visibility_boundary(previous_visible)
 		return
@@ -154,9 +157,26 @@ func sample_vision() -> void:
 
 	var distance_factor: float = 1.0 - clampf(target_distance / max(effective_range, 0.01), 0.0, 1.0)
 	var angle_factor: float = 1.0 - clampf(target_angle_degrees / max(field_of_view_degrees * 0.5, 0.01), 0.0, 1.0)
-	visibility_strength = clampf((0.25 + distance_factor * 0.55 + angle_factor * 0.2) * smoke_visibility_multiplier, 0.0, 1.0)
+	visibility_strength = clampf(
+		(0.25 + distance_factor * 0.55 + angle_factor * 0.2)
+		* smoke_visibility_multiplier
+		* target_stealth_multiplier,
+		0.0,
+		1.0
+	)
 	target_visible = visibility_strength > 0.02
 	emit_visibility_boundary(previous_visible)
+
+
+func get_target_stealth_multiplier() -> float:
+	if target == null:
+		return 1.0
+	if target.has_method("get_stealth_visibility_multiplier"):
+		return clampf(float(target.call("get_stealth_visibility_multiplier")), 0.05, 1.5)
+	var stealth: Node = target.get_node_or_null("StealthController")
+	if stealth != null and stealth.has_method("get_visibility_multiplier"):
+		return clampf(float(stealth.call("get_visibility_multiplier")), 0.05, 1.5)
+	return 1.0
 
 
 func emit_visibility_boundary(previous_visible: bool) -> void:
@@ -251,6 +271,7 @@ func get_observation() -> Dictionary:
 		"line_of_sight_clear": line_of_sight_clear,
 		"smoke_density": smoke_density,
 		"smoke_visibility_multiplier": smoke_visibility_multiplier,
+		"stealth_visibility_multiplier": target_stealth_multiplier,
 		"heard": last_heard_data.duplicate(true),
 	}
 

@@ -5,17 +5,20 @@ var player: CharacterBody3D
 var status_label: Label
 var unlock_label: Label
 var geese: Array[ResearchableGoose] = []
+var species_knowledge: Node
 
 
 func _ready() -> void:
+	species_knowledge = get_node_or_null("/root/SpeciesKnowledge")
 	_build_environment()
 	_build_wetland()
 	player = get_node_or_null("Player") as CharacterBody3D
 	_build_hud()
-	if not SpeciesKnowledge.discovery_recorded.is_connected(_on_discovery):
-		SpeciesKnowledge.discovery_recorded.connect(_on_discovery)
-	if not SpeciesKnowledge.unlock_earned.is_connected(_on_unlock):
-		SpeciesKnowledge.unlock_earned.connect(_on_unlock)
+	if species_knowledge != null:
+		if not species_knowledge.is_connected("discovery_recorded", _on_discovery):
+			species_knowledge.connect("discovery_recorded", _on_discovery)
+		if not species_knowledge.is_connected("unlock_earned", _on_unlock):
+			species_knowledge.connect("unlock_earned", _on_unlock)
 	GameState.set_objective("Study goose behavior with the contextual D-pad menu and unlock animal capabilities.")
 
 
@@ -25,7 +28,8 @@ func _process(_delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("restart_scene"):
-		SpeciesKnowledge.reset_species("goose")
+		if species_knowledge != null and species_knowledge.has_method("reset_species"):
+			species_knowledge.call("reset_species", "goose")
 		for goose: ResearchableGoose in geese:
 			goose.reset_goose()
 		if player != null:
@@ -150,7 +154,10 @@ func _build_hud() -> void:
 func _update_hud() -> void:
 	if status_label == null:
 		return
-	var data: Dictionary = SpeciesKnowledge.get_species_data("goose")
+	if species_knowledge == null or not species_knowledge.has_method("get_species_data"):
+		status_label.text = "GOOSE KNOWLEDGE SERVICE UNAVAILABLE"
+		return
+	var data: Dictionary = species_knowledge.call("get_species_data", "goose")
 	var discoveries: Dictionary = data.get("discoveries", {})
 	status_label.text = (
 		"GOOSE KNOWLEDGE  •  RANK " + str(data.get("rank", 0))

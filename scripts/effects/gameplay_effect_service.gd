@@ -10,7 +10,6 @@ var effect_sources: Dictionary = {}
 
 
 func _ready() -> void:
-	process_mode = Node.PROCESS_MODE_ALWAYS
 	if not GameState.equipment_changed.is_connected(_on_equipment_changed):
 		GameState.equipment_changed.connect(_on_equipment_changed)
 	sync_equipment_sources()

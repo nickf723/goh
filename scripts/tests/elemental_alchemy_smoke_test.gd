@@ -7,7 +7,8 @@ func _ready() -> void:
 	var cauldron := AlchemyCauldron.new()
 	add_child(cauldron)
 	await get_tree().process_frame
-	_expect(cauldron.get_recipe_key(["springwater", "life_bloom"]) == "life_bloom|springwater", "Recipe keys ignore ingredient order")
+	var recipe_ingredients: Array[String] = ["springwater", "life_bloom"]
+	_expect(cauldron.get_recipe_key(recipe_ingredients) == "life_bloom|springwater", "Recipe keys ignore ingredient order")
 	cauldron.apply_element("fire")
 	_expect(cauldron.catalyst == "fire", "Valid elemental treatment is accepted")
 	cauldron.apply_element("banana")

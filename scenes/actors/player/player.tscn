@@ -28,6 +28,7 @@
 [ext_resource type="Script" path="res://scripts/player/player_summon_manager.gd" id="26_summons"]
 [ext_resource type="Resource" path="res://data/summons/spectral_familiar_definition.tres" id="27_familiar_definition"]
 [ext_resource type="Script" path="res://scripts/player/player_special_context_controller.gd" id="28_special_context"]
+[ext_resource type="Script" path="res://scripts/player/player_stealth_controller.gd" id="29_stealth"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -142,6 +143,9 @@ summon_definition = ExtResource("27_familiar_definition")
 
 [node name="SpecialContextController" type="Node" parent="."]
 script = ExtResource("28_special_context")
+
+[node name="StealthController" type="Node" parent="."]
+script = ExtResource("29_stealth")
 
 [node name="PlayerDodgeController" type="Node" parent="." unique_id=1337799175]
 script = ExtResource("8_fp13k")

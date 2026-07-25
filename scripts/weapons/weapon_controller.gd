@@ -314,6 +314,10 @@ func apply_aerial_hit_followthrough(targets: Array[Node]) -> void:
 func update_plunge_landing() -> void:
 	if not plunge_landing_armed:
 		return
+	if action_state != null and (action_state.is_defeated or action_state.is_flying):
+		plunge_landing_armed = false
+		plunge_max_fall_speed = 0.0
+		return
 	var actor: Node3D = get_actor()
 	if not (actor is CharacterBody3D):
 		plunge_landing_armed = false
@@ -591,6 +595,10 @@ func cancel_current_attack(reason: String = "cancelled") -> void:
 
 	if show_debug_prints:
 		print("Attack ", current_attack.attack_id, " ", reason, ".")
+
+	if active_technique_id == WeaponTechniqueCatalogScript.CONTEXT_AERIAL_DOWN:
+		plunge_landing_armed = false
+		plunge_max_fall_speed = 0.0
 
 	current_attack = null
 	current_attack_elapsed = 0.0

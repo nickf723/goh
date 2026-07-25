@@ -2,6 +2,7 @@ extends PanelContainer
 
 const ComboRuleRegistryScript = preload("res://scripts/systems/combo_rule_registry.gd")
 const EquipmentCatalogScript = preload("res://scripts/equipment/equipment_catalog.gd")
+const WeaponInfusionCatalogScript = preload("res://scripts/weapons/weapon_infusion_catalog.gd")
 
 const TAB_DEFS: Array[Dictionary] = [
 	{"id": "loadout", "title": "Loadout", "icon": "⚔"},
@@ -277,6 +278,10 @@ func activate_action(action: Dictionary) -> void:
 			start_equipment_assignment(str(action.get("slot_id", "")))
 		"equip_item":
 			complete_equipment_assignment(str(action.get("item_id", "")))
+		"set_weapon_infusion":
+			GameState.toggle_weapon_infusion(str(action.get("infusion_id", "")))
+			refresh_menu_data()
+			rebuild_menu()
 		"inspect_spell":
 			return
 		_:
@@ -715,6 +720,23 @@ func render_loadout() -> void:
 			badge,
 			{"kind": "choose_equipment_slot", "slot_id": slot_id},
 			equipment_tooltip
+		)
+
+	add_section_header("WEAPON INFUSION")
+	var infusion_grid: GridContainer = make_visual_grid(4)
+	content_box.add_child(infusion_grid)
+	var active_infusion: String = GameState.get_weapon_infusion()
+	for infusion: Dictionary in WeaponInfusionCatalogScript.get_rows():
+		var infusion_id: String = str(infusion.get("id", ""))
+		var is_active: bool = infusion_id == active_infusion
+		var infusion_badge: String = "EQUIPPED • SELECT TO REMOVE" if is_active else "SELECT TO INFUSE"
+		add_visual_action_tile(
+			infusion_grid,
+			str(infusion.get("icon", "◇")),
+			str(infusion.get("name", infusion_id.capitalize())),
+			infusion_badge,
+			{"kind": "set_weapon_infusion", "infusion_id": infusion_id},
+			str(infusion.get("description", ""))
 		)
 
 	add_section_header("SPELL RING")

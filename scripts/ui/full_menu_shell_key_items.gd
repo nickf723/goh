@@ -697,7 +697,7 @@ func render_loadout() -> void:
 		var definition: Dictionary = EquipmentCatalogScript.get_definition(equipped_item_id)
 		var item_name: String = str(definition.get("name", "Empty"))
 		var item_icon: String = str(definition.get("icon", "◇"))
-		var modifiers: Dictionary = definition.get("modifiers", {})
+		var modifiers: Dictionary = definition.get("modifiers", {}) as Dictionary
 		var badge: String = slot_id.to_upper()
 		if not modifiers.is_empty():
 			badge += "  •  " + EquipmentCatalogScript.format_modifiers(modifiers)
@@ -766,7 +766,7 @@ func render_equipment_picker() -> void:
 		if item_id == "" or not GameState.owns_equipment(item_id):
 			continue
 		owned_count += 1
-		var badge: String = EquipmentCatalogScript.format_modifiers(definition.get("modifiers", {}))
+		var badge: String = EquipmentCatalogScript.format_modifiers(definition.get("modifiers", {}) as Dictionary)
 		if GameState.is_equipment_equipped(item_id):
 			badge = "EQUIPPED  •  " + badge
 		add_visual_action_tile(

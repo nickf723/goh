@@ -36,6 +36,11 @@ signal presentation_state_changed(previous_state: String, next_state: String)
 @onready var right_hair_lock: Node3D = get_node_or_null("VisualRoot/RightHairLockPivot") as Node3D
 @onready var left_hand: Node3D = get_node_or_null("VisualRoot/LeftShoulderPivot/LeftHand") as Node3D
 @onready var right_hand: Node3D = get_node_or_null("VisualRoot/RightShoulderPivot/RightHand") as Node3D
+@onready var left_eye: Node3D = get_node_or_null("VisualRoot/HeadRoot/LeftEye") as Node3D
+@onready var right_eye: Node3D = get_node_or_null("VisualRoot/HeadRoot/RightEye") as Node3D
+@onready var left_brow: Node3D = get_node_or_null("VisualRoot/HeadRoot/LeftBrow") as Node3D
+@onready var right_brow: Node3D = get_node_or_null("VisualRoot/HeadRoot/RightBrow") as Node3D
+@onready var mouth: Node3D = get_node_or_null("VisualRoot/HeadRoot/Mouth") as Node3D
 
 @onready var head_anchor: Marker3D = get_node_or_null("HeadAnchor") as Marker3D
 @onready var left_hand_anchor: Marker3D = get_node_or_null("LeftHandAnchor") as Marker3D
@@ -311,6 +316,7 @@ func sample_animation_pose(delta: float) -> void:
 	pose_node(right_leg, right_leg_rotation, Vector3.ZERO, delta, response)
 	pose_accessories(delta, speed)
 	pose_breathing(delta)
+	pose_face(delta)
 	sync_animation_anchors()
 
 
@@ -465,6 +471,9 @@ func pose_accessories(delta: float, speed: float) -> void:
 		"hit",
 		"cast",
 		"flight",
+		"climb",
+		"mantle",
+		"landing",
 	] else 0.0
 	var sway: float = sin(elapsed * (3.2 + speed * 0.35))
 	var sash_rotation := Vector3(
@@ -480,6 +489,56 @@ func pose_accessories(delta: float, speed: float) -> void:
 	pose_node(sash_tail, sash_rotation, Vector3.ZERO, delta, accessory_response)
 	pose_node(left_hair_lock, hair_rotation + Vector3(0.0, 0.0, -0.025), Vector3.ZERO, delta, accessory_response)
 	pose_node(right_hair_lock, hair_rotation + Vector3(0.0, 0.0, 0.025), Vector3.ZERO, delta, accessory_response)
+
+
+func pose_face(delta: float) -> void:
+	var blink_cycle: float = fposmod(elapsed, 4.15)
+	var blink_weight: float = 0.0
+	if blink_cycle < 0.11:
+		blink_weight = sin((blink_cycle / 0.11) * PI)
+	var eye_height: float = lerpf(1.0, 0.08, blink_weight)
+	for eye: Node3D in [left_eye, right_eye]:
+		if eye == null:
+			continue
+		var eye_base: Vector3 = get_base_scale(eye)
+		var target_eye_scale := Vector3(eye_base.x, eye_base.y * eye_height, eye_base.z)
+		eye.scale = eye.scale.lerp(target_eye_scale, clampf(delta * 28.0, 0.0, 1.0))
+
+	var brow_tilt: float = 0.0
+	var brow_lift: float = 0.0
+	var mouth_width: float = 1.0
+	match presentation_state:
+		"attack", "guard", "climb":
+			brow_tilt = 0.13
+			brow_lift = -0.015
+			mouth_width = 0.82
+		"cast", "flight":
+			brow_tilt = -0.08
+			brow_lift = 0.018
+			mouth_width = 1.08
+		"hit", "exhausted":
+			brow_tilt = 0.2
+			brow_lift = 0.024
+			mouth_width = 1.18
+		"defeated":
+			brow_tilt = 0.26
+			brow_lift = -0.025
+			mouth_width = 0.72
+
+	if left_brow != null:
+		var left_target: Vector3 = get_base_rotation(left_brow) + Vector3(0.0, 0.0, -brow_tilt)
+		left_brow.rotation = left_brow.rotation.lerp(left_target, clampf(delta * 12.0, 0.0, 1.0))
+		var left_position: Vector3 = get_base_position(left_brow) + Vector3.UP * brow_lift
+		left_brow.position = left_brow.position.lerp(left_position, clampf(delta * 12.0, 0.0, 1.0))
+	if right_brow != null:
+		var right_target: Vector3 = get_base_rotation(right_brow) + Vector3(0.0, 0.0, brow_tilt)
+		right_brow.rotation = right_brow.rotation.lerp(right_target, clampf(delta * 12.0, 0.0, 1.0))
+		var right_position: Vector3 = get_base_position(right_brow) + Vector3.UP * brow_lift
+		right_brow.position = right_brow.position.lerp(right_position, clampf(delta * 12.0, 0.0, 1.0))
+	if mouth != null:
+		var mouth_base: Vector3 = get_base_scale(mouth)
+		var target_mouth_scale := Vector3(mouth_base.x * mouth_width, mouth_base.y, mouth_base.z)
+		mouth.scale = mouth.scale.lerp(target_mouth_scale, clampf(delta * 12.0, 0.0, 1.0))
 
 
 func pose_breathing(delta: float) -> void:
@@ -575,6 +634,11 @@ func get_pose_nodes() -> Array[Node3D]:
 		sash_tail,
 		left_hair_lock,
 		right_hair_lock,
+		left_eye,
+		right_eye,
+		left_brow,
+		right_brow,
+		mouth,
 	]:
 		if node != null:
 			nodes.append(node)

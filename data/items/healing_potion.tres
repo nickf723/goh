@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="QuickItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/quick_item_definition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "healing_potion"
+display_name = "Healing Potion"
+short_label = "HEAL"
+description = "A concentrated Life-and-Water brew that restores health."
+icon_symbol = "♥"
+use_visual_color = Color(0.92, 0.2, 0.34, 1)
+max_stack = 9
+max_charges = 9
+refill_on_rest = false
+use_duration = 0.72
+movement_multiplier = 0.45
+requires_grounded = true
+restore_resource_id = "health"
+restore_amount = 3
+element = "life"
+tags = Array[String](["consumable", "quick_item", "alchemy", "potion", "life", "water"])

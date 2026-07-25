@@ -248,7 +248,7 @@ func ensure_movement_emitter() -> void:
 		return
 	var emitter: Node = emitter_script.new()
 	emitter.name = "PerceptionMovementEmitter"
-	actor.add_child.call_deferred(emitter)
+	actor.call_deferred("add_child", emitter)
 
 
 func ensure_input() -> void:

@@ -22,12 +22,13 @@ const GameplayEffectAccessScript = preload("res://scripts/effects/gameplay_effec
 @export var can_use_at_maximum: bool = false
 
 @export_group("Effect")
-@export_enum("restore_resource", "delivery_scene", "gameplay_effect") var effect_type: String = "restore_resource"
+@export_enum("restore_resource", "delivery_scene", "gameplay_effect", "cleanse_effects") var effect_type: String = "restore_resource"
 @export_enum("health", "mana", "stamina", "stance") var restore_resource_id: String = "health"
 @export_range(0, 99, 1) var restore_amount: int = 1
 @export var gameplay_effect_ids: Array[String] = []
 @export_range(0.1, 600.0, 0.1) var gameplay_effect_duration: float = 30.0
 @export var gameplay_effect_tags: Array[String] = ["consumable_buff"]
+@export var cleanse_effect_tags: Array[String] = []
 @export var delivery_scene: PackedScene
 @export var impact_scene: PackedScene
 @export_range(1.0, 30.0, 0.5) var throw_speed: float = 12.0
@@ -66,6 +67,10 @@ func is_gameplay_effect_item() -> bool:
 	return effect_type == "gameplay_effect"
 
 
+func is_cleanse_item() -> bool:
+	return effect_type == "cleanse_effects"
+
+
 func get_current_resource() -> int:
 	return GameState.get_stat(restore_resource_id)
 
@@ -79,6 +84,11 @@ func can_apply() -> bool:
 		return delivery_scene != null and impact_scene != null
 	if is_gameplay_effect_item():
 		return not gameplay_effect_ids.is_empty() and gameplay_effect_duration > 0.0
+	if is_cleanse_item():
+		for effect_tag: String in cleanse_effect_tags:
+			if GameplayEffectAccessScript.has_effect_with_tag(effect_tag):
+				return true
+		return false
 	if restore_amount <= 0:
 		return false
 	if can_use_at_maximum:
@@ -117,9 +127,22 @@ func apply_gameplay_effect() -> bool:
 	return true
 
 
+func apply_cleanse_effect() -> int:
+	if not is_cleanse_item():
+		return 0
+	var removed_count: int = 0
+	for effect_tag: String in cleanse_effect_tags:
+		removed_count += GameplayEffectAccessScript.remove_effects_with_tag(effect_tag)
+	if removed_count > 0 and restore_amount > 0:
+		apply_resource_effect()
+	return removed_count
+
+
 func apply_effect() -> int:
 	if is_gameplay_effect_item():
 		return 1 if apply_gameplay_effect() else 0
+	if is_cleanse_item():
+		return apply_cleanse_effect()
 	return apply_resource_effect()
 
 
@@ -136,6 +159,7 @@ func get_debug_data() -> Dictionary:
 		"restore_amount": restore_amount,
 		"gameplay_effect_ids": gameplay_effect_ids.duplicate(),
 		"gameplay_effect_duration": gameplay_effect_duration,
+		"cleanse_effect_tags": cleanse_effect_tags.duplicate(),
 		"refill_on_rest": refill_on_rest,
 		"delivery_scene": delivery_scene.resource_path if delivery_scene != null else "",
 		"impact_scene": impact_scene.resource_path if impact_scene != null else "",

@@ -11,7 +11,8 @@ signal gas_effect_applied(gas_id: String, dose: float)
 @export var sample_offset: Vector3 = Vector3(0.0, 0.85, 0.0)
 @export var lower_body_sample_offset: Vector3 = Vector3(0.0, -0.35, 0.0)
 @export_range(0.02, 1.0, 0.01) var sample_interval: float = 0.12
-@export_range(0.0, 1.0, 0.01) var effect_dose_threshold: float = 0.35
+@export_range(0.0, 1.0, 0.01) var warning_dose_threshold: float = 0.18
+@export_range(0.0, 1.0, 0.01) var effect_dose_threshold: float = 0.45
 @export_range(0.0, 4.0, 0.01) var exposure_response_multiplier: float = 1.0
 @export var apply_player_damage: bool = true
 @export var create_player_obscuration_overlay: bool = true
@@ -25,6 +26,7 @@ var densities: Dictionary = {}
 var doses: Dictionary = {}
 var damage_timers: Dictionary = {}
 var active_exposures: Dictionary = {}
+var warning_exposures: Dictionary = {}
 var obscuration_layer: CanvasLayer = null
 var obscuration_rect: ColorRect = null
 
@@ -124,6 +126,12 @@ func update_exposure(delta: float) -> void:
 
 
 func update_exposure_boundary(gas_id: String, previous_dose: float, dose: float) -> void:
+	var was_warning: bool = previous_dose >= warning_dose_threshold
+	var is_warning: bool = dose >= warning_dose_threshold
+	warning_exposures[gas_id] = is_warning
+	if is_warning and not was_warning:
+		show_message(gas_id.capitalize() + " exposure is building. Leave the cloud or prepare a remedy.")
+
 	var was_active: bool = previous_dose >= effect_dose_threshold
 	var is_active: bool = dose >= effect_dose_threshold
 	active_exposures[gas_id] = is_active
@@ -275,6 +283,7 @@ func clear_exposure() -> void:
 	doses.clear()
 	damage_timers.clear()
 	active_exposures.clear()
+	warning_exposures.clear()
 	sample_timer = 0.0
 	update_obscuration_overlay()
 
@@ -301,6 +310,7 @@ func get_debug_data() -> Dictionary:
 		"densities": densities.duplicate(true),
 		"doses": doses.duplicate(true),
 		"active": active_exposures.duplicate(true),
+		"warning": warning_exposures.duplicate(true),
 		"total_dose": snapped(get_total_dose(), 0.01),
 		"obscuration_alpha": obscuration_rect.color.a if obscuration_rect != null else 0.0,
 	}

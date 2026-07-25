@@ -22,7 +22,7 @@ const TRIM_PATHS: Array[String] = [
 ]
 
 var visual_root: Node3D
-var accessory_root: Node3D
+var accessory_pieces: Array[MeshInstance3D] = []
 var original_materials: Dictionary = {}
 var current_outfit_id: String = ""
 
@@ -35,9 +35,6 @@ func _ready() -> void:
 		return
 
 	cache_original_materials()
-	accessory_root = Node3D.new()
-	accessory_root.name = "EquippedOutfitPieces"
-	visual_root.add_child(accessory_root)
 
 	if not GameState.equipment_changed.is_connected(_on_equipment_changed):
 		GameState.equipment_changed.connect(_on_equipment_changed)
@@ -151,11 +148,10 @@ func apply_material_group(paths: Array[String], material: Material) -> void:
 
 
 func clear_accessory_pieces() -> void:
-	if accessory_root == null:
-		return
-	for child: Node in accessory_root.get_children():
-		accessory_root.remove_child(child)
-		child.queue_free()
+	for piece: MeshInstance3D in accessory_pieces:
+		if is_instance_valid(piece):
+			piece.queue_free()
+	accessory_pieces.clear()
 
 
 func add_box_piece(parent_node: Node3D, piece_name: String, size: Vector3, position: Vector3, rotation: Vector3, material: Material) -> void:
@@ -191,8 +187,7 @@ func add_mesh_piece(parent_node: Node3D, piece_name: String, geometry: Primitive
 	piece.rotation_degrees = rotation
 	parent_node.add_child(piece)
 	piece.set_meta("equipment_visual", true)
-	accessory_root.add_child(piece)
-	piece.reparent(parent_node, true)
+	accessory_pieces.append(piece)
 
 
 func make_material(color: Color, roughness: float, metallic: float = 0.0, emission: Color = Color(0.0, 0.0, 0.0, 1.0)) -> StandardMaterial3D:

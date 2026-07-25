@@ -12,6 +12,7 @@ Grace's procedural visual now resolves and blends these states:
 
 - idle and locomotion
 - jump, fall, and landing
+- surface swimming and underwater strokes
 - climb and mantle
 - light/heavy weapon attacks
 - guard and dodge

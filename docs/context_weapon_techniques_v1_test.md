@@ -15,6 +15,19 @@ Examples include Passing Cut for swords, Driving Thrust for lances, Meteor Rush 
 
 The mastery description now names the technique and its trigger.
 
+
+## Aerial set
+
+Every weapon also gains three airborne techniques at Familiar mastery rank:
+
+- **Neutral Air:** jump and press Light without directional movement. This produces a broad 360-degree strike and briefly checks Grace's fall.
+- **Forward Air:** jump, hold a movement direction, and press Light. This produces a mobile advancing strike with extra reach.
+- **Down Air:** jump and press Heavy. This accelerates Grace downward and produces increased damage, stance pressure, and knockback.
+
+Each of the sixteen classes has its own named set. Examples include Orbit Cut / Comet Slash / Falling Edge for swords, Needle Wheel / Skyline Thrust / Dragon Drop for lances, and Iron Orbit / Comet Cast / Anchorfall for chains.
+
+All aerial attacks retain weapon mastery upgrades, elemental infusion, hit reactions, and existing combo payload behavior. Flight mode remains excluded so ordinary weapon inputs do not conflict with its traversal controls.
+
 ## Context vocabulary
 
 Weapon payloads now identify these contexts:
@@ -34,4 +47,11 @@ Run:
 scenes/tests/context_weapon_technique_smoke_test.tscn
 ```
 
-For a live test, use any weapon at Familiar rank or above. Dodge sideways, backward, and forward, then press each attack input during the dodge. The technique should follow the dodge direction and appear by name in combat debug data.
+For a live test, use any weapon at Familiar rank or above:
+
+1. Dodge sideways, backward, and forward, then press each attack input during the dodge.
+2. Jump without movement and press Light for Neutral Air.
+3. Jump while holding movement and press Light for Forward Air.
+4. Jump and press Heavy for Down Air.
+
+The active technique should appear by context ID in combat debug data.

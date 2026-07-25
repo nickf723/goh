@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/hit_reaction_test_target.gd" id="1_target"]
+
+[node name="HitReactionTestTarget" type="CharacterBody3D" groups=["enemy", "combat_targetable"]]
+script = ExtResource("1_target")

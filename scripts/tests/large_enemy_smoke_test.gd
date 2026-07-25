@@ -2,6 +2,7 @@ extends Node
 
 const ConstructScene: PackedScene = preload("res://scenes/actors/enemies/large_construct_enemy.tscn")
 const TargetingAssistScript = preload("res://scripts/player/combat_targeting_assist.gd")
+const TraversalControllerScript = preload("res://scripts/player/large_enemy_traversal_controller.gd")
 
 
 func _ready() -> void:
@@ -85,6 +86,18 @@ func _ready() -> void:
 	assert(leg.broken)
 	assert(construct.broken_legs == 1)
 	assert(construct.state == LargeConstructEnemy.State.KNEEL)
+	assert(construct.can_player_climb())
+	var anchors: Array[Node3D] = construct.get_climb_anchors()
+	assert(anchors.size() >= 5)
+	actor.global_position = anchors[0].global_position
+	GameState.set_stat("stamina", GameState.get_stat("max_stamina"))
+	var traversal := TraversalControllerScript.new() as LargeEnemyTraversalController
+	actor.add_child(traversal)
+	traversal.setup(actor, construct)
+	assert(traversal.try_attach())
+	assert(traversal.is_attached)
+	traversal.on_large_enemy_shake(1.0)
+	assert(not traversal.is_attached)
 
 	var debug: Dictionary = construct.get_debug_data()
 	assert(bool(debug.get("large_enemy", false)))

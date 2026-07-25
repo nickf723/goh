@@ -1,4 +1,4 @@
-# Large Enemy and Part Breaking v1
+# Large Enemy, Part Breaking, and Climbing v1
 
 ## Run
 
@@ -28,7 +28,20 @@ The body remains a conventional enemy target with its own health and stance. Bre
 
 The construct is approximately three times Grace's height. It closes slowly, telegraphs attacks through orange armor charge, and uses broad attacks with long recovery windows.
 
-Its first attack is a hammer sweep. Disabling the weapon arm materially changes its action set to a ground stomp.
+Its first attack is a hammer sweep. Disabling the weapon arm materially changes its action set to a ground stomp. Every third close-range attack is a telegraphed grab attempt.
+
+## Climbing and grab escapes
+
+- Break stance, the core, or a knee to force the Colossus into a five-second kneel.
+- Approach a cyan grip and press **Interact / E / B** to attach.
+- Use forward/back movement to climb between the boot, knee, hip, chest, shoulder, and core grips.
+- Climbing steadily drains stamina; ordinary stamina regeneration resumes after detaching.
+- Hold **Interact** when the Colossus shakes to brace at an extra stamina cost.
+- Press **Jump** or **Dodge** to leap away intentionally.
+- If the Colossus catches Grace, tap **Light Attack** or **Dodge** four times before the escape timer expires.
+- A failed escape deals crushing damage and throws Grace away.
+
+The traversal controller is a separate player component driven by anchors and danger events exposed by the large enemy. Future giants can provide different anchor layouts without replacing the ordinary movement controller.
 
 ## Smoke test
 
@@ -36,4 +49,4 @@ Run:
 
 `scenes/tests/large_enemy_smoke_test.tscn`
 
-The test breaks the chest plate, confirms the core becomes targetable, disables the hammer arm, breaks a leg, and verifies the kneel consequence.
+The test breaks the chest plate, confirms the core becomes targetable, disables the hammer arm, breaks a leg, verifies the kneel consequence, mounts the first climb anchor, and confirms an unbraced shake detaches Grace.

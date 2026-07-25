@@ -25,6 +25,8 @@
 [ext_resource type="Script" path="res://scripts/visuals/player_motion_feedback.gd" id="23_motion_feedback"]
 [ext_resource type="Script" path="res://scripts/player/player_swimming_controller.gd" id="24_swimming"]
 [ext_resource type="Script" path="res://scripts/player/player_riding_controller.gd" id="25_riding"]
+[ext_resource type="Script" path="res://scripts/player/player_summon_manager.gd" id="26_summons"]
+[ext_resource type="Resource" path="res://data/summons/spectral_familiar_definition.tres" id="27_familiar_definition"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -132,6 +134,10 @@ script = ExtResource("24_swimming")
 
 [node name="RidingController" type="Node" parent="."]
 script = ExtResource("25_riding")
+
+[node name="SummonManager" type="Node" parent="."]
+script = ExtResource("26_summons")
+summon_definition = ExtResource("27_familiar_definition")
 
 [node name="PlayerDodgeController" type="Node" parent="." unique_id=1337799175]
 script = ExtResource("8_fp13k")

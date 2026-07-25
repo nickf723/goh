@@ -5,6 +5,7 @@ class_name GasDensitySensor
 @export var gas_ids: Array[String] = ["smoke", "poison"]
 @export_range(0.02, 1.0, 0.01) var sample_interval: float = 0.15
 @export var label_offset: Vector3 = Vector3(0.0, 1.35, 0.0)
+@export var sample_offset: Vector3 = Vector3(0.0, 1.1, 0.0)
 @export var label_color: Color = Color(0.68, 0.94, 1.0, 1.0)
 
 var gas_manager: Node = null
@@ -88,7 +89,7 @@ func update_sensor() -> void:
 	for gas_id: String in gas_ids:
 		var density: float = 0.0
 		if manager != null and manager.has_method("sample_density"):
-			density = float(manager.call("sample_density", global_position + Vector3.UP * 1.1, gas_id))
+			density = float(manager.call("sample_density", global_position + sample_offset, gas_id))
 		last_densities[gas_id] = density
 		lines.append(gas_id.to_upper() + "  " + str(snapped(density, 0.01)))
 	if label != null:
@@ -103,5 +104,6 @@ func get_debug_data() -> Dictionary:
 	return {
 		"gas_sensor": sensor_label,
 		"position": global_position,
+		"sample_position": global_position + sample_offset,
 		"densities": last_densities.duplicate(true),
 	}

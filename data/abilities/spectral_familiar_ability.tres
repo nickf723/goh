@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+display_name = "Call Familiar"
+description = "Summon Lumen. Recast to recall. Command it to follow, stay, or assist."
+element = "soul"
+category = 2
+mana_cost = 3
+spell_id = "spectral_familiar"
+short_label = "Familiar"
+icon_text = "✦"
+roles = Array[String](["summon", "companion", "combat", "puzzle"])
+targeting_style = "self"
+delivery_type = "summon"
+combo_tags = Array[String](["soul_actor", "friendly_actor", "persistent"])
+ui_tags = Array[String](["summon", "familiar"])
+scaling_stats = Array[String](["intelligence", "soul"])
+design_notes = "First reusable summon spell. Recast recalls the familiar instead of spawning duplicates."

@@ -17,6 +17,9 @@ func _ready() -> void:
 		if not species_knowledge.is_connected("unlock_earned", _on_unlock):
 			species_knowledge.connect("unlock_earned", _on_unlock)
 	GameState.set_objective("Approach a goose and hold the context button to interact.")
+	var game_ui: Node = get_tree().get_first_node_in_group("game_ui")
+	if game_ui != null and game_ui.has_method("set_objective"):
+		game_ui.call("set_objective", "Approach a goose and hold the context button to interact.")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -64,11 +67,6 @@ func _build_wetland() -> void:
 	_spawn_goose("Forager", Vector3(-5, 0.1, -3), "CURIOUS")
 	_spawn_goose("Sentinel", Vector3(5, 0.1, -4), "WARY")
 	_spawn_goose("Pond Goose", Vector3(0, 0.18, -10), "CALM")
-	_add_label("GOOSE FIELD STUDY", Vector3(0, 5.2, 7), Color(1.0, 0.82, 0.38), 38)
-	_add_label("TAP D-PAD DOWN / TAB: CONTEXT ACTION  •  HOLD: COMMAND MENU  •  G: STUDY HONK  •  F8 RESET", Vector3(0, 4.4, 7), Color(0.88, 0.94, 1.0), 17)
-	_add_label("OBSERVE MOVEMENT", Vector3(-5, 2.4, -3), Color(0.56, 0.9, 1.0), 22)
-	_add_label("EARN TRUST", Vector3(5, 2.4, -4), Color(0.56, 1.0, 0.7), 22)
-	_add_label("WETLAND BEHAVIOR", Vector3(0, 2.6, -10), Color(0.38, 0.76, 1.0), 22)
 
 
 func _spawn_goose(goose_name: String, position: Vector3, temperament: String) -> void:

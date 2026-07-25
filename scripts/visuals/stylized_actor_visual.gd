@@ -1,6 +1,8 @@
 extends Node3D
 class_name StylizedActorVisual
 
+signal presentation_state_changed(previous_state: String, next_state: String)
+
 @export_group("Locomotion")
 @export var idle_bob_height: float = 0.014
 @export var idle_bob_speed: float = 2.1
@@ -10,12 +12,17 @@ class_name StylizedActorVisual
 @export var arm_swing_radians: float = 0.42
 @export var maximum_lean_radians: float = 0.11
 @export var locomotion_speed_reference: float = 5.0
+@export var locomotion_blend_response: float = 9.0
+@export var acceleration_lean_scale: float = 0.018
+@export var turning_lean_scale: float = 0.1
 
 @export_group("Response")
 @export var pose_response: float = 12.0
 @export var accessory_response: float = 8.0
 @export var idle_breath_amount: float = 0.018
 @export var action_pose_strength: float = 1.0
+@export var landing_pose_seconds: float = 0.24
+@export var minimum_landing_speed: float = 3.5
 
 @onready var visual_root: Node3D = get_node_or_null("VisualRoot") as Node3D
 @onready var body_root: Node3D = get_node_or_null("VisualRoot/BodyRoot") as Node3D
@@ -42,6 +49,7 @@ var weapon_controller: Node
 var dodge_controller: Node
 var defense_controller: Node
 var aerial_locomotion: Node
+var climbing_controller: Node
 var weapon_hand_anchor: Node3D
 
 var elapsed: float = 0.0
@@ -51,6 +59,16 @@ var stride_phase: float = 0.0
 var base_positions: Dictionary = {}
 var base_rotations: Dictionary = {}
 var base_scales: Dictionary = {}
+var state_elapsed: float = 0.0
+var landing_remaining: float = 0.0
+var landing_strength: float = 0.0
+var previous_on_floor: bool = true
+var previous_vertical_velocity: float = 0.0
+var previous_horizontal_velocity: Vector3 = Vector3.ZERO
+var smoothed_acceleration: Vector3 = Vector3.ZERO
+var previous_actor_yaw: float = 0.0
+var turn_velocity: float = 0.0
+var debug_forced_state: String = ""
 
 
 func _ready() -> void:
@@ -61,10 +79,16 @@ func _ready() -> void:
 		dodge_controller = actor.get_node_or_null("PlayerDodgeController")
 		defense_controller = actor.get_node_or_null("PlayerDefenseController")
 		aerial_locomotion = actor.get_node_or_null("AerialLocomotion")
+		climbing_controller = actor.get_node_or_null("ClimbingController")
 		weapon_hand_anchor = actor.get_node_or_null("WeaponController/HandAnchor") as Node3D
 
 	for node: Node3D in get_pose_nodes():
 		remember_base_pose(node)
+
+	if actor != null:
+		previous_on_floor = actor.is_on_floor()
+		previous_vertical_velocity = actor.velocity.y
+		previous_actor_yaw = actor.rotation.y
 
 	add_to_group("debuggable")
 	sync_animation_anchors()
@@ -85,9 +109,29 @@ func sample_animation_pose(delta: float) -> void:
 		horizontal_velocity = Vector3(actor.velocity.x, 0.0, actor.velocity.z)
 
 	var speed: float = horizontal_velocity.length()
-	movement_weight = clampf(speed / maxf(locomotion_speed_reference, 0.1), 0.0, 1.0)
-	stride_phase = elapsed * lerpf(idle_bob_speed, movement_bob_speed, movement_weight)
-	presentation_state = resolve_presentation_state()
+	var target_movement_weight: float = clampf(
+		speed / maxf(locomotion_speed_reference, 0.1),
+		0.0,
+		1.0
+	)
+	movement_weight = lerpf(
+		movement_weight,
+		target_movement_weight,
+		clampf(delta * locomotion_blend_response, 0.0, 1.0)
+	)
+	stride_phase = fposmod(
+		stride_phase + delta * lerpf(idle_bob_speed, movement_bob_speed, movement_weight),
+		TAU
+	)
+	update_motion_memory(delta, horizontal_velocity)
+	var resolved_state: String = debug_forced_state if debug_forced_state != "" else resolve_presentation_state()
+	if resolved_state != presentation_state:
+		var previous_state: String = presentation_state
+		presentation_state = resolved_state
+		state_elapsed = 0.0
+		presentation_state_changed.emit(previous_state, presentation_state)
+	else:
+		state_elapsed += delta
 
 	var root_rotation: Vector3 = Vector3.ZERO
 	var root_position: Vector3 = Vector3.ZERO
@@ -117,6 +161,24 @@ func sample_animation_pose(delta: float) -> void:
 		-maximum_lean_radians,
 		maximum_lean_radians
 	)
+	var local_acceleration: Vector3 = smoothed_acceleration
+	if actor != null:
+		local_acceleration = actor.global_transform.basis.inverse() * smoothed_acceleration
+	body_rotation.x += clampf(
+		local_acceleration.z * acceleration_lean_scale,
+		-0.16,
+		0.16
+	)
+	body_rotation.z += clampf(
+		-local_acceleration.x * acceleration_lean_scale,
+		-0.14,
+		0.14
+	)
+	root_rotation.z += clampf(
+		-turn_velocity * turning_lean_scale,
+		-0.12,
+		0.12
+	)
 
 	left_leg_rotation.x = step_wave * stride_radians * movement_weight
 	right_leg_rotation.x = -step_wave * stride_radians * movement_weight
@@ -126,6 +188,39 @@ func sample_animation_pose(delta: float) -> void:
 	head_rotation.y = sin(elapsed * 0.72) * 0.025 * (1.0 - movement_weight)
 
 	match presentation_state:
+		"climb":
+			var climb_wave: float = sin(elapsed * 5.2)
+			root_position.z -= 0.035
+			body_rotation.x -= 0.08
+			left_arm_rotation += Vector3(-1.38 + climb_wave * 0.34, 0.0, -0.18)
+			right_arm_rotation += Vector3(-1.38 - climb_wave * 0.34, 0.0, 0.18)
+			left_leg_rotation.x = -climb_wave * 0.48
+			right_leg_rotation.x = climb_wave * 0.48
+			head_rotation.x -= 0.08
+		"mantle":
+			var mantle_progress: float = get_mantle_progress()
+			body_rotation.x -= lerpf(0.28, -0.08, mantle_progress)
+			body_position.y -= sin(mantle_progress * PI) * 0.08
+			left_arm_rotation += Vector3(-1.52, 0.0, -0.24)
+			right_arm_rotation += Vector3(-1.52, 0.0, 0.24)
+			left_leg_rotation.x += lerpf(-0.18, 0.54, mantle_progress)
+			right_leg_rotation.x += lerpf(0.32, -0.12, mantle_progress)
+		"landing":
+			var landing_wave: float = sin(get_landing_progress() * PI)
+			root_position.y -= 0.2 * landing_strength * landing_wave
+			body_position.y -= 0.08 * landing_strength * landing_wave
+			body_rotation.x += 0.18 * landing_strength * landing_wave
+			left_arm_rotation.x -= 0.34 * landing_wave
+			right_arm_rotation.x -= 0.34 * landing_wave
+			left_leg_rotation.x -= 0.28 * landing_wave
+			right_leg_rotation.x += 0.28 * landing_wave
+		"exhausted":
+			var fatigue: float = 0.5 + sin(elapsed * 3.4) * 0.08
+			body_position.y -= 0.1
+			body_rotation.x += 0.22 + fatigue * 0.08
+			head_rotation.x += 0.16
+			left_arm_rotation += Vector3(0.18, 0.0, -0.12)
+			right_arm_rotation += Vector3(0.18, 0.0, 0.12)
 		"attack":
 			var attack_pose: Dictionary = build_attack_pose()
 			body_rotation += attack_pose.get("body", Vector3.ZERO)
@@ -219,7 +314,58 @@ func sample_animation_pose(delta: float) -> void:
 	sync_animation_anchors()
 
 
+func update_motion_memory(delta: float, horizontal_velocity: Vector3) -> void:
+	if actor == null or delta <= 0.0:
+		return
+	var acceleration: Vector3 = (horizontal_velocity - previous_horizontal_velocity) / maxf(delta, 0.001)
+	smoothed_acceleration = smoothed_acceleration.lerp(
+		acceleration,
+		clampf(delta * 7.0, 0.0, 1.0)
+	)
+	previous_horizontal_velocity = horizontal_velocity
+
+	var on_floor: bool = actor.is_on_floor()
+	if on_floor and not previous_on_floor and previous_vertical_velocity < -minimum_landing_speed:
+		landing_remaining = landing_pose_seconds
+		landing_strength = clampf(
+			(-previous_vertical_velocity - minimum_landing_speed) / 9.0 + 0.45,
+			0.45,
+			1.0
+		)
+	landing_remaining = maxf(landing_remaining - delta, 0.0)
+	previous_on_floor = on_floor
+	previous_vertical_velocity = actor.velocity.y
+
+	var yaw_delta: float = wrapf(actor.rotation.y - previous_actor_yaw, -PI, PI)
+	turn_velocity = lerpf(
+		turn_velocity,
+		yaw_delta / maxf(delta, 0.001),
+		clampf(delta * 8.0, 0.0, 1.0)
+	)
+	previous_actor_yaw = actor.rotation.y
+
+
+func get_landing_progress() -> float:
+	if landing_pose_seconds <= 0.0:
+		return 1.0
+	return clampf(1.0 - landing_remaining / landing_pose_seconds, 0.0, 1.0)
+
+
+func get_mantle_progress() -> float:
+	if climbing_controller == null:
+		return 0.0
+	var duration: float = maxf(float(climbing_controller.get("mantle_duration")), 0.01)
+	var remaining: float = maxf(float(climbing_controller.get("mantle_remaining")), 0.0)
+	return clampf(1.0 - remaining / duration, 0.0, 1.0)
+
+
 func resolve_presentation_state() -> String:
+	if climbing_controller != null:
+		if bool(climbing_controller.get("mantling")):
+			return "mantle"
+		if bool(climbing_controller.get("climbing")):
+			return "climb"
+
 	if action_state != null:
 		if action_state.is_defeated:
 			return "defeated"
@@ -250,6 +396,12 @@ func resolve_presentation_state() -> String:
 
 	if aerial_locomotion != null and bool(aerial_locomotion.get("flight_active")):
 		return "flight"
+
+	if landing_remaining > 0.0:
+		return "landing"
+
+	if actor != null and actor.is_on_floor() and GameState.get_stat("stamina") <= 0:
+		return "exhausted"
 
 	if actor != null and not actor.is_on_floor():
 		return "jump" if actor.velocity.y > 0.05 else "fall"
@@ -447,9 +599,22 @@ func get_base_scale(node: Node3D) -> Vector3:
 	return base_scales.get(node.name, node.scale)
 
 
+func set_debug_forced_state(state_name: String) -> void:
+	debug_forced_state = state_name
+
+
+func clear_debug_forced_state() -> void:
+	debug_forced_state = ""
+
+
 func get_animation_debug_data() -> Dictionary:
 	return {
 		"presentation_state": presentation_state,
+		"state_elapsed": snappedf(state_elapsed, 0.01),
+		"landing": snappedf(landing_remaining, 0.01),
+		"turn_velocity": snappedf(turn_velocity, 0.01),
+		"acceleration": smoothed_acceleration,
+		"forced_state": debug_forced_state,
 		"movement_weight": snappedf(movement_weight, 0.01),
 		"stride_phase": snappedf(fposmod(stride_phase, TAU), 0.01),
 		"articulated_pivots": get_pose_nodes().size(),

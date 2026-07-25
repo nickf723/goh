@@ -141,6 +141,21 @@ func _configure_player() -> void:
 			caster.call("align_focus_menu_to_current_ability")
 		if caster.has_method("emit_current_ability"):
 			caster.call_deferred("emit_current_ability")
+	var weapon_controller: Node = player.get_node_or_null("WeaponController")
+	if weapon_controller != null:
+		var base_weapon: WeaponDefinition = weapon_controller.get("equipped_weapon") as WeaponDefinition
+		if base_weapon != null:
+			var lab_weapon: WeaponDefinition = base_weapon.duplicate(true) as WeaponDefinition
+			var base_payload: DamagePayload = lab_weapon.light_payload
+			if base_payload != null:
+				var lab_payload: DamagePayload = base_payload.duplicate(true) as DamagePayload
+				lab_payload.amount = 6
+				lab_payload.stance_damage = 6
+				lab_payload.source_name = "Colossus Trial Blade"
+				lab_weapon.light_payload = lab_payload
+			weapon_controller.set("equipped_weapon", lab_weapon)
+			if weapon_controller.has_method("refresh_weapon_visual"):
+				weapon_controller.call_deferred("refresh_weapon_visual")
 	var resources: Node = player.get_node_or_null("PlayerResourceController")
 	if resources != null and resources.has_method("restore_full_resources"):
 		resources.call("restore_full_resources")

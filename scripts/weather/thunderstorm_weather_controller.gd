@@ -496,10 +496,17 @@ func _play_thunder(world_position: Vector3, distance: float, delay_seconds: floa
 	audio.finished.connect(audio.queue_free)
 	audio.play()
 
-	var manager: Node = get_tree().get_first_node_in_group("perception_stimulus_manager")
-	if manager != null and manager.has_method("emit_stimulus"):
-		manager.call(
-			"emit_stimulus",
+	var manager: PerceptionStimulusManager = get_tree().get_first_node_in_group(
+		"perception_stimulus_manager"
+	) as PerceptionStimulusManager
+	if manager != null:
+		var thunder_tags: Array[String] = [
+			"weather",
+			"storm",
+			"thunder",
+			"hazard",
+		]
+		manager.emit_stimulus(
 			world_position,
 			32.0,
 			"thunder",
@@ -507,7 +514,7 @@ func _play_thunder(world_position: Vector3, distance: float, delay_seconds: floa
 			self,
 			"Thunder",
 			2.4,
-			["weather", "storm", "thunder", "hazard"]
+			thunder_tags
 		)
 	thunder_heard.emit(world_position, distance, delay_seconds)
 

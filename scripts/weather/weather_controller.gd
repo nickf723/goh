@@ -74,6 +74,7 @@ func resolve_dependencies(source_player: Node3D = null) -> void:
 		concentration_manager = get_node_or_null(concentration_manager_path)
 	if concentration_manager == null:
 		concentration_manager = get_tree().get_first_node_in_group("concentration_manager")
+	connect_concentration_signal()
 
 	if world_environment == null and not environment_path.is_empty():
 		world_environment = get_node_or_null(environment_path) as WorldEnvironment
@@ -103,6 +104,8 @@ func start_weather(source_player: Node3D = null) -> bool:
 	if weather_definition == null or concentration_manager == null:
 		show_message("Rain cannot form without a weather definition and concentration manager.")
 		return false
+
+	stop_other_weather_controllers()
 
 	var ability_caster: Node = null
 	if player != null:
@@ -140,6 +143,32 @@ func stop_weather(show_feedback: bool = true) -> void:
 
 	if show_feedback and show_messages:
 		show_message("The rainfall thins and the reserved mana ceiling is released.")
+
+
+func stop_other_weather_controllers() -> void:
+	for candidate: Node in get_tree().get_nodes_in_group("weather_controller"):
+		if candidate == self or candidate == null or not is_instance_valid(candidate):
+			continue
+		if bool(candidate.get("active")) and candidate.has_method("stop_weather"):
+			candidate.call("stop_weather", false)
+
+
+func connect_concentration_signal() -> void:
+	if concentration_manager == null or not concentration_manager.has_signal("effect_deactivated"):
+		return
+	var callback: Callable = Callable(self, "_on_concentration_effect_deactivated")
+	if not concentration_manager.is_connected("effect_deactivated", callback):
+		concentration_manager.connect("effect_deactivated", callback)
+
+
+func _on_concentration_effect_deactivated(effect_id: String) -> void:
+	if not active or effect_id != get_weather_id():
+		return
+	active = false
+	set_rain_visuals_visible(false)
+	restore_weather_environment()
+	weather_stopped.emit(get_weather_id())
+
 
 
 func request_element_units(element: String, requested_units: float) -> float:

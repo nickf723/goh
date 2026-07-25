@@ -22,6 +22,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/quick_item_belt_ui.tscn" id="20_quick_ui"]
 [ext_resource type="Script" path="res://scripts/player/combat_targeting_assist.gd" id="21_targeting"]
 [ext_resource type="Script" path="res://scripts/player/player_climbing_controller.gd" id="22_climbing"]
+[ext_resource type="Script" path="res://scripts/visuals/player_motion_feedback.gd" id="23_motion_feedback"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -120,6 +121,9 @@ script = ExtResource("21_targeting")
 
 [node name="ClimbingController" type="Node" parent="."]
 script = ExtResource("22_climbing")
+
+[node name="PlayerMotionFeedback" type="Node" parent="."]
+script = ExtResource("23_motion_feedback")
 
 [node name="PlayerDodgeController" type="Node" parent="." unique_id=1337799175]
 script = ExtResource("8_fp13k")

@@ -179,7 +179,9 @@ func queue_attack_input(input_kind: String) -> void:
 		if dash_direction.length() > 0.01:
 			pending_context_forward = dash_direction.normalized()
 		reset_combo_chain(false)
-		start_attack(context_attack)
+		if not start_attack(context_attack):
+			pending_context_forward = Vector3.ZERO
+			active_technique_id = ""
 		return
 
 	if action_state != null and not action_state.can_attack():

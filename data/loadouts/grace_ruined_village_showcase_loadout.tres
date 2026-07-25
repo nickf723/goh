@@ -1,0 +1,78 @@
+[gd_resource type="Resource" script_class="AbilityLoadout" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_loadout.gd" id="1_loadout"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+[ext_resource type="Resource" path="res://data/abilities/water_jet_ability.tres" id="3_water"]
+[ext_resource type="Resource" path="res://data/abilities/earth_spike_ability.tres" id="4_earth"]
+[ext_resource type="Resource" path="res://data/abilities/firebolt_ability.tres" id="5_firebolt"]
+[ext_resource type="Resource" path="res://data/abilities/fire_field_ability.tres" id="6_fire_field"]
+[ext_resource type="Resource" path="res://data/abilities/wind_gust_ability.tres" id="7_wind_gust"]
+[ext_resource type="Resource" path="res://data/abilities/gust_ability.tres" id="8_gust"]
+[ext_resource type="Resource" path="res://data/abilities/flight_concentration_ability.tres" id="9_flight"]
+[ext_resource type="Resource" path="res://data/abilities/ice_lance_ability.tres" id="10_ice"]
+[ext_resource type="Resource" path="res://data/abilities/metal_needle_ability.tres" id="11_metal"]
+[ext_resource type="Resource" path="res://data/abilities/metal_tether_ability.tres" id="12_tether"]
+[ext_resource type="Resource" path="res://data/abilities/lightning_spark_ability.tres" id="13_lightning"]
+[ext_resource type="Resource" path="res://data/abilities/poison_cloud_ability.tres" id="14_poison"]
+[ext_resource type="Resource" path="res://data/abilities/life_thorn_ability.tres" id="15_life"]
+[ext_resource type="Resource" path="res://data/abilities/death_hex_ability.tres" id="16_death"]
+[ext_resource type="Resource" path="res://data/abilities/body_burst_ability.tres" id="17_body"]
+[ext_resource type="Resource" path="res://data/abilities/soul_thread_ability.tres" id="18_soul_thread"]
+[ext_resource type="Resource" path="res://data/abilities/soul_grip_ability.tres" id="19_soul_grip"]
+[ext_resource type="Resource" path="res://data/abilities/dream_snare_ability.tres" id="20_dreams"]
+[ext_resource type="Resource" path="res://data/abilities/sound_pulse_ability.tres" id="21_sound"]
+[ext_resource type="Resource" path="res://data/abilities/space_blink_ability.tres" id="22_space"]
+[ext_resource type="Resource" path="res://data/abilities/time_snare_ability.tres" id="23_time"]
+[ext_resource type="Resource" path="res://data/abilities/arcane_spark_ability.tres" id="24_arcane"]
+
+[resource]
+script = ExtResource("1_loadout")
+quick_slot_count = 8
+learned_abilities = Array[ExtResource("2_definition")]([
+	ExtResource("3_water"),
+	ExtResource("4_earth"),
+	ExtResource("5_firebolt"),
+	ExtResource("6_fire_field"),
+	ExtResource("7_wind_gust"),
+	ExtResource("8_gust"),
+	ExtResource("9_flight"),
+	ExtResource("10_ice"),
+	ExtResource("11_metal"),
+	ExtResource("12_tether"),
+	ExtResource("13_lightning"),
+	ExtResource("14_poison"),
+	ExtResource("15_life"),
+	ExtResource("16_death"),
+	ExtResource("17_body"),
+	ExtResource("18_soul_thread"),
+	ExtResource("19_soul_grip"),
+	ExtResource("20_dreams"),
+	ExtResource("21_sound"),
+	ExtResource("22_space"),
+	ExtResource("23_time"),
+	ExtResource("24_arcane")
+])
+equipped_abilities = Array[ExtResource("2_definition")]([
+	ExtResource("3_water"),
+	ExtResource("4_earth"),
+	ExtResource("5_firebolt"),
+	ExtResource("6_fire_field"),
+	ExtResource("7_wind_gust"),
+	ExtResource("8_gust"),
+	ExtResource("9_flight"),
+	ExtResource("10_ice"),
+	ExtResource("11_metal"),
+	ExtResource("12_tether"),
+	ExtResource("13_lightning"),
+	ExtResource("14_poison"),
+	ExtResource("15_life"),
+	ExtResource("16_death"),
+	ExtResource("17_body"),
+	ExtResource("18_soul_thread"),
+	ExtResource("19_soul_grip"),
+	ExtResource("20_dreams"),
+	ExtResource("21_sound"),
+	ExtResource("22_space"),
+	ExtResource("23_time"),
+	ExtResource("24_arcane")
+])

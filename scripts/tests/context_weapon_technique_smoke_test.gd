@@ -28,6 +28,20 @@ func _ready() -> void:
 		assert(payload.tags.has("technique_dash"))
 		assert(payload.tags.has("context_combo"))
 		assert(payload.tags.has("context_deep_combo"))
+		var launcher_payload: DamagePayload = DamagePayload.new()
+		launcher_payload.tags = ["weapon", "heavy"]
+		var launcher_attack: WeaponAttackDefinition = WeaponAttackDefinition.new()
+		launcher_attack.input_kind = "heavy"
+		WeaponTechniqueCatalogScript.apply_ground_launcher(
+			launcher_payload,
+			launcher_attack,
+			weapon_class,
+			3,
+			1,
+			true
+		)
+		assert(launcher_payload.tags.has("technique_launcher"))
+		assert(launcher_payload.knockback_up_strength > 0.0)
 		for aerial_context: String in [
 			WeaponTechniqueCatalogScript.CONTEXT_AERIAL_NEUTRAL,
 			WeaponTechniqueCatalogScript.CONTEXT_AERIAL_FORWARD,

@@ -3,7 +3,7 @@ class_name RainWeatherSpell
 
 
 func execute(player: Node3D, _cast_direction: Vector3) -> void:
-	var weather_controller: Node = get_tree().get_first_node_in_group("weather_controller")
+	var weather_controller: Node = find_rain_controller()
 	if weather_controller == null or not weather_controller.has_method("toggle_weather"):
 		show_message("Rain has nowhere to form in this scene.")
 		queue_free()
@@ -11,6 +11,20 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 
 	weather_controller.call("toggle_weather", "rain", player)
 	queue_free()
+
+
+func find_rain_controller() -> Node:
+	for candidate: Node in get_tree().get_nodes_in_group("weather_controller"):
+		if candidate == null or not is_instance_valid(candidate):
+			continue
+		var definition: Variant = candidate.get("weather_definition")
+		if definition == null:
+			continue
+		var effect_id: String = str(definition.get("effect_id"))
+		var weather_kind: String = str(definition.get("weather_kind"))
+		if effect_id == "rain_weather" or weather_kind == "rain":
+			return candidate
+	return null
 
 
 func show_message(text: String) -> void:

@@ -17,6 +17,7 @@
 [ext_resource type="Resource" path="res://data/weather/thunderstorm_weather.tres" id="15_storm_weather"]
 [ext_resource type="Script" path="res://scripts/presentation/lightning_arc_renderer.gd" id="16_arc_renderer"]
 [ext_resource type="Script" path="res://scripts/weather/storm_lightning_attractor.gd" id="17_storm_attractor"]
+[ext_resource type="Script" path="res://scripts/perception/perception_stimulus_manager.gd" id="18_stimulus_manager"]
 
 [node name="PrototypeRuinedVillageApproach" type="Node3D"]
 script = ExtResource("1_director")
@@ -47,6 +48,9 @@ script = ExtResource("7_sync")
 script = ExtResource("9_concentration")
 passive_mana_regeneration_per_second = 1.0
 show_hud = true
+
+[node name="PerceptionStimulusManager" type="Node" parent="."]
+script = ExtResource("18_stimulus_manager")
 
 [node name="RainWeatherController" type="Node3D" parent="."]
 script = ExtResource("10_rain_controller")

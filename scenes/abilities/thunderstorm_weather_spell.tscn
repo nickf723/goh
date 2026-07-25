@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/thunderstorm_weather_spell.gd" id="1_storm"]
+
+[node name="ThunderstormWeatherSpell" type="Node3D"]
+script = ExtResource("1_storm")

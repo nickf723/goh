@@ -32,6 +32,7 @@ var underwater: bool = false
 var surface_swimming: bool = false
 var sprinting: bool = false
 var exhausted: bool = false
+var water_exit_handoff: bool = false
 var breath_seconds: float = 12.0
 var wetness_remaining: float = 0.0
 var stamina_progress: float = 0.0
@@ -72,6 +73,7 @@ func enter_water(volume: SwimmingWaterVolume) -> void:
 	if not swimming:
 		swimming = true
 		wetness_remaining = wetness_seconds
+		water_exit_handoff = false
 		breath_seconds = maximum_breath_seconds
 		if action_state != null:
 			action_state.clear_action_locks()
@@ -90,6 +92,7 @@ func exit_water(volume: SwimmingWaterVolume) -> void:
 	surface_swimming = false
 	sprinting = false
 	exhausted = false
+	water_exit_handoff = false
 	wetness_remaining = wetness_seconds
 	last_current = Vector3.ZERO
 	if action_state != null:
@@ -100,7 +103,7 @@ func exit_water(volume: SwimmingWaterVolume) -> void:
 
 func should_handle_locomotion() -> bool:
 	_prune_volumes()
-	return swimming and active_volumes.size() > 0
+	return swimming and not water_exit_handoff and active_volumes.size() > 0
 
 
 func process_locomotion(delta: float) -> bool:
@@ -128,6 +131,11 @@ func process_locomotion(delta: float) -> bool:
 	var horizontal_direction: Vector3 = right * input_vector.x + forward * -input_vector.y
 	if horizontal_direction.length() > 1.0:
 		horizontal_direction = horizontal_direction.normalized()
+	if horizontal_direction.length_squared() > 0.01:
+		var target_yaw: float = atan2(-horizontal_direction.x, -horizontal_direction.z)
+		actor.rotation.y = lerp_angle(actor.rotation.y, target_yaw, clampf(delta * 7.0, 0.0, 1.0))
+	if surface_swimming and Input.is_action_just_pressed("jump") and _try_water_exit_handoff():
+		return false
 
 	sprinting = Input.is_action_pressed("guard") and input_vector.length() > 0.3 and not exhausted
 	var movement_speed: float = surface_swim_speed if surface_swimming else underwater_swim_speed
@@ -164,6 +172,39 @@ func process_locomotion(delta: float) -> bool:
 	actor.move_and_slide()
 	_update_breath(delta)
 	_update_swim_state()
+	return true
+
+
+func _try_water_exit_handoff() -> bool:
+	if actor == null or climbing_controller == null:
+		return false
+	var forward: Vector3 = -actor.global_transform.basis.z
+	forward.y = 0.0
+	if forward.length_squared() <= 0.001:
+		return false
+	var origin: Vector3 = actor.global_position + Vector3.UP * 0.8
+	var query := PhysicsRayQueryParameters3D.create(
+		origin,
+		origin + forward.normalized() * 1.25
+	)
+	query.exclude = [actor.get_rid()]
+	query.collide_with_areas = false
+	var hit: Dictionary = actor.get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return false
+	var collider: Node = hit.get("collider") as Node
+	if collider == null or not collider.is_in_group("climbable"):
+		return false
+	if action_state != null:
+		action_state.end_manipulation()
+	water_exit_handoff = true
+	climbing_controller.update_climb_detection()
+	if not climbing_controller.should_handle_locomotion():
+		water_exit_handoff = false
+		if action_state != null:
+			action_state.begin_manipulation()
+		return false
+	_set_state("LEDGE EXIT")
 	return true
 
 
@@ -337,6 +378,7 @@ func reset_swimming() -> void:
 	surface_swimming = false
 	sprinting = false
 	exhausted = false
+	water_exit_handoff = false
 	breath_seconds = maximum_breath_seconds
 	wetness_remaining = 0.0
 	stamina_progress = 0.0
@@ -353,6 +395,7 @@ func get_debug_data() -> Dictionary:
 		"surface": surface_swimming,
 		"sprinting": sprinting,
 		"exhausted": exhausted,
+		"ledge_handoff": water_exit_handoff,
 		"state": last_state,
 		"breath": snappedf(breath_seconds, 0.1),
 		"max_breath": maximum_breath_seconds,

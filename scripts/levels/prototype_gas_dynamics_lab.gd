@@ -124,7 +124,10 @@ func attach_player_exposure_receiver() -> void:
 		return
 	exposure_receiver = GasExposureReceiverScript.new() as GasExposureReceiver
 	exposure_receiver.name = "GasExposureReceiver"
-	exposure_receiver.effect_dose_threshold = 0.32
+	exposure_receiver.warning_dose_threshold = 0.18
+	exposure_receiver.effect_dose_threshold = 0.45
+	exposure_receiver.exposure_response_multiplier = 0.75
+	exposure_receiver.maximum_obscuration_alpha = 0.16
 	exposure_receiver.show_messages = true
 	player.add_child(exposure_receiver)
 
@@ -246,7 +249,7 @@ func create_gas_volumes() -> void:
 
 func create_emitters() -> void:
 	create_emitter("SmokeFurnace", "smoke", Vector3(-8.5, 0.45, -1.5), 1.35, 1.35, Color(0.52, 0.6, 0.65, 1.0), "SMOKE SOURCE")
-	create_emitter("PoisonLeak", "poison", Vector3(6.0, 0.55, -1.5), 1.45, 1.8, Color(0.38, 0.88, 0.18, 1.0), "POISON LEAK")
+	create_emitter("PoisonLeak", "poison", Vector3(6.0, 0.55, -1.5), 1.15, 1.8, Color(0.38, 0.88, 0.18, 1.0), "POISON LEAK")
 	call_deferred("seed_initial_poison")
 
 
@@ -278,8 +281,8 @@ func create_emitter(
 func seed_initial_poison() -> void:
 	if poison_volume == null or not is_instance_valid(poison_volume):
 		return
-	poison_volume.inject_density(Vector3(6.0, 0.45, -1.5), 0.85, 2.8, 0.22)
-	poison_volume.inject_density(Vector3(8.0, 0.4, -1.5), 0.55, 2.4, 0.3)
+	poison_volume.inject_density(Vector3(6.0, 0.45, -1.5), 0.65, 2.8, 0.22)
+	poison_volume.inject_density(Vector3(8.0, 0.4, -1.5), 0.35, 2.4, 0.3)
 
 
 func create_architecture() -> void:

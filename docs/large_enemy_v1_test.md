@@ -45,7 +45,7 @@ The traversal controller is a separate player component driven by anchors and da
 
 ## Encounter balance and spell access
 
-- Hold **Spell Menu / ZL / right mouse** to open the complete sixteen-element Focus selector; press it again to close.
+- Press **Spell Menu / ZL / right mouse** to toggle the complete sixteen-element Focus selector.
 - Cast with **ZR / Q** after equipping a spell.
 - Grace enters this laboratory with 80 health, 50 stamina, 40 mana, stronger combat stats, and a six-damage/six-stance trial blade.
 - The Colossus now has 120 health and 32 stance.

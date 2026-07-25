@@ -31,7 +31,12 @@ const SAVE_SLOT_PATH: String = "user://goh_save_slot_1.json"
 const ARMOR_TRIAL_BLESSING_ID: String = "armor_trial_blessing"
 const GUARD_STAT: String = "guard"
 const MAX_GUARD_STAT: String = "max_guard"
-const DEFAULT_INVENTORY: Dictionary = {"healing_flask": 3}
+const DEFAULT_INVENTORY: Dictionary = {
+	"healing_flask": 3,
+	"swift_tonic": 2,
+	"arcane_draught": 2,
+	"ironbark_brew": 2,
+}
 const DEFAULT_QUICK_ITEM_SLOTS: Array[String] = ["healing_flask", "", "", ""]
 const DEFAULT_OWNED_EQUIPMENT: Dictionary = {"practice_sword": true}
 const DEFAULT_EQUIPMENT_SLOTS: Dictionary = {

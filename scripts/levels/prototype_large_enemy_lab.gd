@@ -20,7 +20,7 @@ func _ready() -> void:
 		construct.health_changed.connect(_on_construct_changed)
 		construct.stance_changed.connect(_on_construct_changed)
 		construct.part_consequence.connect(_on_part_consequence)
-	GameState.set_objective("Hard-lock the colossus, switch toward a part, and break its combat options.")
+	GameState.set_objective("Use weapons or spells to break stance, climb during the kneel, and attack exposed parts.")
 
 
 func _process(_delta: float) -> void:
@@ -139,12 +139,26 @@ func _configure_player() -> void:
 		caster.set("loadout", runtime_loadout)
 		if caster.has_method("align_focus_menu_to_current_ability"):
 			caster.call("align_focus_menu_to_current_ability")
+		if caster.has_method("emit_current_ability"):
+			caster.call_deferred("emit_current_ability")
 	var resources: Node = player.get_node_or_null("PlayerResourceController")
 	if resources != null and resources.has_method("restore_full_resources"):
 		resources.call("restore_full_resources")
-	GameState.set_stat("health", GameState.get_stat("max_health"))
-	GameState.set_stat("stamina", GameState.get_stat("max_stamina"))
-	GameState.set_stat("mana", GameState.get_stat("max_mana"))
+	# Encounter profile: sturdy enough to learn the boss and strong enough to reach a kneel.
+	GameState.set_stat("max_health", 80)
+	GameState.set_stat("health", 80)
+	GameState.set_stat("max_stamina", 50)
+	GameState.set_stat("stamina", 50)
+	GameState.set_stat("max_mana", 40)
+	GameState.set_stat("mana", 40)
+	GameState.set_stat("max_stance", 35)
+	GameState.set_stat("stance", 35)
+	GameState.set_stat("power", 10)
+	GameState.set_stat("skill", 8)
+	GameState.set_stat("arcana", 10)
+	GameState.set_stat("defense", 6)
+	GameState.set_stat("resilience", 6)
+	GameState.set_stat("focus", 8)
 
 
 func _setup_traversal_controller() -> void:

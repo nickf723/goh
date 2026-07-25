@@ -90,12 +90,13 @@ func process_locomotion(delta: float) -> bool:
 		return true
 	if not climbing:
 		return false
+	attachment_grace_remaining = maxf(attachment_grace_remaining - delta, 0.0)
 	if Input.is_action_just_pressed("dodge"):
 		_detach("DROPPED")
 		actor.velocity = Vector3.ZERO
 		actor.move_and_slide()
 		return true
-	if Input.is_action_just_pressed("jump"):
+	if attachment_grace_remaining <= 0.0 and Input.is_action_just_pressed("jump"):
 		var launch: Vector3 = wall_normal * jump_away_speed + Vector3.UP * jump_up_speed
 		_detach("CLIMB JUMP")
 		actor.velocity = launch
@@ -235,6 +236,7 @@ func reset_climbing() -> void:
 	_detach("READY")
 	stamina_drain_progress = 0.0
 	stamina_rest_progress = 0.0
+	attachment_grace_remaining = 0.0
 
 
 func get_debug_data() -> Dictionary:

@@ -287,7 +287,12 @@ func append_history(speaker: String, text: String) -> void:
 
 
 func update_history() -> void:
-	history_label.text = "\n\n".join(history)
+	var transcript: String = ""
+	for entry: String in history:
+		if transcript != "":
+			transcript += "\n\n"
+		transcript += entry
+	history_label.text = transcript
 
 
 func face_player() -> void:

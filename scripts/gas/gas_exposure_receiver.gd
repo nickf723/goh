@@ -9,6 +9,7 @@ signal exposure_ended(gas_id: String)
 signal gas_effect_applied(gas_id: String, dose: float)
 
 @export var sample_offset: Vector3 = Vector3(0.0, 0.85, 0.0)
+@export var lower_body_sample_offset: Vector3 = Vector3(0.0, 0.2, 0.0)
 @export_range(0.02, 1.0, 0.01) var sample_interval: float = 0.12
 @export_range(0.0, 1.0, 0.01) var effect_dose_threshold: float = 0.35
 @export_range(0.0, 4.0, 0.01) var exposure_response_multiplier: float = 1.0
@@ -54,18 +55,39 @@ func resolve_manager() -> Node:
 
 
 func get_sample_position() -> Vector3:
+	return get_position_for_offset(sample_offset)
+
+
+func get_lower_body_sample_position() -> Vector3:
+	return get_position_for_offset(lower_body_sample_offset)
+
+
+func get_position_for_offset(offset: Vector3) -> Vector3:
 	var actor: Node3D = get_parent() as Node3D
 	if actor == null:
 		return Vector3.ZERO
-	return actor.global_position + actor.global_transform.basis * sample_offset
+	return actor.global_position + actor.global_transform.basis * offset
+
+
+func sample_breakdown_at(manager: Node, world_position: Vector3) -> Dictionary:
+	var sampled_value: Variant = manager.call("sample_breakdown", world_position)
+	return sampled_value as Dictionary if sampled_value is Dictionary else {}
+
+
+func merge_strongest_density(target: Dictionary, sample: Dictionary) -> void:
+	for raw_id: Variant in sample.keys():
+		var gas_id: String = str(raw_id)
+		var sampled_density: float = maxf(float(sample.get(raw_id, 0.0)), 0.0)
+		target[gas_id] = maxf(float(target.get(gas_id, 0.0)), sampled_density)
 
 
 func update_exposure(delta: float) -> void:
 	var manager: Node = resolve_manager()
 	if manager == null or not manager.has_method("sample_breakdown"):
 		return
-	var sampled_value: Variant = manager.call("sample_breakdown", get_sample_position())
-	var breakdown: Dictionary = sampled_value as Dictionary if sampled_value is Dictionary else {}
+	var breakdown: Dictionary = {}
+	merge_strongest_density(breakdown, sample_breakdown_at(manager, get_sample_position()))
+	merge_strongest_density(breakdown, sample_breakdown_at(manager, get_lower_body_sample_position()))
 	var gas_ids: Array[String] = []
 	for raw_id: Variant in doses.keys():
 		gas_ids.append(str(raw_id))
@@ -275,6 +297,7 @@ func get_debug_data() -> Dictionary:
 	return {
 		"gas_exposure_receiver": true,
 		"sample_position": get_sample_position(),
+		"lower_body_sample_position": get_lower_body_sample_position(),
 		"densities": densities.duplicate(true),
 		"doses": doses.duplicate(true),
 		"active": active_exposures.duplicate(true),

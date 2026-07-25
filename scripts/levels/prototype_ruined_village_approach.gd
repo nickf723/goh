@@ -115,7 +115,7 @@ func configure_player_showcase() -> void:
 	GameState.set_stat("focus", max(GameState.get_stat("focus"), 5))
 
 	show_message(
-		"Spell showcase ready: all 24 developed spells are learned and equipped, including Rain and Snowfall. "
+		"Spell showcase ready: all 25 developed spells are learned and equipped, including Rain, Snowfall, and Thunderstorm. "
 		+ "Flight is selected — cast with RT / Q, Jump ascends, and Dodge descends."
 	)
 

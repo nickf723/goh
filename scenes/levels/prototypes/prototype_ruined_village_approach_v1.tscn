@@ -9,6 +9,10 @@
 [ext_resource type="Script" path="res://scripts/levels/ruined_village_save_sync.gd" id="7_sync"]
 [ext_resource type="Script" path="res://scripts/visuals/cinematic_lighting_rig_3d.gd" id="8_lighting"]
 [ext_resource type="Script" path="res://scripts/concentration/concentration_manager.gd" id="9_concentration"]
+[ext_resource type="Script" path="res://scripts/weather/weather_controller.gd" id="10_rain_controller"]
+[ext_resource type="Script" path="res://scripts/weather/snow_weather_controller.gd" id="11_snow_controller"]
+[ext_resource type="Resource" path="res://data/weather/rain_weather.tres" id="12_rain_weather"]
+[ext_resource type="Resource" path="res://data/weather/snow_weather.tres" id="13_snow_weather"]
 
 [node name="PrototypeRuinedVillageApproach" type="Node3D"]
 script = ExtResource("1_director")
@@ -40,6 +44,20 @@ script = ExtResource("9_concentration")
 passive_mana_regeneration_per_second = 1.0
 show_hud = true
 
-[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+[node name="RainWeatherController" type="Node3D" parent="."]
+script = ExtResource("10_rain_controller")
+weather_definition = ExtResource("12_rain_weather")
+concentration_manager_path = NodePath("../ConcentrationManager")
+player_path = NodePath("../Player")
+environment_path = NodePath("../VillageEnvironment")
+
+[node name="SnowWeatherController" type="Node3D" parent="."]
+script = ExtResource("11_snow_controller")
+weather_definition = ExtResource("13_snow_weather")
+concentration_manager_path = NodePath("../ConcentrationManager")
+player_path = NodePath("../Player")
+environment_path = NodePath("../VillageEnvironment")
+
+[node name="Player" parent="." groups=["player", "weather_exposed"] instance=ExtResource("2_player")]
 position = Vector3(0, 1.2, 64)
 rotation_degrees = Vector3(0, 0, 0)

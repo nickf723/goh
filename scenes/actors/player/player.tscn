@@ -23,6 +23,7 @@
 [ext_resource type="Script" path="res://scripts/player/combat_targeting_assist.gd" id="21_targeting"]
 [ext_resource type="Script" path="res://scripts/player/player_climbing_controller.gd" id="22_climbing"]
 [ext_resource type="Script" path="res://scripts/visuals/player_motion_feedback.gd" id="23_motion_feedback"]
+[ext_resource type="Script" path="res://scripts/player/player_swimming_controller.gd" id="24_swimming"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -124,6 +125,9 @@ script = ExtResource("22_climbing")
 
 [node name="PlayerMotionFeedback" type="Node" parent="."]
 script = ExtResource("23_motion_feedback")
+
+[node name="SwimmingController" type="Node" parent="."]
+script = ExtResource("24_swimming")
 
 [node name="PlayerDodgeController" type="Node" parent="." unique_id=1337799175]
 script = ExtResource("8_fp13k")

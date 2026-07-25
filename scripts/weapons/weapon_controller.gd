@@ -519,6 +519,7 @@ func execute_current_attack_hit() -> void:
 
 	var payload: DamagePayload = current_attack.build_payload(equipped_weapon)
 	var mastery_rank: int = GameState.get_weapon_mastery_rank(equipped_weapon.weapon_class)
+	WeaponTechniqueCatalogScript.apply_context_tags(payload, current_attack, combo_history.size(), active_technique_id)
 	WeaponMasteryCatalogScript.apply_payload_upgrades(
 		payload,
 		equipped_weapon.weapon_class,

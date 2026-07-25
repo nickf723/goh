@@ -9,6 +9,7 @@ signal combo_state_changed(debug_data: Dictionary)
 const EquipmentCatalogScript = preload("res://scripts/equipment/equipment_catalog.gd")
 const WeaponMasteryCatalogScript = preload("res://scripts/weapons/weapon_mastery_catalog.gd")
 const WeaponInfusionCatalogScript = preload("res://scripts/weapons/weapon_infusion_catalog.gd")
+const WeaponTechniqueCatalogScript = preload("res://scripts/weapons/weapon_technique_catalog.gd")
 const ElementVisualsScript = preload("res://scripts/visuals/element_visuals.gd")
 
 const INPUT_LIGHT: String = "light"
@@ -56,6 +57,8 @@ var combo_timeout_timer: float = 0.0
 var last_completed_attack_id: String = ""
 var combo_history: Array[String] = []
 var attack_forward_override: Vector3 = Vector3.ZERO
+var pending_context_forward: Vector3 = Vector3.ZERO
+var active_technique_id: String = ""
 var current_attack_duration_bonus: float = 0.0
 var last_attack_connected: bool = false
 var camera_impact_tween: Tween
@@ -69,6 +72,7 @@ var runtime_weapon_rig: Node3D
 @onready var weapon_model_root: Node3D = get_node_or_null("HandAnchor/WeaponVisualPivot/WeaponModelRoot")
 @onready var slash_trail: MeshInstance3D = get_node_or_null("HandAnchor/WeaponVisualPivot/SlashTrail")
 @onready var action_state: PlayerActionState = get_parent().get_node_or_null("PlayerActionState")
+@onready var dodge_controller: PlayerDodgeController = get_parent().get_node_or_null("PlayerDodgeController")
 
 var base_visual_position: Vector3 = Vector3.ZERO
 var base_visual_rotation_degrees: Vector3 = Vector3.ZERO
@@ -169,6 +173,15 @@ func queue_attack_input(input_kind: String) -> void:
 		emit_combo_state()
 		return
 
+	var context_attack: WeaponAttackDefinition = resolve_context_attack(input_kind)
+	if context_attack != null:
+		var dash_direction: Vector3 = dodge_controller.cancel_into_weapon_technique()
+		if dash_direction.length() > 0.01:
+			pending_context_forward = dash_direction.normalized()
+		reset_combo_chain(false)
+		start_attack(context_attack)
+		return
+
 	if action_state != null and not action_state.can_attack():
 		return
 
@@ -180,6 +193,33 @@ func queue_attack_input(input_kind: String) -> void:
 		return
 
 	start_attack(requested_attack)
+
+
+func resolve_context_attack(input_kind: String) -> WeaponAttackDefinition:
+	if dodge_controller == null or not dodge_controller.is_dodge_active():
+		return null
+	if equipped_weapon == null:
+		return null
+	var mastery_rank: int = GameState.get_weapon_mastery_rank(equipped_weapon.weapon_class)
+	if not WeaponTechniqueCatalogScript.is_context_unlocked(
+		equipped_weapon.weapon_class,
+		WeaponTechniqueCatalogScript.CONTEXT_DASH,
+		mastery_rank
+	):
+		return null
+	var moveset: WeaponMovesetDefinition = get_moveset()
+	var base_attack: WeaponAttackDefinition
+	if moveset != null:
+		base_attack = moveset.get_entry_attack(input_kind)
+	else:
+		base_attack = build_legacy_attack(input_kind)
+	var technique_attack: WeaponAttackDefinition = WeaponTechniqueCatalogScript.build_dash_attack(
+		base_attack,
+		equipped_weapon.weapon_class
+	)
+	if technique_attack != null:
+		active_technique_id = WeaponTechniqueCatalogScript.CONTEXT_DASH
+	return technique_attack
 
 
 func update_queued_input(delta: float) -> void:
@@ -305,6 +345,9 @@ func start_attack(attack: WeaponAttackDefinition) -> bool:
 	current_attack_duration_bonus = 0.0
 	last_attack_connected = false
 	attack_forward_override = resolve_attack_forward(attack)
+	if pending_context_forward.length() > 0.01:
+		attack_forward_override = pending_context_forward.normalized()
+	pending_context_forward = Vector3.ZERO
 	apply_attack_facing(attack_forward_override)
 	combo_timeout_timer = 0.0
 
@@ -343,6 +386,7 @@ func finish_current_attack() -> void:
 	attack_hit_applied = false
 	current_attack_duration_bonus = 0.0
 	attack_forward_override = Vector3.ZERO
+	active_technique_id = ""
 
 	if action_state != null:
 		action_state.end_attack()
@@ -381,6 +425,8 @@ func cancel_current_attack(reason: String = "cancelled") -> void:
 	attack_hit_applied = false
 	current_attack_duration_bonus = 0.0
 	attack_forward_override = Vector3.ZERO
+	pending_context_forward = Vector3.ZERO
+	active_technique_id = ""
 
 	if action_state != null and action_state.is_attacking:
 		action_state.end_attack()
@@ -1328,4 +1374,5 @@ func get_debug_data() -> Dictionary:
 		"dodge_cancel": dodge_cancel,
 		"runtime_rig": runtime_data,
 		"infusion": WeaponInfusionCatalogScript.get_display_name(GameState.get_weapon_infusion()),
+		"technique": active_technique_id if active_technique_id != "" else "none",
 	}

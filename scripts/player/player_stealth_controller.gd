@@ -286,7 +286,7 @@ func build_indicator() -> void:
 	hud_layer.layer = 24
 	actor.add_child(hud_layer)
 	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_LEFT_BOTTOM)
+	panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	panel.position = Vector2(22.0, -112.0)
 	panel.custom_minimum_size = Vector2(230.0, 82.0)
 	var style := StyleBoxFlat.new()

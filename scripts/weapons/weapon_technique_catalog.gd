@@ -2,6 +2,29 @@ extends RefCounted
 
 const CONTEXT_DASH: String = "dash"
 const DASH_REQUIRED_RANK: int = 1
+const CONTEXT_AERIAL_NEUTRAL: String = "aerial_neutral"
+const CONTEXT_AERIAL_FORWARD: String = "aerial_forward"
+const CONTEXT_AERIAL_DOWN: String = "aerial_down"
+const AERIAL_REQUIRED_RANK: int = 1
+
+const AERIAL_NAMES: Dictionary = {
+	"sword": ["Orbit Cut", "Comet Slash", "Falling Edge"],
+	"lance": ["Needle Wheel", "Skyline Thrust", "Dragon Drop"],
+	"axe": ["Cleaving Halo", "Sky Hew", "Timberfall"],
+	"bow": ["Cyclone Volley", "Gale Shot", "Raptor Dive"],
+	"hammer": ["Bell Orbit", "Thunder Tackle", "Meteor Drop"],
+	"mace": ["Dazing Halo", "Ramfall Swing", "Falling Star"],
+	"daggers": ["Razor Bloom", "Flying Fang", "Pinning Dive"],
+	"whip": ["Ribbon Cyclone", "Sky Crack", "Lashing Descent"],
+	"chains": ["Iron Orbit", "Comet Cast", "Anchorfall"],
+	"gauntlets": ["Cyclone Guard", "Flying Knuckle", "Meteor Fist"],
+	"flail": ["Moon Orbit", "Chasing Star", "Deadweight Drop"],
+	"halberd": ["Reaping Wheel", "Skyline Reap", "Guillotine Drop"],
+	"boomerang": ["Halo Cast", "Tailwind Cast", "Swooping Return"],
+	"scythe": ["Pale Moon", "Sky Harvest", "Gravefall"],
+	"staff": ["Spinning Ward", "Cloud Vault", "Falling Pillar"],
+	"shuriken": ["Star Halo", "Aerial Volley", "Kunai Rain"],
+}
 
 const DASH_DEFINITIONS: Dictionary = {
 	"sword": {"name": "Passing Cut", "damage": 1.16, "stance": 1.0, "range": 0.2, "move": 0.9, "tag": "passing_cut"},
@@ -26,6 +49,8 @@ const DASH_DEFINITIONS: Dictionary = {
 static func is_context_unlocked(weapon_class: String, context_id: String, mastery_rank: int) -> bool:
 	if context_id == CONTEXT_DASH:
 		return DASH_DEFINITIONS.has(weapon_class) and mastery_rank >= DASH_REQUIRED_RANK
+	if context_id in [CONTEXT_AERIAL_NEUTRAL, CONTEXT_AERIAL_FORWARD, CONTEXT_AERIAL_DOWN]:
+		return AERIAL_NAMES.has(weapon_class) and mastery_rank >= AERIAL_REQUIRED_RANK
 	return false
 
 
@@ -68,6 +93,70 @@ static func build_dash_attack(
 	append_tag(attack.extra_tags, "technique")
 	append_tag(attack.extra_tags, "context_dash")
 	append_tag(attack.extra_tags, str(definition.get("tag", "dash_strike")))
+	return attack
+
+
+static func get_aerial_context(input_kind: String, movement_amount: float) -> String:
+	if input_kind == "heavy":
+		return CONTEXT_AERIAL_DOWN
+	if movement_amount > 0.2:
+		return CONTEXT_AERIAL_FORWARD
+	return CONTEXT_AERIAL_NEUTRAL
+
+
+static func get_aerial_technique_name(weapon_class: String, context_id: String) -> String:
+	if not AERIAL_NAMES.has(weapon_class):
+		return "Aerial Strike"
+	var names: Array = AERIAL_NAMES[weapon_class] as Array
+	var index: int = 0
+	if context_id == CONTEXT_AERIAL_FORWARD:
+		index = 1
+	elif context_id == CONTEXT_AERIAL_DOWN:
+		index = 2
+	return str(names[index]) if index < names.size() else "Aerial Strike"
+
+
+static func build_aerial_attack(
+	base_attack: WeaponAttackDefinition,
+	weapon_class: String,
+	context_id: String
+) -> WeaponAttackDefinition:
+	if base_attack == null or not AERIAL_NAMES.has(weapon_class):
+		return null
+	var attack: WeaponAttackDefinition = base_attack.duplicate(true) as WeaponAttackDefinition
+	if attack == null:
+		return null
+	attack.attack_id = "technique_" + context_id + "_" + weapon_class
+	attack.display_name = get_aerial_technique_name(weapon_class, context_id)
+	attack.startup_time = maxf(base_attack.startup_time * 0.72, 0.06)
+	attack.recovery_time = maxf(base_attack.recovery_time * 0.86, 0.09)
+	attack.extra_tags = base_attack.extra_tags.duplicate()
+	append_tag(attack.extra_tags, "technique")
+	append_tag(attack.extra_tags, "context_aerial")
+	append_tag(attack.extra_tags, context_id)
+	match context_id:
+		CONTEXT_AERIAL_NEUTRAL:
+			attack.cone_angle_degrees = 360.0
+			attack.attack_center_forward_offset = 0.15
+			attack.max_targets += 1
+			attack.damage_multiplier *= 0.92
+			attack.stance_multiplier *= 0.9
+			attack.movement_distance = 0.0
+			attack.trail_start_scale = Vector3(0.75, 0.75, 0.75)
+			attack.trail_end_scale = Vector3(1.25, 1.25, 1.25)
+		CONTEXT_AERIAL_FORWARD:
+			attack.damage_multiplier *= 1.1
+			attack.attack_range += 0.38
+			attack.movement_distance = maxf(base_attack.movement_distance, 0.62)
+			attack.movement_duration = 0.12
+		CONTEXT_AERIAL_DOWN:
+			attack.damage_multiplier *= 1.16
+			attack.stance_multiplier *= 1.42
+			attack.knockback_multiplier *= 1.3
+			attack.attack_range += 0.2
+			attack.cone_angle_degrees = maxf(base_attack.cone_angle_degrees, 120.0)
+			attack.movement_distance = 0.08
+			append_tag(attack.extra_tags, "plunging")
 	return attack
 
 

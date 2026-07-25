@@ -26,37 +26,37 @@ const DEFINITIONS: Dictionary = {
 	"travelers_coat": {
 		"id": "travelers_coat", "name": "Traveler's Coat", "slot": SLOT_OUTFIT, "icon": "♧",
 		"description": "A practical coat that leaves Grace room to run and climb.",
-		"buy": 34, "sell": 15, "modifiers": {"max_stamina": 2},
+		"buy": 34, "sell": 15, "modifiers": {"max_stamina": 2}, "effects": ["wayfarer_stride"],
 	},
 	"apprentice_robe": {
 		"id": "apprentice_robe", "name": "Apprentice Robe", "slot": SLOT_OUTFIT, "icon": "✦",
 		"description": "Layered magical cloth that supports sustained spellcasting.",
-		"buy": 38, "sell": 17, "modifiers": {"max_mana": 2},
+		"buy": 38, "sell": 17, "modifiers": {"max_mana": 2}, "effects": ["apprentice_flow"],
 	},
 	"ironweave_jacket": {
 		"id": "ironweave_jacket", "name": "Ironweave Jacket", "slot": SLOT_OUTFIT, "icon": "▧",
 		"description": "Metal-threaded clothing that helps Grace hold her ground.",
-		"buy": 42, "sell": 19, "modifiers": {"max_stance": 2},
+		"buy": 42, "sell": 19, "modifiers": {"max_stance": 2}, "effects": ["ironweave_guard"],
 	},
 	"vital_knot": {
 		"id": "vital_knot", "name": "Vital Knot", "slot": SLOT_CHARM, "icon": "♥",
 		"description": "A woven charm that reinforces Grace's living energy.",
-		"buy": 30, "sell": 13, "modifiers": {"max_health": 2},
+		"buy": 30, "sell": 13, "modifiers": {"max_health": 2}, "effects": ["vital_restoration"],
 	},
 	"resonance_charm": {
 		"id": "resonance_charm", "name": "Resonance Charm", "slot": SLOT_CHARM, "icon": "◉",
 		"description": "A humming charm that steadies attention during Focus.",
-		"buy": 36, "sell": 16, "modifiers": {"focus": 1},
+		"buy": 36, "sell": 16, "modifiers": {"focus": 1}, "effects": ["resonant_focus"],
 	},
 	"merchants_token": {
 		"id": "merchants_token", "name": "Merchant's Token", "slot": SLOT_RELIC, "icon": "◇",
 		"description": "A respected trade token that strengthens social presence.",
-		"buy": 44, "sell": 20, "modifiers": {"charisma": 1},
+		"buy": 44, "sell": 20, "modifiers": {"charisma": 1}, "effects": ["merchant_rapport"],
 	},
 	"lucky_shard": {
 		"id": "lucky_shard", "name": "Lucky Shard", "slot": SLOT_RELIC, "icon": "✧",
 		"description": "A polished fragment carried by travelers courting fortune.",
-		"buy": 48, "sell": 22, "modifiers": {"luck": 1},
+		"buy": 48, "sell": 22, "modifiers": {"luck": 1}, "effects": ["fortunes_favor"],
 	},
 }
 
@@ -81,6 +81,14 @@ static func get_slot(item_id: String) -> String:
 
 static func get_modifiers(item_id: String) -> Dictionary:
 	return (get_definition(item_id).get("modifiers", {}) as Dictionary).duplicate(true)
+
+
+static func get_effect_ids(item_id: String) -> Array[String]:
+	var effect_ids: Array[String] = []
+	var values: Array = get_definition(item_id).get("effects", []) as Array
+	for value: Variant in values:
+		effect_ids.append(str(value))
+	return effect_ids
 
 
 static func get_weapon(item_id: String) -> WeaponDefinition:

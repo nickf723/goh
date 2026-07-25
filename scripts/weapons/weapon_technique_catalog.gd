@@ -144,11 +144,17 @@ static func build_aerial_attack(
 			attack.movement_distance = 0.0
 			attack.trail_start_scale = Vector3(0.75, 0.75, 0.75)
 			attack.trail_end_scale = Vector3(1.25, 1.25, 1.25)
+			attack.windup_rotation_degrees = Vector3(0.0, -145.0, 0.0)
+			attack.strike_rotation_degrees = Vector3(0.0, 215.0, 0.0)
+			attack.recovery_rotation_degrees = Vector3(0.0, 300.0, 0.0)
 		CONTEXT_AERIAL_FORWARD:
 			attack.damage_multiplier *= 1.1
 			attack.attack_range += 0.38
 			attack.movement_distance = maxf(base_attack.movement_distance, 0.62)
 			attack.movement_duration = 0.12
+			attack.windup_offset += Vector3(0.0, 0.08, 0.12)
+			attack.strike_offset += Vector3(0.0, 0.0, -0.38)
+			attack.recovery_offset += Vector3(0.0, -0.06, -0.12)
 		CONTEXT_AERIAL_DOWN:
 			attack.damage_multiplier *= 1.16
 			attack.stance_multiplier *= 1.42
@@ -156,6 +162,11 @@ static func build_aerial_attack(
 			attack.attack_range += 0.2
 			attack.cone_angle_degrees = maxf(base_attack.cone_angle_degrees, 120.0)
 			attack.movement_distance = 0.08
+			attack.windup_rotation_degrees = Vector3(-72.0, -25.0, 0.0)
+			attack.strike_rotation_degrees = Vector3(78.0, 18.0, 0.0)
+			attack.strike_offset += Vector3(0.0, -0.42, -0.08)
+			attack.recovery_offset += Vector3(0.0, -0.18, 0.0)
+			attack.hit_stop_duration = maxf(base_attack.hit_stop_duration, 0.075)
 			append_tag(attack.extra_tags, "plunging")
 	return attack
 

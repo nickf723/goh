@@ -1,6 +1,7 @@
 extends PanelContainer
 
 const ComboRuleRegistryScript = preload("res://scripts/systems/combo_rule_registry.gd")
+const EquipmentCatalogScript = preload("res://scripts/equipment/equipment_catalog.gd")
 
 const TAB_DEFS: Array[Dictionary] = [
 	{"id": "loadout", "title": "Loadout", "icon": "⚔"},
@@ -43,12 +44,16 @@ var action_grid_columns: int = 1
 var action_layout_mode: String = "list"
 var pending_inventory_item_id: String = ""
 var pending_item_grid_return_action_index: int = -1
+var pending_equipment_slot_id: String = ""
+var pending_equipment_return_action_index: int = -1
 
 var title_label: Label
 var subtitle_label: Label
 var tab_box: HBoxContainer
 var content_title_label: Label
 var content_box: VBoxContainer
+var scroll_container: ScrollContainer
+var selected_action_control: Control
 var footer_label: Label
 
 
@@ -202,6 +207,8 @@ func select_action(index: int) -> void:
 
 func select_action_direction(horizontal: int, vertical: int) -> void:
 	if selectable_actions.is_empty():
+		if vertical != 0:
+			scroll_content(vertical)
 		return
 
 	if action_layout_mode == "cross":
@@ -266,10 +273,46 @@ func activate_action(action: Dictionary) -> void:
 			start_item_slot_assignment(str(action.get("item_id", "")))
 		"assign_item_slot":
 			complete_item_slot_assignment(int(action.get("slot", -1)))
+		"choose_equipment_slot":
+			start_equipment_assignment(str(action.get("slot_id", "")))
+		"equip_item":
+			complete_equipment_assignment(str(action.get("item_id", "")))
 		"inspect_spell":
 			return
 		_:
 			return
+
+
+func start_equipment_assignment(slot_id: String) -> void:
+	if not EquipmentCatalogScript.SLOT_ORDER.has(slot_id):
+		return
+
+	pending_equipment_return_action_index = selected_action_index
+	tab_action_memory["loadout"] = selected_action_index
+	assignment_mode = "equipment"
+	pending_equipment_slot_id = slot_id
+	selected_tab_index = get_tab_index("loadout")
+	selected_action_index = 0
+	rebuild_menu()
+
+
+func complete_equipment_assignment(item_id: String) -> void:
+	if not is_assigning_equipment():
+		return
+	if EquipmentCatalogScript.get_slot(item_id) != pending_equipment_slot_id:
+		return
+	if not GameState.equip_item(item_id):
+		return
+
+	var return_action_index: int = pending_equipment_return_action_index
+	assignment_mode = ""
+	pending_equipment_slot_id = ""
+	pending_equipment_return_action_index = -1
+	selected_tab_index = get_tab_index("loadout")
+	selected_action_index = max(return_action_index, 0)
+	tab_action_memory["loadout"] = selected_action_index
+	refresh_menu_data()
+	rebuild_menu()
 
 
 func start_spell_assignment(slot_index: int) -> void:
@@ -386,6 +429,7 @@ func cancel_assignment(should_rebuild: bool = true) -> void:
 	var was_spell_assignment: bool = is_assigning_spell()
 	var was_item_assignment: bool = is_assigning_item()
 	var was_item_slot_assignment: bool = is_assigning_item_slot()
+	var was_equipment_assignment: bool = is_assigning_equipment()
 	var return_action_index: int = -1
 	if was_spell_assignment:
 		return_action_index = pending_spell_return_action_index
@@ -393,6 +437,8 @@ func cancel_assignment(should_rebuild: bool = true) -> void:
 		return_action_index = pending_item_return_action_index
 	elif was_item_slot_assignment:
 		return_action_index = pending_item_grid_return_action_index
+	elif was_equipment_assignment:
+		return_action_index = pending_equipment_return_action_index
 
 	assignment_mode = ""
 	pending_spell_slot_index = -1
@@ -401,12 +447,14 @@ func cancel_assignment(should_rebuild: bool = true) -> void:
 	pending_item_return_action_index = -1
 	pending_inventory_item_id = ""
 	pending_item_grid_return_action_index = -1
+	pending_equipment_slot_id = ""
+	pending_equipment_return_action_index = -1
 
 	if was_item_slot_assignment:
 		selected_tab_index = get_tab_index("items")
 		selected_action_index = max(return_action_index, 0)
 		tab_action_memory["items"] = selected_action_index
-	elif was_spell_assignment or was_item_assignment:
+	elif was_spell_assignment or was_item_assignment or was_equipment_assignment:
 		selected_tab_index = get_tab_index("loadout")
 		selected_action_index = max(return_action_index, 0)
 		tab_action_memory["loadout"] = selected_action_index
@@ -428,8 +476,12 @@ func is_assigning_item_slot() -> bool:
 	return assignment_mode == "item_slot" and pending_inventory_item_id != ""
 
 
+func is_assigning_equipment() -> bool:
+	return assignment_mode == "equipment" and pending_equipment_slot_id != ""
+
+
 func is_assignment_active() -> bool:
-	return is_assigning_spell() or is_assigning_item() or is_assigning_item_slot()
+	return is_assigning_spell() or is_assigning_item() or is_assigning_item_slot() or is_assigning_equipment()
 
 
 func refresh_menu_data() -> void:
@@ -531,16 +583,17 @@ func build_layout() -> void:
 	content_title_label.add_theme_font_size_override("font_size", 20)
 	content_root.add_child(content_title_label)
 
-	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	content_root.add_child(scroll)
+	scroll_container = ScrollContainer.new()
+	scroll_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll_container.follow_focus = true
+	content_root.add_child(scroll_container)
 
 	content_box = VBoxContainer.new()
 	content_box.add_theme_constant_override("separation", 10)
 	content_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(content_box)
+	scroll_container.add_child(content_box)
 
 	footer_label = Label.new()
 	footer_label.text = get_footer_text()
@@ -586,6 +639,7 @@ func _on_tab_pressed(index: int) -> void:
 
 func rebuild_content() -> void:
 	selectable_actions.clear()
+	selected_action_control = null
 	action_grid_columns = 1
 	action_layout_mode = "list"
 	clear_children(content_box)
@@ -624,6 +678,10 @@ func render_loadout() -> void:
 	action_grid_columns = 4
 	action_layout_mode = "grid"
 
+	if is_assigning_equipment():
+		render_equipment_picker()
+		return
+
 	var summary: Dictionary = menu_data.get("loadout_summary", {})
 	add_summary_card([
 		"Known spells " + str(summary.get("learned_count", 0)),
@@ -631,14 +689,26 @@ func render_loadout() -> void:
 		"Four quick-item directions",
 	])
 
-	var weapon: Dictionary = menu_data.get("weapon", {})
-	if not weapon.is_empty():
-		var weapon_body: String = "Damage " + str(weapon.get("damage", 0))
-		weapon_body += "   Stance " + str(weapon.get("stance_damage", 0))
-		weapon_body += "   Scaling " + get_scaling_label(weapon.get("scaling_stats", []))
-		add_visual_info_card("⚔", str(weapon.get("name", "Weapon")), weapon_body, str(weapon.get("class", "weapon")).capitalize())
-	else:
-		add_visual_info_card("⚔", "No Weapon", "Grace's hands are currently empty.", "Weapon")
+	add_section_header("EQUIPMENT")
+	var equipment_grid: GridContainer = make_visual_grid(4)
+	content_box.add_child(equipment_grid)
+	for slot_id: String in EquipmentCatalogScript.SLOT_ORDER:
+		var equipped_item_id: String = GameState.get_equipped_item(slot_id)
+		var definition: Dictionary = EquipmentCatalogScript.get_definition(equipped_item_id)
+		var item_name: String = str(definition.get("name", "Empty"))
+		var item_icon: String = str(definition.get("icon", "◇"))
+		var modifiers: Dictionary = definition.get("modifiers", {})
+		var badge: String = slot_id.to_upper()
+		if not modifiers.is_empty():
+			badge += "  •  " + EquipmentCatalogScript.format_modifiers(modifiers)
+		add_visual_action_tile(
+			equipment_grid,
+			item_icon,
+			item_name,
+			badge,
+			{"kind": "choose_equipment_slot", "slot_id": slot_id},
+			str(definition.get("description", "Choose owned gear for this slot."))
+		)
 
 	add_section_header("SPELL RING")
 	var spell_grid: GridContainer = GridContainer.new()
@@ -681,6 +751,35 @@ func render_loadout() -> void:
 
 	add_visual_info_card("🛠", "Gadgets", "Vehicles, summons, and deployable devices will occupy this bay later.", "Future")
 
+
+func render_equipment_picker() -> void:
+	action_grid_columns = 3
+	action_layout_mode = "grid"
+	var slot_title: String = pending_equipment_slot_id.capitalize()
+	add_assignment_banner("Choose " + slot_title, "Owned gear only  •  Confirm equips  •  Cancel returns to Loadout")
+
+	var equipment_grid: GridContainer = make_visual_grid(3)
+	content_box.add_child(equipment_grid)
+	var owned_count: int = 0
+	for definition: Dictionary in EquipmentCatalogScript.get_rows_for_slot(pending_equipment_slot_id):
+		var item_id: String = str(definition.get("id", ""))
+		if item_id == "" or not GameState.owns_equipment(item_id):
+			continue
+		owned_count += 1
+		var badge: String = EquipmentCatalogScript.format_modifiers(definition.get("modifiers", {}))
+		if GameState.is_equipment_equipped(item_id):
+			badge = "EQUIPPED  •  " + badge
+		add_visual_action_tile(
+			equipment_grid,
+			str(definition.get("icon", "◇")),
+			str(definition.get("name", item_id.capitalize())),
+			badge,
+			{"kind": "equip_item", "item_id": item_id},
+			str(definition.get("description", ""))
+		)
+
+	if owned_count <= 0:
+		add_visual_info_card("◇", "Nothing owned", "Purchase or discover gear for this slot before equipping it.", slot_title)
 
 
 func render_items() -> void:
@@ -996,7 +1095,7 @@ func add_visual_action_tile(parent: Container, icon_text: String, title: String,
 	button.pressed.connect(_on_action_row_pressed.bind(action_index))
 	parent.add_child(button)
 	if is_selected:
-		button.call_deferred("grab_focus")
+		schedule_selected_control(button)
 
 
 func add_visual_info_card(icon_text: String, title: String, body: String, badge: String = "") -> void:
@@ -1156,7 +1255,26 @@ func add_action_row(line: String, action: Dictionary, subtitle: String = "") -> 
 	button.pressed.connect(_on_action_row_pressed.bind(action_index))
 	content_box.add_child(button)
 	if is_selected:
-		button.call_deferred("grab_focus")
+		schedule_selected_control(button)
+
+
+func schedule_selected_control(control: Control) -> void:
+	selected_action_control = control
+	call_deferred("reveal_selected_control")
+
+
+func reveal_selected_control() -> void:
+	await get_tree().process_frame
+	if scroll_container == null or not is_instance_valid(selected_action_control):
+		return
+	selected_action_control.grab_focus()
+	scroll_container.ensure_control_visible(selected_action_control)
+
+
+func scroll_content(direction: int) -> void:
+	if scroll_container == null or direction == 0:
+		return
+	scroll_container.scroll_vertical += direction * 160
 
 
 func _on_action_row_pressed(action_index: int) -> void:
@@ -1539,6 +1657,8 @@ func get_item_assignment_label(item_id: String) -> String:
 
 
 func get_footer_text() -> String:
+	if is_assigning_equipment():
+		return "D-pad/Stick or WASD: owned gear  •  A/Enter: equip  •  B/Esc: back"
 	if is_assigning_spell():
 		return "D-pad/Stick or W/S: spells  •  A/Enter: assign  •  B/Esc: back"
 	if is_assigning_item():

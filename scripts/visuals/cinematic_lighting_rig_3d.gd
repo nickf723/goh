@@ -31,6 +31,7 @@ var lighting_tween: Tween
 var active_weather_id: String = ""
 var weather_shaft_multiplier: float = 1.0
 var weather_shaft_color: Color = Color(1.0, 0.52, 0.20, 1.0)
+var lightning_flash_count: int = 0
 
 
 func _ready() -> void:
@@ -374,6 +375,8 @@ func set_weather_lighting(weather_id: String, animate: bool = true) -> void:
 			_apply_rain_lighting(animate)
 		"snow_weather":
 			_apply_snow_lighting(animate)
+		"thunderstorm_weather":
+			_apply_thunderstorm_lighting(animate)
 		_:
 			_apply_clear_lighting(animate)
 
@@ -469,6 +472,113 @@ func _apply_snow_lighting(animate: bool) -> void:
 		},
 		animate
 	)
+
+
+func _apply_thunderstorm_lighting(animate: bool) -> void:
+	weather_shaft_multiplier = 0.04
+	weather_shaft_color = Color(0.28, 0.48, 0.82, 1.0)
+	_set_dust_for_weather(false)
+	_transition_lighting(
+		{
+			"sky_top": Color(0.008, 0.014, 0.030, 1.0),
+			"sky_horizon": Color(0.075, 0.12, 0.19, 1.0),
+			"ground_horizon": Color(0.035, 0.055, 0.085, 1.0),
+			"ambient_color": Color(0.18, 0.28, 0.46, 1.0),
+			"ambient_energy": 0.32,
+			"fog_color": Color(0.12, 0.19, 0.29, 1.0),
+			"fog_energy": 0.34,
+			"fog_density": 0.020,
+			"volumetric_density": 0.052,
+			"volumetric_albedo": Color(0.30, 0.40, 0.55, 1.0),
+			"volumetric_emission": Color(0.008, 0.016, 0.036, 1.0),
+			"volumetric_anisotropy": 0.18,
+			"glow_intensity": 0.54,
+			"sun_color": Color(0.34, 0.46, 0.66, 1.0),
+			"sun_energy": 0.10,
+			"sun_fog_energy": 0.12,
+			"fill_color": Color(0.17, 0.32, 0.66, 1.0),
+			"fill_energy": 0.36,
+			"accent_scale": 0.52,
+			"shaft_albedo": Color(0.28, 0.48, 0.82, 0.003),
+		},
+		animate
+	)
+
+
+func flash_lightning(intensity: float = 1.0, world_position: Vector3 = Vector3.ZERO) -> void:
+	var strength: float = clampf(intensity, 0.2, 2.5)
+	lightning_flash_count += 1
+
+	var sky_flash := DirectionalLight3D.new()
+	sky_flash.name = "LightningSkyFlash"
+	sky_flash.rotation_degrees = Vector3(-68.0, 24.0, 8.0)
+	sky_flash.light_color = Color(0.72, 0.86, 1.0, 1.0)
+	sky_flash.light_energy = 8.2 * strength
+	sky_flash.light_volumetric_fog_energy = 6.5 * strength
+	sky_flash.shadow_enabled = false
+	sky_flash.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY
+	add_child(sky_flash)
+
+	var impact_flash := OmniLight3D.new()
+	impact_flash.name = "LightningWorldFlash"
+	impact_flash.light_color = Color(0.56, 0.76, 1.0, 1.0)
+	impact_flash.light_energy = 13.0 * strength
+	impact_flash.omni_range = 26.0 * sqrt(strength)
+	impact_flash.light_volumetric_fog_energy = 4.0 * strength
+	impact_flash.shadow_enabled = false
+	add_child(impact_flash)
+	impact_flash.global_position = world_position + Vector3.UP * 3.0
+
+	var flash_tween: Tween = create_tween()
+	flash_tween.set_trans(Tween.TRANS_EXPO)
+	flash_tween.set_ease(Tween.EASE_OUT)
+	flash_tween.tween_property(
+		sky_flash,
+		"light_energy",
+		1.4 * strength,
+		0.075
+	)
+	flash_tween.parallel().tween_property(
+		impact_flash,
+		"light_energy",
+		2.6 * strength,
+		0.075
+	)
+	flash_tween.parallel().tween_property(
+		sky_flash,
+		"light_volumetric_fog_energy",
+		1.2 * strength,
+		0.075
+	)
+	flash_tween.tween_interval(0.045)
+	flash_tween.tween_property(
+		sky_flash,
+		"light_energy",
+		4.6 * strength,
+		0.045
+	)
+	flash_tween.parallel().tween_property(
+		impact_flash,
+		"light_energy",
+		7.0 * strength,
+		0.045
+	)
+	flash_tween.parallel().tween_property(
+		sky_flash,
+		"light_volumetric_fog_energy",
+		3.8 * strength,
+		0.045
+	)
+	flash_tween.tween_property(sky_flash, "light_energy", 0.0, 0.28)
+	flash_tween.parallel().tween_property(impact_flash, "light_energy", 0.0, 0.28)
+	flash_tween.parallel().tween_property(
+		sky_flash,
+		"light_volumetric_fog_energy",
+		0.0,
+		0.28
+	)
+	flash_tween.finished.connect(sky_flash.queue_free)
+	flash_tween.finished.connect(impact_flash.queue_free)
 
 
 func _transition_lighting(state: Dictionary, animate: bool) -> void:
@@ -582,4 +692,5 @@ func get_debug_data() -> Dictionary:
 			and environment_node.environment != null
 			and environment_node.environment.volumetric_fog_enabled,
 		"weather": active_weather_id if active_weather_id != "" else "clear",
+		"lightning_flashes": lightning_flash_count,
 	}

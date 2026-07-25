@@ -61,6 +61,9 @@ var charge_hint_label: Label
 var charge_progress_bar: ProgressBar
 var charge_meter_was_full: bool = false
 var charge_pulse_tween: Tween
+var message_tween: Tween
+var resource_hud: PanelContainer
+var resource_bars: Dictionary = {}
 
 
 func _ready() -> void:
@@ -69,6 +72,7 @@ func _ready() -> void:
 
 	ensure_focus_spell_selector_ui()
 	ensure_charge_meter_ui()
+	ensure_resource_hud()
 	
 	GameState.stat_changed.connect(_on_stat_changed)
 	GameState.player_defeated.connect(_on_player_defeated)
@@ -86,7 +90,8 @@ func _ready() -> void:
 
 
 func set_objective(text: String) -> void:
-	objective_label.text = "Objective: " + text
+	objective_label.text = text
+	objective_label.visible = text.strip_edges() != ""
 
 
 func show_prompt(text: String) -> void:
@@ -100,11 +105,19 @@ func hide_prompt() -> void:
 
 func show_message(text: String) -> void:
 	message_label.text = text
+	message_panel.modulate.a = 1.0
 	message_panel.visible = true
+	if message_tween != null:
+		message_tween.kill()
+	message_tween = create_tween()
+	message_tween.tween_interval(2.65)
+	message_tween.tween_property(message_panel, "modulate:a", 0.0, 0.28)
+	message_tween.tween_callback(hide_message)
 
 
 func hide_message() -> void:
 	message_panel.visible = false
+	message_panel.modulate.a = 1.0
 
 
 func show_prologue_choice() -> void:
@@ -142,12 +155,11 @@ func update_debug_stats_label() -> void:
 	var stance: int = GameState.get_stat("stance")
 	var max_stance: int = GameState.get_stat("max_stance")
 
-	debug_stats_label.text = (
-		"Health: " + str(health) + " / " + str(max_health) + "\n"
-		+ "Stamina: " + str(stamina) + " / " + str(max_stamina) + "\n"
-		+ "Mana: " + str(mana) + " / " + str(max_mana) + "\n"
-		+ "Stance: " + str(stance) + " / " + str(max_stance)
-	)
+	debug_stats_label.visible = false
+	update_resource_bar("health", health, max_health)
+	update_resource_bar("stamina", stamina, max_stamina)
+	update_resource_bar("mana", mana, max_mana)
+	update_resource_bar("stance", stance, max_stance)
 
 
 func _on_stat_changed(stat_name: String, _value: int) -> void:
@@ -170,8 +182,8 @@ func show_focus_mode(time_scale: float) -> void:
 
 
 func hide_focus_mode() -> void:
-	focus_label.text = "Focus: Ready"
-	focus_label.visible = true
+	focus_label.text = "FOCUS"
+	focus_label.visible = false
 
 
 func show_spell_menu() -> void:
@@ -192,6 +204,76 @@ func set_spell_label(ability_name: String) -> void:
 		show_charge_meter(parse_charge_percent(ability_name))
 	else:
 		hide_charge_meter()
+
+
+func ensure_resource_hud() -> void:
+	if resource_hud != null:
+		return
+	resource_hud = PanelContainer.new()
+	resource_hud.name = "ResourceHUD"
+	resource_hud.anchor_top = 1.0
+	resource_hud.anchor_bottom = 1.0
+	resource_hud.offset_left = 24.0
+	resource_hud.offset_top = -132.0
+	resource_hud.offset_right = 310.0
+	resource_hud.offset_bottom = -26.0
+	resource_hud.add_theme_stylebox_override("panel", make_panel_style(Color(0.018, 0.024, 0.038, 0.72), Color(0.5, 0.62, 0.82, 0.34), 1, 14))
+	add_child(resource_hud)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 9)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 9)
+	resource_hud.add_child(margin)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 5)
+	margin.add_child(box)
+	create_resource_row(box, "health", "HEALTH", Color(0.86, 0.18, 0.24))
+	create_resource_row(box, "stamina", "STAMINA", Color(0.32, 0.82, 0.42))
+	create_resource_row(box, "mana", "MANA", Color(0.18, 0.58, 1.0))
+	create_resource_row(box, "stance", "STANCE", Color(0.96, 0.72, 0.2))
+
+
+func create_resource_row(parent: VBoxContainer, resource_id: String, title: String, color: Color) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+	var label := Label.new()
+	label.text = title
+	label.custom_minimum_size = Vector2(64, 0)
+	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_color_override("font_color", Color(0.76, 0.82, 0.92, 0.82))
+	row.add_child(label)
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.custom_minimum_size = Vector2(0, 10)
+	bar.add_theme_stylebox_override("background", make_panel_style(Color(0.04, 0.05, 0.07, 0.9), Color(0.2, 0.24, 0.32, 0.45), 1, 6))
+	bar.add_theme_stylebox_override("fill", make_panel_style(color, color, 0, 6))
+	row.add_child(bar)
+	var value_label := Label.new()
+	value_label.custom_minimum_size = Vector2(48, 0)
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	value_label.add_theme_font_size_override("font_size", 10)
+	value_label.add_theme_color_override("font_color", Color(0.9, 0.93, 1.0, 0.9))
+	row.add_child(value_label)
+	resource_bars[resource_id] = {"bar": bar, "label": value_label, "row": row}
+
+
+func update_resource_bar(resource_id: String, current: int, maximum: int) -> void:
+	if not resource_bars.has(resource_id):
+		return
+	var data: Dictionary = resource_bars[resource_id]
+	var bar: ProgressBar = data.get("bar") as ProgressBar
+	var label: Label = data.get("label") as Label
+	var row: Control = data.get("row") as Control
+	if bar != null:
+		bar.max_value = max(maximum, 1)
+		bar.value = clamp(current, 0, max(maximum, 1))
+	if label != null:
+		label.text = str(current) + "/" + str(maximum)
+	if row != null and resource_id == "stance":
+		row.visible = maximum > 1
 
 
 func ensure_charge_meter_ui() -> void:

@@ -36,7 +36,7 @@ func _ready() -> void:
 	payload.amount = 8
 	payload.stance_damage = 6
 	payload.source_name = "Smoke Test Strike"
-	payload.tags = Array[String](["physical", "enemy", "telegraphed"])
+	payload.tags = ["physical", "enemy", "telegraphed"]
 	var result: Dictionary = resolver.resolve_telegraphed_attack(payload, duelist)
 	assert(str(result.get("outcome", "")) == "perfect_dodge")
 	assert(duelist.counter_window_remaining > 0.0)

@@ -132,9 +132,6 @@ func process_locomotion(delta: float) -> bool:
 	var horizontal_direction: Vector3 = right * input_vector.x + forward * -input_vector.y
 	if horizontal_direction.length() > 1.0:
 		horizontal_direction = horizontal_direction.normalized()
-	if horizontal_direction.length_squared() > 0.01:
-		var target_yaw: float = atan2(-horizontal_direction.x, -horizontal_direction.z)
-		actor.rotation.y = lerp_angle(actor.rotation.y, target_yaw, clampf(delta * 7.0, 0.0, 1.0))
 	if surface_swimming and Input.is_action_just_pressed("jump") and _try_water_exit_handoff():
 		return false
 

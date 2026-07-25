@@ -1,6 +1,8 @@
 extends Node
 class_name PlayerDefenseController
 
+const GameplayEffectAccessScript = preload("res://scripts/effects/gameplay_effect_access.gd")
+
 signal guard_started
 signal guard_ended
 signal attack_blocked(result: Dictionary)
@@ -162,12 +164,12 @@ func resolve_perfect_guard(payload: DamagePayload, attacker: Node3D, incoming_di
 
 
 func resolve_block(payload: DamagePayload, incoming_direction: Vector3) -> Dictionary:
-	var stamina_cost: int = GameplayEffects.modify_int(
+	var stamina_cost: int = GameplayEffectAccessScript.modify_int(
 		"guard_stamina_cost",
 		maxi(minimum_stamina_cost, payload.amount),
 		"ceil"
 	)
-	var stance_cost: int = GameplayEffects.modify_int(
+	var stance_cost: int = GameplayEffectAccessScript.modify_int(
 		"stance_damage_taken",
 		maxi(minimum_stance_damage, payload.stance_damage),
 		"ceil"
@@ -226,7 +228,7 @@ func resolve_guard_break(payload: DamagePayload, incoming_direction: Vector3, re
 func resolve_direct_hit(payload: DamagePayload, incoming_direction: Vector3) -> Dictionary:
 	var health_before: int = GameState.get_stat("health")
 	GameState.take_damage(payload.amount)
-	var effective_stance_damage: int = GameplayEffects.modify_int("stance_damage_taken", payload.stance_damage, "ceil")
+	var effective_stance_damage: int = GameplayEffectAccessScript.modify_int("stance_damage_taken", payload.stance_damage, "ceil")
 	GameState.damage_stance(effective_stance_damage)
 	var health_damage: int = health_before - GameState.get_stat("health")
 

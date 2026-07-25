@@ -68,7 +68,8 @@ func update_climb_detection() -> void:
 	if action_state != null and not action_state.begin_manipulation():
 		return
 	climbing = true
-	wall_normal = (hit.get("normal", Vector3.BACK) as Vector3).normalized()
+	var initial_normal: Vector3 = hit.get("normal", Vector3.BACK)
+	wall_normal = initial_normal.normalized()
 	surface_name = str(profile.get("label", "stone"))
 	surface_drain_multiplier = float(profile.get("drain", 1.0))
 	surface_slide_speed = float(profile.get("slide", 0.0))
@@ -112,7 +113,8 @@ func process_locomotion(delta: float) -> bool:
 			return true
 		_detach("LOST GRIP")
 		return false
-	wall_normal = (contact.get("normal", wall_normal) as Vector3).normalized()
+	var contact_normal: Vector3 = contact.get("normal", wall_normal)
+	wall_normal = contact_normal.normalized()
 	var input_vector: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var vertical_input: float = -input_vector.y
 	var horizontal_input: float = input_vector.x
@@ -140,13 +142,14 @@ func _try_begin_mantle() -> bool:
 	var ledge_hit: Dictionary = _raycast(ledge_probe_origin, ledge_probe_origin + Vector3.DOWN * 3.0)
 	if ledge_hit.is_empty():
 		return false
-	var ledge_normal: Vector3 = ledge_hit.get("normal", Vector3.UP) as Vector3
+	var ledge_normal: Vector3 = ledge_hit.get("normal", Vector3.UP)
 	if ledge_normal.dot(Vector3.UP) < 0.65:
 		return false
 	mantling = true
 	climbing = false
 	mantle_remaining = mantle_duration
-	mantle_target = (ledge_hit.get("position", actor.global_position) as Vector3) + Vector3.UP * 0.08
+	var ledge_position: Vector3 = ledge_hit.get("position", actor.global_position)
+	mantle_target = ledge_position + Vector3.UP * 0.08
 	last_outcome = "MANTLING"
 	mantle_started.emit()
 	return true
@@ -193,6 +196,8 @@ func _detach(reason: String) -> void:
 	mantling = false
 	wall_normal = Vector3.ZERO
 	surface_name = "none"
+	surface_drain_multiplier = 1.0
+	surface_slide_speed = 0.0
 	last_outcome = reason
 	if action_state != null:
 		action_state.end_manipulation()

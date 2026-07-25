@@ -1,6 +1,8 @@
 extends Area3D
 class_name QuestFieldObjective
 
+signal objective_resolved(objective: QuestFieldObjective)
+
 @export var quest_id: String = ""
 @export var objective_id: String = ""
 @export var mode: String = "interact"
@@ -66,6 +68,7 @@ func resolve_objective() -> void:
 		GameState.complete_quest_optional(quest_id, optional_id)
 	if next_stage >= 0:
 		GameState.set_quest_stage(quest_id, next_stage, next_objective)
+	objective_resolved.emit(self)
 	if one_shot:
 		monitoring = false
 		monitorable = false

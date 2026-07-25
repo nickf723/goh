@@ -143,6 +143,40 @@ func get_active_effect_rows() -> Array[Dictionary]:
 	return EffectCatalogScript.get_effect_rows(get_active_effect_ids())
 
 
+func get_active_source_rows(include_permanent: bool = true) -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	for source_variant: Variant in effect_sources.keys():
+		var source_id: String = str(source_variant)
+		var source: Dictionary = effect_sources[source_variant] as Dictionary
+		var remaining: float = float(source.get("remaining", -1.0))
+		if not include_permanent and remaining < 0.0:
+			continue
+		for effect_id: String in get_source_effect_ids(source_id):
+			var row: Dictionary = EffectCatalogScript.get_definition(effect_id)
+			if row.is_empty():
+				continue
+			row["source_id"] = source_id
+			row["remaining"] = remaining
+			row["tags"] = (source.get("tags", []) as Array).duplicate()
+			rows.append(row)
+	rows.sort_custom(sort_source_rows)
+	return rows
+
+
+func sort_source_rows(a: Dictionary, b: Dictionary) -> bool:
+	var a_remaining: float = float(a.get("remaining", -1.0))
+	var b_remaining: float = float(b.get("remaining", -1.0))
+	if is_equal_approx(a_remaining, b_remaining):
+		return str(a.get("name", "")) < str(b.get("name", ""))
+	if a_remaining < 0.0:
+		return false
+	if b_remaining < 0.0:
+		return true
+	return a_remaining < b_remaining
+
+
+
+
 func sync_equipment_sources() -> void:
 	for slot_id: String in EquipmentCatalogScript.SLOT_ORDER:
 		sync_equipment_slot(slot_id, GameState.get_equipped_item(slot_id))

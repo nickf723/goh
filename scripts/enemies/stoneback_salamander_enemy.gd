@@ -105,7 +105,7 @@ func _process_chase(delta: float) -> void:
 	if distance <= attack_range and attack_cooldown <= 0.0:
 		attack_counter += 1
 		var next_attack: String = "tail_sweep" if attack_counter % 2 == 1 else "body_slam"
-		if attack_counter % 4 == 0 and distance <= 4.6:
+		if attack_counter % 4 == 0 and distance <= 4.6 and weapon_arm_enabled:
 			next_attack = "bite_grab"
 		_start_attack(next_attack)
 		return

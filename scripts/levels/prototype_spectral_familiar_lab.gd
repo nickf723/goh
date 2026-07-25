@@ -105,7 +105,7 @@ func _build_lab() -> void:
 	_build_plate()
 	_build_target()
 	_add_label("SPECTRAL FAMILIAR LAB", Vector3(0, 5.5, 8), Color(0.55, 0.88, 1.0), 38)
-	_add_label("CAST SUMMONS / RECALLS  •  J CYCLES FOLLOW–STAY–ASSIST  •  K DISMISSES  •  F8 RESET", Vector3(0, 4.7, 8), Color(0.84, 0.92, 1.0), 17)
+	_add_label("CAST SUMMONS / RECALLS  •  TAP D-PAD DOWN CYCLES  •  HOLD FOR COMMANDS  •  K DISMISSES  •  F8 RESET", Vector3(0, 4.7, 8), Color(0.84, 0.92, 1.0), 17)
 	_add_label("STAY ON THE PLATE", Vector3(7, 2.2, -7), Color(0.58, 0.9, 1.0), 23)
 	_add_label("ASSIST TARGET", Vector3(-7, 3.2, -16), Color(0.76, 0.48, 1.0), 23)
 

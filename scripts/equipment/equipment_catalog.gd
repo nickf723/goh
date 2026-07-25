@@ -1,6 +1,8 @@
 extends RefCounted
 class_name EquipmentCatalog
 
+const EffectCatalogScript = preload("res://scripts/effects/gameplay_effect_catalog.gd")
+
 const SLOT_WEAPON: String = "weapon"
 const SLOT_OUTFIT: String = "outfit"
 const SLOT_CHARM: String = "charm"
@@ -116,6 +118,18 @@ static func get_rows_for_slot(slot_id: String) -> Array[Dictionary]:
 		if str(row.get("slot", "")) == slot_id:
 			rows.append(row)
 	return rows
+
+
+static func format_effects(item_id: String, include_descriptions: bool = false) -> String:
+	var parts: Array[String] = []
+	for effect_id: String in get_effect_ids(item_id):
+		var label: String = EffectCatalogScript.get_display_name(effect_id)
+		if include_descriptions:
+			var description: String = EffectCatalogScript.get_description(effect_id)
+			if description != "":
+				label += " — " + description
+		parts.append(label)
+	return "  •  ".join(parts)
 
 
 static func format_modifiers(modifiers: Dictionary) -> String:

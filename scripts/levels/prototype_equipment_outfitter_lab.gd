@@ -24,7 +24,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func configure_equipment_trial() -> void:
 	GameState.reset_stats_to_defaults(false)
-	GameState.reset_equipment_to_defaults(true)
+	GameState.reset_equipment_to_defaults(true, false)
 	GameState.set_currency(180)
 	GameState.set_stat("health", GameState.get_stat("max_health"))
 	GameState.set_stat("stamina", GameState.get_stat("max_stamina"))

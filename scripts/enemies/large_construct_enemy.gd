@@ -18,15 +18,15 @@ enum State {
 const WeakPointScript = preload("res://scripts/enemies/large_enemy_weak_point.gd")
 
 @export var display_name: String = "Foundry Colossus"
-@export_range(20, 2000, 1) var maximum_health: int = 180
-@export_range(10, 1000, 1) var maximum_stance: int = 90
+@export_range(20, 2000, 1) var maximum_health: int = 120
+@export_range(10, 1000, 1) var maximum_stance: int = 32
 @export_range(0.0, 8.0, 0.1) var move_speed: float = 2.15
 @export_range(2.0, 60.0, 0.5) var detection_range: float = 28.0
 @export_range(2.0, 15.0, 0.25) var attack_range: float = 6.2
 @export var ai_enabled: bool = true
 
-var current_health: int = 180
-var current_stance: int = 90
+var current_health: int = 120
+var current_stance: int = 32
 var state: State = State.IDLE
 var state_timer: float = 0.0
 var attack_cooldown: float = 0.0
@@ -168,8 +168,8 @@ func _perform_attack() -> void:
 	if global_position.distance_to(player.global_position) > radius:
 		return
 	var payload := DamagePayload.new()
-	payload.amount = 15 if pending_attack == "hammer_sweep" else 10
-	payload.stance_damage = 22 if pending_attack == "hammer_sweep" else 16
+	payload.amount = 7 if pending_attack == "hammer_sweep" else 5
+	payload.stance_damage = 10 if pending_attack == "hammer_sweep" else 7
 	payload.element = "metal" if pending_attack == "hammer_sweep" else "earth"
 	payload.source_name = "Colossus Hammer Sweep" if pending_attack == "hammer_sweep" else "Colossus Ground Stomp"
 	payload.hit_type = "enemy_attack"

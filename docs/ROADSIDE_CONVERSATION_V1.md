@@ -1,51 +1,50 @@
-# Roadside Conversation and Choice v1
+# Roadside Conversation, Quest, and Consequence v1
 
 Run:
 
 `scenes/levels/prototypes/prototype_roadside_conversation_lab_v1.tscn`
 
+## Full adventure loop
+
+1. Help Mara repair her cart through conversation.
+2. Speak with her again and accept **The Cartographer's Missing Map**.
+3. Follow the road south and discover the Gremlin camp.
+4. Recover the map case through one of three systemic routes:
+   - defeat the Gremlin sentry;
+   - ring the abandoned bell and retrieve the case while it investigates;
+   - use the Metal recovery point to pull the case from a distance.
+5. Return to Mara.
+6. Receive **Mara's Eastern Chart** as a persistent Key Item.
+7. Speak with her again to confirm the completed-state dialogue.
+
+Each solution records a distinct optional quest outcome.
+
 ## Controls
 
-- Interact: begin or advance dialogue
-- Up / Down: select a response
-- Confirm / Interact: choose the highlighted response
-- Cancel: leave the conversation
-- Left Shoulder / H: toggle conversation history
-- F8 in the editor: reset Mara's test flags and reload the lab
+- Interact: conversations and field objectives
+- Up / Down: select a dialogue response
+- Confirm / Interact: choose or advance
+- Cancel: leave dialogue or the journal
+- Left Shoulder / H: conversation history
+- Minus / J: Journey quest journal
+- F8 in the editor: reset Mara, the quest, and the laboratory
 
-The conversation temporarily pauses ordinary player simulation, so movement, attacks, spells, enemies, and resource systems cannot consume the same input.
+## Quest substrate
 
-## Reusable contract
+Persistent quest records live in `GameState` and are included in saves. They support:
 
-`ConversationNPC` consumes a dictionary graph containing an entry node and named dialogue nodes. Nodes may contain text, a next node, or choices.
+- inactive, active, completed, and failed states
+- ordered stages and current objectives
+- optional objective completion
+- story-driven start, advancement, and resolution
+- compact active/completed journal cards
+- conversation entry rules based on previous outcomes
+- inventory and Key Item rewards
 
-Choices currently support:
+Unavailable dialogue choices remain visible with their requirements.
 
-- item requirements and consumption
-- stat requirements
-- required or blocking story flags
-- story-flag writes
-- objective updates
-- inventory grants
-- relationship changes
-- persistent repeat-entry dialogue
-- conversation history
-
-Unavailable choices remain visible with their requirement, making the reason legible rather than silently removing the option.
-
-## Playtest route
-
-1. Approach Mara and use Interact.
-2. Ask what happened, then return to the first response set.
-3. Move through responses with both keyboard and controller.
-4. Confirm the Charisma response is visibly gated if Grace has less than 2 Charisma.
-5. Help with a Healing Flask or Metal affinity.
-6. Confirm the relevant resource, trust value, and objective change.
-7. Use Left Shoulder or H to review dialogue history.
-8. Finish the conversation and speak with Mara again.
-9. Confirm she remembers Grace and presents the follow-up branch.
-10. Cancel from a conversation and confirm ordinary movement resumes.
-
-Smoke test:
+## Smoke tests
 
 `scenes/tests/roadside_conversation_smoke_test.tscn`
+
+`scenes/tests/quest_system_smoke_test.tscn`

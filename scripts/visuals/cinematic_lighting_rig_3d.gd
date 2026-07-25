@@ -16,6 +16,7 @@ enum Quality {
 @export var animate_atmosphere: bool = true
 @export var shaft_strength: float = 1.0
 @export var dust_strength: float = 1.0
+@export_range(0.0, 5.0, 0.1) var weather_transition_seconds: float = 1.4
 
 var environment_node: WorldEnvironment
 var sun: DirectionalLight3D
@@ -25,6 +26,11 @@ var dust_root: Node3D
 var shaft_materials: Array[StandardMaterial3D] = []
 var dust_systems: Array[GPUParticles3D] = []
 var elapsed: float = 0.0
+var sky_material: ProceduralSkyMaterial
+var lighting_tween: Tween
+var active_weather_id: String = ""
+var weather_shaft_multiplier: float = 1.0
+var weather_shaft_color: Color = Color(1.0, 0.52, 0.20, 1.0)
 
 
 func _ready() -> void:
@@ -38,7 +44,9 @@ func _process(delta: float) -> void:
 	elapsed += delta
 	for index: int in range(shaft_materials.size()):
 		var pulse: float = 0.92 + sin(elapsed * (0.24 + float(index) * 0.035) + float(index) * 1.7) * 0.08
-		shaft_materials[index].emission_energy_multiplier = shaft_strength * pulse
+		shaft_materials[index].emission_energy_multiplier = (
+			shaft_strength * pulse * weather_shaft_multiplier
+		)
 
 
 func _install_profile() -> void:
@@ -63,6 +71,8 @@ func _install_profile() -> void:
 			_build_neutral_profile()
 
 	set_quality(quality)
+	_connect_weather_controllers()
+	_sync_weather_lighting_from_world()
 
 
 func _find_or_create_environment() -> WorldEnvironment:
@@ -97,7 +107,7 @@ func _configure_environment() -> void:
 		environment_node.environment = Environment.new()
 	var environment: Environment = environment_node.environment
 
-	var sky_material: ProceduralSkyMaterial = ProceduralSkyMaterial.new()
+	sky_material = ProceduralSkyMaterial.new()
 	sky_material.sky_top_color = Color(0.075, 0.13, 0.23, 1.0)
 	sky_material.sky_horizon_color = Color(0.72, 0.49, 0.31, 1.0)
 	sky_material.ground_bottom_color = Color(0.035, 0.045, 0.065, 1.0)
@@ -218,7 +228,7 @@ func _create_light_shaft(
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	material.albedo_color = Color(1.0, 0.71, 0.38, 0.026 * energy_scale)
 	material.emission_enabled = true
-	material.emission = Color(1.0, 0.52, 0.20, 1.0)
+	material.emission = weather_shaft_color
 	material.emission_energy_multiplier = shaft_strength * energy_scale
 	shaft.material_override = material
 	shaft.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -327,6 +337,241 @@ func _set_dust_amount(amount_value: int) -> void:
 		particles.emitting = amount_value > 0
 
 
+func _connect_weather_controllers() -> void:
+	for controller: Node in get_tree().get_nodes_in_group("weather_controller"):
+		var started: Callable = Callable(self, "_on_weather_started")
+		var stopped: Callable = Callable(self, "_on_weather_stopped")
+		if controller.has_signal("weather_started") and not controller.is_connected("weather_started", started):
+			controller.connect("weather_started", started)
+		if controller.has_signal("weather_stopped") and not controller.is_connected("weather_stopped", stopped):
+			controller.connect("weather_stopped", stopped)
+
+
+func _on_weather_started(weather_id: String) -> void:
+	set_weather_lighting(weather_id, true)
+
+
+func _on_weather_stopped(_weather_id: String) -> void:
+	active_weather_id = ""
+	call_deferred("_sync_weather_lighting_from_world")
+
+
+func _sync_weather_lighting_from_world() -> void:
+	for controller: Node in get_tree().get_nodes_in_group("weather_controller"):
+		if not bool(controller.get("active")):
+			continue
+		var definition: Variant = controller.get("weather_definition")
+		if definition != null:
+			set_weather_lighting(str(definition.get("effect_id")), false)
+			return
+	set_weather_lighting("", false)
+
+
+func set_weather_lighting(weather_id: String, animate: bool = true) -> void:
+	active_weather_id = weather_id
+	match weather_id:
+		"rain_weather":
+			_apply_rain_lighting(animate)
+		"snow_weather":
+			_apply_snow_lighting(animate)
+		_:
+			_apply_clear_lighting(animate)
+
+
+func _apply_clear_lighting(animate: bool) -> void:
+	weather_shaft_multiplier = 1.0
+	weather_shaft_color = Color(1.0, 0.52, 0.20, 1.0)
+	_set_dust_for_weather(true)
+	_transition_lighting(
+		{
+			"sky_top": Color(0.075, 0.13, 0.23, 1.0),
+			"sky_horizon": Color(0.72, 0.49, 0.31, 1.0),
+			"ground_horizon": Color(0.42, 0.34, 0.29, 1.0),
+			"ambient_color": Color(0.46, 0.56, 0.72, 1.0),
+			"ambient_energy": 0.58,
+			"fog_color": Color(0.61, 0.60, 0.62, 1.0),
+			"fog_energy": 0.62,
+			"fog_density": 0.0035,
+			"volumetric_density": 0.021,
+			"volumetric_albedo": Color(0.88, 0.82, 0.74, 1.0),
+			"volumetric_emission": Color(0.08, 0.095, 0.13, 1.0),
+			"volumetric_anisotropy": 0.68,
+			"glow_intensity": 0.72,
+			"sun_color": Color(1.0, 0.69, 0.42, 1.0),
+			"sun_energy": 1.42,
+			"sun_fog_energy": 1.7,
+			"fill_color": Color(0.33, 0.48, 0.78, 1.0),
+			"fill_energy": 0.34,
+			"accent_scale": 1.0,
+			"shaft_albedo": Color(1.0, 0.71, 0.38, 0.026),
+		},
+		animate
+	)
+
+
+func _apply_rain_lighting(animate: bool) -> void:
+	weather_shaft_multiplier = 0.12
+	weather_shaft_color = Color(0.48, 0.66, 0.82, 1.0)
+	_set_dust_for_weather(false)
+	_transition_lighting(
+		{
+			"sky_top": Color(0.025, 0.045, 0.075, 1.0),
+			"sky_horizon": Color(0.19, 0.27, 0.36, 1.0),
+			"ground_horizon": Color(0.11, 0.15, 0.20, 1.0),
+			"ambient_color": Color(0.30, 0.41, 0.56, 1.0),
+			"ambient_energy": 0.48,
+			"fog_color": Color(0.25, 0.33, 0.43, 1.0),
+			"fog_energy": 0.48,
+			"fog_density": 0.013,
+			"volumetric_density": 0.036,
+			"volumetric_albedo": Color(0.48, 0.58, 0.68, 1.0),
+			"volumetric_emission": Color(0.025, 0.045, 0.075, 1.0),
+			"volumetric_anisotropy": 0.24,
+			"glow_intensity": 0.38,
+			"sun_color": Color(0.56, 0.67, 0.80, 1.0),
+			"sun_energy": 0.30,
+			"sun_fog_energy": 0.38,
+			"fill_color": Color(0.22, 0.38, 0.62, 1.0),
+			"fill_energy": 0.48,
+			"accent_scale": 0.68,
+			"shaft_albedo": Color(0.48, 0.66, 0.82, 0.006),
+		},
+		animate
+	)
+
+
+func _apply_snow_lighting(animate: bool) -> void:
+	weather_shaft_multiplier = 0.48
+	weather_shaft_color = Color(0.76, 0.90, 1.0, 1.0)
+	_set_dust_for_weather(false)
+	_transition_lighting(
+		{
+			"sky_top": Color(0.18, 0.27, 0.39, 1.0),
+			"sky_horizon": Color(0.68, 0.78, 0.88, 1.0),
+			"ground_horizon": Color(0.39, 0.47, 0.57, 1.0),
+			"ambient_color": Color(0.64, 0.76, 0.92, 1.0),
+			"ambient_energy": 0.76,
+			"fog_color": Color(0.72, 0.82, 0.94, 1.0),
+			"fog_energy": 0.82,
+			"fog_density": 0.019,
+			"volumetric_density": 0.045,
+			"volumetric_albedo": Color(0.80, 0.89, 0.98, 1.0),
+			"volumetric_emission": Color(0.10, 0.15, 0.22, 1.0),
+			"volumetric_anisotropy": 0.48,
+			"glow_intensity": 0.82,
+			"sun_color": Color(0.78, 0.88, 1.0, 1.0),
+			"sun_energy": 0.64,
+			"sun_fog_energy": 0.82,
+			"fill_color": Color(0.44, 0.62, 0.90, 1.0),
+			"fill_energy": 0.62,
+			"accent_scale": 1.12,
+			"shaft_albedo": Color(0.76, 0.90, 1.0, 0.016),
+		},
+		animate
+	)
+
+
+func _transition_lighting(state: Dictionary, animate: bool) -> void:
+	if environment_node == null or environment_node.environment == null:
+		return
+	var environment: Environment = environment_node.environment
+	environment.fog_enabled = true
+	environment.volumetric_fog_enabled = quality != Quality.LOW
+
+	if lighting_tween != null and lighting_tween.is_valid():
+		lighting_tween.kill()
+
+	var duration: float = weather_transition_seconds if animate else 0.0
+	if duration <= 0.001:
+		_apply_lighting_state_immediately(state)
+		return
+
+	lighting_tween = create_tween()
+	lighting_tween.set_trans(Tween.TRANS_SINE)
+	lighting_tween.set_ease(Tween.EASE_IN_OUT)
+	_parallel_property(sky_material, "sky_top_color", state["sky_top"], duration)
+	_parallel_property(sky_material, "sky_horizon_color", state["sky_horizon"], duration)
+	_parallel_property(sky_material, "ground_horizon_color", state["ground_horizon"], duration)
+	_parallel_property(environment, "ambient_light_color", state["ambient_color"], duration)
+	_parallel_property(environment, "ambient_light_energy", state["ambient_energy"], duration)
+	_parallel_property(environment, "fog_light_color", state["fog_color"], duration)
+	_parallel_property(environment, "fog_light_energy", state["fog_energy"], duration)
+	_parallel_property(environment, "fog_density", state["fog_density"], duration)
+	_parallel_property(environment, "volumetric_fog_density", state["volumetric_density"], duration)
+	_parallel_property(environment, "volumetric_fog_albedo", state["volumetric_albedo"], duration)
+	_parallel_property(environment, "volumetric_fog_emission", state["volumetric_emission"], duration)
+	_parallel_property(environment, "volumetric_fog_anisotropy", state["volumetric_anisotropy"], duration)
+	_parallel_property(environment, "glow_intensity", state["glow_intensity"], duration)
+	_parallel_property(sun, "light_color", state["sun_color"], duration)
+	_parallel_property(sun, "light_energy", state["sun_energy"], duration)
+	_parallel_property(sun, "light_volumetric_fog_energy", state["sun_fog_energy"], duration)
+	_parallel_property(fill_light, "light_color", state["fill_color"], duration)
+	_parallel_property(fill_light, "light_energy", state["fill_energy"], duration)
+	_transition_accents(float(state["accent_scale"]), duration)
+	for material: StandardMaterial3D in shaft_materials:
+		_parallel_property(material, "albedo_color", state["shaft_albedo"], duration)
+		_parallel_property(material, "emission", weather_shaft_color, duration)
+
+
+func _parallel_property(target: Object, property_name: String, value: Variant, duration: float) -> void:
+	if lighting_tween == null or target == null:
+		return
+	lighting_tween.parallel().tween_property(target, NodePath(property_name), value, duration)
+
+
+func _apply_lighting_state_immediately(state: Dictionary) -> void:
+	var environment: Environment = environment_node.environment
+	sky_material.sky_top_color = state["sky_top"]
+	sky_material.sky_horizon_color = state["sky_horizon"]
+	sky_material.ground_horizon_color = state["ground_horizon"]
+	environment.ambient_light_color = state["ambient_color"]
+	environment.ambient_light_energy = state["ambient_energy"]
+	environment.fog_light_color = state["fog_color"]
+	environment.fog_light_energy = state["fog_energy"]
+	environment.fog_density = state["fog_density"]
+	environment.volumetric_fog_density = state["volumetric_density"]
+	environment.volumetric_fog_albedo = state["volumetric_albedo"]
+	environment.volumetric_fog_emission = state["volumetric_emission"]
+	environment.volumetric_fog_anisotropy = state["volumetric_anisotropy"]
+	environment.glow_intensity = state["glow_intensity"]
+	sun.light_color = state["sun_color"]
+	sun.light_energy = state["sun_energy"]
+	sun.light_volumetric_fog_energy = state["sun_fog_energy"]
+	fill_light.light_color = state["fill_color"]
+	fill_light.light_energy = state["fill_energy"]
+	_set_accent_scale(float(state["accent_scale"]))
+	for material: StandardMaterial3D in shaft_materials:
+		material.albedo_color = state["shaft_albedo"]
+		material.emission = weather_shaft_color
+
+
+func _transition_accents(scale_value: float, duration: float) -> void:
+	for node_name: String in ["ChurchThresholdGlow", "MemoryTrailGlow", "RavineMoonFill"]:
+		var light: OmniLight3D = get_node_or_null(node_name) as OmniLight3D
+		if light == null:
+			continue
+		var base_energy: float = 1.5 if node_name == "ChurchThresholdGlow" else (0.72 if node_name == "MemoryTrailGlow" else 0.48)
+		_parallel_property(light, "light_energy", base_energy * scale_value, duration)
+
+
+func _set_accent_scale(scale_value: float) -> void:
+	for node_name: String in ["ChurchThresholdGlow", "MemoryTrailGlow", "RavineMoonFill"]:
+		var light: OmniLight3D = get_node_or_null(node_name) as OmniLight3D
+		if light == null:
+			continue
+		var base_energy: float = 1.5 if node_name == "ChurchThresholdGlow" else (0.72 if node_name == "MemoryTrailGlow" else 0.48)
+		light.light_energy = base_energy * scale_value
+
+
+func _set_dust_for_weather(clear_weather: bool) -> void:
+	if not clear_weather:
+		for particles: GPUParticles3D in dust_systems:
+			particles.emitting = false
+		return
+	var amount_value: int = 18 if quality == Quality.LOW else (42 if quality == Quality.BALANCED else 72)
+	_set_dust_amount(amount_value)
+
+
 func get_debug_data() -> Dictionary:
 	return {
 		"profile": profile,
@@ -336,4 +581,5 @@ func get_debug_data() -> Dictionary:
 		"volumetric_fog": environment_node != null
 			and environment_node.environment != null
 			and environment_node.environment.volumetric_fog_enabled,
+		"weather": active_weather_id if active_weather_id != "" else "clear",
 	}

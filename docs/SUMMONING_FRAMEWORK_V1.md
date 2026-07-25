@@ -25,7 +25,8 @@ Run:
 `scenes/levels/prototypes/prototype_spectral_familiar_lab_v1.tscn`
 
 - Cast: summon or recall Lumen
-- J: cycle Follow, Stay, and Assist
+- Tap D-pad Down / Tab: cycle Follow, Stay, and Assist
+- Hold D-pad Down / Tab: open contextual familiar commands
 - K: dismiss Lumen
 - Lock-on: designate a target in Follow mode
 - F8: reset

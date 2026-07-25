@@ -20,9 +20,11 @@ var honk_count: int = 0
 var elapsed: float = 0.0
 var visual_root: Node3D
 var state_label: Label3D
+var species_knowledge: Node
 
 
 func _ready() -> void:
+	species_knowledge = get_node_or_null("/root/SpeciesKnowledge")
 	home_position = global_position
 	wander_target = home_position
 	add_to_group("study_animals")
@@ -96,7 +98,10 @@ func perform_study_action(action: String, researcher: Node3D = null) -> Dictiona
 			temperament_changed.emit(temperament)
 		_:
 			return {}
-	var result: Dictionary = SpeciesKnowledge.add_discovery("goose", discovery_id, label, points)
+	if species_knowledge == null or not species_knowledge.has_method("add_discovery"):
+		push_warning("SpeciesKnowledge service is unavailable.")
+		return {}
+	var result: Dictionary = species_knowledge.call("add_discovery", "goose", discovery_id, label, points)
 	result["action"] = action
 	result["goose"] = goose_name
 	studied.emit(action, result)

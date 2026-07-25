@@ -55,6 +55,23 @@ static func remove_effect_source(source_id: String) -> void:
 		service.call("remove_effect_source", source_id)
 
 
+static func has_effect(effect_id: String) -> bool:
+	var service: Node = get_service()
+	return service != null and service.has_method("has_effect") and bool(service.call("has_effect", effect_id))
+
+
+static func has_effect_with_tag(tag: String) -> bool:
+	var service: Node = get_service()
+	return service != null and service.has_method("has_effect_with_tag") and bool(service.call("has_effect_with_tag", tag))
+
+
+static func remove_effects_with_tag(tag: String) -> int:
+	var service: Node = get_service()
+	if service == null or not service.has_method("remove_effects_with_tag"):
+		return 0
+	return int(service.call("remove_effects_with_tag", tag))
+
+
 static func get_active_source_rows(include_permanent: bool = true) -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
 	var service: Node = get_service()

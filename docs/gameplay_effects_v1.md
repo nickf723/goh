@@ -5,28 +5,30 @@ Gameplay effects are reusable rules granted by arbitrary sources. Equipment is t
 ## Contract
 
 1. `GameplayEffectCatalog` defines named effects as channel modifiers.
-2. `GameplayEffects` tracks sources and their effect IDs.
+2. The gameplay-effect service tracks sources and their effect IDs; `GameplayEffectAccessScript` provides compile-safe access.
 3. Gameplay systems resolve values through named channels.
 4. Removing or replacing a source immediately removes its contribution.
 
 A source may be permanent or timed:
 
 ```gdscript
+const GameplayEffectAccessScript = preload("res://scripts/effects/gameplay_effect_access.gd")
+
 var effect_ids: Array[String] = ["wayfarer_stride"]
 var tags: Array[String] = ["potion", "movement"]
-GameplayEffects.set_effect_source("potion:swift_tea", effect_ids, 20.0, tags)
+GameplayEffectAccessScript.set_effect_source("potion:swift_tea", effect_ids, 20.0, tags)
 ```
 
 Removing a source is explicit:
 
 ```gdscript
-GameplayEffects.remove_effect_source("potion:swift_tea")
+GameplayEffectAccessScript.remove_effect_source("potion:swift_tea")
 ```
 
 Sources can also be cleared by tag:
 
 ```gdscript
-GameplayEffects.remove_sources_with_tag("food")
+GameplayEffectAccessScript.remove_sources_with_tag("food")
 ```
 
 ## Channels in v1
@@ -45,8 +47,8 @@ GameplayEffects.remove_sources_with_tag("food")
 A consumer resolves a value without equipment-specific logic:
 
 ```gdscript
-var recovery_rate := GameplayEffects.modify_float("stamina_recovery_rate", base_rate)
-var mana_cost := GameplayEffects.modify_int("mana_cost", base_cost, "ceil")
+var recovery_rate := GameplayEffectAccessScript.modify_float("stamina_recovery_rate", base_rate)
+var mana_cost := GameplayEffectAccessScript.modify_int("mana_cost", base_cost, "ceil")
 ```
 
 ## Current equipment sources

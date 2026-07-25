@@ -174,7 +174,7 @@ func queue_attack_input(input_kind: String) -> void:
 		return
 
 	var context_attack: WeaponAttackDefinition = resolve_context_attack(input_kind)
-	if context_attack != null:
+	if context_attack != null and active_technique_id == WeaponTechniqueCatalogScript.CONTEXT_DASH:
 		var dash_direction: Vector3 = dodge_controller.cancel_into_weapon_technique()
 		if dash_direction.length() > 0.01:
 			pending_context_forward = dash_direction.normalized()
@@ -185,6 +185,14 @@ func queue_attack_input(input_kind: String) -> void:
 		return
 
 	if action_state != null and not action_state.can_attack():
+		active_technique_id = ""
+		return
+
+	if context_attack != null:
+		reset_combo_chain(false)
+		apply_aerial_technique_motion(active_technique_id)
+		if not start_attack(context_attack):
+			active_technique_id = ""
 		return
 
 	var requested_attack: WeaponAttackDefinition = resolve_idle_attack(input_kind)
@@ -198,30 +206,76 @@ func queue_attack_input(input_kind: String) -> void:
 
 
 func resolve_context_attack(input_kind: String) -> WeaponAttackDefinition:
-	if dodge_controller == null or not dodge_controller.is_dodge_active():
-		return null
 	if equipped_weapon == null:
 		return null
 	var mastery_rank: int = GameState.get_weapon_mastery_rank(equipped_weapon.weapon_class)
-	if not WeaponTechniqueCatalogScript.is_context_unlocked(
-		equipped_weapon.weapon_class,
-		WeaponTechniqueCatalogScript.CONTEXT_DASH,
-		mastery_rank
-	):
-		return null
 	var moveset: WeaponMovesetDefinition = get_moveset()
 	var base_attack: WeaponAttackDefinition
 	if moveset != null:
 		base_attack = moveset.get_entry_attack(input_kind)
 	else:
 		base_attack = build_legacy_attack(input_kind)
-	var technique_attack: WeaponAttackDefinition = WeaponTechniqueCatalogScript.build_dash_attack(
-		base_attack,
-		equipped_weapon.weapon_class
+
+	if dodge_controller != null and dodge_controller.is_dodge_active():
+		if WeaponTechniqueCatalogScript.is_context_unlocked(
+			equipped_weapon.weapon_class,
+			WeaponTechniqueCatalogScript.CONTEXT_DASH,
+			mastery_rank
+		):
+			var dash_attack: WeaponAttackDefinition = WeaponTechniqueCatalogScript.build_dash_attack(
+				base_attack,
+				equipped_weapon.weapon_class
+			)
+			if dash_attack != null:
+				active_technique_id = WeaponTechniqueCatalogScript.CONTEXT_DASH
+			return dash_attack
+
+	var actor: Node3D = get_actor()
+	if not (actor is CharacterBody3D):
+		return null
+	var body: CharacterBody3D = actor as CharacterBody3D
+	if body.is_on_floor():
+		return null
+	if action_state != null and action_state.flight_restrictions_apply():
+		return null
+	var movement_amount: float = Input.get_vector(
+		"move_left",
+		"move_right",
+		"move_forward",
+		"move_back"
+	).length()
+	var aerial_context: String = WeaponTechniqueCatalogScript.get_aerial_context(
+		input_kind,
+		movement_amount
 	)
-	if technique_attack != null:
-		active_technique_id = WeaponTechniqueCatalogScript.CONTEXT_DASH
-	return technique_attack
+	if not WeaponTechniqueCatalogScript.is_context_unlocked(
+		equipped_weapon.weapon_class,
+		aerial_context,
+		mastery_rank
+	):
+		return null
+	var aerial_attack: WeaponAttackDefinition = WeaponTechniqueCatalogScript.build_aerial_attack(
+		base_attack,
+		equipped_weapon.weapon_class,
+		aerial_context
+	)
+	if aerial_attack != null:
+		active_technique_id = aerial_context
+	return aerial_attack
+
+
+func apply_aerial_technique_motion(context_id: String) -> void:
+	var actor: Node3D = get_actor()
+	if not (actor is CharacterBody3D):
+		return
+	var body: CharacterBody3D = actor as CharacterBody3D
+	match context_id:
+		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_NEUTRAL:
+			body.velocity.y = maxf(body.velocity.y, -0.8)
+		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_FORWARD:
+			body.velocity.y = maxf(body.velocity.y, -2.0)
+		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_DOWN:
+			body.velocity.y = minf(body.velocity.y, -7.5)
 
 
 func update_queued_input(delta: float) -> void:

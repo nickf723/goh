@@ -169,7 +169,7 @@ func _build_arena() -> void:
 	title.modulate = Color(0.72, 0.88, 1.0)
 	add_child(title)
 	var instructions := Label3D.new()
-	instructions.text = "DODGE: SPACE / BOTTOM FACE   •   1–4 FORCE ATTACK   •   ORANGE INTERRUPTS   •   RED COMMITS   •   F8 RESET"
+	instructions.text = "DODGE: C / BOTTOM FACE   •   1–4 FORCE ATTACK   •   ORANGE INTERRUPTS   •   RED COMMITS   •   F8 RESET"
 	instructions.position = Vector3(0, 4.95, -7.35)
 	instructions.font_size = 18
 	instructions.pixel_size = 0.008

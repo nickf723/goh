@@ -19,7 +19,7 @@ var is_grabbed: bool = false
 var grab_timer: float = 0.0
 var escape_inputs: int = 0
 var stamina_accumulator: float = 0.0
-var status_message: String = "Approach a kneeling Colossus and press Interact to climb."
+var status_message: String = "Approach a vulnerable large enemy and press Interact to climb."
 
 
 func setup(player_node: CharacterBody3D, enemy_node: Node3D) -> void:
@@ -63,7 +63,7 @@ func try_attach() -> bool:
 	if is_attached or is_grabbed or large_enemy == null:
 		return false
 	if large_enemy.has_method("can_player_climb") and not bool(large_enemy.call("can_player_climb")):
-		status_message = "The Colossus must be kneeling before Grace can climb it."
+		status_message = _enemy_name() + " must be vulnerable before Grace can climb it."
 		_show_message(status_message)
 		return false
 	_refresh_anchors()
@@ -87,7 +87,7 @@ func try_attach() -> bool:
 	_set_manipulating(true)
 	status_message = "CLIMBING • Move vertically • Jump/Dodge to leap away • Hold Interact to brace"
 	traversal_state_changed.emit("climbing")
-	_show_message("Grace catches the Colossus armor.")
+	_show_message("Grace catches hold of " + _enemy_name() + ".")
 	return true
 
 
@@ -96,7 +96,7 @@ func _process_climb(delta: float) -> void:
 		detach(Vector3.DOWN, "The climb target is gone.")
 		return
 	if large_enemy.has_method("can_player_climb") and not bool(large_enemy.call("can_player_climb")):
-		detach(Vector3.UP * 3.0 + _away_direction() * 5.0, "The Colossus rises and throws Grace clear.")
+		detach(Vector3.UP * 3.0 + _away_direction() * 5.0, _enemy_name() + " recovers and throws Grace clear.")
 		return
 	_refresh_anchors()
 	if anchor_index < 0 or anchor_index >= anchors.size():
@@ -130,7 +130,7 @@ func on_large_enemy_shake(strength: float = 1.0) -> void:
 			status_message = "BRACED • The shake drains " + str(brace_cost) + " stamina."
 			_show_message(status_message)
 			return
-	detach(Vector3.UP * (2.5 + strength) + _away_direction() * (6.0 + strength * 2.0), "The Colossus shakes Grace loose!")
+	detach(Vector3.UP * (2.5 + strength) + _away_direction() * (6.0 + strength * 2.0), _enemy_name() + " shakes Grace loose!")
 
 
 func start_enemy_grab(enemy: Node3D) -> void:
@@ -154,6 +154,8 @@ func _process_grab(delta: float) -> void:
 		return
 	grab_timer -= maxf(delta, 0.0)
 	var hold_point: Vector3 = large_enemy.global_position + Vector3.UP * 4.7 - large_enemy.global_transform.basis.z * 1.8
+	if large_enemy.has_method("get_grab_hold_point"):
+		hold_point = large_enemy.call("get_grab_hold_point")
 	player.velocity = Vector3.ZERO
 	player.global_position = player.global_position.lerp(hold_point, clampf(delta * 14.0, 0.0, 1.0))
 	status_message = "GRABBED • ESCAPE " + str(escape_inputs) + " / " + str(escape_inputs_required) + " • " + str(snappedf(grab_timer, 0.1)) + " s"
@@ -162,9 +164,13 @@ func _process_grab(delta: float) -> void:
 		payload.amount = 9
 		payload.stance_damage = 10
 		payload.element = "metal"
-		payload.source_name = "Colossus Crushing Grip"
+		payload.source_name = _enemy_name() + " Crushing Grip"
 		payload.hit_type = "enemy_attack"
 		payload.tags = ["large_enemy", "grab", "escape_failed"]
+		if large_enemy.has_method("get_failed_grab_payload"):
+			var custom_payload: Variant = large_enemy.call("get_failed_grab_payload")
+			if custom_payload is DamagePayload:
+				payload = custom_payload as DamagePayload
 		var defense: Node = player.get_node_or_null("PlayerDefenseController")
 		if defense != null and defense.has_method("resolve_incoming_attack"):
 			defense.call("resolve_incoming_attack", payload, large_enemy)
@@ -189,7 +195,7 @@ func detach(impulse: Vector3 = Vector3.ZERO, message: String = "") -> void:
 	anchor_index = -1
 	_set_manipulating(false)
 	player.velocity = impulse
-	status_message = "Grounded • Interact near a kneeling anchor to climb."
+	status_message = "Grounded • Interact near a vulnerable anchor to climb."
 	traversal_state_changed.emit("grounded")
 	if message != "":
 		_show_message(message)
@@ -231,6 +237,17 @@ func _set_manipulating(active: bool) -> void:
 	var action_state: Node = player.get_node_or_null("PlayerActionState")
 	if action_state != null:
 		action_state.set("is_manipulating", active)
+
+
+func _enemy_name() -> String:
+	if large_enemy == null:
+		return "The large enemy"
+	if large_enemy.has_method("get_enemy_display_name"):
+		return str(large_enemy.call("get_enemy_display_name"))
+	var value: Variant = large_enemy.get("display_name")
+	if value != null and str(value) != "":
+		return str(value)
+	return large_enemy.name.capitalize()
 
 
 func _show_message(message: String) -> void:

@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/levels/ruined_village_traversal_grade.gd" id="6_traversal"]
 [ext_resource type="Script" path="res://scripts/levels/ruined_village_save_sync.gd" id="7_sync"]
 [ext_resource type="Script" path="res://scripts/visuals/cinematic_lighting_rig_3d.gd" id="8_lighting"]
+[ext_resource type="Script" path="res://scripts/concentration/concentration_manager.gd" id="9_concentration"]
 
 [node name="PrototypeRuinedVillageApproach" type="Node3D"]
 script = ExtResource("1_director")
@@ -33,6 +34,11 @@ script = ExtResource("6_traversal")
 
 [node name="SaveWorldSync" type="Node" parent="."]
 script = ExtResource("7_sync")
+
+[node name="ConcentrationManager" type="Node" parent="."]
+script = ExtResource("9_concentration")
+passive_mana_regeneration_per_second = 1.0
+show_hud = true
 
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1.2, 64)

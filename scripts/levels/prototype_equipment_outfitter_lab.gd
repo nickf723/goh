@@ -9,9 +9,9 @@ func _ready() -> void:
 	Engine.time_scale = 1.0
 	build_environment()
 	build_room()
+	configure_equipment_trial()
 	build_outfitter()
 	build_reward_chest()
-	configure_equipment_trial()
 	GameState.set_objective("Buy equipment, compare its effects, equip a loadout, and test the weapon.")
 	show_message("Outfitter ready. The chest contains a Charm; the shop carries weapons, outfits, and relics.")
 

@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 GameState="*uid://b8ksqrim3r4tu"
 HitStop="*uid://xg3ac02trs2x"
 FullMenuDirector="*res://scripts/ui/full_menu_director.gd"
+SpeciesKnowledge="*res://scripts/animals/species_knowledge.gd"
 
 [input]
 

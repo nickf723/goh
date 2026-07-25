@@ -40,7 +40,7 @@ static func get_item(item_id: String) -> Dictionary:
 	return (ITEM_DEFINITIONS[item_id] as Dictionary).duplicate(true)
 
 
-static func get_name(item_id: String) -> String:
+static func get_display_name(item_id: String) -> String:
 	return str(get_item(item_id).get("name", item_id.capitalize()))
 
 

@@ -34,8 +34,8 @@ This laboratory intentionally contains only Grace, one responsive dummy, a lined
 
 Use the normal weapon controls:
 
-- **Light Attack:** left mouse / controller shoulder
-- **Heavy Attack:** controller shoulder or configured heavy input
+- **Light Attack:** J / left mouse / left shoulder
+- **Heavy Attack:** K / Mouse 4 / right shoulder
 - **Movement during attack startup:** influences attack direction
 - **Dodge:** cancels attacks whose cancel window is open
 - **G:** toggle dummy guard

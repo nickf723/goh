@@ -12,6 +12,8 @@ func start_weather(source_player: Node3D = null) -> bool:
 		show_message("Snowfall cannot form without a weather definition and concentration manager.")
 		return false
 
+	stop_other_weather_controllers()
+
 	var ability_caster: Node = null
 	if player != null:
 		ability_caster = player.get_node_or_null("AbilityCaster")

@@ -7,7 +7,8 @@ var combat_motion_timer: float = 0.0
 
 @onready var aerial_locomotion: PlayerAerialLocomotion = get_node_or_null("AerialLocomotion") as PlayerAerialLocomotion
 @onready var metal_tether_controller: Node = get_node_or_null("MetalTetherController")
-@onready var defense_controller: PlayerDefenseController = get_node_or_null("PlayerDefenseController") as PlayerDefenseController\n@onready var climbing_controller: PlayerClimbingController = get_node_or_null("ClimbingController") as PlayerClimbingController
+@onready var defense_controller: PlayerDefenseController = get_node_or_null("PlayerDefenseController") as PlayerDefenseController
+@onready var climbing_controller: PlayerClimbingController = get_node_or_null("ClimbingController") as PlayerClimbingController
 
 
 func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
@@ -76,6 +77,13 @@ func _physics_process(delta: float) -> void:
 			velocity.y = -0.1
 		move_and_slide()
 		return
+
+	if climbing_controller != null:
+		climbing_controller.update_climb_detection()
+		if climbing_controller.should_handle_locomotion():
+			cancel_combat_motion()
+			if climbing_controller.process_locomotion(delta):
+				return
 
 	if (
 		metal_tether_controller != null

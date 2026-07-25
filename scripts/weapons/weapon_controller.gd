@@ -6,6 +6,8 @@ signal attack_started(attack: WeaponAttackDefinition)
 signal attack_finished(attack_id: String)
 signal combo_state_changed(debug_data: Dictionary)
 
+const EquipmentCatalogScript = preload("res://scripts/equipment/equipment_catalog.gd")
+
 const INPUT_LIGHT: String = "light"
 const INPUT_HEAVY: String = "heavy"
 
@@ -71,6 +73,12 @@ var base_visual_rotation_degrees: Vector3 = Vector3.ZERO
 
 func _ready() -> void:
 	add_to_group("debuggable")
+	if not GameState.equipment_changed.is_connected(_on_equipment_changed):
+		GameState.equipment_changed.connect(_on_equipment_changed)
+	var saved_weapon_id: String = GameState.get_equipped_item("weapon")
+	var saved_weapon: WeaponDefinition = EquipmentCatalogScript.get_weapon(saved_weapon_id)
+	if saved_weapon != null:
+		equipped_weapon = saved_weapon
 
 	if equipped_weapon == null and default_weapon_path != "":
 		var loaded_weapon: Resource = load(default_weapon_path)
@@ -92,6 +100,19 @@ func _ready() -> void:
 			" weapon=",
 			equipped_weapon.display_name if equipped_weapon != null else "none"
 		)
+
+
+func _exit_tree() -> void:
+	if GameState.equipment_changed.is_connected(_on_equipment_changed):
+		GameState.equipment_changed.disconnect(_on_equipment_changed)
+
+
+func _on_equipment_changed(slot_id: String, item_id: String) -> void:
+	if slot_id != "weapon":
+		return
+	var weapon: WeaponDefinition = EquipmentCatalogScript.get_weapon(item_id)
+	if weapon != null:
+		equip_weapon(weapon)
 
 
 func _process(delta: float) -> void:

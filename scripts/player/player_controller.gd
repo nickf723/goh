@@ -25,11 +25,14 @@ extends CharacterBody3D
 @export var lock_on_min_aim_height: float = 0.55
 @export var lock_on_max_aim_height: float = 1.05
 @export var lock_on_cast_origin_height: float = 1.05
+@export_range(0.1, 3.0, 0.05) var lock_on_visibility_grace_seconds: float = 0.85
+@export var lock_on_dynamic_camera_pitch: bool = true
 
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var interaction_area: Area3D = $InteractionArea
 @onready var ability_caster: Node3D = $AbilityCaster
 @onready var spell_label: Label = $SpellLabel
+@onready var targeting_assist: CombatTargetingAssist = get_node_or_null("CombatTargetingAssist") as CombatTargetingAssist
 
 var dodge_controller: PlayerDodgeController
 var quick_item_controller: Node
@@ -45,6 +48,7 @@ var is_defeated: bool = false
 var lock_on_target: Node3D = null
 var lock_on_marker: MeshInstance3D = null
 var lock_on_switch_timer: float = 0.0
+var lock_on_visibility_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -337,6 +341,9 @@ func toggle_lock_on() -> void:
 
 func set_lock_on_target(target: Node3D, switched: bool = false) -> void:
 	lock_on_target = target
+	lock_on_visibility_timer = 0.0
+	if targeting_assist != null:
+		targeting_assist.set_hard_target(target)
 	update_lock_on_marker()
 
 	if switched:
@@ -347,6 +354,9 @@ func set_lock_on_target(target: Node3D, switched: bool = false) -> void:
 
 func clear_lock_on(message: String = "") -> void:
 	lock_on_target = null
+	lock_on_visibility_timer = 0.0
+	if targeting_assist != null:
+		targeting_assist.clear_hard_target()
 
 	if lock_on_marker != null:
 		lock_on_marker.visible = false
@@ -368,6 +378,17 @@ func update_lock_on(delta: float) -> void:
 		clear_lock_on("Target lost.")
 		return
 
+	if targeting_assist != null:
+		var target_visible: bool = targeting_assist.is_target_visible(lock_on_target)
+		var target_on_screen: bool = targeting_assist.is_target_on_screen(lock_on_target)
+		if target_visible and target_on_screen:
+			lock_on_visibility_timer = 0.0
+		else:
+			lock_on_visibility_timer += max(delta, 0.0)
+			if lock_on_visibility_timer > lock_on_visibility_grace_seconds:
+				clear_lock_on("Target lost behind cover.")
+				return
+
 	face_lock_on_target(delta)
 	update_lock_on_camera_pitch(delta)
 	update_lock_on_marker()
@@ -387,6 +408,8 @@ func face_lock_on_target(delta: float) -> void:
 
 func update_lock_on_camera_pitch(delta: float) -> void:
 	var target_pitch: float = deg_to_rad(lock_on_camera_pitch)
+	if lock_on_dynamic_camera_pitch and targeting_assist != null:
+		target_pitch = targeting_assist.get_dynamic_camera_pitch(lock_on_target)
 	var pitch_amount: float = clamp(lock_on_camera_pitch_strength * delta, 0.0, 1.0)
 	camera_pitch = lerp(camera_pitch, target_pitch, pitch_amount)
 	camera_pitch = clamp(camera_pitch, min_pitch, max_pitch)
@@ -419,6 +442,10 @@ func cycle_lock_on_target(direction: int) -> void:
 
 
 func find_best_lock_on_target(exclude_target: Node3D = null) -> Node3D:
+	if targeting_assist != null:
+		targeting_assist.hard_lock_range = lock_on_range
+		return targeting_assist.find_best_hard_target(exclude_target)
+
 	var best_target: Node3D = null
 	var best_score: float = INF
 	var camera: Camera3D = get_viewport().get_camera_3d()
@@ -449,6 +476,8 @@ func find_best_lock_on_target(exclude_target: Node3D = null) -> Node3D:
 func find_directional_cycle_target(direction: int) -> Node3D:
 	if not has_lock_on_target():
 		return null
+	if targeting_assist != null:
+		return targeting_assist.find_directional_target(lock_on_target, direction)
 
 	var camera: Camera3D = get_viewport().get_camera_3d()
 	var side_axis: Vector3 = global_transform.basis.x
@@ -490,6 +519,10 @@ func find_directional_cycle_target(direction: int) -> Node3D:
 
 
 func get_lock_on_candidates(exclude_target: Node3D = null) -> Array[Node3D]:
+	if targeting_assist != null:
+		targeting_assist.hard_lock_range = lock_on_range
+		return targeting_assist.get_hard_candidates(exclude_target)
+
 	var candidates: Array[Node3D] = []
 
 	for candidate_node: Node in get_tree().get_nodes_in_group("enemy"):
@@ -537,6 +570,8 @@ func is_target_defeated(target: Node) -> bool:
 func get_target_aim_point(target: Node3D) -> Vector3:
 	if target == null:
 		return global_position
+	if targeting_assist != null:
+		return targeting_assist.get_target_aim_point(target)
 
 	return target.global_position + Vector3.UP * get_target_center_mass_height(target)
 
@@ -610,9 +645,31 @@ func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
 	return direction.normalized()
 
 
+func get_soft_aim_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
+	if targeting_assist == null:
+		return Vector3.ZERO
+	var origin: Vector3 = cast_origin
+	if origin == Vector3.ZERO:
+		origin = global_position + Vector3.UP * lock_on_cast_origin_height
+	return targeting_assist.get_soft_aim_direction(origin)
+
+
+func get_combat_aim_direction(
+	aim_origin: Vector3 = Vector3.ZERO,
+	allow_soft_aim: bool = true
+) -> Vector3:
+	if has_lock_on_target():
+		return get_lock_on_cast_direction(aim_origin)
+	if allow_soft_aim:
+		return get_soft_aim_cast_direction(aim_origin)
+	return Vector3.ZERO
+
+
 func get_target_display_name(target: Node) -> String:
 	if target == null:
 		return "Target"
+	if targeting_assist != null and target is Node3D:
+		return targeting_assist.get_target_display_name(target)
 
 	var brain: Node = target.get_node_or_null("EnemyBrain")
 
@@ -660,7 +717,8 @@ func update_lock_on_marker() -> void:
 		return
 
 	lock_on_marker.visible = true
-	lock_on_marker.global_position = lock_on_target.global_position + Vector3.UP * lock_on_marker_height
+	lock_on_marker.global_position = get_target_aim_point(lock_on_target) + Vector3.UP * 0.32
+	update_lock_on_marker_color()
 
 	var pulse_age: float = float(Time.get_ticks_msec()) * 0.001
 	var pulse: float = 1.0 + sin(pulse_age * lock_on_marker_pulse_speed) * lock_on_marker_pulse_size
@@ -670,6 +728,19 @@ func update_lock_on_marker() -> void:
 
 	if camera != null:
 		lock_on_marker.look_at(camera.global_position, Vector3.UP)
+
+
+func update_lock_on_marker_color() -> void:
+	if lock_on_marker == null:
+		return
+	var material: StandardMaterial3D = lock_on_marker.material_override as StandardMaterial3D
+	if material == null:
+		return
+	var color: Color = Color(1.0, 0.76, 0.12, 0.92)
+	if targeting_assist != null:
+		color = targeting_assist.get_target_color(lock_on_target, false)
+	material.albedo_color = color
+	material.emission = Color(color.r, color.g, color.b, 1.0)
 
 
 func show_game_message(text: String) -> void:

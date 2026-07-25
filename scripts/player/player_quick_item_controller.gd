@@ -365,9 +365,20 @@ func ensure_quick_item_input_map() -> void:
 		var action_name: StringName = SLOT_ACTIONS[slot_index]
 		if not InputMap.has_action(action_name):
 			InputMap.add_action(action_name, 0.2)
-		ensure_joypad_button(action_name, SLOT_JOYPAD_BUTTONS[slot_index])
+		if slot_index != SLOT_DOWN:
+			ensure_joypad_button(action_name, SLOT_JOYPAD_BUTTONS[slot_index])
+		else:
+			erase_joypad_button(action_name, JOY_BUTTON_DPAD_DOWN)
 		ensure_key(action_name, SLOT_KEYBOARD_KEYS[slot_index])
 	ensure_key(SLOT_ACTIONS[SLOT_UP], healing_shortcut_key)
+
+
+func erase_joypad_button(action_name: StringName, button: JoyButton) -> void:
+	if not InputMap.has_action(action_name):
+		return
+	for event: InputEvent in InputMap.action_get_events(action_name):
+		if event is InputEventJoypadButton and (event as InputEventJoypadButton).button_index == button:
+			InputMap.action_erase_event(action_name, event)
 
 
 func ensure_joypad_button(action_name: StringName, button: JoyButton) -> void:

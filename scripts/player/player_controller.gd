@@ -99,6 +99,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
+	if event.is_action_pressed("spell_menu"):
+		if is_focus_spell_menu_open():
+			if ability_caster.has_method("close_focus_spell_menu"):
+				ability_caster.call("close_focus_spell_menu")
+		else:
+			if ability_caster.has_method("open_focus_spell_menu"):
+				ability_caster.call("open_focus_spell_menu")
+		get_viewport().set_input_as_handled()
+		return
+
 	if is_focus_spell_menu_open():
 		if ability_caster.has_method("handle_focus_menu_input"):
 			if ability_caster.handle_focus_menu_input(event):

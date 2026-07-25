@@ -304,7 +304,12 @@ func apply_equipment_modifiers(modifiers: Dictionary, direction: int) -> void:
 			set_stat(current_id, clampi(current_value + delta, 0, after))
 
 
-func reset_equipment_to_defaults(emit_signals: bool = true) -> void:
+func reset_equipment_to_defaults(emit_signals: bool = true, remove_current_modifiers: bool = true) -> void:
+	if remove_current_modifiers:
+		for slot_id: String in EquipmentCatalogScript.SLOT_ORDER:
+			var equipped_id: String = get_equipped_item(slot_id)
+			if equipped_id != "":
+				apply_equipment_modifiers(EquipmentCatalogScript.get_modifiers(equipped_id), -1)
 	owned_equipment = DEFAULT_OWNED_EQUIPMENT.duplicate(true)
 	equipped_items = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
 	if not emit_signals:
@@ -877,7 +882,7 @@ func reset_run() -> void:
 	key_items.clear()
 	unlocks.clear()
 	quests.clear()
-	reset_equipment_to_defaults(true)
+	reset_equipment_to_defaults(true, false)
 	set_progression(0, 0)
 	set_currency(0)
 	reset_inventory_to_defaults(true)
@@ -1047,7 +1052,7 @@ func apply_save_data(save_data: Dictionary) -> bool:
 func apply_saved_equipment(save_data: Dictionary) -> void:
 	var saved_equipment: Dictionary = save_data.get("equipment", {}) as Dictionary
 	if saved_equipment.is_empty():
-		reset_equipment_to_defaults(true)
+		reset_equipment_to_defaults(true, false)
 		return
 	var saved_owned: Dictionary = saved_equipment.get("owned", {}) as Dictionary
 	var saved_slots: Dictionary = saved_equipment.get("slots", {}) as Dictionary

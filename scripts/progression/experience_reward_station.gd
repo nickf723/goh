@@ -13,6 +13,7 @@ signal experience_awarded(amount: int, category: String)
 
 var claimed: bool = false
 var core: MeshInstance3D
+var core_material: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -60,8 +61,13 @@ func reset_target() -> void:
 
 
 func update_visual() -> void:
-	if core != null:
-		core.modulate = Color(0.3, 0.34, 0.4) if claimed and not repeatable else Color.WHITE
+	if core_material == null:
+		return
+	var active: bool = not claimed or repeatable
+	var display_color: Color = station_color if active else Color(0.12, 0.15, 0.16)
+	core_material.albedo_color = display_color
+	core_material.emission = display_color.darkened(0.25)
+	core_material.emission_energy_multiplier = 2.2 if active else 0.15
 
 
 func build_visual() -> void:
@@ -90,12 +96,12 @@ func build_visual() -> void:
 	core_mesh.height = 0.84
 	core.mesh = core_mesh
 	core.position.y = 1.2
-	var material := StandardMaterial3D.new()
-	material.albedo_color = station_color
-	material.emission_enabled = true
-	material.emission = station_color.darkened(0.25)
-	material.emission_energy_multiplier = 2.2
-	core.material_override = material
+	core_material = StandardMaterial3D.new()
+	core_material.albedo_color = station_color
+	core_material.emission_enabled = true
+	core_material.emission = station_color.darkened(0.25)
+	core_material.emission_energy_multiplier = 2.2
+	core.material_override = core_material
 	add_child(core)
 	var label := Label3D.new()
 	label.text = reward_name.to_upper() + "\n+" + str(experience_amount) + " XP"

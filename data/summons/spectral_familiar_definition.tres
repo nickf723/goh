@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SummonDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/summons/summon_definition.gd" id="1_definition"]
+[ext_resource type="PackedScene" path="res://scenes/actors/summons/spectral_familiar.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_definition")
+summon_id = "spectral_familiar"
+display_name = "Lumen, Spectral Familiar"
+summon_scene = ExtResource("2_scene")
+maximum_active = 1
+mana_cost = 3
+defeat_cooldown = 8.0
+summon_offset = Vector3(1.8, 0.2, -1.5)
+roles = Array[String](["companion", "combat", "puzzle", "scout"])

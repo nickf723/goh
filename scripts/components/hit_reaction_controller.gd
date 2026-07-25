@@ -95,7 +95,7 @@ func resolve_impact(payload: DamagePayload, direction: Vector3, attack: WeaponAt
 		displacement = 3.2
 		lift = 6.0
 		interrupts = true
-	elif current_poise <= 0.0 or effective_impact >= 7.0:
+	elif current_poise <= 0.0 or effective_impact >= 9.0:
 		reaction = "STAGGER"
 		duration = 0.52
 		displacement = 2.0

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource path="res://scripts/tests/context_weapon_technique_smoke_test.gd" type="Script" id="1"]
+
+[node name="ContextWeaponTechniqueSmokeTest" type="Node"]
+script = ExtResource("1")

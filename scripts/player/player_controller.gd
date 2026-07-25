@@ -33,6 +33,7 @@ extends CharacterBody3D
 @onready var ability_caster: Node3D = $AbilityCaster
 @onready var spell_label: Label = $SpellLabel
 @onready var targeting_assist: CombatTargetingAssist = get_node_or_null("CombatTargetingAssist") as CombatTargetingAssist
+@onready var stealth_controller: Node = get_node_or_null("StealthController")
 
 var dodge_controller: PlayerDodgeController
 var quick_item_controller: Node
@@ -238,6 +239,8 @@ func _physics_process(delta: float) -> void:
 	var movement_multiplier: float = 1.0
 	if quick_item_controller != null and quick_item_controller.has_method("get_movement_multiplier"):
 		movement_multiplier = float(quick_item_controller.call("get_movement_multiplier"))
+	if stealth_controller != null and stealth_controller.has_method("get_movement_multiplier"):
+		movement_multiplier *= float(stealth_controller.call("get_movement_multiplier"))
 
 	velocity.x = direction.x * move_speed * movement_multiplier
 	velocity.z = direction.z * move_speed * movement_multiplier

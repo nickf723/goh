@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_large_enemy_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="PackedScene" path="res://scenes/actors/enemies/large_construct_enemy.tscn" id="4_construct"]
+
+[node name="PrototypeLargeEnemyLab" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1.1, 13)
+
+[node name="LargeConstructEnemy" parent="." instance=ExtResource("4_construct")]
+position = Vector3(0, 0, -4)

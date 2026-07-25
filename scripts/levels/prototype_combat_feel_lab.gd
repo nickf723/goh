@@ -139,7 +139,7 @@ func _build_arena() -> void:
 	title.modulate = Color(0.66, 0.86, 1.0)
 	add_child(title)
 	var instructions := Label3D.new()
-	instructions.text = "LIGHT CHAIN   •   LIGHT→HEAVY BRANCH   •   HEAVY→LIGHT REPRISE   •   G GUARD   •   H HITBOXES   •   F8 RESET"
+	instructions.text = "LIGHT J / LMB / L   •   HEAVY K / MOUSE4 / R   •   G GUARD   •   H HITBOXES   •   F8 RESET"
 	instructions.position = Vector3(0, 4.35, -7.35)
 	instructions.font_size = 20
 	instructions.pixel_size = 0.008

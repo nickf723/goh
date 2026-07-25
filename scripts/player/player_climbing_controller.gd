@@ -28,7 +28,8 @@ var stamina_drain_progress: float = 0.0
 var stamina_rest_progress: float = 0.0
 var mantle_remaining: float = 0.0
 var mantle_target: Vector3 = Vector3.ZERO
-var last_outcome: String = "READY"\nvar attachment_grace_remaining: float = 0.0
+var last_outcome: String = "READY"
+var attachment_grace_remaining: float = 0.0
 
 @onready var actor: CharacterBody3D = get_parent() as CharacterBody3D
 @onready var action_state: PlayerActionState = get_parent().get_node_or_null("PlayerActionState") as PlayerActionState
@@ -73,7 +74,8 @@ func update_climb_detection() -> void:
 	surface_name = str(profile.get("label", "stone"))
 	surface_drain_multiplier = float(profile.get("drain", 1.0))
 	surface_slide_speed = float(profile.get("slide", 0.0))
-	attachment_grace_remaining = 0.14\n\tlast_outcome = "GRABBED " + surface_name.to_upper()
+	attachment_grace_remaining = 0.14
+	last_outcome = "GRABBED " + surface_name.to_upper()
 	_face_wall()
 	climb_started.emit(surface_name)
 	_show_message("Climbing " + surface_name + ".")

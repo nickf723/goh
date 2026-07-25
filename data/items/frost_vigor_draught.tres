@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="QuickItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/quick_item_definition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "frost_vigor_draught"
+display_name = "Frost Vigor Draught"
+short_label = "VIGOR"
+description = "A bracing Ice-and-Body draught that restores stamina."
+icon_symbol = "❄"
+use_visual_color = Color(0.45, 0.9, 1, 1)
+max_stack = 9
+max_charges = 9
+refill_on_rest = false
+use_duration = 0.7
+movement_multiplier = 0.45
+requires_grounded = true
+restore_resource_id = "stamina"
+restore_amount = 4
+element = "ice"
+tags = Array[String](["consumable", "quick_item", "alchemy", "draught", "ice", "body"])

@@ -1,5 +1,7 @@
 extends Node
 
+const GameplayEffectAccessScript = preload("res://scripts/effects/gameplay_effect_access.gd")
+
 signal objective_changed(new_objective: String)
 signal flag_changed(flag_name: String, value: bool)
 signal stat_changed(stat_name: String, value: int)
@@ -409,7 +411,7 @@ func set_currency(amount: int) -> void:
 func add_currency(amount: int) -> int:
 	if amount <= 0:
 		return 0
-	var effective_amount: int = maxi(GameplayEffects.modify_int("currency_reward", amount), 0)
+	var effective_amount: int = maxi(GameplayEffectAccessScript.modify_int("currency_reward", amount), 0)
 	var before: int = currency
 	set_currency(currency + effective_amount)
 	return currency - before

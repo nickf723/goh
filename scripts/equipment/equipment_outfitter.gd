@@ -140,11 +140,11 @@ func confirmation_prompt(item_id: String) -> String:
 	var name: String = EquipmentCatalogScript.get_display_name(item_id)
 	match active_tab:
 		TAB_SHOP:
-			return "Buy " + name + " for " + str(EquipmentCatalogScript.get_definition(item_id).get("buy", 0)) + " crowns? Confirm again."
+			return "Buy " + name + " for " + str(get_buy_price(item_id)) + " crowns? Confirm again."
 		TAB_OWNED:
 			return "Equip " + name + "? Confirm again."
 		TAB_SELL:
-			return "Sell " + name + " for " + str(EquipmentCatalogScript.get_definition(item_id).get("sell", 0)) + " crowns? Confirm again."
+			return "Sell " + name + " for " + str(get_sell_price(item_id)) + " crowns? Confirm again."
 		_:
 			return "Confirm action?"
 
@@ -154,12 +154,21 @@ func clear_confirmation() -> void:
 	pending_key = ""
 
 
+func get_buy_price(item_id: String) -> int:
+	var base_price: int = maxi(int(EquipmentCatalogScript.get_definition(item_id).get("buy", 0)), 0)
+	return maxi(GameplayEffects.modify_int("shop_buy_price", base_price), 0)
+
+
+func get_sell_price(item_id: String) -> int:
+	var base_price: int = maxi(int(EquipmentCatalogScript.get_definition(item_id).get("sell", 0)), 0)
+	return maxi(GameplayEffects.modify_int("shop_sell_price", base_price), 0)
+
+
 func buy_equipment(item_id: String) -> bool:
 	if GameState.owns_equipment(item_id):
 		status_message = "Grace already owns that equipment."
 		return false
-	var definition: Dictionary = EquipmentCatalogScript.get_definition(item_id)
-	var price: int = maxi(int(definition.get("buy", 0)), 0)
+	var price: int = get_buy_price(item_id)
 	if price <= 0:
 		status_message = "That equipment is not for sale."
 		return false
@@ -191,8 +200,7 @@ func sell_equipment(item_id: String) -> bool:
 	if GameState.is_equipment_equipped(item_id):
 		status_message = "Equipped gear cannot be sold. Equip a replacement first."
 		return false
-	var definition: Dictionary = EquipmentCatalogScript.get_definition(item_id)
-	var price: int = maxi(int(definition.get("sell", 0)), 0)
+	var price: int = get_sell_price(item_id)
 	if price <= 0:
 		status_message = "That equipment cannot be sold."
 		return false
@@ -290,9 +298,9 @@ func refresh_menu() -> void:
 			line.text = ("◆  " if selected else "    ") + str(row.get("icon", "◇")) + "  " + str(row.get("name", item_id.capitalize()))
 			line.text += "   [" + str(row.get("slot", "")).to_upper() + "]"
 			if active_tab == TAB_SHOP:
-				line.text += "       " + str(row.get("buy", 0)) + " C"
+				line.text += "       " + str(get_buy_price(item_id)) + " C"
 			elif active_tab == TAB_SELL:
-				line.text += "       " + str(row.get("sell", 0)) + " C"
+				line.text += "       " + str(get_sell_price(item_id)) + " C"
 				if GameState.is_equipment_equipped(item_id):
 					line.text += "   EQUIPPED"
 			line.add_theme_color_override("font_color", Color(1.0, 0.82, 0.36) if selected else Color(0.8, 0.87, 0.94))
@@ -302,6 +310,9 @@ func refresh_menu() -> void:
 		detail_label.text = str(selected_row.get("name", selected_id.capitalize())).to_upper() + "\n\n"
 		detail_label.text += str(selected_row.get("description", "")) + "\n\n"
 		detail_label.text += EquipmentCatalogScript.format_modifiers(selected_row.get("modifiers", {}) as Dictionary)
+		var effect_text: String = EquipmentCatalogScript.format_effects(selected_id, true)
+		if effect_text != "":
+			detail_label.text += "\n\nTRAIT\n" + effect_text
 		comparison_label.text = build_comparison(selected_id)
 	status_label.text = status_message
 

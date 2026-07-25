@@ -7,6 +7,7 @@ signal attack_finished(attack_id: String)
 signal combo_state_changed(debug_data: Dictionary)
 
 const EquipmentCatalogScript = preload("res://scripts/equipment/equipment_catalog.gd")
+const WeaponMasteryCatalogScript = preload("res://scripts/weapons/weapon_mastery_catalog.gd")
 
 const INPUT_LIGHT: String = "light"
 const INPUT_HEAVY: String = "heavy"
@@ -277,8 +278,11 @@ func start_attack(attack: WeaponAttackDefinition) -> bool:
 	if attack == null or equipped_weapon == null:
 		return false
 
-	if attack.stamina_cost > 0:
-		if not GameState.spend_stamina(attack.stamina_cost):
+	var mastery_rank: int = GameState.get_weapon_mastery_rank(equipped_weapon.weapon_class)
+	var mastery_stamina_multiplier: float = WeaponMasteryCatalogScript.get_stamina_multiplier(equipped_weapon.weapon_class, mastery_rank)
+	var resolved_stamina_cost: int = ceili(float(attack.stamina_cost) * mastery_stamina_multiplier)
+	if resolved_stamina_cost > 0:
+		if not GameState.spend_stamina(resolved_stamina_cost):
 			show_message("Not enough stamina for " + attack.display_name + ".")
 			reset_combo_chain()
 			return false
@@ -420,7 +424,12 @@ func get_moveset() -> WeaponMovesetDefinition:
 func get_attack_speed() -> float:
 	if equipped_weapon == null:
 		return 1.0
-	return max(equipped_weapon.attack_speed, 0.05)
+	var mastery_rank: int = GameState.get_weapon_mastery_rank(equipped_weapon.weapon_class)
+	var mastery_multiplier: float = WeaponMasteryCatalogScript.get_attack_speed_multiplier(
+		equipped_weapon.weapon_class,
+		mastery_rank
+	)
+	return max(equipped_weapon.attack_speed * mastery_multiplier, 0.05)
 
 
 func build_legacy_attack(input_kind: String) -> WeaponAttackDefinition:
@@ -452,6 +461,14 @@ func execute_current_attack_hit() -> void:
 		return
 
 	var payload: DamagePayload = current_attack.build_payload(equipped_weapon)
+	var mastery_rank: int = GameState.get_weapon_mastery_rank(equipped_weapon.weapon_class)
+	WeaponMasteryCatalogScript.apply_payload_upgrades(
+		payload,
+		equipped_weapon.weapon_class,
+		mastery_rank,
+		current_attack,
+		combo_history.size()
+	)
 	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("modify_attack_payload"):
 		runtime_weapon_rig.call("modify_attack_payload", payload, current_attack)
 
@@ -475,6 +492,7 @@ func execute_current_attack_hit() -> void:
 
 	last_attack_connected = targets.size() > 0
 	if targets.size() > 0:
+		award_weapon_mastery(current_attack, critical_landed)
 		apply_camera_impact(current_attack, critical_landed)
 		HitStop.request(
 			max(
@@ -499,6 +517,52 @@ func execute_current_attack_hit() -> void:
 		show_attack_debug_wedge(current_attack)
 
 
+func award_weapon_mastery(attack: WeaponAttackDefinition, critical_landed: bool) -> void:
+	if attack == null or equipped_weapon == null:
+		return
+	var points: int = 1
+	var reasons: Array[String] = ["connected hit"]
+	if attack.input_kind == INPUT_HEAVY:
+		points += 1
+		reasons.append("heavy technique")
+	if combo_history.size() >= 3:
+		points += 1
+		reasons.append("deep combo")
+	if critical_landed:
+		points += 1
+		reasons.append("critical")
+	GameState.add_weapon_mastery_progress(
+		equipped_weapon.weapon_class,
+		points,
+		", ".join(reasons)
+	)
+
+
+func get_effective_attack_range(attack: WeaponAttackDefinition) -> float:
+	if attack == null:
+		return 0.1
+	var bonus: float = 0.0
+	if equipped_weapon != null:
+		var rank: int = GameState.get_weapon_mastery_rank(equipped_weapon.weapon_class)
+		bonus = WeaponMasteryCatalogScript.get_range_bonus(equipped_weapon.weapon_class, rank)
+	return maxf(attack.attack_range + bonus, 0.1)
+
+
+func get_effective_max_targets(attack: WeaponAttackDefinition) -> int:
+	if attack == null:
+		return 1
+	var extra_targets: int = 0
+	if equipped_weapon != null:
+		var rank: int = GameState.get_weapon_mastery_rank(equipped_weapon.weapon_class)
+		extra_targets = WeaponMasteryCatalogScript.get_extra_targets(
+			equipped_weapon.weapon_class,
+			rank,
+			attack,
+			combo_history.size()
+		)
+	return maxi(attack.max_targets + extra_targets, 1)
+
+
 func find_targets(attack: WeaponAttackDefinition) -> Array[Node]:
 	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("find_weapon_targets"):
 		var runtime_targets: Variant = runtime_weapon_rig.call(
@@ -512,7 +576,7 @@ func find_targets(attack: WeaponAttackDefinition) -> Array[Node]:
 			for candidate: Variant in runtime_targets as Array:
 				if candidate is Node and not resolved_targets.has(candidate as Node):
 					resolved_targets.append(candidate as Node)
-				if resolved_targets.size() >= max(attack.max_targets, 1):
+				if resolved_targets.size() >= get_effective_max_targets(attack):
 					break
 			return resolved_targets
 
@@ -528,7 +592,7 @@ func find_targets(attack: WeaponAttackDefinition) -> Array[Node]:
 
 	var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
 	var shape: SphereShape3D = SphereShape3D.new()
-	shape.radius = max(attack.attack_range, 0.1)
+	shape.radius = get_effective_attack_range(attack)
 
 	var query: PhysicsShapeQueryParameters3D = PhysicsShapeQueryParameters3D.new()
 	query.shape = shape
@@ -567,7 +631,7 @@ func find_targets(attack: WeaponAttackDefinition) -> Array[Node]:
 		seen_ids[target_id] = true
 		targets.append(target)
 
-		if targets.size() >= max(attack.max_targets, 1):
+		if targets.size() >= get_effective_max_targets(attack):
 			break
 
 	return targets
@@ -585,7 +649,7 @@ func _get_locked_weak_point(actor: Node3D, attack: WeaponAttackDefinition) -> No
 	if target.has_method("is_targeting_enabled") and not bool(target.call("is_targeting_enabled")):
 		return null
 	var target_position: Vector3 = get_target_position(target)
-	var maximum_distance: float = max(attack.attack_range, 0.1) + 0.75
+	var maximum_distance: float = get_effective_attack_range(attack) + 0.75
 	if get_attack_origin().distance_to(target_position) > maximum_distance:
 		return null
 	if not is_target_in_attack_cone(target, attack):

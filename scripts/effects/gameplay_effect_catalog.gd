@@ -57,6 +57,55 @@ const DEFINITIONS: Dictionary = {
 		"tags": ["passive", "economy", "reward"],
 		"channels": {"currency_reward": {"multiply": 1.2}},
 	},
+	"poisoned": {
+		"id": "poisoned",
+		"name": "Poisoned",
+		"description": "Lose 1 health every 2 seconds.",
+		"polarity": "harmful",
+		"tags": ["harmful", "ailment", "poison"],
+		"channels": {},
+		"pulse": {"interval": 2.0, "operation": "health_damage", "amount": 1},
+	},
+	"burning": {
+		"id": "burning",
+		"name": "Burning",
+		"description": "Lose 1 health every second until the flames are extinguished.",
+		"polarity": "harmful",
+		"tags": ["harmful", "ailment", "fire", "burning"],
+		"channels": {},
+		"pulse": {"interval": 1.0, "operation": "health_damage", "amount": 1},
+	},
+	"chilled": {
+		"id": "chilled",
+		"name": "Chilled",
+		"description": "Movement and stamina recovery are reduced by 30%.",
+		"polarity": "harmful",
+		"tags": ["harmful", "ailment", "ice", "chill"],
+		"channels": {
+			"movement_speed": {"multiply": 0.7},
+			"stamina_recovery_rate": {"multiply": 0.7},
+		},
+	},
+	"weakened": {
+		"id": "weakened",
+		"name": "Weakened",
+		"description": "Stance damage received is increased by 35%.",
+		"polarity": "harmful",
+		"tags": ["harmful", "ailment", "physical", "weakness"],
+		"channels": {"stance_damage_taken": {"multiply": 1.35}},
+	},
+	"silenced": {
+		"id": "silenced",
+		"name": "Silenced",
+		"description": "Mana and Focus costs are increased by 50%.",
+		"polarity": "harmful",
+		"tags": ["harmful", "ailment", "magic", "silence"],
+		"channels": {
+			"mana_cost": {"multiply": 1.5},
+			"focus_cost": {"multiply": 1.5},
+		},
+	},
+
 }
 
 

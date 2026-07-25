@@ -78,8 +78,8 @@ func _input(event: InputEvent) -> void:
 		if crouched:
 			if can_stand():
 				set_crouched(false)
-		else:
-			show_message("Not enough room to stand.")
+			else:
+				show_message("Not enough room to stand.")
 		else:
 			set_crouched(true)
 		get_viewport().set_input_as_handled()

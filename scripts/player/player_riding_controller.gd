@@ -70,11 +70,11 @@ func mount_mount(mount: RideableMount) -> bool:
 		return false
 	if actor.global_position.distance_to(mount.global_position) > mount_range:
 		return false
+	_reset_incompatible_locomotion()
 	if action_state != null:
 		action_state.clear_action_locks()
 		if not action_state.begin_manipulation():
 			return false
-	_reset_incompatible_locomotion()
 	if not mount.assign_rider(actor):
 		if action_state != null:
 			action_state.end_manipulation()

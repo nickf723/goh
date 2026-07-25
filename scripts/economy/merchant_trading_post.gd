@@ -145,7 +145,7 @@ func buy_item(item_id: String) -> bool:
 		GameState.consume_inventory_item(item_id, 1)
 		return fail_transaction("The payment could not be completed.")
 	stock[item_id] = remaining - 1
-	status_message = "Bought " + EconomyCatalogScript.get_name(item_id) + " for " + str(price) + " crowns."
+	status_message = "Bought " + EconomyCatalogScript.get_display_name(item_id) + " for " + str(price) + " crowns."
 	transaction_completed.emit("buy", item_id, price)
 	return true
 
@@ -160,7 +160,7 @@ func sell_item(item_id: String) -> bool:
 	buyback.push_front({"item_id": item_id, "price": price})
 	if buyback.size() > 8:
 		buyback.pop_back()
-	status_message = "Sold " + EconomyCatalogScript.get_name(item_id) + " for " + str(price) + " crowns."
+	status_message = "Sold " + EconomyCatalogScript.get_display_name(item_id) + " for " + str(price) + " crowns."
 	transaction_completed.emit("sell", item_id, price)
 	return true
 
@@ -180,7 +180,7 @@ func buyback_item(index: int) -> bool:
 		GameState.consume_inventory_item(item_id, 1)
 		return fail_transaction("The payment could not be completed.")
 	buyback.remove_at(index)
-	status_message = "Bought back " + EconomyCatalogScript.get_name(item_id) + "."
+	status_message = "Bought back " + EconomyCatalogScript.get_display_name(item_id) + "."
 	transaction_completed.emit("buyback", item_id, price)
 	return true
 

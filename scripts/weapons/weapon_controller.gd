@@ -282,6 +282,117 @@ func apply_aerial_technique_motion(context_id: String) -> void:
 			body.velocity.y = maxf(body.velocity.y, -2.0)
 		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_DOWN:
 			body.velocity.y = minf(body.velocity.y, -7.5)
+			plunge_landing_armed = true
+			plunge_max_fall_speed = absf(minf(body.velocity.y, 0.0))
+
+
+func apply_aerial_hit_followthrough(targets: Array[Node]) -> void:
+	if targets.is_empty():
+		return
+	if active_technique_id not in [
+		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_NEUTRAL,
+		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_FORWARD,
+	]:
+		return
+	var actor: Node3D = get_actor()
+	if not (actor is CharacterBody3D):
+		return
+	var body: CharacterBody3D = actor as CharacterBody3D
+	body.velocity.y = maxf(body.velocity.y, 0.65)
+	if active_technique_id != WeaponTechniqueCatalogScript.CONTEXT_AERIAL_FORWARD:
+		return
+	var target_position: Vector3 = get_target_position(targets[0])
+	var pursuit_direction: Vector3 = target_position - body.global_position
+	pursuit_direction.y = 0.0
+	if pursuit_direction.length() <= 0.01:
+		return
+	pursuit_direction = pursuit_direction.normalized()
+	body.velocity.x = lerpf(body.velocity.x, pursuit_direction.x * 5.2, 0.72)
+	body.velocity.z = lerpf(body.velocity.z, pursuit_direction.z * 5.2, 0.72)
+
+
+func update_plunge_landing() -> void:
+	if not plunge_landing_armed:
+		return
+	var actor: Node3D = get_actor()
+	if not (actor is CharacterBody3D):
+		plunge_landing_armed = false
+		return
+	var body: CharacterBody3D = actor as CharacterBody3D
+	if not body.is_on_floor():
+		plunge_max_fall_speed = maxf(plunge_max_fall_speed, absf(minf(body.velocity.y, 0.0)))
+		return
+	resolve_plunge_landing(body)
+	plunge_landing_armed = false
+	plunge_max_fall_speed = 0.0
+
+
+func resolve_plunge_landing(body: CharacterBody3D) -> void:
+	if equipped_weapon == null:
+		return
+	var fall_factor: float = clampf(plunge_max_fall_speed / 7.5, 1.0, 2.0)
+	var landing_attack: WeaponAttackDefinition = WeaponAttackDefinition.new()
+	landing_attack.attack_id = "technique_plunge_landing_" + equipped_weapon.weapon_class
+	landing_attack.display_name = "Plunging Impact"
+	landing_attack.input_kind = INPUT_HEAVY
+	landing_attack.attack_range = 1.8 + fall_factor * 0.35
+	landing_attack.cone_angle_degrees = 360.0
+	landing_attack.attack_center_forward_offset = 0.0
+	landing_attack.max_targets = 8
+	landing_attack.damage_multiplier = 0.55 + fall_factor * 0.18
+	landing_attack.stance_multiplier = 1.0 + fall_factor * 0.35
+	landing_attack.knockback_multiplier = 1.0 + fall_factor * 0.2
+	var payload: DamagePayload = landing_attack.build_payload(equipped_weapon)
+	if not payload.tags.has("technique"):
+		payload.tags.append("technique")
+	if not payload.tags.has("plunge_landing"):
+		payload.tags.append("plunge_landing")
+	payload.knockback_up_strength += 1.2 + fall_factor
+	WeaponInfusionCatalogScript.apply_to_payload(payload, GameState.get_weapon_infusion())
+	var targets: Array[Node] = find_landing_targets(body.global_position, landing_attack.attack_range)
+	for target: Node in targets:
+		send_payload_to_target(target, payload)
+		if target.has_method("receive_weapon_impact"):
+			target.call("receive_weapon_impact", payload, get_attack_forward(), landing_attack)
+	ElementVisualsScript.spawn_impact(
+		get_tree(),
+		body.global_position + Vector3.UP * 0.08,
+		payload.element,
+		0.75 + fall_factor * 0.2
+	)
+	if not targets.is_empty():
+		HitStop.request(0.075 + fall_factor * 0.025, 0.035)
+
+
+func find_landing_targets(center: Vector3, radius: float) -> Array[Node]:
+	var targets: Array[Node] = []
+	var actor: Node3D = get_actor()
+	if actor == null:
+		return targets
+	var shape: SphereShape3D = SphereShape3D.new()
+	shape.radius = maxf(radius, 0.1)
+	var query: PhysicsShapeQueryParameters3D = PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.transform = Transform3D(Basis(), center + Vector3.UP * 0.35)
+	query.collision_mask = hit_mask
+	query.collide_with_bodies = true
+	query.collide_with_areas = true
+	if actor is CollisionObject3D:
+		query.exclude = [actor.get_rid()]
+	var seen_ids: Dictionary = {}
+	for result: Dictionary in get_world_3d().direct_space_state.intersect_shape(query, 48):
+		var collider: Node = result.get("collider") as Node
+		var target: Node = find_payload_target(collider)
+		if target == null or target == actor:
+			continue
+		var target_id: int = target.get_instance_id()
+		if seen_ids.has(target_id):
+			continue
+		seen_ids[target_id] = true
+		targets.append(target)
+		if targets.size() >= 8:
+			break
+	return targets
 
 
 func update_queued_input(delta: float) -> void:

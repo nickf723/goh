@@ -30,6 +30,7 @@
 [ext_resource type="Script" path="res://scripts/player/player_special_context_controller.gd" id="28_special_context"]
 [ext_resource type="Script" path="res://scripts/player/player_stealth_controller.gd" id="29_stealth"]
 [ext_resource type="Script" path="res://scripts/equipment/grace_equipment_appearance.gd" id="30_outfit_appearance"]
+[ext_resource type="Script" path="res://scripts/ui/gameplay_effect_status_hud.gd" id="31_effect_hud"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -125,6 +126,9 @@ script = ExtResource("18_quick_items")
 up_item = ExtResource("19_flask")
 
 [node name="QuickItemBeltUI" parent="." instance=ExtResource("20_quick_ui")]
+
+[node name="GameplayEffectStatusHUD" type="CanvasLayer" parent="."]
+script = ExtResource("31_effect_hud")
 
 [node name="CombatTargetingAssist" type="Node" parent="."]
 script = ExtResource("21_targeting")

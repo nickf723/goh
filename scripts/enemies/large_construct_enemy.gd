@@ -44,6 +44,9 @@ var chest_open: bool = false
 var broken_legs: int = 0
 var last_consequence: String = "none"
 var attack_flash: float = 0.0
+var climb_anchors: Array[Node3D] = []
+var attack_counter: int = 0
+var kneel_shake_emitted: bool = false
 
 
 func _ready() -> void:
@@ -103,7 +106,11 @@ func _process_chase(delta: float) -> void:
 	var offset: Vector3 = player.global_position - global_position
 	var distance: float = Vector2(offset.x, offset.z).length()
 	if distance <= attack_range and attack_cooldown <= 0.0:
-		_start_attack("hammer_sweep" if weapon_arm_enabled else "ground_stomp")
+		attack_counter += 1
+		var next_attack: String = "hammer_sweep" if weapon_arm_enabled else "ground_stomp"
+		if attack_counter % 3 == 0 and distance <= 4.8:
+			next_attack = "grab_sweep"
+		_start_attack(next_attack)
 		return
 	if distance > detection_range * 1.35:
 		state = State.IDLE
@@ -122,7 +129,7 @@ func _process_chase(delta: float) -> void:
 func _start_attack(attack_id: String) -> void:
 	pending_attack = attack_id
 	state = State.WINDUP
-	state_timer = 1.18 if attack_id == "hammer_sweep" else 0.92
+	state_timer = 1.18 if attack_id == "hammer_sweep" else (1.05 if attack_id == "grab_sweep" else 0.92)
 	_stop_horizontal()
 	attack_flash = state_timer
 
@@ -134,13 +141,14 @@ func _process_windup(delta: float) -> void:
 		direction.y = 0.0
 		_face_direction(direction.normalized(), delta)
 	state_timer -= delta
-	var charge: float = 1.0 - clampf(state_timer / (1.18 if pending_attack == "hammer_sweep" else 0.92), 0.0, 1.0)
+	var windup_duration: float = 1.18 if pending_attack == "hammer_sweep" else (1.05 if pending_attack == "grab_sweep" else 0.92)
+	var charge: float = 1.0 - clampf(state_timer / windup_duration, 0.0, 1.0)
 	if visual_root != null:
 		visual_root.scale = Vector3(1.0 + charge * 0.08, 1.0 - charge * 0.05, 1.0 + charge * 0.08)
 	if state_timer <= 0.0:
 		_perform_attack()
 		state = State.RECOVER
-		state_timer = 1.05 if pending_attack == "hammer_sweep" else 0.72
+		state_timer = 1.05 if pending_attack == "hammer_sweep" else (1.15 if pending_attack == "grab_sweep" else 0.72)
 		attack_cooldown = 2.2
 
 
@@ -148,6 +156,13 @@ func _perform_attack() -> void:
 	if visual_root != null:
 		visual_root.scale = Vector3.ONE
 	if player == null:
+		return
+	if pending_attack == "grab_sweep":
+		if global_position.distance_to(player.global_position) <= 4.8:
+			var traversal: Node = get_tree().get_first_node_in_group("large_enemy_traversal_controller")
+			if traversal != null and traversal.has_method("start_enemy_grab"):
+				traversal.call("start_enemy_grab", self)
+		_spawn_impact_wave(4.8)
 		return
 	var radius: float = 6.4 if pending_attack == "hammer_sweep" else 5.0
 	if global_position.distance_to(player.global_position) > radius:
@@ -181,6 +196,11 @@ func _process_kneel(delta: float) -> void:
 	state_timer -= delta
 	if torso_root != null:
 		torso_root.position.y = lerpf(torso_root.position.y, -1.35, clampf(delta * 7.0, 0.0, 1.0))
+	if state_timer <= 1.45 and not kneel_shake_emitted:
+		kneel_shake_emitted = true
+		var traversal: Node = get_tree().get_first_node_in_group("large_enemy_traversal_controller")
+		if traversal != null and traversal.has_method("on_large_enemy_shake"):
+			traversal.call("on_large_enemy_shake", 1.0)
 	if state_timer <= 0.0:
 		if torso_root != null:
 			var rise := create_tween()
@@ -285,7 +305,8 @@ func _trigger_kneel(message: String) -> void:
 	if state == State.DEFEATED:
 		return
 	state = State.KNEEL
-	state_timer = 3.8
+	state_timer = 5.2
+	kneel_shake_emitted = false
 	current_stance = 0
 	pending_attack = ""
 	if visual_root != null:
@@ -348,12 +369,39 @@ func _build_visuals() -> void:
 	_add_box(torso_root, "LeftFoot", Vector3(1.6, 0.65, 2.25), Vector3(-1.0, 0.35, -0.32), armor_material)
 	_add_box(torso_root, "RightFoot", Vector3(1.6, 0.65, 2.25), Vector3(1.0, 0.35, -0.32), armor_material)
 	_add_box(torso_root, "ChestPlate", Vector3(2.6, 2.0, 0.38), Vector3(0, 5.05, -1.28), armor_material)
+	_build_climb_anchors()
 
 	hammer_root = Node3D.new()
 	hammer_root.name = "HammerRoot"
 	torso_root.add_child(hammer_root)
 	_add_box(hammer_root, "HammerShaft", Vector3(0.32, 4.9, 0.32), Vector3(3.1, 3.15, 0), body_material, Vector3(0, 0, 8))
 	_add_box(hammer_root, "HammerHead", Vector3(2.5, 1.25, 1.35), Vector3(3.65, 5.45, 0), armor_material, Vector3(0, 0, 8))
+
+
+func _build_climb_anchors() -> void:
+	climb_anchors.clear()
+	_create_climb_anchor("LeftBootGrip", Vector3(-1.35, 0.85, -1.0))
+	_create_climb_anchor("LeftKneeGrip", Vector3(-1.35, 2.35, -1.05))
+	_create_climb_anchor("HipGrip", Vector3(-0.75, 3.55, -1.12))
+	_create_climb_anchor("ChestGrip", Vector3(-0.85, 4.85, -1.38))
+	_create_climb_anchor("ShoulderGrip", Vector3(-1.55, 6.05, -0.92))
+	_create_climb_anchor("CoreStrikeGrip", Vector3(0.0, 5.05, -1.72))
+
+
+func _create_climb_anchor(anchor_name: String, local_position: Vector3) -> void:
+	var anchor := Marker3D.new()
+	anchor.name = anchor_name
+	anchor.position = local_position
+	torso_root.add_child(anchor)
+	climb_anchors.append(anchor)
+	var marker := MeshInstance3D.new()
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.12
+	sphere.height = 0.24
+	marker.mesh = sphere
+	marker.material_override = _make_emissive_material(Color(0.18, 0.82, 1.0, 0.78), 2.4)
+	marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	anchor.add_child(marker)
 
 
 func _build_weak_points() -> void:
@@ -511,6 +559,18 @@ func _apply_gravity(delta: float) -> void:
 		velocity.y -= 18.0 * max(delta, 0.0)
 	elif velocity.y < 0.0:
 		velocity.y = -0.1
+
+
+func get_climb_anchors() -> Array[Node3D]:
+	var available: Array[Node3D] = []
+	for anchor: Node3D in climb_anchors:
+		if anchor != null and is_instance_valid(anchor):
+			available.append(anchor)
+	return available
+
+
+func can_player_climb() -> bool:
+	return state == State.KNEEL and state_timer > 0.15
 
 
 func get_weak_point(part_id: String) -> LargeEnemyWeakPoint:

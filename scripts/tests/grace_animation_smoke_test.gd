@@ -3,7 +3,7 @@ extends Node
 const PlayerScene: PackedScene = preload("res://scenes/actors/player/player.tscn")
 
 const EXPECTED_STATES: Array[String] = [
-	"idle", "locomotion", "jump", "fall", "landing", "climb", "mantle",
+	"idle", "locomotion", "jump", "fall", "landing", "swim_surface", "swim_underwater", "climb", "mantle",
 	"attack", "guard", "dodge", "hit", "cast", "flight", "exhausted", "defeated",
 ]
 

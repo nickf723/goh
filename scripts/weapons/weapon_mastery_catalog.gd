@@ -76,6 +76,20 @@ static func get_upgrade_description(weapon_class: String, rank: int) -> String:
 		var technique_name: String = WeaponTechniqueCatalogScript.get_dash_technique_name(weapon_class)
 		if technique_name != "":
 			description += " " + technique_name + " — attack during a dodge."
+	if rank == WeaponTechniqueCatalogScript.AERIAL_REQUIRED_RANK:
+		var neutral_air: String = WeaponTechniqueCatalogScript.get_aerial_technique_name(
+			weapon_class,
+			WeaponTechniqueCatalogScript.CONTEXT_AERIAL_NEUTRAL
+		)
+		var forward_air: String = WeaponTechniqueCatalogScript.get_aerial_technique_name(
+			weapon_class,
+			WeaponTechniqueCatalogScript.CONTEXT_AERIAL_FORWARD
+		)
+		var down_air: String = WeaponTechniqueCatalogScript.get_aerial_technique_name(
+			weapon_class,
+			WeaponTechniqueCatalogScript.CONTEXT_AERIAL_DOWN
+		)
+		description += " Air set: " + neutral_air + ", " + forward_air + ", " + down_air + "."
 	return description
 
 

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="QuickItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/quick_item_definition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "conductive_elixir"
+display_name = "Conductive Elixir"
+short_label = "CHARGE"
+description = "Metal and Lightning reinforce Grace's stance."
+icon_symbol = "ϟ"
+use_visual_color = Color(1, 0.82, 0.18, 1)
+max_stack = 9
+max_charges = 9
+refill_on_rest = false
+use_duration = 0.78
+movement_multiplier = 0.38
+requires_grounded = true
+restore_resource_id = "stance"
+restore_amount = 4
+element = "lightning"
+tags = Array[String](["consumable", "quick_item", "alchemy", "elixir", "metal", "lightning"])

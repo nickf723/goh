@@ -287,6 +287,7 @@ func start_map_quest() -> void:
 		],
 	})
 	GameState.set_objective("Follow the road south to the Gremlin camp.")
+	set_guard_active(true)
 	show_message("Quest started. Choose combat, distraction, or Metal magic.")
 
 
@@ -351,6 +352,23 @@ func build_quest_field() -> void:
 	var receiver: Node = quest_guard.get_node_or_null("HitReceiver")
 	if receiver != null:
 		receiver.connect("health_depleted", _on_guard_defeated)
+	if GameState.get_flag("mara_map_recovered") or GameState.get_flag("mara_map_quest_completed"):
+		map_case.visible = false
+		metal_recovery.visible = false
+		distraction.visible = false
+		quest_guard.queue_free()
+	elif GameState.get_flag("mara_map_quest_active"):
+		set_guard_active(true)
+	else:
+		set_guard_active(false)
+
+
+func set_guard_active(active: bool) -> void:
+	if quest_guard == null or not is_instance_valid(quest_guard):
+		return
+	var brain: Node = quest_guard.get_node_or_null("EnemyBrain")
+	if brain != null:
+		brain.process_mode = Node.PROCESS_MODE_INHERIT if active else Node.PROCESS_MODE_DISABLED
 
 
 func create_quest_objective(

@@ -48,5 +48,20 @@ func _ready() -> void:
 	assert(environment_node.environment.volumetric_fog_enabled)
 	assert(environment_node.environment.ssao_enabled)
 
+	rig.call("set_weather_lighting", "rain_weather", false)
+	assert(is_equal_approx(sun.light_energy, 0.30))
+	assert(is_equal_approx(environment_node.environment.fog_density, 0.013))
+	assert(rig.call("get_debug_data").get("weather") == "rain_weather")
+
+	rig.call("set_weather_lighting", "snow_weather", false)
+	assert(is_equal_approx(sun.light_energy, 0.64))
+	assert(is_equal_approx(environment_node.environment.fog_density, 0.019))
+	assert(rig.call("get_debug_data").get("weather") == "snow_weather")
+
+	rig.call("set_weather_lighting", "", false)
+	assert(is_equal_approx(sun.light_energy, 1.42))
+	assert(is_equal_approx(environment_node.environment.fog_density, 0.0035))
+	assert(rig.call("get_debug_data").get("weather") == "clear")
+
 	print("CinematicLightingSmokeTest: PASS")
 	get_tree().quit()

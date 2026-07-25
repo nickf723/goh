@@ -25,7 +25,6 @@ func _ready() -> void:
 	add_to_group("player_ability_channels")
 	add_to_group("summon_managers")
 	add_to_group("debuggable")
-	_ensure_command_input()
 
 
 func _process(delta: float) -> void:
@@ -34,15 +33,6 @@ func _process(delta: float) -> void:
 		summon_cooldown_changed.emit(cooldown_remaining)
 	if active_summon != null and not is_instance_valid(active_summon):
 		active_summon = null
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if not event.is_action_pressed(command_action) or active_summon == null:
-		return
-	var next_command: String = active_summon.cycle_command()
-	summon_command_changed.emit(next_command)
-	_show_message(active_summon.display_name + ": " + next_command.capitalize())
-	get_viewport().set_input_as_handled()
 
 
 func can_handle_ability(ability: AbilityDefinition) -> bool:
@@ -158,17 +148,6 @@ func _on_familiar_defeated(_familiar: SpectralFamiliar) -> void:
 func _begin_cast_feedback() -> void:
 	if action_state != null:
 		action_state.begin_cast(0.32)
-
-
-func _ensure_command_input() -> void:
-	if not InputMap.has_action(command_action):
-		InputMap.add_action(command_action, 0.2)
-	for event: InputEvent in InputMap.action_get_events(command_action):
-		if event is InputEventKey and (event as InputEventKey).physical_keycode == KEY_J:
-			return
-	var key_event := InputEventKey.new()
-	key_event.physical_keycode = KEY_J
-	InputMap.action_add_event(command_action, key_event)
 
 
 func _show_message(message: String) -> void:

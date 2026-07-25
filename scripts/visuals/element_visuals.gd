@@ -6,6 +6,7 @@ const ELEMENT_COLORS: Dictionary = {
 	"water": Color(0.08, 0.58, 1.0, 1.0),
 	"ice": Color(0.56, 0.94, 1.0, 1.0),
 	"lightning": Color(0.72, 0.72, 1.0, 1.0),
+	"poison": Color(0.42, 0.95, 0.18, 1.0),
 	"sound": Color(1.0, 0.43, 0.74, 1.0),
 	"oil": Color(0.09, 0.055, 0.12, 1.0),
 	"steam": Color(0.84, 0.9, 0.96, 1.0),

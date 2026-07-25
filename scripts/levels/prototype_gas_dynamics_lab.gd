@@ -181,7 +181,7 @@ func create_airflow_fields() -> void:
 	var poison_crosswind: Node3D = create_field("poison_vent", AirflowFieldScript.FieldKind.DIRECTIONAL, AirflowFieldScript.VolumeShape.BOX, Vector3(8.5, 2.4, -1.5))
 	poison_crosswind.set("box_extents", Vector3(6.8, 2.8, 5.6))
 	poison_crosswind.set("local_direction", Vector3.RIGHT)
-	poison_crosswind.set("strength", 4.2)
+	poison_crosswind.set("strength", 1.6)
 	poison_crosswind.set("turbulence_strength", 0.18)
 	poison_crosswind.set("edge_fade_fraction", 0.22)
 
@@ -246,7 +246,8 @@ func create_gas_volumes() -> void:
 
 func create_emitters() -> void:
 	create_emitter("SmokeFurnace", "smoke", Vector3(-8.5, 0.45, -1.5), 1.35, 1.35, Color(0.52, 0.6, 0.65, 1.0), "SMOKE SOURCE")
-	create_emitter("PoisonLeak", "poison", Vector3(6.0, 0.65, -1.5), 1.05, 1.3, Color(0.38, 0.88, 0.18, 1.0), "POISON LEAK")
+	create_emitter("PoisonLeak", "poison", Vector3(6.0, 0.55, -1.5), 1.45, 1.8, Color(0.38, 0.88, 0.18, 1.0), "POISON LEAK")
+	call_deferred("seed_initial_poison")
 
 
 func create_emitter(
@@ -274,6 +275,13 @@ func create_emitter(
 	return emitter
 
 
+func seed_initial_poison() -> void:
+	if poison_volume == null or not is_instance_valid(poison_volume):
+		return
+	poison_volume.inject_density(Vector3(6.0, 0.45, -1.5), 0.85, 2.8, 0.22)
+	poison_volume.inject_density(Vector3(8.0, 0.4, -1.5), 0.55, 2.4, 0.3)
+
+
 func create_architecture() -> void:
 	var smoke_color := Color(0.2, 0.28, 0.34, 1.0)
 	for index: int in range(4):
@@ -282,7 +290,11 @@ func create_architecture() -> void:
 		ring_root.position = Vector3(-8.5, 1.3 + float(index) * 1.7, -1.5)
 		add_child(ring_root)
 		ElementVisuals.add_torus(ring_root, "Ring", 1.55, 1.78, smoke_color.lightened(float(index) * 0.08), Vector3.ZERO, Vector3.ZERO, 0.85, 0.2)
-	create_static_box("SmokeCrown", Vector3(-8.5, 7.4, -1.5), Vector3(5.2, 0.42, 5.2), Color(0.28, 0.38, 0.44, 1.0), 0.18, 0.55)
+	var crown_marker := Node3D.new()
+	crown_marker.name = "SmokeCrownMarker"
+	crown_marker.position = Vector3(-8.5, 7.1, -1.5)
+	add_child(crown_marker)
+	ElementVisuals.add_torus(crown_marker, "CrownRing", 2.15, 2.42, Color(0.28, 0.38, 0.44, 1.0), Vector3.ZERO, Vector3.ZERO, 0.85, 0.28)
 	create_static_box("PoisonLowShelf", Vector3(11.4, 0.3, -1.5), Vector3(3.8, 0.6, 8.0), Color(0.16, 0.32, 0.1, 1.0), 0.15, 0.72)
 
 	for index: int in range(4):
@@ -305,8 +317,10 @@ func create_sensors() -> void:
 	create_sensor("Smoke Base", Vector3(-11.0, 0.0, 0.8), ["smoke"], Color(0.72, 0.82, 0.88, 1.0))
 	create_sensor("Smoke Mid", Vector3(-11.0, 3.0, -1.5), ["smoke"], Color(0.66, 0.78, 0.86, 1.0))
 	create_sensor("Smoke Crown", Vector3(-11.0, 6.1, -3.8), ["smoke"], Color(0.6, 0.74, 0.84, 1.0))
-	create_sensor("Poison Low", Vector3(5.0, 0.0, 1.3), ["poison"], Color(0.48, 0.96, 0.24, 1.0))
-	create_sensor("Poison High", Vector3(8.5, 2.7, 1.3), ["poison"], Color(0.7, 1.0, 0.42, 1.0))
+	var poison_low: GasDensitySensor = create_sensor("Poison Low", Vector3(5.0, 0.0, 1.3), ["poison"], Color(0.48, 0.96, 0.24, 1.0))
+	poison_low.sample_offset = Vector3(0.0, 0.3, 0.0)
+	var poison_high: GasDensitySensor = create_sensor("Poison High", Vector3(11.4, 0.6, 1.3), ["poison"], Color(0.7, 1.0, 0.42, 1.0))
+	poison_high.sample_offset = Vector3(0.0, 2.1, 0.0)
 	create_sensor("Vortex", Vector3(-2.5, 2.4, -11.0), ["smoke", "poison"], Color(0.78, 0.62, 1.0, 1.0))
 
 
@@ -447,6 +461,7 @@ func reset_lab() -> void:
 		player.transform = initial_player_transform
 		player.velocity = Vector3.ZERO
 	configure_player()
+	call_deferred("seed_initial_poison")
 	GameState.set_objective("Watch Smoke rise, compare Poison density by height, use Gust to ventilate the fields, and inspect the vortex.")
 	show_message("Gas Dynamics Laboratory reset #" + str(reset_count) + ".")
 	update_readout()

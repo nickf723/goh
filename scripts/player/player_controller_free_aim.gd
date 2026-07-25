@@ -50,7 +50,15 @@ func begin_combat_motion(direction: Vector3, distance: float, duration: float) -
 		return
 
 	combat_motion_timer = duration
-	combat_motion_velocity = horizontal_direction.normalized() * (distance / duration)
+	var desired_velocity: Vector3 = horizontal_direction.normalized() * (distance / duration)
+	var existing_velocity := Vector3(velocity.x, 0.0, velocity.z)
+	# Preserve part of Grace's current movement when an attack lunge begins. This
+	# avoids a one-frame velocity corner while still converging decisively on the
+	# authored attack motion.
+	if existing_velocity.length() > 0.1:
+		combat_motion_velocity = existing_velocity.lerp(desired_velocity, 0.68)
+	else:
+		combat_motion_velocity = desired_velocity
 
 
 func cancel_combat_motion() -> void:

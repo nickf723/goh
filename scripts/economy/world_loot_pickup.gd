@@ -72,7 +72,7 @@ func collect_loot() -> bool:
 func get_display_name() -> String:
 	if loot_kind == "currency":
 		return "crowns"
-	return EconomyCatalogScript.get_name(item_id)
+	return EconomyCatalogScript.get_display_name(item_id)
 
 
 func reset_target() -> void:

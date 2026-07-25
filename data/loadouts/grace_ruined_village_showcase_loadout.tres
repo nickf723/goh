@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/abilities/ability_loadout.gd" id="1_loadout"]
 [ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
 [ext_resource type="Resource" path="res://data/abilities/water_jet_ability.tres" id="3_water"]
+[ext_resource type="Resource" path="res://data/abilities/rain_weather_ability.tres" id="25_rain"]
 [ext_resource type="Resource" path="res://data/abilities/earth_spike_ability.tres" id="4_earth"]
 [ext_resource type="Resource" path="res://data/abilities/firebolt_ability.tres" id="5_firebolt"]
 [ext_resource type="Resource" path="res://data/abilities/fire_field_ability.tres" id="6_fire_field"]
@@ -10,6 +11,7 @@
 [ext_resource type="Resource" path="res://data/abilities/gust_ability.tres" id="8_gust"]
 [ext_resource type="Resource" path="res://data/abilities/flight_concentration_ability.tres" id="9_flight"]
 [ext_resource type="Resource" path="res://data/abilities/ice_lance_ability.tres" id="10_ice"]
+[ext_resource type="Resource" path="res://data/abilities/snow_weather_ability.tres" id="26_snow"]
 [ext_resource type="Resource" path="res://data/abilities/metal_needle_ability.tres" id="11_metal"]
 [ext_resource type="Resource" path="res://data/abilities/metal_tether_ability.tres" id="12_tether"]
 [ext_resource type="Resource" path="res://data/abilities/lightning_spark_ability.tres" id="13_lightning"]
@@ -30,6 +32,7 @@ script = ExtResource("1_loadout")
 quick_slot_count = 8
 learned_abilities = Array[ExtResource("2_definition")]([
 	ExtResource("3_water"),
+	ExtResource("25_rain"),
 	ExtResource("4_earth"),
 	ExtResource("5_firebolt"),
 	ExtResource("6_fire_field"),
@@ -37,6 +40,7 @@ learned_abilities = Array[ExtResource("2_definition")]([
 	ExtResource("8_gust"),
 	ExtResource("9_flight"),
 	ExtResource("10_ice"),
+	ExtResource("26_snow"),
 	ExtResource("11_metal"),
 	ExtResource("12_tether"),
 	ExtResource("13_lightning"),
@@ -54,6 +58,7 @@ learned_abilities = Array[ExtResource("2_definition")]([
 ])
 equipped_abilities = Array[ExtResource("2_definition")]([
 	ExtResource("3_water"),
+	ExtResource("25_rain"),
 	ExtResource("4_earth"),
 	ExtResource("5_firebolt"),
 	ExtResource("6_fire_field"),
@@ -61,6 +66,7 @@ equipped_abilities = Array[ExtResource("2_definition")]([
 	ExtResource("8_gust"),
 	ExtResource("9_flight"),
 	ExtResource("10_ice"),
+	ExtResource("26_snow"),
 	ExtResource("11_metal"),
 	ExtResource("12_tether"),
 	ExtResource("13_lightning"),

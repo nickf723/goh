@@ -17,17 +17,27 @@ signal currency_changed(amount: int, delta: int)
 signal experience_changed(current: int, required: int)
 signal level_gained(new_level: int, growth_points_awarded: int)
 signal growth_points_changed(points: int)
+signal equipment_owned_changed(item_id: String, owned: bool)
+signal equipment_changed(slot_id: String, item_id: String)
 
 const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
 const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
 const QuickItemCatalogScript = preload("res://scripts/items/quick_item_catalog.gd")
-const SAVE_VERSION: int = 8
+const EquipmentCatalogScript = preload("res://scripts/equipment/equipment_catalog.gd")
+const SAVE_VERSION: int = 9
 const SAVE_SLOT_PATH: String = "user://goh_save_slot_1.json"
 const ARMOR_TRIAL_BLESSING_ID: String = "armor_trial_blessing"
 const GUARD_STAT: String = "guard"
 const MAX_GUARD_STAT: String = "max_guard"
 const DEFAULT_INVENTORY: Dictionary = {"healing_flask": 3}
 const DEFAULT_QUICK_ITEM_SLOTS: Array[String] = ["healing_flask", "", "", ""]
+const DEFAULT_OWNED_EQUIPMENT: Dictionary = {"practice_sword": true}
+const DEFAULT_EQUIPMENT_SLOTS: Dictionary = {
+	"weapon": "practice_sword",
+	"outfit": "",
+	"charm": "",
+	"relic": "",
+}
 
 const KEY_ITEM_DEFS: Dictionary = {
 	"church_trial_sigil": {
@@ -51,6 +61,8 @@ var quests: Dictionary = {}
 var currency: int = 0
 var experience: int = 0
 var growth_points: int = 0
+var owned_equipment: Dictionary = DEFAULT_OWNED_EQUIPMENT.duplicate(true)
+var equipped_items: Dictionary = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
 
 var story_flags: Dictionary = {
 	"inspected_stone": false,
@@ -209,6 +221,99 @@ func reset_quest(quest_id: String) -> void:
 		return
 	quests.erase(quest_id)
 	quest_changed.emit(quest_id, {})
+
+
+func owns_equipment(item_id: String) -> bool:
+	return item_id != "" and bool(owned_equipment.get(item_id, false))
+
+
+func grant_equipment(item_id: String) -> bool:
+	if not EquipmentCatalogScript.has_item(item_id) or owns_equipment(item_id):
+		return false
+	owned_equipment[item_id] = true
+	equipment_owned_changed.emit(item_id, true)
+	return true
+
+
+func revoke_equipment(item_id: String) -> bool:
+	if not owns_equipment(item_id) or is_equipment_equipped(item_id):
+		return false
+	owned_equipment.erase(item_id)
+	equipment_owned_changed.emit(item_id, false)
+	return true
+
+
+func get_owned_equipment_snapshot() -> Dictionary:
+	return owned_equipment.duplicate(true)
+
+
+func get_equipped_item(slot_id: String) -> String:
+	return str(equipped_items.get(slot_id, ""))
+
+
+func get_equipped_items_snapshot() -> Dictionary:
+	return equipped_items.duplicate(true)
+
+
+func is_equipment_equipped(item_id: String) -> bool:
+	return item_id != "" and equipped_items.values().has(item_id)
+
+
+func equip_item(item_id: String) -> bool:
+	if not owns_equipment(item_id):
+		return false
+	var definition: Dictionary = EquipmentCatalogScript.get_definition(item_id)
+	var slot_id: String = str(definition.get("slot", ""))
+	if slot_id == "" or not equipped_items.has(slot_id):
+		return false
+	var previous_id: String = get_equipped_item(slot_id)
+	if previous_id == item_id:
+		return true
+	if previous_id != "":
+		apply_equipment_modifiers(EquipmentCatalogScript.get_modifiers(previous_id), -1)
+	equipped_items[slot_id] = item_id
+	apply_equipment_modifiers(EquipmentCatalogScript.get_modifiers(item_id), 1)
+	equipment_changed.emit(slot_id, item_id)
+	return true
+
+
+func unequip_slot(slot_id: String) -> bool:
+	if slot_id == "weapon" or not equipped_items.has(slot_id):
+		return false
+	var previous_id: String = get_equipped_item(slot_id)
+	if previous_id == "":
+		return true
+	apply_equipment_modifiers(EquipmentCatalogScript.get_modifiers(previous_id), -1)
+	equipped_items[slot_id] = ""
+	equipment_changed.emit(slot_id, "")
+	return true
+
+
+func apply_equipment_modifiers(modifiers: Dictionary, direction: int) -> void:
+	for stat_variant: Variant in modifiers.keys():
+		var stat_id: String = str(stat_variant)
+		var delta: int = int(modifiers[stat_variant]) * direction
+		if delta == 0:
+			continue
+		var before: int = get_stat(stat_id)
+		var after: int = maxi(before + delta, 0)
+		set_stat(stat_id, after)
+		if stat_id.begins_with("max_"):
+			var current_id: String = stat_id.trim_prefix("max_")
+			var current_value: int = get_stat(current_id)
+			set_stat(current_id, clampi(current_value + delta, 0, after))
+
+
+func reset_equipment_to_defaults(emit_signals: bool = true) -> void:
+	owned_equipment = DEFAULT_OWNED_EQUIPMENT.duplicate(true)
+	equipped_items = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
+	if not emit_signals:
+		return
+	for item_id_variant: Variant in EquipmentCatalogScript.DEFINITIONS.keys():
+		var item_id: String = str(item_id_variant)
+		equipment_owned_changed.emit(item_id, owns_equipment(item_id))
+	for slot_id: String in EquipmentCatalogScript.SLOT_ORDER:
+		equipment_changed.emit(slot_id, get_equipped_item(slot_id))
 
 
 func get_experience() -> int:
@@ -772,6 +877,7 @@ func reset_run() -> void:
 	key_items.clear()
 	unlocks.clear()
 	quests.clear()
+	reset_equipment_to_defaults(true)
 	set_progression(0, 0)
 	set_currency(0)
 	reset_inventory_to_defaults(true)
@@ -836,6 +942,10 @@ func save_at_bed(bed_id: String, bed_name: String, bed_position: Vector3) -> Dic
 		"progression": {
 			"experience": experience,
 			"growth_points": growth_points,
+		},
+		"equipment": {
+			"owned": get_owned_equipment_snapshot(),
+			"slots": get_equipped_items_snapshot(),
 		},
 		"objective": current_objective,
 		"saved_at": Time.get_datetime_string_from_system(false, true),
@@ -913,6 +1023,7 @@ func apply_save_data(save_data: Dictionary) -> bool:
 	apply_saved_unlocks(save_data)
 	apply_saved_key_items(save_data)
 	apply_saved_inventory(save_data)
+	apply_saved_equipment(save_data)
 	set_currency(int(save_data.get("currency", 0)))
 	var saved_progression: Dictionary = save_data.get("progression", {}) as Dictionary
 	set_progression(
@@ -931,6 +1042,30 @@ func apply_save_data(save_data: Dictionary) -> bool:
 	last_save_data = save_data.duplicate(true)
 	save_loaded.emit(last_save_data)
 	return true
+
+
+func apply_saved_equipment(save_data: Dictionary) -> void:
+	var saved_equipment: Dictionary = save_data.get("equipment", {}) as Dictionary
+	if saved_equipment.is_empty():
+		reset_equipment_to_defaults(true)
+		return
+	var saved_owned: Dictionary = saved_equipment.get("owned", {}) as Dictionary
+	var saved_slots: Dictionary = saved_equipment.get("slots", {}) as Dictionary
+	owned_equipment = DEFAULT_OWNED_EQUIPMENT.duplicate(true)
+	for item_id_variant: Variant in saved_owned.keys():
+		var item_id: String = str(item_id_variant)
+		if EquipmentCatalogScript.has_item(item_id) and bool(saved_owned[item_id_variant]):
+			owned_equipment[item_id] = true
+	equipped_items = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
+	for slot_id: String in EquipmentCatalogScript.SLOT_ORDER:
+		var item_id: String = str(saved_slots.get(slot_id, equipped_items.get(slot_id, "")))
+		if item_id != "" and owns_equipment(item_id) and EquipmentCatalogScript.get_slot(item_id) == slot_id:
+			equipped_items[slot_id] = item_id
+	for item_id_variant: Variant in EquipmentCatalogScript.DEFINITIONS.keys():
+		var owned_id: String = str(item_id_variant)
+		equipment_owned_changed.emit(owned_id, owns_equipment(owned_id))
+	for slot_id: String in EquipmentCatalogScript.SLOT_ORDER:
+		equipment_changed.emit(slot_id, get_equipped_item(slot_id))
 
 
 func apply_saved_stats(save_data: Dictionary) -> void:

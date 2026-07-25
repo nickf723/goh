@@ -106,6 +106,7 @@ func ensure_input_mode_label() -> void:
 	input_mode_label.offset_right = -24.0
 	input_mode_label.offset_bottom = 98.0
 	input_mode_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	input_mode_label.visible = false
 	input_mode_label.add_theme_color_override("font_color", Color(0.68, 0.76, 0.9, 0.78))
 	input_mode_label.add_theme_font_size_override("font_size", 12)
 	add_child(input_mode_label)

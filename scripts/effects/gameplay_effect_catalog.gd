@@ -60,11 +60,11 @@ const DEFINITIONS: Dictionary = {
 	"poisoned": {
 		"id": "poisoned",
 		"name": "Poisoned",
-		"description": "Lose 1 health every 2 seconds.",
+		"description": "Lose 1 health every 3 seconds.",
 		"polarity": "harmful",
 		"tags": ["harmful", "ailment", "poison"],
 		"channels": {},
-		"pulse": {"interval": 2.0, "operation": "health_damage", "amount": 1},
+		"pulse": {"interval": 3.0, "operation": "health_damage", "amount": 1},
 	},
 	"burning": {
 		"id": "burning",

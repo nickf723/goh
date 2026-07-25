@@ -149,6 +149,9 @@ func complete_active_use() -> void:
 	if completed_item.is_delivery_item():
 		applied = launch_delivery_item(completed_item)
 		effect_amount = 1 if applied else 0
+	elif completed_item.is_gameplay_effect_item():
+		applied = completed_item.apply_gameplay_effect()
+		effect_amount = 1 if applied else 0
 	else:
 		effect_amount = completed_item.apply_resource_effect()
 		applied = effect_amount > 0
@@ -169,6 +172,13 @@ func complete_active_use() -> void:
 
 	if completed_item.is_delivery_item():
 		show_message("Threw " + completed_item.display_name + ".")
+	elif completed_item.is_gameplay_effect_item():
+		show_message(
+			completed_item.display_name
+			+ " takes effect for "
+			+ str(roundi(completed_item.gameplay_effect_duration))
+			+ " seconds."
+		)
 	else:
 		show_message(
 			completed_item.display_name

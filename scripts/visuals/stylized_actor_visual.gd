@@ -56,6 +56,7 @@ var defense_controller: Node
 var aerial_locomotion: Node
 var climbing_controller: Node
 var swimming_controller: Node
+var riding_controller: Node
 var weapon_hand_anchor: Node3D
 
 var elapsed: float = 0.0
@@ -87,6 +88,7 @@ func _ready() -> void:
 		aerial_locomotion = actor.get_node_or_null("AerialLocomotion")
 		climbing_controller = actor.get_node_or_null("ClimbingController")
 		swimming_controller = actor.get_node_or_null("SwimmingController")
+		riding_controller = actor.get_node_or_null("RidingController")
 		weapon_hand_anchor = actor.get_node_or_null("WeaponController/HandAnchor") as Node3D
 
 	for node: Node3D in get_pose_nodes():
@@ -196,6 +198,23 @@ func sample_animation_pose(delta: float) -> void:
 	head_rotation.y += clampf(-local_velocity.x * 0.018, -0.09, 0.09)
 
 	match presentation_state:
+		"riding":
+			var mount_speed: float = 0.0
+			var mount_steering: float = 0.0
+			if riding_controller != null and riding_controller.has_method("get_current_mount"):
+				var ridden_mount: RideableMount = riding_controller.call("get_current_mount") as RideableMount
+				if ridden_mount != null:
+					mount_speed = absf(ridden_mount.current_speed)
+					mount_steering = ridden_mount.steering_input
+			var saddle_wave: float = sin(elapsed * (3.2 + mount_speed * 0.85))
+			root_position.y += absf(saddle_wave) * clampf(mount_speed / 10.0, 0.0, 1.0) * 0.08
+			root_rotation.z += mount_steering * 0.1
+			body_rotation.x -= 0.1 + clampf(mount_speed / 10.0, 0.0, 1.0) * 0.12
+			left_arm_rotation += Vector3(-1.0, 0.0, -0.38)
+			right_arm_rotation += Vector3(-1.0, 0.0, 0.38)
+			left_leg_rotation += Vector3(0.72, 0.0, -0.32)
+			right_leg_rotation += Vector3(0.72, 0.0, 0.32)
+			head_rotation.x -= 0.05
 		"swim_surface":
 			var surface_stroke: float = sin(elapsed * 5.4)
 			root_position.y += sin(elapsed * 3.2) * 0.035
@@ -388,6 +407,10 @@ func get_mantle_progress() -> float:
 
 
 func resolve_presentation_state() -> String:
+	if riding_controller != null and riding_controller.has_method("is_riding"):
+		if bool(riding_controller.call("is_riding")):
+			return "riding"
+
 	if swimming_controller != null and bool(swimming_controller.get("swimming")):
 		if bool(swimming_controller.get("underwater")):
 			return "swim_underwater"
@@ -503,6 +526,7 @@ func pose_accessories(delta: float, speed: float) -> void:
 		"landing",
 		"swim_surface",
 		"swim_underwater",
+		"riding",
 	] else 0.0
 	var sway: float = sin(elapsed * (3.2 + speed * 0.35))
 	var sash_rotation := Vector3(
@@ -537,7 +561,7 @@ func pose_face(delta: float) -> void:
 	var brow_lift: float = 0.0
 	var mouth_width: float = 1.0
 	match presentation_state:
-		"attack", "guard", "climb":
+		"attack", "guard", "climb", "riding":
 			brow_tilt = 0.13
 			brow_lift = -0.015
 			mouth_width = 0.82

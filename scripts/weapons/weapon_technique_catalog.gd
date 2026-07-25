@@ -71,6 +71,24 @@ static func build_dash_attack(
 	return attack
 
 
+static func apply_context_tags(
+	payload: DamagePayload,
+	attack: WeaponAttackDefinition,
+	combo_depth: int,
+	technique_id: String = ""
+) -> void:
+	if payload == null or attack == null:
+		return
+	if technique_id != "":
+		append_tag(payload.tags, "technique_" + technique_id)
+	if combo_depth >= 2:
+		append_tag(payload.tags, "context_combo")
+	if combo_depth >= 3:
+		append_tag(payload.tags, "context_deep_combo")
+	if attack.next_light_attack_id == "" and attack.next_heavy_attack_id == "":
+		append_tag(payload.tags, "context_finisher")
+
+
 static func append_tag(tags: Array[String], tag: String) -> void:
 	if tag != "" and not tags.has(tag):
 		tags.append(tag)

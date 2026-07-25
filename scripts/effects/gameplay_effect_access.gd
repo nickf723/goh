@@ -63,7 +63,8 @@ static func get_active_source_rows(include_permanent: bool = true) -> Array[Dict
 	var result: Variant = service.call("get_active_source_rows", include_permanent)
 	if not (result is Array):
 		return rows
-	for row_variant: Variant in result as Array:
+	var result_array: Array = result as Array
+	for row_variant: Variant in result_array:
 		if row_variant is Dictionary:
 			rows.append((row_variant as Dictionary).duplicate(true))
 	return rows

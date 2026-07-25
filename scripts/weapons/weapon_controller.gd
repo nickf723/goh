@@ -15,6 +15,17 @@ const INPUT_HEAVY: String = "heavy"
 @export var use_camera_direction: bool = true
 @export var close_range_auto_hit_radius: float = 0.85
 
+@export_group("Attack Steering")
+@export_range(0.0, 8.0, 0.1) var facing_assist_range: float = 3.8
+@export_range(0.0, 180.0, 1.0) var facing_assist_angle_degrees: float = 72.0
+@export_range(0.0, 1.0, 0.05) var facing_assist_strength: float = 0.72
+@export_range(0.0, 90.0, 1.0) var facing_assist_max_turn_degrees: float = 38.0
+@export_range(0.0, 1.0, 0.05) var movement_direction_weight: float = 0.78
+
+@export_group("Contact Rhythm")
+@export_range(0.0, 0.5, 0.01) var whiff_recovery_penalty: float = 0.11
+@export_range(0.0, 0.4, 0.01) var camera_impact_amount: float = 0.075
+
 @export_group("Input Buffer")
 @export var input_buffer_seconds: float = 0.32
 
@@ -39,6 +50,10 @@ var queued_input_timer: float = 0.0
 var combo_timeout_timer: float = 0.0
 var last_completed_attack_id: String = ""
 var combo_history: Array[String] = []
+var attack_forward_override: Vector3 = Vector3.ZERO
+var current_attack_duration_bonus: float = 0.0
+var last_attack_connected: bool = false
+var camera_impact_tween: Tween
 
 var swing_tween: Tween
 var sweep_tween: Tween
@@ -174,7 +189,7 @@ func update_current_attack(delta: float) -> void:
 	var attack_speed: float = get_attack_speed()
 	var startup_duration: float = current_attack.get_startup_duration(attack_speed)
 	var active_end: float = startup_duration + current_attack.get_active_duration(attack_speed)
-	var total_duration: float = current_attack.get_total_duration(attack_speed)
+	var total_duration: float = current_attack.get_total_duration(attack_speed) + current_attack_duration_bonus
 
 	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("update_attack_pose"):
 		runtime_weapon_rig.call(
@@ -251,6 +266,10 @@ func start_attack(attack: WeaponAttackDefinition) -> bool:
 	current_attack_elapsed = 0.0
 	current_phase = "startup"
 	attack_hit_applied = false
+	current_attack_duration_bonus = 0.0
+	last_attack_connected = false
+	attack_forward_override = resolve_attack_forward(attack)
+	apply_attack_facing(attack_forward_override)
 	combo_timeout_timer = 0.0
 
 	if not combo_history.has(attack.attack_id) or combo_history.size() == 0:
@@ -286,6 +305,8 @@ func finish_current_attack() -> void:
 	current_attack_elapsed = 0.0
 	current_phase = "idle"
 	attack_hit_applied = false
+	current_attack_duration_bonus = 0.0
+	attack_forward_override = Vector3.ZERO
 
 	if action_state != null:
 		action_state.end_attack()
@@ -322,6 +343,8 @@ func cancel_current_attack(reason: String = "cancelled") -> void:
 	current_attack_elapsed = 0.0
 	current_phase = "idle"
 	attack_hit_applied = false
+	current_attack_duration_bonus = 0.0
+	attack_forward_override = Vector3.ZERO
 
 	if action_state != null and action_state.is_attacking:
 		action_state.end_attack()
@@ -418,6 +441,10 @@ func execute_current_attack_hit() -> void:
 	for target: Node in targets:
 		var result: Dictionary = send_payload_to_target(target, payload)
 		critical_landed = critical_landed or bool(result.get("critical", false))
+		if target.has_method("receive_weapon_impact"):
+			target.call("receive_weapon_impact", payload, get_attack_forward(), current_attack)
+		elif target.has_method("receive_hit_reaction"):
+			target.call("receive_hit_reaction", get_attack_forward(), payload.knockback_strength)
 
 		if result.has("message") and result["message"] != "":
 			messages.append(str(result["message"]))
@@ -425,7 +452,9 @@ func execute_current_attack_hit() -> void:
 	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("on_weapon_targets_hit"):
 		runtime_weapon_rig.call("on_weapon_targets_hit", targets, current_attack)
 
+	last_attack_connected = targets.size() > 0
 	if targets.size() > 0:
+		apply_camera_impact(current_attack, critical_landed)
 		HitStop.request(
 			max(
 				current_attack.hit_stop_duration * (1.85 if critical_landed else 1.0),
@@ -437,8 +466,10 @@ func execute_current_attack_hit() -> void:
 				1.0
 			)
 		)
-	elif show_debug_prints:
-		messages.append(equipped_weapon.display_name + " • " + current_attack.display_name + " misses.")
+	else:
+		current_attack_duration_bonus = maxf(whiff_recovery_penalty, 0.0)
+		if show_debug_prints:
+			messages.append(equipped_weapon.display_name + " • " + current_attack.display_name + " misses.")
 
 	if messages.size() > 0:
 		show_message("\n".join(messages))
@@ -637,6 +668,8 @@ func get_attack_center(attack: WeaponAttackDefinition) -> Vector3:
 
 
 func get_attack_forward() -> Vector3:
+	if attack_forward_override.length_squared() > 0.001:
+		return attack_forward_override.normalized()
 	var actor: Node3D = get_actor()
 
 	if actor != null and actor.has_method("get_combat_aim_direction"):
@@ -673,6 +706,95 @@ func get_attack_forward() -> Vector3:
 	if actor_forward.length() <= 0.01:
 		return Vector3.FORWARD
 	return actor_forward.normalized()
+
+
+func resolve_attack_forward(attack: WeaponAttackDefinition) -> Vector3:
+	attack_forward_override = Vector3.ZERO
+	var actor: Node3D = get_actor()
+	var resolved: Vector3 = get_attack_forward()
+	var input_vector: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	if input_vector.length() > 0.22 and actor != null:
+		var camera: Camera3D = get_viewport().get_camera_3d()
+		var right: Vector3 = actor.global_transform.basis.x
+		var forward: Vector3 = -actor.global_transform.basis.z
+		if camera != null:
+			right = camera.global_transform.basis.x
+			forward = -camera.global_transform.basis.z
+		right.y = 0.0
+		forward.y = 0.0
+		if right.length_squared() > 0.001 and forward.length_squared() > 0.001:
+			var movement_direction: Vector3 = (right.normalized() * input_vector.x + forward.normalized() * -input_vector.y).normalized()
+			resolved = resolved.slerp(movement_direction, movement_direction_weight).normalized()
+	var assist_target: Node3D = find_facing_assist_target(resolved, attack)
+	if assist_target != null and actor != null:
+		var target_direction: Vector3 = get_target_position(assist_target) - actor.global_position
+		target_direction.y = 0.0
+		if target_direction.length_squared() > 0.001:
+			target_direction = target_direction.normalized()
+			var angle: float = resolved.angle_to(target_direction)
+			var maximum_turn: float = deg_to_rad(facing_assist_max_turn_degrees)
+			var blend: float = facing_assist_strength
+			if angle > 0.001:
+				blend = minf(blend, maximum_turn / angle)
+			resolved = resolved.slerp(target_direction, clampf(blend, 0.0, 1.0)).normalized()
+	return resolved if resolved.length_squared() > 0.001 else Vector3.FORWARD
+
+
+func find_facing_assist_target(forward: Vector3, attack: WeaponAttackDefinition) -> Node3D:
+	var actor: Node3D = get_actor()
+	if actor == null or facing_assist_range <= 0.0:
+		return null
+	var best: Node3D = null
+	var best_score: float = INF
+	var minimum_dot: float = cos(deg_to_rad(facing_assist_angle_degrees))
+	var search_range: float = maxf(facing_assist_range, attack.attack_range if attack != null else 0.0)
+	for candidate_node: Node in get_tree().get_nodes_in_group("enemy"):
+		if not candidate_node is Node3D:
+			continue
+		var candidate: Node3D = candidate_node as Node3D
+		if candidate == actor:
+			continue
+		var offset: Vector3 = get_target_position(candidate) - actor.global_position
+		offset.y = 0.0
+		var distance: float = offset.length()
+		if distance <= 0.01 or distance > search_range:
+			continue
+		var alignment: float = forward.normalized().dot(offset.normalized())
+		if alignment < minimum_dot:
+			continue
+		var score: float = distance - alignment * 1.4
+		if score < best_score:
+			best_score = score
+			best = candidate
+	return best
+
+
+func apply_attack_facing(direction: Vector3) -> void:
+	var actor: Node3D = get_actor()
+	if actor == null or direction.length_squared() <= 0.001:
+		return
+	var target_angle: float = atan2(-direction.x, -direction.z)
+	actor.rotation.y = lerp_angle(actor.rotation.y, target_angle, 0.82)
+
+
+func apply_camera_impact(attack: WeaponAttackDefinition, critical: bool) -> void:
+	var camera: Camera3D = get_viewport().get_camera_3d()
+	if camera == null or camera_impact_amount <= 0.0:
+		return
+	if camera_impact_tween != null:
+		camera_impact_tween.kill()
+	var strength: float = camera_impact_amount
+	if attack != null:
+		strength *= clampf(attack.damage_multiplier, 0.8, 2.2)
+	if critical:
+		strength *= 1.65
+	camera.h_offset = (-strength if combo_history.size() % 2 == 0 else strength)
+	camera.v_offset = strength * 0.55
+	camera_impact_tween = create_tween()
+	camera_impact_tween.set_trans(Tween.TRANS_QUAD)
+	camera_impact_tween.set_ease(Tween.EASE_OUT)
+	camera_impact_tween.parallel().tween_property(camera, "h_offset", 0.0, 0.13)
+	camera_impact_tween.parallel().tween_property(camera, "v_offset", 0.0, 0.13)
 
 
 func get_target_position(target: Node) -> Vector3:

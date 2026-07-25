@@ -40,6 +40,9 @@ func interact() -> Dictionary:
 	if resolved and one_shot:
 		return {"message": "Nothing more is needed here.", "objective": ""}
 	var quest: Dictionary = GameState.get_quest(quest_id)
+	if set_flag != "" and GameState.get_flag(set_flag):
+		resolved = true
+		return {"message": "That objective is already complete.", "objective": ""}
 	if quest.is_empty() or str(quest.get("state", "")) != "active":
 		return {"message": "Grace has no reason to interfere with this yet.", "objective": ""}
 	if required_stage >= 0 and int(quest.get("stage", 0)) < required_stage:

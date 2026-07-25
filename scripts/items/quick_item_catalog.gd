@@ -4,11 +4,21 @@ class_name QuickItemCatalog
 const HealingFlask: QuickItemDefinition = preload("res://data/items/healing_flask.tres")
 const OilFlask: QuickItemDefinition = preload("res://data/items/oil_flask.tres")
 const NoiseMaker: QuickItemDefinition = preload("res://data/items/noise_maker.tres")
+const HealingPotion: QuickItemDefinition = preload("res://data/items/healing_potion.tres")
+const ResonanceTonic: QuickItemDefinition = preload("res://data/items/resonance_tonic.tres")
+const FrostVigorDraught: QuickItemDefinition = preload("res://data/items/frost_vigor_draught.tres")
+const Antidote: QuickItemDefinition = preload("res://data/items/antidote.tres")
+const ConductiveElixir: QuickItemDefinition = preload("res://data/items/conductive_elixir.tres")
 
 const ITEM_IDS: Array[String] = [
 	"healing_flask",
 	"oil_flask",
 	"noise_maker",
+	"healing_potion",
+	"resonance_tonic",
+	"frost_vigor_draught",
+	"antidote",
+	"conductive_elixir",
 ]
 
 
@@ -20,12 +30,22 @@ static func get_item(item_id: String) -> QuickItemDefinition:
 			return OilFlask
 		"noise_maker":
 			return NoiseMaker
+		"healing_potion":
+			return HealingPotion
+		"resonance_tonic":
+			return ResonanceTonic
+		"frost_vigor_draught":
+			return FrostVigorDraught
+		"antidote":
+			return Antidote
+		"conductive_elixir":
+			return ConductiveElixir
 		_:
 			return null
 
 
 static func get_all_items() -> Array[QuickItemDefinition]:
-	return [HealingFlask, OilFlask, NoiseMaker]
+	return [HealingFlask, OilFlask, NoiseMaker, HealingPotion, ResonanceTonic, FrostVigorDraught, Antidote, ConductiveElixir]
 
 
 static func get_inventory_rows(inventory: Dictionary) -> Array[Dictionary]:

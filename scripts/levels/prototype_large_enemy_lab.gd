@@ -2,9 +2,11 @@ extends Node3D
 class_name PrototypeLargeEnemyLab
 
 const ShowcaseLoadout: AbilityLoadout = preload("res://data/loadouts/grace_ruined_village_showcase_loadout.tres")
+const TraversalControllerScript = preload("res://scripts/player/large_enemy_traversal_controller.gd")
 
 var construct: LargeConstructEnemy = null
 var status_label: Label = null
+var traversal_controller: LargeEnemyTraversalController = null
 
 
 func _ready() -> void:
@@ -12,6 +14,7 @@ func _ready() -> void:
 	_build_arena()
 	_configure_player()
 	construct = get_node_or_null("LargeConstructEnemy") as LargeConstructEnemy
+	_setup_traversal_controller()
 	_build_hud()
 	if construct != null:
 		construct.health_changed.connect(_on_construct_changed)
@@ -116,7 +119,7 @@ func _build_arena() -> void:
 	add_child(title)
 
 	var instructions := Label3D.new()
-	instructions.text = "R3 / T LOCK BODY   •   RIGHT STICK / , . SWITCH PARTS   •   F8 RESET"
+	instructions.text = "BREAK STANCE → INTERACT TO CLIMB   •   MOVE UP/DOWN   •   HOLD INTERACT TO BRACE   •   ATTACK/DODGE TO ESCAPE GRABS"
 	instructions.position = Vector3(0, 8.25, -15.3)
 	instructions.font_size = 21
 	instructions.pixel_size = 0.008
@@ -142,6 +145,16 @@ func _configure_player() -> void:
 	GameState.set_stat("health", GameState.get_stat("max_health"))
 	GameState.set_stat("stamina", GameState.get_stat("max_stamina"))
 	GameState.set_stat("mana", GameState.get_stat("max_mana"))
+
+
+func _setup_traversal_controller() -> void:
+	var player: CharacterBody3D = get_node_or_null("Player") as CharacterBody3D
+	if player == null or construct == null:
+		return
+	traversal_controller = TraversalControllerScript.new() as LargeEnemyTraversalController
+	traversal_controller.name = "LargeEnemyTraversalController"
+	player.add_child(traversal_controller)
+	traversal_controller.setup(player, construct)
 
 
 func _build_hud() -> void:
@@ -184,6 +197,9 @@ func _update_hud() -> void:
 		+ "\nTARGET " + target_text
 		+ "     HAMMER " + ("ACTIVE" if bool(debug.get("weapon_arm", true)) else "DISABLED")
 		+ "     CORE " + ("EXPOSED" if bool(debug.get("chest_open", false)) else "ARMORED")
+		+ "\nTRAVERSAL " + (traversal_controller.get_state_name() if traversal_controller != null else "OFFLINE")
+		+ "     STAMINA " + str(GameState.get_stat("stamina")) + " / " + str(GameState.get_stat("max_stamina"))
+		+ "\n" + (traversal_controller.get_status_text() if traversal_controller != null else "")
 	)
 
 

@@ -111,7 +111,7 @@ func _execute_attack() -> void:
 	payload.knockback_strength = float(current_attack.get("knockback", 3.0))
 	payload.source_name = str(current_attack.get("name", "Telegraphed Strike"))
 	payload.hit_type = "enemy_attack"
-	payload.tags = Array[String](["physical", "enemy", "telegraphed"])
+	payload.tags = ["physical", "enemy", "telegraphed"]
 	var resolver: PlayerPerfectDodgeController = player.get_node_or_null("PlayerPerfectDodgeController") as PlayerPerfectDodgeController
 	var result: Dictionary = {}
 	if resolver != null:

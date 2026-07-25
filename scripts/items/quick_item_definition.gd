@@ -22,9 +22,12 @@ const GameplayEffectAccessScript = preload("res://scripts/effects/gameplay_effec
 @export var can_use_at_maximum: bool = false
 
 @export_group("Effect")
-@export_enum("restore_resource", "delivery_scene") var effect_type: String = "restore_resource"
+@export_enum("restore_resource", "delivery_scene", "gameplay_effect") var effect_type: String = "restore_resource"
 @export_enum("health", "mana", "stamina", "stance") var restore_resource_id: String = "health"
 @export_range(0, 99, 1) var restore_amount: int = 1
+@export var gameplay_effect_ids: Array[String] = []
+@export_range(0.1, 600.0, 0.1) var gameplay_effect_duration: float = 30.0
+@export var gameplay_effect_tags: Array[String] = ["consumable_buff"]
 @export var delivery_scene: PackedScene
 @export var impact_scene: PackedScene
 @export_range(1.0, 30.0, 0.5) var throw_speed: float = 12.0
@@ -59,6 +62,10 @@ func is_delivery_item() -> bool:
 	return effect_type == "delivery_scene"
 
 
+func is_gameplay_effect_item() -> bool:
+	return effect_type == "gameplay_effect"
+
+
 func get_current_resource() -> int:
 	return GameState.get_stat(restore_resource_id)
 
@@ -70,6 +77,8 @@ func get_maximum_resource() -> int:
 func can_apply() -> bool:
 	if is_delivery_item():
 		return delivery_scene != null and impact_scene != null
+	if is_gameplay_effect_item():
+		return not gameplay_effect_ids.is_empty() and gameplay_effect_duration > 0.0
 	if restore_amount <= 0:
 		return false
 	if can_use_at_maximum:
@@ -96,7 +105,21 @@ func apply_resource_effect() -> int:
 	return GameState.get_stat(restore_resource_id) - before
 
 
+func apply_gameplay_effect() -> bool:
+	if not is_gameplay_effect_item() or gameplay_effect_ids.is_empty():
+		return false
+	GameplayEffectAccessScript.set_effect_source(
+		"quick_item:" + item_id,
+		gameplay_effect_ids,
+		gameplay_effect_duration,
+		gameplay_effect_tags
+	)
+	return true
+
+
 func apply_effect() -> int:
+	if is_gameplay_effect_item():
+		return 1 if apply_gameplay_effect() else 0
 	return apply_resource_effect()
 
 
@@ -111,6 +134,8 @@ func get_debug_data() -> Dictionary:
 		"movement": get_movement_multiplier(),
 		"restore_resource": restore_resource_id,
 		"restore_amount": restore_amount,
+		"gameplay_effect_ids": gameplay_effect_ids.duplicate(),
+		"gameplay_effect_duration": gameplay_effect_duration,
 		"refill_on_rest": refill_on_rest,
 		"delivery_scene": delivery_scene.resource_path if delivery_scene != null else "",
 		"impact_scene": impact_scene.resource_path if impact_scene != null else "",

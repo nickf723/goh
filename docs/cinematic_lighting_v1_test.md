@@ -40,13 +40,34 @@ The rig exposes:
 
 The scene defaults to Cinematic for visual evaluation.
 
+## Weather lighting
+
+The village showcase loadout includes Rain and Snowfall.
+
+**Rain**
+
+- reserves 40% mana and makes Water spells free
+- replaces the sunset with blue-gray storm light
+- suppresses golden shafts and floating dust
+- thickens cool volumetric fog
+- dims emissive accents while preserving navigation landmarks
+
+**Snowfall**
+
+- reserves 45% mana and makes Ice spells free
+- shifts the sky, sun, fog, fill, and shafts toward cold white-blue
+- increases diffuse atmospheric brightness and crystalline bloom
+- preserves warm church light as a contrasting destination
+
+Dismiss either spell to restore the original late-afternoon lighting. Casting one weather spell while the other is active dismisses the previous weather first.
+
 ## Smoke test
 
 Run:
 
 `scenes/tests/cinematic_lighting_smoke_test.tscn`
 
-It verifies environment reuse, volumetric fog, glow, SSAO, shadowed sun, shaft and dust construction, and quality switching.
+It verifies environment reuse, volumetric fog, glow, SSAO, shadowed sun, shaft and dust construction, quality switching, Rain lighting, Snowfall lighting, and clear-weather restoration.
 
 ## Performance checks
 

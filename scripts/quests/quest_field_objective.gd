@@ -45,6 +45,9 @@ func interact() -> Dictionary:
 		return {"message": "That objective is already complete.", "objective": ""}
 	if quest.is_empty() or str(quest.get("state", "")) != "active":
 		return {"message": "Grace has no reason to interfere with this yet.", "objective": ""}
+	if next_stage >= 0 and int(quest.get("stage", 0)) >= next_stage:
+		resolved = true
+		return {"message": "That quest step is already complete.", "objective": ""}
 	if required_stage >= 0 and int(quest.get("stage", 0)) < required_stage:
 		return {"message": "Another step must be completed first.", "objective": ""}
 	if required_stat != "" and GameState.get_stat(required_stat) < required_stat_minimum:
@@ -95,6 +98,9 @@ func _on_body_entered(body: Node3D) -> void:
 		return
 	var quest: Dictionary = GameState.get_quest(quest_id)
 	if quest.is_empty() or str(quest.get("state", "")) != "active":
+		return
+	if next_stage >= 0 and int(quest.get("stage", 0)) >= next_stage:
+		resolved = true
 		return
 	resolve_objective()
 	var ui: Node = get_tree().get_first_node_in_group("game_ui")

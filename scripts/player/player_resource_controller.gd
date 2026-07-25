@@ -96,6 +96,7 @@ func recover_resource(
 		return 0.0
 
 	var points_per_second: float = float(maximum) / maxf(empty_to_full_seconds, 0.01)
+	points_per_second = GameplayEffects.modify_float(resource_name + "_recovery_rate", points_per_second)
 	accumulator += points_per_second * delta
 	var whole_points: int = floori(accumulator)
 

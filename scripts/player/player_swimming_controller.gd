@@ -36,6 +36,7 @@ var water_exit_handoff: bool = false
 var breath_seconds: float = 12.0
 var wetness_remaining: float = 0.0
 var stamina_progress: float = 0.0
+var stamina_recovery_progress: float = 0.0
 var bubble_timer: float = 0.0
 var last_state: String = "DRY"
 var last_current: Vector3 = Vector3.ZERO
@@ -145,6 +146,7 @@ func process_locomotion(delta: float) -> bool:
 	else:
 		sprinting = false
 		stamina_progress = maxf(stamina_progress - delta, 0.0)
+		_recover_swim_stamina(delta)
 
 	var desired_velocity: Vector3 = horizontal_direction * movement_speed
 	last_current = sample_total_current()
@@ -229,7 +231,23 @@ func _update_breath(delta: float) -> void:
 			exhausted = false
 
 
+func _recover_swim_stamina(delta: float) -> void:
+	var maximum: int = GameState.get_stat("max_stamina")
+	var current: int = GameState.get_stat("stamina")
+	if current >= maximum:
+		stamina_recovery_progress = 0.0
+		return
+	stamina_recovery_progress += 3.2 * delta
+	var recovered: int = floori(stamina_recovery_progress)
+	if recovered <= 0:
+		return
+	recovered = mini(recovered, maximum - current)
+	GameState.restore_stamina(recovered)
+	stamina_recovery_progress -= float(recovered)
+
+
 func _drain_sprint_stamina(delta: float) -> void:
+	stamina_recovery_progress = 0.0
 	stamina_progress += sprint_stamina_per_second * delta
 	while stamina_progress >= 1.0:
 		stamina_progress -= 1.0
@@ -382,6 +400,7 @@ func reset_swimming() -> void:
 	breath_seconds = maximum_breath_seconds
 	wetness_remaining = 0.0
 	stamina_progress = 0.0
+	stamina_recovery_progress = 0.0
 	last_current = Vector3.ZERO
 	_set_state("DRY")
 	if action_state != null:

@@ -1,5 +1,7 @@
 extends CharacterBody3D
 
+const GameplayEffectAccessScript = preload("res://scripts/effects/gameplay_effect_access.gd")
+
 @export var move_speed: float = 5.0
 @export var jump_velocity: float = 4.5
 @export var gravity: float = 18.0
@@ -242,8 +244,9 @@ func _physics_process(delta: float) -> void:
 	if stealth_controller != null and stealth_controller.has_method("get_movement_multiplier"):
 		movement_multiplier *= float(stealth_controller.call("get_movement_multiplier"))
 
-	velocity.x = direction.x * move_speed * movement_multiplier
-	velocity.z = direction.z * move_speed * movement_multiplier
+	var effective_move_speed: float = GameplayEffectAccessScript.modify_float("movement_speed", move_speed)
+	velocity.x = direction.x * effective_move_speed * movement_multiplier
+	velocity.z = direction.z * effective_move_speed * movement_multiplier
 
 	if not is_on_floor():
 		velocity.y -= gravity * delta

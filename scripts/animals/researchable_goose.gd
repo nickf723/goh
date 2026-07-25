@@ -215,6 +215,7 @@ func _build_goose() -> void:
 	state_label.pixel_size = 0.006
 	state_label.outline_size = 7
 	state_label.modulate = Color(1.0, 0.84, 0.38)
+	state_label.visible = false
 	visual_root.add_child(state_label)
 
 

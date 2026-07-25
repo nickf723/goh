@@ -614,7 +614,16 @@ func get_attack_center(attack: WeaponAttackDefinition) -> Vector3:
 func get_attack_forward() -> Vector3:
 	var actor: Node3D = get_actor()
 
-	if actor != null and actor.has_method("has_lock_on_target") and actor.has_lock_on_target():
+	if actor != null and actor.has_method("get_combat_aim_direction"):
+		var target_direction: Vector3 = actor.call(
+			"get_combat_aim_direction",
+			get_attack_origin(),
+			true
+		)
+		target_direction.y = 0.0
+		if target_direction.length() > 0.01:
+			return target_direction.normalized()
+	elif actor != null and actor.has_method("has_lock_on_target") and actor.has_lock_on_target():
 		if actor.has_method("get_lock_on_cast_direction"):
 			var lock_direction: Vector3 = actor.get_lock_on_cast_direction(get_attack_origin())
 			lock_direction.y = 0.0

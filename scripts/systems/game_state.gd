@@ -23,13 +23,15 @@ signal equipment_owned_changed(item_id: String, owned: bool)
 signal equipment_changed(slot_id: String, item_id: String)
 signal weapon_mastery_changed(weapon_class: String, points: int, rank: int, delta: int)
 signal weapon_mastery_ranked_up(weapon_class: String, rank: int)
+signal weapon_infusion_changed(infusion_id: String)
 
 const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
 const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
 const QuickItemCatalogScript = preload("res://scripts/items/quick_item_catalog.gd")
 const EquipmentCatalogScript = preload("res://scripts/equipment/equipment_catalog.gd")
 const WeaponMasteryCatalogScript = preload("res://scripts/weapons/weapon_mastery_catalog.gd")
-const SAVE_VERSION: int = 10
+const WeaponInfusionCatalogScript = preload("res://scripts/weapons/weapon_infusion_catalog.gd")
+const SAVE_VERSION: int = 11
 const SAVE_SLOT_PATH: String = "user://goh_save_slot_1.json"
 const ARMOR_TRIAL_BLESSING_ID: String = "armor_trial_blessing"
 const GUARD_STAT: String = "guard"
@@ -74,6 +76,7 @@ var growth_points: int = 0
 var owned_equipment: Dictionary = DEFAULT_OWNED_EQUIPMENT.duplicate(true)
 var equipped_items: Dictionary = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
 var weapon_mastery: Dictionary = {}
+var weapon_infusion_id: String = WeaponInfusionCatalogScript.DEFAULT_INFUSION_ID
 
 var story_flags: Dictionary = {
 	"inspected_stone": false,
@@ -124,6 +127,26 @@ func get_stat(stat_name: String) -> int:
 func add_stat(stat_name: String, amount: int) -> void:
 	var current_value: int = get_stat(stat_name)
 	set_stat(stat_name, current_value + amount)
+
+
+func get_weapon_infusion() -> String:
+	return weapon_infusion_id
+
+
+func set_weapon_infusion(infusion_id: String) -> bool:
+	if not WeaponInfusionCatalogScript.is_valid(infusion_id):
+		return false
+	if weapon_infusion_id == infusion_id:
+		return true
+	weapon_infusion_id = infusion_id
+	weapon_infusion_changed.emit(weapon_infusion_id)
+	return true
+
+
+func toggle_weapon_infusion(infusion_id: String) -> bool:
+	if infusion_id == weapon_infusion_id:
+		return set_weapon_infusion(WeaponInfusionCatalogScript.DEFAULT_INFUSION_ID)
+	return set_weapon_infusion(infusion_id)
 
 
 func get_weapon_mastery_points(weapon_class: String) -> int:
@@ -967,6 +990,7 @@ func reset_run() -> void:
 	set_currency(0)
 	reset_inventory_to_defaults(true)
 	reset_weapon_mastery(true)
+	set_weapon_infusion(WeaponInfusionCatalogScript.DEFAULT_INFUSION_ID)
 
 	for flag_name: String in story_flags.keys():
 		story_flags[flag_name] = false
@@ -1034,6 +1058,7 @@ func save_at_bed(bed_id: String, bed_name: String, bed_position: Vector3) -> Dic
 			"slots": get_equipped_items_snapshot(),
 		},
 		"weapon_mastery": get_weapon_mastery_snapshot(),
+		"weapon_infusion": weapon_infusion_id,
 		"objective": current_objective,
 		"saved_at": Time.get_datetime_string_from_system(false, true),
 	}
@@ -1112,6 +1137,7 @@ func apply_save_data(save_data: Dictionary) -> bool:
 	apply_saved_inventory(save_data)
 	apply_saved_equipment(save_data)
 	apply_saved_weapon_mastery(save_data)
+	apply_saved_weapon_infusion(save_data)
 	set_currency(int(save_data.get("currency", 0)))
 	var saved_progression: Dictionary = save_data.get("progression", {}) as Dictionary
 	set_progression(
@@ -1130,6 +1156,16 @@ func apply_save_data(save_data: Dictionary) -> bool:
 	last_save_data = save_data.duplicate(true)
 	save_loaded.emit(last_save_data)
 	return true
+
+
+func apply_saved_weapon_infusion(save_data: Dictionary) -> void:
+	var saved_infusion: String = str(
+		save_data.get("weapon_infusion", WeaponInfusionCatalogScript.DEFAULT_INFUSION_ID)
+	)
+	if not WeaponInfusionCatalogScript.is_valid(saved_infusion):
+		saved_infusion = WeaponInfusionCatalogScript.DEFAULT_INFUSION_ID
+	weapon_infusion_id = saved_infusion
+	weapon_infusion_changed.emit(weapon_infusion_id)
 
 
 func apply_saved_weapon_mastery(save_data: Dictionary) -> void:

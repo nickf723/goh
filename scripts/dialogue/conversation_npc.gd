@@ -54,7 +54,7 @@ func configure(data: Dictionary) -> void:
 	if conversation_data.has("title"):
 		title = str(conversation_data["title"])
 	if conversation_data.has("portrait_color"):
-		portrait_color = conversation_data["portrait_color"] as Color
+		portrait_color = conversation_data["portrait_color"]
 	if is_node_ready():
 		update_visual_colors()
 
@@ -161,7 +161,7 @@ func show_node(node_id: String) -> void:
 	append_history(speaker, text)
 	visible_choices.clear()
 	for child: Node in choices_box.get_children():
-		child.queue_free()
+		child.free()
 	var choices_variant: Variant = node.get("choices", [])
 	if choices_variant is Array:
 		for choice_variant: Variant in choices_variant:

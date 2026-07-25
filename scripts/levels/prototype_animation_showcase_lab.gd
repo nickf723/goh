@@ -2,7 +2,7 @@ extends Node3D
 class_name PrototypeAnimationShowcaseLab
 
 const POSE_STATES: Array[String] = [
-	"idle", "locomotion", "jump", "fall", "landing", "climb", "mantle",
+	"idle", "locomotion", "jump", "fall", "landing", "swim_surface", "swim_underwater", "climb", "mantle",
 	"attack", "guard", "dodge", "hit", "cast", "flight", "exhausted", "defeated",
 ]
 

@@ -53,9 +53,9 @@ func build_hud() -> void:
 	panel.anchor_right = 0.0
 	panel.anchor_bottom = 1.0
 	panel.offset_left = 24.0
-	panel.offset_top = -192.0
+	panel.offset_top = -276.0
 	panel.offset_right = 316.0
-	panel.offset_bottom = -116.0
+	panel.offset_bottom = -200.0
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.018, 0.025, 0.04, 0.9)
 	style.border_color = Color(0.92, 0.68, 0.2, 0.7)

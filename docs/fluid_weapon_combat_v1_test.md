@@ -11,9 +11,10 @@ This laboratory intentionally contains only Grace, one responsive dummy, a lined
 ## Shared combat upgrades
 
 - Attack inputs buffer for 0.38 seconds in the laboratory.
-- Movement input influences the attack heading at startup.
+- Movement input influences the attack heading at startup without instantly rotating the player/camera rig.
 - A nearby target inside the assist cone receives a limited facing correction rather than a full forced lock.
 - Each attack caches its heading so the strike geometry, lunge, and reaction agree.
+- Attack lunges blend with existing horizontal velocity instead of replacing it in one frame.
 - Connected attacks trigger directional recoil and a small camera impulse.
 - Missed attacks receive additional recovery, preserving a readable cost for whiffing.
 - Late cancel permissions still come from each attack definition.

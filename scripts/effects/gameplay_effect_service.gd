@@ -52,6 +52,7 @@ func set_effect_source(source_id: String, effect_ids: Array[String], duration: f
 	effect_sources[source_id] = {
 		"effect_ids": valid_ids,
 		"remaining": duration,
+		"duration": duration,
 		"tags": tags.duplicate(),
 	}
 	effect_source_changed.emit(source_id, valid_ids.duplicate())
@@ -157,6 +158,7 @@ func get_active_source_rows(include_permanent: bool = true) -> Array[Dictionary]
 				continue
 			row["source_id"] = source_id
 			row["remaining"] = remaining
+			row["duration"] = float(source.get("duration", remaining))
 			row["tags"] = (source.get("tags", []) as Array).duplicate()
 			rows.append(row)
 	rows.sort_custom(sort_source_rows)

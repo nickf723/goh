@@ -471,7 +471,8 @@ func find_targets(attack: WeaponAttackDefinition) -> Array[Node]:
 
 	var locked_part: Node = _get_locked_weak_point(actor, attack)
 	if locked_part != null:
-		return [locked_part]
+		var precise_targets: Array[Node] = [locked_part]
+		return precise_targets
 
 	var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
 	var shape: SphereShape3D = SphereShape3D.new()

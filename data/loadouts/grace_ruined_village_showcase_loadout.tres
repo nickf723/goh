@@ -15,6 +15,7 @@
 [ext_resource type="Resource" path="res://data/abilities/metal_needle_ability.tres" id="11_metal"]
 [ext_resource type="Resource" path="res://data/abilities/metal_tether_ability.tres" id="12_tether"]
 [ext_resource type="Resource" path="res://data/abilities/lightning_spark_ability.tres" id="13_lightning"]
+[ext_resource type="Resource" path="res://data/abilities/thunderstorm_weather_ability.tres" id="27_storm"]
 [ext_resource type="Resource" path="res://data/abilities/poison_cloud_ability.tres" id="14_poison"]
 [ext_resource type="Resource" path="res://data/abilities/life_thorn_ability.tres" id="15_life"]
 [ext_resource type="Resource" path="res://data/abilities/death_hex_ability.tres" id="16_death"]
@@ -44,6 +45,7 @@ learned_abilities = Array[ExtResource("2_definition")]([
 	ExtResource("11_metal"),
 	ExtResource("12_tether"),
 	ExtResource("13_lightning"),
+	ExtResource("27_storm"),
 	ExtResource("14_poison"),
 	ExtResource("15_life"),
 	ExtResource("16_death"),
@@ -70,6 +72,7 @@ equipped_abilities = Array[ExtResource("2_definition")]([
 	ExtResource("11_metal"),
 	ExtResource("12_tether"),
 	ExtResource("13_lightning"),
+	ExtResource("27_storm"),
 	ExtResource("14_poison"),
 	ExtResource("15_life"),
 	ExtResource("16_death"),

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="QuickItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/quick_item_definition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "resonance_tonic"
+display_name = "Resonance Tonic"
+short_label = "ECHO"
+description = "Sound and Air suspended together, restoring mana for further spellwork."
+icon_symbol = "◉"
+use_visual_color = Color(0.82, 0.36, 1, 1)
+max_stack = 9
+max_charges = 9
+refill_on_rest = false
+use_duration = 0.68
+movement_multiplier = 0.5
+requires_grounded = true
+restore_resource_id = "mana"
+restore_amount = 4
+element = "sound"
+tags = Array[String](["consumable", "quick_item", "alchemy", "tonic", "sound", "air"])

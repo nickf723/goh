@@ -14,6 +14,10 @@ func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
 	if has_lock_on_target():
 		return super.get_lock_on_cast_direction(cast_origin)
 
+	var soft_direction: Vector3 = super.get_soft_aim_cast_direction(cast_origin)
+	if soft_direction.length() > 0.01:
+		return soft_direction.normalized()
+
 	var cast_direction: Vector3 = -global_transform.basis.z
 	var camera: Camera3D = get_viewport().get_camera_3d()
 

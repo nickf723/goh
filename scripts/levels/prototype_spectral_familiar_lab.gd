@@ -50,8 +50,16 @@ func _configure_player() -> void:
 	if player == null:
 		return
 	var caster: Node = player.get_node_or_null("AbilityCaster")
-	if caster != null and caster.has_method("select_ability_by_id"):
-		caster.call("select_ability_by_id", "spectral_familiar")
+	if caster == null or not caster.has_method("select_ability"):
+		return
+	var loadout_resource: AbilityLoadout = caster.get("loadout") as AbilityLoadout
+	if loadout_resource == null:
+		return
+	for index: int in range(loadout_resource.get_equipped_ability_count()):
+		var ability: AbilityDefinition = loadout_resource.get_equipped_ability(index)
+		if ability != null and ability.get_spell_id() == "spectral_familiar":
+			caster.call("select_ability", index)
+			break
 
 
 func _reset_lab() -> void:

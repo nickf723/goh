@@ -701,13 +701,20 @@ func render_loadout() -> void:
 		var badge: String = slot_id.to_upper()
 		if not modifiers.is_empty():
 			badge += "  •  " + EquipmentCatalogScript.format_modifiers(modifiers)
+		var effect_names: String = EquipmentCatalogScript.format_effects(equipped_item_id)
+		if effect_names != "":
+			badge += "  •  " + effect_names
+		var equipment_tooltip: String = str(definition.get("description", "Choose owned gear for this slot."))
+		var effect_details: String = EquipmentCatalogScript.format_effects(equipped_item_id, true)
+		if effect_details != "":
+			equipment_tooltip += "\n" + effect_details
 		add_visual_action_tile(
 			equipment_grid,
 			item_icon,
 			item_name,
 			badge,
 			{"kind": "choose_equipment_slot", "slot_id": slot_id},
-			str(definition.get("description", "Choose owned gear for this slot."))
+			equipment_tooltip
 		)
 
 	add_section_header("SPELL RING")
@@ -767,6 +774,13 @@ func render_equipment_picker() -> void:
 			continue
 		owned_count += 1
 		var badge: String = EquipmentCatalogScript.format_modifiers(definition.get("modifiers", {}) as Dictionary)
+		var effect_names: String = EquipmentCatalogScript.format_effects(item_id)
+		if effect_names != "":
+			badge += "  •  " + effect_names
+		var equipment_tooltip: String = str(definition.get("description", ""))
+		var effect_details: String = EquipmentCatalogScript.format_effects(item_id, true)
+		if effect_details != "":
+			equipment_tooltip += "\n" + effect_details
 		if GameState.is_equipment_equipped(item_id):
 			badge = "EQUIPPED  •  " + badge
 		add_visual_action_tile(
@@ -775,7 +789,7 @@ func render_equipment_picker() -> void:
 			str(definition.get("name", item_id.capitalize())),
 			badge,
 			{"kind": "equip_item", "item_id": item_id},
-			str(definition.get("description", ""))
+			equipment_tooltip
 		)
 
 	if owned_count <= 0:

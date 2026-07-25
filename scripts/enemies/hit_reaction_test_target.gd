@@ -99,8 +99,8 @@ func _apply_profile() -> void:
 		_:
 			display_name = "Light Gremlin"
 			reaction_controller.configure({
-				"poise": 5.0,
-				"mass": 0.75,
+				"poise": 9.0,
+				"mass": 1.0,
 				"armor": 0.0,
 				"allows_launch": true,
 				"poise_recovery": 2.8,

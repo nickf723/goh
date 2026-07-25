@@ -98,8 +98,8 @@ func _spawn_ground_ring(origin: Vector3, radius: float, color: Color, duration: 
 	material.emission = Color(color.r, color.g, color.b)
 	material.emission_energy_multiplier = 1.1
 	ring.material_override = material
-	ring.global_position = origin + Vector3.UP * 0.025
 	get_tree().current_scene.add_child(ring)
+	ring.global_position = origin + Vector3.UP * 0.025
 	_track_effect(ring)
 	var tween := ring.create_tween()
 	tween.set_trans(Tween.TRANS_QUAD)
@@ -132,8 +132,8 @@ func _spawn_grip_mote() -> void:
 	material.emission = Color(0.42, 0.7, 1.0)
 	material.emission_energy_multiplier = 1.8
 	mote.material_override = material
-	mote.global_position = anchor.global_position
 	get_tree().current_scene.add_child(mote)
+	mote.global_position = anchor.global_position
 	_track_effect(mote)
 	var tween := mote.create_tween()
 	tween.parallel().tween_property(mote, "global_position:y", mote.global_position.y - 0.22, 0.34)

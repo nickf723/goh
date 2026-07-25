@@ -13,11 +13,12 @@ signal unlock_changed(unlock_id: String, value: bool)
 signal inventory_changed(item_id: String, count: int)
 signal quick_item_slot_changed(slot_index: int, item_id: String)
 signal quest_changed(quest_id: String, quest_data: Dictionary)
+signal currency_changed(amount: int, delta: int)
 
 const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
 const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
 const QuickItemCatalogScript = preload("res://scripts/items/quick_item_catalog.gd")
-const SAVE_VERSION: int = 6
+const SAVE_VERSION: int = 7
 const SAVE_SLOT_PATH: String = "user://goh_save_slot_1.json"
 const ARMOR_TRIAL_BLESSING_ID: String = "armor_trial_blessing"
 const GUARD_STAT: String = "guard"
@@ -44,6 +45,7 @@ var inventory: Dictionary = DEFAULT_INVENTORY.duplicate(true)
 var quick_item_slots: Array[String] = DEFAULT_QUICK_ITEM_SLOTS.duplicate()
 var collected_pickups: Dictionary = {}
 var quests: Dictionary = {}
+var currency: int = 0
 
 var story_flags: Dictionary = {
 	"inspected_stone": false,
@@ -202,6 +204,33 @@ func reset_quest(quest_id: String) -> void:
 		return
 	quests.erase(quest_id)
 	quest_changed.emit(quest_id, {})
+
+
+func get_currency() -> int:
+	return currency
+
+
+func set_currency(amount: int) -> void:
+	var before: int = currency
+	currency = maxi(amount, 0)
+	currency_changed.emit(currency, currency - before)
+
+
+func add_currency(amount: int) -> int:
+	if amount <= 0:
+		return 0
+	var before: int = currency
+	set_currency(currency + amount)
+	return currency - before
+
+
+func spend_currency(amount: int) -> bool:
+	if amount <= 0:
+		return true
+	if currency < amount:
+		return false
+	set_currency(currency - amount)
+	return true
 
 
 func add_inventory_item(item_id: String, amount: int = 1) -> int:
@@ -663,6 +692,7 @@ func reset_run() -> void:
 	key_items.clear()
 	unlocks.clear()
 	quests.clear()
+	set_currency(0)
 	reset_inventory_to_defaults(true)
 
 	for flag_name: String in story_flags.keys():
@@ -721,6 +751,7 @@ func save_at_bed(bed_id: String, bed_name: String, bed_position: Vector3) -> Dic
 		"inventory": get_inventory_snapshot(),
 		"quick_item_slots": get_quick_item_slots_snapshot(),
 		"collected_pickups": collected_pickups.duplicate(true),
+		"currency": currency,
 		"objective": current_objective,
 		"saved_at": Time.get_datetime_string_from_system(false, true),
 	}
@@ -797,6 +828,7 @@ func apply_save_data(save_data: Dictionary) -> bool:
 	apply_saved_unlocks(save_data)
 	apply_saved_key_items(save_data)
 	apply_saved_inventory(save_data)
+	set_currency(int(save_data.get("currency", 0)))
 	sync_legacy_progression_state()
 
 	if save_data.has("objective"):

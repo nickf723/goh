@@ -14,11 +14,14 @@ signal inventory_changed(item_id: String, count: int)
 signal quick_item_slot_changed(slot_index: int, item_id: String)
 signal quest_changed(quest_id: String, quest_data: Dictionary)
 signal currency_changed(amount: int, delta: int)
+signal experience_changed(current: int, required: int)
+signal level_gained(new_level: int, growth_points_awarded: int)
+signal growth_points_changed(points: int)
 
 const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
 const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
 const QuickItemCatalogScript = preload("res://scripts/items/quick_item_catalog.gd")
-const SAVE_VERSION: int = 7
+const SAVE_VERSION: int = 8
 const SAVE_SLOT_PATH: String = "user://goh_save_slot_1.json"
 const ARMOR_TRIAL_BLESSING_ID: String = "armor_trial_blessing"
 const GUARD_STAT: String = "guard"
@@ -46,6 +49,8 @@ var quick_item_slots: Array[String] = DEFAULT_QUICK_ITEM_SLOTS.duplicate()
 var collected_pickups: Dictionary = {}
 var quests: Dictionary = {}
 var currency: int = 0
+var experience: int = 0
+var growth_points: int = 0
 
 var story_flags: Dictionary = {
 	"inspected_stone": false,
@@ -204,6 +209,81 @@ func reset_quest(quest_id: String) -> void:
 		return
 	quests.erase(quest_id)
 	quest_changed.emit(quest_id, {})
+
+
+func get_experience() -> int:
+	return experience
+
+
+func get_growth_points() -> int:
+	return growth_points
+
+
+func get_experience_required(level: int = -1) -> int:
+	var target_level: int = get_stat("level") if level < 0 else level
+	return 40 + maxi(target_level - 1, 0) * 25
+
+
+func set_progression(new_experience: int, new_growth_points: int) -> void:
+	experience = clampi(new_experience, 0, maxi(get_experience_required() - 1, 0))
+	growth_points = maxi(new_growth_points, 0)
+	experience_changed.emit(experience, get_experience_required())
+	growth_points_changed.emit(growth_points)
+
+
+func add_experience(amount: int) -> Dictionary:
+	var result: Dictionary = {
+		"gained": 0,
+		"levels": 0,
+		"points": 0,
+		"level": get_stat("level"),
+	}
+	if amount <= 0:
+		return result
+	experience += amount
+	result["gained"] = amount
+	while experience >= get_experience_required():
+		var required: int = get_experience_required()
+		experience -= required
+		var new_level: int = get_stat("level") + 1
+		set_stat("level", new_level)
+		growth_points += 1
+		result["levels"] = int(result["levels"]) + 1
+		result["points"] = int(result["points"]) + 1
+		result["level"] = new_level
+		growth_points_changed.emit(growth_points)
+		level_gained.emit(new_level, 1)
+	if int(result["levels"]) > 0:
+		restore_rest_resources()
+	experience_changed.emit(experience, get_experience_required())
+	return result
+
+
+func grant_growth_points(amount: int) -> int:
+	if amount <= 0:
+		return 0
+	growth_points += amount
+	growth_points_changed.emit(growth_points)
+	return amount
+
+
+func spend_growth_point(amount: int = 1) -> bool:
+	if amount <= 0:
+		return true
+	if growth_points < amount:
+		return false
+	growth_points -= amount
+	growth_points_changed.emit(growth_points)
+	return true
+
+
+func get_progression_snapshot() -> Dictionary:
+	return {
+		"experience": experience,
+		"required": get_experience_required(),
+		"growth_points": growth_points,
+		"level": get_stat("level"),
+	}
 
 
 func get_currency() -> int:
@@ -692,6 +772,7 @@ func reset_run() -> void:
 	key_items.clear()
 	unlocks.clear()
 	quests.clear()
+	set_progression(0, 0)
 	set_currency(0)
 	reset_inventory_to_defaults(true)
 
@@ -752,6 +833,10 @@ func save_at_bed(bed_id: String, bed_name: String, bed_position: Vector3) -> Dic
 		"quick_item_slots": get_quick_item_slots_snapshot(),
 		"collected_pickups": collected_pickups.duplicate(true),
 		"currency": currency,
+		"progression": {
+			"experience": experience,
+			"growth_points": growth_points,
+		},
 		"objective": current_objective,
 		"saved_at": Time.get_datetime_string_from_system(false, true),
 	}
@@ -829,6 +914,11 @@ func apply_save_data(save_data: Dictionary) -> bool:
 	apply_saved_key_items(save_data)
 	apply_saved_inventory(save_data)
 	set_currency(int(save_data.get("currency", 0)))
+	var saved_progression: Dictionary = save_data.get("progression", {}) as Dictionary
+	set_progression(
+		int(saved_progression.get("experience", 0)),
+		int(saved_progression.get("growth_points", 0))
+	)
 	sync_legacy_progression_state()
 
 	if save_data.has("objective"):

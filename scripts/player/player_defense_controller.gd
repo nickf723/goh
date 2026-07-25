@@ -162,8 +162,16 @@ func resolve_perfect_guard(payload: DamagePayload, attacker: Node3D, incoming_di
 
 
 func resolve_block(payload: DamagePayload, incoming_direction: Vector3) -> Dictionary:
-	var stamina_cost: int = maxi(minimum_stamina_cost, payload.amount)
-	var stance_cost: int = maxi(minimum_stance_damage, payload.stance_damage)
+	var stamina_cost: int = GameplayEffects.modify_int(
+		"guard_stamina_cost",
+		maxi(minimum_stamina_cost, payload.amount),
+		"ceil"
+	)
+	var stance_cost: int = GameplayEffects.modify_int(
+		"stance_damage_taken",
+		maxi(minimum_stance_damage, payload.stance_damage),
+		"ceil"
+	)
 	var current_stamina: int = GameState.get_stat("stamina")
 
 	if current_stamina < stamina_cost:
@@ -218,7 +226,8 @@ func resolve_guard_break(payload: DamagePayload, incoming_direction: Vector3, re
 func resolve_direct_hit(payload: DamagePayload, incoming_direction: Vector3) -> Dictionary:
 	var health_before: int = GameState.get_stat("health")
 	GameState.take_damage(payload.amount)
-	GameState.damage_stance(payload.stance_damage)
+	var effective_stance_damage: int = GameplayEffects.modify_int("stance_damage_taken", payload.stance_damage, "ceil")
+	GameState.damage_stance(effective_stance_damage)
 	var health_damage: int = health_before - GameState.get_stat("health")
 
 	last_outcome = "hit"

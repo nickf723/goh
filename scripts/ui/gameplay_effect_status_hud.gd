@@ -166,6 +166,16 @@ func get_effect_icon(effect_id: String) -> String:
 			return "◇"
 		"fortunes_favor":
 			return "✧"
+		"poisoned":
+			return "☠"
+		"burning":
+			return "🔥"
+		"chilled":
+			return "❄"
+		"weakened":
+			return "↓"
+		"silenced":
+			return "✕"
 		_:
 			return "◆"
 
@@ -182,6 +192,16 @@ func get_effect_color(effect_id: String) -> Color:
 			return Color(1.0, 0.38, 0.5, 1.0)
 		"resonant_focus":
 			return Color(0.25, 0.78, 1.0, 1.0)
+		"poisoned":
+			return Color(0.48, 0.94, 0.22, 1.0)
+		"burning":
+			return Color(1.0, 0.34, 0.12, 1.0)
+		"chilled":
+			return Color(0.35, 0.84, 1.0, 1.0)
+		"weakened":
+			return Color(1.0, 0.42, 0.38, 1.0)
+		"silenced":
+			return Color(0.78, 0.45, 1.0, 1.0)
 		_:
 			return Color(0.9, 0.76, 0.28, 1.0)
 

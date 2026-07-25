@@ -22,8 +22,9 @@ func _ready() -> void:
 		GameState.weapon_mastery_ranked_up.connect(_on_mastery_ranked_up)
 	var weapon_controller: Node = get_parent().get_node_or_null("WeaponController")
 	if weapon_controller != null:
-		if weapon_controller.weapon_changed.connect(_on_weapon_changed) != OK:
-			pass
+		var weapon_changed_callable: Callable = Callable(self, "_on_weapon_changed")
+		if not weapon_controller.is_connected("weapon_changed", weapon_changed_callable):
+			weapon_controller.connect("weapon_changed", weapon_changed_callable)
 		var weapon: WeaponDefinition = weapon_controller.get("equipped_weapon") as WeaponDefinition
 		if weapon != null:
 			current_weapon_class = weapon.weapon_class

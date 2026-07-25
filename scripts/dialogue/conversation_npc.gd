@@ -140,6 +140,19 @@ func _input(event: InputEvent) -> void:
 
 
 func resolve_entry_node() -> String:
+	var rules_variant: Variant = conversation_data.get("entry_rules", [])
+	if rules_variant is Array:
+		for rule_variant: Variant in rules_variant:
+			if not rule_variant is Dictionary:
+				continue
+			var rule: Dictionary = rule_variant as Dictionary
+			var required_flag: String = str(rule.get("requires_flag", ""))
+			var blocked_flag: String = str(rule.get("blocked_by_flag", ""))
+			if required_flag != "" and not GameState.get_flag(required_flag):
+				continue
+			if blocked_flag != "" and GameState.get_flag(blocked_flag):
+				continue
+			return str(rule.get("node", conversation_data.get("entry", "start")))
 	var resolved_flag: String = str(conversation_data.get("resolved_flag", ""))
 	if resolved_flag != "" and GameState.get_flag(resolved_flag):
 		return str(conversation_data.get("repeat_entry", "start"))

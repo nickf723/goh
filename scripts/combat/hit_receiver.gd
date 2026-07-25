@@ -169,7 +169,7 @@ func _damage_health(power: int) -> Dictionary:
 			message += " Grace recovers " + str(restores_mana_when_defeated) + " mana."
 
 		if disappears_when_defeated and get_parent() != null:
-			get_parent().queue_free()
+			request_parent_defeat_cleanup()
 
 		return {
 			"message": message,
@@ -182,6 +182,16 @@ func _damage_health(power: int) -> Dictionary:
 		"objective": "Keep testing target health.",
 		"damage_dealt": power,
 	}
+
+
+func request_parent_defeat_cleanup() -> void:
+	var parent: Node = get_parent()
+	if parent == null:
+		return
+	if parent.has_method("begin_defeat_cleanup"):
+		parent.call("begin_defeat_cleanup")
+	else:
+		parent.queue_free()
 
 
 func reset_health() -> void:
@@ -338,7 +348,7 @@ func _damage_health_from_payload(
 			defeat_message += " Grace recovers " + str(restores_mana_when_defeated) + " mana."
 
 		if disappears_when_defeated and get_parent() != null:
-			get_parent().queue_free()
+			request_parent_defeat_cleanup()
 
 		return {
 			"message": defeat_message,

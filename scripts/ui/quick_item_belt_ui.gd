@@ -35,10 +35,12 @@ func refresh_display() -> void:
 	set_slot_label(up_label, PlayerQuickItemController.SLOT_UP, "↑")
 	set_slot_label(left_label, PlayerQuickItemController.SLOT_LEFT, "←")
 	set_slot_label(right_label, PlayerQuickItemController.SLOT_RIGHT, "→")
-	set_slot_label(down_label, PlayerQuickItemController.SLOT_DOWN, "↓")
+	if down_label != null:
+		down_label.text = "▼  CONTEXT"
+		down_label.modulate = Color(0.72, 0.48, 1.0, 0.9)
 
 	if center_label != null:
-		center_label.text = "USING" if controller.is_using_item() else "ITEMS"
+		center_label.text = "USE" if controller.is_using_item() else "ITEM"
 		center_label.modulate = Color(0.42, 0.9, 1.0, 1.0) if controller.is_using_item() else Color(0.72, 0.78, 0.9, 1.0)
 
 	if progress_label != null:
@@ -47,7 +49,8 @@ func refresh_display() -> void:
 			var progress: float = 1.0 - (controller.use_timer / duration)
 			progress_label.text = controller.active_item.short_label + "  " + str(roundi(progress * 100.0)) + "%"
 		else:
-			progress_label.text = "D-PAD • H USES UP"
+			progress_label.text = ""
+		progress_label.visible = controller.is_using_item()
 
 
 func set_slot_label(label: Label, slot_index: int, arrow: String) -> void:

@@ -189,8 +189,12 @@ func get_quest_rows(state_filter: String = "") -> Array[Dictionary]:
 		if state_filter != "" and str(row.get("state", "")) != state_filter:
 			continue
 		rows.append(row)
-	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("title", "")) < str(b.get("title", "")))
+	rows.sort_custom(sort_quest_rows)
 	return rows
+
+
+func sort_quest_rows(a: Dictionary, b: Dictionary) -> bool:
+	return str(a.get("title", "")) < str(b.get("title", ""))
 
 
 func reset_quest(quest_id: String) -> void:

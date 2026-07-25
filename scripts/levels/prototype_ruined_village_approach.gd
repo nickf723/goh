@@ -17,6 +17,7 @@ const WeaponRackScene: PackedScene = preload("res://scenes/actors/interactables/
 const PracticeSword: WeaponDefinition = preload("res://data/weapons/practice_sword.tres")
 const TrainingHammer: WeaponDefinition = preload("res://data/weapons/training_hammer.tres")
 const TrainingSpear: WeaponDefinition = preload("res://data/weapons/training_spear.tres")
+const VillageShowcaseLoadout: AbilityLoadout = preload("res://data/loadouts/grace_ruined_village_showcase_loadout.tres")
 
 const CHURCH_TRIAL_SCENE: String = "res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn"
 const ARRIVAL_OBJECTIVE: String = "Survey the impossible village and reach the church above the ruins."
@@ -72,6 +73,51 @@ func _ready() -> void:
 			"Grace lands in a hollow where an entire village appears to have been cut away from the earth. "
 			+ "The church remains on the ridge beyond it."
 		)
+
+
+	configure_player_showcase()
+
+
+func configure_player_showcase() -> void:
+	var player: CharacterBody3D = get_node_or_null("Player") as CharacterBody3D
+	if player == null:
+		return
+
+	var ability_caster: Node = player.get_node_or_null("AbilityCaster")
+	if ability_caster != null:
+		var runtime_loadout: AbilityLoadout = VillageShowcaseLoadout.duplicate(true) as AbilityLoadout
+		ability_caster.set("loadout", runtime_loadout)
+
+		var flight_index: int = 0
+		for index: int in range(runtime_loadout.equipped_abilities.size()):
+			var ability: AbilityDefinition = runtime_loadout.equipped_abilities[index]
+			if ability != null and ability.get_spell_id() == "flight_concentration":
+				flight_index = index
+				break
+
+		ability_caster.set("current_ability_index", flight_index)
+		if ability_caster.has_method("align_focus_menu_to_current_ability"):
+			ability_caster.call("align_focus_menu_to_current_ability")
+		if ability_caster.has_method("emit_current_ability"):
+			ability_caster.call("emit_current_ability")
+
+	var aerial_locomotion: PlayerAerialLocomotion = player.get_node_or_null("AerialLocomotion") as PlayerAerialLocomotion
+	if aerial_locomotion != null:
+		aerial_locomotion.double_jump_unlocked = true
+		aerial_locomotion.hover_unlocked = true
+		aerial_locomotion.flight_unlocked = true
+		aerial_locomotion.maximum_air_jumps = 1
+
+	var maximum_mana: int = max(GameState.get_stat("max_mana"), 12)
+	GameState.set_stat("max_mana", maximum_mana)
+	GameState.set_stat("mana", maximum_mana)
+	GameState.set_stat("stamina", GameState.get_stat("max_stamina"))
+	GameState.set_stat("focus", max(GameState.get_stat("focus"), 5))
+
+	show_message(
+		"Spell showcase ready: all 22 developed spells are learned and equipped. "
+		+ "Flight is selected — cast with RT / Q, Jump ascends, and Dodge descends."
+	)
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -235,7 +235,7 @@ func slot_name(index: int) -> String:
 
 func apply_element(element: String) -> void:
 	var normalized: String = element.to_lower().strip_edges()
-	if not normalized in ["fire", "air", "ice", "water", "lightning"]:
+	if normalized not in ["fire", "air", "ice", "water", "lightning"]:
 		return
 	catalyst = normalized
 	status_message = normalized.capitalize() + " treatment prepared."
@@ -248,7 +248,12 @@ func apply_element(element: String) -> void:
 func get_recipe_key(ingredients: Array[String]) -> String:
 	var sorted: Array[String] = ingredients.duplicate()
 	sorted.sort()
-	return "|".join(sorted)
+	var key: String = ""
+	for ingredient_id: String in sorted:
+		if key != "":
+			key += "|"
+		key += ingredient_id
+	return key
 
 
 func ingredient_name(ingredient_id: String) -> String:
@@ -401,8 +406,9 @@ func flash_liquid(color: Color) -> void:
 		return
 	liquid_material.albedo_color = color
 	liquid_material.emission = color
+	liquid_material.emission_energy_multiplier = 3.5
 	var tween := create_tween()
-	tween.tween_method(func(value: float) -> void: liquid_material.emission_energy_multiplier = value, 3.5, 1.4, 0.45)
+	tween.tween_property(liquid_material, "emission_energy_multiplier", 1.4, 0.45)
 	tween.finished.connect(update_liquid_color)
 
 

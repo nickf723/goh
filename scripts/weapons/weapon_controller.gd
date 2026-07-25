@@ -1022,18 +1022,26 @@ func clear_weapon_model() -> void:
 
 
 func build_sword_visual() -> void:
-	add_box_part("Grip", Vector3(0.09, 0.09, 0.34), Vector3(0.15, 0.0, 0.16), equipped_weapon.visual_secondary_color)
-	add_box_part("Guard", Vector3(0.42, 0.08, 0.08), Vector3(0.15, 0.0, -0.04), equipped_weapon.visual_accent_color, true)
-	add_box_part("Blade", Vector3(0.11, 0.055, 1.12), Vector3(0.15, 0.0, -0.64), equipped_weapon.visual_primary_color, true)
+	# The hand remains anatomically right-sided, while the blade sits nearer the
+	# character's center line so its silhouette does not feel detached from Grace.
+	if slash_trail != null:
+		slash_trail.position.x = 0.03
+	add_box_part("Grip", Vector3(0.09, 0.09, 0.34), Vector3(-0.02, 0.0, 0.16), equipped_weapon.visual_secondary_color)
+	add_box_part("Guard", Vector3(0.42, 0.08, 0.08), Vector3(-0.02, 0.0, -0.04), equipped_weapon.visual_accent_color, true)
+	add_box_part("Blade", Vector3(0.11, 0.055, 1.12), Vector3(-0.02, 0.0, -0.64), equipped_weapon.visual_primary_color, true)
 
 
 func build_hammer_visual() -> void:
+	if slash_trail != null:
+		slash_trail.position.x = 0.2
 	add_box_part("Shaft", Vector3(0.11, 0.11, 1.28), Vector3(0.12, 0.0, -0.42), equipped_weapon.visual_secondary_color)
 	add_box_part("Head", Vector3(0.74, 0.42, 0.34), Vector3(0.12, 0.0, -1.02), equipped_weapon.visual_primary_color)
 	add_box_part("HeadBand", Vector3(0.8, 0.12, 0.39), Vector3(0.12, 0.0, -1.02), equipped_weapon.visual_accent_color, true)
 
 
 func build_spear_visual() -> void:
+	if slash_trail != null:
+		slash_trail.position.x = 0.2
 	add_box_part("Shaft", Vector3(0.075, 0.075, 1.82), Vector3(0.12, 0.0, -0.68), equipped_weapon.visual_secondary_color)
 	add_cone_part("Tip", 0.17, 0.0, 0.56, Vector3(0.12, 0.0, -1.86), Vector3(90.0, 0.0, 0.0), equipped_weapon.visual_primary_color, true)
 	add_box_part("Collar", Vector3(0.2, 0.12, 0.16), Vector3(0.12, 0.0, -1.55), equipped_weapon.visual_accent_color, true)

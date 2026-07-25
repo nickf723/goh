@@ -33,6 +33,7 @@ GameplayEffectAccessScript.remove_sources_with_tag("food")
 
 ## Channels in v1
 
+- `movement_speed`
 - `stamina_recovery_rate`
 - `mana_cost`
 - `stamina_cost`
@@ -50,6 +51,16 @@ A consumer resolves a value without equipment-specific logic:
 var recovery_rate := GameplayEffectAccessScript.modify_float("stamina_recovery_rate", base_rate)
 var mana_cost := GameplayEffectAccessScript.modify_int("mana_cost", base_cost, "ceil")
 ```
+
+## Harmful effects
+
+- Poisoned deals one health damage every two seconds.
+- Burning deals one health damage every second.
+- Chilled reduces movement speed and stamina recovery to 70%.
+- Weakened increases incoming stance damage by 35%.
+- Silenced raises mana and focus costs by 50%.
+
+Harmful sources use the `harmful` tag plus an ailment tag such as `poison`. Cleansing items remove matching sources through `remove_effects_with_tag()`. Poison gas sustains the `poisoned` effect while Grace remains exposed; it lingers briefly after she escapes, and Clarifying Antidote removes it.
 
 ## Current equipment sources
 

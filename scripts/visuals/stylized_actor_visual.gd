@@ -191,6 +191,7 @@ func sample_animation_pose(delta: float) -> void:
 	right_arm_rotation.x = step_wave * arm_swing_radians * movement_weight
 	body_rotation.y = -step_wave * 0.035 * movement_weight
 	head_rotation.y = sin(elapsed * 0.72) * 0.025 * (1.0 - movement_weight)
+	head_rotation.y += clampf(-local_velocity.x * 0.018, -0.09, 0.09)
 
 	match presentation_state:
 		"climb":
@@ -549,10 +550,26 @@ func pose_breathing(delta: float) -> void:
 	if presentation_state not in ["idle", "guard", "item"]:
 		breath_weight = 0.25
 	var breath: float = sin(elapsed * idle_bob_speed) * idle_breath_amount * breath_weight
+	var squash_xz: float = 1.0
+	var squash_y: float = 1.0
+	if presentation_state == "landing":
+		var landing_wave: float = sin(get_landing_progress() * PI) * landing_strength
+		squash_xz += landing_wave * 0.08
+		squash_y -= landing_wave * 0.12
+	elif presentation_state == "jump":
+		squash_xz -= 0.025
+		squash_y += 0.045
+	elif presentation_state == "dodge":
+		var dodge_squash: float = get_dodge_wave()
+		squash_xz += dodge_squash * 0.055
+		squash_y -= dodge_squash * 0.075
+	elif presentation_state == "exhausted":
+		squash_xz += 0.035
+		squash_y -= 0.045
 	var target_scale := Vector3(
-		base_scale.x * (1.0 - breath * 0.22),
-		base_scale.y * (1.0 + breath),
-		base_scale.z * (1.0 - breath * 0.22)
+		base_scale.x * (1.0 - breath * 0.22) * squash_xz,
+		base_scale.y * (1.0 + breath) * squash_y,
+		base_scale.z * (1.0 - breath * 0.22) * squash_xz
 	)
 	body_root.scale = body_root.scale.lerp(
 		target_scale,

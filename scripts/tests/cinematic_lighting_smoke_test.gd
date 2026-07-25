@@ -58,6 +58,13 @@ func _ready() -> void:
 	assert(is_equal_approx(environment_node.environment.fog_density, 0.019))
 	assert(rig.call("get_debug_data").get("weather") == "snow_weather")
 
+	rig.call("set_weather_lighting", "thunderstorm_weather", false)
+	assert(is_equal_approx(sun.light_energy, 0.10))
+	assert(is_equal_approx(environment_node.environment.fog_density, 0.020))
+	assert(rig.call("get_debug_data").get("weather") == "thunderstorm_weather")
+	rig.call("flash_lightning", 1.0, Vector3.ZERO)
+	assert(int(rig.call("get_debug_data").get("lightning_flashes", 0)) == 1)
+
 	rig.call("set_weather_lighting", "", false)
 	assert(is_equal_approx(sun.light_energy, 1.42))
 	assert(is_equal_approx(environment_node.environment.fog_density, 0.0035))

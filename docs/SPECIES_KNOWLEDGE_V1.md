@@ -17,9 +17,10 @@ Knowledge is shared substrate. Familiar customization and transformation systems
 D-pad Down is reserved for special context.
 
 - Tap: perform the context's primary action
-- Hold: open the compact context menu
-- Hold + Left/Up/Right: select one of three actions
-- Keyboard equivalent: Tab; while held use Left/Up/Right or 1/2/3
+- Hold until the compact context menu opens, then release: the menu stays open
+- Press Left/Up/Right to select one of three actions
+- Press Down again to cancel
+- Keyboard equivalent: hold then release Tab; use Left/Up/Right or 1/2/3, and Tab again to cancel
 
 Contexts currently include familiar commands, mounts, and animal study. Controller quick items retain D-pad Up, Left, and Right. All four quick-item slots remain available through keyboard shortcuts.
 

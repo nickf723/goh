@@ -88,7 +88,9 @@ static func get_weapon(item_id: String) -> WeaponDefinition:
 	if path == "":
 		return null
 	var resource: Resource = load(path)
-	return resource as WeaponDefinition if resource is WeaponDefinition else null
+	if resource is WeaponDefinition:
+		return resource as WeaponDefinition
+	return null
 
 
 static func get_all_rows() -> Array[Dictionary]:

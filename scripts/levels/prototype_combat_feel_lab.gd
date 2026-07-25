@@ -176,7 +176,11 @@ func _update_hud() -> void:
 	var weapon: Dictionary = weapon_controller.get_debug_data()
 	var target: Dictionary = dummy.get_debug_data()
 	var chain_value: Variant = weapon.get("chain", [])
-	var chain_text: String = " → ".join(chain_value as Array) if chain_value is Array and (chain_value as Array).size() > 0 else "none"
+	var chain_names: PackedStringArray = []
+	if chain_value is Array:
+		for chain_entry: Variant in chain_value as Array:
+			chain_names.append(str(chain_entry))
+	var chain_text: String = " → ".join(chain_names) if chain_names.size() > 0 else "none"
 	status_label.text = (
 		"FLOW-TEST SWORD  •  " + str(weapon.get("attack", "Ready")).to_upper()
 		+ "\nPHASE " + str(weapon.get("phase", "idle")).to_upper()

@@ -146,6 +146,8 @@ func _configure_player() -> void:
 		var base_weapon: WeaponDefinition = weapon_controller.get("equipped_weapon") as WeaponDefinition
 		if base_weapon != null:
 			var lab_weapon: WeaponDefinition = base_weapon.duplicate(true) as WeaponDefinition
+			lab_weapon.damage = 6
+			lab_weapon.stance_damage = 6
 			var base_payload: DamagePayload = lab_weapon.light_payload
 			if base_payload != null:
 				var lab_payload: DamagePayload = base_payload.duplicate(true) as DamagePayload

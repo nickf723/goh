@@ -773,8 +773,14 @@ func apply_attack_facing(direction: Vector3) -> void:
 	var actor: Node3D = get_actor()
 	if actor == null or direction.length_squared() <= 0.001:
 		return
+	# Movement-directed attacks already use the cached heading for hit geometry and
+	# lunges. Rotating the player/camera rig here made strafing attacks appear to
+	# teleport, so visible facing assist only settles an idle attacker.
+	var movement_input: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	if movement_input.length() > 0.22:
+		return
 	var target_angle: float = atan2(-direction.x, -direction.z)
-	actor.rotation.y = lerp_angle(actor.rotation.y, target_angle, 0.82)
+	actor.rotation.y = lerp_angle(actor.rotation.y, target_angle, 0.38)
 
 
 func apply_camera_impact(attack: WeaponAttackDefinition, critical: bool) -> void:

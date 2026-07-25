@@ -124,6 +124,17 @@ func get_dodge_velocity() -> Vector3:
 func is_dodge_active() -> bool:
 	return is_active
 
+
+func cancel_into_weapon_technique() -> Vector3:
+	if not is_active:
+		return Vector3.ZERO
+	var carried_direction: Vector3 = dodge_direction
+	is_active = false
+	dodge_timer = 0.0
+	if action_state != null:
+		action_state.end_dodge()
+	return carried_direction
+
 func get_actor_forward() -> Vector3:
 	if actor == null:
 		return Vector3.FORWARD

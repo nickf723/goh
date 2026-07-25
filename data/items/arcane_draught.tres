@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="QuickItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/quick_item_definition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "arcane_draught"
+display_name = "Arcane Draught"
+short_label = "ARCANE"
+description = "A violet draught that temporarily smooths the flow of spellcasting."
+icon_symbol = "✦"
+use_visual_color = Color(0.5, 0.3, 1, 1)
+max_stack = 5
+max_charges = 5
+refill_on_rest = false
+use_duration = 0.8
+movement_multiplier = 0.35
+requires_grounded = true
+can_use_at_maximum = true
+effect_type = "gameplay_effect"
+gameplay_effect_ids = Array[String](["apprentice_flow"])
+gameplay_effect_duration = 30.0
+gameplay_effect_tags = Array[String](["consumable_buff", "draught", "magic"])
+element = "dreams"
+tags = Array[String](["consumable", "quick_item", "buff", "draught", "magic"])

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="QuickItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/quick_item_definition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "ironbark_brew"
+display_name = "Ironbark Brew"
+short_label = "BARK"
+description = "A dense earthen brew that temporarily reinforces Grace's stance."
+icon_symbol = "▧"
+use_visual_color = Color(0.66, 0.45, 0.18, 1)
+max_stack = 5
+max_charges = 5
+refill_on_rest = false
+use_duration = 0.85
+movement_multiplier = 0.3
+requires_grounded = true
+can_use_at_maximum = true
+effect_type = "gameplay_effect"
+gameplay_effect_ids = Array[String](["ironweave_guard"])
+gameplay_effect_duration = 30.0
+gameplay_effect_tags = Array[String](["consumable_buff", "brew", "defense"])
+element = "earth"
+tags = Array[String](["consumable", "quick_item", "buff", "brew", "earth"])

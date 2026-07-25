@@ -469,6 +469,10 @@ func find_targets(attack: WeaponAttackDefinition) -> Array[Node]:
 	if actor == null or attack == null:
 		return []
 
+	var locked_part: Node = _get_locked_weak_point(actor, attack)
+	if locked_part != null:
+		return [locked_part]
+
 	var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
 	var shape: SphereShape3D = SphereShape3D.new()
 	shape.radius = max(attack.attack_range, 0.1)
@@ -514,6 +518,26 @@ func find_targets(attack: WeaponAttackDefinition) -> Array[Node]:
 			break
 
 	return targets
+
+
+func _get_locked_weak_point(actor: Node3D, attack: WeaponAttackDefinition) -> Node:
+	if actor == null or attack == null:
+		return null
+	var target_value: Variant = actor.get("lock_on_target")
+	if not (target_value is Node3D):
+		return null
+	var target: Node3D = target_value as Node3D
+	if not target.is_in_group("lock_on_weak_point"):
+		return null
+	if target.has_method("is_targeting_enabled") and not bool(target.call("is_targeting_enabled")):
+		return null
+	var target_position: Vector3 = get_target_position(target)
+	var maximum_distance: float = max(attack.attack_range, 0.1) + 0.75
+	if get_attack_origin().distance_to(target_position) > maximum_distance:
+		return null
+	if not is_target_in_attack_cone(target, attack):
+		return null
+	return target
 
 
 func send_payload_to_target(target: Node, payload: DamagePayload) -> Dictionary:

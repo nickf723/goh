@@ -29,6 +29,8 @@ var hard_target: Node3D = null
 var soft_refresh_timer: float = 0.0
 var soft_marker: Node3D = null
 var soft_marker_material: StandardMaterial3D = null
+var spring_arm: SpringArm3D = null
+var base_spring_length: float = 6.0
 
 
 func _ready() -> void:
@@ -37,6 +39,9 @@ func _ready() -> void:
 		camera_pivot = actor.get_node_or_null("CameraPivot") as Node3D
 	if camera_pivot != null:
 		base_camera_pivot_position = camera_pivot.position
+		spring_arm = camera_pivot.get_node_or_null("SpringArm3D") as SpringArm3D
+		if spring_arm != null:
+			base_spring_length = spring_arm.spring_length
 	add_to_group("combat_targeting_assists")
 	add_to_group("debuggable")
 	_create_soft_marker()
@@ -129,7 +134,7 @@ func find_directional_target(current_target: Node3D, direction: int) -> Node3D:
 	var current_screen: Vector2 = camera.unproject_position(get_target_aim_point(current_target))
 	var best_target: Node3D = null
 	var best_score: float = INF
-	for candidate: Node3D in _get_candidates(false, current_target):
+	for candidate: Node3D in _get_directional_candidates(current_target):
 		var aim_point: Vector3 = get_target_aim_point(candidate)
 		if camera.is_position_behind(aim_point):
 			continue
@@ -144,6 +149,35 @@ func find_directional_target(current_target: Node3D, direction: int) -> Node3D:
 			best_score = score
 			best_target = candidate
 	return best_target
+
+
+func _get_directional_candidates(current_target: Node3D) -> Array[Node3D]:
+	var candidates: Array[Node3D] = _get_candidates(false, current_target)
+	var targeting_owner: Node3D = current_target
+	if current_target != null and current_target.has_method("get_targeting_owner"):
+		var owner_value: Variant = current_target.call("get_targeting_owner")
+		if owner_value is Node3D:
+			targeting_owner = owner_value as Node3D
+
+	for raw_part: Node in get_tree().get_nodes_in_group("lock_on_weak_point"):
+		var part: Node3D = raw_part as Node3D
+		if part == null or part == current_target or not is_instance_valid(part):
+			continue
+		if part.has_method("is_targeting_enabled") and not bool(part.call("is_targeting_enabled")):
+			continue
+		var part_owner: Node3D = part.get_parent() as Node3D
+		if part.has_method("get_targeting_owner"):
+			var part_owner_value: Variant = part.call("get_targeting_owner")
+			if part_owner_value is Node3D:
+				part_owner = part_owner_value as Node3D
+		if part_owner != targeting_owner:
+			continue
+		if not candidates.has(part):
+			candidates.append(part)
+
+	if current_target != targeting_owner and targeting_owner != null and not candidates.has(targeting_owner):
+		candidates.append(targeting_owner)
+	return candidates
 
 
 func get_hard_candidates(exclude_target: Node3D = null) -> Array[Node3D]:
@@ -298,6 +332,12 @@ func get_target_display_name(target: Node) -> String:
 func get_target_color(target: Node3D, soft: bool = false) -> Color:
 	if target == null:
 		return Color(0.62, 0.82, 1.0, 0.7)
+	if target.is_in_group("lock_on_weak_point"):
+		var authored_color: Variant = target.get("part_color")
+		if authored_color is Color:
+			var part_color: Color = authored_color as Color
+			part_color.a = 0.96
+			return part_color
 	if target.is_in_group("boss") or target.name.to_lower().contains("boss"):
 		return Color(1.0, 0.28, 0.68, 0.96)
 	if target.is_in_group("metal_tether_anchors"):
@@ -375,12 +415,25 @@ func _update_camera_composition(delta: float) -> void:
 	if camera_pivot == null:
 		return
 	var desired_position: Vector3 = base_camera_pivot_position
+	var distance_multiplier: float = 1.0
 	if hard_target != null and is_instance_valid(hard_target):
 		desired_position.x += camera_side_offset
+		if hard_target.has_method("get_lock_on_camera_distance_multiplier"):
+			distance_multiplier = clampf(
+				float(hard_target.call("get_lock_on_camera_distance_multiplier")),
+				1.0,
+				1.8
+			)
 	camera_pivot.position = camera_pivot.position.lerp(
 		desired_position,
 		clampf(camera_composition_speed * max(delta, 0.0), 0.0, 1.0)
 	)
+	if spring_arm != null:
+		spring_arm.spring_length = lerpf(
+			spring_arm.spring_length,
+			base_spring_length * distance_multiplier,
+			clampf(camera_composition_speed * 0.72 * max(delta, 0.0), 0.0, 1.0)
+		)
 
 
 func _get_camera() -> Camera3D:
@@ -448,6 +501,10 @@ func _get_shape_height(shape: Shape3D) -> float:
 func _is_target_defeated(target: Node) -> bool:
 	if target == null:
 		return true
+	if target.has_method("is_targeting_enabled") and not bool(target.call("is_targeting_enabled")):
+		return true
+	if target.has_method("is_target_defeated"):
+		return bool(target.call("is_target_defeated"))
 	var hit_receiver: Node = target.get_node_or_null("HitReceiver")
 	if hit_receiver == null:
 		return false

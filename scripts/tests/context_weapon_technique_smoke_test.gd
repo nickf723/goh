@@ -28,4 +28,18 @@ func _ready() -> void:
 		assert(payload.tags.has("technique_dash"))
 		assert(payload.tags.has("context_combo"))
 		assert(payload.tags.has("context_deep_combo"))
+		for aerial_context: String in [
+			WeaponTechniqueCatalogScript.CONTEXT_AERIAL_NEUTRAL,
+			WeaponTechniqueCatalogScript.CONTEXT_AERIAL_FORWARD,
+			WeaponTechniqueCatalogScript.CONTEXT_AERIAL_DOWN,
+		]:
+			assert(WeaponTechniqueCatalogScript.is_context_unlocked(weapon_class, aerial_context, 1))
+			var aerial_attack: WeaponAttackDefinition = WeaponTechniqueCatalogScript.build_aerial_attack(
+				base_attack,
+				weapon_class,
+				aerial_context
+			)
+			assert(aerial_attack != null)
+			assert(aerial_attack.extra_tags.has("context_aerial"))
+			assert(aerial_attack.extra_tags.has(aerial_context))
 	print("Context weapon technique smoke test passed for all 16 weapon classes.")

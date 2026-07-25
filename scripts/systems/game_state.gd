@@ -21,12 +21,15 @@ signal level_gained(new_level: int, growth_points_awarded: int)
 signal growth_points_changed(points: int)
 signal equipment_owned_changed(item_id: String, owned: bool)
 signal equipment_changed(slot_id: String, item_id: String)
+signal weapon_mastery_changed(weapon_class: String, points: int, rank: int, delta: int)
+signal weapon_mastery_ranked_up(weapon_class: String, rank: int)
 
 const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
 const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
 const QuickItemCatalogScript = preload("res://scripts/items/quick_item_catalog.gd")
 const EquipmentCatalogScript = preload("res://scripts/equipment/equipment_catalog.gd")
-const SAVE_VERSION: int = 9
+const WeaponMasteryCatalogScript = preload("res://scripts/weapons/weapon_mastery_catalog.gd")
+const SAVE_VERSION: int = 10
 const SAVE_SLOT_PATH: String = "user://goh_save_slot_1.json"
 const ARMOR_TRIAL_BLESSING_ID: String = "armor_trial_blessing"
 const GUARD_STAT: String = "guard"
@@ -70,6 +73,7 @@ var experience: int = 0
 var growth_points: int = 0
 var owned_equipment: Dictionary = DEFAULT_OWNED_EQUIPMENT.duplicate(true)
 var equipped_items: Dictionary = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
+var weapon_mastery: Dictionary = {}
 
 var story_flags: Dictionary = {
 	"inspected_stone": false,
@@ -120,6 +124,74 @@ func get_stat(stat_name: String) -> int:
 func add_stat(stat_name: String, amount: int) -> void:
 	var current_value: int = get_stat(stat_name)
 	set_stat(stat_name, current_value + amount)
+
+
+func get_weapon_mastery_points(weapon_class: String) -> int:
+	return maxi(int(weapon_mastery.get(weapon_class, 0)), 0)
+
+
+func get_weapon_mastery_rank(weapon_class: String) -> int:
+	return WeaponMasteryCatalogScript.get_rank(get_weapon_mastery_points(weapon_class))
+
+
+func get_weapon_mastery_snapshot() -> Dictionary:
+	return weapon_mastery.duplicate(true)
+
+
+func add_weapon_mastery_progress(weapon_class: String, amount: int, _reason: String = "") -> Dictionary:
+	if amount <= 0 or not WeaponMasteryCatalogScript.is_weapon_class(weapon_class):
+		return {}
+	var previous_points: int = get_weapon_mastery_points(weapon_class)
+	var previous_rank: int = WeaponMasteryCatalogScript.get_rank(previous_points)
+	var maximum_points: int = WeaponMasteryCatalogScript.RANK_THRESHOLDS.back()
+	var new_points: int = mini(previous_points + amount, maximum_points)
+	if new_points == previous_points:
+		return {
+			"weapon_class": weapon_class,
+			"points": new_points,
+			"rank": previous_rank,
+			"delta": 0,
+			"ranked_up": false,
+		}
+	weapon_mastery[weapon_class] = new_points
+	var new_rank: int = WeaponMasteryCatalogScript.get_rank(new_points)
+	weapon_mastery_changed.emit(weapon_class, new_points, new_rank, new_points - previous_points)
+	if new_rank > previous_rank:
+		for unlocked_rank: int in range(previous_rank + 1, new_rank + 1):
+			weapon_mastery_ranked_up.emit(weapon_class, unlocked_rank)
+	return {
+		"weapon_class": weapon_class,
+		"points": new_points,
+		"rank": new_rank,
+		"delta": new_points - previous_points,
+		"ranked_up": new_rank > previous_rank,
+	}
+
+
+func set_weapon_mastery_points(weapon_class: String, points: int, emit_signal: bool = true) -> void:
+	if not WeaponMasteryCatalogScript.is_weapon_class(weapon_class):
+		return
+	var maximum_points: int = WeaponMasteryCatalogScript.RANK_THRESHOLDS.back()
+	var resolved_points: int = clampi(points, 0, maximum_points)
+	if resolved_points <= 0:
+		weapon_mastery.erase(weapon_class)
+	else:
+		weapon_mastery[weapon_class] = resolved_points
+	if emit_signal:
+		weapon_mastery_changed.emit(
+			weapon_class,
+			resolved_points,
+			WeaponMasteryCatalogScript.get_rank(resolved_points),
+			0
+		)
+
+
+func reset_weapon_mastery(emit_signals: bool = true) -> void:
+	weapon_mastery.clear()
+	if not emit_signals:
+		return
+	for weapon_class: String in WeaponMasteryCatalogScript.WEAPON_CLASSES:
+		weapon_mastery_changed.emit(weapon_class, 0, 0, 0)
 
 
 func get_stat_snapshot() -> Dictionary:
@@ -894,6 +966,7 @@ func reset_run() -> void:
 	set_progression(0, 0)
 	set_currency(0)
 	reset_inventory_to_defaults(true)
+	reset_weapon_mastery(true)
 
 	for flag_name: String in story_flags.keys():
 		story_flags[flag_name] = false
@@ -960,6 +1033,7 @@ func save_at_bed(bed_id: String, bed_name: String, bed_position: Vector3) -> Dic
 			"owned": get_owned_equipment_snapshot(),
 			"slots": get_equipped_items_snapshot(),
 		},
+		"weapon_mastery": get_weapon_mastery_snapshot(),
 		"objective": current_objective,
 		"saved_at": Time.get_datetime_string_from_system(false, true),
 	}
@@ -1037,6 +1111,7 @@ func apply_save_data(save_data: Dictionary) -> bool:
 	apply_saved_key_items(save_data)
 	apply_saved_inventory(save_data)
 	apply_saved_equipment(save_data)
+	apply_saved_weapon_mastery(save_data)
 	set_currency(int(save_data.get("currency", 0)))
 	var saved_progression: Dictionary = save_data.get("progression", {}) as Dictionary
 	set_progression(
@@ -1055,6 +1130,23 @@ func apply_save_data(save_data: Dictionary) -> bool:
 	last_save_data = save_data.duplicate(true)
 	save_loaded.emit(last_save_data)
 	return true
+
+
+func apply_saved_weapon_mastery(save_data: Dictionary) -> void:
+	weapon_mastery.clear()
+	var saved_mastery: Dictionary = save_data.get("weapon_mastery", {}) as Dictionary
+	for class_variant: Variant in saved_mastery.keys():
+		var weapon_class: String = str(class_variant)
+		if not WeaponMasteryCatalogScript.is_weapon_class(weapon_class):
+			continue
+		set_weapon_mastery_points(weapon_class, int(saved_mastery[class_variant]), false)
+	for weapon_class: String in WeaponMasteryCatalogScript.WEAPON_CLASSES:
+		weapon_mastery_changed.emit(
+			weapon_class,
+			get_weapon_mastery_points(weapon_class),
+			get_weapon_mastery_rank(weapon_class),
+			0
+		)
 
 
 func apply_saved_equipment(save_data: Dictionary) -> void:

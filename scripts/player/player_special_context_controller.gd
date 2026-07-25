@@ -15,6 +15,7 @@ var riding_controller: PlayerRidingController
 var held: bool = false
 var hold_time: float = 0.0
 var wheel_open: bool = false
+var suppress_context_release: bool = false
 var context_name: String = "NONE"
 var layer: CanvasLayer
 var panel: PanelContainer
@@ -41,17 +42,24 @@ func _process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed(context_action):
-		held = true
-		hold_time = 0.0
+		if wheel_open:
+			suppress_context_release = true
+			held = false
+			hold_time = 0.0
+			_close_context()
+		else:
+			suppress_context_release = false
+			held = true
+			hold_time = 0.0
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_released(context_action):
-		if wheel_open:
-			_close_context()
-		else:
-			_perform_primary_action()
 		held = false
 		hold_time = 0.0
+		if suppress_context_release:
+			suppress_context_release = false
+		elif not wheel_open:
+			_perform_primary_action()
 		get_viewport().set_input_as_handled()
 		return
 	if not wheel_open or not event.is_pressed():

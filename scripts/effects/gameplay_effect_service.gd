@@ -161,7 +161,7 @@ func get_active_source_rows(include_permanent: bool = true) -> Array[Dictionary]
 			row["duration"] = float(source.get("duration", remaining))
 			row["tags"] = (source.get("tags", []) as Array).duplicate()
 			rows.append(row)
-	rows.sort_custom(sort_source_rows)
+	rows.sort_custom(Callable(self, "sort_source_rows"))
 	return rows
 
 

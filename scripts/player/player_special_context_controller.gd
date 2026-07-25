@@ -85,6 +85,10 @@ func _perform_primary_action() -> void:
 		riding_controller.dismount()
 		_emit_action("MOUNT", "dismount")
 		return
+	var animal: ResearchableGoose = _nearest_goose()
+	if animal != null:
+		animal.perform_study_action("observe", actor)
+		_emit_action("ANIMAL STUDY", "observe")
 		return
 	if summon_manager != null and summon_manager.get_active_summon() != null:
 		var familiar: SpectralFamiliar = summon_manager.get_active_summon()
@@ -96,11 +100,6 @@ func _perform_primary_action() -> void:
 		var mount: RideableMount = riding_controller.find_nearest_mount()
 		if mount != null and riding_controller.mount_mount(mount):
 			_emit_action("MOUNT", "mount")
-			return
-	var animal: ResearchableGoose = _nearest_goose()
-	if animal != null:
-		animal.perform_study_action("observe", actor)
-		_emit_action("ANIMAL STUDY", "observe")
 
 
 func _open_context() -> void:

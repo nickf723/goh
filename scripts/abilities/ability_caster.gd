@@ -397,28 +397,29 @@ func get_cast_direction(player: Node3D, cast_origin: Vector3) -> Vector3:
 
 
 func pay_ability_cost(ability: AbilityDefinition, extra_mana_cost: int = 0) -> bool:
-	var required_mana: int = ability.mana_cost + extra_mana_cost
+	var required_mana: int = GameplayEffects.modify_int("mana_cost", ability.mana_cost + extra_mana_cost, "ceil")
+	var required_stamina: int = GameplayEffects.modify_int("stamina_cost", ability.stamina_cost, "ceil")
+	var required_focus: int = GameplayEffects.modify_int("focus_cost", ability.focus_cost, "ceil")
 
 	if GameState.get_stat("mana") < required_mana:
 		return false
 
-	if GameState.get_stat("stamina") < ability.stamina_cost:
+	if GameState.get_stat("stamina") < required_stamina:
 		return false
 
-	if GameState.get_stat("focus") < ability.focus_cost:
+	if GameState.get_stat("focus") < required_focus:
 		return false
 
 	if required_mana > 0:
 		GameState.spend_mana(required_mana)
 
-	if ability.stamina_cost > 0:
-		GameState.spend_stamina(ability.stamina_cost)
+	if required_stamina > 0:
+		GameState.spend_stamina(required_stamina)
 
-	if ability.focus_cost > 0:
-		GameState.set_stat("focus", GameState.get_stat("focus") - ability.focus_cost)
+	if required_focus > 0:
+		GameState.set_stat("focus", GameState.get_stat("focus") - required_focus)
 
 	return true
-
 
 func select_ability(index: int, should_show_feedback: bool = true) -> void:
 	if loadout == null:

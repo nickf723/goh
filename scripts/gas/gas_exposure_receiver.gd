@@ -1,6 +1,8 @@
 extends Node
 class_name GasExposureReceiver
 
+const GameplayEffectAccessScript = preload("res://scripts/effects/gameplay_effect_access.gd")
+
 signal exposure_changed(gas_id: String, density: float, dose: float)
 signal exposure_began(gas_id: String)
 signal exposure_ended(gas_id: String)
@@ -120,12 +122,30 @@ func update_gas_effect(gas_id: String, definition: GasDefinition, dose: float, d
 	if not definition.harmful:
 		return
 
+	var actor: Node = get_parent()
+	if gas_id == "poison" and actor != null and actor.is_in_group("player"):
+		sustain_player_poison(definition, dose)
+		return
+
 	var timer: float = float(damage_timers.get(gas_id, definition.damage_interval)) - delta
 	if timer > 0.0:
 		damage_timers[gas_id] = timer
 		return
 	damage_timers[gas_id] = max(definition.damage_interval, 0.05)
 	apply_gas_effect(gas_id, definition, dose)
+
+
+func sustain_player_poison(definition: GasDefinition, dose: float) -> void:
+	var effect_ids: Array[String] = ["poisoned"]
+	var source_tags: Array[String] = ["harmful", "ailment", "poison", "gas"]
+	var linger_duration: float = maxf(definition.damage_interval * 2.0 + 0.25, 4.0)
+	GameplayEffectAccessScript.set_effect_source(
+		"gas_exposure:poison",
+		effect_ids,
+		linger_duration,
+		source_tags
+	)
+	gas_effect_applied.emit("poison", dose)
 
 
 func apply_gas_effect(gas_id: String, definition: GasDefinition, dose: float) -> void:
@@ -228,6 +248,7 @@ func get_total_dose() -> float:
 
 
 func clear_exposure() -> void:
+	GameplayEffectAccessScript.remove_effect_source("gas_exposure:poison")
 	densities.clear()
 	doses.clear()
 	damage_timers.clear()

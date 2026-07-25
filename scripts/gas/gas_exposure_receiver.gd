@@ -9,7 +9,7 @@ signal exposure_ended(gas_id: String)
 signal gas_effect_applied(gas_id: String, dose: float)
 
 @export var sample_offset: Vector3 = Vector3(0.0, 0.85, 0.0)
-@export var lower_body_sample_offset: Vector3 = Vector3(0.0, 0.2, 0.0)
+@export var lower_body_sample_offset: Vector3 = Vector3(0.0, -0.35, 0.0)
 @export_range(0.02, 1.0, 0.01) var sample_interval: float = 0.12
 @export_range(0.0, 1.0, 0.01) var effect_dose_threshold: float = 0.35
 @export_range(0.0, 4.0, 0.01) var exposure_response_multiplier: float = 1.0

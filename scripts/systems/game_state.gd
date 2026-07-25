@@ -409,8 +409,9 @@ func set_currency(amount: int) -> void:
 func add_currency(amount: int) -> int:
 	if amount <= 0:
 		return 0
+	var effective_amount: int = maxi(GameplayEffects.modify_int("currency_reward", amount), 0)
 	var before: int = currency
-	set_currency(currency + amount)
+	set_currency(currency + effective_amount)
 	return currency - before
 
 

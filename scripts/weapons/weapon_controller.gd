@@ -9,6 +9,7 @@ signal combo_state_changed(debug_data: Dictionary)
 const EquipmentCatalogScript = preload("res://scripts/equipment/equipment_catalog.gd")
 const WeaponMasteryCatalogScript = preload("res://scripts/weapons/weapon_mastery_catalog.gd")
 const WeaponInfusionCatalogScript = preload("res://scripts/weapons/weapon_infusion_catalog.gd")
+const ElementVisualsScript = preload("res://scripts/visuals/element_visuals.gd")
 
 const INPUT_LIGHT: String = "light"
 const INPUT_HEAVY: String = "heavy"
@@ -490,6 +491,8 @@ func execute_current_attack_hit() -> void:
 	for target: Node in targets:
 		var result: Dictionary = send_payload_to_target(target, payload)
 		critical_landed = critical_landed or bool(result.get("critical", false))
+		if GameState.get_weapon_infusion() != WeaponInfusionCatalogScript.DEFAULT_INFUSION_ID:
+			ElementVisualsScript.spawn_impact(get_tree(), get_target_position(target), payload.element, 0.68)
 		if target.has_method("receive_weapon_impact"):
 			target.call("receive_weapon_impact", payload, get_attack_forward(), current_attack)
 		elif target.has_method("receive_hit_reaction"):

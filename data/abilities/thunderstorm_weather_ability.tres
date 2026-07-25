@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/abilities/thunderstorm_weather_spell.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Thunderstorm"
+description = "Reserve over half of Grace's mana capacity to charge the sky. Lightning spells become free while fair, telegraphed strikes seek wet, metallic, and elevated conductors. Cast again to dismiss it."
+element = "lightning"
+category = 4
+mana_cost = 0
+spell_id = "thunderstorm_weather"
+short_label = "Storm"
+icon_text = "Th"
+roles = Array[String](["weather", "concentration", "element_source", "damage", "control", "setup"])
+targeting_style = "self_centered"
+delivery_type = "sustained_weather"
+combo_tags = Array[String](["thunderstorm", "lightning", "rain", "wet_shock", "conductive", "weather", "infinite_source"])
+status_tags = Array[String](["wet", "stunned"])
+ui_tags = Array[String](["weather", "concentration", "toggle"])
+debug_tags = Array[String](["prototype", "thunderstorm_weather"])
+design_notes = "Thunderstorm reserves mana capacity, supplies free Lightning, wets exposed targets, and produces telegraphed environmental strikes that prefer elevated conductive targets and chain through nearby conductors."
+ability_scene = ExtResource("1_scene")

@@ -9,7 +9,7 @@ func _ready() -> void:
 	var original_slots: Dictionary = GameState.get_equipped_items_snapshot()
 	var original_currency: int = GameState.get_currency()
 	GameState.reset_stats_to_defaults(false)
-	GameState.reset_equipment_to_defaults(false)
+	GameState.reset_equipment_to_defaults(false, false)
 	_expect(GameState.grant_equipment("training_hammer"), "New weapon ownership can be granted")
 	_expect(GameState.equip_item("training_hammer"), "Owned weapon can be equipped")
 	_expect(GameState.get_equipped_item("weapon") == "training_hammer", "Weapon slot persists the equipment id")

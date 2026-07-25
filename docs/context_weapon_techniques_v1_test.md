@@ -20,13 +20,21 @@ The mastery description now names the technique and its trigger.
 
 Every weapon also gains three airborne techniques at Familiar mastery rank:
 
-- **Neutral Air:** jump and press Light without directional movement. This produces a broad 360-degree strike and briefly checks Grace's fall.
-- **Forward Air:** jump, hold a movement direction, and press Light. This produces a mobile advancing strike with extra reach.
-- **Down Air:** jump and press Heavy. This accelerates Grace downward and produces increased damage, stance pressure, and knockback.
+- **Aerial Sweep:** jump and press Light without directional movement. This produces a broad 360-degree defensive strike.
+- **Aerial Pursuit:** jump, hold a movement direction, and press Light. This advances toward the attack direction; a successful hit briefly preserves height and pulls Grace toward the target.
+- **Plunging Heavy:** jump and press Heavy. This commits Grace downward and arms a radial landing impact whose strength scales with falling speed.
 
 Each of the sixteen classes has its own named set. Examples include Orbit Cut / Comet Slash / Falling Edge for swords, Needle Wheel / Skyline Thrust / Dragon Drop for lances, and Iron Orbit / Comet Cast / Anchorfall for chains.
 
 All aerial attacks retain weapon mastery upgrades, elemental infusion, hit reactions, and existing combo payload behavior. Flight mode remains excluded so ordinary weapon inputs do not conflict with its traversal controls.
+
+Grounded Heavy finishers at Familiar rank also receive vertical launch force. The resulting loop is:
+
+```text
+Grounded Heavy finisher → launch target → jump → Aerial Pursuit → height-preserving hit → Plunging Heavy → landing impact
+```
+
+Missing an aerial attack does not preserve height. This makes continued aerial pressure depend on connecting rather than allowing indefinite air movement.
 
 ## Context vocabulary
 
@@ -50,8 +58,9 @@ scenes/tests/context_weapon_technique_smoke_test.tscn
 For a live test, use any weapon at Familiar rank or above:
 
 1. Dodge sideways, backward, and forward, then press each attack input during the dodge.
-2. Jump without movement and press Light for Neutral Air.
-3. Jump while holding movement and press Light for Forward Air.
-4. Jump and press Heavy for Down Air.
+2. Complete a grounded Heavy finisher and confirm the target receives upward launch force.
+3. Jump without movement and press Light for Aerial Sweep.
+4. Jump while holding movement and press Light for Aerial Pursuit; connect and confirm Grace briefly preserves height.
+5. Jump and press Heavy for Plunging Heavy; land and confirm the radial elemental impact appears.
 
 The active technique should appear by context ID in combat debug data.

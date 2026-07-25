@@ -13,6 +13,10 @@
 [ext_resource type="Script" path="res://scripts/weather/snow_weather_controller.gd" id="11_snow_controller"]
 [ext_resource type="Resource" path="res://data/weather/rain_weather.tres" id="12_rain_weather"]
 [ext_resource type="Resource" path="res://data/weather/snow_weather.tres" id="13_snow_weather"]
+[ext_resource type="Script" path="res://scripts/weather/thunderstorm_weather_controller.gd" id="14_storm_controller"]
+[ext_resource type="Resource" path="res://data/weather/thunderstorm_weather.tres" id="15_storm_weather"]
+[ext_resource type="Script" path="res://scripts/presentation/lightning_arc_renderer.gd" id="16_arc_renderer"]
+[ext_resource type="Script" path="res://scripts/weather/storm_lightning_attractor.gd" id="17_storm_attractor"]
 
 [node name="PrototypeRuinedVillageApproach" type="Node3D"]
 script = ExtResource("1_director")
@@ -57,6 +61,54 @@ weather_definition = ExtResource("13_snow_weather")
 concentration_manager_path = NodePath("../ConcentrationManager")
 player_path = NodePath("../Player")
 environment_path = NodePath("../VillageEnvironment")
+
+[node name="LightningArcRenderer" type="Node3D" parent="."]
+script = ExtResource("16_arc_renderer")
+
+[node name="ThunderstormWeatherController" type="Node3D" parent="."]
+script = ExtResource("14_storm_controller")
+weather_definition = ExtResource("15_storm_weather")
+concentration_manager_path = NodePath("../ConcentrationManager")
+player_path = NodePath("../Player")
+environment_path = NodePath("../VillageEnvironment")
+lightning_renderer_path = NodePath("../LightningArcRenderer")
+lighting_rig_path = NodePath("../CinematicLighting")
+
+[node name="ArrivalStormRodA" type="Node3D" parent="."]
+position = Vector3(-5.5, 0, 43)
+script = ExtResource("17_storm_attractor")
+display_name = "Arrival copper rod"
+rod_height = 5.4
+
+[node name="ArrivalStormRodB" type="Node3D" parent="."]
+position = Vector3(0.5, 0, 40)
+script = ExtResource("17_storm_attractor")
+display_name = "Arrival grounding rod"
+rod_height = 3.8
+
+[node name="SquareStormRodA" type="Node3D" parent="."]
+position = Vector3(8.5, 0, 4)
+script = ExtResource("17_storm_attractor")
+display_name = "Village square copper rod"
+rod_height = 6.2
+
+[node name="SquareStormRodB" type="Node3D" parent="."]
+position = Vector3(2.5, 0, 0.5)
+script = ExtResource("17_storm_attractor")
+display_name = "Dry well grounding rod"
+rod_height = 4.2
+
+[node name="ChurchStormRodA" type="Node3D" parent="."]
+position = Vector3(-10.5, 0, -51)
+script = ExtResource("17_storm_attractor")
+display_name = "Church approach copper rod"
+rod_height = 6.8
+
+[node name="ChurchStormRodB" type="Node3D" parent="."]
+position = Vector3(-4, 0, -47)
+script = ExtResource("17_storm_attractor")
+display_name = "Church grounding rod"
+rod_height = 4.6
 
 [node name="Player" parent="." groups=["player", "weather_exposed"] instance=ExtResource("2_player")]
 position = Vector3(0, 1.2, 64)

@@ -114,6 +114,9 @@ static func apply_payload_upgrades(
 			if deep_combo:
 				payload.amount += 1
 				payload.stance_damage += 1
+			if rank >= 3 and is_heavy and deep_combo:
+				payload.critical_multiplier += 0.3
+				payload.knockback_strength += 1.0
 		"lance":
 			if attack.cone_angle_degrees <= 70.0:
 				payload.amount += 1
@@ -140,14 +143,19 @@ static func apply_payload_upgrades(
 				payload.stance_damage += 2
 				payload.status_effect = "staggered"
 				payload.status_duration = maxf(payload.status_duration, 0.45)
+			if rank >= 3 and deep_combo:
+				payload.amount += 1
 		"daggers":
 			if not is_heavy and combo_depth >= 2:
 				payload.amount += 1
+			if rank >= 3 and deep_combo:
+				payload.critical_multiplier += 0.25
 		"whip":
 			if attack.cone_angle_degrees <= 80.0:
 				payload.amount += 1
 				payload.status_effect = "staggered"
 			if rank >= 3 and is_heavy and deep_combo:
+				payload.stance_damage += 1
 				append_tag(payload, "bind")
 		"chains":
 			if is_heavy:

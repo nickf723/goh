@@ -59,6 +59,8 @@ var combo_history: Array[String] = []
 var attack_forward_override: Vector3 = Vector3.ZERO
 var pending_context_forward: Vector3 = Vector3.ZERO
 var active_technique_id: String = ""
+var plunge_landing_armed: bool = false
+var plunge_max_fall_speed: float = 0.0
 var current_attack_duration_bonus: float = 0.0
 var last_attack_connected: bool = false
 var camera_impact_tween: Tween
@@ -139,6 +141,8 @@ func _process(delta: float) -> void:
 	else:
 		update_combo_timeout(delta)
 
+	update_plunge_landing()
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("weapon_light_attack"):
@@ -190,9 +194,11 @@ func queue_attack_input(input_kind: String) -> void:
 
 	if context_attack != null:
 		reset_combo_chain(false)
-		apply_aerial_technique_motion(active_technique_id)
+		var aerial_context: String = active_technique_id
 		if not start_attack(context_attack):
 			active_technique_id = ""
+			return
+		apply_aerial_technique_motion(aerial_context)
 		return
 
 	var requested_attack: WeaponAttackDefinition = resolve_idle_attack(input_kind)
@@ -576,6 +582,16 @@ func execute_current_attack_hit() -> void:
 	var payload: DamagePayload = current_attack.build_payload(equipped_weapon)
 	var mastery_rank: int = GameState.get_weapon_mastery_rank(equipped_weapon.weapon_class)
 	WeaponTechniqueCatalogScript.apply_context_tags(payload, current_attack, combo_history.size(), active_technique_id)
+	var actor: Node3D = get_actor()
+	var actor_grounded: bool = actor is CharacterBody3D and (actor as CharacterBody3D).is_on_floor()
+	WeaponTechniqueCatalogScript.apply_ground_launcher(
+		payload,
+		current_attack,
+		equipped_weapon.weapon_class,
+		combo_history.size(),
+		mastery_rank,
+		actor_grounded
+	)
 	WeaponMasteryCatalogScript.apply_payload_upgrades(
 		payload,
 		equipped_weapon.weapon_class,
@@ -609,6 +625,7 @@ func execute_current_attack_hit() -> void:
 
 	last_attack_connected = targets.size() > 0
 	if targets.size() > 0:
+		apply_aerial_hit_followthrough(targets)
 		award_weapon_mastery(current_attack, critical_landed)
 		apply_camera_impact(current_attack, critical_landed)
 		HitStop.request(

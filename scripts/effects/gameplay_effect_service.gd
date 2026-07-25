@@ -12,12 +12,20 @@ var effect_sources: Dictionary = {}
 func _ready() -> void:
 	if not GameState.equipment_changed.is_connected(_on_equipment_changed):
 		GameState.equipment_changed.connect(_on_equipment_changed)
+	if not GameState.rest_resources_restored.is_connected(_on_rest_or_defeat):
+		GameState.rest_resources_restored.connect(_on_rest_or_defeat)
+	if not GameState.player_defeated.is_connected(_on_rest_or_defeat):
+		GameState.player_defeated.connect(_on_rest_or_defeat)
 	sync_equipment_sources()
 
 
 func _exit_tree() -> void:
 	if GameState.equipment_changed.is_connected(_on_equipment_changed):
 		GameState.equipment_changed.disconnect(_on_equipment_changed)
+	if GameState.rest_resources_restored.is_connected(_on_rest_or_defeat):
+		GameState.rest_resources_restored.disconnect(_on_rest_or_defeat)
+	if GameState.player_defeated.is_connected(_on_rest_or_defeat):
+		GameState.player_defeated.disconnect(_on_rest_or_defeat)
 
 
 func _process(delta: float) -> void:
@@ -192,3 +200,7 @@ func sync_equipment_slot(slot_id: String, item_id: String) -> void:
 
 func _on_equipment_changed(slot_id: String, item_id: String) -> void:
 	sync_equipment_slot(slot_id, item_id)
+
+
+func _on_rest_or_defeat() -> void:
+	remove_sources_with_tag("consumable_buff")

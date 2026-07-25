@@ -55,6 +55,20 @@ static func remove_effect_source(source_id: String) -> void:
 		service.call("remove_effect_source", source_id)
 
 
+static func get_active_source_rows(include_permanent: bool = true) -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	var service: Node = get_service()
+	if service == null or not service.has_method("get_active_source_rows"):
+		return rows
+	var result: Variant = service.call("get_active_source_rows", include_permanent)
+	if not (result is Array):
+		return rows
+	for row_variant: Variant in result as Array:
+		if row_variant is Dictionary:
+			rows.append((row_variant as Dictionary).duplicate(true))
+	return rows
+
+
 static func remove_sources_with_tag(tag: String) -> void:
 	var service: Node = get_service()
 	if service != null and service.has_method("remove_sources_with_tag"):

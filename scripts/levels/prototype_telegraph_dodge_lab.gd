@@ -202,8 +202,8 @@ func _build_hud() -> void:
 func _update_hud() -> void:
 	if status_label == null or duelist == null or perfect_dodge == null:
 		return
-	var enemy := duelist.get_debug_data()
-	var dodge := perfect_dodge.get_debug_data()
+	var enemy: Dictionary = duelist.get_debug_data()
+	var dodge: Dictionary = perfect_dodge.get_debug_data()
 	var armor_text: String = "COMMITTED" if bool(enemy.get("committed", false)) else "INTERRUPTIBLE"
 	status_label.text = (
 		"ENEMY  •  " + str(enemy.get("attack", "None")).to_upper()

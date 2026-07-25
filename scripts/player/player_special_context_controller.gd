@@ -85,6 +85,7 @@ func _perform_primary_action() -> void:
 		riding_controller.dismount()
 		_emit_action("MOUNT", "dismount")
 		return
+		return
 	if summon_manager != null and summon_manager.get_active_summon() != null:
 		var familiar: SpectralFamiliar = summon_manager.get_active_summon()
 		var command: String = familiar.cycle_command()
@@ -156,10 +157,10 @@ func _perform_wheel_action(index: int) -> void:
 func _resolve_context_name() -> String:
 	if riding_controller != null and (riding_controller.is_riding() or riding_controller.find_nearest_mount() != null):
 		return "MOUNT"
-	if summon_manager != null and summon_manager.get_active_summon() != null:
-		return "FAMILIAR"
 	if _nearest_goose() != null:
 		return "ANIMAL STUDY"
+	if summon_manager != null and summon_manager.get_active_summon() != null:
+		return "FAMILIAR"
 	return "NONE"
 
 

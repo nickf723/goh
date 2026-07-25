@@ -35,7 +35,7 @@ func build_hud() -> void:
 	panel.offset_left = -350.0
 	panel.offset_top = 72.0
 	panel.offset_right = -24.0
-	panel.offset_bottom = 72.0
+	panel.offset_bottom = 220.0
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.add_theme_stylebox_override("panel", make_panel_style())
 	add_child(panel)
@@ -94,6 +94,7 @@ func rebuild_rows(rows: Array[Dictionary]) -> void:
 		row_box.add_child(copy_box)
 
 		var title_row: HBoxContainer = HBoxContainer.new()
+		title_row.name = "TitleRow"
 		copy_box.add_child(title_row)
 		var name_label: Label = Label.new()
 		name_label.name = "Name"
@@ -131,7 +132,7 @@ func update_row_values(rows: Array[Dictionary]) -> void:
 		var copy_box: VBoxContainer = row_box.get_child(1) as VBoxContainer
 		if copy_box == null:
 			continue
-		var timer_label: Label = copy_box.get_node_or_null("HBoxContainer/Timer") as Label
+		var timer_label: Label = copy_box.get_node_or_null("TitleRow/Timer") as Label
 		var progress: ProgressBar = copy_box.get_node_or_null("Progress") as ProgressBar
 		var remaining: float = maxf(float(row.get("remaining", 0.0)), 0.0)
 		if timer_label != null:

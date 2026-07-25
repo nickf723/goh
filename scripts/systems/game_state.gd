@@ -12,11 +12,12 @@ signal key_item_changed(item_id: String, value: bool)
 signal unlock_changed(unlock_id: String, value: bool)
 signal inventory_changed(item_id: String, count: int)
 signal quick_item_slot_changed(slot_index: int, item_id: String)
+signal quest_changed(quest_id: String, quest_data: Dictionary)
 
 const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
 const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
 const QuickItemCatalogScript = preload("res://scripts/items/quick_item_catalog.gd")
-const SAVE_VERSION: int = 5
+const SAVE_VERSION: int = 6
 const SAVE_SLOT_PATH: String = "user://goh_save_slot_1.json"
 const ARMOR_TRIAL_BLESSING_ID: String = "armor_trial_blessing"
 const GUARD_STAT: String = "guard"
@@ -42,6 +43,7 @@ var unlocks: Dictionary = {}
 var inventory: Dictionary = DEFAULT_INVENTORY.duplicate(true)
 var quick_item_slots: Array[String] = DEFAULT_QUICK_ITEM_SLOTS.duplicate()
 var collected_pickups: Dictionary = {}
+var quests: Dictionary = {}
 
 var story_flags: Dictionary = {
 	"inspected_stone": false,
@@ -100,6 +102,102 @@ func get_stat_snapshot() -> Dictionary:
 
 func get_story_flags_snapshot() -> Dictionary:
 	return story_flags.duplicate(true)
+
+
+func start_quest(quest_id: String, definition: Dictionary) -> bool:
+	if quest_id == "":
+		return false
+	var existing: Dictionary = get_quest(quest_id)
+	if not existing.is_empty() and str(existing.get("state", "")) == "completed":
+		return false
+	var quest: Dictionary = definition.duplicate(true)
+	quest["id"] = quest_id
+	quest["state"] = "active"
+	quest["stage"] = int(quest.get("stage", 0))
+	quest["optional_completed"] = {}
+	quests[quest_id] = quest
+	quest_changed.emit(quest_id, quest.duplicate(true))
+	return true
+
+
+func set_quest_stage(quest_id: String, stage: int, objective: String = "") -> bool:
+	if not quests.has(quest_id):
+		return false
+	var quest: Dictionary = quests[quest_id] as Dictionary
+	if str(quest.get("state", "")) != "active":
+		return false
+	quest["stage"] = maxi(stage, 0)
+	if objective != "":
+		quest["objective"] = objective
+		set_objective(objective)
+	quests[quest_id] = quest
+	quest_changed.emit(quest_id, quest.duplicate(true))
+	return true
+
+
+func complete_quest_optional(quest_id: String, optional_id: String) -> bool:
+	if not quests.has(quest_id) or optional_id == "":
+		return false
+	var quest: Dictionary = quests[quest_id] as Dictionary
+	var completed: Dictionary = quest.get("optional_completed", {})
+	completed[optional_id] = true
+	quest["optional_completed"] = completed
+	quests[quest_id] = quest
+	quest_changed.emit(quest_id, quest.duplicate(true))
+	return true
+
+
+func complete_quest(quest_id: String, objective: String = "") -> bool:
+	if not quests.has(quest_id):
+		return false
+	var quest: Dictionary = quests[quest_id] as Dictionary
+	quest["state"] = "completed"
+	quest["completed"] = true
+	if objective != "":
+		set_objective(objective)
+	quests[quest_id] = quest
+	quest_changed.emit(quest_id, quest.duplicate(true))
+	return true
+
+
+func fail_quest(quest_id: String, objective: String = "") -> bool:
+	if not quests.has(quest_id):
+		return false
+	var quest: Dictionary = quests[quest_id] as Dictionary
+	quest["state"] = "failed"
+	if objective != "":
+		set_objective(objective)
+	quests[quest_id] = quest
+	quest_changed.emit(quest_id, quest.duplicate(true))
+	return true
+
+
+func get_quest(quest_id: String) -> Dictionary:
+	if not quests.has(quest_id):
+		return {}
+	return (quests[quest_id] as Dictionary).duplicate(true)
+
+
+func get_quest_snapshot() -> Dictionary:
+	return quests.duplicate(true)
+
+
+func get_quest_rows(state_filter: String = "") -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	for quest_id_variant: Variant in quests.keys():
+		var row: Dictionary = (quests[quest_id_variant] as Dictionary).duplicate(true)
+		if state_filter != "" and str(row.get("state", "")) != state_filter:
+			continue
+		rows.append(row)
+	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("title", "")) < str(b.get("title", "")))
+	return rows
+
+
+func reset_quest(quest_id: String) -> void:
+	if not quests.has(quest_id):
+		return
+	quests.erase(quest_id)
+	quest_changed.emit(quest_id, {})
 
 
 func add_inventory_item(item_id: String, amount: int = 1) -> int:
@@ -560,6 +658,7 @@ func reset_run() -> void:
 	reset_stats_to_defaults(false)
 	key_items.clear()
 	unlocks.clear()
+	quests.clear()
 	reset_inventory_to_defaults(true)
 
 	for flag_name: String in story_flags.keys():
@@ -612,6 +711,7 @@ func save_at_bed(bed_id: String, bed_name: String, bed_position: Vector3) -> Dic
 		"bed_position": vector3_to_save_dict(bed_position),
 		"stats": get_stat_snapshot(),
 		"story_flags": get_story_flags_snapshot(),
+		"quests": get_quest_snapshot(),
 		"key_items": get_key_item_snapshot(),
 		"unlocks": get_unlock_snapshot(),
 		"inventory": get_inventory_snapshot(),
@@ -689,6 +789,7 @@ func apply_save_data(save_data: Dictionary) -> bool:
 
 	apply_saved_stats(save_data)
 	apply_saved_flags(save_data)
+	apply_saved_quests(save_data)
 	apply_saved_unlocks(save_data)
 	apply_saved_key_items(save_data)
 	apply_saved_inventory(save_data)
@@ -735,6 +836,19 @@ func apply_saved_flags(save_data: Dictionary) -> void:
 	for flag_name in saved_flags.keys():
 		story_flags[str(flag_name)] = bool(saved_flags[flag_name])
 		flag_changed.emit(str(flag_name), bool(saved_flags[flag_name]))
+
+
+func apply_saved_quests(save_data: Dictionary) -> void:
+	quests.clear()
+	if not save_data.has("quests") or not save_data["quests"] is Dictionary:
+		return
+	var saved_quests: Dictionary = save_data["quests"] as Dictionary
+	for quest_id_variant: Variant in saved_quests.keys():
+		if not saved_quests[quest_id_variant] is Dictionary:
+			continue
+		var quest_id: String = str(quest_id_variant)
+		quests[quest_id] = (saved_quests[quest_id_variant] as Dictionary).duplicate(true)
+		quest_changed.emit(quest_id, (quests[quest_id] as Dictionary).duplicate(true))
 
 
 func apply_saved_unlocks(save_data: Dictionary) -> void:

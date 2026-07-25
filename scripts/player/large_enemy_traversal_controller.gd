@@ -185,7 +185,7 @@ func _release_grab(escaped: bool) -> void:
 	player.velocity = Vector3.UP * 4.0 + _away_direction() * (5.0 if escaped else 7.0)
 	status_message = "ESCAPED" if escaped else "CRUSHED AND THROWN"
 	traversal_state_changed.emit("grounded")
-	_show_message("Grace breaks the grip!" if escaped else "The Colossus crushes and throws Grace.")
+	_show_message("Grace breaks the grip!" if escaped else _enemy_name() + " crushes and throws Grace.")
 
 
 func detach(impulse: Vector3 = Vector3.ZERO, message: String = "") -> void:

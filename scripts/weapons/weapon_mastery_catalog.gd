@@ -1,6 +1,8 @@
 extends RefCounted
 class_name WeaponMasteryCatalog
 
+const WeaponTechniqueCatalogScript = preload("res://scripts/weapons/weapon_technique_catalog.gd")
+
 const WEAPON_CLASSES: Array[String] = [
 	"sword", "lance", "axe", "bow", "hammer", "mace", "daggers", "whip",
 	"chains", "gauntlets", "flail", "halberd", "boomerang", "scythe", "staff", "shuriken",
@@ -69,7 +71,12 @@ static func get_next_rank_threshold(rank: int) -> int:
 
 
 static func get_upgrade_description(weapon_class: String, rank: int) -> String:
-	return str(get_definition(weapon_class).get("rank_" + str(rank), ""))
+	var description: String = str(get_definition(weapon_class).get("rank_" + str(rank), ""))
+	if rank == WeaponTechniqueCatalogScript.DASH_REQUIRED_RANK:
+		var technique_name: String = WeaponTechniqueCatalogScript.get_dash_technique_name(weapon_class)
+		if technique_name != "":
+			description += " " + technique_name + " — attack during a dodge."
+	return description
 
 
 static func get_attack_speed_multiplier(weapon_class: String, rank: int) -> float:

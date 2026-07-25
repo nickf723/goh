@@ -1,6 +1,8 @@
 extends Resource
 class_name QuickItemDefinition
 
+const GameplayEffectAccessScript = preload("res://scripts/effects/gameplay_effect_access.gd")
+
 @export var item_id: String = "quick_item"
 @export var display_name: String = "Quick Item"
 @export var short_label: String = "ITEM"
@@ -79,7 +81,7 @@ func apply_resource_effect() -> int:
 	if is_delivery_item():
 		return 0
 	var before: int = get_current_resource()
-	var effective_amount: int = maxi(GameplayEffects.modify_int(restore_resource_id + "_restore", restore_amount), 0)
+	var effective_amount: int = maxi(GameplayEffectAccessScript.modify_int(restore_resource_id + "_restore", restore_amount), 0)
 	match restore_resource_id:
 		"health":
 			GameState.heal(effective_amount)

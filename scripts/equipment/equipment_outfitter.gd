@@ -1,6 +1,8 @@
 extends Area3D
 class_name EquipmentOutfitter
 
+const GameplayEffectAccessScript = preload("res://scripts/effects/gameplay_effect_access.gd")
+
 signal equipment_transaction(kind: String, item_id: String, price: int)
 
 const EquipmentCatalogScript = preload("res://scripts/equipment/equipment_catalog.gd")
@@ -156,12 +158,12 @@ func clear_confirmation() -> void:
 
 func get_buy_price(item_id: String) -> int:
 	var base_price: int = maxi(int(EquipmentCatalogScript.get_definition(item_id).get("buy", 0)), 0)
-	return maxi(GameplayEffects.modify_int("shop_buy_price", base_price), 0)
+	return maxi(GameplayEffectAccessScript.modify_int("shop_buy_price", base_price), 0)
 
 
 func get_sell_price(item_id: String) -> int:
 	var base_price: int = maxi(int(EquipmentCatalogScript.get_definition(item_id).get("sell", 0)), 0)
-	return maxi(GameplayEffects.modify_int("shop_sell_price", base_price), 0)
+	return maxi(GameplayEffectAccessScript.modify_int("shop_sell_price", base_price), 0)
 
 
 func buy_equipment(item_id: String) -> bool:

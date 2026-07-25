@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="WeatherDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/weather/weather_definition.gd" id="1_weather"]
+
+[resource]
+script = ExtResource("1_weather")
+effect_id = "thunderstorm_weather"
+display_name = "Thunderstorm"
+description = "Sustain a charged rainstorm by reserving over half of Grace's mana capacity. Lightning spells become free while the sky seeks conductive paths."
+mana_reservation_fraction = 0.55
+free_elements = Array[String](["lightning"])
+effect_tags = Array[String](["concentration", "weather", "thunderstorm", "lightning_source"])
+weather_kind = "thunderstorm"
+generated_elements = Array[String](["lightning", "water"])
+weather_tags = Array[String](["thunderstorm", "rain", "wet", "lightning", "weather", "element_source"])
+exposure_interval = 0.5
+status_duration = 3.5
+exposure_strength = 1.15
+rain_drop_count = 104
+rain_radius = 11.5
+rain_height = 10.0
+fall_speed = 23.0
+wind_velocity = Vector3(2.2, 0, 0.8)

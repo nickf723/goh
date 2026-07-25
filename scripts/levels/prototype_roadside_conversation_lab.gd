@@ -2,9 +2,18 @@ extends Node3D
 class_name PrototypeRoadsideConversationLab
 
 const ConversationNPCScript = preload("res://scripts/dialogue/conversation_npc.gd")
+const QuestFieldObjectiveScript = preload("res://scripts/quests/quest_field_objective.gd")
+const QuestJournalScript = preload("res://scripts/quests/quest_journal_ui.gd")
+const GremlinScene: PackedScene = preload("res://scenes/actors/enemies/gremlin_drone.tscn")
+
+const MARA_QUEST_ID: String = "mara_missing_map"
 
 var traveler: Area3D
 var result_label: Label3D
+var quest_guard: CharacterBody3D
+var map_case: Area3D
+var distraction: Area3D
+var metal_recovery: Area3D
 
 
 func _ready() -> void:
@@ -12,9 +21,12 @@ func _ready() -> void:
 	build_environment()
 	build_roadside_scene()
 	build_traveler()
-	GameState.set_objective("Speak with Mara and decide how Grace will help.")
+	build_quest_field()
+	build_quest_journal()
+	if GameState.get_quest(MARA_QUEST_ID).is_empty():
+		GameState.set_objective("Speak with Mara and decide how Grace will help.")
 	await get_tree().process_frame
-	show_message("Approach the stranded traveler and press Interact to begin a real conversation.")
+	show_message("Help Mara, then accept her field quest. Minus / J opens the Journey journal.")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -23,6 +35,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		GameState.set_flag("helped_mara_metal", false)
 		GameState.set_flag("helped_mara_persuasion", false)
 		GameState.set_flag("mara_helped", false)
+		GameState.set_flag("mara_map_quest_active", false)
+		GameState.set_flag("mara_map_recovered", false)
+		GameState.set_flag("mara_map_quest_completed", false)
+		GameState.set_flag("mara_map_distraction", false)
+		GameState.reset_quest(MARA_QUEST_ID)
 		get_tree().reload_current_scene()
 		get_viewport().set_input_as_handled()
 
@@ -96,6 +113,12 @@ func build_traveler() -> void:
 		"entry": "start",
 		"repeat_entry": "after_help",
 		"resolved_flag": "mara_helped",
+		"entry_rules": [
+			{"requires_flag": "mara_map_quest_completed", "node": "after_quest"},
+			{"requires_flag": "mara_map_recovered", "node": "quest_return"},
+			{"requires_flag": "mara_map_quest_active", "blocked_by_flag": "mara_map_recovered", "node": "quest_active"},
+			{"requires_flag": "mara_helped", "node": "after_help"},
+		],
 		"nodes": {
 			"start": {
 				"speaker": "Mara",
@@ -192,11 +215,35 @@ func build_traveler() -> void:
 			},
 			"after_help": {
 				"speaker": "Mara",
-				"text": "The repair is holding. I will remember the young traveler who stopped when she could have simply kept walking.",
+				"text": "The repair is holding—but I discovered my eastern map case is missing. A Gremlin dragged it into the camp down the road.",
 				"choices": [
+					{"id": "accept_map_quest", "text": "I will recover your map case.", "next": "quest_accept"},
 					{"id": "ask_road", "text": "What lies beyond the eastern ridge?", "next": "road_warning"},
-					{"id": "goodbye", "text": "Safe travels, Mara."},
+					{"id": "goodbye", "text": "I cannot help with that yet."},
 				],
+			},
+			"quest_accept": {
+				"speaker": "Mara",
+				"text": "The sentry is small but vicious. Fight it, lure it from the case, or use that remarkable Metal magic of yours.",
+			},
+			"quest_active": {
+				"speaker": "Mara",
+				"text": "The map case is in the Gremlin camp south of the cart. There must be more than one way past that sentry.",
+			},
+			"quest_return": {
+				"speaker": "Mara",
+				"text": "You found it! Those maps contain roads that vanished before either of us was born.",
+				"choices": [
+					{"id": "return_map", "text": "Return Mara's map case.", "next": "return_thanks"},
+				],
+			},
+			"return_thanks": {
+				"speaker": "Mara",
+				"text": "Keep my annotated eastern chart. It will not reveal every danger, but it may keep you from walking directly into one.",
+			},
+			"after_quest": {
+				"speaker": "Mara",
+				"text": "The map case is secure, the cart is sound, and your road east is marked. I would call that a very good meeting.",
 			},
 			"road_warning": {
 				"speaker": "Mara",
@@ -211,13 +258,142 @@ func build_traveler() -> void:
 
 func _on_choice_selected(choice_id: String, _npc: Node) -> void:
 	if choice_id == "finish":
-		result_label.text = "The cart is roadworthy. Mara will remember Grace."
+		result_label.text = "The cart is roadworthy. Mara has another problem."
 		result_label.modulate = Color(0.45, 1.0, 0.68)
+	elif choice_id == "accept_map_quest":
+		start_map_quest()
+	elif choice_id == "return_map":
+		complete_map_quest()
 
 
 func _on_conversation_finished(_npc: Node) -> void:
-	if GameState.get_flag("mara_helped"):
-		show_message("Mara remembers Grace's help. Speak with her again to hear the persistent follow-up conversation.")
+	if GameState.get_flag("mara_map_quest_completed"):
+		show_message("Quest complete: The Cartographer's Missing Map.")
+	elif GameState.get_flag("mara_helped"):
+		show_message("Speak with Mara again to continue her story.")
+
+
+func start_map_quest() -> void:
+	GameState.set_flag("mara_map_quest_active", true)
+	GameState.start_quest(MARA_QUEST_ID, {
+		"title": "The Cartographer's Missing Map",
+		"description": "Recover Mara's eastern map case from the Gremlin camp.",
+		"objective": "Follow the road south to the Gremlin camp.",
+		"stage": 0,
+		"stages": [
+			"Find the Gremlin camp.",
+			"Recover the stolen map case.",
+			"Return the map case to Mara.",
+		],
+	})
+	GameState.set_objective("Follow the road south to the Gremlin camp.")
+	show_message("Quest started. Choose combat, distraction, or Metal magic.")
+
+
+func complete_map_quest() -> void:
+	if GameState.get_flag("mara_map_quest_completed"):
+		return
+	GameState.set_flag("mara_map_quest_completed", true)
+	GameState.complete_quest(MARA_QUEST_ID, "Continue east using Mara's annotated chart.")
+	GameState.add_key_item("mara_eastern_chart", {
+		"name": "Mara's Eastern Chart",
+		"kind": "Quest Reward",
+		"description": "An annotated road map warning of ruins, storms, and vanished paths beyond the ridge.",
+		"source": "The Cartographer's Missing Map",
+	})
+	result_label.text = "QUEST COMPLETE — MARA'S EASTERN CHART ACQUIRED"
+	result_label.modulate = Color(1.0, 0.78, 0.28)
+	show_message("Quest complete. Mara's Eastern Chart was added to Key Items.")
+
+
+func build_quest_journal() -> void:
+	var journal := QuestJournalScript.new()
+	journal.name = "QuestJournalUI"
+	add_child(journal)
+
+
+func build_quest_field() -> void:
+	var discover := create_quest_objective(
+		"DiscoverGremlinCamp", Vector3(0.0, 0.0, -13.5), "discover",
+		"", "Gremlin camp discovered. The sentry guards Mara's map case.",
+		0, 1, "Recover the stolen map case.", "", "found_camp"
+	)
+	discover.set("one_shot", true)
+	distraction = create_quest_objective(
+		"NoiseLure", Vector3(-5.0, 0.2, -14.0), "interact",
+		"Ring abandoned camp bell", "The bell crashes through the trees. The Gremlin abandons its post.",
+		1, -1, "Recover Mara's map case while the sentry is distracted.",
+		"mara_map_distraction", "distraction"
+	)
+	distraction.set("visual_color", Color(0.95, 0.66, 0.18))
+	distraction.connect("objective_resolved", _on_distraction_resolved)
+	map_case = create_quest_objective(
+		"MaraMapCase", Vector3(0.0, 0.25, -17.0), "interact",
+		"Recover Mara's map case", "Grace recovers Mara's stolen map case.",
+		1, 2, "Return the map case to Mara.", "mara_map_recovered", ""
+	)
+	map_case.set("blocked_by_guard_group", "mara_quest_guard")
+	map_case.set("distraction_flag", "mara_map_distraction")
+	map_case.set("visual_color", Color(0.2, 0.72, 1.0))
+	metal_recovery = create_quest_objective(
+		"MetalRecoveryPoint", Vector3(5.0, 0.25, -11.0), "interact",
+		"Pull map case with Metal", "Metal answers Grace's call. The case tears free and sails into her hands.",
+		1, 2, "Return the map case to Mara.", "mara_map_recovered", "metal_solution"
+	)
+	metal_recovery.set("required_stat", "metal")
+	metal_recovery.set("required_stat_minimum", 1)
+	metal_recovery.set("visual_color", Color(0.72, 0.82, 0.94))
+	quest_guard = GremlinScene.instantiate() as CharacterBody3D
+	quest_guard.name = "MapCaseGremlin"
+	quest_guard.position = Vector3(1.7, 0.8, -15.2)
+	quest_guard.add_to_group("mara_quest_guard")
+	add_child(quest_guard)
+	var receiver: Node = quest_guard.get_node_or_null("HitReceiver")
+	if receiver != null:
+		receiver.connect("health_depleted", _on_guard_defeated)
+
+
+func create_quest_objective(
+	node_name: String,
+	position: Vector3,
+	mode: String,
+	prompt: String,
+	message: String,
+	required_stage: int,
+	next_stage: int,
+	next_objective: String,
+	flag: String,
+	optional_id: String
+) -> Area3D:
+	var objective := Area3D.new()
+	objective.name = node_name
+	objective.position = position
+	objective.set_script(QuestFieldObjectiveScript)
+	objective.set("quest_id", MARA_QUEST_ID)
+	objective.set("objective_id", node_name.to_snake_case())
+	objective.set("mode", mode)
+	objective.set("prompt_text", prompt)
+	objective.set("message_text", message)
+	objective.set("required_stage", required_stage)
+	objective.set("next_stage", next_stage)
+	objective.set("next_objective", next_objective)
+	objective.set("set_flag", flag)
+	objective.set("optional_id", optional_id)
+	add_child(objective)
+	return objective
+
+
+func _on_guard_defeated() -> void:
+	GameState.complete_quest_optional(MARA_QUEST_ID, "combat")
+	show_message("The sentry is defeated. Mara's map case is exposed.")
+
+
+func _on_distraction_resolved(_objective: Node) -> void:
+	if quest_guard != null and is_instance_valid(quest_guard):
+		quest_guard.position = Vector3(-9.0, 0.8, -18.0)
+		var brain: Node = quest_guard.get_node_or_null("EnemyBrain")
+		if brain != null:
+			brain.process_mode = Node.PROCESS_MODE_DISABLED
 
 
 func build_broken_cart(position: Vector3) -> void:

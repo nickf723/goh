@@ -14,7 +14,7 @@ signal mantle_finished
 @export var wall_hold_speed: float = 1.6
 @export var jump_away_speed: float = 5.0
 @export var jump_up_speed: float = 5.4
-@export var mantle_duration: float = 0.3
+@export var mantle_duration: float = 0.52
 @export var base_stamina_per_second: float = 2.2
 @export var resting_stamina_per_second: float = 1.25
 
@@ -28,6 +28,9 @@ var stamina_drain_progress: float = 0.0
 var stamina_rest_progress: float = 0.0
 var mantle_remaining: float = 0.0
 var mantle_target: Vector3 = Vector3.ZERO
+var mantle_lift_target: Vector3 = Vector3.ZERO
+var mantle_stage: int = 0
+var mantle_stage_remaining: float = 0.0
 var last_outcome: String = "READY"
 var attachment_grace_remaining: float = 0.0
 
@@ -150,8 +153,12 @@ func _try_begin_mantle() -> bool:
 	mantling = true
 	climbing = false
 	mantle_remaining = mantle_duration
+	mantle_stage = 0
+	mantle_stage_remaining = mantle_duration * 0.58
 	var ledge_position: Vector3 = ledge_hit.get("position", actor.global_position)
-	mantle_target = ledge_position + Vector3.UP * 0.08
+	var body_clearance: float = _get_actor_floor_offset() + 0.08
+	mantle_target = ledge_position - wall_normal * 0.78 + Vector3.UP * body_clearance
+	mantle_lift_target = Vector3(actor.global_position.x, mantle_target.y + 0.12, actor.global_position.z)
 	last_outcome = "MANTLING"
 	mantle_started.emit()
 	return true
@@ -159,11 +166,23 @@ func _try_begin_mantle() -> bool:
 
 func _process_mantle(delta: float) -> void:
 	mantle_remaining = maxf(mantle_remaining - delta, 0.0)
-	var remaining: float = maxf(mantle_remaining, 0.04)
-	actor.velocity = (mantle_target - actor.global_position) / remaining
-	actor.velocity = actor.velocity.limit_length(8.5)
+	mantle_stage_remaining = maxf(mantle_stage_remaining - delta, 0.0)
+	var stage_target: Vector3 = mantle_lift_target if mantle_stage == 0 else mantle_target
+	var distance_to_stage: float = actor.global_position.distance_to(stage_target)
+	var travel_time: float = maxf(mantle_stage_remaining, 0.04)
+	actor.velocity = (stage_target - actor.global_position) / travel_time
+	actor.velocity = actor.velocity.limit_length(14.0)
 	actor.move_and_slide()
-	if mantle_remaining <= 0.0 or actor.global_position.distance_to(mantle_target) < 0.12:
+
+	if mantle_stage == 0 and (distance_to_stage < 0.14 or mantle_stage_remaining <= 0.0):
+		mantle_stage = 1
+		mantle_stage_remaining = maxf(mantle_remaining, mantle_duration * 0.32)
+		return
+
+	if mantle_stage == 1 and (
+		actor.global_position.distance_to(mantle_target) < 0.14
+		or mantle_remaining <= 0.0
+	):
 		actor.global_position = mantle_target
 		actor.velocity = Vector3.ZERO
 		mantling = false
@@ -172,6 +191,21 @@ func _process_mantle(delta: float) -> void:
 			action_state.end_manipulation()
 		mantle_finished.emit()
 
+
+func _get_actor_floor_offset() -> float:
+	if actor == null:
+		return 1.0
+	for child: Node in actor.get_children():
+		if not child is CollisionShape3D:
+			continue
+		var collision := child as CollisionShape3D
+		if collision.shape is CapsuleShape3D:
+			var capsule := collision.shape as CapsuleShape3D
+			return maxf(capsule.height * 0.5, capsule.radius)
+		if collision.shape is BoxShape3D:
+			var box := collision.shape as BoxShape3D
+			return box.size.y * 0.5
+	return 1.0
 
 func _update_stamina(delta: float, effort: float) -> void:
 	if effort > 0.12 or surface_slide_speed > 0.0:
@@ -196,6 +230,8 @@ func _update_stamina(delta: float, effort: float) -> void:
 func _detach(reason: String) -> void:
 	climbing = false
 	mantling = false
+	mantle_stage = 0
+	mantle_stage_remaining = 0.0
 	wall_normal = Vector3.ZERO
 	surface_name = "none"
 	surface_drain_multiplier = 1.0

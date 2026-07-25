@@ -29,6 +29,7 @@
 [ext_resource type="Resource" path="res://data/summons/spectral_familiar_definition.tres" id="27_familiar_definition"]
 [ext_resource type="Script" path="res://scripts/player/player_special_context_controller.gd" id="28_special_context"]
 [ext_resource type="Script" path="res://scripts/player/player_stealth_controller.gd" id="29_stealth"]
+[ext_resource type="Script" path="res://scripts/equipment/grace_equipment_appearance.gd" id="30_outfit_appearance"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -54,6 +55,9 @@ mesh = SubResource("CapsuleMesh_qhqgy")
 
 [node name="GraceVisualV1" parent="." instance=ExtResource("9_grace")]
 position = Vector3(0, -1, 0)
+
+[node name="EquipmentAppearanceController" type="Node" parent="."]
+script = ExtResource("30_outfit_appearance")
 
 [node name="CameraPivot" type="Node3D" parent="." unique_id=1528540765]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)

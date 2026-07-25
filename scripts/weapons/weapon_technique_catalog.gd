@@ -171,6 +171,33 @@ static func build_aerial_attack(
 	return attack
 
 
+static func apply_ground_launcher(
+	payload: DamagePayload,
+	attack: WeaponAttackDefinition,
+	weapon_class: String,
+	combo_depth: int,
+	mastery_rank: int,
+	actor_grounded: bool
+) -> void:
+	if payload == null or attack == null or mastery_rank < 1 or not actor_grounded:
+		return
+	if attack.input_kind != "heavy":
+		return
+	var is_finisher: bool = attack.next_light_attack_id == "" and attack.next_heavy_attack_id == ""
+	if combo_depth < 3 and not is_finisher:
+		return
+	var launch_strengths: Dictionary = {
+		"hammer": 6.4, "gauntlets": 6.2, "staff": 5.8, "mace": 5.7,
+		"axe": 5.5, "halberd": 5.5, "lance": 5.4, "flail": 5.3,
+		"sword": 5.1, "chains": 5.1, "scythe": 5.0, "whip": 4.9,
+		"daggers": 4.7, "boomerang": 4.7, "shuriken": 4.6, "bow": 4.5,
+	}
+	payload.knockback_up_strength += float(launch_strengths.get(weapon_class, 5.0))
+	payload.stance_damage += 1
+	append_tag(payload.tags, "technique_launcher")
+	append_tag(payload.tags, "context_ground_finisher")
+
+
 static func apply_context_tags(
 	payload: DamagePayload,
 	attack: WeaponAttackDefinition,

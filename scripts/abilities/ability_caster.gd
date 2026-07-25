@@ -1,5 +1,7 @@
 extends Node3D
 
+const GameplayEffectAccessScript = preload("res://scripts/effects/gameplay_effect_access.gd")
+
 signal ability_changed(ability_name: String, ability_index: int)
 
 const ELEMENT_ORDER: Array[String] = [
@@ -397,9 +399,9 @@ func get_cast_direction(player: Node3D, cast_origin: Vector3) -> Vector3:
 
 
 func pay_ability_cost(ability: AbilityDefinition, extra_mana_cost: int = 0) -> bool:
-	var required_mana: int = GameplayEffects.modify_int("mana_cost", ability.mana_cost + extra_mana_cost, "ceil")
-	var required_stamina: int = GameplayEffects.modify_int("stamina_cost", ability.stamina_cost, "ceil")
-	var required_focus: int = GameplayEffects.modify_int("focus_cost", ability.focus_cost, "ceil")
+	var required_mana: int = GameplayEffectAccessScript.modify_int("mana_cost", ability.mana_cost + extra_mana_cost, "ceil")
+	var required_stamina: int = GameplayEffectAccessScript.modify_int("stamina_cost", ability.stamina_cost, "ceil")
+	var required_focus: int = GameplayEffectAccessScript.modify_int("focus_cost", ability.focus_cost, "ceil")
 
 	if GameState.get_stat("mana") < required_mana:
 		return false

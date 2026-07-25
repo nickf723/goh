@@ -25,8 +25,7 @@ var status_message: String = "Approach a kneeling Colossus and press Interact to
 func setup(player_node: CharacterBody3D, enemy_node: Node3D) -> void:
 	player = player_node
 	large_enemy = enemy_node
-	if large_enemy != null and large_enemy.has_method("get_climb_anchors"):
-		anchors = large_enemy.call("get_climb_anchors")
+	_refresh_anchors()
 	add_to_group("large_enemy_traversal_controller")
 
 
@@ -209,8 +208,13 @@ func get_status_text() -> String:
 
 
 func _refresh_anchors() -> void:
-	if large_enemy != null and large_enemy.has_method("get_climb_anchors"):
-		anchors = large_enemy.call("get_climb_anchors")
+	anchors.clear()
+	if large_enemy == null or not large_enemy.has_method("get_climb_anchors"):
+		return
+	var anchor_values: Array = large_enemy.call("get_climb_anchors")
+	for anchor_value: Variant in anchor_values:
+		if anchor_value is Node3D:
+			anchors.append(anchor_value as Node3D)
 
 
 func _away_direction() -> Vector3:

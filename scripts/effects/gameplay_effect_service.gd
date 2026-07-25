@@ -70,7 +70,8 @@ func remove_effect_source(source_id: String) -> void:
 	if not effect_sources.has(source_id):
 		return
 	effect_sources.erase(source_id)
-	effect_source_changed.emit(source_id, [])
+	var empty_effect_ids: Array[String] = []
+	effect_source_changed.emit(source_id, empty_effect_ids)
 	effects_changed.emit()
 
 
@@ -150,7 +151,8 @@ func sync_equipment_sources() -> void:
 
 func sync_equipment_slot(slot_id: String, item_id: String) -> void:
 	var source_id: String = "equipment:" + slot_id
-	set_effect_source(source_id, EquipmentCatalogScript.get_effect_ids(item_id), -1.0, ["equipment", slot_id])
+	var source_tags: Array[String] = ["equipment", slot_id]
+	set_effect_source(source_id, EquipmentCatalogScript.get_effect_ids(item_id), -1.0, source_tags)
 
 
 func _on_equipment_changed(slot_id: String, item_id: String) -> void:

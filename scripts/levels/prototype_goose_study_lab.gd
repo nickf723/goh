@@ -2,8 +2,6 @@ extends Node3D
 class_name PrototypeGooseStudyLab
 
 var player: CharacterBody3D
-var status_label: Label
-var unlock_label: Label
 var geese: Array[ResearchableGoose] = []
 var species_knowledge: Node
 
@@ -13,17 +11,12 @@ func _ready() -> void:
 	_build_environment()
 	_build_wetland()
 	player = get_node_or_null("Player") as CharacterBody3D
-	_build_hud()
 	if species_knowledge != null:
 		if not species_knowledge.is_connected("discovery_recorded", _on_discovery):
 			species_knowledge.connect("discovery_recorded", _on_discovery)
 		if not species_knowledge.is_connected("unlock_earned", _on_unlock):
 			species_knowledge.connect("unlock_earned", _on_unlock)
-	GameState.set_objective("Study goose behavior with the contextual D-pad menu and unlock animal capabilities.")
-
-
-func _process(_delta: float) -> void:
-	_update_hud()
+	GameState.set_objective("Approach a goose and hold the context button to interact.")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -123,49 +116,6 @@ func _add_label(text: String, position: Vector3, color: Color, font_size: int) -
 	label.outline_size = 7
 	label.modulate = color
 	add_child(label)
-
-
-func _build_hud() -> void:
-	var layer := CanvasLayer.new()
-	layer.layer = 14
-	add_child(layer)
-	var panel := PanelContainer.new()
-	panel.position = Vector2(20, 20)
-	panel.custom_minimum_size = Vector2(650, 116)
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.025, 0.055, 0.052, 0.92)
-	style.border_color = Color(0.62, 0.88, 0.42, 0.9)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(10)
-	panel.add_theme_stylebox_override("panel", style)
-	layer.add_child(panel)
-	var box := VBoxContainer.new()
-	panel.add_child(box)
-	status_label = Label.new()
-	status_label.add_theme_font_size_override("font_size", 15)
-	status_label.add_theme_color_override("font_color", Color(0.9, 0.96, 0.82))
-	box.add_child(status_label)
-	unlock_label = Label.new()
-	unlock_label.add_theme_font_size_override("font_size", 14)
-	unlock_label.add_theme_color_override("font_color", Color(0.62, 0.86, 1.0))
-	box.add_child(unlock_label)
-
-
-func _update_hud() -> void:
-	if status_label == null:
-		return
-	if species_knowledge == null or not species_knowledge.has_method("get_species_data"):
-		status_label.text = "GOOSE KNOWLEDGE SERVICE UNAVAILABLE"
-		return
-	var data: Dictionary = species_knowledge.call("get_species_data", "goose")
-	var discoveries: Dictionary = data.get("discoveries", {})
-	status_label.text = (
-		"GOOSE KNOWLEDGE  •  RANK " + str(data.get("rank", 0))
-		+ "     POINTS " + str(data.get("points", 0)) + "/" + str(data.get("next_threshold", 0))
-		+ "     DISCOVERIES " + str(discoveries.size())
-	)
-	var unlocks: Dictionary = data.get("unlocks", {})
-	unlock_label.text = "CAPABILITIES  •  " + ("  •  ".join(unlocks.values()) if not unlocks.is_empty() else "None")
 
 
 func _on_discovery(species_id: String, _discovery_id: String, label: String) -> void:

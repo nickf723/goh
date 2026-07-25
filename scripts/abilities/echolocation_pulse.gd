@@ -40,6 +40,7 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 	var radius: float = max(detection_payload.radius, 0.5)
 	var wave_speed: float = max(wave_speed_meters_per_second, 0.1)
 	var travel_time: float = max(radius / wave_speed, minimum_visual_lifetime)
+	emit_acoustic_pulse(radius)
 
 	spawn_wave_visual(radius, travel_time)
 	schedule_detection(wave_speed)
@@ -47,6 +48,19 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 
 	var cleanup_timer: SceneTreeTimer = get_tree().create_timer(travel_time + cleanup_padding)
 	cleanup_timer.timeout.connect(Callable(self, "queue_free"))
+
+
+func emit_acoustic_pulse(radius: float) -> void:
+	var manager: PerceptionStimulusManager = get_tree().get_first_node_in_group("perception_stimulus_manager") as PerceptionStimulusManager
+	if manager == null:
+		return
+	var loudness: float = clampf(radius * 0.9, 12.0, 28.0)
+	var tags: Array[String] = ["acoustic", "echolocation", "magic", "frequency:broadband", "reveals_source"]
+	manager.emit_stimulus(origin_position, loudness, "echolocation", 1.25, source_actor, "Echolocation pulse", 1.5, tags)
+	if source_actor != null:
+		var stealth: Node = source_actor.get_node_or_null("StealthController")
+		if stealth != null and stealth.has_method("report_acoustic_event"):
+			stealth.call("report_acoustic_event", "echolocation", loudness)
 
 
 func spawn_wave_visual(radius: float, lifetime: float) -> void:

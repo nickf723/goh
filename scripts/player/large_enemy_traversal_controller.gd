@@ -159,8 +159,8 @@ func _process_grab(delta: float) -> void:
 	status_message = "GRABBED • ESCAPE " + str(escape_inputs) + " / " + str(escape_inputs_required) + " • " + str(snappedf(grab_timer, 0.1)) + " s"
 	if grab_timer <= 0.0:
 		var payload := DamagePayload.new()
-		payload.amount = 18
-		payload.stance_damage = 20
+		payload.amount = 9
+		payload.stance_damage = 10
 		payload.element = "metal"
 		payload.source_name = "Colossus Crushing Grip"
 		payload.hit_type = "enemy_attack"

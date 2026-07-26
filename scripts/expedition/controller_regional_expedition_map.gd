@@ -56,8 +56,6 @@ func refresh_route_preview() -> void:
 
 
 func get_selected_plan() -> Dictionary:
-	if selected_route_id == "":
-		return {}
 	return build_plan_for_context(
 		selected_route_id,
 		str(network_record.get("current_node_id", RegionalStoreScript.NODE_CYPRESS)),
@@ -84,22 +82,29 @@ func build_plan_for_context(
 
 
 func build_launch_context() -> Dictionary:
-	var context: Dictionary = super.build_launch_context()
-	var route_id_value: String = str(context.get("route_id", ""))
+	var route_id_value: String = selected_route_id
 	var origin_node_id: String = str(
-		context.get("origin_node_id", RegionalStoreScript.NODE_CYPRESS)
+		network_record.get("current_node_id", RegionalStoreScript.NODE_CYPRESS)
 	)
-	var destination_node_id: String = str(context.get("destination_node_id", ""))
+	var destination_node_id: String = selected_node_id
 	var plan: Dictionary = build_plan_for_context(
 		route_id_value,
 		origin_node_id,
 		destination_node_id
 	)
-	context["route_state"] = str(plan.get("state", RegionalStoreScript.STATE_DISCOVERED))
-	context["route_seed"] = int(plan.get("seed", 18890417))
-	context["familiarity_plan"] = plan.duplicate(true)
-	context["plan_signature"] = str(plan.get("signature", ""))
-	return context
+	return {
+		"route_id": route_id_value,
+		"origin_node_id": origin_node_id,
+		"destination_node_id": destination_node_id,
+		"network_record_path": network_record_path,
+		"expedition_record_path": expedition_record_path,
+		"map_scene_path": map_scene_path,
+		"suppress_scene_transition": not allow_scene_launch,
+		"route_state": str(plan.get("state", RegionalStoreScript.STATE_DISCOVERED)),
+		"route_seed": int(plan.get("seed", 18890417)),
+		"familiarity_plan": plan.duplicate(true),
+		"plan_signature": str(plan.get("signature", "")),
+	}
 
 
 func get_route_description(route_id: String, from_node: String, to_node: String) -> String:

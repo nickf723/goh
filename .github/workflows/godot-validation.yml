@@ -33,15 +33,31 @@ jobs:
       - name: Run route familiarity smoke test
         run: godot --headless --path . res://scenes/tests/route_familiarity_smoke_test.tscn
 
-      - name: Run regional map persistence regression
+      - name: Capture regional map persistence regression
+        continue-on-error: true
         shell: bash
         run: |
           rm -f "$RUNNER_TEMP/goh-regional-map-pass.txt" "$RUNNER_TEMP/goh-regional-map-checkpoint.txt"
-          set +e
-          timeout 30s godot --headless --path . res://scenes/tests/regional_expedition_map_smoke_test.tscn
-          set -e
-          echo "Regional checkpoint: $(cat "$RUNNER_TEMP/goh-regional-map-checkpoint.txt" 2>/dev/null || echo missing)"
-          test -f "$RUNNER_TEMP/goh-regional-map-pass.txt"
+          timeout 30s godot --headless --path . res://scenes/tests/regional_expedition_map_smoke_test.tscn 2>&1 | tee regional-map-test.log
+          cp "$RUNNER_TEMP/goh-regional-map-checkpoint.txt" regional-map-checkpoint.txt 2>/dev/null || echo missing > regional-map-checkpoint.txt
+          cp "$RUNNER_TEMP/goh-regional-map-pass.txt" regional-map-pass.txt 2>/dev/null || true
+
+      - name: Upload regional map diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: route-familiarity-regional-diagnostics
+          path: |
+            regional-map-test.log
+            regional-map-checkpoint.txt
+            regional-map-pass.txt
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Verify regional map persistence regression
+        run: |
+          echo "Regional checkpoint: $(cat regional-map-checkpoint.txt 2>/dev/null || echo missing)"
+          test -f regional-map-pass.txt
 
       - name: Run Wilds generation regression
         run: godot --headless --path . res://scenes/tests/wilds_expedition_smoke_test.tscn

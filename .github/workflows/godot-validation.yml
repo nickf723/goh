@@ -50,8 +50,7 @@ jobs:
           path: |
             regional-map-test.log
             regional-map-checkpoint.txt
-            regional-map-pass.txt
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 1
 
       - name: Verify regional map persistence regression

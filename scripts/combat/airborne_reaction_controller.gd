@@ -4,6 +4,7 @@ class_name AirborneReactionController
 signal air_state_changed(previous_state: String, new_state: String)
 signal landed(recovery_time: float)
 signal ground_bounced(bounce_count: int)
+signal plunge_started
 
 enum AirState {
 	GROUNDED,
@@ -120,6 +121,7 @@ func register_payload(payload: DamagePayload) -> void:
 		pending_ground_bounce = true
 		actor.velocity.y = minf(actor.velocity.y, -absf(ground_bounce_min_fall_speed))
 		set_air_state(AirState.FALLING)
+		plunge_started.emit()
 
 
 func consume_launch_impulse() -> void:

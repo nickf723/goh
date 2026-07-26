@@ -33,6 +33,9 @@ jobs:
       - name: Boot combat combo laboratory
         run: godot --headless --path . res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn --quit-after 7
 
+      - name: Validate core weapon tests
+        run: godot --headless --path . res://scenes/tests/weapon_moveset_core_diagnostic.tscn
+
       - name: Validate sandbox grants
         run: godot --headless --path . res://scenes/tests/combat_arena_sandbox_diagnostic.tscn -- apply
 

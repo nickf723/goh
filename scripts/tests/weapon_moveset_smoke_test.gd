@@ -27,6 +27,9 @@ func _ready() -> void:
 
 
 func run_tests() -> void:
+	# The sandbox emits broad GameState refresh signals while restoring its entry
+	# snapshot, so validate it before any temporary combat fixtures are created.
+	validate_combat_arena_sandbox()
 	validate_weapon(Sword, "sword", 9)
 	validate_weapon(Hammer, "hammer", 7)
 	validate_weapon(Spear, "lance", 7)
@@ -36,7 +39,6 @@ func run_tests() -> void:
 	validate_payload_contracts()
 	validate_critical_profiles()
 	validate_stance_critical_loop()
-	validate_combat_arena_sandbox()
 
 
 func validate_weapon(weapon: WeaponDefinition, expected_class: String, expected_attacks: int) -> void:
@@ -247,7 +249,7 @@ func validate_stance_critical_loop() -> void:
 	if int(receiver.get("current_stance")) != 5:
 		failures.append("Expired critical window did not restore stance")
 
-	receiver.queue_free()
+	receiver.free()
 
 
 func validate_combat_arena_sandbox() -> void:

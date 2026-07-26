@@ -59,9 +59,14 @@ jobs:
           ROUTE_STAGE: initial_state
         run: godot --headless --path . res://scenes/tests/validation_regional_route_stage.tscn
 
-      - name: Validate initial five-segment plan
+      - name: Validate initial plan payload
         env:
-          ROUTE_STAGE: initial_plan
+          ROUTE_STAGE: initial_plan_type
+        run: godot --headless --path . res://scenes/tests/validation_regional_route_stage.tscn
+
+      - name: Validate initial five-segment slice
+        env:
+          ROUTE_STAGE: initial_plan_size
         run: godot --headless --path . res://scenes/tests/validation_regional_route_stage.tscn
 
       - name: Validate persisted regional return state

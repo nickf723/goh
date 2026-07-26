@@ -148,16 +148,20 @@ static func complete_route(
 		route_id,
 		create_route_state(STATE_DISCOVERED, route_id)
 	) as Dictionary
+	var previous_state: String = str(route_state.get("state", STATE_UNKNOWN))
 	route_state["crossings"] = maxi(int(route_state.get("crossings", 0)), 0) + 1
 	route_state["last_destination"] = destination_node_id
 	route_state["last_plan_signature"] = plan_signature
 	var crossings: int = int(route_state["crossings"])
+	var crossing_state: String = STATE_CROSSED
 	if crossings >= 3:
-		route_state["state"] = STATE_STABILIZED
+		crossing_state = STATE_STABILIZED
 	elif crossings >= 2:
-		route_state["state"] = STATE_MAPPED
+		crossing_state = STATE_MAPPED
+	if get_state_rank(crossing_state) > get_state_rank(previous_state):
+		route_state["state"] = crossing_state
 	else:
-		route_state["state"] = STATE_CROSSED
+		route_state["state"] = previous_state
 	route_state["journey_index"] = maxi(int(route_state.get("journey_index", 0)), 0) + 1
 	route_state["seed"] = advance_route_seed(
 		int(route_state.get("seed", get_default_route_seed(route_id))),
@@ -254,6 +258,7 @@ static func load_record(record_path: String = DEFAULT_RECORD_PATH) -> Dictionary
 	if file == null:
 		return {}
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
 	return parsed as Dictionary if parsed is Dictionary else {}
 
 
@@ -262,6 +267,8 @@ static func save_record(record: Dictionary, record_path: String = DEFAULT_RECORD
 	if file == null:
 		return false
 	file.store_string(JSON.stringify(normalize_record(record), "\t"))
+	file.flush()
+	file.close()
 	return true
 
 

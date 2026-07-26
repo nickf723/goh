@@ -86,31 +86,24 @@ jobs:
         run: godot --headless --path . res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn --quit-after 7
 
       - name: Check weapon graphs
-        continue-on-error: true
         run: godot --headless --path . res://scenes/tests/weapon_moveset_core_diagnostic.tscn -- graph
 
       - name: Check sword branches
-        continue-on-error: true
         run: godot --headless --path . res://scenes/tests/weapon_moveset_core_diagnostic.tscn -- sword
 
       - name: Check hammer identity
-        continue-on-error: true
         run: godot --headless --path . res://scenes/tests/weapon_moveset_core_diagnostic.tscn -- hammer
 
       - name: Check spear identity
-        continue-on-error: true
         run: godot --headless --path . res://scenes/tests/weapon_moveset_core_diagnostic.tscn -- spear
 
       - name: Check payload contracts
-        continue-on-error: true
         run: godot --headless --path . res://scenes/tests/weapon_moveset_core_diagnostic.tscn -- payload
 
       - name: Check critical profiles
-        continue-on-error: true
         run: godot --headless --path . res://scenes/tests/weapon_moveset_core_diagnostic.tscn -- critical
 
       - name: Check stance critical loop
-        continue-on-error: true
         run: godot --headless --path . res://scenes/tests/weapon_moveset_core_diagnostic.tscn -- stance
 
       - name: Validate sandbox grants
@@ -119,5 +112,19 @@ jobs:
       - name: Validate sandbox restoration
         run: godot --headless --path . res://scenes/tests/combat_arena_sandbox_diagnostic.tscn -- restore
 
-      - name: Validate registered weapon and sandbox suite
-        run: godot --headless --path . res://scenes/tests/weapon_moveset_smoke_test.tscn
+      - name: Capture registered weapon and sandbox suite
+        continue-on-error: true
+        run: godot --headless --path . res://scenes/tests/weapon_moveset_smoke_test.tscn > registered-weapon-suite.log 2>&1
+
+      - name: Upload registered suite log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: registered-weapon-suite-log
+          path: registered-weapon-suite.log
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Require registered suite pass
+        if: always()
+        run: grep -q "WEAPON_MOVESET_SMOKE_TEST: PASS" registered-weapon-suite.log

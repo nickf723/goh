@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/tests/weapon_moveset_registered_smoke_test.gd" id="1_test"]
+[ext_resource type="Script" path="res://scripts/tests/weapon_moveset_smoke_test.gd" id="1_test"]
 
 [node name="WeaponMovesetSmokeTest" type="Node"]
 script = ExtResource("1_test")

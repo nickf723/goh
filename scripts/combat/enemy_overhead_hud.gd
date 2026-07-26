@@ -67,10 +67,20 @@ static func ensure_for_target(target: Node) -> EnemyOverheadHud:
 		existing_hud.refresh_now()
 		return existing_hud
 
+	const PENDING_HUD_META: String = "_pending_enemy_overhead_hud"
+	if target_3d.has_meta(PENDING_HUD_META):
+		var pending_value: Variant = target_3d.get_meta(PENDING_HUD_META)
+		if pending_value is EnemyOverheadHud and is_instance_valid(pending_value):
+			var pending_hud: EnemyOverheadHud = pending_value as EnemyOverheadHud
+			pending_hud.bind_target(target_3d)
+			return pending_hud
+		target_3d.remove_meta(PENDING_HUD_META)
+
 	var hud: EnemyOverheadHud = EnemyOverheadHud.new()
 	hud.name = "EnemyOverheadHud"
-	target_3d.add_child(hud)
 	hud.bind_target(target_3d)
+	target_3d.set_meta(PENDING_HUD_META, hud)
+	target_3d.add_child.call_deferred(hud)
 	return hud
 
 

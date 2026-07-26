@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ExpeditionSegmentDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/expedition/expedition_segment_definition.gd" id="1_segment"]
+
+[resource]
+script = ExtResource("1_segment")
+segment_id = "mountain_forest"
+display_name = "Blue Ridge Mountain Forest"
+biome_id = "appalachian_mountain"
+role = "rest"
+length = 27.0
+width = 18.0
+path_width = 5.5
+elevation_delta = 2.25
+boundary_style = "mixed"
+water_fraction = 0.0
+obstacle_density = 0.3
+ground_color = Color(0.2, 0.24, 0.18, 1)
+path_color = Color(0.34, 0.3, 0.23, 1)
+boundary_color = Color(0.055, 0.14, 0.075, 1)
+accent_color = Color(0.48, 0.76, 1, 1)
+tags = Array[String](["mountain", "forest", "rest", "north"])

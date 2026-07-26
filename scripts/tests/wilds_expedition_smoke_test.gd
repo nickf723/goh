@@ -27,11 +27,29 @@ func _ready() -> void:
 	assert(route.is_marker_recorded("landmark", "old_survey_cairn"))
 	assert(bool(route.route_record.get("shortcut_unlocked", false)))
 
+	var stale_marker: Area3D = route.landmark_marker as Area3D
+	assert(stale_marker != null)
+	route.player.set("lock_on_target", stale_marker)
+	route.player.set("current_interactable", stale_marker)
+	var nearby_interactables: Array[Area3D] = [stale_marker]
+	route.player.set("nearby_interactables", nearby_interactables)
+
 	route.assemble_full_expedition()
 	await get_tree().process_frame
 	assert(route.route_valid)
 	assert(route.get_route_signature() == original_signature)
 	assert(route.is_marker_recorded("landmark", "old_survey_cairn"))
+	assert(route.player.get("lock_on_target") == null)
+	assert(route.player.get("current_interactable") == null)
+	var nearby_after_rebuild: Variant = route.player.get("nearby_interactables")
+	assert(nearby_after_rebuild is Array)
+	assert((nearby_after_rebuild as Array).is_empty())
+
+	var weapon_controller: Node = route.player.get_node_or_null("WeaponController")
+	assert(weapon_controller != null)
+	weapon_controller.call("try_light_attack")
+	await get_tree().process_frame
+	await get_tree().process_frame
 
 	route.generate_new_route_seed()
 	route.assemble_full_expedition()

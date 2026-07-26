@@ -21,7 +21,9 @@ func render_arc(event: LightningArcEvent, profile: LightningProfile = null) -> L
 	if event == null or not event.is_finite_event():
 		rejected_count += 1
 		return null
-	var resolved_profile: LightningProfile = profile if profile != null else LightningProfile.new()
+	var resolved_profile: LightningProfile = profile
+	if resolved_profile == null:
+		resolved_profile = LightningProfile.new()
 	var working: LightningArcEvent = event.duplicate_event()
 	resolved_profile.apply_to_event(working, event.intensity)
 	var generation: Dictionary = LightningPathGenerator.generate(working)

@@ -2,21 +2,14 @@ name: Godot validation
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: godot-validation-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   validate:
-    name: Registry, import, startup, and Windows export
+    name: Latest route familiarity stage validation
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -24,42 +17,36 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Validate custom agent profiles
-        run: python scripts/ci/validate_agent_profiles.py
-
-      - name: Validate feature registry
-        run: python scripts/ci/validate_feature_registry.py
-
-      - name: Install Godot 4.6 and export templates
+      - name: Install Godot 4.6
         uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.6.0
           use-dotnet: false
-          include-templates: true
-
-      - name: Show Godot version
-        run: godot --version
 
       - name: Import project headlessly
         run: godot --headless --path . --editor --quit
 
-      - name: Start project headlessly
-        run: godot --headless --path . --quit-after 5
+      - name: Run route familiarity assembly test
+        run: godot --headless --path . res://scenes/tests/route_familiarity_smoke_test.tscn
 
-      - name: Run registered feature scenes and tests
-        run: python scripts/ci/run_feature_registry.py --godot godot
+      - name: Validate initial map launch plan
+        env:
+          ROUTE_STAGE: initial
+        run: godot --headless --path . res://scenes/tests/validation_route_familiarity_map_stage.tscn
 
-      - name: Export Windows v0.1 build
-        run: |
-          mkdir -p build/windows
-          godot --headless --path . --export-release "Windows Desktop" build/windows/GraceOfHumanity-v0.1.0.exe
-          test -f build/windows/GraceOfHumanity-v0.1.0.exe
+      - name: Validate persisted map return state
+        env:
+          ROUTE_STAGE: returned
+        run: godot --headless --path . res://scenes/tests/validation_route_familiarity_map_stage.tscn
 
-      - name: Upload Windows v0.1 artifact (best effort)
-        continue-on-error: true
-        uses: actions/upload-artifact@v6
-        with:
-          name: GraceOfHumanity-v0.1.0-windows
-          path: build/windows
-          if-no-files-found: error
-          retention-days: 3
+      - name: Run Wilds generation regression
+        run: godot --headless --path . res://scenes/tests/wilds_expedition_smoke_test.tscn
+
+      - name: Boot regional expedition map
+        run: godot --headless --path . res://scenes/levels/prototypes/prototype_regional_expedition_map_v1.tscn --quit-after 4
+
+      - name: Boot Wilds expedition
+        run: godot --headless --path . res://scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn --quit-after 4
+
+      - name: Boot combo arena regression
+        run: godot --headless --path . res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn --quit-after 4

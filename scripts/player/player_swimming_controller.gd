@@ -320,7 +320,7 @@ func _build_wet_sheen() -> void:
 	wet_material.emission_energy_multiplier = 0.45
 	wet_sheen.material_override = wet_material
 	wet_sheen.visible = false
-	actor.add_child(wet_sheen)
+	actor.add_child.call_deferred(wet_sheen)
 
 
 func _build_underwater_overlay() -> void:

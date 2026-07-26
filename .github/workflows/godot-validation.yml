@@ -29,17 +29,96 @@ jobs:
       - name: Run route familiarity smoke test
         run: godot --headless --path . res://scenes/tests/route_familiarity_smoke_test.tscn
 
-      - name: Run regional map persistence regression
-        run: godot --headless --path . res://scenes/tests/regional_expedition_map_smoke_test.tscn
+      - name: Capture regional map regression
+        id: regional
+        shell: bash
+        run: |
+          rm -f "$RUNNER_TEMP/goh-regional-map-pass.txt" "$RUNNER_TEMP/goh-regional-map-checkpoint.txt"
+          set +e
+          timeout 30s godot --headless --path . res://scenes/tests/regional_expedition_map_smoke_test.tscn
+          checkpoint="$(cat "$RUNNER_TEMP/goh-regional-map-checkpoint.txt" 2>/dev/null || echo missing)"
+          echo "checkpoint=$checkpoint" >> "$GITHUB_OUTPUT"
+          if test -f "$RUNNER_TEMP/goh-regional-map-pass.txt"; then echo "passed=true" >> "$GITHUB_OUTPUT"; else echo "passed=false" >> "$GITHUB_OUTPUT"; fi
+          exit 0
+
+      - name: Failure initial map instantiation
+        if: steps.regional.outputs.checkpoint == 'FAILED: initial map instantiation'
+        run: echo failed
+      - name: Failure initial current node
+        if: steps.regional.outputs.checkpoint == 'FAILED: initial current node'
+        run: echo failed
+      - name: Failure cairn initially hidden
+        if: steps.regional.outputs.checkpoint == 'FAILED: cairn initially hidden'
+        run: echo failed
+      - name: Failure main route selection
+        if: steps.regional.outputs.checkpoint == 'FAILED: main route selection'
+        run: echo failed
+      - name: Failure outbound origin
+        if: steps.regional.outputs.checkpoint == 'FAILED: outbound origin'
+        run: echo failed
+      - name: Failure outbound destination
+        if: steps.regional.outputs.checkpoint == 'FAILED: outbound destination'
+        run: echo failed
+      - name: Failure outbound route state
+        if: steps.regional.outputs.checkpoint == 'FAILED: outbound route state'
+        run: echo failed
+      - name: Failure outbound plan type
+        if: steps.regional.outputs.checkpoint == 'FAILED: outbound plan type'
+        run: echo failed
+      - name: Failure outbound signature
+        if: steps.regional.outputs.checkpoint == 'FAILED: outbound signature'
+        run: echo failed
+      - name: Failure outbound indices type
+        if: steps.regional.outputs.checkpoint == 'FAILED: outbound indices type'
+        run: echo failed
+      - name: Failure outbound full slice
+        if: steps.regional.outputs.checkpoint == 'FAILED: outbound full slice'
+        run: echo failed
+      - name: Failure returned map instantiation
+        if: steps.regional.outputs.checkpoint == 'FAILED: returned map instantiation'
+        run: echo failed
+      - name: Failure returned current node
+        if: steps.regional.outputs.checkpoint == 'FAILED: returned current node'
+        run: echo failed
+      - name: Failure returned cairn discovery
+        if: steps.regional.outputs.checkpoint == 'FAILED: returned cairn discovery'
+        run: echo failed
+      - name: Failure returned main route familiarity
+        if: steps.regional.outputs.checkpoint == 'FAILED: returned main route familiarity'
+        run: echo failed
+      - name: Failure returned cairn route selection
+        if: steps.regional.outputs.checkpoint == 'FAILED: returned cairn route selection'
+        run: echo failed
+      - name: Failure cairn route origin
+        if: steps.regional.outputs.checkpoint == 'FAILED: cairn route origin'
+        run: echo failed
+      - name: Failure cairn route destination
+        if: steps.regional.outputs.checkpoint == 'FAILED: cairn route destination'
+        run: echo failed
+      - name: Failure cairn route familiarity
+        if: steps.regional.outputs.checkpoint == 'FAILED: cairn route familiarity'
+        run: echo failed
+      - name: Failure cairn plan type
+        if: steps.regional.outputs.checkpoint == 'FAILED: cairn plan type'
+        run: echo failed
+      - name: Failure cairn indices type
+        if: steps.regional.outputs.checkpoint == 'FAILED: cairn indices type'
+        run: echo failed
+      - name: Failure cairn eastern slice
+        if: steps.regional.outputs.checkpoint == 'FAILED: cairn eastern slice'
+        run: echo failed
+      - name: Checkpoint complete
+        if: steps.regional.outputs.checkpoint == 'complete'
+        run: echo complete
+
+      - name: Verify regional map persistence regression
+        run: test "${{ steps.regional.outputs.passed }}" = "true"
 
       - name: Run Wilds generation regression
         run: godot --headless --path . res://scenes/tests/wilds_expedition_smoke_test.tscn
-
       - name: Boot regional expedition map
         run: godot --headless --path . res://scenes/levels/prototypes/prototype_regional_expedition_map_v1.tscn --quit-after 4
-
       - name: Boot Wilds expedition
         run: godot --headless --path . res://scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn --quit-after 4
-
       - name: Boot combo arena regression
         run: godot --headless --path . res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn --quit-after 4

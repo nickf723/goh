@@ -107,10 +107,16 @@ func reset_target() -> void:
 
 
 func get_debug_data() -> Dictionary:
+	var trail_emitting: bool = false
+	if trail_particles != null:
+		trail_emitting = trail_particles.emitting
+	var renderer_debug: Dictionary = {}
+	if renderer != null and renderer.has_method("get_debug_data"):
+		renderer_debug = renderer.call("get_debug_data") as Dictionary
 	return {
 		"ice_projectile_vfx": true,
 		"active": active_for_ice,
 		"initialized": initialized,
-		"trail_emitting": trail_particles.emitting if trail_particles != null else false,
-		"renderer": renderer.call("get_debug_data") if renderer != null and renderer.has_method("get_debug_data") else {},
+		"trail_emitting": trail_emitting,
+		"renderer": renderer_debug,
 	}

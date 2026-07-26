@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ExpeditionSegmentDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/expedition/expedition_segment_definition.gd" id="1_segment"]
+
+[resource]
+script = ExtResource("1_segment")
+segment_id = "survey_cairn_branch"
+display_name = "Forgotten Survey Cut"
+biome_id = "karst_sinkhole"
+role = "discovery"
+length = 18.0
+width = 12.0
+path_width = 4.25
+elevation_delta = -2.0
+boundary_style = "mixed"
+water_fraction = 0.15
+obstacle_density = 0.55
+ground_color = Color(0.2, 0.22, 0.18, 1)
+path_color = Color(0.31, 0.29, 0.24, 1)
+boundary_color = Color(0.1, 0.15, 0.1, 1)
+accent_color = Color(0.58, 0.9, 1, 1)
+landmark_id = "old_survey_cairn"
+tags = Array[String](["optional", "sinkhole", "landmark", "persistent"])

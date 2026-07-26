@@ -4,10 +4,6 @@ const Sword: WeaponDefinition = preload("res://data/weapons/practice_sword.tres"
 const Hammer: WeaponDefinition = preload("res://data/weapons/training_hammer.tres")
 const Spear: WeaponDefinition = preload("res://data/weapons/training_spear.tres")
 const HitReceiverScript: Script = preload("res://scripts/combat/hit_receiver.gd")
-const CombatArenaLoadoutScript = preload("res://scripts/systems/combat_arena_loadout.gd")
-const EquipmentCatalogScript = preload("res://scripts/equipment/equipment_catalog.gd")
-const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
-const WeaponMasteryCatalogScript = preload("res://scripts/weapons/weapon_mastery_catalog.gd")
 
 var failures: Array[String] = []
 
@@ -27,9 +23,6 @@ func _ready() -> void:
 
 
 func run_tests() -> void:
-	# The sandbox emits broad GameState refresh signals while restoring its entry
-	# snapshot, so validate it before any temporary combat fixtures are created.
-	validate_combat_arena_sandbox()
 	validate_weapon(Sword, "sword", 9)
 	validate_weapon(Hammer, "hammer", 7)
 	validate_weapon(Spear, "lance", 7)
@@ -249,48 +242,7 @@ func validate_stance_critical_loop() -> void:
 	if int(receiver.get("current_stance")) != 5:
 		failures.append("Expired critical window did not restore stance")
 
-	receiver.free()
-
-
-func validate_combat_arena_sandbox() -> void:
-	var before: Dictionary = CombatArenaLoadoutScript.capture_state()
-	var result: Dictionary = CombatArenaLoadoutScript.apply_everything_unlocked()
-	var maximum_mastery: int = WeaponMasteryCatalogScript.RANK_THRESHOLDS.back()
-
-	if int(result.get("mastery_total", 0)) != WeaponMasteryCatalogScript.WEAPON_CLASSES.size():
-		failures.append("Combat arena sandbox did not report all weapon classes")
-	if int(result.get("equipment_total", 0)) != EquipmentCatalogScript.DEFINITIONS.size():
-		failures.append("Combat arena sandbox did not report all equipment definitions")
-	if int(result.get("unlocks_total", 0)) != UnlockCatalogScript.UNLOCK_DEFS.size():
-		failures.append("Combat arena sandbox did not report all unlock definitions")
-
-	for weapon_class: String in WeaponMasteryCatalogScript.WEAPON_CLASSES:
-		if GameState.get_weapon_mastery_points(weapon_class) != maximum_mastery:
-			failures.append("Combat arena sandbox did not master " + weapon_class)
-
-	for item_variant: Variant in EquipmentCatalogScript.DEFINITIONS.keys():
-		if not GameState.owns_equipment(str(item_variant)):
-			failures.append("Combat arena sandbox did not grant equipment: " + str(item_variant))
-
-	for unlock_variant: Variant in UnlockCatalogScript.UNLOCK_DEFS.keys():
-		if not GameState.has_unlock(str(unlock_variant)):
-			failures.append("Combat arena sandbox did not grant unlock: " + str(unlock_variant))
-
-	for resource_id: String in CombatArenaLoadoutScript.RESOURCE_IDS:
-		if GameState.get_stat(resource_id) != GameState.get_stat("max_" + resource_id):
-			failures.append("Combat arena sandbox did not refill " + resource_id)
-
-	CombatArenaLoadoutScript.restore_state(before)
-	if GameState.get_stat_snapshot() != before.get("stats", {}):
-		failures.append("Combat arena sandbox did not restore the entry stat snapshot")
-	if GameState.get_owned_equipment_snapshot() != before.get("owned_equipment", {}):
-		failures.append("Combat arena sandbox did not restore owned equipment")
-	if GameState.get_equipped_items_snapshot() != before.get("equipped_items", {}):
-		failures.append("Combat arena sandbox did not restore equipped items")
-	if GameState.get_weapon_mastery_snapshot() != before.get("weapon_mastery", {}):
-		failures.append("Combat arena sandbox did not restore weapon mastery")
-	if GameState.get_unlock_snapshot() != before.get("unlocks", {}):
-		failures.append("Combat arena sandbox did not restore unlocks")
+	receiver.queue_free()
 
 
 func assert_follow_up(

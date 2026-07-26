@@ -58,14 +58,21 @@ func run_initial_check(check_id: String) -> void:
 			var state_context: Dictionary = map.build_launch_context()
 			if not check(str(state_context.get("route_state", "")) == RegionalStoreScript.STATE_DISCOVERED, "main route starts discovered"):
 				return
-		"plan":
+		"plan_type":
 			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
-			var plan_context: Dictionary = map.build_launch_context()
-			var plan_value: Variant = plan_context.get("familiarity_plan", {})
+			var type_context: Dictionary = map.build_launch_context()
+			if not check(type_context.get("familiarity_plan", {}) is Dictionary, "initial plan dictionary"):
+				return
+		"plan_size":
+			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
+			var size_context: Dictionary = map.build_launch_context()
+			var plan_value: Variant = size_context.get("familiarity_plan", {})
 			if not check(plan_value is Dictionary, "initial plan dictionary"):
 				return
 			var indices_value: Variant = (plan_value as Dictionary).get("source_indices", [])
-			if not check(indices_value is Array and (indices_value as Array).size() == 5, "initial plan uses five segments"):
+			if not check(indices_value is Array, "initial plan indices array"):
+				return
+			if not check((indices_value as Array).size() == 5, "initial plan uses five segments; actual=" + str((indices_value as Array).size())):
 				return
 		_:
 			fail("unknown initial check " + check_id)

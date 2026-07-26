@@ -405,7 +405,7 @@ func build_flight_visual() -> void:
 	flight_visual_root = Node3D.new()
 	flight_visual_root.name = "FlightConcentrationVisual"
 	flight_visual_root.position = Vector3(0.0, 0.15, 0.0)
-	actor.add_child(flight_visual_root)
+	actor.add_child.call_deferred(flight_visual_root)
 	ElementVisuals.add_torus(
 		flight_visual_root,
 		"LowerOrbit",

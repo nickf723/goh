@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ExpeditionSegmentDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/expedition/expedition_segment_definition.gd" id="1_segment"]
+
+[resource]
+script = ExtResource("1_segment")
+segment_id = "pine_ridge"
+display_name = "Longleaf Pine Ridge"
+biome_id = "pine_upland"
+role = "resource"
+length = 28.0
+width = 18.0
+path_width = 5.5
+elevation_delta = 2.75
+boundary_style = "forest"
+water_fraction = 0.0
+obstacle_density = 0.35
+ground_color = Color(0.25, 0.27, 0.15, 1)
+path_color = Color(0.42, 0.34, 0.18, 1)
+boundary_color = Color(0.07, 0.19, 0.08, 1)
+accent_color = Color(0.8, 0.88, 0.38, 1)
+tags = Array[String](["pine", "ridge", "resource", "upland"])

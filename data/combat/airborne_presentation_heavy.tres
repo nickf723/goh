@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AirbornePresentationProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/airborne_presentation_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "heavy"
+display_name = "Juggernaut"
+launch_rotation_degrees = Vector3(-8, 0, 4)
+spin_degrees_per_second = Vector3(34, 18, 42)
+falling_rotation_degrees = Vector3(62, 0, 10)
+plunge_rotation_degrees = Vector3(104, 0, 3)
+airborne_scale = Vector3(1.02, 0.98, 1.02)
+pose_response = 6.5
+bounce_scale = Vector3(1.04, 0.86, 1.04)
+landing_rotation_degrees = Vector3(38, 0, 5)
+landing_scale = Vector3(1.04, 0.88, 1.04)
+landing_drop = 0.25
+bounce_pose_time = 0.24
+landing_recover_time = 0.42
+bounce_height_multiplier = 0.62
+landing_recovery_multiplier = 1.42
+juggle_resistance_multiplier = 1.28
+air_hitstun_multiplier = 1.18

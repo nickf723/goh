@@ -7,6 +7,7 @@ const Spear: WeaponDefinition = preload("res://data/weapons/training_spear.tres"
 
 
 func _ready() -> void:
+	# Keep the legacy scene-running test dormant and invoke its checks explicitly.
 	var suite: Node = WeaponMovesetSuiteScript.new()
 	var suite_failures: Array = suite.get("failures") as Array
 	suite_failures.clear()

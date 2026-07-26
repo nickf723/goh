@@ -186,7 +186,10 @@ func build_expanded_guide(weapon_class: String) -> String:
 	var lines: Array[String] = ["ROUTES"]
 	var routes_value: Variant = director.get("current_combo_routes")
 	var completed_value: Variant = director.get("completed_route_keys")
-	var completed_keys: Dictionary = completed_value as Dictionary if completed_value is Dictionary else {}
+	var completed_keys: Dictionary = {}
+	if completed_value is Dictionary:
+		completed_keys = completed_value as Dictionary
+
 	if routes_value is Array:
 		for route_value: Variant in routes_value as Array:
 			if not route_value is Dictionary:
@@ -211,7 +214,10 @@ func build_expanded_guide(weapon_class: String) -> String:
 
 	lines.append("\nTECHNIQUES")
 	var technique_completed_value: Variant = director.get("completed_technique_keys")
-	var technique_completed: Dictionary = technique_completed_value as Dictionary if technique_completed_value is Dictionary else {}
+	var technique_completed: Dictionary = {}
+	if technique_completed_value is Dictionary:
+		technique_completed = technique_completed_value as Dictionary
+
 	for technique_id: String in get_technique_ids():
 		var instruction: String = technique_id
 		if director.has_method("get_technique_instruction"):
@@ -254,9 +260,10 @@ func abbreviate_text(text: String, max_length: int) -> String:
 
 
 func get_technique_ids() -> Array[String]:
-	return [
+	var technique_ids: Array[String] = [
 		WeaponTechniqueCatalogScript.CONTEXT_DASH,
 		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_NEUTRAL,
 		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_FORWARD,
 		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_DOWN,
 	]
+	return technique_ids

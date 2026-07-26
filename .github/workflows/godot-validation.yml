@@ -33,13 +33,23 @@ jobs:
       - name: Run route familiarity smoke test
         run: godot --headless --path . res://scenes/tests/route_familiarity_smoke_test.tscn
 
-      - name: Run regional map persistence regression
+      - name: Capture regional map persistence regression
+        continue-on-error: true
         shell: bash
         run: |
-          set +e
-          timeout 45s godot --headless --path . res://scenes/tests/regional_expedition_map_smoke_test.tscn 2>&1 | tee /tmp/regional-map-test.log
-          set -e
-          grep -q "REGIONAL_EXPEDITION_MAP_SMOKE_TEST: PASS" /tmp/regional-map-test.log
+          timeout 45s godot --headless --path . res://scenes/tests/regional_expedition_map_smoke_test.tscn 2>&1 | tee regional-map-test.log
+
+      - name: Upload regional regression log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: regional-map-test-log
+          path: regional-map-test.log
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Verify regional map persistence regression
+        run: grep -q "REGIONAL_EXPEDITION_MAP_SMOKE_TEST: PASS" regional-map-test.log
 
       - name: Run Wilds generation regression
         run: godot --headless --path . res://scenes/tests/wilds_expedition_smoke_test.tscn

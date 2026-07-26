@@ -15,7 +15,8 @@ func _ready() -> void:
 	print("WEAPON_MOVESET_SMOKE_TEST: core checks complete")
 
 	# The stance test queues its temporary receiver for deletion. Let Godot finish
-	# that cleanup before the sandbox emits broad progression-refresh signals.
+	# deferred deletion before the sandbox emits broad progression-refresh signals.
+	await get_tree().process_frame
 	await get_tree().process_frame
 	validate_combat_arena_sandbox()
 

@@ -4,7 +4,7 @@ class_name IcePatternGenerator
 
 static func generate_radial_paths(event: IceVfxEvent, profile: IcePresentationProfile) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
-	rng.seed = event.seed
+	rng.seed = event.event_seed
 	var branch_total: int = max(event.branch_count, get_branch_count(event.kind, profile))
 	var segment_total: int = max(event.segment_count, get_segment_count(event.kind, profile))
 	var jitter: float = get_jitter(event.kind, profile)
@@ -40,7 +40,7 @@ static func generate_radial_paths(event: IceVfxEvent, profile: IcePresentationPr
 
 static func generate_crystals(event: IceVfxEvent, profile: IcePresentationProfile) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
-	rng.seed = event.seed
+	rng.seed = event.event_seed
 	var count: int = clampi(max(event.shard_count, profile.crystal_count), 1, 96)
 	var crystals: Array[Dictionary] = []
 	var basis: Basis = event.get_plane_basis()
@@ -75,7 +75,7 @@ static func generate_crystals(event: IceVfxEvent, profile: IcePresentationProfil
 
 static func generate_shard_vectors(event: IceVfxEvent, profile: IcePresentationProfile) -> Array[Vector3]:
 	var rng := RandomNumberGenerator.new()
-	rng.seed = event.seed
+	rng.seed = event.event_seed
 	var count: int = clampi(max(event.shard_count, profile.shard_count), 1, 128)
 	var vectors: Array[Vector3] = []
 	var normal: Vector3 = event.normal.normalized() if event.normal.length() > 0.001 else Vector3.UP

@@ -29,9 +29,39 @@ jobs:
       - name: Run route familiarity assembly test
         run: godot --headless --path . res://scenes/tests/route_familiarity_smoke_test.tscn
 
-      - name: Validate initial regional launch plan
+      - name: Validate initial Cypress location
         env:
-          ROUTE_STAGE: initial
+          ROUTE_STAGE: initial_node
+        run: godot --headless --path . res://scenes/tests/validation_regional_route_stage.tscn
+
+      - name: Validate initial hidden cairn
+        env:
+          ROUTE_STAGE: initial_cairn
+        run: godot --headless --path . res://scenes/tests/validation_regional_route_stage.tscn
+
+      - name: Validate initial route selection
+        env:
+          ROUTE_STAGE: initial_route
+        run: godot --headless --path . res://scenes/tests/validation_regional_route_stage.tscn
+
+      - name: Validate initial route origin
+        env:
+          ROUTE_STAGE: initial_origin
+        run: godot --headless --path . res://scenes/tests/validation_regional_route_stage.tscn
+
+      - name: Validate initial route destination
+        env:
+          ROUTE_STAGE: initial_destination
+        run: godot --headless --path . res://scenes/tests/validation_regional_route_stage.tscn
+
+      - name: Validate initial route state
+        env:
+          ROUTE_STAGE: initial_state
+        run: godot --headless --path . res://scenes/tests/validation_regional_route_stage.tscn
+
+      - name: Validate initial five-segment plan
+        env:
+          ROUTE_STAGE: initial_plan
         run: godot --headless --path . res://scenes/tests/validation_regional_route_stage.tscn
 
       - name: Validate persisted regional return state

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ExpeditionSegmentDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/expedition/expedition_segment_definition.gd" id="1_segment"]
+
+[resource]
+script = ExtResource("1_segment")
+segment_id = "wet_woodland"
+display_name = "Wet Woodland Fork"
+biome_id = "wet_woodland"
+role = "discovery"
+length = 25.0
+width = 18.0
+path_width = 5.75
+elevation_delta = 1.0
+boundary_style = "forest"
+water_fraction = 0.35
+obstacle_density = 0.4
+ground_color = Color(0.16, 0.24, 0.14, 1)
+path_color = Color(0.3, 0.28, 0.18, 1)
+boundary_color = Color(0.045, 0.16, 0.055, 1)
+accent_color = Color(0.58, 0.92, 0.46, 1)
+allows_optional_branch = true
+branch_side = "right"
+branch_distance_normalized = 0.56
+tags = Array[String](["forest", "wet", "branch", "transition"])

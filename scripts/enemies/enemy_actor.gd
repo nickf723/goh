@@ -2,6 +2,10 @@ extends CharacterBody3D
 class_name EnemyActor
 
 const AirborneReactionControllerScript = preload("res://scripts/combat/airborne_reaction_controller.gd")
+const AirbornePresentationControllerScript = preload("res://scripts/visuals/airborne_presentation_controller.gd")
+
+@export_group("Airborne Presentation")
+@export var airborne_presentation_profile: AirbornePresentationProfile
 
 @export_group("Defeat Presentation")
 @export_range(0.0, 2.0, 0.05) var defeat_cleanup_delay: float = 0.55
@@ -10,11 +14,13 @@ const AirborneReactionControllerScript = preload("res://scripts/combat/airborne_
 
 var defeat_cleanup_started: bool = false
 var airborne_reaction_controller: Node
+var airborne_presentation_controller: Node
 
 
 func _ready() -> void:
 	add_to_group("enemy")
 	ensure_airborne_reaction_controller()
+	ensure_airborne_presentation_controller()
 
 
 func ensure_airborne_reaction_controller() -> void:
@@ -25,6 +31,17 @@ func ensure_airborne_reaction_controller() -> void:
 	airborne_reaction_controller = AirborneReactionControllerScript.new()
 	airborne_reaction_controller.name = "AirborneReactionController"
 	add_child(airborne_reaction_controller)
+
+
+func ensure_airborne_presentation_controller() -> void:
+	airborne_presentation_controller = get_node_or_null("AirbornePresentationController")
+	if airborne_presentation_controller != null:
+		return
+
+	airborne_presentation_controller = AirbornePresentationControllerScript.new()
+	airborne_presentation_controller.name = "AirbornePresentationController"
+	airborne_presentation_controller.set("profile", airborne_presentation_profile)
+	add_child(airborne_presentation_controller)
 
 
 func receive_damage_payload(payload: DamagePayload) -> Dictionary:
@@ -80,6 +97,7 @@ func begin_defeat_cleanup() -> void:
 			"PayloadReceiver",
 			"ForceReceiver",
 			"AirborneReactionController",
+			"AirbornePresentationController",
 			"EnemyBrain",
 			"EnemyThreatSensor",
 			"EnemyActionRunner",

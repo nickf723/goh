@@ -25,9 +25,9 @@ func resolve_action_runner() -> void:
 	action_runner.name = "EnemyActionRunner"
 
 	if actor != null:
-		actor.add_child(action_runner)
+		actor.add_child.call_deferred(action_runner)
 	else:
-		add_child(action_runner)
+		add_child.call_deferred(action_runner)
 
 
 func start_attack() -> void:

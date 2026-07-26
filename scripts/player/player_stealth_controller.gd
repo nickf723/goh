@@ -284,7 +284,7 @@ func ensure_input() -> void:
 func build_indicator() -> void:
 	hud_layer = CanvasLayer.new()
 	hud_layer.layer = 24
-	actor.add_child(hud_layer)
+	actor.add_child.call_deferred(hud_layer)
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	panel.position = Vector2(22.0, -112.0)

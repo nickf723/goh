@@ -64,6 +64,7 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
+  # Temporary focused diagnostics for the combo laboratory PR.
   combo-lab-final:
     name: Combo laboratory final checks
     runs-on: ubuntu-latest

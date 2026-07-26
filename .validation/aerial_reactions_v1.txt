@@ -1,0 +1,1 @@
+Validation-only branch for the direct-main Aerial Reactions v1 implementation.

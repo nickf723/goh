@@ -12,6 +12,7 @@ func _ready() -> void:
 	validate_payload_contracts()
 	validate_critical_profiles()
 	validate_stance_critical_loop()
+	print("WEAPON_MOVESET_SMOKE_TEST: core checks complete")
 
 	# The stance test queues its temporary receiver for deletion. Let Godot finish
 	# that cleanup before the sandbox emits broad progression-refresh signals.

@@ -2,7 +2,7 @@ extends RefCounted
 class_name RegionalExpeditionStore
 
 const DEFAULT_RECORD_PATH: String = "user://regional_expedition_network_v1.json"
-const RECORD_VERSION: int = 1
+const RECORD_VERSION: int = 2
 
 const NODE_CYPRESS: String = "cypress_field_camp"
 const NODE_BLUE_RIDGE: String = "blue_ridge_waystation"
@@ -17,6 +17,12 @@ const STATE_DISCOVERED: String = "discovered"
 const STATE_CROSSED: String = "crossed"
 const STATE_MAPPED: String = "mapped"
 const STATE_STABILIZED: String = "stabilized"
+
+const ROUTE_DEFAULT_SEEDS: Dictionary = {
+	ROUTE_MAIN: 18890417,
+	ROUTE_CYPRESS_CAIRN: 9042311,
+	ROUTE_CAIRN_BLUE_RIDGE: 27182819,
+}
 
 
 static func load_or_create(record_path: String = DEFAULT_RECORD_PATH) -> Dictionary:
@@ -37,18 +43,21 @@ static func create_record() -> Dictionary:
 			NODE_CAIRN: false,
 		},
 		"routes": {
-			ROUTE_MAIN: create_route_state(STATE_DISCOVERED),
-			ROUTE_CYPRESS_CAIRN: create_route_state(STATE_UNKNOWN),
-			ROUTE_CAIRN_BLUE_RIDGE: create_route_state(STATE_UNKNOWN),
+			ROUTE_MAIN: create_route_state(STATE_DISCOVERED, ROUTE_MAIN),
+			ROUTE_CYPRESS_CAIRN: create_route_state(STATE_UNKNOWN, ROUTE_CYPRESS_CAIRN),
+			ROUTE_CAIRN_BLUE_RIDGE: create_route_state(STATE_UNKNOWN, ROUTE_CAIRN_BLUE_RIDGE),
 		},
 	}
 
 
-static func create_route_state(initial_state: String) -> Dictionary:
+static func create_route_state(initial_state: String, route_id: String = ROUTE_MAIN) -> Dictionary:
 	return {
 		"state": initial_state,
 		"crossings": 0,
 		"last_destination": "",
+		"seed": get_default_route_seed(route_id),
+		"journey_index": 0,
+		"last_plan_signature": "",
 	}
 
 
@@ -67,14 +76,22 @@ static func normalize_record(record: Dictionary) -> Dictionary:
 	normalized["discovered_nodes"] = discovered_nodes
 
 	var routes: Dictionary = normalized.get("routes", {}) as Dictionary
-	routes[ROUTE_MAIN] = normalize_route_state(routes.get(ROUTE_MAIN, {}), STATE_DISCOVERED)
-	routes[ROUTE_CYPRESS_CAIRN] = normalize_route_state(routes.get(ROUTE_CYPRESS_CAIRN, {}), STATE_UNKNOWN)
-	routes[ROUTE_CAIRN_BLUE_RIDGE] = normalize_route_state(routes.get(ROUTE_CAIRN_BLUE_RIDGE, {}), STATE_UNKNOWN)
+	routes[ROUTE_MAIN] = normalize_route_state(routes.get(ROUTE_MAIN, {}), STATE_DISCOVERED, ROUTE_MAIN)
+	routes[ROUTE_CYPRESS_CAIRN] = normalize_route_state(
+		routes.get(ROUTE_CYPRESS_CAIRN, {}),
+		STATE_UNKNOWN,
+		ROUTE_CYPRESS_CAIRN
+	)
+	routes[ROUTE_CAIRN_BLUE_RIDGE] = normalize_route_state(
+		routes.get(ROUTE_CAIRN_BLUE_RIDGE, {}),
+		STATE_UNKNOWN,
+		ROUTE_CAIRN_BLUE_RIDGE
+	)
 	normalized["routes"] = routes
 	return normalized
 
 
-static func normalize_route_state(value: Variant, fallback_state: String) -> Dictionary:
+static func normalize_route_state(value: Variant, fallback_state: String, route_id: String) -> Dictionary:
 	var route_state: Dictionary = value as Dictionary if value is Dictionary else {}
 	var state_name: String = str(route_state.get("state", fallback_state))
 	if get_state_rank(state_name) < 0:
@@ -83,6 +100,9 @@ static func normalize_route_state(value: Variant, fallback_state: String) -> Dic
 		"state": state_name,
 		"crossings": maxi(int(route_state.get("crossings", 0)), 0),
 		"last_destination": str(route_state.get("last_destination", "")),
+		"seed": maxi(int(route_state.get("seed", get_default_route_seed(route_id))), 1),
+		"journey_index": maxi(int(route_state.get("journey_index", 0)), 0),
+		"last_plan_signature": str(route_state.get("last_plan_signature", "")),
 	}
 
 
@@ -111,7 +131,12 @@ static func sync_from_expedition_record(network_record: Dictionary, expedition_r
 	return synced
 
 
-static func complete_route(record: Dictionary, route_id: String, destination_node_id: String) -> Dictionary:
+static func complete_route(
+	record: Dictionary,
+	route_id: String,
+	destination_node_id: String,
+	plan_signature: String = ""
+) -> Dictionary:
 	var completed: Dictionary = normalize_record(record)
 	var discovered_nodes: Dictionary = completed["discovered_nodes"] as Dictionary
 	discovered_nodes[destination_node_id] = true
@@ -119,9 +144,13 @@ static func complete_route(record: Dictionary, route_id: String, destination_nod
 	completed["current_node_id"] = destination_node_id
 
 	var routes: Dictionary = completed["routes"] as Dictionary
-	var route_state: Dictionary = routes.get(route_id, create_route_state(STATE_DISCOVERED)) as Dictionary
+	var route_state: Dictionary = routes.get(
+		route_id,
+		create_route_state(STATE_DISCOVERED, route_id)
+	) as Dictionary
 	route_state["crossings"] = maxi(int(route_state.get("crossings", 0)), 0) + 1
 	route_state["last_destination"] = destination_node_id
+	route_state["last_plan_signature"] = plan_signature
 	var crossings: int = int(route_state["crossings"])
 	if crossings >= 3:
 		route_state["state"] = STATE_STABILIZED
@@ -129,6 +158,11 @@ static func complete_route(record: Dictionary, route_id: String, destination_nod
 		route_state["state"] = STATE_MAPPED
 	else:
 		route_state["state"] = STATE_CROSSED
+	route_state["journey_index"] = maxi(int(route_state.get("journey_index", 0)), 0) + 1
+	route_state["seed"] = advance_route_seed(
+		int(route_state.get("seed", get_default_route_seed(route_id))),
+		int(route_state["journey_index"])
+	)
 	routes[route_id] = route_state
 	completed["routes"] = routes
 	return completed
@@ -136,7 +170,10 @@ static func complete_route(record: Dictionary, route_id: String, destination_nod
 
 static func promote_route(record: Dictionary, route_id: String, target_state: String) -> void:
 	var routes: Dictionary = record.get("routes", {}) as Dictionary
-	var route_state: Dictionary = routes.get(route_id, create_route_state(STATE_UNKNOWN)) as Dictionary
+	var route_state: Dictionary = routes.get(
+		route_id,
+		create_route_state(STATE_UNKNOWN, route_id)
+	) as Dictionary
 	if get_state_rank(target_state) > get_state_rank(str(route_state.get("state", STATE_UNKNOWN))):
 		route_state["state"] = target_state
 	routes[route_id] = route_state
@@ -145,7 +182,10 @@ static func promote_route(record: Dictionary, route_id: String, target_state: St
 
 static func set_minimum_crossings(record: Dictionary, route_id: String, minimum: int) -> void:
 	var routes: Dictionary = record.get("routes", {}) as Dictionary
-	var route_state: Dictionary = routes.get(route_id, create_route_state(STATE_UNKNOWN)) as Dictionary
+	var route_state: Dictionary = routes.get(
+		route_id,
+		create_route_state(STATE_UNKNOWN, route_id)
+	) as Dictionary
 	route_state["crossings"] = maxi(int(route_state.get("crossings", 0)), minimum)
 	routes[route_id] = route_state
 	record["routes"] = routes
@@ -161,6 +201,30 @@ static func get_route_crossings(record: Dictionary, route_id: String) -> int:
 	var routes: Dictionary = record.get("routes", {}) as Dictionary
 	var route_state: Dictionary = routes.get(route_id, {}) as Dictionary
 	return maxi(int(route_state.get("crossings", 0)), 0)
+
+
+static func get_route_seed(record: Dictionary, route_id: String) -> int:
+	var routes: Dictionary = record.get("routes", {}) as Dictionary
+	var route_state: Dictionary = routes.get(route_id, {}) as Dictionary
+	return maxi(int(route_state.get("seed", get_default_route_seed(route_id))), 1)
+
+
+static func get_route_journey_index(record: Dictionary, route_id: String) -> int:
+	var routes: Dictionary = record.get("routes", {}) as Dictionary
+	var route_state: Dictionary = routes.get(route_id, {}) as Dictionary
+	return maxi(int(route_state.get("journey_index", 0)), 0)
+
+
+static func get_default_route_seed(route_id: String) -> int:
+	return maxi(int(ROUTE_DEFAULT_SEEDS.get(route_id, 18890417)), 1)
+
+
+static func advance_route_seed(current_seed: int, journey_index: int) -> int:
+	var advanced: int = int(
+		(current_seed * 1103515245 + 12345 + journey_index * 7919)
+		& 0x7FFFFFFF
+	)
+	return maxi(advanced, 1)
 
 
 static func is_node_discovered(record: Dictionary, node_id: String) -> bool:

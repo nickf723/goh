@@ -19,7 +19,7 @@ var branch_chance: float = 0.28
 var branch_depth: int = 1
 var branch_length_ratio: float = 0.38
 var maximum_branches: int = 12
-var seed: int = 1
+var event_seed: int = 1
 var flatten_to_surface: bool = false
 var surface_y: float = 0.0
 var source_id: String = "unknown"
@@ -41,7 +41,7 @@ static func make(
 	event.start_position = next_start
 	event.end_position = next_end
 	event.intensity = clampf(next_intensity, 0.05, 8.0)
-	event.seed = next_seed if next_seed != 0 else 1
+	event.event_seed = next_seed if next_seed != 0 else 1
 	event.source_id = next_source_id if next_source_id != "" else "unknown"
 	event.tags = next_tags.duplicate()
 	return event
@@ -104,7 +104,7 @@ func duplicate_event() -> LightningArcEvent:
 	copy.branch_depth = branch_depth
 	copy.branch_length_ratio = branch_length_ratio
 	copy.maximum_branches = maximum_branches
-	copy.seed = seed
+	copy.event_seed = event_seed
 	copy.flatten_to_surface = flatten_to_surface
 	copy.surface_y = surface_y
 	copy.source_id = source_id
@@ -127,7 +127,7 @@ func get_debug_data() -> Dictionary:
 		"branch_chance": snapped(branch_chance, 0.01),
 		"branch_depth": branch_depth,
 		"maximum_branches": maximum_branches,
-		"seed": seed,
+		"seed": event_seed,
 		"flattened": flatten_to_surface,
 		"source_id": source_id,
 		"tags": tags.duplicate(),

@@ -39,5 +39,19 @@ jobs:
       - name: Validate sandbox restoration
         run: godot --headless --path . res://scenes/tests/combat_arena_sandbox_diagnostic.tscn -- restore
 
-      - name: Run weapon and sandbox smoke test
-        run: godot --headless --path . res://scenes/tests/weapon_moveset_smoke_test.tscn
+      - name: Capture weapon and sandbox smoke test
+        continue-on-error: true
+        run: godot --headless --path . res://scenes/tests/weapon_moveset_smoke_test.tscn > weapon-smoke.log 2>&1
+
+      - name: Upload weapon smoke log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: weapon-smoke-log
+          path: weapon-smoke.log
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Require weapon smoke pass
+        if: always()
+        run: grep -q "WEAPON_MOVESET_SMOKE_TEST: PASS" weapon-smoke.log

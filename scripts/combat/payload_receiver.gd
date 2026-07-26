@@ -25,6 +25,7 @@ func receive_payload(payload: DamagePayload) -> Dictionary:
 	remember_payload(payload)
 	apply_direct_status(target, payload)
 	apply_force(target, payload)
+	apply_airborne_reaction(target, payload)
 	var thermal_result: Dictionary = apply_thermal(target, payload)
 	var combustion_result: Dictionary = apply_combustion(target, payload)
 	var electrical_result: Dictionary = apply_electrical_material_response(target, payload)
@@ -62,7 +63,6 @@ func remember_payload(payload: DamagePayload) -> void:
 func apply_direct_status(target: Node, payload: DamagePayload) -> void:
 	if payload.status_effect == "":
 		return
-
 	if payload.status_duration <= 0.0:
 		return
 
@@ -250,6 +250,13 @@ func apply_force(target: Node, payload: DamagePayload) -> void:
 		payload.knockback_up_strength,
 		payload.source_name
 	)
+
+
+func apply_airborne_reaction(target: Node, payload: DamagePayload) -> void:
+	var airborne_controller: Node = get_component(target, "AirborneReactionController")
+	if airborne_controller == null or not airborne_controller.has_method("register_payload"):
+		return
+	airborne_controller.call("register_payload", payload)
 
 
 func get_payload_source_position(_payload: DamagePayload) -> Vector3:

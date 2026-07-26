@@ -1,0 +1,38 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/expedition/expedition_route_generator.gd" id="1_route"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Resource" path="res://data/expedition_segments/cypress_basin.tres" id="5_cypress"]
+[ext_resource type="Resource" path="res://data/expedition_segments/wet_woodland.tres" id="6_woodland"]
+[ext_resource type="Resource" path="res://data/expedition_segments/pine_ridge.tres" id="7_pine"]
+[ext_resource type="Resource" path="res://data/expedition_segments/rocky_foothills.tres" id="8_foothills"]
+[ext_resource type="Resource" path="res://data/expedition_segments/mountain_forest.tres" id="9_mountain"]
+[ext_resource type="Resource" path="res://data/expedition_segments/survey_cairn_branch.tres" id="10_branch"]
+
+[node name="PrototypeWildsExpedition" type="Node3D"]
+script = ExtResource("1_route")
+main_segment_definitions = Array[ExtResource("5_cypress")]([ExtResource("5_cypress"), ExtResource("6_woodland"), ExtResource("7_pine"), ExtResource("8_foothills"), ExtResource("9_mountain")])
+branch_segment_definition = ExtResource("10_branch")
+branch_after_index = 1
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -28, 0)
+light_color = Color(0.95, 0.9, 0.76, 1)
+light_energy = 1.25
+shadow_enabled = true
+
+[node name="SkyFill" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(38, 142, 0)
+light_color = Color(0.36, 0.55, 0.72, 1)
+light_energy = 0.45
+shadow_enabled = false
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, 0)

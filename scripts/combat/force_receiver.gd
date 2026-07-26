@@ -12,6 +12,7 @@ class_name ForceReceiver
 @export var max_angular_speed: float = 5.0
 
 var external_velocity: Vector3 = Vector3.ZERO
+var unclaimed_vertical_impulse: float = 0.0
 var continuous_velocity: Vector3 = Vector3.ZERO
 var angular_velocity: Vector3 = Vector3.ZERO
 var continuous_forces: Dictionary = {}
@@ -146,8 +147,19 @@ func get_total_continuous_torque() -> Vector3:
 
 func consume_external_velocity(delta: float) -> Vector3:
 	var current_velocity: Vector3 = external_velocity
+	if absf(current_velocity.y) > 0.001:
+		unclaimed_vertical_impulse = current_velocity.y
 	external_velocity = external_velocity.move_toward(Vector3.ZERO, drag * delta)
 	return current_velocity
+
+
+func consume_vertical_impulse() -> float:
+	var vertical_impulse: float = unclaimed_vertical_impulse
+	if absf(vertical_impulse) <= 0.001:
+		vertical_impulse = external_velocity.y
+	unclaimed_vertical_impulse = 0.0
+	external_velocity.y = 0.0
+	return vertical_impulse
 
 
 func clear_all_continuous_influences() -> void:
@@ -161,6 +173,7 @@ func clear_all_continuous_influences() -> void:
 
 func reset_forces() -> void:
 	external_velocity = Vector3.ZERO
+	unclaimed_vertical_impulse = 0.0
 	continuous_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
 	continuous_forces.clear()
@@ -173,6 +186,7 @@ func reset_forces() -> void:
 func has_force() -> bool:
 	return (
 		external_velocity.length() > 0.05
+		or absf(unclaimed_vertical_impulse) > 0.05
 		or continuous_velocity.length() > 0.05
 		or not continuous_forces.is_empty()
 	)
@@ -182,6 +196,7 @@ func get_debug_data() -> Dictionary:
 	return {
 		"force": snapped(external_velocity.length(), 0.01),
 		"impulse_velocity": external_velocity,
+		"vertical_impulse": snapped(unclaimed_vertical_impulse, 0.01),
 		"impulse_retention": snapped(impulse_momentum_retention, 0.01),
 		"continuous_velocity": continuous_velocity,
 		"continuous_force": get_total_continuous_force(),

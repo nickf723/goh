@@ -163,7 +163,7 @@ func _on_landed(recovery_time: float) -> void:
 	visual_root.position = base_position + Vector3(0.0, -profile.landing_drop, 0.0)
 	presentation_tween = create_tween()
 	presentation_tween.set_parallel(true)
-	var duration: float = maxf(recovery_time, profile.landing_recover_time, 0.05)
+	var duration: float = maxf(maxf(recovery_time, profile.landing_recover_time), 0.05)
 	presentation_tween.tween_property(visual_root, "rotation", base_rotation, duration)
 	presentation_tween.tween_property(visual_root, "scale", base_scale, duration)
 	presentation_tween.tween_property(visual_root, "position", base_position, duration)

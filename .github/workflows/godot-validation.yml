@@ -118,3 +118,6 @@ jobs:
 
       - name: Validate sandbox restoration
         run: godot --headless --path . res://scenes/tests/combat_arena_sandbox_diagnostic.tscn -- restore
+
+      - name: Validate registered weapon and sandbox suite
+        run: godot --headless --path . res://scenes/tests/weapon_moveset_smoke_test.tscn

@@ -19,10 +19,7 @@ static func build_plan(
 	origin_node_id: String,
 	destination_node_id: String
 ) -> Dictionary:
-	var typed_source_indices: Array[int] = get_route_source_indices(route_id, state_name)
-	var source_indices: Array = []
-	for source_index: int in typed_source_indices:
-		source_indices.append(source_index)
+	var source_indices: Array = get_route_source_indices(route_id, state_name)
 	var modifiers: Dictionary = get_familiarity_modifiers(state_name)
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed_value
@@ -74,7 +71,7 @@ static func build_plan(
 	}
 
 
-static func get_route_source_indices(route_id: String, state_name: String) -> Array[int]:
+static func get_route_source_indices(route_id: String, state_name: String) -> Array:
 	var stabilized: bool = state_name == RegionalStoreScript.STATE_STABILIZED
 	match route_id:
 		RegionalStoreScript.ROUTE_CYPRESS_CAIRN:

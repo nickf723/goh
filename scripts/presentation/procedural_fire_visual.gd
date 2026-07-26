@@ -29,7 +29,7 @@ func configure(next_event: RefCounted, next_profile: Resource) -> void:
 	current_intensity = clampf(float(event.intensity), 0.0, 5.0)
 	wind_velocity = event.wind_velocity
 	persistent = bool(profile.persistent)
-	seed_phase = float(abs(int(event.seed) % 997)) * 0.031
+	seed_phase = float(abs(int(event.event_seed) % 997)) * 0.031
 	build_flames()
 	build_smoke()
 	build_embers()

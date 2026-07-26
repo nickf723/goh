@@ -60,7 +60,7 @@ func validate_initial_check(check_id: String) -> void:
 				return
 			if not require((plan_value as Dictionary).get("source_indices", []) is Array, "source indices array"):
 				return
-		"plan_size":
+		"plan_size_probe":
 			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
 			var size_context: Dictionary = map.build_launch_context()
 			var size_plan_value: Variant = size_context.get("familiarity_plan", {})
@@ -69,7 +69,8 @@ func validate_initial_check(check_id: String) -> void:
 			var source_value: Variant = (size_plan_value as Dictionary).get("source_indices", [])
 			if not require(source_value is Array, "source indices array"):
 				return
-			if not require((source_value as Array).size() == 5, "five-segment main route"):
+			var expected_size: int = int(OS.get_environment("EXPECTED_ROUTE_SIZE"))
+			if not require((source_value as Array).size() == expected_size, "expected plan size"):
 				return
 		_:
 			fail("unknown initial check " + check_id)

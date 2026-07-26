@@ -102,7 +102,7 @@ func build_launch_context() -> Dictionary:
 		"suppress_scene_transition": not allow_scene_launch,
 		"route_state": str(plan.get("state", RegionalStoreScript.STATE_DISCOVERED)),
 		"route_seed": int(plan.get("seed", 18890417)),
-		"familiarity_plan": plan.duplicate(true),
+		"familiarity_plan": plan,
 		"plan_signature": str(plan.get("signature", "")),
 	}
 

@@ -13,6 +13,7 @@
 [ext_resource type="Material" path="res://art/materials/prototype/floor_stone_gray.tres" id="11_floor"]
 [ext_resource type="Material" path="res://art/materials/prototype/wall_dark_stone.tres" id="12_wall"]
 [ext_resource type="Material" path="res://art/materials/church/church_warm_stone_v1.tres" id="13_warm"]
+[ext_resource type="Script" path="res://scripts/levels/combat_arena_compact_hud.gd" id="14_compact_hud"]
 
 [sub_resource type="BoxShape3D" id="BoxShape_floor"]
 size = Vector3(30, 1, 36)
@@ -76,6 +77,9 @@ corner_radius_bottom_left = 10
 
 [node name="PrototypeWeaponCombatArena" type="Node3D" unique_id=2120937738]
 script = ExtResource("1_director")
+
+[node name="CompactHUDController" type="Node" parent="."]
+script = ExtResource("14_compact_hud")
 
 [node name="GameUI" parent="." unique_id=1985744405 instance=ExtResource("3_ui")]
 

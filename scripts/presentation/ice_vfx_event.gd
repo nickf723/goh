@@ -18,7 +18,7 @@ const KIND_IMPACT: String = "impact"
 @export var intensity: float = 1.0
 @export var progress: float = 1.0
 @export var duration_seconds: float = 1.2
-@export var seed: int = 1
+@export var event_seed: int = 1
 @export var branch_count: int = 6
 @export var segment_count: int = 7
 @export var shard_count: int = 18
@@ -43,7 +43,7 @@ static func make(
 	event.normal = normal_value.normalized() if normal_value.length() > 0.001 else Vector3.UP
 	event.intensity = max(intensity_value, 0.0)
 	event.radius = max(radius_value, 0.01)
-	event.seed = seed_value
+	event.event_seed = seed_value
 	event.source_id = source_value
 	event.tags = tag_values.duplicate()
 	return event

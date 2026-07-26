@@ -12,18 +12,18 @@ func _ready() -> void:
 	RegionalStoreScript.delete_record(NETWORK_PATH)
 	ExpeditionStoreScript.delete_record(EXPEDITION_PATH)
 	var stage: String = OS.get_environment("ROUTE_STAGE")
-	match stage:
-		"initial":
-			await run_initial_stage()
-		"returned":
-			await run_returned_stage()
-		_:
-			fail("unknown stage " + stage)
+	if stage.begins_with("initial_"):
+		await run_initial_check(stage.trim_prefix("initial_"))
+	elif stage == "returned":
+		await run_returned_stage()
+	else:
+		fail("unknown stage " + stage)
 
 
-func run_initial_stage() -> void:
+func run_initial_check(check_id: String) -> void:
 	var map: RegionalExpeditionMap = MapScene.instantiate() as RegionalExpeditionMap
-	if not check(map != null, "initial map instantiated"):
+	if map == null:
+		fail("initial map instantiated")
 		return
 	map.network_record_path = NETWORK_PATH
 	map.expedition_record_path = EXPEDITION_PATH
@@ -31,23 +31,46 @@ func run_initial_stage() -> void:
 	add_child(map)
 	await get_tree().process_frame
 	await get_tree().process_frame
-	if not check(str(map.network_record.get("current_node_id", "")) == RegionalStoreScript.NODE_CYPRESS, "initial node is Cypress"):
-		return
-	if not check(not RegionalStoreScript.is_node_discovered(map.network_record, RegionalStoreScript.NODE_CAIRN), "cairn starts hidden"):
-		return
-	map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
-	if not check(map.selected_route_id == RegionalStoreScript.ROUTE_MAIN, "main route selected"):
-		return
-	var context: Dictionary = map.build_launch_context()
-	if not check(str(context.get("route_state", "")) == RegionalStoreScript.STATE_DISCOVERED, "main route starts discovered"):
-		return
-	var plan_value: Variant = context.get("familiarity_plan", {})
-	if not check(plan_value is Dictionary, "initial plan dictionary"):
-		return
-	var indices_value: Variant = (plan_value as Dictionary).get("source_indices", [])
-	if not check(indices_value is Array and (indices_value as Array).size() == 5, "initial plan uses five segments"):
-		return
-	pass_stage("INITIAL")
+
+	match check_id:
+		"node":
+			if not check(str(map.network_record.get("current_node_id", "")) == RegionalStoreScript.NODE_CYPRESS, "initial node is Cypress"):
+				return
+		"cairn":
+			if not check(not RegionalStoreScript.is_node_discovered(map.network_record, RegionalStoreScript.NODE_CAIRN), "cairn starts hidden"):
+				return
+		"route":
+			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
+			if not check(map.selected_route_id == RegionalStoreScript.ROUTE_MAIN, "main route selected"):
+				return
+		"origin":
+			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
+			var origin_context: Dictionary = map.build_launch_context()
+			if not check(str(origin_context.get("origin_node_id", "")) == RegionalStoreScript.NODE_CYPRESS, "outbound origin"):
+				return
+		"destination":
+			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
+			var destination_context: Dictionary = map.build_launch_context()
+			if not check(str(destination_context.get("destination_node_id", "")) == RegionalStoreScript.NODE_BLUE_RIDGE, "outbound destination"):
+				return
+		"state":
+			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
+			var state_context: Dictionary = map.build_launch_context()
+			if not check(str(state_context.get("route_state", "")) == RegionalStoreScript.STATE_DISCOVERED, "main route starts discovered"):
+				return
+		"plan":
+			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
+			var plan_context: Dictionary = map.build_launch_context()
+			var plan_value: Variant = plan_context.get("familiarity_plan", {})
+			if not check(plan_value is Dictionary, "initial plan dictionary"):
+				return
+			var indices_value: Variant = (plan_value as Dictionary).get("source_indices", [])
+			if not check(indices_value is Array and (indices_value as Array).size() == 5, "initial plan uses five segments"):
+				return
+		_:
+			fail("unknown initial check " + check_id)
+			return
+	pass_stage("INITIAL_" + check_id.to_upper())
 
 
 func run_returned_stage() -> void:

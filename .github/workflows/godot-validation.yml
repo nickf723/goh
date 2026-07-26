@@ -34,34 +34,50 @@ jobs:
         run: godot --headless --path . res://scenes/tests/route_familiarity_smoke_test.tscn
 
       - name: Capture regional map persistence regression
+        id: regional
         continue-on-error: true
         shell: bash
         run: |
           rm -f "$RUNNER_TEMP/goh-regional-map-pass.txt" "$RUNNER_TEMP/goh-regional-map-checkpoint.txt"
           set +e
           set +o pipefail
-          timeout 30s godot --headless --path . res://scenes/tests/regional_expedition_map_smoke_test.tscn 2>&1 | tee regional-map-test.log
+          timeout 30s godot --headless --path . res://scenes/tests/regional_expedition_map_smoke_test.tscn
           set -o pipefail
-          set -e
-          cp "$RUNNER_TEMP/goh-regional-map-checkpoint.txt" regional-map-checkpoint.txt 2>/dev/null || echo missing > regional-map-checkpoint.txt
-          cp "$RUNNER_TEMP/goh-regional-map-pass.txt" regional-map-pass.txt 2>/dev/null || true
-          echo "Captured checkpoint: $(cat regional-map-checkpoint.txt)"
+          checkpoint="$(cat "$RUNNER_TEMP/goh-regional-map-checkpoint.txt" 2>/dev/null || echo missing)"
+          echo "checkpoint=$checkpoint" >> "$GITHUB_OUTPUT"
+          if test -f "$RUNNER_TEMP/goh-regional-map-pass.txt"; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
+          exit 0
 
-      - name: Upload regional map diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: route-familiarity-regional-diagnostics-${{ github.run_id }}
-          path: |
-            regional-map-test.log
-            regional-map-checkpoint.txt
-          if-no-files-found: error
-          retention-days: 1
+      - name: Checkpoint complete
+        if: steps.regional.outputs.checkpoint == 'complete'
+        run: echo "Regional map regression reached completion."
+
+      - name: Checkpoint returned map ready
+        if: steps.regional.outputs.checkpoint == 'returned map ready'
+        run: echo "Regional map regression stopped after returned map setup."
+
+      - name: Checkpoint persistence simulated
+        if: steps.regional.outputs.checkpoint == 'persistence simulated'
+        run: echo "Regional map regression stopped after persistence simulation."
+
+      - name: Checkpoint outbound context valid
+        if: steps.regional.outputs.checkpoint == 'outbound context valid'
+        run: echo "Regional map regression stopped after outbound context."
+
+      - name: Checkpoint initial map ready
+        if: steps.regional.outputs.checkpoint == 'initial map ready'
+        run: echo "Regional map regression stopped after initial map setup."
+
+      - name: Checkpoint starting or missing
+        if: steps.regional.outputs.checkpoint == 'starting' || steps.regional.outputs.checkpoint == 'missing'
+        run: echo "Regional map regression stopped during startup."
 
       - name: Verify regional map persistence regression
-        run: |
-          echo "Regional checkpoint: $(cat regional-map-checkpoint.txt 2>/dev/null || echo missing)"
-          test -f regional-map-pass.txt
+        run: test "${{ steps.regional.outputs.passed }}" = "true"
 
       - name: Run Wilds generation regression
         run: godot --headless --path . res://scenes/tests/wilds_expedition_smoke_test.tscn

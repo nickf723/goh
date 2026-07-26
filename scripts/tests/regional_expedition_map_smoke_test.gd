@@ -194,6 +194,8 @@ func write_ci_file(file_name: String, value: String) -> void:
 	var file: FileAccess = FileAccess.open(get_ci_file_path(file_name), FileAccess.WRITE)
 	if file != null:
 		file.store_string(value)
+		file.flush()
+		file.close()
 
 
 func get_ci_file_path(file_name: String) -> String:

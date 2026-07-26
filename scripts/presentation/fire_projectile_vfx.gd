@@ -12,7 +12,7 @@ var projectile: Node3D
 var visual: Node3D
 var profile: Resource
 var event: RefCounted
-var seed: int = 4103
+var event_seed: int = 4103
 
 
 func _ready() -> void:
@@ -31,7 +31,7 @@ func _ready() -> void:
 	)
 	event.smoke_strength = 0.18
 	event.ember_strength = 1.0
-	event.seed = seed
+	event.event_seed = event_seed
 	visual = FireVisualScript.new() as Node3D
 	visual.name = "ProceduralFireboltVisual"
 	add_child(visual)

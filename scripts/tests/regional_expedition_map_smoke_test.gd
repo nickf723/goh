@@ -63,10 +63,10 @@ func _ready() -> void:
 	var outbound_plan: Dictionary = outbound_plan_value as Dictionary
 	if not require_true(str(outbound_plan.get("signature", "")) != "", "outbound signature"):
 		return
-	var outbound_indices_value: Variant = outbound_plan.get("source_indices", [])
-	if not require_true(outbound_indices_value is Array, "outbound indices type"):
+	var outbound_entries_value: Variant = outbound_plan.get("entries", [])
+	if not require_true(outbound_entries_value is Array, "outbound entries type"):
 		return
-	if not require_true((outbound_indices_value as Array).size() == 5, "outbound full slice"):
+	if not require_true((outbound_entries_value as Array).size() == 5, "outbound full recipe"):
 		return
 	write_checkpoint("outbound context valid")
 
@@ -152,10 +152,10 @@ func _ready() -> void:
 	var cairn_plan_value: Variant = cairn_context.get("familiarity_plan", {})
 	if not require_true(cairn_plan_value is Dictionary, "cairn plan type"):
 		return
-	var cairn_indices_value: Variant = (cairn_plan_value as Dictionary).get("source_indices", [])
-	if not require_true(cairn_indices_value is Array, "cairn indices type"):
+	var cairn_entries_value: Variant = (cairn_plan_value as Dictionary).get("entries", [])
+	if not require_true(cairn_entries_value is Array, "cairn entries type"):
 		return
-	if not require_true((cairn_indices_value as Array).size() == 3, "cairn eastern slice"):
+	if not require_true((cairn_entries_value as Array).size() == 3, "cairn eastern recipe"):
 		return
 
 	returned_map.queue_free()

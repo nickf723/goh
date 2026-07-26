@@ -1,6 +1,9 @@
 extends Node
 
 const WeaponMovesetSuiteScript: Script = preload("res://scripts/tests/weapon_moveset_smoke_test.gd")
+const Sword: WeaponDefinition = preload("res://data/weapons/practice_sword.tres")
+const Hammer: WeaponDefinition = preload("res://data/weapons/training_hammer.tres")
+const Spear: WeaponDefinition = preload("res://data/weapons/training_spear.tres")
 
 
 func _ready() -> void:
@@ -11,9 +14,9 @@ func _ready() -> void:
 	# Validate the global progression sandbox before local combat fixtures exist.
 	suite.call("validate_combat_arena_sandbox")
 
-	suite.call("validate_weapon", suite.get("Sword"), "sword", 9)
-	suite.call("validate_weapon", suite.get("Hammer"), "hammer", 7)
-	suite.call("validate_weapon", suite.get("Spear"), "lance", 7)
+	suite.call("validate_weapon", Sword, "sword", 9)
+	suite.call("validate_weapon", Hammer, "hammer", 7)
+	suite.call("validate_weapon", Spear, "lance", 7)
 	suite.call("validate_sword_branch_tree")
 	suite.call("validate_hammer_identity")
 	suite.call("validate_spear_identity")

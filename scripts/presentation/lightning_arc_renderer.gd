@@ -35,7 +35,7 @@ func render_arc(event: LightningArcEvent, profile: LightningProfile = null) -> L
 	visual.name = "ProceduralLightning_" + working.kind
 	add_child(visual)
 	visual.global_position = working.start_position
-	visual.configure(working.duration_seconds, resolved_profile.flicker_frequency, working.seed)
+	visual.configure(working.duration_seconds, resolved_profile.flicker_frequency, working.event_seed)
 	visual.expired.connect(_on_visual_expired)
 
 	var local_paths: Array = []

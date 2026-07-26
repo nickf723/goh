@@ -1,6 +1,8 @@
 extends Node3D
 class_name EnemyOverheadHud
 
+const PENDING_HUD_META: String = "_pending_enemy_overhead_hud"
+
 const BACK_COLOR: Color = Color(0.02, 0.025, 0.035, 0.82)
 const HEALTH_GOOD_COLOR: Color = Color(0.2, 1.0, 0.32, 0.96)
 const HEALTH_LOW_COLOR: Color = Color(1.0, 0.18, 0.12, 0.96)
@@ -67,7 +69,6 @@ static func ensure_for_target(target: Node) -> EnemyOverheadHud:
 		existing_hud.refresh_now()
 		return existing_hud
 
-	const PENDING_HUD_META: String = "_pending_enemy_overhead_hud"
 	if target_3d.has_meta(PENDING_HUD_META):
 		var pending_value: Variant = target_3d.get_meta(PENDING_HUD_META)
 		if pending_value is EnemyOverheadHud and is_instance_valid(pending_value):

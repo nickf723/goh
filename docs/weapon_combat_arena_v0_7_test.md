@@ -137,15 +137,12 @@ Confirm:
 
 ## Automated coverage
 
-The registered `weapon_moveset_smoke_test.tscn` now verifies:
+The combat checks are intentionally isolated into two scenes:
 
-- all existing Sword, Hammer, and Spear moveset graphs and payload contracts;
-- weapon critical identity and the stance-critical loop;
-- the arena sandbox reports every weapon class, equipment definition, and catalog unlock;
-- all weapon classes receive maximum mastery inside the sandbox;
-- all equipment and catalog unlocks are temporarily granted;
-- combat resources refill;
-- stats, owned equipment, equipped items, mastery, and unlock snapshots restore afterward.
+- `weapon_moveset_smoke_test.tscn` verifies the existing Sword, Hammer, and Spear moveset graphs, payload contracts, weapon identity, critical profiles, and stance-critical loop.
+- `combat_arena_loadout_smoke_test.tscn` verifies that every weapon class, equipment definition, and catalog unlock is granted inside the sandbox; combat resources refill; and stats, equipment, mastery, unlocks, and weapon infusion restore afterward.
+
+Keeping progression snapshots separate from temporary combat receivers prevents unrelated test fixtures from sharing one Godot lifecycle.
 
 ## Known limitations
 

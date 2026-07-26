@@ -18,7 +18,7 @@ var smoke_strength: float = 0.5
 var ember_strength: float = 0.4
 var wind_velocity: Vector3 = Vector3.ZERO
 var duration_seconds: float = 1.2
-var seed: int = 1
+var event_seed: int = 1
 var source_id: String = "unknown"
 var tags: Array[String] = []
 var metadata: Dictionary = {}
@@ -67,8 +67,8 @@ func sanitize() -> void:
 	smoke_strength = clampf(smoke_strength, 0.0, 3.0)
 	ember_strength = clampf(ember_strength, 0.0, 3.0)
 	duration_seconds = clampf(duration_seconds, 0.05, 20.0)
-	if seed == 0:
-		seed = 1
+	if event_seed == 0:
+		event_seed = 1
 
 
 func duplicate_event() -> FireVfxEvent:
@@ -83,7 +83,7 @@ func duplicate_event() -> FireVfxEvent:
 	copy.ember_strength = ember_strength
 	copy.wind_velocity = wind_velocity
 	copy.duration_seconds = duration_seconds
-	copy.seed = seed
+	copy.event_seed = event_seed
 	copy.source_id = source_id
 	copy.tags = tags.duplicate()
 	copy.metadata = metadata.duplicate(true)
@@ -102,7 +102,7 @@ func get_debug_data() -> Dictionary:
 		"embers": snapped(ember_strength, 0.01),
 		"wind": wind_velocity,
 		"duration": snapped(duration_seconds, 0.01),
-		"seed": seed,
+		"seed": event_seed,
 		"source_id": source_id,
 		"tags": tags.duplicate(),
 	}

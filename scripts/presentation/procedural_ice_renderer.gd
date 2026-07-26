@@ -26,7 +26,9 @@ func render_event(event: Resource, profile: Resource = null) -> Node3D:
 	if event == null or not event.has_method("is_valid_event") or not bool(event.call("is_valid_event")):
 		rejected_count += 1
 		return null
-	var active_profile: Resource = profile if profile != null else IceProfileScript.new()
+	var active_profile: Resource = profile
+	if active_profile == null:
+		active_profile = IceProfileScript.new()
 	if active_effects.size() >= max(int(active_profile.maximum_active_effects), 8):
 		rejected_count += 1
 		return null

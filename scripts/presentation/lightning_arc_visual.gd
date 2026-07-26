@@ -12,10 +12,10 @@ var base_light_energy: float = 0.0
 var mesh_nodes: Array[MeshInstance3D] = []
 
 
-func configure(duration: float, frequency: float, seed: int) -> void:
+func configure(duration: float, frequency: float, random_seed: int) -> void:
 	duration_seconds = clampf(duration, 0.04, 2.5)
 	flicker_frequency = clampf(frequency, 1.0, 120.0)
-	seed_phase = float(abs(seed % 997)) * 0.017
+	seed_phase = float(abs(random_seed % 997)) * 0.017
 
 
 func register_mesh(mesh: MeshInstance3D) -> void:

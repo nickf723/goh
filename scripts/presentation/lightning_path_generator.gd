@@ -15,7 +15,7 @@ static func generate(event: LightningArcEvent) -> Dictionary:
 	var working: LightningArcEvent = event.duplicate_event()
 	working.sanitize()
 	var rng := RandomNumberGenerator.new()
-	rng.seed = working.seed
+	rng.seed = working.event_seed
 	var main_path: PackedVector3Array = generate_polyline(
 		working.start_position,
 		working.end_position,

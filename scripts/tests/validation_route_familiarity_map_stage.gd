@@ -12,15 +12,15 @@ func _ready() -> void:
 	RegionalStoreScript.delete_record(NETWORK_PATH)
 	ExpeditionStoreScript.delete_record(EXPEDITION_PATH)
 	var stage: String = OS.get_environment("ROUTE_STAGE")
-	if stage == "initial":
-		await validate_initial_map()
+	if stage.begins_with("initial_"):
+		await validate_initial_check(stage.trim_prefix("initial_"))
 	elif stage == "returned":
 		await validate_returned_map()
 	else:
 		fail("unknown stage " + stage)
 
 
-func validate_initial_map() -> void:
+func validate_initial_check(check_id: String) -> void:
 	var map: RegionalExpeditionMap = MapScene.instantiate() as RegionalExpeditionMap
 	if not require(map != null, "map instantiated"):
 		return
@@ -31,25 +31,50 @@ func validate_initial_map() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	if not require(str(map.network_record.get("current_node_id", "")) == RegionalStoreScript.NODE_CYPRESS, "starts at Cypress"):
-		return
-	if not require(not RegionalStoreScript.is_node_discovered(map.network_record, RegionalStoreScript.NODE_CAIRN), "cairn hidden"):
-		return
-	map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
-	if not require(map.selected_route_id == RegionalStoreScript.ROUTE_MAIN, "main route selected"):
-		return
-	var context: Dictionary = map.build_launch_context()
-	if not require(str(context.get("route_state", "")) == RegionalStoreScript.STATE_DISCOVERED, "route discovered"):
-		return
-	var plan_value: Variant = context.get("familiarity_plan", {})
-	if not require(plan_value is Dictionary, "plan dictionary"):
-		return
-	var source_value: Variant = (plan_value as Dictionary).get("source_indices", [])
-	if not require(source_value is Array, "source indices array"):
-		return
-	if not require((source_value as Array).size() == 5, "five-segment main route"):
-		return
-	pass_stage("INITIAL")
+	match check_id:
+		"node":
+			if not require(str(map.network_record.get("current_node_id", "")) == RegionalStoreScript.NODE_CYPRESS, "starts at Cypress"):
+				return
+		"cairn":
+			if not require(not RegionalStoreScript.is_node_discovered(map.network_record, RegionalStoreScript.NODE_CAIRN), "cairn hidden"):
+				return
+		"route":
+			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
+			if not require(map.selected_route_id == RegionalStoreScript.ROUTE_MAIN, "main route selected"):
+				return
+		"state":
+			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
+			var state_context: Dictionary = map.build_launch_context()
+			if not require(str(state_context.get("route_state", "")) == RegionalStoreScript.STATE_DISCOVERED, "route discovered"):
+				return
+		"plan_type":
+			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
+			var type_context: Dictionary = map.build_launch_context()
+			if not require(type_context.get("familiarity_plan", {}) is Dictionary, "plan dictionary"):
+				return
+		"indices_type":
+			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
+			var indices_context: Dictionary = map.build_launch_context()
+			var plan_value: Variant = indices_context.get("familiarity_plan", {})
+			if not require(plan_value is Dictionary, "plan dictionary"):
+				return
+			if not require((plan_value as Dictionary).get("source_indices", []) is Array, "source indices array"):
+				return
+		"plan_size":
+			map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
+			var size_context: Dictionary = map.build_launch_context()
+			var size_plan_value: Variant = size_context.get("familiarity_plan", {})
+			if not require(size_plan_value is Dictionary, "plan dictionary"):
+				return
+			var source_value: Variant = (size_plan_value as Dictionary).get("source_indices", [])
+			if not require(source_value is Array, "source indices array"):
+				return
+			if not require((source_value as Array).size() == 5, "five-segment main route"):
+				return
+		_:
+			fail("unknown initial check " + check_id)
+			return
+	pass_stage("INITIAL_" + check_id.to_upper())
 
 
 func validate_returned_map() -> void:

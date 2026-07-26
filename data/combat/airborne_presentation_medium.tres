@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AirbornePresentationProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/airborne_presentation_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "medium"
+display_name = "Standard"
+launch_rotation_degrees = Vector3(-18, 0, 12)
+spin_degrees_per_second = Vector3(110, 70, 145)
+falling_rotation_degrees = Vector3(42, 0, 28)
+plunge_rotation_degrees = Vector3(78, 0, 8)
+airborne_scale = Vector3(0.98, 1.04, 0.98)
+pose_response = 10.0
+bounce_scale = Vector3(1.08, 0.74, 1.08)
+landing_rotation_degrees = Vector3(24, 0, 12)
+landing_scale = Vector3(1.05, 0.82, 1.05)
+landing_drop = 0.16
+bounce_pose_time = 0.16
+landing_recover_time = 0.28
+bounce_height_multiplier = 1.0
+landing_recovery_multiplier = 1.0
+juggle_resistance_multiplier = 1.0
+air_hitstun_multiplier = 1.0

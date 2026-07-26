@@ -58,26 +58,46 @@ func refresh_route_preview() -> void:
 func get_selected_plan() -> Dictionary:
 	if selected_route_id == "":
 		return {}
-	var origin_node_id: String = str(
-		network_record.get("current_node_id", RegionalStoreScript.NODE_CYPRESS)
-	)
-	var state_name: String = RegionalStoreScript.get_route_state(network_record, selected_route_id)
-	var route_seed: int = RegionalStoreScript.get_route_seed(network_record, selected_route_id)
-	return PlannerScript.build_plan(
+	return build_plan_for_context(
 		selected_route_id,
+		str(network_record.get("current_node_id", RegionalStoreScript.NODE_CYPRESS)),
+		selected_node_id
+	)
+
+
+func build_plan_for_context(
+	route_id_value: String,
+	origin_node_id: String,
+	destination_node_id: String
+) -> Dictionary:
+	if route_id_value == "":
+		return {}
+	var state_name: String = RegionalStoreScript.get_route_state(network_record, route_id_value)
+	var route_seed: int = RegionalStoreScript.get_route_seed(network_record, route_id_value)
+	return PlannerScript.build_plan(
+		route_id_value,
 		state_name,
 		route_seed,
 		origin_node_id,
-		selected_node_id
+		destination_node_id
 	)
 
 
 func build_launch_context() -> Dictionary:
 	var context: Dictionary = super.build_launch_context()
-	var plan: Dictionary = get_selected_plan()
+	var route_id_value: String = str(context.get("route_id", ""))
+	var origin_node_id: String = str(
+		context.get("origin_node_id", RegionalStoreScript.NODE_CYPRESS)
+	)
+	var destination_node_id: String = str(context.get("destination_node_id", ""))
+	var plan: Dictionary = build_plan_for_context(
+		route_id_value,
+		origin_node_id,
+		destination_node_id
+	)
 	context["route_state"] = str(plan.get("state", RegionalStoreScript.STATE_DISCOVERED))
 	context["route_seed"] = int(plan.get("seed", 18890417))
-	context["familiarity_plan"] = plan
+	context["familiarity_plan"] = plan.duplicate(true)
 	context["plan_signature"] = str(plan.get("signature", ""))
 	return context
 

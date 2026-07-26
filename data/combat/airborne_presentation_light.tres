@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AirbornePresentationProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/airborne_presentation_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "light"
+display_name = "Featherweight"
+launch_rotation_degrees = Vector3(-28, 0, 24)
+spin_degrees_per_second = Vector3(250, 175, 320)
+falling_rotation_degrees = Vector3(24, 0, 72)
+plunge_rotation_degrees = Vector3(96, 0, 18)
+airborne_scale = Vector3(0.93, 1.12, 0.93)
+pose_response = 14.0
+bounce_scale = Vector3(1.16, 0.58, 1.16)
+landing_rotation_degrees = Vector3(12, 0, 28)
+landing_scale = Vector3(1.12, 0.66, 1.12)
+landing_drop = 0.11
+bounce_pose_time = 0.12
+landing_recover_time = 0.18
+bounce_height_multiplier = 1.22
+landing_recovery_multiplier = 0.72
+juggle_resistance_multiplier = 0.82
+air_hitstun_multiplier = 0.88

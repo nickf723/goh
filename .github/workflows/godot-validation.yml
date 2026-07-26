@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - agent/combat-combo-lab-v0-8
   workflow_dispatch:
 
 permissions:

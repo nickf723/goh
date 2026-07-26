@@ -1,0 +1,37 @@
+name: Combo lab diagnostic
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: combo-lab-diagnostic-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-combo-lab:
+    name: Arena boot and weapon smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project
+        run: godot --headless --path . --editor --quit
+
+      - name: Boot combat combo laboratory
+        run: godot --headless --path . res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn --quit-after 7
+
+      - name: Run weapon and sandbox smoke test
+        run: godot --headless --path . res://scenes/tests/weapon_moveset_smoke_test.tscn

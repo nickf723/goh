@@ -23,7 +23,9 @@ var base_light_energy: float = 0.0
 
 func configure(next_event: RefCounted, next_profile: Resource) -> void:
 	event = next_event
-	profile = next_profile if next_profile != null else FireProfileScript.new()
+	profile = next_profile
+	if profile == null:
+		profile = FireProfileScript.new()
 	if event == null:
 		event = FireEventScript.new()
 	current_intensity = clampf(float(event.intensity), 0.0, 5.0)

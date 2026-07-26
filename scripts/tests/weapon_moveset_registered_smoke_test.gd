@@ -3,6 +3,11 @@ extends "res://scripts/tests/weapon_moveset_smoke_test.gd"
 
 func _ready() -> void:
 	failures.clear()
+
+	# Validate the global progression sandbox before local combat fixtures exist.
+	# The sandbox restores its entry snapshot before the weapon tests begin.
+	validate_combat_arena_sandbox()
+
 	validate_weapon(Sword, "sword", 9)
 	validate_weapon(Hammer, "hammer", 7)
 	validate_weapon(Spear, "lance", 7)
@@ -12,13 +17,6 @@ func _ready() -> void:
 	validate_payload_contracts()
 	validate_critical_profiles()
 	validate_stance_critical_loop()
-	print("WEAPON_MOVESET_SMOKE_TEST: core checks complete")
-
-	# The stance test queues its temporary receiver for deletion. Let Godot finish
-	# deferred deletion before the sandbox emits broad progression-refresh signals.
-	await get_tree().process_frame
-	await get_tree().process_frame
-	validate_combat_arena_sandbox()
 
 	if failures.is_empty():
 		print("WEAPON_MOVESET_SMOKE_TEST: PASS")

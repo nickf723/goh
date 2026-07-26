@@ -74,9 +74,17 @@ func hide_legacy_mesh() -> void:
 
 
 func get_debug_data() -> Dictionary:
+	var legacy_hidden: bool = true
+	if projectile != null:
+		var legacy_mesh := projectile.get_node_or_null("MeshInstance3D") as MeshInstance3D
+		if legacy_mesh != null:
+			legacy_hidden = not legacy_mesh.visible
+	var visual_debug: Dictionary = {}
+	if visual != null and visual.has_method("get_debug_data"):
+		visual_debug = visual.call("get_debug_data") as Dictionary
 	return {
 		"fire_projectile_vfx": true,
-		"legacy_hidden": not bool((projectile.get_node_or_null("MeshInstance3D") as MeshInstance3D).visible) if projectile != null and projectile.get_node_or_null("MeshInstance3D") != null else true,
+		"legacy_hidden": legacy_hidden,
 		"direction": get_projectile_direction(),
-		"visual": visual.get_debug_data() if visual != null and visual.has_method("get_debug_data") else {},
+		"visual": visual_debug,
 	}

@@ -29,9 +29,39 @@ jobs:
       - name: Run route familiarity assembly test
         run: godot --headless --path . res://scenes/tests/route_familiarity_smoke_test.tscn
 
-      - name: Validate initial map launch plan
+      - name: Validate initial location
         env:
-          ROUTE_STAGE: initial
+          ROUTE_STAGE: initial_node
+        run: godot --headless --path . res://scenes/tests/validation_route_familiarity_map_stage.tscn
+
+      - name: Validate hidden cairn
+        env:
+          ROUTE_STAGE: initial_cairn
+        run: godot --headless --path . res://scenes/tests/validation_route_familiarity_map_stage.tscn
+
+      - name: Validate route selection
+        env:
+          ROUTE_STAGE: initial_route
+        run: godot --headless --path . res://scenes/tests/validation_route_familiarity_map_stage.tscn
+
+      - name: Validate route state
+        env:
+          ROUTE_STAGE: initial_state
+        run: godot --headless --path . res://scenes/tests/validation_route_familiarity_map_stage.tscn
+
+      - name: Validate plan payload
+        env:
+          ROUTE_STAGE: initial_plan_type
+        run: godot --headless --path . res://scenes/tests/validation_route_familiarity_map_stage.tscn
+
+      - name: Validate source indices payload
+        env:
+          ROUTE_STAGE: initial_indices_type
+        run: godot --headless --path . res://scenes/tests/validation_route_familiarity_map_stage.tscn
+
+      - name: Validate five-segment plan
+        env:
+          ROUTE_STAGE: initial_plan_size
         run: godot --headless --path . res://scenes/tests/validation_route_familiarity_map_stage.tscn
 
       - name: Validate persisted map return state

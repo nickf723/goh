@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: route-familiarity-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: Focused route familiarity validation
@@ -30,7 +34,12 @@ jobs:
         run: godot --headless --path . res://scenes/tests/route_familiarity_smoke_test.tscn
 
       - name: Run regional map persistence regression
-        run: godot --headless --path . res://scenes/tests/regional_expedition_map_smoke_test.tscn
+        shell: bash
+        run: |
+          set +e
+          timeout 45s godot --headless --path . res://scenes/tests/regional_expedition_map_smoke_test.tscn 2>&1 | tee /tmp/regional-map-test.log
+          set -e
+          grep -q "REGIONAL_EXPEDITION_MAP_SMOKE_TEST: PASS" /tmp/regional-map-test.log
 
       - name: Run Wilds generation regression
         run: godot --headless --path . res://scenes/tests/wilds_expedition_smoke_test.tscn

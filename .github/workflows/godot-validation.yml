@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   validate:
-    name: Atomic route map stage validation
+    name: Atomic route map assertion validation
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -25,13 +25,29 @@ jobs:
         run: godot --headless --path . --editor --quit
       - name: Run route familiarity assembly test
         run: godot --headless --path . res://scenes/tests/route_familiarity_smoke_test.tscn
-      - name: Validate atomic initial map
-        env:
-          ROUTE_STAGE: initial
+      - name: Validate initial node
+        env: { ROUTE_STAGE: initial_node }
         run: godot --headless --path . res://scenes/tests/validation_atomic_route_map_stage.tscn
-      - name: Validate atomic returned map
-        env:
-          ROUTE_STAGE: returned
+      - name: Validate selected route
+        env: { ROUTE_STAGE: initial_selection }
+        run: godot --headless --path . res://scenes/tests/validation_atomic_route_map_stage.tscn
+      - name: Validate context route
+        env: { ROUTE_STAGE: initial_context_route }
+        run: godot --headless --path . res://scenes/tests/validation_atomic_route_map_stage.tscn
+      - name: Validate context state
+        env: { ROUTE_STAGE: initial_context_state }
+        run: godot --headless --path . res://scenes/tests/validation_atomic_route_map_stage.tscn
+      - name: Validate plan type
+        env: { ROUTE_STAGE: initial_plan_type }
+        run: godot --headless --path . res://scenes/tests/validation_atomic_route_map_stage.tscn
+      - name: Validate indices type
+        env: { ROUTE_STAGE: initial_indices_type }
+        run: godot --headless --path . res://scenes/tests/validation_atomic_route_map_stage.tscn
+      - name: Validate plan size
+        env: { ROUTE_STAGE: initial_plan_size }
+        run: godot --headless --path . res://scenes/tests/validation_atomic_route_map_stage.tscn
+      - name: Validate returned map
+        env: { ROUTE_STAGE: returned }
         run: godot --headless --path . res://scenes/tests/validation_atomic_route_map_stage.tscn
       - name: Run Wilds regression
         run: godot --headless --path . res://scenes/tests/wilds_expedition_smoke_test.tscn

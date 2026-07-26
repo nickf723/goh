@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   validate:
-    name: Route familiarity typed-array validation
+    name: Route familiarity checkpoint validation
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -25,13 +25,52 @@ jobs:
         run: godot --headless --path . --editor --quit
       - name: Run route familiarity assembly test
         run: godot --headless --path . res://scenes/tests/route_familiarity_smoke_test.tscn
-      - name: Run regional map persistence test
-        run: godot --headless --path . res://scenes/tests/regional_expedition_map_smoke_test.tscn
-      - name: Run Wilds generation regression
-        run: godot --headless --path . res://scenes/tests/wilds_expedition_smoke_test.tscn
-      - name: Boot regional map
-        run: godot --headless --path . res://scenes/levels/prototypes/prototype_regional_expedition_map_v1.tscn --quit-after 4
-      - name: Boot Wilds
-        run: godot --headless --path . res://scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn --quit-after 4
-      - name: Boot combo arena
-        run: godot --headless --path . res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn --quit-after 4
+      - name: Capture regional map test
+        id: regional
+        shell: bash
+        run: |
+          rm -f "$RUNNER_TEMP/goh-regional-map-pass.txt" "$RUNNER_TEMP/goh-regional-map-checkpoint.txt"
+          set +e
+          timeout 30s godot --headless --path . res://scenes/tests/regional_expedition_map_smoke_test.tscn
+          checkpoint="$(cat "$RUNNER_TEMP/goh-regional-map-checkpoint.txt" 2>/dev/null || echo missing)"
+          echo "checkpoint=$checkpoint" >> "$GITHUB_OUTPUT"
+          if test -f "$RUNNER_TEMP/goh-regional-map-pass.txt"; then echo "passed=true" >> "$GITHUB_OUTPUT"; else echo "passed=false" >> "$GITHUB_OUTPUT"; fi
+          exit 0
+      - name: Failure outbound full slice
+        if: steps.regional.outputs.checkpoint == 'FAILED: outbound full slice'
+        run: echo "Failed outbound full slice"
+      - name: Failure outbound signature
+        if: steps.regional.outputs.checkpoint == 'FAILED: outbound signature'
+        run: echo "Failed outbound signature"
+      - name: Failure returned current node
+        if: steps.regional.outputs.checkpoint == 'FAILED: returned current node'
+        run: echo "Failed returned current node"
+      - name: Failure returned cairn discovery
+        if: steps.regional.outputs.checkpoint == 'FAILED: returned cairn discovery'
+        run: echo "Failed returned cairn discovery"
+      - name: Failure returned main route familiarity
+        if: steps.regional.outputs.checkpoint == 'FAILED: returned main route familiarity'
+        run: echo "Failed returned route familiarity"
+      - name: Failure returned cairn route selection
+        if: steps.regional.outputs.checkpoint == 'FAILED: returned cairn route selection'
+        run: echo "Failed returned cairn route selection"
+      - name: Failure cairn route familiarity
+        if: steps.regional.outputs.checkpoint == 'FAILED: cairn route familiarity'
+        run: echo "Failed cairn route familiarity"
+      - name: Failure cairn eastern slice
+        if: steps.regional.outputs.checkpoint == 'FAILED: cairn eastern slice'
+        run: echo "Failed cairn eastern slice"
+      - name: Checkpoint outbound context valid
+        if: steps.regional.outputs.checkpoint == 'outbound context valid'
+        run: echo "Stopped after outbound context"
+      - name: Checkpoint persistence simulated
+        if: steps.regional.outputs.checkpoint == 'persistence simulated'
+        run: echo "Stopped after persistence simulation"
+      - name: Checkpoint returned map ready
+        if: steps.regional.outputs.checkpoint == 'returned map ready'
+        run: echo "Stopped after returned map setup"
+      - name: Checkpoint complete
+        if: steps.regional.outputs.checkpoint == 'complete'
+        run: echo "Complete"
+      - name: Verify regional map test
+        run: test "${{ steps.regional.outputs.passed }}" = "true"

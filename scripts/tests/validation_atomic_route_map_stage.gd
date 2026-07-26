@@ -10,10 +10,13 @@ const EXPEDITION_PATH := "user://validation_atomic_route_expedition.json"
 func _ready() -> void:
 	RegionalStoreScript.delete_record(NETWORK_PATH)
 	ExpeditionStoreScript.delete_record(EXPEDITION_PATH)
-	match OS.get_environment("ROUTE_STAGE"):
-		"initial": await validate_initial()
-		"returned": await validate_returned()
-		_: fail("unknown stage")
+	var stage := OS.get_environment("ROUTE_STAGE")
+	if stage.begins_with("initial_"):
+		await validate_initial(stage.trim_prefix("initial_"))
+	elif stage == "returned":
+		await validate_returned()
+	else:
+		fail("unknown stage")
 
 
 func make_map() -> RegionalExpeditionMap:
@@ -25,21 +28,36 @@ func make_map() -> RegionalExpeditionMap:
 	return map
 
 
-func validate_initial() -> void:
+func validate_initial(check_id: String) -> void:
 	var map := make_map()
 	await get_tree().process_frame
 	await get_tree().process_frame
-	if not check(str(map.network_record.get("current_node_id", "")) == RegionalStoreScript.NODE_CYPRESS, "initial node"): return
 	map.select_node(RegionalStoreScript.NODE_BLUE_RIDGE)
-	if not check(map.selected_route_id == RegionalStoreScript.ROUTE_MAIN, "route selection"): return
 	var context: Dictionary = map.build_launch_context()
-	if not check(str(context.get("route_id", "")) == RegionalStoreScript.ROUTE_MAIN, "context route"): return
-	if not check(str(context.get("route_state", "")) == RegionalStoreScript.STATE_DISCOVERED, "context state"): return
-	var plan_value: Variant = context.get("familiarity_plan", {})
-	if not check(plan_value is Dictionary, "plan type"): return
-	var indices_value: Variant = (plan_value as Dictionary).get("source_indices", [])
-	if not check(indices_value is Array and (indices_value as Array).size() == 5, "plan size"): return
-	pass_stage("INITIAL")
+	match check_id:
+		"node":
+			if not check(str(map.network_record.get("current_node_id", "")) == RegionalStoreScript.NODE_CYPRESS, "initial node"): return
+		"selection":
+			if not check(map.selected_route_id == RegionalStoreScript.ROUTE_MAIN, "route selection"): return
+		"context_route":
+			if not check(str(context.get("route_id", "")) == RegionalStoreScript.ROUTE_MAIN, "context route"): return
+		"context_state":
+			if not check(str(context.get("route_state", "")) == RegionalStoreScript.STATE_DISCOVERED, "context state"): return
+		"plan_type":
+			if not check(context.get("familiarity_plan", {}) is Dictionary, "plan type"): return
+		"indices_type":
+			var plan_value: Variant = context.get("familiarity_plan", {})
+			if not check(plan_value is Dictionary, "plan type"): return
+			if not check((plan_value as Dictionary).get("source_indices", []) is Array, "indices type"): return
+		"plan_size":
+			var plan_value: Variant = context.get("familiarity_plan", {})
+			if not check(plan_value is Dictionary, "plan type"): return
+			var indices_value: Variant = (plan_value as Dictionary).get("source_indices", [])
+			if not check(indices_value is Array and (indices_value as Array).size() == 5, "plan size"): return
+		_:
+			fail("unknown initial check")
+			return
+	pass_stage("INITIAL_" + check_id.to_upper())
 
 
 func validate_returned() -> void:

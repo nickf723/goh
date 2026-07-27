@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://shaders/environment/modular_water.gdshader" id="1_shader"]
+
+[resource]
+render_priority = 1
+shader = ExtResource("1_shader")
+shader_parameter/deep_color = Color(0.015, 0.08, 0.13, 1)
+shader_parameter/shallow_color = Color(0.045, 0.27, 0.37, 1)
+shader_parameter/highlight_color = Color(0.26, 0.78, 0.96, 1)
+shader_parameter/wave_scale = 1.15
+shader_parameter/wave_speed = 0.58
+shader_parameter/alpha_value = 0.72
+shader_parameter/emission_strength = 0.23

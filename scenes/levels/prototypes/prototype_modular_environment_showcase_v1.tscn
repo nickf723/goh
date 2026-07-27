@@ -1,0 +1,28 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_modular_environment_showcase_v1.gd" id="1_showcase"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+
+[node name="PrototypeModularEnvironmentShowcaseV1" type="Node3D"]
+script = ExtResource("1_showcase")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -28, 0)
+light_color = Color(0.58, 0.7, 0.86, 1)
+light_energy = 1.05
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, -15)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="World" type="Node3D" parent="."]

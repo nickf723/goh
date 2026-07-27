@@ -13,7 +13,10 @@
     {
       "id": "authored_quest_framework",
       "display_name": "Authored Quest Framework",
-      "lifecycle": ["canonical", "story_integrated"],
+      "lifecycle": [
+        "canonical",
+        "story_integrated"
+      ],
       "owner_files": [
         "scripts/quests/authored_quest_runtime.gd",
         "scripts/quests/quest_reward_bundle.gd",
@@ -22,7 +25,15 @@
         "scripts/levels/prototype_broken_waystation_framework_integration.gd"
       ],
       "canonical_scene": "scenes/levels/prototypes/prototype_broken_waystation_mission_v1.tscn",
-      "aliases": ["quest director", "mission director", "quest stages", "quest rewards", "world state variants", "encounter sequence", "completion summary"],
+      "aliases": [
+        "quest director",
+        "mission director",
+        "quest stages",
+        "quest rewards",
+        "world state variants",
+        "encounter sequence",
+        "completion summary"
+      ],
       "implemented": true,
       "do_not_resuggest": true,
       "next_use": "Build authored quests with the framework rather than adding another generic quest layer."
@@ -30,10 +41,22 @@
     {
       "id": "conversation_and_relationships",
       "display_name": "Conversation, Requirements, and Relationships",
-      "lifecycle": ["canonical", "story_integrated"],
-      "owner_files": ["scripts/dialogue/conversation_npc.gd"],
+      "lifecycle": [
+        "canonical",
+        "story_integrated"
+      ],
+      "owner_files": [
+        "scripts/dialogue/conversation_npc.gd"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_roadside_conversation_lab_v1.tscn",
-      "aliases": ["dialogue tree", "conversation system", "npc choices", "relationship system", "stat checks", "item checks"],
+      "aliases": [
+        "dialogue tree",
+        "conversation system",
+        "npc choices",
+        "relationship system",
+        "stat checks",
+        "item checks"
+      ],
       "implemented": true,
       "do_not_resuggest": true,
       "quality_reference": "Mara roadside encounter"
@@ -41,201 +64,457 @@
     {
       "id": "weapon_combat_graphs",
       "display_name": "Weapon Combat Graphs",
-      "lifecycle": ["canonical"],
-      "owner_files": ["scripts/weapons/weapon_controller.gd", "scripts/weapons/weapon_moveset_definition.gd", "scripts/weapons/weapon_attack_definition.gd"],
+      "lifecycle": [
+        "canonical"
+      ],
+      "owner_files": [
+        "scripts/weapons/weapon_controller.gd",
+        "scripts/weapons/weapon_moveset_definition.gd",
+        "scripts/weapons/weapon_attack_definition.gd"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn",
-      "aliases": ["weapon combos", "light heavy branches", "input buffer", "cancel windows", "attack phases", "combo tree"],
+      "aliases": [
+        "weapon combos",
+        "light heavy branches",
+        "input buffer",
+        "cancel windows",
+        "attack phases",
+        "combo tree"
+      ],
       "implemented": true,
       "do_not_resuggest": true,
-      "authored_classes": ["sword", "hammer", "spear"]
+      "authored_classes": [
+        "sword",
+        "hammer",
+        "spear"
+      ]
     },
     {
       "id": "weapon_progression",
       "display_name": "Weapon Mastery, Techniques, and Infusion",
-      "lifecycle": ["canonical"],
-      "owner_files": ["scripts/weapons/weapon_mastery_catalog.gd", "scripts/weapons/weapon_technique_catalog.gd", "scripts/weapons/weapon_infusion_catalog.gd"],
+      "lifecycle": [
+        "canonical"
+      ],
+      "owner_files": [
+        "scripts/weapons/weapon_mastery_catalog.gd",
+        "scripts/weapons/weapon_technique_catalog.gd",
+        "scripts/weapons/weapon_infusion_catalog.gd"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn",
-      "aliases": ["weapon mastery", "dash strike", "aerial techniques", "weapon upgrades", "weapon infusion", "context techniques"],
+      "aliases": [
+        "weapon mastery",
+        "dash strike",
+        "aerial techniques",
+        "weapon upgrades",
+        "weapon infusion",
+        "context techniques"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "player_defense",
       "display_name": "Guard, Perfect Guard, and Guard Break",
-      "lifecycle": ["canonical"],
-      "owner_files": ["scripts/player/player_defense_controller.gd"],
+      "lifecycle": [
+        "canonical"
+      ],
+      "owner_files": [
+        "scripts/player/player_defense_controller.gd"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_combat_survival_trial_v1.tscn",
-      "aliases": ["blocking", "parry", "perfect guard", "guard break", "directional guard"],
+      "aliases": [
+        "blocking",
+        "parry",
+        "perfect guard",
+        "guard break",
+        "directional guard"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "aerial_combat",
       "display_name": "Aerial Combat and Airborne Reactions",
-      "lifecycle": ["canonical", "experimental"],
-      "owner_files": ["scripts/weapons/weapon_technique_catalog.gd"],
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/weapons/weapon_technique_catalog.gd"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_airborne_presentation_lab_v1.tscn",
-      "aliases": ["neutral air", "forward air", "down air", "launcher", "juggle", "airborne reaction", "aerial pursuit"],
+      "aliases": [
+        "neutral air",
+        "forward air",
+        "down air",
+        "launcher",
+        "juggle",
+        "airborne reaction",
+        "aerial pursuit"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "spell_modifier_framework",
       "display_name": "Spell Modifier Framework",
-      "lifecycle": ["canonical"],
-      "owner_files": ["scripts/abilities/spell_modifier_registry.gd"],
+      "lifecycle": [
+        "canonical"
+      ],
+      "owner_files": [
+        "scripts/abilities/spell_modifier_registry.gd"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_upgrade_lab_v1.tscn",
-      "aliases": ["spell upgrades", "charged firebolt", "piercing ice lance", "chain lightning", "payload modifiers"],
+      "aliases": [
+        "spell upgrades",
+        "charged firebolt",
+        "piercing ice lance",
+        "chain lightning",
+        "payload modifiers"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "ground_targeting",
       "display_name": "Ground Targeting and Field Spells",
-      "lifecycle": ["canonical"],
-      "owner_files": ["scripts/abilities/ground_targeting_controller.gd", "scripts/abilities/ground_spell_registry.gd"],
+      "lifecycle": [
+        "canonical"
+      ],
+      "owner_files": [
+        "scripts/abilities/ground_targeting_controller.gd",
+        "scripts/abilities/ground_spell_registry.gd"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_upgrade_lab_v1.tscn",
-      "aliases": ["ground aoe", "target marker", "earth spike", "poison bloom", "time snare", "dream trap", "mine spell"],
+      "aliases": [
+        "ground aoe",
+        "target marker",
+        "earth spike",
+        "poison bloom",
+        "time snare",
+        "dream trap",
+        "mine spell"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "elemental_reactions",
       "display_name": "Elemental Reactions and Environmental Sources",
-      "lifecycle": ["canonical"],
-      "owner_files": ["scripts/systems/reaction_resolver.gd", "data/combo_rules/"],
+      "lifecycle": [
+        "canonical"
+      ],
+      "owner_files": [
+        "scripts/systems/reaction_resolver.gd",
+        "data/combo_rules/"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_environmental_chemistry_lab_v1.tscn",
-      "aliases": ["ignite", "conduct", "freeze", "shatter", "steam burst", "toxic ignition", "environmental element source", "reaction burst"],
+      "aliases": [
+        "ignite",
+        "conduct",
+        "freeze",
+        "shatter",
+        "steam burst",
+        "toxic ignition",
+        "environmental element source",
+        "reaction burst"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "enemy_behavior_architecture",
       "display_name": "Enemy Personality, Actions, Defense, and Threat Awareness",
-      "lifecycle": ["canonical"],
-      "owner_files": ["scripts/enemies/"],
+      "lifecycle": [
+        "canonical"
+      ],
+      "owner_files": [
+        "scripts/enemies/"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_enemy_personality_lab_v1.tscn",
-      "aliases": ["enemy personality", "hazard avoidance", "action selection", "committed attacks", "backstep", "threat awareness", "reaction delay"],
+      "aliases": [
+        "enemy personality",
+        "hazard avoidance",
+        "action selection",
+        "committed attacks",
+        "backstep",
+        "threat awareness",
+        "reaction delay"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "player_resources",
       "display_name": "Health, Stamina, Mana, Stance, and Focus",
-      "lifecycle": ["canonical"],
-      "owner_files": ["scripts/player/player_resource_controller.gd", "scripts/systems/game_state.gd", "scripts/systems/stat_catalog.gd"],
+      "lifecycle": [
+        "canonical"
+      ],
+      "owner_files": [
+        "scripts/player/player_resource_controller.gd",
+        "scripts/systems/game_state.gd",
+        "scripts/systems/stat_catalog.gd"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn",
-      "aliases": ["stamina regen", "stance regen", "mana", "focus", "runtime stats", "resource loop"],
+      "aliases": [
+        "stamina regen",
+        "stance regen",
+        "mana",
+        "focus",
+        "runtime stats",
+        "resource loop"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "inventory_loot_quick_items",
       "display_name": "Inventory, Loot, Key Items, and Quick Items",
-      "lifecycle": ["canonical", "story_integrated"],
-      "owner_files": ["scripts/items/", "scripts/player/player_quick_item_controller.gd", "scripts/ui/quick_item_belt_ui.gd"],
+      "lifecycle": [
+        "canonical",
+        "story_integrated"
+      ],
+      "owner_files": [
+        "scripts/items/",
+        "scripts/player/player_quick_item_controller.gd",
+        "scripts/ui/quick_item_belt_ui.gd"
+      ],
       "canonical_scene": "scenes/levels/_dev/dev_interaction_sandbox.tscn",
-      "aliases": ["inventory", "loot tables", "world pickup", "quick item belt", "key items", "reward chest"],
+      "aliases": [
+        "inventory",
+        "loot tables",
+        "world pickup",
+        "quick item belt",
+        "key items",
+        "reward chest"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "physical_fields_and_magnetism",
       "display_name": "Physical Materials, Fields, Force, Torque, and Magnetism",
-      "lifecycle": ["canonical", "experimental"],
-      "owner_files": ["scripts/physics/"],
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/physics/"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_physical_interaction_lab_v1.tscn",
-      "aliases": ["material profiles", "vector fields", "continuous force", "torque", "magnetism", "magnetization"],
+      "aliases": [
+        "material profiles",
+        "vector fields",
+        "continuous force",
+        "torque",
+        "magnetism",
+        "magnetization"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "electrical_networks",
       "display_name": "Circuits, Electrical Excitation, and Conductive Water",
-      "lifecycle": ["canonical", "experimental"],
-      "owner_files": ["scripts/circuits/"],
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/circuits/"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_conductive_network_lab_v1.tscn",
-      "aliases": ["circuit graph", "dc circuit", "battery", "switch", "electromagnet", "lightning circuit", "conductive water"],
+      "aliases": [
+        "circuit graph",
+        "dc circuit",
+        "battery",
+        "switch",
+        "electromagnet",
+        "lightning circuit",
+        "conductive water"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "thermal_pressure_machinery",
       "display_name": "Thermal State, Pressure, Generators, Motors, and Conveyors",
-      "lifecycle": ["canonical", "experimental"],
-      "owner_files": ["scripts/thermal/", "scripts/machinery/"],
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/thermal/",
+        "scripts/machinery/"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_motor_lab_v1.tscn",
-      "aliases": ["temperature", "phase change", "steam", "pressure", "turbine", "generator", "motor", "conveyor"],
+      "aliases": [
+        "temperature",
+        "phase change",
+        "steam",
+        "pressure",
+        "turbine",
+        "generator",
+        "motor",
+        "conveyor"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "fluids_buoyancy_weather",
       "display_name": "Fluid Forces, Buoyancy, Currents, Rain, and Snow",
-      "lifecycle": ["canonical", "experimental"],
-      "owner_files": ["scripts/fluids/", "scripts/weather/"],
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/fluids/",
+        "scripts/weather/"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_buoyancy_lab_v1.tscn",
-      "aliases": ["buoyancy", "density floating", "currents", "water drag", "propeller", "rain", "snowfall", "snow accumulation"],
+      "aliases": [
+        "buoyancy",
+        "density floating",
+        "currents",
+        "water drag",
+        "propeller",
+        "rain",
+        "snowfall",
+        "snow accumulation"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "airflow_gas_smoke",
       "display_name": "Airflow, Gas, Smoke, and Exposure",
-      "lifecycle": ["canonical", "experimental"],
-      "owner_files": ["scripts/airflow/", "scripts/gas/"],
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/airflow/",
+        "scripts/gas/"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_airflow_lab_v1.tscn",
-      "aliases": ["wind simulation", "airflow", "gas dynamics", "smoke", "toxic exposure", "poison cloud movement"],
+      "aliases": [
+        "wind simulation",
+        "airflow",
+        "gas dynamics",
+        "smoke",
+        "toxic exposure",
+        "poison cloud movement"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "flexible_tethers",
       "display_name": "Rope, Chain, Tension, Snapping, and Pulleys",
-      "lifecycle": ["canonical", "experimental"],
-      "owner_files": ["scripts/tethers/"],
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/tethers/"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_flexible_tether_lab_v1.tscn",
-      "aliases": ["rope physics", "chain physics", "tension", "snapping", "burning rope", "frozen rope", "pulley"],
+      "aliases": [
+        "rope physics",
+        "chain physics",
+        "tension",
+        "snapping",
+        "burning rope",
+        "frozen rope",
+        "pulley"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "structural_stress",
       "display_name": "Structural Supports, Fracture, and Collapse",
-      "lifecycle": ["canonical", "experimental"],
-      "owner_files": ["scripts/structures/"],
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/structures/"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_structural_stress_lab_v1.tscn",
-      "aliases": ["structural integrity", "support graph", "load redistribution", "masonry fracture", "collapse", "foundry sabotage"],
+      "aliases": [
+        "structural integrity",
+        "support graph",
+        "load redistribution",
+        "masonry fracture",
+        "collapse",
+        "foundry sabotage"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "spatial_portals",
       "display_name": "Spatial Portals and Momentum Preservation",
-      "lifecycle": ["canonical", "experimental"],
-      "owner_files": ["scripts/space/"],
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/space/"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_spatial_portal_lab_v1.tscn",
-      "aliases": ["portal", "teleport surface", "momentum portal", "projectile portal"],
+      "aliases": [
+        "portal",
+        "teleport surface",
+        "momentum portal",
+        "projectile portal"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "resonance",
       "display_name": "Resonance and Material Frequency",
-      "lifecycle": ["canonical", "experimental"],
-      "owner_files": ["scripts/resonance/"],
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/resonance/"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_resonance_lab_v1.tscn",
-      "aliases": ["frequency", "resonant pulse", "sympathetic resonance", "resonant fracture"],
+      "aliases": [
+        "frequency",
+        "resonant pulse",
+        "sympathetic resonance",
+        "resonant fracture"
+      ],
       "implemented": true,
       "do_not_resuggest": true
     },
     {
       "id": "wilds_expedition",
       "display_name": "Wilds Expedition, Regional Map, and Route Familiarity",
-      "lifecycle": ["canonical", "experimental"],
-      "owner_files": ["scripts/expedition/", "data/expedition_segments/"],
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/expedition/",
+        "data/expedition_segments/"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn",
-      "aliases": ["wild generation", "expedition route", "regional map", "route familiarity", "authored wilds segment", "cypress basin", "pine ridge"],
+      "aliases": [
+        "wild generation",
+        "expedition route",
+        "regional map",
+        "route familiarity",
+        "authored wilds segment",
+        "cypress basin",
+        "pine ridge"
+      ],
       "implemented": true,
       "do_not_resuggest": true,
       "next_use": "Consolidate and integrate existing route systems; do not add more generation mechanics by default."
@@ -243,7 +522,10 @@
     {
       "id": "global_playability_framework",
       "display_name": "Global Playability, Recovery, Safe Destinations, and Guidance",
-      "lifecycle": ["canonical", "story_integrated"],
+      "lifecycle": [
+        "canonical",
+        "story_integrated"
+      ],
       "owner_files": [
         "scripts/quality/playable_space_3d.gd",
         "scripts/quality/playable_recovery_volume_3d.gd",
@@ -255,38 +537,89 @@
         "scripts/player/player_recovery_controller.gd"
       ],
       "canonical_scene": "scenes/levels/prototypes/prototype_drowned_bell_v1.tscn",
-      "aliases": ["global polish", "playable space", "void recovery", "safe teleport", "safe blink", "water exits", "swimming exit", "quest guidance", "objective marker", "scene quality audit", "stuck recovery"],
+      "aliases": [
+        "global polish",
+        "playable space",
+        "void recovery",
+        "safe teleport",
+        "safe blink",
+        "water exits",
+        "swimming exit",
+        "quest guidance",
+        "objective marker",
+        "scene quality audit",
+        "stuck recovery"
+      ],
       "implemented": true,
       "do_not_resuggest": true,
       "next_use": "Integrate explicit playable-space contracts into authored scenes as they receive polish; do not replace authored collision or manual playtesting with the safety framework."
     },
     {
       "id": "authored_environment_composition",
-      "display_name": "Authored Environment Composition and Prototype Architecture",
-      "lifecycle": ["canonical", "story_integrated"],
+      "display_name": "Authored Environment Composition and Modular Asset Kit",
+      "lifecycle": [
+        "canonical",
+        "story_integrated"
+      ],
       "owner_files": [
         "scripts/environment/authored_environment_palette.gd",
         "scripts/environment/authored_environment_builder.gd",
         "scripts/environment/authored_environment_auditor.gd",
+        "scripts/environment/modular_environment_piece.gd",
+        "scripts/environment/modular_environment_gate.gd",
+        "scripts/environment/modular_environment_catalog.gd",
         "scripts/levels/drowned_bell_environment_pass.gd",
-        "data/environment_palettes/drowned_chapel_palette.tres"
+        "scenes/environment/modular/",
+        "art/materials/environment/modular/",
+        "shaders/environment/"
       ],
-      "canonical_scene": "scenes/levels/prototypes/prototype_drowned_bell_v1.tscn",
-      "aliases": ["environment pass", "global environment polish", "authored space builder", "modular level art", "prototype architecture kit", "collision matched geometry", "level dressing", "environment palette"],
+      "canonical_scene": "scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn",
+      "aliases": [
+        "environment pass",
+        "global environment polish",
+        "authored space builder",
+        "modular level art",
+        "prototype architecture kit",
+        "collision matched geometry",
+        "level dressing",
+        "environment palette",
+        "modular environment kit",
+        "environment asset kit",
+        "prop kit",
+        "dungeon set pieces",
+        "environment showcase",
+        "weathered cloister"
+      ],
       "implemented": true,
       "do_not_resuggest": true,
-      "next_use": "Reuse the palette, collision-matched primitives, and auditor when polishing authored spaces; keep each level's layout, landmarks, sightlines, and environmental storytelling authored."
+      "next_use": "Apply the reusable scenes to the Drowned Chapel benchmark and future dungeons instead of rebuilding repeated architecture and props from raw runtime primitives. Keep layout, landmarks, and environmental storytelling authored.",
+      "story_reference": "The Drowned Bell",
+      "limitations": [
+        "The v1 reusable kit is a stylized primitive-based benchmark rather than final imported production art.",
+        "Only one weathered architecture family is represented so far."
+      ]
     },
     {
       "id": "systems_integration_hub",
       "display_name": "Systems Integration Hub",
-      "lifecycle": ["canonical"],
-      "owner_files": ["scripts/levels/prototype_systems_integration_hub.gd"],
+      "lifecycle": [
+        "canonical"
+      ],
+      "owner_files": [
+        "scripts/levels/prototype_systems_integration_hub.gd"
+      ],
       "canonical_scene": "scenes/levels/prototypes/prototype_systems_integration_hub_v1.tscn",
-      "aliases": ["integration hub", "test everything", "mechanics campus", "shared sandbox"],
+      "aliases": [
+        "integration hub",
+        "test everything",
+        "mechanics campus",
+        "shared sandbox"
+      ],
       "implemented": true,
       "do_not_resuggest": true,
-      "limitations": ["The hub intentionally does not contain every implemented system yet."]
+      "limitations": [
+        "The hub intentionally does not contain every implemented system yet."
+      ]
     }
   ]
 }

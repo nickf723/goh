@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/modular_environment_piece.gd" id="1_piece"]
+
+[node name="WeatheredWallSconce" type="Node3D"]
+script = ExtResource("1_piece")
+piece_id = "weathered_wall_sconce"
+display_name = "Weathered Wall Sconce"
+category = "lighting"
+piece_type = "wall_sconce"
+footprint = Vector3(0.8, 1.3, 1)
+requires_collision = false
+variant_seed = 1

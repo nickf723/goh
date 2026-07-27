@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/modular_environment_piece.gd" id="1_piece"]
+
+[node name="WeatheredBarrel" type="Node3D"]
+script = ExtResource("1_piece")
+piece_id = "weathered_barrel"
+display_name = "Weathered Storage Barrel"
+category = "prop"
+piece_type = "barrel"
+footprint = Vector3(1.35, 1.45, 1.35)
+variant_seed = 2

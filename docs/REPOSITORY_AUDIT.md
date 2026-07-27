@@ -225,6 +225,23 @@ Implemented environment-composition capabilities include palette-driven prototyp
 
 These systems guarantee safety, consistency, and construction contracts. They do not replace authored floor plans, sightlines, environmental history, mood, camera checks, or human playtesting.
 
+### Modular environment assets
+
+Owner areas:
+
+```text
+scenes/environment/modular/
+scripts/environment/modular_environment_piece.gd
+scripts/environment/modular_environment_gate.gd
+scripts/environment/modular_environment_catalog.gd
+art/materials/environment/modular/
+shaders/environment/
+```
+
+The Weathered Cloister kit provides reusable scene assets for floors, walls, arches, stairs, pillars, timber frames, gates, pedestals, crates, barrels, sconces, and water channels. Its canonical benchmark is `prototype_modular_environment_showcase_v1.tscn`.
+
+Do not propose another generic modular architecture framework, prop kit, or environment showcase as new work. Extend this kit only when repeated authored-content needs justify additional modules or material families.
+
 ## Canonical development scenes
 
 Use these scenes as mechanic owners rather than creating another lab by default:
@@ -247,6 +264,7 @@ Use these scenes as mechanic owners rather than creating another lab by default:
 | Element presentation | `prototype_element_vfx_gallery_v1.tscn` |
 | Wilds route | `prototype_wilds_expedition_v1.tscn` |
 | Authored quest template | `prototype_broken_waystation_mission_v1.tscn` |
+| Modular environment assets | `prototype_modular_environment_showcase_v1.tscn` |
 | Completed composition-first quest | `prototype_drowned_bell_v1.tscn` |
 
 A dedicated lab may still be appropriate when a mechanic needs isolated measurement, but the capability inventory must identify why an existing owner scene is insufficient.

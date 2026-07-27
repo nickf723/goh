@@ -63,6 +63,19 @@ docs/drowned_bell_v3_test.md
 
 These frameworks are safety and construction scaffolds, not substitutes for continuous authored collision, natural boundaries, readable sightlines, deliberate composition, or human playtesting.
 
+## Modular environment assets
+
+Repeated architecture and props now have production-facing scene owners under `scenes/environment/modular/`, with shared weathered materials under `art/materials/environment/modular/` and canonical lookup through `scripts/environment/modular_environment_catalog.gd`. The dedicated Weathered Cloister showcase is `scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn`.
+
+The modular kit extends the authored environment-composition capability rather than replacing it. Use modular scenes for repeated floors, walls, arches, stairs, pillars, timber frames, gates, props, lighting, and water-edge vocabulary. Keep blocking support, bespoke landmarks, floor plans, sightlines, mood, and environmental storytelling authored per level.
+
+Architecture and manual quality gates are documented in:
+
+```text
+docs/MODULAR_ENVIRONMENT_KIT_V1.md
+docs/modular_environment_showcase_v1_test.md
+```
+
 ## Development infrastructure
 
 - Development Control Center: registry-driven launcher

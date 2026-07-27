@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://shaders/environment/modular_surface.gdshader" id="1_shader"]
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/base_color = Color(0.43, 0.44, 0.40, 1)
+shader_parameter/secondary_color = Color(0.25, 0.28, 0.27, 1)
+shader_parameter/variation_scale = 0.9
+shader_parameter/variation_strength = 0.16
+shader_parameter/band_scale = 0.35
+shader_parameter/roughness_value = 0.86
+shader_parameter/metallic_value = 0.0
+shader_parameter/emission_tint = Color(1, 1, 1, 1)
+shader_parameter/emission_strength = 0.0
+shader_parameter/side_darkening = 0.08

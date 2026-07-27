@@ -179,6 +179,44 @@
       "timeout_seconds": 14
     },
     {
+      "id": "modular_environment_showcase",
+      "order": 19,
+      "display_name": "Weathered Cloister: Modular Environment Showcase",
+      "category": "Environment Showcase",
+      "version": "v1",
+      "status": "prototype_verified",
+      "description": "Dedicated walkable benchmark for the reusable Weathered Cloister environment and prop kit, including layered architecture, shared weathered materials, water transitions, localized lighting, stairs, props, an operable iron gate, and global playability coverage.",
+      "scene": "res://scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/modular_environment_showcase_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "INTERACT",
+        "JUMP",
+        "DODGE",
+        "RESET"
+      ],
+      "manual_test": "docs/modular_environment_showcase_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "The first kit uses stylized primitive-based scene assemblies rather than imported production meshes or authored UV texture sets.",
+        "Only the Weathered Cloister material family and a compact architecture/prop vocabulary are represented in v1.",
+        "The water channel is a shallow decorative transition and does not replace the shared swimming-volume system.",
+        "Final decals, lightmaps, baked occlusion, destruction variants, and environment-specific art direction remain future asset work."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 12
+    },
+    {
       "id": "elemental_reaction_lab",
       "order": 20,
       "display_name": "Elemental Reaction Laboratory",

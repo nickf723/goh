@@ -1,6 +1,6 @@
 Global Playability Framework validation failure
 
-ERROR: recovery clears unstable velocity
+ERROR: recovery clears unstable velocity while allowing grounded settling
 GLOBAL_PLAYABILITY_FRAMEWORK_SMOKE_TEST: FAIL
 
 Last 120 lines:
@@ -8,8 +8,8 @@ Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
 
 GameUI ready. Adding to game_ui group.
 Player found dodge controller: /root/GlobalPlayabilityFrameworkSmokeTest/PrototypeDrownedBell/Player/PlayerDodgeController
-ERROR: recovery clears unstable velocity
+ERROR: recovery clears unstable velocity while allowing grounded settling
    at: push_error (core/variant/variant_utility.cpp:1024)
    GDScript backtrace (most recent call first):
-       [0] _ready (res://scripts/tests/global_playability_framework_smoke_test.gd:85)
+       [0] _ready (res://scripts/tests/global_playability_framework_smoke_test.gd:89)
 GLOBAL_PLAYABILITY_FRAMEWORK_SMOKE_TEST: FAIL

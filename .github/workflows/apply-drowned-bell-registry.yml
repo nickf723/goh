@@ -1,0 +1,101 @@
+name: Apply Drowned Bell registry entry
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'validation/apply-drowned-bell-registry' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Add Drowned Bell to feature registry
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('data/features/feature_registry.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          features = data['features']
+          feature_id = 'drowned_bell'
+          entry = {
+              'id': feature_id,
+              'order': 18,
+              'display_name': 'The Drowned Bell',
+              'category': 'Authored Quest Vertical Slice',
+              'version': 'v3',
+              'status': 'vertical_slice',
+              'description': 'Complete character-led marsh quest combining Orin dialogue, resonance investigation, authored chapel and crypt environments, swimming traversal, a passive-to-hostile amphibious creature, three physical resolution routes, persistent aftermath, key-item rewards, and quest completion.',
+              'scene': 'res://scenes/levels/prototypes/prototype_drowned_bell_v1.tscn',
+              'validation_scenes': [
+                  'res://scenes/levels/prototypes/prototype_drowned_bell_v1.tscn',
+              ],
+              'automated_tests': [
+                  'res://scenes/tests/drowned_bell_crypt_smoke_test.tscn',
+                  'res://scenes/tests/drowned_bell_environment_smoke_test.tscn',
+                  'res://scenes/tests/global_playability_framework_smoke_test.tscn',
+                  'res://scenes/tests/drowned_bell_foundation_smoke_test.tscn',
+              ],
+              'dependencies': [
+                  'broken_waystation',
+                  'weapon_combat_arena',
+                  'resonance_lab',
+              ],
+              'controls': [
+                  'MOVE',
+                  'CAMERA',
+                  'INTERACT',
+                  'JUMP',
+                  'LIGHT',
+                  'HEAVY',
+                  'FOCUS',
+                  'CAST',
+                  'DODGE',
+                  'LOCK-ON',
+                  'MENU',
+                  'RESET',
+              ],
+              'manual_test': 'docs/drowned_bell_v3_test.md',
+              'temporary_state': 'persistent',
+              'story_integrated': True,
+              'limitations': [
+                  'The chapel, crypt, Listener, lighting, and water presentation remain replacement-ready procedural prototype assets.',
+                  'The Listener uses one encounter-specific authored behavior rather than a general creature-social AI framework.',
+                  'Final animation, audio synthesis, voice acting, cinematics, and combat balance are not represented.',
+                  'The opened marsh route does not yet connect to a production region.',
+              ],
+              'launchable': True,
+              'visible_in_launcher': True,
+              'ci_validate': True,
+              'timeout_seconds': 14,
+          }
+
+          existing = next((i for i, row in enumerate(features) if row.get('id') == feature_id), None)
+          if existing is not None:
+              features[existing] = entry
+          else:
+              insert_at = next((i + 1 for i, row in enumerate(features) if row.get('id') == 'broken_waystation'), len(features))
+              features.insert(insert_at, entry)
+
+          path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          PY
+      - name: Validate registry
+        run: python scripts/ci/validate_feature_registry.py
+      - name: Commit registry entry to main
+        shell: bash
+        run: |
+          git config user.name "goh-registry-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/features/feature_registry.json
+          git commit -m "Register The Drowned Bell v3" || exit 0
+          git push origin main

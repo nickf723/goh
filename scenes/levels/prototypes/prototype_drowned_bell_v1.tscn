@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/prototype_drowned_bell_v1.gd" id="1_director"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
 [ext_resource type="Script" path="res://scripts/levels/drowned_bell_playability_pass.gd" id="5_playability"]
+[ext_resource type="Script" path="res://scripts/levels/drowned_bell_environment_pass.gd" id="6_environment"]
 
 [node name="PrototypeDrownedBell" type="Node3D"]
 script = ExtResource("1_director")
@@ -25,6 +26,9 @@ shadow_enabled = true
 position = Vector3(0, 1, -10)
 
 [node name="World" type="Node3D" parent="."]
+
+[node name="EnvironmentPass" type="Node" parent="."]
+script = ExtResource("6_environment")
 
 [node name="PlayabilityPass" type="Node" parent="."]
 script = ExtResource("5_playability")

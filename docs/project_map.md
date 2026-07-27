@@ -43,20 +43,24 @@ The Authored Quest Framework is owned by `scripts/quests/authored_quest_runtime.
 
 ## Exploration
 
-Ruined Village Approach and Church Trial are story-integrated vertical slices. Wilds Expedition owns the five-segment outdoor route and authored Cypress, Wet Woodland, and Pine Ridge layouts. Regional Expedition Map owns route selection and regional persistence. The Drowned Bell is the current composition-first quest proving water, resonance investigation, guidance, and global playability contracts.
+Ruined Village Approach and Church Trial are story-integrated vertical slices. Wilds Expedition owns the five-segment outdoor route and authored Cypress, Wet Woodland, and Pine Ridge layouts. Regional Expedition Map owns route selection and regional persistence. The Drowned Bell is the current composition-first quest proving water, resonance investigation, guidance, global playability, and authored environment contracts.
 
 ## Playability and authored-space quality
 
 The reusable playability layer lives under `scripts/quality/` and `scripts/player/player_recovery_controller.gd`. It provides explicit playable bounds, safe recovery transforms, forbidden and recovery volumes, safe destination validation, swimming exit anchors, quest guidance targets, and a structural scene auditor. Space Blink uses the shared safe-destination query, and the shared player retains fallback recovery even in scenes that have not yet declared an explicit `PlayableSpace3D`.
+
+The reusable environment-composition layer lives under `scripts/environment/`. It provides palette-driven prototype materials, collision-matched architectural primitives, stair runs, pillars, archways, non-blocking dressing, local lights, build statistics, and an authored-environment auditor. Level-specific passes retain responsibility for layout, landmarks, sightlines, mood, prop placement, and environmental storytelling.
 
 Architecture and manual quality gates are documented in:
 
 ```text
 docs/GLOBAL_PLAYABILITY_FRAMEWORK_V1.md
 docs/global_playability_framework_v1_test.md
+docs/AUTHORED_ENVIRONMENT_COMPOSITION_V1.md
+docs/drowned_chapel_environment_v2_2_test.md
 ```
 
-The framework is a safety net, not a substitute for continuous authored collision, natural boundaries, readable sightlines, or human playtesting.
+These frameworks are safety and construction scaffolds, not substitutes for continuous authored collision, natural boundaries, readable sightlines, deliberate composition, or human playtesting.
 
 ## Development infrastructure
 
@@ -66,6 +70,7 @@ The framework is a safety net, not a substitute for continuous authored collisio
 - Feature registry validator and runner: launcher/CI integrity
 - Capability inventory validator: planning memory and resuggestion integrity
 - Playable Space Auditor: recovery, water-exit, interaction, and guidance contracts
+- Authored Environment Auditor: collision-paired surfaces and assembly integrity
 
 ## Planning rule
 

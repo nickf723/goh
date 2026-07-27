@@ -27,7 +27,7 @@ Weapon combat is data-first through WeaponDefinition, WeaponMovesetDefinition, W
 
 Canonical owners: Weapon Combat Arena, Airborne Presentation Laboratory, and Systems Integration Hub. Primary authored movesets are Sword, Hammer, and Spear; Chain and Whip remain experimental flexible classes.
 
-Enemy behavior includes personality profiles, hazard awareness, committed action phases, multi-action selection, defensive actions, threat sensing, reaction delay, and encounter sequencing.
+Enemy behavior includes personality profiles, hazard awareness, committed action phases, multi-action selection, defensive actions, threat sensing, reaction delay, and encounter sequencing. Encounter-specific actors such as the Drowned Bell's Listener may compose these shared combat contracts without becoming a new general AI framework.
 
 ## Abilities and world systems
 
@@ -39,11 +39,11 @@ The repository also contains elemental reactions, environmental sources, thermal
 
 GameState owns stats, affinities, resources, equipment, mastery, unlocks, infusion, inventory, quick-item assignment, key items, relationships, quests, route state, and save data.
 
-The Authored Quest Framework is owned by `scripts/quests/authored_quest_runtime.gd`, `quest_reward_bundle.gd`, `world_state_variant.gd`, and `authored_encounter_sequence.gd`. Broken Waystation / Relay Response is the canonical quest example. Mara and Tamsin are the minimum authored-content quality references.
+The Authored Quest Framework is owned by `scripts/quests/authored_quest_runtime.gd`, `quest_reward_bundle.gd`, `world_state_variant.gd`, and `authored_encounter_sequence.gd`. Broken Waystation / Relay Response is the canonical reusable quest example. The Drowned Bell is the second complete authored quest and demonstrates direct composition, environmental investigation, alternative resolution, and persistent aftermath. Mara and Tamsin remain the minimum conversation and staging quality references.
 
 ## Exploration
 
-Ruined Village Approach and Church Trial are story-integrated vertical slices. Wilds Expedition owns the five-segment outdoor route and authored Cypress, Wet Woodland, and Pine Ridge layouts. Regional Expedition Map owns route selection and regional persistence. The Drowned Bell is the current composition-first quest proving water, resonance investigation, guidance, global playability, and authored environment contracts.
+Ruined Village Approach and Church Trial are story-integrated vertical slices. Wilds Expedition owns the five-segment outdoor route and authored Cypress, Wet Woodland, and Pine Ridge layouts. Regional Expedition Map owns route selection and regional persistence. The completed Drowned Bell quest combines water traversal, resonance investigation, a coherent chapel and crypt, three Listener-resolution routes, return dialogue, rewards, global playability, and authored environment contracts.
 
 ## Playability and authored-space quality
 
@@ -58,6 +58,7 @@ docs/GLOBAL_PLAYABILITY_FRAMEWORK_V1.md
 docs/global_playability_framework_v1_test.md
 docs/AUTHORED_ENVIRONMENT_COMPOSITION_V1.md
 docs/drowned_chapel_environment_v2_2_test.md
+docs/drowned_bell_v3_test.md
 ```
 
 These frameworks are safety and construction scaffolds, not substitutes for continuous authored collision, natural boundaries, readable sightlines, deliberate composition, or human playtesting.

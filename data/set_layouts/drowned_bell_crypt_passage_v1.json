@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "layout_id": "drowned_bell_crypt_passage_v1",
+  "purpose": "Player-clearance-first replacement for the hand-positioned collapsed burial passage.",
+  "replace_paths": [
+    "CollapsedBurialPassage",
+    "ListenerChamber/FrontWallWest",
+    "ListenerChamber/FrontWallEast",
+    "ListenerChamber/PassageArch"
+  ],
+  "corridors": [
+    {
+      "id": "CollapsedBurialPassage",
+      "floor_center": [-1.8, -6.8, 50.35],
+      "forward": [0.0, 0.0, 1.0],
+      "length": 10.7,
+      "clear_width": 5.8,
+      "clear_height": 5.1,
+      "floor_thickness": 0.5,
+      "wall_thickness": 0.5,
+      "ceiling_thickness": 0.5,
+      "include_ceiling": true,
+      "material": "stone_dark",
+      "traversal": "swim",
+      "enforce_minimum": true
+    }
+  ],
+  "walls": [
+    {
+      "id": "ListenerChamberFrontWall",
+      "base_center": [0.0, -4.68, 55.2],
+      "normal": [0.0, 0.0, 1.0],
+      "length": 14.3,
+      "height": 6.0,
+      "depth": 0.65,
+      "material": "stone_primary",
+      "openings": [
+        {
+          "id": "PassageOpening",
+          "center_offset": -1.8,
+          "width": 5.8,
+          "height": 4.7,
+          "traversal": "swim"
+        }
+      ]
+    }
+  ],
+  "stairs": [
+    {
+      "id": "ChamberExitSteps",
+      "low_origin": [-1.8, -6.8, 52.75],
+      "forward": [0.0, 0.0, 1.0],
+      "step_count": 6,
+      "width": 4.8,
+      "step_run": 0.48,
+      "total_rise": 2.12,
+      "landing_length": 1.0,
+      "ramp_thickness": 0.14,
+      "material": "stone_wet"
+    }
+  ],
+  "water": {
+    "position": [-1.8, -4.85, 50.35],
+    "size": [5.7, 4.7, 10.5],
+    "surface_height_offset": 2.25,
+    "current_velocity": [0.0, 0.0, 0.24],
+    "surface_size": [5.65, 0.12, 10.45],
+    "depth_size": [5.55, 0.08, 10.25]
+  },
+  "drained_walkway": {
+    "position": [-1.8, -4.86, 50.35],
+    "size": [5.2, 0.38, 10.4]
+  },
+  "exit_anchors": [
+    {
+      "node": "CryptPassageUpperExit",
+      "position": [-1.8, -4.05, 45.35],
+      "activation_radius": 3.8
+    },
+    {
+      "node": "CryptPassageChamberExit",
+      "position": [-1.8, -3.95, 56.0],
+      "activation_radius": 4.0
+    }
+  ]
+}

@@ -2,6 +2,10 @@ extends Node
 
 const SceneUnderTest: PackedScene = preload("res://scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn")
 const Catalog = preload("res://scripts/environment/modular_environment_catalog.gd")
+const BuilderScript = preload("res://scripts/environment/authored_environment_builder.gd")
+const ComposerScript = preload("res://scripts/environment/authored_set_composer.gd")
+const SetClearanceAuditor = preload("res://scripts/environment/authored_set_clearance_auditor.gd")
+const ChapelPalette = preload("res://data/environment_palettes/drowned_chapel_palette.tres")
 const PlayableSpaceAuditorScript = preload("res://scripts/quality/playable_space_auditor.gd")
 const WATER_SHADER_PATH := "res://shaders/environment/modular_water.gdshader"
 
@@ -15,7 +19,7 @@ func _process(delta: float) -> void:
 	if finished:
 		return
 	elapsed += maxf(delta, 0.0)
-	if elapsed >= 20.0:
+	if elapsed >= 25.0:
 		push_error("Modular environment showcase test stalled during: " + current_step)
 		print("MODULAR_ENVIRONMENT_SHOWCASE_SMOKE_TEST: STALLED AT " + current_step)
 		get_tree().quit(1)
@@ -77,6 +81,76 @@ func _ready() -> void:
 		if top_landing != null:
 			check(bool(top_landing.get_meta("walkable_landing", false)), "stair landing publishes its traversal role")
 	kit_sandbox.queue_free()
+	await get_tree().process_frame
+
+	current_step = "compose a set from compact layout data"
+	var composed_sandbox := Node3D.new()
+	composed_sandbox.name = "ComposedSetSandbox"
+	add_child(composed_sandbox)
+	var builder: AuthoredEnvironmentBuilder = BuilderScript.new(composed_sandbox, ChapelPalette) as AuthoredEnvironmentBuilder
+	var composer: AuthoredSetComposer = ComposerScript.new(builder) as AuthoredSetComposer
+	var plan: Dictionary = {
+		"layout_id": "composer_smoke_set",
+		"corridors": [{
+			"id": "SwimCorridor",
+			"floor_center": Vector3(0.0, 0.0, 0.0),
+			"forward": Vector3(0.0, 0.0, 1.0),
+			"length": 8.0,
+			"clear_width": 5.7,
+			"clear_height": 5.0,
+			"traversal": "swim",
+			"material": "stone_dark",
+		}],
+		"walls": [{
+			"id": "OpeningWall",
+			"base_center": Vector3(0.0, 0.0, 4.0),
+			"normal": Vector3(0.0, 0.0, 1.0),
+			"length": 12.0,
+			"height": 5.5,
+			"depth": 0.5,
+			"openings": [{
+				"id": "AlignedOpening",
+				"center_offset": 0.0,
+				"width": 5.7,
+				"height": 5.0,
+				"traversal": "swim",
+			}],
+		}],
+		"stairs": [{
+			"id": "WalkableStairs",
+			"low_origin": Vector3(7.0, 0.0, -2.0),
+			"forward": Vector3(0.0, 0.0, 1.0),
+			"step_count": 6,
+			"width": 4.0,
+			"step_run": 0.6,
+			"total_rise": 1.5,
+			"landing_length": 1.0,
+		}],
+		"modules": [{
+			"id": "LayoutCrate",
+			"piece_id": "weathered_crate",
+			"position": Vector3(-5.0, 0.0, 0.0),
+			"collision_mode": "own",
+			"variant_seed": 8,
+		}],
+	}
+	var compose_result: Dictionary = composer.compose_plan(composed_sandbox, plan)
+	await get_tree().physics_frame
+	check(str(compose_result.get("layout_id", "")) == "composer_smoke_set", "composer preserves the layout id")
+	var counts: Dictionary = compose_result.get("counts", {})
+	check(int(counts.get("corridors", 0)) == 1, "composer builds a corridor from one data row")
+	check(int(counts.get("walls", 0)) == 1, "composer builds an opening-aware wall from one data row")
+	check(int(counts.get("stairs", 0)) == 1, "composer builds walkable stairs from one data row")
+	check(int(counts.get("modules", 0)) == 1, "composer places a catalog module from one data row")
+	check(composed_sandbox.get_node_or_null("SwimCorridor") != null, "composed corridor has a stable authored id")
+	check(composed_sandbox.get_node_or_null("OpeningWall") != null, "composed wall has a stable authored id")
+	check(composed_sandbox.get_node_or_null("WalkableStairs/WalkRamp") != null, "composed stairs own continuous ramp collision")
+	check(composed_sandbox.get_node_or_null("LayoutCrate") != null, "composed modular prop has a stable authored id")
+	var set_audit: Dictionary = SetClearanceAuditor.audit(composed_sandbox)
+	for error: String in set_audit.get("errors", []):
+		failures.append("set composer: " + error)
+	check(bool(set_audit.get("passed", false)), "compact set plan passes clearance auditing")
+	composed_sandbox.queue_free()
 	await get_tree().process_frame
 
 	current_step = "instantiate showcase"

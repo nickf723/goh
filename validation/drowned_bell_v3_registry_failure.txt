@@ -1,0 +1,348 @@
+Drowned Bell v3 full registry validation failure
+
+ERROR: PHYSICAL_INTERACTION_FOUNDATION_SMOKE_TEST: thermal: thermal-only targets should report energy reception instead of an empty hit
+ERROR: WEAPON_MOVESET_SMOKE_TEST: Practice Sword expected 9 attacks but found 10
+ERROR: WEAPON_MOVESET_SMOKE_TEST: sword_l1 + light expected sword_l2 but found sword_reprise
+ERROR: WEAPON_MOVESET_SMOKE_TEST: sword_l2 + light expected sword_l3 but found sword_reprise
+ERROR: WEAPON_MOVESET_SMOKE_TEST: sword_l3 + light expected sword_l4 but found sword_reprise
+ERROR: PLAYER_RESOURCE_LOOP_SMOKE_TEST: practice_sword/sword_reprise must spend stamina
+ERROR: ENEMY_PERSONALITY_LAB_SMOKE_TEST: CautiousGoblin lane enemy is missing
+ERROR: ENEMY_PERSONALITY_LAB_SMOKE_TEST: BoldGoblin lane enemy is missing
+ERROR: ENEMY_PERSONALITY_LAB_SMOKE_TEST: SkittishGoblin lane enemy is missing
+ERROR: ENEMY_PERSONALITY_LAB_SMOKE_TEST: BruteGoblin lane enemy is missing
+ERROR: ENEMY_PERSONALITY_LAB_SMOKE_TEST: reset CautiousGoblin lane enemy is missing
+ERROR: ENEMY_PERSONALITY_LAB_SMOKE_TEST: reset BoldGoblin lane enemy is missing
+ERROR: ENEMY_PERSONALITY_LAB_SMOKE_TEST: reset SkittishGoblin lane enemy is missing
+ERROR: ENEMY_PERSONALITY_LAB_SMOKE_TEST: reset BruteGoblin lane enemy is missing
+ERROR: QUICK_ITEM_BELT_SMOKE_TEST: rest refills flask charges: expected 3 but got 1
+ERROR: QUICK_ITEM_BELT_SMOKE_TEST: quick_item_down has directional D-pad button: expected true
+  DROWNED_BELL_CRYPT_SMOKE_TEST: PASS
+  DROWNED_BELL_ENVIRONMENT_SMOKE_TEST: PASS
+  DROWNED_BELL_INTERIOR_SMOKE_TEST: PASS
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+SCRIPT ERROR: Invalid assignment of property or key 'action_options' with value of type 'Array' on a base object of type 'Node (EnemyThreatAwareActionBrain)'.
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: Gremlin must prefer Close Bite at 0.9m while Bite is ready
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: Pounce cooldown must not block Close Bite
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: soul_grip has no ability scene
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: soul_grip has no action payload for delivery type channel
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: metal_tether has no ability scene
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: metal_tether has no action payload for delivery type channeled_tether
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: spectral_familiar has no ability scene
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: spectral_familiar has no action payload for delivery type summon
+ERROR: 8 resources still in use at exit (run with --verbose for details).
+  [FAIL] physical_interaction_lab [test] res://scenes/tests/physical_interaction_foundation_smoke_test.tscn (Godot exited with code 1)
+  [FAIL] weapon_combat_arena [test] res://scenes/tests/weapon_moveset_smoke_test.tscn (Godot exited with code 1)
+  [FAIL] runtime_stat_lab [test] res://scenes/tests/player_resource_loop_smoke_test.tscn (Godot exited with code 1)
+  [FAIL] enemy_personality_lab [test] res://scenes/tests/enemy_personality_lab_smoke_test.tscn (Godot exited with code 1)
+  [FAIL] combat_survival_trial [test] res://scenes/tests/quick_item_belt_smoke_test.tscn (Godot exited with code 1)
+  [PASS] regional_expedition_map [test] res://scenes/tests/regional_expedition_map_smoke_test.tscn (passed)FEATURE_REGISTRY_RUNNER: FAIL (6/68 targets failed)
+  [FAIL] development_control_center [test] res://scenes/tests/architecture_contract_smoke_test.tscn (Godot exited with code 1)
+
+Last 300 lines:
+
+== airflow_foundation [test] res://scenes/tests/airflow_foundation_smoke_test.tscn ==
+  AIRFLOW_FOUNDATION_SMOKE_TEST: PASS
+
+== flexible_tether_foundation [scene] res://scenes/levels/prototypes/prototype_flexible_tether_lab_v1.tscn ==
+
+== flexible_tether_foundation [test] res://scenes/tests/flexible_tether_foundation_smoke_test.tscn ==
+  FLEXIBLE_TETHER_FOUNDATION_SMOKE_TEST: PASS
+
+== chain_weapon_lab [scene] res://scenes/levels/prototypes/prototype_chain_weapon_lab_v1.tscn ==
+
+== chain_weapon_lab [test] res://scenes/tests/chain_weapon_smoke_test.tscn ==
+  CHAIN_WEAPON_SMOKE_TEST: PASS
+
+== whip_weapon_lab [scene] res://scenes/levels/prototypes/prototype_whip_weapon_lab_v1.tscn ==
+
+== whip_weapon_lab [test] res://scenes/tests/whip_weapon_smoke_test.tscn ==
+  WHIP_WEAPON_SMOKE_TEST: PASS
+
+== metal_tether_traversal [scene] res://scenes/levels/prototypes/prototype_metal_tether_traversal_lab_v1.tscn ==
+
+== metal_tether_traversal [test] res://scenes/tests/metal_tether_traversal_smoke_test.tscn ==
+  METAL_TETHER_TRAVERSAL_SMOKE_TEST: PASS
+
+== structural_stress_lab [scene] res://scenes/levels/prototypes/prototype_structural_stress_lab_v1.tscn ==
+
+== structural_stress_lab [test] res://scenes/tests/structural_stress_smoke_test.tscn ==
+  STRUCTURAL_STRESS_SMOKE_TEST: PASS
+
+== foundry_sabotage [scene] res://scenes/levels/prototypes/prototype_foundry_sabotage_v1.tscn ==
+
+== foundry_sabotage [test] res://scenes/tests/foundry_sabotage_smoke_test.tscn ==
+  FOUNDRY_SABOTAGE_SMOKE_TEST: PASS
+
+== runtime_stat_lab [scene] res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn ==
+
+== runtime_stat_lab [test] res://scenes/tests/runtime_stat_lab_smoke_test.tscn ==
+
+== runtime_stat_lab [test] res://scenes/tests/player_resource_loop_smoke_test.tscn ==
+--- stdout ---
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+== spatial_portal_lab [scene] res://scenes/levels/prototypes/prototype_spatial_portal_lab_v1.tscn ==
+
+== spatial_portal_lab [test] res://scenes/tests/spatial_portal_smoke_test.tscn ==
+  SPATIAL_PORTAL_SMOKE_TEST: PASS
+
+== enemy_personality_lab [scene] res://scenes/levels/prototypes/prototype_enemy_personality_lab_v1.tscn ==
+
+== enemy_personality_lab [test] res://scenes/tests/enemy_personality_lab_smoke_test.tscn ==
+--- stdout ---
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+GameUI ready. Adding to game_ui group.
+Player found dodge controller: /root/EnemyPersonalityLabSmokeTest/PrototypeEnemyPersonalityLabV1/Player/PlayerDodgeController
+GameUI ready. Adding to game_ui group.
+Player found dodge controller: /root/EnemyPersonalityLabSmokeTest/PrototypeEnemyPersonalityLabV1/Player/PlayerDodgeController
+
+== resonance_lab [scene] res://scenes/levels/prototypes/prototype_resonance_lab_v1.tscn ==
+
+== resonance_lab [test] res://scenes/tests/resonance_smoke_test.tscn ==
+  RESONANCE_SMOKE_TEST: PASS
+
+== combat_survival_trial [scene] res://scenes/levels/prototypes/prototype_combat_survival_trial_v1.tscn ==
+
+== combat_survival_trial [test] res://scenes/tests/player_defense_smoke_test.tscn ==
+  PLAYER_DEFENSE_SMOKE_TEST: PASS
+
+== combat_survival_trial [test] res://scenes/tests/quick_item_belt_smoke_test.tscn ==
+--- stdout ---
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+Using Test Healing Flask...
+Test Healing Flask interrupted.
+Using Test Healing Flask...
+Test Healing Flask restores 2 Health.
+Test Healing Flask is not needed right now.
+
+== combat_survival_trial [test] res://scenes/tests/field_inventory_smoke_test.tscn ==
+  FIELD_INVENTORY_SMOKE_TEST: PASS
+
+== combat_survival_trial [test] res://scenes/tests/loot_reward_smoke_test.tscn ==
+  LOOT_REWARD_SMOKE_TEST: PASS
+
+== element_vfx_gallery [scene] res://scenes/levels/prototypes/prototype_element_vfx_gallery_v1.tscn ==
+
+== airborne_presentation_lab [scene] res://scenes/levels/prototypes/prototype_airborne_presentation_lab_v1.tscn ==
+
+== airborne_presentation_lab [test] res://scenes/tests/airborne_presentation_smoke_test.tscn ==
+  AIRBORNE_PRESENTATION_SMOKE_TEST: PASS
+
+== ice_vfx_lab [scene] res://scenes/levels/prototypes/prototype_ice_vfx_lab_v1.tscn ==
+
+== systems_integration_hub [scene] res://scenes/levels/prototypes/prototype_systems_integration_hub_v1.tscn ==
+
+== systems_integration_hub [test] res://scenes/tests/systems_integration_hub_smoke_test.tscn ==
+  SYSTEMS_INTEGRATION_HUB_SMOKE_TEST: PASS
+
+== dev_interaction_sandbox [scene] res://scenes/levels/_dev/dev_interaction_sandbox.tscn ==--- stderr ---
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+   at: get_global_transform (scene/3d/node_3d.cpp:642)
+   GDScript backtrace (most recent call first):
+       [0] configure (res://scripts/combat/combat_threat.gd:41)
+       [1] validate_enemy_threat_awareness_contract (res://scripts/tests/architecture_contract_smoke_test.gd:206)
+       [2] run_tests (res://scripts/tests/architecture_contract_smoke_test.gd:48)
+       [3] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:32)
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+   at: get_global_transform (scene/3d/node_3d.cpp:642)
+   GDScript backtrace (most recent call first):
+       [0] get_origin (res://scripts/combat/combat_threat.gd:66)
+       [1] contains_point (res://scripts/combat/combat_threat.gd:94)
+       [2] validate_enemy_threat_awareness_contract (res://scripts/tests/architecture_contract_smoke_test.gd:223)
+       [3] run_tests (res://scripts/tests/architecture_contract_smoke_test.gd:48)
+       [4] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:32)
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+   at: get_global_transform (scene/3d/node_3d.cpp:642)
+   GDScript backtrace (most recent call first):
+       [0] get_origin (res://scripts/combat/combat_threat.gd:66)
+       [1] get_center (res://scripts/combat/combat_threat.gd:71)
+       [2] contains_point (res://scripts/combat/combat_threat.gd:101)
+       [3] validate_enemy_threat_awareness_contract (res://scripts/tests/architecture_contract_smoke_test.gd:223)
+       [4] run_tests (res://scripts/tests/architecture_contract_smoke_test.gd:48)
+       [5] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:32)
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+   at: get_global_transform (scene/3d/node_3d.cpp:642)
+   GDScript backtrace (most recent call first):
+       [0] configure (res://scripts/combat/combat_threat.gd:41)
+       [1] validate_enemy_threat_awareness_contract (res://scripts/tests/architecture_contract_smoke_test.gd:228)
+       [2] run_tests (res://scripts/tests/architecture_contract_smoke_test.gd:48)
+       [3] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:32)
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+   at: get_global_transform (scene/3d/node_3d.cpp:642)
+   GDScript backtrace (most recent call first):
+       [0] get_origin (res://scripts/combat/combat_threat.gd:66)
+       [1] receive_combat_threat (res://scripts/enemies/enemy_threat_sensor.gd:36)
+       [2] validate_enemy_threat_awareness_contract (res://scripts/tests/architecture_contract_smoke_test.gd:250)
+       [3] run_tests (res://scripts/tests/architecture_contract_smoke_test.gd:48)
+       [4] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:32)
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+   at: get_global_transform (scene/3d/node_3d.cpp:642)
+   GDScript backtrace (most recent call first):
+       [0] receive_combat_threat (res://scripts/enemies/enemy_threat_sensor.gd:36)
+       [1] validate_enemy_threat_awareness_contract (res://scripts/tests/architecture_contract_smoke_test.gd:250)
+       [2] run_tests (res://scripts/tests/architecture_contract_smoke_test.gd:48)
+       [3] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:32)
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+   at: get_global_transform (scene/3d/node_3d.cpp:642)
+   GDScript backtrace (most recent call first):
+       [0] get_origin (res://scripts/combat/combat_threat.gd:66)
+       [1] contains_point (res://scripts/combat/combat_threat.gd:94)
+       [2] get_best_actionable_threat (res://scripts/enemies/enemy_threat_sensor.gd:66)
+       [3] validate_enemy_threat_awareness_contract (res://scripts/tests/architecture_contract_smoke_test.gd:251)
+       [4] run_tests (res://scripts/tests/architecture_contract_smoke_test.gd:48)
+       [5] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:32)
+ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+   at: get_global_transform (scene/3d/node_3d.cpp:642)
+   GDScript backtrace (most recent call first):
+       [0] get_origin (res://scripts/combat/combat_threat.gd:66)
+       [1] get_center (res://scripts/combat/combat_threat.gd:71)
+       [2] contains_point (res://scripts/combat/combat_threat.gd:101)
+       [3] get_best_actionable_threat (res://scripts/enemies/enemy_threat_sensor.gd:66)
+       [4] validate_enemy_threat_awareness_contract (res://scripts/tests/architecture_contract_smoke_test.gd:251)
+       [5] run_tests (res://scripts/tests/architecture_contract_smoke_test.gd:48)
+       [6] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:32)
+SCRIPT ERROR: Invalid assignment of property or key 'action_options' with value of type 'Array' on a base object of type 'Node (EnemyThreatAwareActionBrain)'.
+          at: validate_enemy_threat_awareness_contract (res://scripts/tests/architecture_contract_smoke_test.gd:256)
+          GDScript backtrace (most recent call first):
+              [0] validate_enemy_threat_awareness_contract (res://scripts/tests/architecture_contract_smoke_test.gd:256)
+              [1] run_tests (res://scripts/tests/architecture_contract_smoke_test.gd:48)
+              [2] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:32)
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: Gremlin must prefer Close Bite at 0.9m while Bite is ready
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:40)
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: Pounce cooldown must not block Close Bite
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:40)
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: soul_grip has no ability scene
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:40)
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: soul_grip has no action payload for delivery type channel
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:40)
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: metal_tether has no ability scene
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:40)
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: metal_tether has no action payload for delivery type channeled_tether
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:40)
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: spectral_familiar has no ability scene
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:40)
+ERROR: ARCHITECTURE_CONTRACT_SMOKE_TEST: spectral_familiar has no action payload for delivery type summon
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scripts/tests/architecture_contract_smoke_test.gd:40)
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+     at: cleanup (core/object/object.cpp:2641)
+ERROR: 8 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)
+
+
+== wilds_expedition [scene] res://scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn ==
+
+== wilds_expedition [test] res://scenes/tests/wilds_expedition_smoke_test.tscn ==
+  WILDS_EXPEDITION_SMOKE_TEST: PASS
+
+== wilds_expedition [test] res://scenes/tests/route_familiarity_smoke_test.tscn ==
+  ROUTE_FAMILIARITY_SMOKE_TEST: PASS
+
+== wilds_expedition [test] res://scenes/tests/authored_wilds_segments_smoke_test.tscn ==
+  AUTHORED_WILDS_SEGMENTS_SMOKE_TEST: PASS
+
+== regional_expedition_map [scene] res://scenes/levels/prototypes/prototype_regional_expedition_map_v1.tscn ==
+
+== regional_expedition_map [test] res://scenes/tests/regional_expedition_map_smoke_test.tscn ==
+  REGIONAL_EXPEDITION_MAP_SMOKE_TEST: PASS
+
+== development_control_center [scene] res://scenes/ui/development_control_center_v1.tscn ==
+
+== development_control_center [test] res://scenes/tests/architecture_contract_smoke_test.tscn ==
+--- stdout ---
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+Registered feature validation summary:
+  [PASS] ruined_village_approach [scene] res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn (passed)
+  [PASS] ruined_village_approach [test] res://scenes/tests/ruined_village_approach_smoke_test.tscn (passed)
+  [PASS] church_trial [scene] res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn (passed)
+  [PASS] broken_waystation [scene] res://scenes/levels/prototypes/prototype_broken_waystation_mission_v1.tscn (passed)
+  [PASS] broken_waystation [test] res://scenes/tests/authored_quest_framework_smoke_test.tscn (passed)
+  [PASS] broken_waystation [test] res://scenes/tests/broken_waystation_consequence_smoke_test.tscn (passed)
+  [PASS] drowned_bell [scene] res://scenes/levels/prototypes/prototype_drowned_bell_v1.tscn (passed)
+  [PASS] drowned_bell [test] res://scenes/tests/drowned_bell_crypt_smoke_test.tscn (passed)
+  [PASS] drowned_bell [test] res://scenes/tests/drowned_bell_environment_smoke_test.tscn (passed)
+  [PASS] drowned_bell [test] res://scenes/tests/global_playability_framework_smoke_test.tscn (passed)
+  [PASS] drowned_bell [test] res://scenes/tests/drowned_bell_foundation_smoke_test.tscn (passed)
+  [PASS] elemental_reaction_lab [scene] res://scenes/levels/prototypes/prototype_environmental_chemistry_lab_v1.tscn (passed)
+  [PASS] elemental_reaction_lab [test] res://scenes/tests/elemental_reaction_smoke_test.tscn (passed)
+  [PASS] elemental_reaction_lab [test] res://scenes/tests/mechanical_consumer_smoke_test.tscn (passed)
+  [PASS] physical_interaction_lab [scene] res://scenes/levels/prototypes/prototype_physical_interaction_lab_v1.tscn (passed)
+  [FAIL] physical_interaction_lab [test] res://scenes/tests/physical_interaction_foundation_smoke_test.tscn (Godot exited with code 1)
+  [PASS] soul_circuit_puzzle [scene] res://scenes/levels/prototypes/prototype_soul_circuit_puzzle_v1.tscn (passed)
+  [PASS] rain_concentration_weather [scene] res://scenes/levels/prototypes/prototype_rain_weather_lab_v1.tscn (passed)
+  [PASS] rain_concentration_weather [test] res://scenes/tests/rain_concentration_weather_smoke_test.tscn (passed)
+  [PASS] weapon_combat_arena [scene] res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn (passed)
+  [FAIL] weapon_combat_arena [test] res://scenes/tests/weapon_moveset_smoke_test.tscn (Godot exited with code 1)
+  [PASS] snow_concentration_weather [scene] res://scenes/levels/prototypes/prototype_snow_weather_lab_v1.tscn (passed)
+  [PASS] snow_concentration_weather [test] res://scenes/tests/snow_concentration_weather_smoke_test.tscn (passed)
+  [PASS] aerial_traversal_concentration [scene] res://scenes/levels/prototypes/prototype_aerial_traversal_lab_v1.tscn (passed)
+  [PASS] aerial_traversal_concentration [test] res://scenes/tests/aerial_traversal_concentration_smoke_test.tscn (passed)
+  [PASS] airflow_foundation [scene] res://scenes/levels/prototypes/prototype_airflow_lab_v1.tscn (passed)
+  [PASS] airflow_foundation [test] res://scenes/tests/airflow_foundation_smoke_test.tscn (passed)
+  [PASS] flexible_tether_foundation [scene] res://scenes/levels/prototypes/prototype_flexible_tether_lab_v1.tscn (passed)
+  [PASS] flexible_tether_foundation [test] res://scenes/tests/flexible_tether_foundation_smoke_test.tscn (passed)
+  [PASS] chain_weapon_lab [scene] res://scenes/levels/prototypes/prototype_chain_weapon_lab_v1.tscn (passed)
+  [PASS] chain_weapon_lab [test] res://scenes/tests/chain_weapon_smoke_test.tscn (passed)
+  [PASS] whip_weapon_lab [scene] res://scenes/levels/prototypes/prototype_whip_weapon_lab_v1.tscn (passed)
+  [PASS] whip_weapon_lab [test] res://scenes/tests/whip_weapon_smoke_test.tscn (passed)
+  [PASS] metal_tether_traversal [scene] res://scenes/levels/prototypes/prototype_metal_tether_traversal_lab_v1.tscn (passed)
+  [PASS] metal_tether_traversal [test] res://scenes/tests/metal_tether_traversal_smoke_test.tscn (passed)
+  [PASS] structural_stress_lab [scene] res://scenes/levels/prototypes/prototype_structural_stress_lab_v1.tscn (passed)
+  [PASS] structural_stress_lab [test] res://scenes/tests/structural_stress_smoke_test.tscn (passed)
+  [PASS] foundry_sabotage [scene] res://scenes/levels/prototypes/prototype_foundry_sabotage_v1.tscn (passed)
+  [PASS] foundry_sabotage [test] res://scenes/tests/foundry_sabotage_smoke_test.tscn (passed)
+  [PASS] runtime_stat_lab [scene] res://scenes/levels/prototypes/prototype_runtime_stat_lab_v1.tscn (passed)
+  [PASS] runtime_stat_lab [test] res://scenes/tests/runtime_stat_lab_smoke_test.tscn (passed)
+  [FAIL] runtime_stat_lab [test] res://scenes/tests/player_resource_loop_smoke_test.tscn (Godot exited with code 1)
+  [PASS] spatial_portal_lab [scene] res://scenes/levels/prototypes/prototype_spatial_portal_lab_v1.tscn (passed)
+  [PASS] spatial_portal_lab [test] res://scenes/tests/spatial_portal_smoke_test.tscn (passed)
+  [PASS] enemy_personality_lab [scene] res://scenes/levels/prototypes/prototype_enemy_personality_lab_v1.tscn (passed)
+  [FAIL] enemy_personality_lab [test] res://scenes/tests/enemy_personality_lab_smoke_test.tscn (Godot exited with code 1)
+  [PASS] resonance_lab [scene] res://scenes/levels/prototypes/prototype_resonance_lab_v1.tscn (passed)
+  [PASS] resonance_lab [test] res://scenes/tests/resonance_smoke_test.tscn (passed)
+  [PASS] combat_survival_trial [scene] res://scenes/levels/prototypes/prototype_combat_survival_trial_v1.tscn (passed)
+  [PASS] combat_survival_trial [test] res://scenes/tests/player_defense_smoke_test.tscn (passed)
+  [FAIL] combat_survival_trial [test] res://scenes/tests/quick_item_belt_smoke_test.tscn (Godot exited with code 1)
+  [PASS] combat_survival_trial [test] res://scenes/tests/field_inventory_smoke_test.tscn (passed)
+  [PASS] combat_survival_trial [test] res://scenes/tests/loot_reward_smoke_test.tscn (passed)
+  [PASS] element_vfx_gallery [scene] res://scenes/levels/prototypes/prototype_element_vfx_gallery_v1.tscn (passed)
+  [PASS] airborne_presentation_lab [scene] res://scenes/levels/prototypes/prototype_airborne_presentation_lab_v1.tscn (passed)
+  [PASS] airborne_presentation_lab [test] res://scenes/tests/airborne_presentation_smoke_test.tscn (passed)
+  [PASS] ice_vfx_lab [scene] res://scenes/levels/prototypes/prototype_ice_vfx_lab_v1.tscn (passed)
+  [PASS] systems_integration_hub [scene] res://scenes/levels/prototypes/prototype_systems_integration_hub_v1.tscn (passed)
+  [PASS] systems_integration_hub [test] res://scenes/tests/systems_integration_hub_smoke_test.tscn (passed)
+  [PASS] dev_interaction_sandbox [scene] res://scenes/levels/_dev/dev_interaction_sandbox.tscn (passed)
+  [PASS] wilds_expedition [scene] res://scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn (passed)
+  [PASS] wilds_expedition [test] res://scenes/tests/wilds_expedition_smoke_test.tscn (passed)
+  [PASS] wilds_expedition [test] res://scenes/tests/route_familiarity_smoke_test.tscn (passed)
+  [PASS] wilds_expedition [test] res://scenes/tests/authored_wilds_segments_smoke_test.tscn (passed)
+  [PASS] regional_expedition_map [scene] res://scenes/levels/prototypes/prototype_regional_expedition_map_v1.tscn (passed)
+  [PASS] regional_expedition_map [test] res://scenes/tests/regional_expedition_map_smoke_test.tscn (passed)FEATURE_REGISTRY_RUNNER: FAIL (6/68 targets failed)
+
+  [PASS] development_control_center [scene] res://scenes/ui/development_control_center_v1.tscn (passed)
+  [FAIL] development_control_center [test] res://scenes/tests/architecture_contract_smoke_test.tscn (Godot exited with code 1)

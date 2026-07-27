@@ -69,8 +69,10 @@ func build_environment() -> void:
 	add_visual_box(quiet_state, "LowWater", Vector3(18, 0.16, 18), Vector3(0, 0.18, 23), Color(0.08, 0.2, 0.26, 0.55))
 	add_visual_box(quiet_state, "ExposedSteps", Vector3(4.2, 0.4, 6), Vector3(0, 0.2, 25), Color(0.33, 0.33, 0.29))
 
-	chapel_state.register_variant("flooded", [flooded_state])
-	chapel_state.register_variant("quiet", [quiet_state])
+	var flooded_nodes: Array[Node] = [flooded_state]
+	var quiet_nodes: Array[Node] = [quiet_state]
+	chapel_state.call("register_variant", "flooded", flooded_nodes)
+	chapel_state.call("register_variant", "quiet", quiet_nodes)
 	add_world_label("THE DROWNED CHAPEL", Vector3(0, 8.4, 30), Color(0.63, 0.82, 0.92), 30)
 
 
@@ -167,26 +169,26 @@ func build_hud() -> void:
 func _on_ferryman_choice(choice_id: String, _npc: Node) -> void:
 	if choice_id in ["accept", "accept_after_history"]:
 		GameState.set_flag(FLAG_ACCEPTED, true)
-		quest.ensure_started()
-		quest.set_stage(1, "Listen to the drowned bell from the old causeway.")
+		quest.call("ensure_started")
+		quest.call("set_stage", 1, "Listen to the drowned bell from the old causeway.")
 		refresh_hud("QUEST STARTED  •  The bell is ringing beneath the floodwater.")
 
 
 func _on_bell_listened(_interactable: Node) -> void:
 	GameState.set_flag(FLAG_HEARD_PATTERN, true)
-	quest.set_stage(2, "Enter the drowned chapel and trace the false burial signal.")
+	quest.call("set_stage", 2, "Enter the drowned chapel and trace the false burial signal.")
 	refresh_hud("BELL PATTERN HEARD  •  Two low notes, then one impossibly high reply.")
 
 
 func apply_saved_state() -> void:
 	if GameState.get_flag(FLAG_COMPLETE):
-		chapel_state.apply("quiet")
-		quest.complete("The Drowned Bell is silent. Return to the road when ready.")
+		chapel_state.call("apply", "quiet")
+		quest.call("complete", "The Drowned Bell is silent. Return to the road when ready.")
 	elif GameState.get_flag(FLAG_ACCEPTED):
-		chapel_state.apply("flooded")
-		quest.ensure_started()
+		chapel_state.call("apply", "flooded")
+		quest.call("ensure_started")
 	else:
-		chapel_state.apply("flooded")
+		chapel_state.call("apply", "flooded")
 	refresh_hud()
 
 

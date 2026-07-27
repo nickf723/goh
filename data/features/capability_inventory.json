@@ -241,6 +241,26 @@
       "next_use": "Consolidate and integrate existing route systems; do not add more generation mechanics by default."
     },
     {
+      "id": "global_playability_framework",
+      "display_name": "Global Playability, Recovery, Safe Destinations, and Guidance",
+      "lifecycle": ["canonical", "story_integrated"],
+      "owner_files": [
+        "scripts/quality/playable_space_3d.gd",
+        "scripts/quality/playable_recovery_volume_3d.gd",
+        "scripts/quality/playable_forbidden_volume_3d.gd",
+        "scripts/quality/safe_destination_query.gd",
+        "scripts/quality/swimming_exit_anchor_3d.gd",
+        "scripts/quality/quest_guidance_target_3d.gd",
+        "scripts/quality/playable_space_auditor.gd",
+        "scripts/player/player_recovery_controller.gd"
+      ],
+      "canonical_scene": "scenes/levels/prototypes/prototype_drowned_bell_v1.tscn",
+      "aliases": ["global polish", "playable space", "void recovery", "safe teleport", "safe blink", "water exits", "swimming exit", "quest guidance", "objective marker", "scene quality audit", "stuck recovery"],
+      "implemented": true,
+      "do_not_resuggest": true,
+      "next_use": "Integrate explicit playable-space contracts into authored scenes as they receive polish; do not replace authored collision or manual playtesting with the safety framework."
+    },
+    {
       "id": "systems_integration_hub",
       "display_name": "Systems Integration Hub",
       "lifecycle": ["canonical"],

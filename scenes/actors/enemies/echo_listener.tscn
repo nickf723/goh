@@ -1,0 +1,47 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/echo_listener_actor.gd" id="1_actor"]
+[ext_resource type="Script" path="res://scripts/combat/hit_receiver.gd" id="2_hit"]
+[ext_resource type="Script" path="res://scripts/combat/status_receiver.gd" id="3_status"]
+[ext_resource type="Script" path="res://scripts/core/tag_component.gd" id="4_tags"]
+[ext_resource type="Script" path="res://scripts/enemies/echo_listener_payload_receiver.gd" id="5_payload"]
+[ext_resource type="Script" path="res://scripts/combat/force_receiver.gd" id="6_force"]
+
+[sub_resource type="CapsuleShape3D" id="Capsule_listener"]
+radius = 0.9
+height = 2.15
+
+[node name="EchoListener" type="CharacterBody3D"]
+script = ExtResource("1_actor")
+floor_snap_length = 0.35
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.75, 0)
+shape = SubResource("Capsule_listener")
+
+[node name="HitReceiver" type="Node" parent="."]
+script = ExtResource("2_hit")
+target_name = "The Listener"
+hit_mode = 2
+max_health = 18
+current_health = 18
+max_stance = 0
+current_stance = 0
+regenerates_stance = false
+disappears_when_defeated = false
+resistant_elements = Array[String](["water"])
+
+[node name="StatusReceiver" type="Node" parent="."]
+script = ExtResource("3_status")
+
+[node name="TagComponent" type="Node" parent="."]
+script = ExtResource("4_tags")
+tags = Array[String](["enemy", "organic", "amphibious", "blind", "resonant", "living"])
+
+[node name="PayloadReceiver" type="Node" parent="."]
+script = ExtResource("5_payload")
+
+[node name="ForceReceiver" type="Node" parent="."]
+script = ExtResource("6_force")
+
+[node name="VisualRoot" type="Node3D" parent="."]

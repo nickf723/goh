@@ -3,6 +3,7 @@ extends Node
 const SceneUnderTest: PackedScene = preload("res://scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn")
 const Catalog = preload("res://scripts/environment/modular_environment_catalog.gd")
 const PlayableSpaceAuditorScript = preload("res://scripts/quality/playable_space_auditor.gd")
+const WATER_SHADER_PATH := "res://shaders/environment/modular_water.gdshader"
 
 var failures: Array[String] = []
 var elapsed: float = 0.0
@@ -22,6 +23,14 @@ func _process(delta: float) -> void:
 
 func _ready() -> void:
 	GameState.reset_run()
+	current_step = "validate water shader"
+	var shader_source: String = FileAccess.get_file_as_string(WATER_SHADER_PATH)
+	check(not shader_source.is_empty(), "modular water shader source loads")
+	check(not shader_source.contains("depth_draw_alpha_prepass"), "modular water shader does not use the Godot 3 alpha prepass token")
+	check(shader_source.contains("depth_prepass_alpha"), "modular water shader uses the Godot 4 alpha depth prepass token")
+	var water_shader: Shader = load(WATER_SHADER_PATH) as Shader
+	check(water_shader != null, "modular water shader parses as a Shader resource")
+
 	current_step = "validate catalog"
 	var catalog_errors: Array[String] = Catalog.validate_catalog()
 	for error: String in catalog_errors:

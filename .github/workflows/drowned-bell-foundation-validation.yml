@@ -23,6 +23,6 @@ jobs:
           set +e
           godot --headless --path . scenes/tests/drowned_bell_foundation_smoke_test.tscn > /tmp/drowned-bell-test.log 2>&1
           status=$?
-          echo "===== DROWNED BELL TEST OUTPUT ====="
-          cat /tmp/drowned-bell-test.log
+          echo "===== DROWNED BELL DIAGNOSTICS ====="
+          grep -E "DROWNED_BELL|SCRIPT ERROR|ERROR:|Invalid|stalled during" /tmp/drowned-bell-test.log || true
           exit $status

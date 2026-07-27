@@ -64,7 +64,11 @@ func _ready() -> void:
 		await get_tree().physics_frame
 		await get_tree().process_frame
 		check(player.global_position.y > -4.4, "falling below the level restores Grace to safe ground")
-		check(player.velocity.length() < 0.05, "recovery clears unstable velocity")
+		var horizontal_velocity := Vector2(player.velocity.x, player.velocity.z)
+		check(
+			horizontal_velocity.length() < 0.05 and absf(player.velocity.y) <= 0.2,
+			"recovery clears unstable velocity while allowing grounded settling"
+		)
 
 	if player != null and water != null and not supporting_exits.is_empty():
 		var swimming: Node = player.get_node_or_null("SwimmingController")

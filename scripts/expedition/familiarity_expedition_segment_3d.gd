@@ -3,6 +3,7 @@ class_name FamiliarityExpeditionSegment3D
 
 const AuthoredCypressScene: PackedScene = preload("res://scenes/levels/expedition_segments/authored_cypress_basin_v1.tscn")
 const AuthoredWetWoodlandScene: PackedScene = preload("res://scenes/levels/expedition_segments/authored_wet_woodland_v1.tscn")
+const AuthoredPineRidgeScene: PackedScene = preload("res://scenes/levels/expedition_segments/authored_pine_ridge_v1.tscn")
 
 var familiarity_modifiers: Dictionary = {}
 var authored_layout: AuthoredWildsSegmentLayout
@@ -47,6 +48,8 @@ func get_authored_scene_for_definition() -> PackedScene:
 			return AuthoredCypressScene
 		"wet_woodland":
 			return AuthoredWetWoodlandScene
+		"pine_ridge":
+			return AuthoredPineRidgeScene
 	return null
 
 

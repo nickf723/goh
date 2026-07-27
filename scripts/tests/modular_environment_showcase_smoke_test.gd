@@ -43,6 +43,7 @@ func _ready() -> void:
 	kit_sandbox.name = "KitSandbox"
 	add_child(kit_sandbox)
 	var instantiated: Array[Node3D] = []
+	var stairs_piece: Node3D
 	for piece_id: String in piece_ids:
 		var piece: Node3D = Catalog.instantiate_piece(piece_id)
 		check(piece != null, piece_id + " instantiates")
@@ -50,6 +51,8 @@ func _ready() -> void:
 			continue
 		kit_sandbox.add_child(piece)
 		instantiated.append(piece)
+		if piece_id == "weathered_stone_stairs_4m":
+			stairs_piece = piece
 	await get_tree().process_frame
 	for piece: Node3D in instantiated:
 		var piece_id: String = str(piece.get("piece_id"))
@@ -59,6 +62,20 @@ func _ready() -> void:
 		var collision_count: int = int(piece.call("get_collision_shape_count")) if piece.has_method("get_collision_shape_count") else 0
 		if requires_collision:
 			check(collision_count > 0, piece_id + " has collision")
+
+	current_step = "inspect stair traversal contract"
+	check(stairs_piece != null, "catalog exposes the modular stair piece")
+	if stairs_piece != null:
+		var walk_ramp: StaticBody3D = stairs_piece.get_node_or_null("WalkRamp") as StaticBody3D
+		var top_landing: StaticBody3D = stairs_piece.get_node_or_null("TopLanding") as StaticBody3D
+		check(walk_ramp != null, "stairs provide one continuous walk ramp")
+		check(top_landing != null, "stairs provide a flat upper landing")
+		if walk_ramp != null:
+			check(bool(walk_ramp.get_meta("walkable_ramp", false)), "stair ramp publishes its traversal role")
+			check(walk_ramp.rotation.x < -0.1, "stair ramp rises toward the gallery")
+			check(walk_ramp.get_node_or_null("CollisionShape3D") != null, "stair ramp has physical collision")
+		if top_landing != null:
+			check(bool(top_landing.get_meta("walkable_landing", false)), "stair landing publishes its traversal role")
 	kit_sandbox.queue_free()
 	await get_tree().process_frame
 
@@ -98,7 +115,16 @@ func _ready() -> void:
 	await get_tree().process_frame
 	check(bool(gate.get("target_open")), "physical lever opens the gate")
 	gate.call("set_open", true, true)
+	await get_tree().physics_frame
 	check(bool(gate.call("is_open")), "gate supports deterministic authored state restoration")
+	check(bool(gate.call("is_passage_clear")), "fully open gate clears its panel collision from the doorway")
+	var gate_panel: AnimatableBody3D = gate.get_node_or_null("GatePivot/GatePanel") as AnimatableBody3D
+	check(gate_panel != null and gate_panel.collision_layer == 0, "open gate panel no longer blocks the player")
+	gate.call("set_open", false, true)
+	await get_tree().physics_frame
+	check(not bool(gate.call("is_passage_clear")), "closed gate restores its blocking collision")
+	check(gate_panel != null and gate_panel.collision_layer != 0, "closed gate panel blocks the doorway")
+	gate.call("set_open", true, true)
 
 	current_step = "audit playable space"
 	var audit: Dictionary = PlayableSpaceAuditorScript.audit_scene(showcase)

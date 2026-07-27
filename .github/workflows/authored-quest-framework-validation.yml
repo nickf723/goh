@@ -1,0 +1,27 @@
+name: Authored quest framework validation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+      - name: Import project
+        run: godot --headless --path . --editor --quit
+      - name: Test authored quest framework
+        run: godot --headless --path . scenes/tests/authored_quest_framework_smoke_test.tscn
+      - name: Test Broken Waystation consequences
+        run: godot --headless --path . scenes/tests/broken_waystation_consequence_smoke_test.tscn
+      - name: Boot Broken Waystation
+        run: godot --headless --path . scenes/levels/prototypes/prototype_broken_waystation_mission_v1.tscn --quit-after 5

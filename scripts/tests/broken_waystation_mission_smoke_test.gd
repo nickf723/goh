@@ -4,57 +4,53 @@ const MissionScene: PackedScene = preload("res://scenes/levels/prototypes/protot
 
 
 func _ready() -> void:
-	var before_mastery: Dictionary = GameState.get_weapon_mastery_snapshot()
+	var tracked_flags: Array[String] = [
+		"broken_waystation_relay_repaired",
+		"broken_waystation_repaired_metal",
+		"broken_waystation_repaired_earth",
+		"broken_waystation_repaired_lightning",
+	]
+	var previous_flags: Dictionary = {}
+	for flag_id: String in tracked_flags:
+		previous_flags[flag_id] = GameState.get_flag(flag_id)
+		GameState.set_flag(flag_id, false)
+
 	var mission := MissionScene.instantiate()
 	add_child(mission)
 	await get_tree().process_frame
 
-	assert(mission.mission_state == mission.STATE_BRIEFING)
 	assert(mission.player != null)
-	assert(mission.get_node_or_null("World/Roadblock") != null)
-	assert(mission.get_node_or_null("World/SignalCache") != null)
-	assert(mission.get_node_or_null("World/RepairedBeacon") != null)
+	assert(mission.tamsin != null)
+	assert(mission.tamsin.is_in_group("conversation_npc"))
+	assert(not mission.tamsin.conversation_data.is_empty())
+	assert(mission.relay_root != null)
+	assert(mission.relay_root.name == "DamagedRelay")
+	assert(mission.broken_arm.visible)
+	assert(not mission.repaired_arm.visible)
+	assert(mission.foundation_rubble.visible)
+	assert(not mission.raised_foundation.visible)
+	assert(mission.dead_conduit.visible)
+	assert(not mission.live_conduit.visible)
+	assert(is_zero_approx(mission.beacon_light.light_energy))
+	assert(mission.get_node_or_null("World/WaystationHouse") != null)
+	assert(mission.get_node_or_null("World/RepairCamp") != null)
 
-	mission.player.global_position = mission.briefing_position
-	mission.interact_nearby()
-	assert(mission.mission_state == mission.STATE_ROADBLOCK)
+	mission.begin_repair("metal")
+	assert(not mission.broken_arm.visible)
+	assert(mission.repaired_arm.visible)
+	assert(not mission.foundation_rubble.visible)
+	assert(not mission.dead_conduit.visible)
+	assert(mission.repair_method == "metal")
+	mission.transformation_time = 2.3
+	mission.animate_repair(0.0)
+	assert(not mission.transformation_active)
+	assert(mission.beacon_light.light_energy > 2.0)
 
-	mission.player.global_position = mission.discovery_position
-	mission.interact_nearby()
-	assert(mission.optional_discovery)
-	assert(not mission.get_node("World/SignalCache").visible)
-
-	mission.player.global_position = mission.roadblock_position
-	mission.resolve_roadblock("break")
-	assert(mission.mission_state == mission.STATE_ENCOUNTER)
-	assert(mission.roadblock_method == "break")
-	assert(not mission.get_node("World/Roadblock").visible)
-	assert(mission.enemies.size() == 3)
-
-	mission.player.global_position = Vector3(20, 3, 20)
-	mission.restore_checkpoint()
-	assert(mission.player.global_position.distance_to(mission.checkpoint_position) < 0.05)
-	assert(mission.enemies.size() == 3)
-
-	mission.clear_enemies()
-	await get_tree().process_frame
-	mission.finish_encounter()
-	assert(mission.mission_state == mission.STATE_RETURN)
-	assert(mission.get_node("World/RepairedBeacon").visible)
-
-	mission.player.global_position = mission.briefing_position
-	mission.interact_nearby()
-	assert(mission.mission_state == mission.STATE_COMPLETE)
-	assert(mission.reward_granted)
-	assert(GameState.get_weapon_mastery_points("sword") >= 12)
-
-	mission.reset_mission()
-	assert(mission.mission_state == mission.STATE_BRIEFING)
-	assert(mission.get_node("World/Roadblock").visible)
-	assert(not mission.optional_discovery)
-
-	GameState.weapon_mastery = before_mastery.duplicate(true)
 	mission.queue_free()
 	await get_tree().process_frame
-	print("BROKEN_WAYSTATION_MISSION_SMOKE_TEST: PASS")
+
+	for flag_id: String in tracked_flags:
+		GameState.set_flag(flag_id, bool(previous_flags[flag_id]))
+
+	print("BROKEN_WAYSTATION_WAYKEEPER_SMOKE_TEST: PASS")
 	get_tree().quit(0)

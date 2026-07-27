@@ -15,11 +15,13 @@ signal gate_state_changed(opened: bool)
 @export var open_angle_degrees: float = -96.0
 @export var animation_speed: float = 4.0
 @export var starts_open: bool = false
+@export_range(0.5, 1.0, 0.01) var collision_clear_open_ratio: float = 0.9
 
 var built: bool = false
 var target_open: bool = false
 var gate_pivot: Node3D
 var gate_body: AnimatableBody3D
+var gate_collision: CollisionShape3D
 
 
 func _ready() -> void:
@@ -45,6 +47,7 @@ func _process(delta: float) -> void:
 	)
 	if absf(angle_difference(gate_pivot.rotation.y, target_angle)) <= 0.004:
 		gate_pivot.rotation.y = target_angle
+	_refresh_panel_collision()
 
 
 func _build_gate() -> void:
@@ -61,14 +64,15 @@ func _build_gate() -> void:
 	gate_body = AnimatableBody3D.new()
 	gate_body.name = "GatePanel"
 	gate_body.position = Vector3(1.48, 0.0, 0.0)
+	gate_body.collision_mask = 0
 	gate_pivot.add_child(gate_body)
-	var collision := CollisionShape3D.new()
-	collision.name = "CollisionShape3D"
+	gate_collision = CollisionShape3D.new()
+	gate_collision.name = "CollisionShape3D"
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(2.96, 2.62, 0.22)
-	collision.shape = shape
-	collision.position.y = 1.45
-	gate_body.add_child(collision)
+	gate_collision.shape = shape
+	gate_collision.position.y = 1.45
+	gate_body.add_child(gate_collision)
 	for bar: int in range(9):
 		_add_visual_box(
 			gate_body,
@@ -89,6 +93,7 @@ func set_open(value: bool, instant: bool = false) -> void:
 	target_open = value
 	if instant and gate_pivot != null:
 		gate_pivot.rotation.y = deg_to_rad(open_angle_degrees) if target_open else 0.0
+	_refresh_panel_collision()
 	gate_state_changed.emit(target_open)
 
 
@@ -98,6 +103,27 @@ func toggle_gate() -> void:
 
 func is_open() -> bool:
 	return target_open
+
+
+func is_passage_clear() -> bool:
+	return target_open and gate_body != null and gate_body.collision_layer == 0
+
+
+func get_open_progress() -> float:
+	if gate_pivot == null:
+		return 0.0
+	var full_angle: float = absf(deg_to_rad(open_angle_degrees))
+	if full_angle <= 0.001:
+		return 1.0 if target_open else 0.0
+	return clampf(absf(angle_difference(0.0, gate_pivot.rotation.y)) / full_angle, 0.0, 1.0)
+
+
+func _refresh_panel_collision() -> void:
+	if gate_body == null:
+		return
+	var passage_clear: bool = target_open and get_open_progress() >= collision_clear_open_ratio
+	gate_body.collision_layer = 0 if passage_clear else 1
+	gate_body.set_meta("passage_clear", passage_clear)
 
 
 func get_collision_shape_count() -> int:
@@ -183,6 +209,8 @@ func get_debug_data() -> Dictionary:
 		"category": category,
 		"built": built,
 		"open": target_open,
+		"open_progress": snappedf(get_open_progress(), 0.01),
+		"passage_clear": is_passage_clear(),
 		"angle": gate_pivot.rotation.y if gate_pivot != null else 0.0,
 		"colliders": get_collision_shape_count(),
 	}

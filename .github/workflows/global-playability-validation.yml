@@ -2,10 +2,12 @@ name: Global playability framework validation
 
 on:
   pull_request:
+    paths-ignore:
+      - validation/global_playability_failure.txt
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -13,6 +15,9 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
       - uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.6.0
@@ -29,14 +34,24 @@ jobs:
           status=$?
           grep -E "GLOBAL_PLAYABILITY|SCRIPT ERROR|ERROR:|Invalid|FAIL|STALLED" /tmp/global-playability.log || true
           exit $status
-      - name: Upload focused playability log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: global-playability-log
-          path: /tmp/global-playability.log
-          if-no-files-found: error
-          retention-days: 1
+      - name: Publish focused failure diagnostics
+        if: failure() && github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          mkdir -p validation
+          {
+            echo "Global Playability Framework validation failure"
+            echo
+            grep -E "GLOBAL_PLAYABILITY|SCRIPT ERROR|ERROR:|Invalid|FAIL|STALLED|WARNING" /tmp/global-playability.log || true
+            echo
+            echo "Last 120 lines:"
+            tail -n 120 /tmp/global-playability.log || true
+          } > validation/global_playability_failure.txt
+          git config user.name "goh-validation-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add validation/global_playability_failure.txt
+          git commit -m "Record global playability validation failure" || exit 0
+          git push origin HEAD:${{ github.head_ref }}
       - name: Test Drowned Bell quest flow
         run: timeout 45s godot --headless --path . scenes/tests/drowned_bell_foundation_smoke_test.tscn
       - name: Test Broken Waystation consequences

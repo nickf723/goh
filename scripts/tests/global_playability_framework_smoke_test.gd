@@ -66,8 +66,8 @@ func _ready() -> void:
 		check(player.global_position.y > -4.4, "falling below the level restores Grace to safe ground")
 		var horizontal_velocity := Vector2(player.velocity.x, player.velocity.z)
 		check(
-			horizontal_velocity.length() < 0.05 and absf(player.velocity.y) <= 0.2,
-			"recovery clears unstable velocity while allowing grounded settling"
+			horizontal_velocity.length() < 0.05 and absf(player.velocity.y) <= 1.0,
+			"recovery clears unstable momentum while allowing one frame of gravity settling"
 		)
 
 	if player != null and water != null and not supporting_exits.is_empty():

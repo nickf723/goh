@@ -38,7 +38,10 @@ func receive_payload(payload: DamagePayload) -> Dictionary:
 	append_component_result(target, result, reaction_messages, electrical_result)
 	append_component_result(target, result, reaction_messages, structural_result)
 
-	return combine_messages(result, reaction_messages)
+	var combined_result: Dictionary = combine_messages(result, reaction_messages)
+	if str(combined_result.get("message", "")).strip_edges() == "":
+		combined_result["message"] = payload.source_name + " affects " + target.name + "."
+	return combined_result
 
 
 func get_target_node() -> Node:
@@ -173,7 +176,7 @@ func apply_hit(target: Node, payload: DamagePayload) -> Dictionary:
 			return hit_result
 
 	return {
-		"message": payload.source_name + " hits " + target.name + ", but nothing receives the hit.",
+		"message": "",
 		"objective": ""
 	}
 

@@ -37,6 +37,7 @@ func run_tests() -> void:
 	flask.item_id = "test_healing_flask"
 	flask.display_name = "Test Healing Flask"
 	flask.short_label = "FLASK"
+	flask.max_stack = 3
 	flask.max_charges = 3
 	flask.use_duration = 0.9
 	flask.movement_multiplier = 0.35
@@ -109,12 +110,14 @@ func assert_input_contract() -> void:
 		{"action": "quick_item_up", "button": JOY_BUTTON_DPAD_UP},
 		{"action": "quick_item_left", "button": JOY_BUTTON_DPAD_LEFT},
 		{"action": "quick_item_right", "button": JOY_BUTTON_DPAD_RIGHT},
-		{"action": "quick_item_down", "button": JOY_BUTTON_DPAD_DOWN},
 	]
 	for row: Dictionary in expected:
 		var action_name: StringName = StringName(str(row["action"]))
 		assert_true(InputMap.has_action(action_name), str(action_name) + " action exists")
 		assert_true(action_has_joy_button(action_name, int(row["button"])), str(action_name) + " has directional D-pad button")
+	assert_true(InputMap.has_action(&"quick_item_down"), "Quick Item Down action remains available")
+	assert_true(action_has_key(&"quick_item_down", KEY_DOWN), "Down Arrow mirrors Quick Item Down")
+	assert_true(not action_has_joy_button(&"quick_item_down", JOY_BUTTON_DPAD_DOWN), "D-pad Down remains reserved for Special Context")
 	assert_true(action_has_key(&"quick_item_up", KEY_H), "H mirrors Quick Item Up")
 
 

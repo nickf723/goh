@@ -4,10 +4,10 @@ const LabScene: PackedScene = preload("res://scenes/levels/prototypes/prototype_
 const PersonalityTraits = preload("res://scripts/enemies/enemy_personality_traits.gd")
 
 const EXPECTED_LANES: Array[Dictionary] = [
-	{"enemy": "CautiousGoblin", "profile": "cautious", "target": "personality_lab_cautious_target"},
-	{"enemy": "BoldGoblin", "profile": "bold", "target": "personality_lab_bold_target"},
-	{"enemy": "SkittishGoblin", "profile": "skittish", "target": "personality_lab_skittish_target"},
-	{"enemy": "BruteGoblin", "profile": "brute", "target": "personality_lab_brute_target"},
+	{"enemy": "CautiousGremlin", "profile": "cautious", "target": "personality_lab_cautious_target"},
+	{"enemy": "BoldGremlin", "profile": "bold", "target": "personality_lab_bold_target"},
+	{"enemy": "SkittishGremlin", "profile": "skittish", "target": "personality_lab_skittish_target"},
+	{"enemy": "BruteGremlin", "profile": "brute", "target": "personality_lab_brute_target"},
 ]
 
 var failures: Array[String] = []

@@ -5,6 +5,7 @@ const StatCatalogScript = preload("res://scripts/systems/stat_catalog.gd")
 const EnemyActionSelectionBrainScript = preload("res://scripts/enemies/enemy_action_selection_brain.gd")
 const EnemyThreatAwareActionBrainScript = preload("res://scripts/enemies/enemy_threat_aware_action_brain.gd")
 const StartingLoadout: AbilityLoadout = preload("res://data/loadouts/grace_starting_loadout.tres")
+const PlayerScene: PackedScene = preload("res://scenes/actors/player/player.tscn")
 const PracticeSword: WeaponDefinition = preload("res://data/weapons/practice_sword.tres")
 const TrainingHammer: WeaponDefinition = preload("res://data/weapons/training_hammer.tres")
 const TrainingSpear: WeaponDefinition = preload("res://data/weapons/training_spear.tres")
@@ -151,7 +152,7 @@ func validate_enemy_action_selection_contract() -> void:
 		GremlinBackstepOption,
 	]
 	brain.action_options = options
-	brain.personality_id = "skittish"
+	brain.personality_id = "balanced"
 
 	var close_choice: EnemyActionOption = brain.select_action(0.9)
 	if close_choice != GremlinBiteOption:
@@ -202,6 +203,8 @@ func validate_enemy_threat_awareness_contract() -> void:
 	source.position = Vector3.ZERO
 	var threatened_actor: Node3D = Node3D.new()
 	threatened_actor.position = Vector3(0.0, 0.0, -1.2)
+	add_child(source)
+	add_child(threatened_actor)
 
 	var heavy_threat: CombatThreat = CombatThreat.new().configure(
 		"sword_h0",
@@ -252,14 +255,19 @@ func validate_enemy_threat_awareness_contract() -> void:
 	if sensed_threat != heavy_threat:
 		failures.append("Threat sensor must surface an actionable heavy sword threat")
 
-	var threat_brain = EnemyThreatAwareActionBrainScript.new()
-	threat_brain.action_options = [
+	var threat_brain: Node = EnemyThreatAwareActionBrainScript.new()
+	var threat_options: Array[EnemyActionOption] = [
 		GremlinBiteOption,
 		GremlinPounceOption,
 		GremlinBackstepOption,
 	]
-	threat_brain.personality_id = "skittish"
-	var threat_response: EnemyActionOption = threat_brain.select_threat_response(0.9, heavy_threat)
+	threat_brain.set("action_options", threat_options)
+	threat_brain.set("personality_id", "skittish")
+	var threat_response: EnemyActionOption = threat_brain.call(
+		"select_threat_response",
+		0.9,
+		heavy_threat
+	) as EnemyActionOption
 	if threat_response != GremlinBackstepOption:
 		failures.append("Gremlin must choose Backstep as its compatible heavy-sword response")
 
@@ -340,6 +348,13 @@ func validate_ability_contracts() -> void:
 
 	var defaults: Dictionary = StatCatalogScript.get_default_stats()
 	var seen_spell_ids: Dictionary = {}
+	var specialized_handlers: Dictionary = {
+		"soul_grip": "SoulGripController",
+		"metal_tether": "MetalTetherController",
+		"spectral_familiar": "SummonManager",
+	}
+	var player: Node = PlayerScene.instantiate()
+
 	for ability: AbilityDefinition in abilities:
 		if ability == null:
 			failures.append("Grace starting loadout contains a null ability")
@@ -355,14 +370,23 @@ func validate_ability_contracts() -> void:
 
 		if ability.display_name.strip_edges() == "":
 			failures.append(spell_id + " has an empty display name")
-		if ability.ability_scene == null:
-			failures.append(spell_id + " has no ability scene")
+
+		var uses_specialized_handler: bool = specialized_handlers.has(spell_id)
+		if ability.ability_scene == null and not uses_specialized_handler:
+			failures.append(spell_id + " has no ability scene or specialized player handler")
 
 		var payload: Resource = ability.get_action_payload()
 		var delivery_type: String = ability.get_delivery_type()
-		if payload == null and delivery_type != "instant":
+		if payload == null and delivery_type != "instant" and not uses_specialized_handler:
 			failures.append(spell_id + " has no action payload for delivery type " + delivery_type)
+
+		if uses_specialized_handler:
+			var handler_name: String = str(specialized_handlers[spell_id])
+			if player.get_node_or_null(handler_name) == null:
+				failures.append(spell_id + " is missing specialized player handler " + handler_name)
 
 		for scaling_stat: String in ability.get_scaling_stats():
 			if not defaults.has(scaling_stat):
 				failures.append(spell_id + " references unknown scaling stat: " + scaling_stat)
+
+	player.queue_free()

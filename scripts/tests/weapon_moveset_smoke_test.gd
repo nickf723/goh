@@ -23,7 +23,7 @@ func _ready() -> void:
 
 
 func run_tests() -> void:
-	validate_weapon(Sword, "sword", 9)
+	validate_weapon(Sword, "sword", 10)
 	validate_weapon(Hammer, "hammer", 7)
 	validate_weapon(Spear, "lance", 7)
 	validate_sword_branch_tree()
@@ -74,13 +74,17 @@ func validate_sword_branch_tree() -> void:
 	var moveset: WeaponMovesetDefinition = Sword.moveset
 	assert_attack_id(moveset.get_entry_attack("light"), "sword_l1", "Sword light entry")
 	assert_attack_id(moveset.get_entry_attack("heavy"), "sword_h0", "Sword heavy entry")
-	assert_follow_up(moveset, "sword_l1", "light", "sword_l2")
+	assert_follow_up(moveset, "sword_l1", "light", "sword_reprise")
 	assert_follow_up(moveset, "sword_l1", "heavy", "sword_h1")
-	assert_follow_up(moveset, "sword_l2", "light", "sword_l3")
+	assert_follow_up(moveset, "sword_l2", "light", "sword_reprise")
 	assert_follow_up(moveset, "sword_l2", "heavy", "sword_h2")
-	assert_follow_up(moveset, "sword_l3", "light", "sword_l4")
+	assert_follow_up(moveset, "sword_l3", "light", "sword_reprise")
 	assert_follow_up(moveset, "sword_l3", "heavy", "sword_h3")
+	assert_follow_up(moveset, "sword_l4", "light", "sword_reprise")
 	assert_follow_up(moveset, "sword_l4", "heavy", "sword_h4")
+	assert_follow_up(moveset, "sword_h0", "light", "sword_reprise")
+	assert_follow_up(moveset, "sword_reprise", "light", "sword_l2")
+	assert_follow_up(moveset, "sword_reprise", "heavy", "sword_h2")
 
 	var light_one: WeaponAttackDefinition = moveset.get_attack("sword_l1")
 	var heavy_four: WeaponAttackDefinition = moveset.get_attack("sword_h4")

@@ -1,0 +1,105 @@
+name: Authored set composer v1 validation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Register authored set composer ownership
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("data/features/capability_inventory.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          capability = next(
+              row for row in data["capabilities"]
+              if row.get("id") == "authored_environment_composition"
+          )
+          owner_files = capability.setdefault("owner_files", [])
+          for owner in [
+              "scripts/environment/authored_set_composer.gd",
+              "scripts/environment/authored_set_clearance_auditor.gd",
+              "scripts/levels/drowned_bell_crypt_layout_pass.gd",
+              "data/set_layouts/",
+          ]:
+              if owner not in owner_files:
+                  owner_files.append(owner)
+          aliases = capability.setdefault("aliases", [])
+          for alias in [
+              "authored set composer",
+              "set layout",
+              "data driven level layout",
+              "corridor builder",
+              "opening aware wall",
+              "clearance audit",
+              "room assembly",
+              "dungeon layout data",
+          ]:
+              if alias not in aliases:
+                  aliases.append(alias)
+          capability["next_use"] = (
+              "Build connected rooms, corridors, doorways, stairs, and modular placements from compact layout data; "
+              "use clearance metadata and auditing before adding more hand-positioned support geometry."
+          )
+          capability["story_reference"] = "The Drowned Bell crypt passage"
+          data["updated"] = "2026-07-27"
+          path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Validate repository inventories and layout JSON
+        run: |
+          python scripts/ci/validate_capability_inventory.py
+          python scripts/ci/validate_feature_registry.py
+          python -m json.tool data/set_layouts/drowned_bell_crypt_passage_v1.json > /dev/null
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project
+        run: godot --headless --path . --editor --quit
+
+      - name: Test modular set composition
+        run: timeout 90s godot --headless --path . scenes/tests/modular_environment_showcase_smoke_test.tscn
+
+      - name: Test Drowned Bell environment and clearance
+        run: timeout 90s godot --headless --path . scenes/tests/drowned_bell_environment_smoke_test.tscn
+
+      - name: Test Drowned Bell complete quest
+        run: timeout 90s godot --headless --path . scenes/tests/drowned_bell_crypt_smoke_test.tscn
+
+      - name: Test global playability regression
+        run: timeout 75s godot --headless --path . scenes/tests/global_playability_framework_smoke_test.tscn
+
+      - name: Boot Drowned Bell
+        run: timeout 40s godot --headless --path . scenes/levels/prototypes/prototype_drowned_bell_v1.tscn --quit-after 8
+
+      - name: Run complete registered feature inventory
+        run: python scripts/ci/run_feature_registry.py --godot godot
+
+      - name: Commit capability inventory alignment to main
+        shell: bash
+        run: |
+          git config user.name "goh-validation-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/features/capability_inventory.json
+          git commit -m "Register authored set composer capability" || exit 0
+          git push origin HEAD:main

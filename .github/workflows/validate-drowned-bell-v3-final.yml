@@ -4,6 +4,7 @@ on:
   pull_request:
     paths-ignore:
       - validation/drowned_bell_v3_final_failure.txt
+      - validation/drowned_bell_v3_registry_failure.txt
   workflow_dispatch:
 
 permissions:
@@ -64,5 +65,31 @@ jobs:
         run: timeout 60s godot --headless --path . scenes/tests/broken_waystation_consequence_smoke_test.tscn
       - name: Test Ruined Village regression
         run: timeout 60s godot --headless --path . scenes/tests/ruined_village_approach_smoke_test.tscn
+      - name: Run full registered feature inventory
+        shell: bash
+        run: |
+          set +e
+          timeout 900s python scripts/ci/run_feature_registry.py --godot godot > /tmp/drowned-bell-v3-registry.log 2>&1
+          status=$?
+          grep -E "FEATURE|FAILED|FAIL|ERROR|TIMEOUT|DROWNED_BELL|Traceback" /tmp/drowned-bell-v3-registry.log || true
+          exit $status
+      - name: Publish full registry failure diagnostics
+        if: failure() && github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          mkdir -p validation
+          {
+            echo "Drowned Bell v3 full registry validation failure"
+            echo
+            grep -E "FEATURE|FAILED|FAIL|ERROR|TIMEOUT|DROWNED_BELL|Traceback" /tmp/drowned-bell-v3-registry.log || true
+            echo
+            echo "Last 300 lines:"
+            tail -n 300 /tmp/drowned-bell-v3-registry.log || true
+          } > validation/drowned_bell_v3_registry_failure.txt
+          git config user.name "goh-validation-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add validation/drowned_bell_v3_registry_failure.txt
+          git commit -m "Record Drowned Bell registry validation failure" || exit 0
+          git push origin HEAD:${{ github.head_ref }}
       - name: Boot Drowned Bell
         run: timeout 35s godot --headless --path . scenes/levels/prototypes/prototype_drowned_bell_v1.tscn --quit-after 7

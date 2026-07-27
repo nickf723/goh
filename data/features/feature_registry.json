@@ -83,6 +83,51 @@
       "timeout_seconds": 5
     },
     {
+      "id": "broken_waystation",
+      "order": 15,
+      "display_name": "Broken Waystation / Relay Response",
+      "category": "Authored Quest Vertical Slice",
+      "version": "v1",
+      "status": "vertical_slice",
+      "description": "Character-led authored quest using Tamsin dialogue, affinity-based relay repair, an illuminated signal trail, staged combat, physical evidence, quest journal stages, key-item rewards, persistent aftermath, and the reusable Authored Quest Framework.",
+      "scene": "res://scenes/levels/prototypes/prototype_broken_waystation_mission_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_broken_waystation_mission_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/authored_quest_framework_smoke_test.tscn",
+        "res://scenes/tests/broken_waystation_consequence_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "weapon_combat_arena",
+        "enemy_personality_lab"
+      ],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON",
+        "MENU",
+        "RESET"
+      ],
+      "manual_test": "docs/broken_waystation_v1_test.md",
+      "temporary_state": "persistent",
+      "story_integrated": true,
+      "limitations": [
+        "Environment and character presentation remain procedural prototypes.",
+        "Goblin and Gremlin actors stand in for future location-specific enemies.",
+        "The eastern route opens but does not yet connect to a production region."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 10
+    },
+    {
       "id": "elemental_reaction_lab",
       "order": 20,
       "display_name": "Elemental Reaction Laboratory",
@@ -238,9 +283,9 @@
       "order": 30,
       "display_name": "Weapon Combat Arena",
       "category": "Systems Arena",
-      "version": "v0.7",
+      "version": "v0.8+",
       "status": "prototype_verified",
-      "description": "Three-class combat arena for buffered Light/Heavy branches, regenerating stance, timed vulnerability, and weapon-specific critical strikes against training targets and live enemies.",
+      "description": "All-unlocks combat and mastery laboratory for buffered Light and Heavy branches, context techniques, dash and aerial attacks, launch and juggle routes, stance breaks, critical strikes, defense, infusion, and exact temporary progression restoration.",
       "scene": "res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/prototype_weapon_combat_arena_v1.tscn"
@@ -264,10 +309,9 @@
       "temporary_state": "runtime_only",
       "story_integrated": false,
       "limitations": [
-        "Only Sword, Hammer, and Spear are represented.",
-        "Presentation is procedural and transform-driven rather than skeletal animation.",
-        "Critical strikes reuse the triggering attack pose; bespoke execution animations are deferred.",
-        "Blocking, parrying, aerial combat, boss-specific break rules, and final balance are out of scope."
+        "Sword, Hammer, and Spear remain the primary authored production movesets; Chain and Whip have separate experimental laboratories.",
+        "Presentation is procedural and transform-driven rather than final skeletal animation.",
+        "Boss-specific break rules, executions, final animation, and balance remain deferred."
       ],
       "launchable": true,
       "visible_in_launcher": true,
@@ -901,6 +945,45 @@
       "timeout_seconds": 7
     },
     {
+      "id": "airborne_presentation_lab",
+      "order": 46,
+      "display_name": "Airborne Presentation Laboratory",
+      "category": "Combat Laboratory",
+      "version": "v1",
+      "status": "development_tool",
+      "description": "Dedicated launch, juggle, fall, slam, landing, and recovery presentation space for light, medium, and heavy airborne targets using the shared weapon and reaction pipeline.",
+      "scene": "res://scenes/levels/prototypes/prototype_airborne_presentation_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_airborne_presentation_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/airborne_presentation_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "weapon_combat_arena"
+      ],
+      "controls": [
+        "MOVE",
+        "LIGHT",
+        "HEAVY",
+        "DODGE",
+        "LOCK-ON",
+        "RESET"
+      ],
+      "manual_test": "docs/AIRBORNE_PRESENTATION_V1.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Presentation uses procedural transforms rather than final skeletal animation.",
+        "The laboratory isolates target reactions and is not an authored encounter.",
+        "Boss-specific airborne resistance and final balance remain deferred."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 7
+    },
+    {
       "id": "ice_vfx_lab",
       "order": 47,
       "display_name": "Cryogenic Observatory",
@@ -928,6 +1011,52 @@
         "Frozen-water collision, skating friction, and load-bearing thickness are deferred.",
         "Shards are presentation particles rather than persistent rigid bodies.",
         "Arbitrary world objects require an authored FreezeState component before they can freeze or fracture."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
+      "id": "systems_integration_hub",
+      "order": 48,
+      "display_name": "Systems Integration Hub",
+      "category": "Integration Laboratory",
+      "version": "v1",
+      "status": "development_tool",
+      "description": "Persistent shared-player campus connecting combat and mastery, aerial reactions, movement, interaction, status, and ability-range stations with fast travel, reset, temporary unlocks, and exact progression restoration.",
+      "scene": "res://scenes/levels/prototypes/prototype_systems_integration_hub_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_systems_integration_hub_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/systems_integration_hub_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "weapon_combat_arena",
+        "airborne_presentation_lab",
+        "runtime_stat_lab",
+        "dev_interaction_sandbox"
+      ],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON",
+        "FAST TRAVEL",
+        "RESET"
+      ],
+      "manual_test": "docs/systems_integration_hub_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "The hub intentionally does not contain every repository capability.",
+        "Dedicated laboratories remain authoritative for detailed tuning.",
+        "Campus geometry and fixtures are developer presentation rather than final world art."
       ],
       "launchable": true,
       "visible_in_launcher": true,
@@ -975,6 +1104,85 @@
       "timeout_seconds": 5
     },
     {
+      "id": "wilds_expedition",
+      "order": 52,
+      "display_name": "Wilds Expedition",
+      "category": "Exploration Prototype",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Five-segment outdoor expedition from cypress basin through wet woodland and longleaf ridge toward foothills and Blue Ridge forest, with authored early segments, route familiarity, optional discovery, checkpoints, and shared regional state.",
+      "scene": "res://scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/wilds_expedition_smoke_test.tscn",
+        "res://scenes/tests/route_familiarity_smoke_test.tscn",
+        "res://scenes/tests/authored_wilds_segments_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "systems_integration_hub"
+      ],
+      "controls": [
+        "MOVE",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "RESET"
+      ],
+      "manual_test": "docs/wilds_expedition_v1.md",
+      "temporary_state": "persistent",
+      "story_integrated": false,
+      "limitations": [
+        "Only Cypress Basin, Wet Woodland, and Pine Ridge have authored layout passes.",
+        "Rocky Foothill Camp and Blue Ridge forest remain prototype route segments.",
+        "Regional presentation and traversal assets remain replacement-ready."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 10
+    },
+    {
+      "id": "regional_expedition_map",
+      "order": 53,
+      "display_name": "Regional Expedition Map",
+      "category": "Exploration Infrastructure",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Regional route-selection and persistence prototype connecting mapped destinations, expedition entry, route familiarity, segment state, and return flow.",
+      "scene": "res://scenes/levels/prototypes/prototype_regional_expedition_map_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_regional_expedition_map_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/regional_expedition_map_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "wilds_expedition"
+      ],
+      "controls": [
+        "NAVIGATE",
+        "SELECT",
+        "BACK"
+      ],
+      "manual_test": "docs/REGIONAL_EXPEDITION_MAP_V1.md",
+      "temporary_state": "persistent",
+      "story_integrated": false,
+      "limitations": [
+        "The map represents a prototype regional network rather than final geography.",
+        "Combined map and route-familiarity persistence previously required focused validation.",
+        "Only the current Wilds route is developed beyond placeholder destination data."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
       "id": "development_control_center",
       "order": 100,
       "display_name": "Development Control Center",
@@ -1013,7 +1221,12 @@
         "element_vfx_gallery",
         "ice_vfx_lab",
         "dev_interaction_sandbox",
-        "combat_survival_trial"
+        "combat_survival_trial",
+        "broken_waystation",
+        "airborne_presentation_lab",
+        "systems_integration_hub",
+        "wilds_expedition",
+        "regional_expedition_map"
       ],
       "controls": [
         "NAVIGATE",

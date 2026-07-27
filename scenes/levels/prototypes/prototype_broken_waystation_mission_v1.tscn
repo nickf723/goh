@@ -1,0 +1,128 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_broken_waystation_mission.gd" id="1_director"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+
+[sub_resource type="BoxShape3D" id="RoadblockShape"]
+size = Vector3(7, 2.8, 2.4)
+
+[sub_resource type="BoxMesh" id="RoadblockMesh"]
+size = Vector3(7, 2.8, 2.4)
+
+[sub_resource type="StandardMaterial3D" id="RoadblockMaterial"]
+albedo_color = Color(0.28, 0.14, 0.06, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="CacheMesh"]
+size = Vector3(1.8, 1.1, 1.4)
+
+[sub_resource type="StandardMaterial3D" id="CacheMaterial"]
+albedo_color = Color(0.17, 0.42, 0.5, 1)
+emission_enabled = true
+emission = Color(0.04, 0.18, 0.24, 1)
+emission_energy_multiplier = 0.7
+
+[sub_resource type="CylinderMesh" id="BeaconMesh"]
+top_radius = 0.35
+bottom_radius = 0.55
+height = 3.2
+radial_segments = 10
+
+[sub_resource type="StandardMaterial3D" id="BeaconMaterial"]
+albedo_color = Color(0.82, 0.58, 0.18, 1)
+emission_enabled = true
+emission = Color(0.52, 0.22, 0.04, 1)
+emission_energy_multiplier = 1.2
+
+[sub_resource type="StyleBoxFlat" id="HUDPanel"]
+bg_color = Color(0.035, 0.04, 0.055, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72, 0.55, 0.24, 0.85)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="PrototypeBrokenWaystationMission" type="Node3D"]
+script = ExtResource("1_director")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -28, 0)
+light_energy = 1.35
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, -16)
+
+[node name="World" type="Node3D" parent="."]
+
+[node name="Roadblock" type="MeshInstance3D" parent="World"]
+position = Vector3(0, 1.4, -3)
+mesh = SubResource("RoadblockMesh")
+material_override = SubResource("RoadblockMaterial")
+
+[node name="RoadblockCollision" type="StaticBody3D" parent="World"]
+position = Vector3(0, 1.4, -3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="World/RoadblockCollision"]
+shape = SubResource("RoadblockShape")
+
+[node name="SignalCache" type="MeshInstance3D" parent="World"]
+position = Vector3(-8, 0.55, 5)
+mesh = SubResource("CacheMesh")
+material_override = SubResource("CacheMaterial")
+
+[node name="RepairedBeacon" type="MeshInstance3D" parent="World"]
+visible = false
+position = Vector3(0, 1.6, 18)
+mesh = SubResource("BeaconMesh")
+material_override = SubResource("BeaconMaterial")
+
+[node name="EnemyContainer" type="Node3D" parent="."]
+
+[node name="MissionHUD" type="CanvasLayer" parent="."]
+layer = 30
+
+[node name="Panel" type="PanelContainer" parent="MissionHUD"]
+offset_left = 22.0
+offset_top = 22.0
+offset_right = 775.0
+offset_bottom = 202.0
+theme_override_styles/panel = SubResource("HUDPanel")
+
+[node name="Margin" type="MarginContainer" parent="MissionHUD/Panel"]
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="MissionHUD/Panel/Margin"]
+theme_override_constants/separation = 6
+
+[node name="Mission" type="Label" parent="MissionHUD/Panel/Margin/VBox"]
+text = "THE BROKEN WAYSTATION"
+theme_override_font_sizes/font_size = 19
+
+[node name="Objective" type="Label" parent="MissionHUD/Panel/Margin/VBox"]
+text = "OBJECTIVE"
+theme_override_font_sizes/font_size = 16
+
+[node name="Prompt" type="Label" parent="MissionHUD/Panel/Margin/VBox"]
+text = ""
+theme_override_font_sizes/font_size = 17
+
+[node name="Status" type="Label" parent="MissionHUD/Panel/Margin/VBox"]
+text = ""
+theme_override_font_sizes/font_size = 14

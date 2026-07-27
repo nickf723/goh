@@ -1,7 +1,11 @@
 extends "res://scripts/expedition/expedition_segment_3d.gd"
 class_name FamiliarityExpeditionSegment3D
 
+const AuthoredCypressScene: PackedScene = preload("res://scenes/levels/expedition_segments/authored_cypress_basin_v1.tscn")
+const AuthoredWetWoodlandScene: PackedScene = preload("res://scenes/levels/expedition_segments/authored_wet_woodland_v1.tscn")
+
 var familiarity_modifiers: Dictionary = {}
+var authored_layout: AuthoredWildsSegmentLayout
 
 
 func configure_familiarity(
@@ -12,6 +16,42 @@ func configure_familiarity(
 ) -> void:
 	familiarity_modifiers = modifiers.duplicate(true)
 	configure(segment_definition, seed_value, optional_branch)
+
+
+func build_segment() -> void:
+	if built or definition == null:
+		return
+	var authored_scene: PackedScene = get_authored_scene_for_definition()
+	if authored_scene == null:
+		super.build_segment()
+		return
+	built = true
+	build_sockets()
+	authored_layout = authored_scene.instantiate() as AuthoredWildsSegmentLayout
+	if authored_layout != null:
+		authored_layout.name = "AuthoredLayout"
+		add_child(authored_layout)
+		authored_layout.configure_layout(definition, segment_seed)
+	build_role_content()
+	build_segment_label()
+	add_to_group("expedition_segment")
+	add_to_group("authored_expedition_segment")
+	add_to_group("debuggable")
+
+
+func get_authored_scene_for_definition() -> PackedScene:
+	if is_optional_branch or definition == null:
+		return null
+	match definition.segment_id:
+		"cypress_basin":
+			return AuthoredCypressScene
+		"wet_woodland":
+			return AuthoredWetWoodlandScene
+	return null
+
+
+func uses_authored_layout() -> bool:
+	return authored_layout != null and is_instance_valid(authored_layout)
 
 
 func build_role_content() -> void:
@@ -165,3 +205,10 @@ func add_route_label(text_value: String, local_position: Vector3, color: Color) 
 	label.modulate = color
 	label.outline_size = 5
 	add_child(label)
+
+
+func get_debug_data() -> Dictionary:
+	var data: Dictionary = super.get_debug_data()
+	data["authored"] = uses_authored_layout()
+	data["authored_layout"] = authored_layout.layout_id if uses_authored_layout() else "procedural"
+	return data

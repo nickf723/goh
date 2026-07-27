@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/prototype_drowned_bell_v1.gd" id="1_director"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scripts/levels/drowned_bell_playability_pass.gd" id="5_playability"]
 [ext_resource type="Script" path="res://scripts/levels/drowned_bell_environment_pass.gd" id="6_environment"]
 [ext_resource type="Script" path="res://scripts/environment/authored_swimming_volume_adapter.gd" id="7_water_adapter"]
+[ext_resource type="Script" path="res://scripts/levels/drowned_bell_crypt_pass.gd" id="8_crypt"]
 
 [node name="PrototypeDrownedBell" type="Node3D"]
 script = ExtResource("1_director")
@@ -42,3 +43,6 @@ water_label = "Flooded Side Chapel"
 
 [node name="PlayabilityPass" type="Node" parent="."]
 script = ExtResource("5_playability")
+
+[node name="CryptPass" type="Node" parent="."]
+script = ExtResource("8_crypt")

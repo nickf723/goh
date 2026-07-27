@@ -33,17 +33,23 @@ func _ready() -> void:
 	check(mission.get_node_or_null("BellListeningPoint") != null, "bell listening point exists")
 	check(mission.get_node_or_null("World/FloodedState") != null, "flooded world variant exists")
 	check(mission.get_node_or_null("World/QuietState") != null, "quiet world variant exists")
+	var listening_point: Area3D = mission.get_node("BellListeningPoint") as Area3D
+	check(listening_point != null, "listening point is an Area3D")
+	check(not listening_point.monitoring, "listening point begins locked before accepting the quest")
 
 	current_step = "accept quest"
 	mission.call("_on_ferryman_choice", "accept", mission.get("ferryman"))
 	check(GameState.get_flag("drowned_bell_accepted"), "accepting starts the investigation")
 	check(str(GameState.get_quest("the_drowned_bell").get("state", "")) == "active", "quest is active")
 	check(int(GameState.get_quest("the_drowned_bell").get("stage", -1)) == 1, "quest advances to listening stage")
+	check(listening_point.monitoring, "listening point activates when the acceptance flag changes")
+	check(listening_point.monitorable, "listening point becomes detectable by the player interaction area")
 
 	current_step = "listen to bell"
 	mission.call("_on_bell_listened", mission.get("bell_marker"))
 	check(GameState.get_flag("drowned_bell_heard_pattern"), "listening records the bell pattern")
 	check(int(GameState.get_quest("the_drowned_bell").get("stage", -1)) == 2, "quest advances to chapel entry stage")
+	check(not listening_point.monitoring, "one-time listening point locks after the pattern is recorded")
 
 	current_step = "apply quiet variant"
 	var world_state: RefCounted = mission.get("chapel_state") as RefCounted

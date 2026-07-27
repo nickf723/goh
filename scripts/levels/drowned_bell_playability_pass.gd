@@ -18,6 +18,7 @@ const FLAG_COMPLETE := "drowned_bell_complete"
 
 var mission: Node3D
 var world: Node3D
+var authored_environment: Node3D
 var playable_space: Node3D
 var water_volume: Area3D
 var exit_anchors: Array[Node3D] = []
@@ -38,6 +39,7 @@ func _install() -> void:
 	world = mission.get_node_or_null("World") as Node3D
 	if world == null:
 		return
+	authored_environment = world.get_node_or_null("AuthoredEnvironmentV2") as Node3D
 	installed = true
 	_build_playable_space()
 	_rebuild_pool_escape_routes()
@@ -53,7 +55,7 @@ func _build_playable_space() -> void:
 	playable_space.set_script(PlayableSpaceScript)
 	playable_space.set("use_bounds", true)
 	playable_space.set("bounds_center", Vector3(0.0, 1.5, 15.0))
-	playable_space.set("bounds_size", Vector3(32.0, 20.0, 58.0))
+	playable_space.set("bounds_size", Vector3(34.0, 20.0, 60.0))
 	playable_space.set("minimum_recovery_y", -4.4)
 	playable_space.set("generate_boundary_collision", true)
 	playable_space.set("boundary_thickness", 1.2)
@@ -73,7 +75,7 @@ func _build_playable_space() -> void:
 	recovery_volume.set("recovery_reason", "fell beneath the authored level")
 	var recovery_shape := CollisionShape3D.new()
 	var recovery_box := BoxShape3D.new()
-	recovery_box.size = Vector3(40.0, 4.0, 70.0)
+	recovery_box.size = Vector3(42.0, 4.0, 72.0)
 	recovery_shape.shape = recovery_box
 	recovery_volume.add_child(recovery_shape)
 	playable_space.add_child(recovery_volume)
@@ -81,7 +83,7 @@ func _build_playable_space() -> void:
 	_add_collision_box(
 		world,
 		"DeepSafetyCatch",
-		Vector3(38.0, 0.5, 68.0),
+		Vector3(40.0, 0.5, 70.0),
 		Vector3(0.0, -8.8, 15.0),
 		Color(0.04, 0.05, 0.06),
 		false
@@ -92,37 +94,50 @@ func _rebuild_pool_escape_routes() -> void:
 	water_volume = mission.get_node_or_null("NaveSwimPocket") as Area3D
 	if water_volume == null:
 		return
-	water_volume.position = Vector3(4.2, -2.5, 29.5)
-	water_volume.set("current_velocity", Vector3(-0.28, 0.0, 0.08))
+	water_volume.position = Vector3(4.35, -2.55, 29.55)
+	water_volume.set("surface_height_offset", 3.1)
+	water_volume.set("current_velocity", Vector3(-0.22, 0.0, 0.06))
 	var water_shape: CollisionShape3D = water_volume.get_node_or_null("CollisionShape3D") as CollisionShape3D
 	if water_shape != null and water_shape.shape is BoxShape3D:
-		(water_shape.shape as BoxShape3D).size = Vector3(5.0, 5.5, 5.0)
+		(water_shape.shape as BoxShape3D).size = Vector3(5.15, 5.7, 5.75)
 
-	_add_collision_box(world, "PoolWestRim", Vector3(1.0, 0.8, 5.4), Vector3(1.2, -0.4, 29.5), Color(0.29, 0.3, 0.28))
+	if authored_environment == null:
+		_build_legacy_pool_escape_geometry()
+	else:
+		for surface_name: String in ["PoolWestRim", "PoolExitStepLip", "PoolBackClimbLedge", "DryRecoveryLedge"]:
+			_mark_climbable(world.find_child(surface_name, true, false))
+
+	_make_exit_anchor("PoolWestExit", Vector3(1.55, 1.05, 28.15), "STAIR EXIT")
+	_make_exit_anchor("PoolBackExit", Vector3(4.72, 1.05, 33.65), "LEDGE EXIT")
+
+	if authored_environment == null:
+		for index: int in range(3):
+			var arrow := MeshInstance3D.new()
+			arrow.name = "CurrentArrow%02d" % index
+			var mesh := BoxMesh.new()
+			mesh.size = Vector3(0.48, 0.04, 0.12)
+			arrow.mesh = mesh
+			arrow.position = Vector3(5.5 - float(index) * 0.85, 0.68, 30.5)
+			arrow.rotation.y = -0.28
+			arrow.material_override = _material(Color(0.25, 0.72, 0.9, 0.58))
+			world.add_child(arrow)
+
+
+func _build_legacy_pool_escape_geometry() -> void:
+	_add_collision_box(world, "PoolWestRim", Vector3(1.0, 0.8, 5.4), Vector3(1.2, -0.4, 29.5), Color(0.29, 0.3, 0.28), true)
 	_add_collision_box(world, "PoolExitStepDeep", Vector3(1.1, 0.5, 2.4), Vector3(4.0, -2.55, 28.5), Color(0.22, 0.24, 0.23), true)
 	_add_collision_box(world, "PoolExitStepMid", Vector3(1.0, 0.65, 2.4), Vector3(3.15, -1.95, 28.5), Color(0.25, 0.27, 0.25), true)
 	_add_collision_box(world, "PoolExitStepHigh", Vector3(1.0, 0.75, 2.4), Vector3(2.35, -1.2, 28.5), Color(0.28, 0.29, 0.27), true)
 	_add_collision_box(world, "PoolExitStepLip", Vector3(0.8, 0.8, 2.4), Vector3(1.72, -0.42, 28.5), Color(0.31, 0.31, 0.28), true)
 	_add_collision_box(world, "PoolBackClimbLedge", Vector3(2.2, 0.55, 0.9), Vector3(3.0, 0.25, 32.15), Color(0.34, 0.34, 0.3), true)
+	_mark_climbable(world.get_node_or_null("DryRecoveryLedge"))
 
-	var existing_ledge: Node = world.get_node_or_null("DryRecoveryLedge")
-	if existing_ledge != null:
-		existing_ledge.add_to_group("climbable")
-		existing_ledge.set_meta("climb_surface", "wet")
 
-	_make_exit_anchor("PoolWestExit", Vector3(0.5, 1.05, 28.5), "SHALLOW EXIT")
-	_make_exit_anchor("PoolBackExit", Vector3(3.0, 1.05, 33.0), "LEDGE EXIT")
-
-	for index: int in range(3):
-		var arrow := MeshInstance3D.new()
-		arrow.name = "CurrentArrow%02d" % index
-		var mesh := BoxMesh.new()
-		mesh.size = Vector3(0.48, 0.04, 0.12)
-		arrow.mesh = mesh
-		arrow.position = Vector3(5.5 - float(index) * 0.85, 0.68, 30.5)
-		arrow.rotation.y = -0.28
-		arrow.material_override = _material(Color(0.25, 0.72, 0.9, 0.58))
-		world.add_child(arrow)
+func _mark_climbable(candidate: Node) -> void:
+	if candidate == null:
+		return
+	candidate.add_to_group("climbable")
+	candidate.set_meta("climb_surface", "wet")
 
 
 func _make_exit_anchor(node_name: String, position_value: Vector3, label: String) -> void:
@@ -131,8 +146,8 @@ func _make_exit_anchor(node_name: String, position_value: Vector3, label: String
 	anchor.position = position_value
 	anchor.set_script(SwimmingExitAnchorScript)
 	anchor.set("marker_text", label)
-	anchor.set("activation_radius", 3.4)
-	anchor.set("maximum_vertical_distance", 2.8)
+	anchor.set("activation_radius", 3.6)
+	anchor.set("maximum_vertical_distance", 3.0)
 	anchor.set("require_facing", false)
 	anchor.set("show_marker", true)
 	mission.add_child(anchor)
@@ -251,6 +266,7 @@ func get_debug_data() -> Dictionary:
 	return {
 		"installed": installed,
 		"playable_space": playable_space != null,
+		"authored_environment": authored_environment != null,
 		"water_volume": water_volume != null,
 		"exit_anchors": exit_anchors.size(),
 		"guidance_targets": get_tree().get_nodes_in_group("quest_guidance_target").size() if get_tree() != null else 0,

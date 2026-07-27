@@ -75,7 +75,9 @@ func _ready() -> void:
 	check(mission.get_node_or_null("World/ModularChapelBenchmarkV1/FurnishingModules/VestibuleSupplyCrate") != null, "chapel dressing includes reusable physical props")
 
 	var nave_support: StaticBody3D = mission.get_node_or_null("World/AuthoredEnvironmentV2/ChapelShell/NaveFloor") as StaticBody3D
-	var nave_support_visual: MeshInstance3D = nave_support.get_node_or_null("Visual") as MeshInstance3D if nave_support != null else null
+	var nave_support_visual: MeshInstance3D
+	if nave_support != null:
+		nave_support_visual = nave_support.get_node_or_null("Visual") as MeshInstance3D
 	check(nave_support != null and nave_support.collision_layer != 0, "hidden nave support remains physical")
 	check(nave_support_visual != null and not nave_support_visual.visible, "old nave floor mesh is hidden beneath the modules")
 	var entrance_module: Node = mission.get_node_or_null("World/ModularChapelBenchmarkV1/WallAndThresholdModules/ModularEntranceArch")

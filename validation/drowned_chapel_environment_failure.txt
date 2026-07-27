@@ -1,0 +1,63 @@
+Drowned Chapel environment validation failure
+
+SCRIPT ERROR: Parse Error: Cannot infer the type of "shore" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "shell" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "architecture" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "arcade" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "frame" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "altar_root" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "rose" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "props" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "pews" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "flooded_visuals" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "quiet_visuals" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "lighting" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "cluster" variable because the value doesn't have a set type.
+SCRIPT ERROR: Parse Error: Cannot infer the type of "lantern" variable because the value doesn't have a set type.
+ERROR: Failed to load script "res://scripts/levels/drowned_bell_environment_pass.gd" with error "Parse error".
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_debug_data (via call)' in base 'Node'.
+ERROR: Drowned Bell environment smoke test stalled.
+
+Last 160 lines:
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+SCRIPT ERROR: Parse Error: Cannot infer the type of "shore" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:79)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "shell" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:119)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "architecture" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:174)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "arcade" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:197)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "frame" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:208)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "altar_root" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:219)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "rose" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:229)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "props" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:238)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "pews" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:239)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "flooded_visuals" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:265)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "quiet_visuals" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:272)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "lighting" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:366)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "cluster" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:375)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "lantern" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://scripts/levels/drowned_bell_environment_pass.gd:385)
+ERROR: Failed to load script "res://scripts/levels/drowned_bell_environment_pass.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:2907)
+GameUI ready. Adding to game_ui group.
+Player found dodge controller: /root/DrownedBellEnvironmentSmokeTest/PrototypeDrownedBell/Player/PlayerDodgeController
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_debug_data (via call)' in base 'Node'.
+          at: _ready (res://scripts/tests/drowned_bell_environment_smoke_test.gd:34)
+          GDScript backtrace (most recent call first):
+              [0] _ready (res://scripts/tests/drowned_bell_environment_smoke_test.gd:34)
+ERROR: Drowned Bell environment smoke test stalled.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _process (res://scripts/tests/drowned_bell_environment_smoke_test.gd:16)

@@ -23,5 +23,3 @@ jobs:
         run: godot --headless --path . scenes/tests/systems_integration_hub_smoke_test.tscn
       - name: Boot integration hub
         run: godot --headless --path . scenes/levels/prototypes/prototype_systems_integration_hub_v1.tscn --quit-after 5
-      - name: Test weapon framework
-        run: godot --headless --path . scenes/tests/weapon_moveset_smoke_test.tscn

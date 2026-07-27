@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/prototype_drowned_bell_v1.gd" id="1_director"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/levels/drowned_bell_environment_pass.gd" id="6_environment"]
 [ext_resource type="Script" path="res://scripts/environment/authored_swimming_volume_adapter.gd" id="7_water_adapter"]
 [ext_resource type="Script" path="res://scripts/levels/drowned_bell_crypt_pass.gd" id="8_crypt"]
+[ext_resource type="Script" path="res://scripts/levels/drowned_bell_crypt_opening_patch.gd" id="9_opening"]
 
 [node name="PrototypeDrownedBell" type="Node3D"]
 script = ExtResource("1_director")
@@ -40,6 +41,9 @@ collision_size = Vector3(5.15, 5.7, 5.75)
 surface_height_offset = 3.1
 current_velocity = Vector3(-0.22, 0, 0.06)
 water_label = "Flooded Side Chapel"
+
+[node name="CryptOpeningPatch" type="Node" parent="."]
+script = ExtResource("9_opening")
 
 [node name="PlayabilityPass" type="Node" parent="."]
 script = ExtResource("5_playability")

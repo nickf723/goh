@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/environment/modular_environment_piece.gd" id="1_piece"]
+[ext_resource type="Script" path="res://scripts/environment/modular_environment_stairs.gd" id="1_piece"]
 
 [node name="WeatheredStoneStairs4m" type="Node3D"]
 script = ExtResource("1_piece")

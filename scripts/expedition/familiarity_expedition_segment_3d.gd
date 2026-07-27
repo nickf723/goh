@@ -55,6 +55,12 @@ func uses_authored_layout() -> bool:
 
 
 func build_role_content() -> void:
+	# Authored scenes own their main traversal composition. Re-applying the
+	# procedural role pass can place rocks, pillars, or other blockers directly
+	# across a hand-authored route. Familiarity overlays remain additive and safe.
+	if uses_authored_layout():
+		build_familiarity_overlay()
+		return
 	match definition.role:
 		"traversal":
 			build_traversal_obstacle()

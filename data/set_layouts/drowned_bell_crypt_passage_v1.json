@@ -48,11 +48,11 @@
   "stairs": [
     {
       "id": "ChamberExitSteps",
-      "low_origin": [-1.8, -6.8, 52.75],
+      "low_origin": [-1.8, -6.8, 52.15],
       "forward": [0.0, 0.0, 1.0],
       "step_count": 6,
       "width": 4.8,
-      "step_run": 0.48,
+      "step_run": 0.55,
       "total_rise": 2.12,
       "landing_length": 1.0,
       "ramp_thickness": 0.14,

@@ -17,10 +17,23 @@ jobs:
         run: python scripts/ci/validate_capability_inventory.py
       - name: Verify consolidation documents
         run: |
-          test -f docs/REPOSITORY_AUDIT.md
-          test -f docs/CONSOLIDATION_BACKLOG.md
-          grep -q "capability_inventory.json" AGENTS.md
-          grep -q "do_not_resuggest" docs/REPOSITORY_AUDIT.md
+          python - <<'PY'
+          from pathlib import Path
+
+          required = [
+              Path('docs/REPOSITORY_AUDIT.md'),
+              Path('docs/CONSOLIDATION_BACKLOG.md'),
+              Path('AGENTS.md'),
+          ]
+          for path in required:
+              assert path.is_file(), f'missing {path}'
+
+          agents = Path('AGENTS.md').read_text(encoding='utf-8')
+          audit = Path('docs/REPOSITORY_AUDIT.md').read_text(encoding='utf-8')
+          assert 'capability_inventory.json' in agents, 'AGENTS.md does not reference capability inventory'
+          assert 'do_not_resuggest' in audit, 'repository audit does not define resuggestion policy'
+          print('CONSOLIDATION_DOCUMENTS: PASS')
+          PY
       - uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.6.0

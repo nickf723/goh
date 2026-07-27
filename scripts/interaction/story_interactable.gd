@@ -60,9 +60,11 @@ func _on_game_state_flag_changed(flag_name: String, _value: bool) -> void:
 
 
 func ensure_collision() -> void:
-	if get_node_or_null("CollisionShape3D") != null:
-		return
+	for child: Node in get_children():
+		if child is CollisionShape3D:
+			return
 	var collision := CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
 	var shape := SphereShape3D.new()
 	shape.radius = 1.25
 	collision.shape = shape

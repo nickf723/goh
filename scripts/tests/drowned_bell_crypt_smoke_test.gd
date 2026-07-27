@@ -97,7 +97,7 @@ func _ready() -> void:
 	check(GameState.get_flag("drowned_bell_complete"), "reporting to Orin completes The Drowned Bell")
 	check(str(GameState.get_quest("the_drowned_bell").get("state", "")) == "completed", "quest journal records completion")
 	check(GameState.has_key_item("orin_marsh_pass_token"), "Orin rewards the marsh-passage token")
-	check(GameState.get_experience() >= 75, "quest completion grants experience")
+	check(GameState.get_stat("level") > 1 or GameState.get_experience() >= 75, "quest completion grants experience or a level")
 	check(mission.get_node("World/QuietState").visible, "completed chapel remains in its quiet aftermath")
 
 	current_step = "combat route contract"

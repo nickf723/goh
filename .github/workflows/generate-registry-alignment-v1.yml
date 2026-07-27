@@ -1,0 +1,359 @@
+name: Generate registry alignment v1
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate aligned files
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry_path = Path('data/features/feature_registry.json')
+          registry = json.loads(registry_path.read_text(encoding='utf-8'))
+          features = registry['features']
+
+          additions = [
+            {
+              'id': 'broken_waystation',
+              'order': 15,
+              'display_name': 'Broken Waystation / Relay Response',
+              'category': 'Authored Quest Vertical Slice',
+              'version': 'v1',
+              'status': 'vertical_slice',
+              'description': 'Character-led authored quest using Tamsin dialogue, affinity-based relay repair, an illuminated signal trail, staged combat, physical evidence, quest journal stages, key-item rewards, persistent aftermath, and the reusable Authored Quest Framework.',
+              'scene': 'res://scenes/levels/prototypes/prototype_broken_waystation_mission_v1.tscn',
+              'validation_scenes': ['res://scenes/levels/prototypes/prototype_broken_waystation_mission_v1.tscn'],
+              'automated_tests': [
+                'res://scenes/tests/authored_quest_framework_smoke_test.tscn',
+                'res://scenes/tests/broken_waystation_consequence_smoke_test.tscn'
+              ],
+              'dependencies': ['weapon_combat_arena', 'enemy_personality_lab'],
+              'controls': ['MOVE','INTERACT','LIGHT','HEAVY','FOCUS','CAST','DODGE','LOCK-ON','MENU','RESET'],
+              'manual_test': 'docs/broken_waystation_v1_test.md',
+              'temporary_state': 'persistent',
+              'story_integrated': true,
+              'limitations': [
+                'Environment and character presentation remain procedural prototypes.',
+                'Goblin and Gremlin actors stand in for future location-specific enemies.',
+                'The eastern route opens but does not yet connect to a production region.'
+              ],
+              'launchable': True,
+              'visible_in_launcher': True,
+              'ci_validate': True,
+              'timeout_seconds': 10
+            },
+            {
+              'id': 'airborne_presentation_lab',
+              'order': 46,
+              'display_name': 'Airborne Presentation Laboratory',
+              'category': 'Combat Laboratory',
+              'version': 'v1',
+              'status': 'development_tool',
+              'description': 'Dedicated launch, juggle, fall, slam, landing, and recovery presentation space for light, medium, and heavy airborne targets using the shared weapon and reaction pipeline.',
+              'scene': 'res://scenes/levels/prototypes/prototype_airborne_presentation_lab_v1.tscn',
+              'validation_scenes': ['res://scenes/levels/prototypes/prototype_airborne_presentation_lab_v1.tscn'],
+              'automated_tests': ['res://scenes/tests/airborne_presentation_smoke_test.tscn'],
+              'dependencies': ['weapon_combat_arena'],
+              'controls': ['MOVE','LIGHT','HEAVY','DODGE','LOCK-ON','RESET'],
+              'manual_test': 'docs/AIRBORNE_PRESENTATION_V1.md',
+              'temporary_state': 'runtime_only',
+              'story_integrated': False,
+              'limitations': [
+                'Presentation uses procedural transforms rather than final skeletal animation.',
+                'The laboratory isolates target reactions and is not an authored encounter.',
+                'Boss-specific airborne resistance and final balance remain deferred.'
+              ],
+              'launchable': True,
+              'visible_in_launcher': True,
+              'ci_validate': True,
+              'timeout_seconds': 7
+            },
+            {
+              'id': 'systems_integration_hub',
+              'order': 48,
+              'display_name': 'Systems Integration Hub',
+              'category': 'Integration Laboratory',
+              'version': 'v1',
+              'status': 'development_tool',
+              'description': 'Persistent shared-player campus connecting combat and mastery, aerial reactions, movement, interaction, status, and ability-range stations with fast travel, reset, temporary unlocks, and exact progression restoration.',
+              'scene': 'res://scenes/levels/prototypes/prototype_systems_integration_hub_v1.tscn',
+              'validation_scenes': ['res://scenes/levels/prototypes/prototype_systems_integration_hub_v1.tscn'],
+              'automated_tests': ['res://scenes/tests/systems_integration_hub_smoke_test.tscn'],
+              'dependencies': ['weapon_combat_arena','airborne_presentation_lab','runtime_stat_lab','dev_interaction_sandbox'],
+              'controls': ['MOVE','INTERACT','LIGHT','HEAVY','FOCUS','CAST','DODGE','LOCK-ON','FAST TRAVEL','RESET'],
+              'manual_test': 'docs/systems_integration_hub_v1_test.md',
+              'temporary_state': 'runtime_only',
+              'story_integrated': False,
+              'limitations': [
+                'The hub intentionally does not contain every repository capability.',
+                'Dedicated laboratories remain authoritative for detailed tuning.',
+                'Campus geometry and fixtures are developer presentation rather than final world art.'
+              ],
+              'launchable': True,
+              'visible_in_launcher': True,
+              'ci_validate': True,
+              'timeout_seconds': 8
+            },
+            {
+              'id': 'wilds_expedition',
+              'order': 52,
+              'display_name': 'Wilds Expedition',
+              'category': 'Exploration Prototype',
+              'version': 'v1',
+              'status': 'experimental',
+              'description': 'Five-segment outdoor expedition from cypress basin through wet woodland and longleaf ridge toward foothills and Blue Ridge forest, with authored early segments, route familiarity, optional discovery, checkpoints, and shared regional state.',
+              'scene': 'res://scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn',
+              'validation_scenes': ['res://scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn'],
+              'automated_tests': [
+                'res://scenes/tests/wilds_expedition_smoke_test.tscn',
+                'res://scenes/tests/route_familiarity_smoke_test.tscn',
+                'res://scenes/tests/authored_wilds_segments_smoke_test.tscn'
+              ],
+              'dependencies': ['systems_integration_hub'],
+              'controls': ['MOVE','INTERACT','LIGHT','HEAVY','FOCUS','CAST','DODGE','RESET'],
+              'manual_test': 'docs/wilds_expedition_v1.md',
+              'temporary_state': 'persistent',
+              'story_integrated': False,
+              'limitations': [
+                'Only Cypress Basin, Wet Woodland, and Pine Ridge have authored layout passes.',
+                'Rocky Foothill Camp and Blue Ridge forest remain prototype route segments.',
+                'Regional presentation and traversal assets remain replacement-ready.'
+              ],
+              'launchable': True,
+              'visible_in_launcher': True,
+              'ci_validate': True,
+              'timeout_seconds': 10
+            },
+            {
+              'id': 'regional_expedition_map',
+              'order': 53,
+              'display_name': 'Regional Expedition Map',
+              'category': 'Exploration Infrastructure',
+              'version': 'v1',
+              'status': 'experimental',
+              'description': 'Regional route-selection and persistence prototype connecting mapped destinations, expedition entry, route familiarity, segment state, and return flow.',
+              'scene': 'res://scenes/levels/prototypes/prototype_regional_expedition_map_v1.tscn',
+              'validation_scenes': ['res://scenes/levels/prototypes/prototype_regional_expedition_map_v1.tscn'],
+              'automated_tests': ['res://scenes/tests/regional_expedition_map_smoke_test.tscn'],
+              'dependencies': ['wilds_expedition'],
+              'controls': ['NAVIGATE','SELECT','BACK'],
+              'manual_test': 'docs/REGIONAL_EXPEDITION_MAP_V1.md',
+              'temporary_state': 'persistent',
+              'story_integrated': False,
+              'limitations': [
+                'The map represents a prototype regional network rather than final geography.',
+                'Combined map and route-familiarity persistence previously required focused validation.',
+                'Only the current Wilds route is developed beyond placeholder destination data.'
+              ],
+              'launchable': True,
+              'visible_in_launcher': True,
+              'ci_validate': True,
+              'timeout_seconds': 8
+            }
+          ]
+
+          addition_ids = {entry['id'] for entry in additions}
+          features = [entry for entry in features if entry.get('id') not in addition_ids]
+          features.extend(additions)
+
+          for entry in features:
+            if entry.get('id') == 'weapon_combat_arena':
+              entry['version'] = 'v0.8+'
+              entry['description'] = 'All-unlocks combat and mastery laboratory for buffered Light and Heavy branches, context techniques, dash and aerial attacks, launch and juggle routes, stance breaks, critical strikes, defense, infusion, and exact temporary progression restoration.'
+              entry['limitations'] = [
+                'Sword, Hammer, and Spear remain the primary authored production movesets; Chain and Whip have separate experimental laboratories.',
+                'Presentation is procedural and transform-driven rather than final skeletal animation.',
+                'Boss-specific break rules, executions, final animation, and balance remain deferred.'
+              ]
+            if entry.get('id') == 'development_control_center':
+              deps = list(entry.get('dependencies', []))
+              for feature_id in ['broken_waystation','airborne_presentation_lab','systems_integration_hub','wilds_expedition','regional_expedition_map']:
+                if feature_id not in deps:
+                  deps.append(feature_id)
+              entry['dependencies'] = deps
+
+          registry['features'] = sorted(features, key=lambda row: (int(row.get('order', 9999)), str(row.get('id', ''))))
+
+          out = Path('alignment-output')
+          out.mkdir(exist_ok=True)
+          (out / 'feature_registry.json').write_text(json.dumps(registry, indent=2) + '\n', encoding='utf-8')
+
+          project_map = '''# Grace of Humanity Prototype Project Map
+
+This is the repository navigation guide. It explains canonical ownership and points to live inventories rather than duplicating them.
+
+## Read before planning
+
+1. `docs/REPOSITORY_AUDIT.md` for the human-readable capability audit and lifecycle classifications.
+2. `data/features/capability_inventory.json` for searchable capability ownership, aliases, maturity, and `do_not_resuggest` policy.
+3. `data/features/feature_registry.json` for the live launcher and CI inventory of permanent scenes.
+4. `AGENTS.md` for scope, quality, validation, and direct-main rules.
+
+The capability inventory answers **what already exists**. The feature registry answers **what launches and validates**. Do not maintain another permanent-scene list in this document.
+
+## Godot project
+
+- Engine configuration: `project.godot`
+- Current production startup scene: read `run/main_scene` in `project.godot`
+- Autoloads include `GameState`, `HitStop`, `FullMenuDirector`, `SpeciesKnowledge`, and `GameplayEffects`
+
+## Core gameplay grammar
+
+```text
+Actor → Tool → Action → Payload → Target → Receiver → Reaction → Consequence
+```
+
+Reuse existing definitions, payloads, receivers, reactions, and consequences before adding another system.
+
+## Canonical player stack
+
+```text
+Player
+├── PlayerActionState
+├── PlayerResourceController
+├── PlayerDefenseController
+├── AbilityCaster
+├── WeaponController / SafeWeaponController
+│   ├── WeaponInputBootstrap
+│   └── WeaponThreatBroadcaster
+├── PlayerDodgeController
+├── CombatTargetingAssist
+├── PlayerQuickItemController
+├── SoulGripController
+├── MetalTetherController
+├── AerialLocomotion
+├── ClimbingController
+├── SwimmingController
+├── RidingController
+├── SummonManager
+├── StealthController
+├── EquipmentAppearanceController
+├── GameplayEffectStatusHUD
+└── WeaponMasteryHUD
+```
+
+Key paths:
+
+```text
+scenes/actors/player/player.tscn
+scripts/player/
+scripts/abilities/
+scripts/weapons/
+scripts/items/
+scripts/ui/
+```
+
+## Combat ownership
+
+### Weapons
+
+The shared weapon route is data first:
+
+```text
+WeaponDefinition
+→ WeaponMovesetDefinition
+→ WeaponAttackDefinition graph
+→ WeaponController
+→ DamagePayload
+→ receiver stack
+```
+
+Implemented shared behavior includes input buffering, Light and Heavy branching, startup/active/recovery, cancel windows, attack movement, context-triggered dash and aerial techniques, launch and juggle reactions, stance breaks, critical windows, mastery, equipment, infusion, Guard, Perfect Guard, and safe stale-target cleanup.
+
+Primary authored movesets: Sword, Hammer, Spear. Experimental flexible classes: Chain and Whip.
+
+Canonical development owners:
+
+- Weapon Combat Arena for movesets, mastery, techniques, and defense
+- Airborne Presentation Laboratory for launch, juggle, fall, slam, and landing readability
+- Systems Integration Hub for cross-system coexistence on one Player instance
+
+### Enemies
+
+Enemy behavior includes personality profiles, hazard awareness, committed action phases, multi-action selection, defensive actions, threat sensing, reaction delay, and encounter sequencing.
+
+Key paths:
+
+```text
+scripts/enemies/
+data/enemies/
+data/enemy_attacks/
+scenes/actors/enemies/
+```
+
+## Abilities and elemental systems
+
+Casting uses Ability definitions, loadouts, Focus selection, resource payment, spell modifiers, ground-targeting registry, concentration, projectiles, fields, and ordinary payload delivery.
+
+Implemented families include Firebolt, Charged Firebolt, Ice Lance, Piercing Ice Lance, Lightning Spark, Chain Lightning, Earth Spike, Poison Bloom, Time Snare, Dream Trap, Sound detection, Resonant Pulse, Blink, Wind Gust, Rain, Snowfall, Flight, Soul Grip, Metal Tether, and portal interaction.
+
+Elemental and material systems include status surfaces, combo rules, Steam Burst, environmental element emitters, thermal state, conductive water, circuits, pressure, machinery, buoyancy, airflow, gas, flexible tethers, and structural collapse.
+
+Use `capability_inventory.json` to find the canonical owner for a specific mechanic.
+
+## Progression, inventory, quests, and persistence
+
+`GameState` owns runtime and persistent progression including stats, elemental affinities, resources, equipment, mastery, unlocks, infusion, consumables, quick-item assignments, key items, relationships, quests, route state, and save data.
+
+The authored quest framework is owned by:
+
+```text
+scripts/quests/authored_quest_runtime.gd
+scripts/quests/quest_reward_bundle.gd
+scripts/quests/world_state_variant.gd
+scripts/quests/authored_encounter_sequence.gd
+```
+
+Broken Waystation / Relay Response is the canonical authored quest example. Mara and Tamsin are the minimum quality references for dialogue, staging, physical feedback, and persistent consequences.
+
+## Exploration and world prototypes
+
+- Ruined Village Approach and Church Trial are story-integrated vertical slices.
+- Wilds Expedition owns the five-segment outdoor route and authored Cypress, Wet Woodland, and Pine Ridge layouts.
+- Regional Expedition Map owns route selection and regional persistence.
+- Broken Waystation owns the current authored quest framework proof.
+
+## Development infrastructure
+
+- `data/features/feature_registry.json`: live launcher and CI feature inventory
+- `data/features/capability_inventory.json`: planning memory and canonical ownership
+- `scenes/ui/development_control_center_v1.tscn`: registry-driven launcher
+- `scenes/levels/prototypes/prototype_systems_integration_hub_v1.tscn`: cross-system integration campus
+- `scenes/levels/_dev/dev_interaction_sandbox.tscn`: disposable interaction workbench
+- `scripts/ci/validate_feature_registry.py`: registry schema and path validation
+- `scripts/ci/validate_capability_inventory.py`: capability ownership and resuggestion validation
+- `scripts/ci/run_feature_registry.py`: registry-driven scene and test execution
+
+## Planning rule
+
+Before proposing a mechanic:
+
+1. Search the capability inventory using the user’s wording and aliases.
+2. Inspect the canonical owner files and scene.
+3. Classify the request as integration, authored content, polish, extension, consolidation, or genuinely new.
+4. Do not propose an implemented `do_not_resuggest` capability as new.
+5. Add or update inventory and registry metadata in the same change that creates or promotes permanent architecture.
+
+## Quality rule
+
+Automated validation proves technical contracts, not player-facing quality. Manual playtesting remains authoritative for feel, staging, clarity, pacing, visual coherence, and whether a mechanic belongs in the game.
+'''
+          (out / 'project_map.md').write_text(project_map, encoding='utf-8')
+          print(f'Generated {len(registry["features"])} registry entries')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: registry-alignment-output
+          path: alignment-output/
+          if-no-files-found: error

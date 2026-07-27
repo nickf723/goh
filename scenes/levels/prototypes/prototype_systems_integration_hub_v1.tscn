@@ -1,0 +1,34 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_systems_integration_hub.gd" id="1_director"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+
+[node name="PrototypeSystemsIntegrationHubV1" type="Node3D"]
+script = ExtResource("1_director")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -28, 0)
+light_energy = 1.35
+shadow_enabled = true
+
+[node name="WarmFill" type="OmniLight3D" parent="."]
+position = Vector3(-16, 7, 8)
+light_color = Color(1, 0.48, 0.22, 1)
+light_energy = 2.2
+omni_range = 35.0
+
+[node name="CoolFill" type="OmniLight3D" parent="."]
+position = Vector3(18, 8, 20)
+light_color = Color(0.32, 0.62, 1, 1)
+light_energy = 2.0
+omni_range = 38.0
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, -14)

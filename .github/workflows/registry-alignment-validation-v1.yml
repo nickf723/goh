@@ -1,0 +1,53 @@
+name: Registry alignment validation v1
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate feature registry
+        run: python scripts/ci/validate_feature_registry.py
+      - name: Validate capability inventory
+        run: python scripts/ci/validate_capability_inventory.py
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+      - name: Import project
+        run: godot --headless --path . --editor --quit
+      - name: Boot Development Control Center
+        run: godot --headless --path . scenes/ui/development_control_center_v1.tscn --quit-after 5
+      - name: Test Systems Integration Hub
+        run: godot --headless --path . scenes/tests/systems_integration_hub_smoke_test.tscn
+      - name: Boot Systems Integration Hub
+        run: godot --headless --path . scenes/levels/prototypes/prototype_systems_integration_hub_v1.tscn --quit-after 5
+      - name: Test Airborne Presentation
+        run: godot --headless --path . scenes/tests/airborne_presentation_smoke_test.tscn
+      - name: Boot Airborne Presentation Lab
+        run: godot --headless --path . scenes/levels/prototypes/prototype_airborne_presentation_lab_v1.tscn --quit-after 5
+      - name: Test Wilds Expedition
+        run: godot --headless --path . scenes/tests/wilds_expedition_smoke_test.tscn
+      - name: Test Route Familiarity
+        run: godot --headless --path . scenes/tests/route_familiarity_smoke_test.tscn
+      - name: Test Authored Wilds Segments
+        run: godot --headless --path . scenes/tests/authored_wilds_segments_smoke_test.tscn
+      - name: Boot Wilds Expedition
+        run: godot --headless --path . scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn --quit-after 5
+      - name: Test Regional Expedition Map
+        run: godot --headless --path . scenes/tests/regional_expedition_map_smoke_test.tscn
+      - name: Boot Regional Expedition Map
+        run: godot --headless --path . scenes/levels/prototypes/prototype_regional_expedition_map_v1.tscn --quit-after 5
+      - name: Test Authored Quest Framework
+        run: godot --headless --path . scenes/tests/authored_quest_framework_smoke_test.tscn
+      - name: Test Broken Waystation Consequences
+        run: godot --headless --path . scenes/tests/broken_waystation_consequence_smoke_test.tscn
+      - name: Boot Broken Waystation
+        run: godot --headless --path . scenes/levels/prototypes/prototype_broken_waystation_mission_v1.tscn --quit-after 5

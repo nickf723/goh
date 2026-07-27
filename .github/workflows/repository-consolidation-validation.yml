@@ -23,15 +23,16 @@ jobs:
           required = [
               Path('docs/REPOSITORY_AUDIT.md'),
               Path('docs/CONSOLIDATION_BACKLOG.md'),
+              Path('data/features/capability_inventory.json'),
               Path('AGENTS.md'),
           ]
           for path in required:
               assert path.is_file(), f'missing {path}'
 
           agents = Path('AGENTS.md').read_text(encoding='utf-8')
-          audit = Path('docs/REPOSITORY_AUDIT.md').read_text(encoding='utf-8')
+          inventory = Path('data/features/capability_inventory.json').read_text(encoding='utf-8')
           assert 'capability_inventory.json' in agents, 'AGENTS.md does not reference capability inventory'
-          assert 'do_not_resuggest' in audit, 'repository audit does not define resuggestion policy'
+          assert 'do_not_resuggest' in inventory, 'capability inventory does not define resuggestion policy'
           print('CONSOLIDATION_DOCUMENTS: PASS')
           PY
       - uses: chickensoft-games/setup-godot@v2

@@ -3,7 +3,6 @@ extends "res://scripts/expedition/expedition_route_generator.gd"
 const RegionalStoreScript = preload("res://scripts/expedition/regional_expedition_store.gd")
 const PlannerScript = preload("res://scripts/expedition/route_familiarity_planner.gd")
 const FamiliaritySegmentScript = preload("res://scripts/expedition/familiarity_expedition_segment_3d.gd")
-const RouteMarkerScript = preload("res://scripts/expedition/expedition_route_marker.gd")
 
 @export var regional_network_record_path: String = RegionalStoreScript.DEFAULT_RECORD_PATH
 @export var regional_map_scene_path: String = "res://scenes/levels/prototypes/prototype_regional_expedition_map_v1.tscn"

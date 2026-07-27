@@ -120,13 +120,14 @@ func _build_causeway_modules() -> void:
 	var root := _make_root("CausewayModules")
 	var z_positions: Array[float] = [-1.5, 2.5, 6.5, 10.5, 14.5, 18.5, 22.1]
 	for index: int in range(z_positions.size()):
+		var length_scale: float = 0.98 if index < z_positions.size() - 1 else 0.72
 		_place_piece(
 			root,
 			FLOOR_ID,
 			"CausewayFloor%02d" % index,
 			Vector3(0.0, 0.12, z_positions[index]),
 			Vector3.ZERO,
-			Vector3(1.18, 1.0, 0.98 if index < z_positions.size() - 1 else 0.72),
+			Vector3(1.18, 1.0, length_scale),
 			false,
 			index + 2
 		)
@@ -162,10 +163,11 @@ func _build_wall_and_threshold_modules() -> void:
 	for side: float in [-1.0, 1.0]:
 		for level: int in range(2):
 			for z_value: float in side_z:
+				var side_name: String = "West" if side < 0.0 else "East"
 				_place_piece(
 					root,
 					WALL_ID,
-					"SideWall_%s_L%d_%s" % ["West" if side < 0.0 else "East", level, _coord_name(z_value)],
+					"SideWall_%s_L%d_%s" % [side_name, level, _coord_name(z_value)],
 					Vector3(side * 7.05, float(level) * 3.2, z_value),
 					Vector3(0.0, PI * 0.5, 0.0),
 					Vector3(1.0, 1.03, 1.0),
@@ -176,10 +178,11 @@ func _build_wall_and_threshold_modules() -> void:
 
 	for level: int in range(2):
 		for side: float in [-1.0, 1.0]:
+			var side_name: String = "West" if side < 0.0 else "East"
 			_place_piece(
 				root,
 				WALL_ID,
-				"FrontWall_%s_L%d" % ["West" if side < 0.0 else "East", level],
+				"FrontWall_%s_L%d" % [side_name, level],
 				Vector3(side * 4.95, float(level) * 3.2, 22.55),
 				Vector3.ZERO,
 				Vector3(1.25, 1.03, 1.0),
@@ -219,28 +222,30 @@ func _build_nave_structure_modules() -> void:
 			90 + index
 		)
 
-	for index: int in range(3):
-		var z_value: float = [25.6, 30.0, 34.15][index]
+	var frame_z_positions: Array[float] = [25.6, 30.0, 34.15]
+	for index: int in range(frame_z_positions.size()):
 		_place_piece(
 			root,
 			TIMBER_ID,
 			"NaveTimberFrame%02d" % index,
-			Vector3(-1.4, 0.0, z_value),
+			Vector3(-1.4, 0.0, frame_z_positions[index]),
 			Vector3.ZERO,
 			Vector3(1.5, 1.7, 1.0),
 			false,
 			100 + index
 		)
 
+	var sconce_z_positions: Array[float] = [25.5, 30.0, 34.35]
 	for side: float in [-1.0, 1.0]:
-		for index: int in range(3):
-			var z_value: float = [25.5, 30.0, 34.35][index]
+		for index: int in range(sconce_z_positions.size()):
+			var side_name: String = "West" if side < 0.0 else "East"
+			var sconce_yaw: float = -PI * 0.5 if side < 0.0 else PI * 0.5
 			_place_piece(
 				root,
 				SCONCE_ID,
-				"NaveSconce_%s_%02d" % ["West" if side < 0.0 else "East", index],
-				Vector3(side * 6.7, 1.35, z_value),
-				Vector3(0.0, -PI * 0.5 if side < 0.0 else PI * 0.5, 0.0),
+				"NaveSconce_%s_%02d" % [side_name, index],
+				Vector3(side * 6.7, 1.35, sconce_z_positions[index]),
+				Vector3(0.0, sconce_yaw, 0.0),
 				Vector3(0.86, 0.86, 0.86),
 				false,
 				110 + index
@@ -367,7 +372,7 @@ func _hide_children_with_prefix(parent_path: String, prefix: String) -> void:
 	for child: Node in parent.get_children():
 		if child.name.begins_with(prefix):
 			hidden_legacy_meshes += _hide_meshes_under(child)
-			replaced_paths.append(parent_path + "/" + child.name)
+			replaced_paths.append(parent_path + "/" + str(child.name))
 
 
 func _hide_meshes_under(node: Node) -> int:
@@ -381,7 +386,10 @@ func _hide_meshes_under(node: Node) -> int:
 
 
 func _has_property(node: Object, property_name: String) -> bool:
-	for property_data: Dictionary in node.get_property_list():
+	for property_variant: Variant in node.get_property_list():
+		if not property_variant is Dictionary:
+			continue
+		var property_data: Dictionary = property_variant as Dictionary
 		if str(property_data.get("name", "")) == property_name:
 			return true
 	return false

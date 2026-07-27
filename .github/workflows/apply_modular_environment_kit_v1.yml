@@ -1,0 +1,82 @@
+name: Apply modular environment kit v1
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out generator branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Stage generator and switch to current main
+        shell: bash
+        run: |
+          cp scripts/ci/generate_modular_environment_kit_v1.py /tmp/generate_modular_environment_kit_v1.py
+          git fetch origin main
+          git checkout -B modular-kit-main origin/main
+
+      - name: Generate modular environment kit and inventories
+        run: python /tmp/generate_modular_environment_kit_v1.py
+
+      - name: Validate repository inventories
+        shell: bash
+        run: |
+          python scripts/ci/validate_capability_inventory.py
+          python scripts/ci/validate_feature_registry.py
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project
+        run: godot --headless --path . --editor --quit
+
+      - name: Test modular environment showcase
+        run: timeout 90s godot --headless --path . scenes/tests/modular_environment_showcase_smoke_test.tscn
+
+      - name: Test existing authored environment and playability
+        shell: bash
+        run: |
+          timeout 90s godot --headless --path . scenes/tests/drowned_bell_environment_smoke_test.tscn
+          timeout 90s godot --headless --path . scenes/tests/global_playability_framework_smoke_test.tscn
+
+      - name: Boot showcase scene
+        run: timeout 45s godot --headless --path . scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn --quit-after 8
+
+      - name: Run full registered feature inventory
+        run: python scripts/ci/run_feature_registry.py --godot godot
+
+      - name: Commit verified modular kit to main
+        shell: bash
+        run: |
+          git config user.name "goh-validation-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add shaders/environment \
+            art/materials/environment/modular \
+            scripts/environment/modular_environment_piece.gd \
+            scripts/environment/modular_environment_gate.gd \
+            scripts/environment/modular_environment_catalog.gd \
+            scenes/environment/modular \
+            scripts/levels/prototype_modular_environment_showcase_v1.gd \
+            scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn \
+            scripts/tests/modular_environment_showcase_smoke_test.gd \
+            scenes/tests/modular_environment_showcase_smoke_test.tscn \
+            docs/MODULAR_ENVIRONMENT_KIT_V1.md \
+            docs/modular_environment_showcase_v1_test.md \
+            docs/project_map.md \
+            docs/REPOSITORY_AUDIT.md \
+            data/features/feature_registry.json \
+            data/features/capability_inventory.json
+          git commit -m "Build modular environment kit and showcase"
+          git push origin HEAD:main

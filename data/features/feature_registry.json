@@ -128,6 +128,57 @@
       "timeout_seconds": 10
     },
     {
+      "id": "drowned_bell",
+      "order": 18,
+      "display_name": "The Drowned Bell",
+      "category": "Authored Quest Vertical Slice",
+      "version": "v3",
+      "status": "vertical_slice",
+      "description": "Complete character-led marsh quest combining Orin dialogue, resonance investigation, authored chapel and crypt environments, swimming traversal, a passive-to-hostile amphibious creature, three physical resolution routes, persistent aftermath, key-item rewards, and quest completion.",
+      "scene": "res://scenes/levels/prototypes/prototype_drowned_bell_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_drowned_bell_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/drowned_bell_crypt_smoke_test.tscn",
+        "res://scenes/tests/drowned_bell_environment_smoke_test.tscn",
+        "res://scenes/tests/global_playability_framework_smoke_test.tscn",
+        "res://scenes/tests/drowned_bell_foundation_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "broken_waystation",
+        "weapon_combat_arena",
+        "resonance_lab"
+      ],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "INTERACT",
+        "JUMP",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON",
+        "MENU",
+        "RESET"
+      ],
+      "manual_test": "docs/drowned_bell_v3_test.md",
+      "temporary_state": "persistent",
+      "story_integrated": true,
+      "limitations": [
+        "The chapel, crypt, Listener, lighting, and water presentation remain replacement-ready procedural prototype assets.",
+        "The Listener uses one encounter-specific authored behavior rather than a general creature-social AI framework.",
+        "Final animation, audio synthesis, voice acting, cinematics, and combat balance are not represented.",
+        "The opened marsh route does not yet connect to a production region."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 14
+    },
+    {
       "id": "elemental_reaction_lab",
       "order": 20,
       "display_name": "Elemental Reaction Laboratory",

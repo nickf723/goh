@@ -20,6 +20,8 @@ jobs:
         with:
           version: 4.6.0
           use-dotnet: false
+      - name: Import project
+        run: godot --headless --path . --editor --quit
       - name: Test Drowned Bell foundation
         shell: bash
         run: |
@@ -36,3 +38,5 @@ jobs:
           fi
           cat .validation/drowned-bell-diagnostics.txt
           exit $status
+      - name: Boot Drowned Bell scene
+        run: godot --headless --path . scenes/levels/prototypes/prototype_drowned_bell_v1.tscn --quit-after 5

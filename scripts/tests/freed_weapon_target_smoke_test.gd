@@ -25,14 +25,16 @@ func _ready() -> void:
 
 	var resolved: Node = controller.call("_get_locked_weak_point", player, attack)
 	assert(resolved == null)
-	assert(player.get("lock_on_target") == null)
 
-	var second_target := Node3D.new()
-	add_child(second_target)
-	second_target.free()
-	var position: Vector3 = controller.call("get_target_position", second_target)
-	assert(position == Vector3.ZERO)
+	var fresh_target := Node3D.new()
+	fresh_target.add_to_group("lock_on_weak_point")
+	fresh_target.position = Vector3(0.0, 0.0, -1.0)
+	add_child(fresh_target)
+	player.set("lock_on_target", fresh_target)
+	var fresh_resolved: Node = controller.call("_get_locked_weak_point", player, attack)
+	assert(fresh_resolved == fresh_target)
 
+	fresh_target.queue_free()
 	player.queue_free()
 	await get_tree().process_frame
 	print("FREED_WEAPON_TARGET_SMOKE_TEST: PASS")

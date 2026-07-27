@@ -8,7 +8,13 @@ scenes/levels/prototypes/prototype_drowned_bell_v1.tscn
 
 ## Purpose
 
-Complete the authored Drowned Bell quest through the crypt beneath the chapel. This milestone reuses the Authored Quest Framework, Global Playability Framework, Authored Environment Composition, shared swimming, ordinary combat payloads, key items, persistence, and conversation systems. It does not introduce another generic quest or creature-interaction framework.
+Complete the authored Drowned Bell quest through the crypt beneath the chapel. This milestone reuses the Authored Quest Framework, Global Playability Framework, Authored Environment Composition, Modular Environment and Prop Kit, shared swimming, ordinary combat payloads, key items, persistence, and conversation systems. It does not introduce another generic quest or creature-interaction framework.
+
+The chapel's production-facing modular benchmark has its own detailed environment contract:
+
+```text
+docs/drowned_chapel_benchmark_remaster_v1_test.md
+```
 
 ## Full route
 
@@ -29,6 +35,7 @@ Complete the authored Drowned Bell quest through the crypt beneath the chapel. T
 
 ## Expected authored sequence
 
+- The modular causeway, chapel shell, nave structure, wet-stone transitions, lighting, and props remain visually coherent over the continuous authored support shell.
 - The crypt seal consumes the carried tuning plate and opens a real passage.
 - The burial stair leads continuously below the chapel without a collision gap.
 - The submerged passage uses the shared swimming controller and has exits at both ends.
@@ -42,6 +49,8 @@ Complete the authored Drowned Bell quest through the crypt beneath the chapel. T
 
 ## Traversal and safety pass
 
+- Walk the weathered causeway and chapel threshold without jumping.
+- Circle the modular nave pillars, timber frames, freestanding props, bell frame, and pool rim with the camera close behind Grace.
 - Walk from the altar through the crypt threshold without jumping.
 - Descend and climb the burial stair with the camera close behind Grace.
 - Enter the submerged passage from both ends.
@@ -49,7 +58,7 @@ Complete the authored Drowned Bell quest through the crypt beneath the chapel. T
 - Complete the drained return route without swimming.
 - Press against the stair walls, chamber pillars, memorial niches, and escape arch.
 - Deliberately fall below the crypt and confirm recovery returns Grace to the latest lower-chamber anchor.
-- Blink toward the stair walls, tunnel ceiling, chamber perimeter, and opened escape passage.
+- Blink toward modular joins, the pool rim, stair walls, tunnel ceiling, chamber perimeter, and opened escape passage.
 
 ## Combat pass
 
@@ -63,7 +72,14 @@ Complete the authored Drowned Bell quest through the crypt beneath the chapel. T
 
 ## Readability pass
 
-From the lower chamber entrance, identify without developer instructions:
+From the chapel entrance, identify without developer instructions:
+
+- the memorial aisle on the left;
+- the bell frame and severed rope in the nave;
+- the flooded side chapel on the right;
+- the raised altar and crypt threshold at the rear.
+
+From the lower chamber entrance, identify:
 
 - the Listener in the central pool;
 - the cool two-note pedestal on the left;
@@ -80,4 +96,4 @@ scenes/tests/global_playability_framework_smoke_test.tscn
 scenes/tests/drowned_bell_foundation_smoke_test.tscn
 ```
 
-Automated checks prove the quest state, route alternatives, actor contract, swimming exits, rewards, aftermath, and regressions. Manual playtesting remains authoritative for path clarity, camera comfort, combat feel, and whether the Listener reads as frightened rather than villainous.
+Automated checks prove the quest state, modular benchmark ownership, route alternatives, actor contract, swimming exits, rewards, aftermath, and regressions. Manual playtesting remains authoritative for path clarity, camera comfort, environment quality, combat feel, and whether the Listener reads as frightened rather than villainous.

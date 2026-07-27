@@ -115,7 +115,7 @@ func build_generated_boundaries() -> void:
 	generated_boundaries.name = "GeneratedSafetyBoundaries"
 	add_child(generated_boundaries)
 	var thickness: float = maxf(boundary_thickness, 0.1)
-	var height: float = maxf(boundary_height, bounds_size.y, 2.0)
+	var height: float = maxf(maxf(boundary_height, bounds_size.y), 2.0)
 	var half: Vector3 = bounds_size * 0.5
 	var center_y: float = bounds_center.y
 	_create_boundary_box(

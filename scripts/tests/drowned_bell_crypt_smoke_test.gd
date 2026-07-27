@@ -13,7 +13,7 @@ func _process(delta: float) -> void:
 	if finished:
 		return
 	elapsed += delta
-	if elapsed >= 18.0:
+	if elapsed >= 24.0:
 		push_error("Drowned Bell crypt test stalled during: " + current_step)
 		print("DROWNED_BELL_CRYPT_SMOKE_TEST: STALLED AT " + current_step)
 		get_tree().quit(1)
@@ -100,6 +100,27 @@ func _ready() -> void:
 	check(GameState.get_stat("level") > 1 or GameState.get_experience() >= 75, "quest completion grants experience or a level")
 	check(mission.get_node("World/QuietState").visible, "completed chapel remains in its quiet aftermath")
 
+	current_step = "reload completed aftermath"
+	mission.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var reloaded_mission := SceneUnderTest.instantiate()
+	add_child(reloaded_mission)
+	for _index: int in range(5):
+		await get_tree().process_frame
+	await get_tree().physics_frame
+	var reloaded_pass: Node = reloaded_mission.get_node_or_null("CryptPass")
+	check(reloaded_pass != null and bool(reloaded_pass.get("installed")), "completed quest reloads the crypt composition")
+	var reloaded_door: StaticBody3D = reloaded_mission.get_node("World/BellBelowV3/CryptDescent/CryptDoorBlocker") as StaticBody3D
+	check(reloaded_door.collision_layer == 0, "opened crypt remains open after reload")
+	var reloaded_water: Area3D = reloaded_mission.get_node("World/BellBelowV3/CryptSwimPassage") as Area3D
+	check(not reloaded_water.monitoring and not reloaded_water.visible, "resolved lower passage remains drained after reload")
+	var reloaded_walkway: StaticBody3D = reloaded_mission.get_node("World/BellBelowV3/DrainedPassageWalkway") as StaticBody3D
+	check(reloaded_walkway.collision_layer != 0, "drained return walkway persists after reload")
+	var reloaded_listener: EchoListenerActor = reloaded_mission.get_node("World/BellBelowV3/TheListener") as EchoListenerActor
+	check(not reloaded_listener.visible and not reloaded_listener.is_in_group("enemy"), "resolved Listener does not return after reload")
+	check(reloaded_mission.get_node("World/QuietState").visible, "quiet chapel aftermath persists after reload")
+
 	current_step = "combat route contract"
 	var listener_test: EchoListenerActor = ListenerScene.instantiate() as EchoListenerActor
 	add_child(listener_test)
@@ -122,7 +143,7 @@ func _ready() -> void:
 	check(listener_test.resolved and listener_test.current_route == "fought", "defeating the Listener exposes the combat resolution route")
 
 	current_step = "cleanup"
-	mission.queue_free()
+	reloaded_mission.queue_free()
 	listener_test.queue_free()
 	await get_tree().process_frame
 	finished = true

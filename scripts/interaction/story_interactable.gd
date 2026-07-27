@@ -16,6 +16,8 @@ func _ready() -> void:
 	add_to_group("interactable_target")
 	add_to_group("story_interactable")
 	ensure_collision()
+	if not GameState.flag_changed.is_connected(_on_game_state_flag_changed):
+		GameState.flag_changed.connect(_on_game_state_flag_changed)
 	refresh_state()
 
 
@@ -46,9 +48,15 @@ func set_active(value: bool) -> void:
 
 
 func refresh_state() -> void:
-	monitoring = can_activate()
-	monitorable = can_activate()
+	var available: bool = can_activate()
+	monitoring = available
+	monitorable = available
 	visible = active
+
+
+func _on_game_state_flag_changed(flag_name: String, _value: bool) -> void:
+	if flag_name == required_flag or flag_name == blocked_flag:
+		refresh_state()
 
 
 func ensure_collision() -> void:

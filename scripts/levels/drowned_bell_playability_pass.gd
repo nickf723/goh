@@ -54,12 +54,12 @@ func _build_playable_space() -> void:
 	playable_space.name = "PlayableSpace"
 	playable_space.set_script(PlayableSpaceScript)
 	playable_space.set("use_bounds", true)
-	playable_space.set("bounds_center", Vector3(0.0, 1.5, 15.0))
-	playable_space.set("bounds_size", Vector3(34.0, 20.0, 60.0))
-	playable_space.set("minimum_recovery_y", -4.4)
+	playable_space.set("bounds_center", Vector3(0.0, -1.5, 30.0))
+	playable_space.set("bounds_size", Vector3(38.0, 30.0, 96.0))
+	playable_space.set("minimum_recovery_y", -12.0)
 	playable_space.set("generate_boundary_collision", true)
 	playable_space.set("boundary_thickness", 1.2)
-	playable_space.set("boundary_height", 18.0)
+	playable_space.set("boundary_height", 22.0)
 
 	var default_anchor := Marker3D.new()
 	default_anchor.name = "DefaultRecoveryAnchor"
@@ -70,12 +70,12 @@ func _build_playable_space() -> void:
 
 	var recovery_volume := Area3D.new()
 	recovery_volume.name = "VoidRecoveryVolume"
-	recovery_volume.position = Vector3(0.0, -7.0, 15.0)
+	recovery_volume.position = Vector3(0.0, -13.8, 30.0)
 	recovery_volume.set_script(RecoveryVolumeScript)
 	recovery_volume.set("recovery_reason", "fell beneath the authored level")
 	var recovery_shape := CollisionShape3D.new()
 	var recovery_box := BoxShape3D.new()
-	recovery_box.size = Vector3(42.0, 4.0, 72.0)
+	recovery_box.size = Vector3(42.0, 3.0, 104.0)
 	recovery_shape.shape = recovery_box
 	recovery_volume.add_child(recovery_shape)
 	playable_space.add_child(recovery_volume)
@@ -83,8 +83,8 @@ func _build_playable_space() -> void:
 	_add_collision_box(
 		world,
 		"DeepSafetyCatch",
-		Vector3(40.0, 0.5, 70.0),
-		Vector3(0.0, -8.8, 15.0),
+		Vector3(40.0, 0.5, 102.0),
+		Vector3(0.0, -15.6, 30.0),
 		Color(0.04, 0.05, 0.06),
 		false
 	)

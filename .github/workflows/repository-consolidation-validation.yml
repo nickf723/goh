@@ -1,0 +1,29 @@
+name: Repository consolidation validation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate capability inventory
+        run: python scripts/ci/validate_capability_inventory.py
+      - name: Verify consolidation documents
+        run: |
+          test -f docs/REPOSITORY_AUDIT.md
+          test -f docs/CONSOLIDATION_BACKLOG.md
+          grep -q "capability_inventory.json" AGENTS.md
+          grep -q "do_not_resuggest" docs/REPOSITORY_AUDIT.md
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+      - name: Import project
+        run: godot --headless --path . --editor --quit

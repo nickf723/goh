@@ -1,0 +1,68 @@
+name: Drowned Bell v3 validation
+
+on:
+  pull_request:
+    paths-ignore:
+      - validation/drowned_bell_v3_failure.txt
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+      - name: Validate capability inventory
+        run: python scripts/ci/validate_capability_inventory.py
+      - name: Validate feature registry
+        run: python scripts/ci/validate_feature_registry.py
+      - name: Import project
+        run: godot --headless --path . --editor --quit
+      - name: Test Drowned Bell crypt finale
+        shell: bash
+        run: |
+          set +e
+          timeout 90s godot --headless --path . scenes/tests/drowned_bell_crypt_smoke_test.tscn > /tmp/drowned-bell-v3.log 2>&1
+          status=$?
+          grep -E "DROWNED_BELL_CRYPT|SCRIPT ERROR|ERROR:|Invalid|FAIL|STALLED|WARNING" /tmp/drowned-bell-v3.log || true
+          exit $status
+      - name: Publish focused failure diagnostics
+        if: failure() && github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          mkdir -p validation
+          {
+            echo "Drowned Bell v3 validation failure"
+            echo
+            grep -E "DROWNED_BELL_CRYPT|SCRIPT ERROR|ERROR:|Invalid|FAIL|STALLED|WARNING" /tmp/drowned-bell-v3.log || true
+            echo
+            echo "Last 200 lines:"
+            tail -n 200 /tmp/drowned-bell-v3.log || true
+          } > validation/drowned_bell_v3_failure.txt
+          git config user.name "goh-validation-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add validation/drowned_bell_v3_failure.txt
+          git commit -m "Record Drowned Bell v3 validation failure" || exit 0
+          git push origin HEAD:${{ github.head_ref }}
+      - name: Test authored chapel environment
+        run: timeout 60s godot --headless --path . scenes/tests/drowned_bell_environment_smoke_test.tscn
+      - name: Test global playability
+        run: timeout 60s godot --headless --path . scenes/tests/global_playability_framework_smoke_test.tscn
+      - name: Test Drowned Bell foundation
+        run: timeout 60s godot --headless --path . scenes/tests/drowned_bell_foundation_smoke_test.tscn
+      - name: Test Broken Waystation consequences
+        run: timeout 60s godot --headless --path . scenes/tests/broken_waystation_consequence_smoke_test.tscn
+      - name: Test Ruined Village regression
+        run: timeout 60s godot --headless --path . scenes/tests/ruined_village_approach_smoke_test.tscn
+      - name: Boot Drowned Bell
+        run: timeout 35s godot --headless --path . scenes/levels/prototypes/prototype_drowned_bell_v1.tscn --quit-after 7

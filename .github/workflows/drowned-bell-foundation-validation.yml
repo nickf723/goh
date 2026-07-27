@@ -20,6 +20,12 @@ jobs:
       - name: Import project
         run: godot --headless --path . --editor --quit
       - name: Test Drowned Bell foundation
-        run: godot --headless --path . scenes/tests/drowned_bell_foundation_smoke_test.tscn
+        shell: bash
+        run: |
+          set +e
+          godot --headless --path . scenes/tests/drowned_bell_foundation_smoke_test.tscn > /tmp/drowned-bell-test.log 2>&1
+          status=$?
+          tail -n 160 /tmp/drowned-bell-test.log
+          exit $status
       - name: Boot Drowned Bell scene
         run: godot --headless --path . scenes/levels/prototypes/prototype_drowned_bell_v1.tscn --quit-after 5

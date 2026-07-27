@@ -24,6 +24,9 @@ Reuse this grammar and existing components before adding parallel systems.
 - Preserve player-facing behavior outside the issue scope.
 - Add or update a manual test document for player-facing changes.
 - Register every permanent development scene in `data/features/feature_registry.json`.
+- Add every genuinely new reusable mechanic to `data/features/capability_inventory.json`.
+- Search the capability inventory before proposing a mechanic, framework, laboratory, or progression system.
+- When a capability already exists, propose authored use, integration, polish, extension, or consolidation instead of presenting it as new.
 - Surface uncertainty in the pull request instead of guessing at creative intent.
 
 ## Creative approval boundary
@@ -40,13 +43,26 @@ Agents may choose ordinary implementation details when they preserve the approve
 
 ## Repository map
 
-Read `docs/project_map.md` before planning or building. Important paths include:
+Read these in order before planning or building:
+
+```text
+docs/REPOSITORY_AUDIT.md                 current capability and lifecycle map
+data/features/capability_inventory.json   machine-readable planning memory and aliases
+docs/project_map.md                       architecture and folder guide
+data/features/feature_registry.json       canonical permanent-scene and CI inventory
+```
+
+The repository audit supersedes stale capability descriptions in the older project map. The feature registry remains authoritative for launchable permanent scenes and validation.
+
+Important paths include:
 
 ```text
 project.godot                              Godot project configuration and inputs
 data/features/feature_registry.json        canonical permanent-feature inventory
+data/features/capability_inventory.json    canonical mechanic and ownership inventory
 scripts/systems/feature_registry.gd        Godot registry reader and runtime health
 scripts/ci/validate_feature_registry.py    static registry validation
+scripts/ci/validate_capability_inventory.py planning-memory validation
 scripts/ci/run_feature_registry.py         registry-driven Godot scene/test runner
 scripts/player/                            player behavior and controllers
 scripts/abilities/                         ability definitions and casting
@@ -64,6 +80,18 @@ docs/                                      architecture notes and manual test pl
 Expected reusable component patterns are documented in `docs/project_map.md`. Extend those patterns rather than bypassing them.
 
 Read `docs/feature_registry.md` before adding a permanent laboratory, arena, sandbox, vertical slice, or infrastructure scene. The registry is the shared source for the Development Control Center and CI. Do not add the same scene to a second hard-coded validation list.
+
+## Capability discovery protocol
+
+Before suggesting or implementing a system:
+
+1. Search `data/features/capability_inventory.json` using the user’s terminology and likely aliases.
+2. Inspect the listed owner files and canonical scene.
+3. Decide whether the request is integration, authored content, polish, extension, consolidation, or a genuinely new capability.
+4. State which existing systems will be reused.
+5. Update the inventory in the same change only when ownership, maturity, aliases, or implemented scope materially changes.
+
+An implemented capability with `do_not_resuggest: true` must never be proposed as though the repository does not contain it.
 
 ## Agent modes
 
@@ -86,11 +114,15 @@ Building work may modify `main` directly when Nick's standing direct-main author
 
 When a build creates or promotes a permanent development scene, it must add the scene, its tests, its manual test path, its dependencies, and its state policy to the feature registry in the same pull request.
 
+When a build adds a genuinely new reusable capability, it must add its canonical owner, aliases, lifecycle, maturity, canonical scene, and resuggestion policy to the capability inventory in the same change.
+
 ### Review
 
 Review work compares a pull request with its issue and checks correctness, scope, architecture reuse, regressions, and testability. The reviewer should not approve its own implementation merely because checks pass.
 
 Reviewers should reject permanent development scenes that are missing a registry entry or register nonexistent tests, documentation, dependencies, or scene paths.
+
+Reviewers should reject new frameworks or mechanics that duplicate an implemented capability or omit a capability-inventory update.
 
 ## Specialist team
 
@@ -124,6 +156,7 @@ A task is done only when:
 - relevant automated checks pass;
 - manual playtest instructions exist for player-facing changes;
 - permanent scenes and tests are represented accurately in the feature registry;
+- genuinely new or materially changed capabilities are represented accurately in the capability inventory;
 - the pull request explains limitations and unresolved decisions;
 - no unrelated behavior was intentionally changed.
 
@@ -135,10 +168,11 @@ CI uses a headless Godot smoke test driven by the feature registry. Locally, run
 
 ```powershell
 python scripts/ci/validate_feature_registry.py
+python scripts/ci/validate_capability_inventory.py
 ./scripts/ci/validate_project.ps1
 ```
 
-The registry validator checks schema, duplicate IDs, paths, documentation, statuses, dependencies, and cycles. The full project validator imports the project, starts the production main scene, then boots every registered validation scene and runs every registered automated test.
+The feature registry validator checks schema, duplicate IDs, paths, documentation, statuses, dependencies, and cycles. The capability validator checks planning IDs, lifecycle values, aliases, owners, and resuggestion policy. The full project validator imports the project, starts the production main scene, then boots every registered validation scene and runs every registered automated test.
 
 Record any validation that could not be run, including the reason.
 
@@ -149,7 +183,7 @@ Do not:
 - commit generated imports, editor caches, secrets, or local save data;
 - add external dependencies without approval;
 - delete or rename major systems to make a narrow task easier;
-- duplicate an existing payload, receiver, status, or reaction under a new name;
+- duplicate an existing payload, receiver, status, reaction, quest framework, mechanic, or laboratory under a new name;
 - create a parallel list of permanent prototype scenes outside the feature registry;
 - claim a scene was manually tested when it was not;
 - turn prototype art into an implied final art direction.

@@ -261,6 +261,23 @@
       "next_use": "Integrate explicit playable-space contracts into authored scenes as they receive polish; do not replace authored collision or manual playtesting with the safety framework."
     },
     {
+      "id": "authored_environment_composition",
+      "display_name": "Authored Environment Composition and Prototype Architecture",
+      "lifecycle": ["canonical", "story_integrated"],
+      "owner_files": [
+        "scripts/environment/authored_environment_palette.gd",
+        "scripts/environment/authored_environment_builder.gd",
+        "scripts/environment/authored_environment_auditor.gd",
+        "scripts/levels/drowned_bell_environment_pass.gd",
+        "data/environment_palettes/drowned_chapel_palette.tres"
+      ],
+      "canonical_scene": "scenes/levels/prototypes/prototype_drowned_bell_v1.tscn",
+      "aliases": ["environment pass", "global environment polish", "authored space builder", "modular level art", "prototype architecture kit", "collision matched geometry", "level dressing", "environment palette"],
+      "implemented": true,
+      "do_not_resuggest": true,
+      "next_use": "Reuse the palette, collision-matched primitives, and auditor when polishing authored spaces; keep each level's layout, landmarks, sightlines, and environmental storytelling authored."
+    },
+    {
       "id": "systems_integration_hub",
       "display_name": "Systems Integration Hub",
       "lifecycle": ["canonical"],

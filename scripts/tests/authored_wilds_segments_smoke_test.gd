@@ -35,5 +35,11 @@ func verify_segment(
 	assert((segment.get_node_or_null("BranchSocket") != null) == expect_branch)
 	assert(segment.authored_layout.get_child_count() >= 8)
 	assert(segment.authored_layout.get_tree().get_nodes_in_group("authored_wilds_layout").has(segment.authored_layout))
+
+	# Authored scenes own their route composition. The procedural role pass must
+	# not add its old blocking rocks or ruin pillars on top of the authored path.
+	assert(segment.get_node_or_null("Rock") == null)
+	assert(segment.get_node_or_null("RuinPillar") == null)
+
 	segment.queue_free()
 	await get_tree().process_frame

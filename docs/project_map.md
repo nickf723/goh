@@ -51,12 +51,15 @@ The reusable playability layer lives under `scripts/quality/` and `scripts/playe
 
 The reusable environment-composition layer lives under `scripts/environment/`. It provides palette-driven prototype materials, collision-matched architectural primitives, stair runs, pillars, archways, non-blocking dressing, local lights, build statistics, and an authored-environment auditor. Level-specific passes retain responsibility for layout, landmarks, sightlines, mood, prop placement, and environmental storytelling.
 
+The Authored Set Composer adds a data-first assembly layer through `scripts/environment/authored_set_composer.gd`, `scripts/environment/authored_set_clearance_auditor.gd`, and `data/set_layouts/`. It builds corridors, opening-aware walls, continuous-ramp stairs, modular catalog placements, and simple support geometry from compact plans. The Drowned Bell crypt passage is the first story-integrated proof. Use it when connected dimensions or repeated placements would otherwise be scattered across unrelated magic numbers.
+
 Architecture and manual quality gates are documented in:
 
 ```text
 docs/GLOBAL_PLAYABILITY_FRAMEWORK_V1.md
 docs/global_playability_framework_v1_test.md
 docs/AUTHORED_ENVIRONMENT_COMPOSITION_V1.md
+docs/AUTHORED_SET_COMPOSER_V1.md
 docs/drowned_chapel_environment_v2_2_test.md
 docs/drowned_bell_v3_test.md
 ```
@@ -90,6 +93,7 @@ The next meaningful proof is a larger existing route, likely Church Trial or Rui
 - Capability inventory validator: planning memory and resuggestion integrity
 - Playable Space Auditor: recovery, water-exit, interaction, and guidance contracts
 - Authored Environment Auditor: collision-paired surfaces and assembly integrity
+- Authored Set Clearance Auditor: corridor, doorway, and stair clearance contracts
 
 ## Planning rule
 

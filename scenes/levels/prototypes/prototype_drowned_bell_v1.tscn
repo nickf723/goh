@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/prototype_drowned_bell_v1.gd" id="1_director"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
 [ext_resource type="Script" path="res://scripts/levels/drowned_bell_playability_pass.gd" id="5_playability"]
 [ext_resource type="Script" path="res://scripts/levels/drowned_bell_environment_pass.gd" id="6_environment"]
+[ext_resource type="Script" path="res://scripts/environment/authored_swimming_volume_adapter.gd" id="7_water_adapter"]
 
 [node name="PrototypeDrownedBell" type="Node3D"]
 script = ExtResource("1_director")
@@ -29,6 +30,15 @@ position = Vector3(0, 1, -10)
 
 [node name="EnvironmentPass" type="Node" parent="."]
 script = ExtResource("6_environment")
+
+[node name="WaterVolumeAdapter" type="Node" parent="."]
+script = ExtResource("7_water_adapter")
+volume_path = NodePath("../NaveSwimPocket")
+volume_position = Vector3(4.35, -2.55, 29.55)
+collision_size = Vector3(5.15, 5.7, 5.75)
+surface_height_offset = 3.1
+current_velocity = Vector3(-0.22, 0, 0.06)
+water_label = "Flooded Side Chapel"
 
 [node name="PlayabilityPass" type="Node" parent="."]
 script = ExtResource("5_playability")

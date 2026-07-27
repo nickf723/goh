@@ -4,7 +4,7 @@
 [ext_resource type="Material" uid="uid://bxrl6afl3gijr" path="res://art/materials/player_debug.tres" id="2_mpktj"]
 [ext_resource type="Script" path="res://scripts/abilities/ability_caster_player_channels.gd" id="2_oj104"]
 [ext_resource type="Resource" uid="uid://bg485tlykg7uk" path="res://data/loadouts/grace_starting_loadout.tres" id="3_oj104"]
-[ext_resource type="Script" uid="uid://dl8yw5cwab03v" path="res://scripts/weapons/weapon_controller.gd" id="5_qdyt2"]
+[ext_resource type="Script" path="res://scripts/weapons/safe_weapon_controller.gd" id="5_qdyt2"]
 [ext_resource type="Resource" uid="uid://dgcmpqkn3b3a4" path="res://data/weapons/practice_sword.tres" id="6_g2g7f"]
 [ext_resource type="Script" uid="uid://yxbkrqi8ju8j" path="res://scripts/player/player_action_state.gd" id="7_g2g7f"]
 [ext_resource type="Script" uid="uid://dmp5o1qjlca1n" path="res://scripts/player/player_dodge_controller.gd" id="8_fp13k"]
@@ -88,7 +88,6 @@ visible = false
 script = ExtResource("5_qdyt2")
 equipped_weapon = ExtResource("6_g2g7f")
 print_attack_debug = true
-metadata/_custom_type_script = "uid://dl8yw5cwab03v"
 
 [node name="WeaponInputBootstrap" type="Node" parent="WeaponController"]
 script = ExtResource("10_weapon_input")
@@ -114,7 +113,6 @@ mesh = SubResource("PlaneMesh_qdyt2")
 
 [node name="PlayerActionState" type="Node" parent="." unique_id=449087462]
 script = ExtResource("7_g2g7f")
-metadata/_custom_type_script = "uid://yxbkrqi8ju8j"
 
 [node name="PlayerResourceController" type="Node" parent="."]
 script = ExtResource("16_resources")
@@ -161,7 +159,6 @@ script = ExtResource("29_stealth")
 
 [node name="PlayerDodgeController" type="Node" parent="." unique_id=1337799175]
 script = ExtResource("8_fp13k")
-metadata/_custom_type_script = "uid://dmp5o1qjlca1n"
 
 [node name="SoulGripController" type="Node3D" parent="."]
 script = ExtResource("12_soul_grip")

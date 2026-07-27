@@ -27,7 +27,10 @@ func _ready() -> void:
 	check(GameState.get_flag("drowned_bell_heard_pattern"), "listening records the bell pattern")
 	check(int(GameState.get_quest("the_drowned_bell").get("stage", -1)) == 2, "quest advances to chapel entry stage")
 
-	mission.get("chapel_state").apply("quiet")
+	var world_state: RefCounted = mission.get("chapel_state") as RefCounted
+	check(world_state != null, "world-state handle is available")
+	if world_state != null:
+		world_state.call("apply", "quiet")
 	check(not mission.get_node("World/FloodedState").visible, "quiet state hides flood presentation")
 	check(mission.get_node("World/QuietState").visible, "quiet state exposes chapel steps")
 

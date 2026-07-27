@@ -1,0 +1,15 @@
+Drowned Bell v3 validation failure
+
+ERROR: quest completion grants experience
+DROWNED_BELL_CRYPT_SMOKE_TEST: FAIL
+
+Last 200 lines:
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+GameUI ready. Adding to game_ui group.
+Player found dodge controller: /root/DrownedBellCryptSmokeTest/PrototypeDrownedBell/Player/PlayerDodgeController
+ERROR: quest completion grants experience
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scripts/tests/drowned_bell_crypt_smoke_test.gd:134)
+DROWNED_BELL_CRYPT_SMOKE_TEST: FAIL

@@ -17,7 +17,7 @@ Actor → Tool → Action → Payload → Target → Receiver → Reaction → C
 
 ## Canonical player
 
-The shared Player scene contains movement, camera, lock-on, action state, health/stamina/mana/stance recovery, defense and Perfect Guard, ability casting, data-driven weapons, Dodge, quick items, Soul Grip, Metal Tether, aerial locomotion, climbing, swimming, riding, summons, stealth, equipment appearance, and gameplay HUD layers.
+The shared Player scene contains movement, camera, lock-on, action state, health/stamina/mana/stance recovery, defense and Perfect Guard, ability casting, data-driven weapons, Dodge, quick items, Soul Grip, Metal Tether, aerial locomotion, climbing, swimming, riding, summons, stealth, equipment appearance, gameplay HUD layers, and last-resort playable-space recovery.
 
 Primary paths: `scenes/actors/player/player.tscn`, `scripts/player/`, `scripts/abilities/`, `scripts/weapons/`, `scripts/items/`, and `scripts/ui/`.
 
@@ -43,7 +43,20 @@ The Authored Quest Framework is owned by `scripts/quests/authored_quest_runtime.
 
 ## Exploration
 
-Ruined Village Approach and Church Trial are story-integrated vertical slices. Wilds Expedition owns the five-segment outdoor route and authored Cypress, Wet Woodland, and Pine Ridge layouts. Regional Expedition Map owns route selection and regional persistence.
+Ruined Village Approach and Church Trial are story-integrated vertical slices. Wilds Expedition owns the five-segment outdoor route and authored Cypress, Wet Woodland, and Pine Ridge layouts. Regional Expedition Map owns route selection and regional persistence. The Drowned Bell is the current composition-first quest proving water, resonance investigation, guidance, and global playability contracts.
+
+## Playability and authored-space quality
+
+The reusable playability layer lives under `scripts/quality/` and `scripts/player/player_recovery_controller.gd`. It provides explicit playable bounds, safe recovery transforms, forbidden and recovery volumes, safe destination validation, swimming exit anchors, quest guidance targets, and a structural scene auditor. Space Blink uses the shared safe-destination query, and the shared player retains fallback recovery even in scenes that have not yet declared an explicit `PlayableSpace3D`.
+
+Architecture and manual quality gates are documented in:
+
+```text
+docs/GLOBAL_PLAYABILITY_FRAMEWORK_V1.md
+docs/global_playability_framework_v1_test.md
+```
+
+The framework is a safety net, not a substitute for continuous authored collision, natural boundaries, readable sightlines, or human playtesting.
 
 ## Development infrastructure
 
@@ -52,6 +65,7 @@ Ruined Village Approach and Church Trial are story-integrated vertical slices. W
 - Dev Interaction Sandbox: disposable interaction workbench
 - Feature registry validator and runner: launcher/CI integrity
 - Capability inventory validator: planning memory and resuggestion integrity
+- Playable Space Auditor: recovery, water-exit, interaction, and guidance contracts
 
 ## Planning rule
 

@@ -26,13 +26,13 @@ static func audit_scene(root: Node) -> Dictionary:
 				errors.append("Playable space %s has no recovery anchor." % space.name)
 			var bounds_size: Variant = space.get("bounds_size")
 			if bounds_size is Vector3:
-				var size := bounds_size as Vector3
+				var size: Vector3 = bounds_size
 				if size.x <= 0.0 or size.y <= 0.0 or size.z <= 0.0:
 					errors.append("Playable space %s has invalid bounds." % space.name)
 
 	var guidance_targets: Array[Node] = _nodes_in_group_under(root, "quest_guidance_target")
 	for interactable: Node in _nodes_in_group_under(root, "story_interactable"):
-		if interactable.get_node_or_null("CollisionShape3D") == null:
+		if not _has_collision_shape(interactable):
 			errors.append("Story interactable %s has no CollisionShape3D." % interactable.name)
 		if bool(interactable.get_meta("quality_requires_guidance", false)):
 			var has_guidance: bool = false
@@ -58,6 +58,16 @@ static func audit_scene(root: Node) -> Dictionary:
 		warnings.append("Playable space has no explicit recovery volume; minimum-height recovery remains active.")
 
 	return _report(errors, warnings)
+
+
+static func _has_collision_shape(node: Node) -> bool:
+	if node == null:
+		return false
+	for child: Node in node.get_children():
+		if child is CollisionShape3D:
+			var collision := child as CollisionShape3D
+			return collision.shape != null and not collision.disabled
+	return false
 
 
 static func _nodes_in_group_under(root: Node, group_name: String) -> Array[Node]:

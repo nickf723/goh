@@ -1,0 +1,31 @@
+name: Modular environment traversal validation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+      - name: Validate inventories
+        run: |
+          python scripts/ci/validate_capability_inventory.py
+          python scripts/ci/validate_feature_registry.py
+      - name: Import project
+        run: godot --headless --path . --editor --quit
+      - name: Test modular stair and gate contracts
+        run: timeout 60s godot --headless --path . scenes/tests/modular_environment_showcase_smoke_test.tscn
+      - name: Boot modular showcase
+        run: timeout 35s godot --headless --path . scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn --quit-after 7
+      - name: Run full registered feature inventory
+        run: python scripts/ci/run_feature_registry.py --godot godot

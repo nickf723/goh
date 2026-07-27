@@ -13,6 +13,7 @@ func _ready() -> void:
 	add_child(mission)
 	await get_tree().process_frame
 	await get_tree().process_frame
+	await get_tree().process_frame
 	await get_tree().physics_frame
 
 	var player: CharacterBody3D = mission.get_node_or_null("Player") as CharacterBody3D
@@ -22,6 +23,7 @@ func _ready() -> void:
 	check(recovery != null, "shared player owns RecoveryController")
 	check(playable_space != null, "Drowned Bell declares PlayableSpace3D")
 	check(mission.get_node_or_null("PlayableSpace/VoidRecoveryVolume") != null, "void recovery volume exists")
+	check(mission.get_node_or_null("EnvironmentPass") != null, "scene composes the authored environment pass")
 	check(mission.get_node_or_null("PlayabilityPass") != null, "scene composes the playability integration pass")
 
 	var water: Area3D = mission.get_node_or_null("NaveSwimPocket") as Area3D
@@ -32,7 +34,10 @@ func _ready() -> void:
 			if bool(candidate.call("supports_volume", water)):
 				supporting_exits.append(candidate)
 	check(supporting_exits.size() >= 2, "nave swimming volume has two authored exits")
-	check(mission.get_node_or_null("World/PoolExitStepLip") != null, "pool has a physical stepped exit")
+	check(
+		mission.get_node_or_null("World/AuthoredEnvironmentV2/ChapelShell/PoolExitStepLip") != null,
+		"pool has a physical authored stepped exit"
+	)
 
 	var guidance_count: int = 0
 	for guidance: Node in get_tree().get_nodes_in_group("quest_guidance_target"):

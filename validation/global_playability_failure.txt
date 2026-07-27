@@ -1,13 +1,5 @@
 Global Playability Framework validation failure
 
-ERROR: auditor: Story interactable BellListeningPoint has no CollisionShape3D.
-ERROR: auditor: Story interactable ChapelEntrance has no CollisionShape3D.
-ERROR: auditor: Story interactable MemorialPlaque has no CollisionShape3D.
-ERROR: auditor: Story interactable SeveredBellRope has no CollisionShape3D.
-ERROR: auditor: Story interactable BurialMechanism has no CollisionShape3D.
-ERROR: auditor: Story interactable CorrodedTuningPlate has no CollisionShape3D.
-ERROR: auditor: Story interactable SubmergedCryptSeal has no CollisionShape3D.
-ERROR: playable-space auditor passes Drowned Bell
 ERROR: recovery clears unstable velocity
 GLOBAL_PLAYABILITY_FRAMEWORK_SMOKE_TEST: FAIL
 
@@ -16,38 +8,6 @@ Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
 
 GameUI ready. Adding to game_ui group.
 Player found dodge controller: /root/GlobalPlayabilityFrameworkSmokeTest/PrototypeDrownedBell/Player/PlayerDodgeController
-ERROR: auditor: Story interactable BellListeningPoint has no CollisionShape3D.
-   at: push_error (core/variant/variant_utility.cpp:1024)
-   GDScript backtrace (most recent call first):
-       [0] _ready (res://scripts/tests/global_playability_framework_smoke_test.gd:85)
-ERROR: auditor: Story interactable ChapelEntrance has no CollisionShape3D.
-   at: push_error (core/variant/variant_utility.cpp:1024)
-   GDScript backtrace (most recent call first):
-       [0] _ready (res://scripts/tests/global_playability_framework_smoke_test.gd:85)
-ERROR: auditor: Story interactable MemorialPlaque has no CollisionShape3D.
-   at: push_error (core/variant/variant_utility.cpp:1024)
-   GDScript backtrace (most recent call first):
-       [0] _ready (res://scripts/tests/global_playability_framework_smoke_test.gd:85)
-ERROR: auditor: Story interactable SeveredBellRope has no CollisionShape3D.
-   at: push_error (core/variant/variant_utility.cpp:1024)
-   GDScript backtrace (most recent call first):
-       [0] _ready (res://scripts/tests/global_playability_framework_smoke_test.gd:85)
-ERROR: auditor: Story interactable BurialMechanism has no CollisionShape3D.
-   at: push_error (core/variant/variant_utility.cpp:1024)
-   GDScript backtrace (most recent call first):
-       [0] _ready (res://scripts/tests/global_playability_framework_smoke_test.gd:85)
-ERROR: auditor: Story interactable CorrodedTuningPlate has no CollisionShape3D.
-   at: push_error (core/variant/variant_utility.cpp:1024)
-   GDScript backtrace (most recent call first):
-       [0] _ready (res://scripts/tests/global_playability_framework_smoke_test.gd:85)
-ERROR: auditor: Story interactable SubmergedCryptSeal has no CollisionShape3D.
-   at: push_error (core/variant/variant_utility.cpp:1024)
-   GDScript backtrace (most recent call first):
-       [0] _ready (res://scripts/tests/global_playability_framework_smoke_test.gd:85)
-ERROR: playable-space auditor passes Drowned Bell
-   at: push_error (core/variant/variant_utility.cpp:1024)
-   GDScript backtrace (most recent call first):
-       [0] _ready (res://scripts/tests/global_playability_framework_smoke_test.gd:85)
 ERROR: recovery clears unstable velocity
    at: push_error (core/variant/variant_utility.cpp:1024)
    GDScript backtrace (most recent call first):

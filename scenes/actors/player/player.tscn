@@ -23,7 +23,7 @@
 [ext_resource type="Script" path="res://scripts/player/combat_targeting_assist.gd" id="21_targeting"]
 [ext_resource type="Script" path="res://scripts/player/player_climbing_controller.gd" id="22_climbing"]
 [ext_resource type="Script" path="res://scripts/visuals/player_motion_feedback.gd" id="23_motion_feedback"]
-[ext_resource type="Script" path="res://scripts/player/player_swimming_controller.gd" id="24_swimming"]
+[ext_resource type="Script" path="res://scripts/player/player_swimming_controller_playability.gd" id="24_swimming"]
 [ext_resource type="Script" path="res://scripts/player/player_riding_controller.gd" id="25_riding"]
 [ext_resource type="Script" path="res://scripts/player/player_summon_manager.gd" id="26_summons"]
 [ext_resource type="Resource" path="res://data/summons/spectral_familiar_definition.tres" id="27_familiar_definition"]
@@ -32,6 +32,7 @@
 [ext_resource type="Script" path="res://scripts/equipment/grace_equipment_appearance.gd" id="30_outfit_appearance"]
 [ext_resource type="Script" path="res://scripts/ui/gameplay_effect_status_hud.gd" id="31_effect_hud"]
 [ext_resource type="Script" path="res://scripts/ui/weapon_mastery_hud.gd" id="32_mastery_hud"]
+[ext_resource type="Script" path="res://scripts/player/player_recovery_controller.gd" id="33_recovery"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 
@@ -113,6 +114,9 @@ mesh = SubResource("PlaneMesh_qdyt2")
 
 [node name="PlayerActionState" type="Node" parent="." unique_id=449087462]
 script = ExtResource("7_g2g7f")
+
+[node name="RecoveryController" type="Node" parent="."]
+script = ExtResource("33_recovery")
 
 [node name="PlayerResourceController" type="Node" parent="."]
 script = ExtResource("16_resources")

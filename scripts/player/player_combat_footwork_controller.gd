@@ -149,14 +149,22 @@ func sample_root_velocity(delta: float) -> Vector3:
 		return sampled_velocity
 
 	_apply_late_steering(delta)
-	var sample_progress: float = clampf(
-		(motion_elapsed + active_delta * 0.5) / maxf(motion_duration, 0.001),
+	var start_progress: float = clampf(
+		motion_elapsed / maxf(motion_duration, 0.001),
 		0.0,
 		1.0
 	)
-	var speed_multiplier: float = CombatFootworkCatalogScript.sample_speed_multiplier(
-		active_profile_id,
-		sample_progress
+	var end_progress: float = clampf(
+		(motion_elapsed + active_delta) / maxf(motion_duration, 0.001),
+		0.0,
+		1.0
+	)
+	# Integrate the authored curve across the covered interval rather than sampling
+	# one midpoint. This keeps total distance stable at 30 FPS, 60 FPS, high refresh,
+	# and on a partial final frame without flattening the plant/drive/settle shape.
+	var speed_multiplier: float = _sample_interval_speed_multiplier(
+		start_progress,
+		end_progress
 	)
 	var partial_frame_share: float = active_delta / maxf(delta, 0.001)
 	sampled_velocity = motion_direction * base_motion_speed * speed_multiplier * partial_frame_share
@@ -384,6 +392,30 @@ func _apply_steering_direction(requested_direction: Vector3, delta: float) -> vo
 	# capped by the footwork profile, so this cannot become unrestricted homing.
 	if weapon_controller != null:
 		weapon_controller.attack_forward_override = motion_direction
+
+
+func _sample_interval_speed_multiplier(
+	start_progress: float,
+	end_progress: float
+) -> float:
+	var start: float = clampf(start_progress, 0.0, 1.0)
+	var finish: float = clampf(end_progress, start, 1.0)
+	if finish <= start + 0.000001:
+		return CombatFootworkCatalogScript.sample_speed_multiplier(
+			active_profile_id,
+			start
+		)
+	var interval_span: float = finish - start
+	var sample_count: int = maxi(4, ceili(interval_span * 32.0))
+	var total: float = 0.0
+	for index: int in range(sample_count):
+		var sample_weight: float = (float(index) + 0.5) / float(sample_count)
+		var progress: float = lerpf(start, finish, sample_weight)
+		total += CombatFootworkCatalogScript.sample_speed_multiplier(
+			active_profile_id,
+			progress
+		)
+	return total / float(sample_count)
 
 
 func _direction_from_input(input_vector: Vector2) -> Vector3:

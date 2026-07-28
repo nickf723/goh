@@ -76,12 +76,9 @@ func validate_level_structure() -> void:
 
 
 func validate_outdoor_remaster() -> void:
-	var raw_failures: Variant = OutdoorRemasterFixture.call("run", village)
-	if not raw_failures is Array:
-		failures.append("outdoor remaster fixture returned an invalid result")
-		return
-	for failure: Variant in raw_failures as Array:
-		failures.append(str(failure))
+	var raw_failures: Array[String] = OutdoorRemasterFixture.run(village)
+	for failure: String in raw_failures:
+		failures.append(failure)
 
 
 func validate_encounter_definition() -> void:

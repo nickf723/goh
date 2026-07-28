@@ -44,6 +44,9 @@
 [ext_resource type="Resource" path="res://data/player/grace_combat_footwork_profile.tres" id="42_footwork_profile"]
 [ext_resource type="Script" path="res://scripts/player/player_vertical_motion_controller.gd" id="43_vertical_motion"]
 [ext_resource type="Resource" path="res://data/player/grace_vertical_motion_profile.tres" id="44_vertical_profile"]
+[ext_resource type="Script" path="res://scripts/player/player_avatar_manager.gd" id="45_avatar_manager"]
+[ext_resource type="Resource" path="res://data/avatars/grace_avatar_definition.tres" id="46_grace_avatar"]
+[ext_resource type="Resource" path="res://data/avatars/ruvia_incarnation_prototype.tres" id="47_ruvia_avatar"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.46
@@ -94,6 +97,11 @@ profile = ExtResource("44_vertical_profile")
 [node name="CombatFootworkController" type="Node" parent="."]
 script = ExtResource("41_footwork")
 profile = ExtResource("42_footwork_profile")
+
+[node name="AvatarManager" type="Node" parent="."]
+script = ExtResource("45_avatar_manager")
+default_avatar_definition = ExtResource("46_grace_avatar")
+prototype_avatar_definition = ExtResource("47_ruvia_avatar")
 
 [node name="EquipmentAppearanceController" type="Node" parent="."]
 script = ExtResource("30_outfit_appearance")

@@ -46,7 +46,7 @@ func sample_animation_pose(delta: float) -> void:
 	_pose_controlled_hands(delta)
 	_apply_ground_motion_accent()
 	_apply_dodge_motion_accent()
-	_apply_combat_footwork_accent()
+	_apply_combat_footwork_accent(delta)
 	_apply_dodge_iframe_highlight()
 	sync_animation_anchors()
 
@@ -249,7 +249,7 @@ func _apply_dodge_motion_accent() -> void:
 	_apply_motion_accent()
 
 
-func _apply_combat_footwork_accent() -> void:
+func _apply_combat_footwork_accent(delta: float) -> void:
 	if combat_footwork_controller == null:
 		return
 	if not combat_footwork_controller.is_visual_footwork_active():
@@ -264,29 +264,44 @@ func _apply_combat_footwork_accent() -> void:
 		if combat_footwork_controller.profile != null
 		else 1.0
 	)
-	motion_accent_root_position = (
+	var response: float = (
+		combat_footwork_controller.profile.pose_response
+		if combat_footwork_controller.profile != null
+		else 22.0
+	)
+	var root_position: Vector3 = (
 		sample.get("root_position", Vector3.ZERO) as Vector3
 	) * strength
-	motion_accent_root_rotation = (
+	var root_rotation: Vector3 = (
 		sample.get("root_rotation", Vector3.ZERO) as Vector3
 	) * strength
+	var left_leg_position: Vector3 = (
+		sample.get("left_leg_position", Vector3.ZERO) as Vector3
+	) * strength
+	var left_leg_rotation: Vector3 = (
+		sample.get("left_leg_rotation", Vector3.ZERO) as Vector3
+	) * strength
+	var right_leg_position: Vector3 = (
+		sample.get("right_leg_position", Vector3.ZERO) as Vector3
+	) * strength
+	var right_leg_rotation: Vector3 = (
+		sample.get("right_leg_rotation", Vector3.ZERO) as Vector3
+	) * strength
+
+	# Root and leg targets deliberately replace locomotion bob and stride during an
+	# attack. This is what makes a planted foot remain planted instead of continuing
+	# to run underneath a sword pose while root motion carries the body forward.
+	pose_node(visual_root, root_rotation, root_position, delta, response)
+	pose_node(left_leg, left_leg_rotation, left_leg_position, delta, response)
+	pose_node(right_leg, right_leg_rotation, right_leg_position, delta, response)
+
+	# The torso already contains the authored upper-body sword pose. Footwork adds
+	# only its weight-transfer accent so shoulder control and hip drive coexist.
 	motion_accent_body_position = (
 		sample.get("body_position", Vector3.ZERO) as Vector3
 	) * strength
 	motion_accent_body_rotation = (
 		sample.get("body_rotation", Vector3.ZERO) as Vector3
-	) * strength
-	motion_accent_left_leg_position = (
-		sample.get("left_leg_position", Vector3.ZERO) as Vector3
-	) * strength
-	motion_accent_left_leg_rotation = (
-		sample.get("left_leg_rotation", Vector3.ZERO) as Vector3
-	) * strength
-	motion_accent_right_leg_position = (
-		sample.get("right_leg_position", Vector3.ZERO) as Vector3
-	) * strength
-	motion_accent_right_leg_rotation = (
-		sample.get("right_leg_rotation", Vector3.ZERO) as Vector3
 	) * strength
 	_apply_motion_accent()
 

@@ -11,6 +11,7 @@ var visual: StylizedActorVisual
 var feedback: PlayerMotionFeedback
 var climbing: PlayerClimbingController
 var ground_motion: PlayerGroundMotionMotor
+var dodge_motion: PlayerDodgeController
 var status_label: Label
 var pose_index: int = -1
 
@@ -24,9 +25,10 @@ func _ready() -> void:
 		feedback = player.get_node_or_null("PlayerMotionFeedback") as PlayerMotionFeedback
 		climbing = player.get_node_or_null("ClimbingController") as PlayerClimbingController
 		ground_motion = player.get_node_or_null("GroundMotionMotor") as PlayerGroundMotionMotor
+		dodge_motion = player.get_node_or_null("PlayerDodgeController") as PlayerDodgeController
 	_configure_player()
 	_build_hud()
-	GameState.set_objective("Accelerate, stop, reverse, turn, climb, fight, and inspect Grace's transitions.")
+	GameState.set_objective("Accelerate, stop, reverse, dodge, recover, fight, and inspect Grace's transitions.")
 
 
 func _process(_delta: float) -> void:
@@ -64,6 +66,8 @@ func _configure_player() -> void:
 	if weapon != null:
 		weapon.show_debug_prints = false
 		weapon.print_attack_debug = false
+	if dodge_motion != null:
+		dodge_motion.show_debug_prints = false
 
 
 func _cycle_pose() -> void:
@@ -87,6 +91,10 @@ func _reset_lab() -> void:
 		climbing.reset_climbing()
 	if ground_motion != null:
 		ground_motion.reset_motion()
+	if dodge_motion != null:
+		dodge_motion.cancel_dodge("lab_reset")
+		dodge_motion.cooldown_timer = 0.0
+		dodge_motion.chain_count = 0
 	if player != null:
 		player.global_position = Vector3(0, 1.1, 8.0)
 		player.rotation = Vector3.ZERO
@@ -158,6 +166,15 @@ func _build_course() -> void:
 			false
 		)
 
+	# The dodge lane makes launch, protected travel, recovery, wall collision, and
+	# sideways exits legible without building a separate laboratory.
+	_add_box_body("DodgeLaunchLine", Vector3(4.8, 0.045, 0.13), Vector3(0, 0.035, -6.3), Color(0.28, 0.9, 0.95), false)
+	_add_box_body("DodgeIFrameLine", Vector3(4.8, 0.045, 0.13), Vector3(0, 0.035, -7.25), Color(0.96, 0.9, 0.28), false)
+	_add_box_body("DodgeRecoveryLine", Vector3(4.8, 0.045, 0.13), Vector3(0, 0.035, -8.15), Color(0.86, 0.34, 0.96), false)
+	_add_box_body("DodgeStopWall", Vector3(5.6, 1.8, 0.36), Vector3(0, 0.9, -9.55), Color(0.56, 0.12, 0.18))
+	_add_box_body("SideDodgeLeft", Vector3(0.13, 0.045, 2.3), Vector3(-3.0, 0.035, -7.45), Color(0.24, 0.74, 1.0), false)
+	_add_box_body("SideDodgeRight", Vector3(0.13, 0.045, 2.3), Vector3(3.0, 0.035, -7.45), Color(1.0, 0.36, 0.72), false)
+
 	var title := Label3D.new()
 	title.text = "GRACE MOTION SHOWCASE"
 	title.position = Vector3(0, 7.0, -7.2)
@@ -168,7 +185,7 @@ func _build_course() -> void:
 	title.modulate = Color(0.72, 0.88, 1.0)
 	add_child(title)
 	var instructions := Label3D.new()
-	instructions.text = "START • BRAKE • REVERSE • FIGURE 8 • STAIRS   |   ATTACK / DODGE / LOCK-ON   |   P POSES • O LIVE • F8 RESET"
+	instructions.text = "START • BRAKE • REVERSE • FIGURE 8 • STAIRS   |   DODGE / CHAIN / ATTACK / CAST / GUARD   |   P POSES • O LIVE • F8 RESET"
 	instructions.position = Vector3(0, 6.2, -7.1)
 	instructions.font_size = 17
 	instructions.pixel_size = 0.008
@@ -217,7 +234,7 @@ func _build_hud() -> void:
 	add_child(layer)
 	var panel := PanelContainer.new()
 	panel.position = Vector2(20, 20)
-	panel.custom_minimum_size = Vector2(610, 138)
+	panel.custom_minimum_size = Vector2(700, 168)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.012, 0.022, 0.043, 0.9)
 	style.border_color = Color(0.3, 0.66, 1.0, 0.85)
@@ -237,6 +254,7 @@ func _update_hud() -> void:
 	var animation: Dictionary = visual.get_animation_debug_data()
 	var feedback_data: Dictionary = feedback.get_debug_data() if feedback != null else {}
 	var motor: Dictionary = ground_motion.get_debug_data() if ground_motion != null else {}
+	var dodge: Dictionary = dodge_motion.get_debug_data() if dodge_motion != null else {}
 	var acceleration: Vector3 = animation.get("acceleration", Vector3.ZERO)
 	status_label.text = (
 		"ANIMATION  •  " + str(animation.get("presentation_state", "idle")).to_upper()
@@ -246,6 +264,17 @@ func _update_hud() -> void:
 		+ "     TARGET " + str(motor.get("target_speed", 0.0))
 		+ "     ACTUAL " + str(motor.get("actual_speed", 0.0))
 		+ "     INPUT " + str(motor.get("input_strength", 0.0))
+		+ "\nDODGE  •  " + str(dodge.get("phase", "idle")).to_upper()
+		+ "     " + str(dodge.get("kind", "forward")).to_upper()
+		+ "     PROGRESS " + str(dodge.get("progress", 0.0))
+		+ "     SPEED " + str(dodge.get("speed", 0.0))
+		+ "     I-FRAME " + ("YES" if bool(dodge.get("iframe", false)) else "NO")
+		+ "     CHAIN " + str(dodge.get("chain_count", 0))
+		+ "\nWINDOWS  •  ATTACK " + ("OPEN" if bool(dodge.get("attack_cancel_ready", false)) else "-")
+		+ "     CAST " + ("OPEN" if bool(dodge.get("cast_cancel_ready", false)) else "-")
+		+ "     GUARD " + ("OPEN" if bool(dodge.get("guard_cancel_ready", false)) else "-")
+		+ "     NEXT DODGE " + ("OPEN" if bool(dodge.get("chain_ready", false)) else "-")
+		+ "     BUFFER " + str(dodge.get("buffered_follow_up", ""))
 		+ "\nINTENT  •  TURN " + str(motor.get("turn_angle_degrees", 0.0)) + "°"
 		+ "     BRAKE " + str(motor.get("braking_weight", 0.0))
 		+ "     REVERSE " + str(motor.get("reversal_weight", 0.0))

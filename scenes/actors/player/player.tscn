@@ -40,6 +40,8 @@
 [ext_resource type="Script" path="res://scripts/player/player_ground_motion_motor.gd" id="38_ground_motion"]
 [ext_resource type="Resource" path="res://data/player/grace_ground_motion_profile.tres" id="39_ground_profile"]
 [ext_resource type="Resource" path="res://data/player/grace_dodge_motion_profile.tres" id="40_dodge_profile"]
+[ext_resource type="Script" path="res://scripts/player/player_combat_footwork_controller.gd" id="41_footwork"]
+[ext_resource type="Resource" path="res://data/player/grace_combat_footwork_profile.tres" id="42_footwork_profile"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.46
@@ -82,6 +84,10 @@ script = ExtResource("36_step_up")
 [node name="GroundMotionMotor" type="Node" parent="."]
 script = ExtResource("38_ground_motion")
 profile = ExtResource("39_ground_profile")
+
+[node name="CombatFootworkController" type="Node" parent="."]
+script = ExtResource("41_footwork")
+profile = ExtResource("42_footwork_profile")
 
 [node name="EquipmentAppearanceController" type="Node" parent="."]
 script = ExtResource("30_outfit_appearance")

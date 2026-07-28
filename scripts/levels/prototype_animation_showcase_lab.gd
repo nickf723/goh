@@ -11,6 +11,7 @@ var visual: StylizedActorVisual
 var feedback: PlayerMotionFeedback
 var climbing: PlayerClimbingController
 var ground_motion: PlayerGroundMotionMotor
+var vertical_motion: PlayerVerticalMotionController
 var dodge_motion: PlayerDodgeController
 var combat_footwork: PlayerCombatFootworkController
 var status_label: Label
@@ -26,6 +27,9 @@ func _ready() -> void:
 		feedback = player.get_node_or_null("PlayerMotionFeedback") as PlayerMotionFeedback
 		climbing = player.get_node_or_null("ClimbingController") as PlayerClimbingController
 		ground_motion = player.get_node_or_null("GroundMotionMotor") as PlayerGroundMotionMotor
+		vertical_motion = (
+			player.get_node_or_null("VerticalMotionController") as PlayerVerticalMotionController
+		)
 		dodge_motion = player.get_node_or_null("PlayerDodgeController") as PlayerDodgeController
 		combat_footwork = (
 			player.get_node_or_null("CombatFootworkController") as PlayerCombatFootworkController
@@ -33,7 +37,7 @@ func _ready() -> void:
 	_configure_player()
 	_build_hud()
 	GameState.set_objective(
-		"Accelerate, stop, reverse, dodge, plant, drive attacks, and inspect Grace's transitions."
+		"Accelerate, jump, cross the apex, land, dodge, plant attacks, and inspect Grace's transitions."
 	)
 
 
@@ -97,6 +101,8 @@ func _reset_lab() -> void:
 		climbing.reset_climbing()
 	if ground_motion != null:
 		ground_motion.reset_motion()
+	if vertical_motion != null:
+		vertical_motion.reset_motion()
 	if dodge_motion != null:
 		dodge_motion.cancel_dodge("lab_reset")
 		dodge_motion.cooldown_timer = 0.0
@@ -192,6 +198,8 @@ func _build_course() -> void:
 	_add_box_body("FootworkLeftPlant", Vector3(0.13, 0.045, 2.2), Vector3(-9.15, 0.035, 0.4), Color(0.24, 0.74, 1.0), false)
 	_add_box_body("FootworkRightPlant", Vector3(0.13, 0.045, 2.2), Vector3(-6.85, 0.035, 0.4), Color(1.0, 0.36, 0.72), false)
 
+	_build_vertical_lane()
+
 	var title := Label3D.new()
 	title.text = "GRACE MOTION SHOWCASE"
 	title.position = Vector3(0, 7.0, -7.2)
@@ -202,7 +210,7 @@ func _build_course() -> void:
 	title.modulate = Color(0.72, 0.88, 1.0)
 	add_child(title)
 	var instructions := Label3D.new()
-	instructions.text = "START • BRAKE • REVERSE • STAIRS   |   DODGE / CHAIN   |   PLANT / DRIVE / SETTLE ATTACKS   |   P POSES • O LIVE • F8 RESET"
+	instructions.text = "GROUND • JUMP / APEX / LAND • DODGE / CHAIN • PLANT / DRIVE / SETTLE • P POSES • O LIVE • F8 RESET"
 	instructions.position = Vector3(0, 6.2, -7.1)
 	instructions.font_size = 17
 	instructions.pixel_size = 0.008
@@ -210,6 +218,66 @@ func _build_course() -> void:
 	instructions.outline_size = 6
 	instructions.modulate = Color(0.86, 0.93, 1.0)
 	add_child(instructions)
+
+
+func _build_vertical_lane() -> void:
+	var lane_x: float = 8.0
+	_add_box_body(
+		"JumpLaunchLine",
+		Vector3(2.8, 0.045, 0.13),
+		Vector3(lane_x, 0.035, 6.0),
+		Color(0.24, 0.86, 1.0),
+		false
+	)
+	_add_box_body(
+		"ShortHopReleaseLine",
+		Vector3(2.8, 0.045, 0.13),
+		Vector3(lane_x, 0.035, 4.9),
+		Color(0.98, 0.48, 0.72),
+		false
+	)
+	_add_box_body(
+		"ApexHeightMarker",
+		Vector3(2.8, 0.06, 0.08),
+		Vector3(lane_x, 1.58, 5.45),
+		Color(1.0, 0.86, 0.28),
+		false
+	)
+
+	# Six ordinary 0.30-unit risers lead to a 2.10-unit drop platform. The final
+	# landing is strong enough to exercise hard-impact presentation without becoming
+	# a lethal fall or requiring debug teleportation.
+	for index: int in range(6):
+		var height: float = float(index + 1) * 0.3
+		_add_box_body(
+			"VerticalLaneStep" + str(index),
+			Vector3(2.0, height, 0.82),
+			Vector3(lane_x, height * 0.5, 3.65 - float(index) * 0.82),
+			Color(0.14, 0.3 + float(index) * 0.035, 0.5)
+		)
+	_add_box_body(
+		"VerticalDropPlatform",
+		Vector3(2.5, 0.3, 1.8),
+		Vector3(lane_x, 1.95, -1.15),
+		Color(0.22, 0.42, 0.66)
+	)
+	_add_box_body(
+		"HardLandingTarget",
+		Vector3(2.8, 0.045, 1.6),
+		Vector3(lane_x, 0.035, -3.05),
+		Color(1.0, 0.42, 0.18),
+		false
+	)
+
+	var label := Label3D.new()
+	label.text = "TAP / HOLD • COYOTE • BUFFER • DROP"
+	label.position = Vector3(lane_x, 2.75, 2.2)
+	label.font_size = 18
+	label.pixel_size = 0.007
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.outline_size = 6
+	label.modulate = Color(0.72, 0.9, 1.0)
+	add_child(label)
 
 
 func _add_box_body(
@@ -251,7 +319,7 @@ func _build_hud() -> void:
 	add_child(layer)
 	var panel := PanelContainer.new()
 	panel.position = Vector2(20, 20)
-	panel.custom_minimum_size = Vector2(760, 196)
+	panel.custom_minimum_size = Vector2(800, 250)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.012, 0.022, 0.043, 0.9)
 	style.border_color = Color(0.3, 0.66, 1.0, 0.85)
@@ -271,6 +339,7 @@ func _update_hud() -> void:
 	var animation: Dictionary = visual.get_animation_debug_data()
 	var feedback_data: Dictionary = feedback.get_debug_data() if feedback != null else {}
 	var motor: Dictionary = ground_motion.get_debug_data() if ground_motion != null else {}
+	var vertical: Dictionary = vertical_motion.get_debug_data() if vertical_motion != null else {}
 	var dodge: Dictionary = dodge_motion.get_debug_data() if dodge_motion != null else {}
 	var footwork: Dictionary = combat_footwork.get_debug_data() if combat_footwork != null else {}
 	var acceleration: Vector3 = animation.get("acceleration", Vector3.ZERO)
@@ -282,6 +351,19 @@ func _update_hud() -> void:
 		+ "     TARGET " + str(motor.get("target_speed", 0.0))
 		+ "     ACTUAL " + str(motor.get("actual_speed", 0.0))
 		+ "     INPUT " + str(motor.get("input_strength", 0.0))
+		+ "\nVERTICAL  •  " + str(vertical.get("state", "grounded")).to_upper()
+		+ "     VELOCITY " + str(vertical.get("vertical_velocity", 0.0))
+		+ "     GRAVITY x" + str(vertical.get("gravity_scale", 1.0))
+		+ "     PHASE " + str(vertical.get("phase_progress", 0.0))
+		+ "     PEAK FALL " + str(vertical.get("peak_downward_speed", 0.0))
+		+ "\nFORGIVENESS  •  COYOTE " + str(vertical.get("coyote", 0.0))
+		+ "     BUFFER " + str(vertical.get("jump_buffer", 0.0))
+		+ "     LAST JUMP " + str(vertical.get("last_jump_kind", "none")).to_upper()
+		+ "     CUT " + ("YES" if bool(vertical.get("jump_cut", false)) else "NO")
+		+ "\nLANDING  •  " + str(vertical.get("landing_kind", "none")).to_upper()
+		+ "     IMPACT " + str(vertical.get("landing_speed", 0.0))
+		+ "     STRENGTH " + str(vertical.get("landing_strength", 0.0))
+		+ "     FEEDBACK " + str(feedback_data.get("last_landing_kind", "none")).to_upper()
 		+ "\nDODGE  •  " + str(dodge.get("phase", "idle")).to_upper()
 		+ "     " + str(dodge.get("kind", "forward")).to_upper()
 		+ "     PROGRESS " + str(dodge.get("progress", 0.0))
@@ -291,20 +373,13 @@ func _update_hud() -> void:
 		+ "\nFOOTWORK  •  " + str(footwork.get("phase", "idle")).to_upper()
 		+ "     " + str(footwork.get("profile_name", "-")).to_upper()
 		+ "     PLANT " + str(footwork.get("plant_foot", "-")).to_upper()
-		+ "     PROGRESS " + str(footwork.get("progress", 0.0))
-		+ "     SPEED " + str(footwork.get("speed", 0.0))
-		+ "\nROOT MOTION  •  REQUEST " + str(footwork.get("requested_distance", 0.0))
-		+ "     EXPECT " + str(footwork.get("expected_distance", 0.0))
-		+ "     ACTUAL " + str(footwork.get("actual_distance", 0.0))
-		+ "     STEER " + str(footwork.get("steering_angle_degrees", 0.0)) + "°"
+		+ "     ROOT " + str(footwork.get("actual_distance", 0.0))
+		+ "/" + str(footwork.get("requested_distance", 0.0))
 		+ "     BLOCKED " + ("YES" if bool(footwork.get("blocked", false)) else "NO")
 		+ "\nINTENT  •  TURN " + str(motor.get("turn_angle_degrees", 0.0)) + "°"
 		+ "     BRAKE " + str(motor.get("braking_weight", 0.0))
 		+ "     REVERSE " + str(motor.get("reversal_weight", 0.0))
 		+ "     ACCEL " + str(snappedf(acceleration.length(), 0.1))
-		+ "\nFEEDBACK  •  FOOT " + str(feedback_data.get("footstep_side", "left")).to_upper()
-		+ "     LIVE EFFECTS " + str(feedback_data.get("live_effects", 0))
-		+ "     LANDING " + str(animation.get("landing", 0.0)) + "s"
 	)
 
 

@@ -3,6 +3,7 @@ extends Node
 const GraceMotionProfile: GroundMotionProfile = preload(
 	"res://data/player/grace_ground_motion_profile.tres"
 )
+const PlayerScene: PackedScene = preload("res://scenes/actors/player/player.tscn")
 
 
 func _ready() -> void:
@@ -76,7 +77,7 @@ func _ready() -> void:
 
 	motor.capture_external_velocity(Vector3(8.0, 0.0, 0.0), "dodge")
 	assert(motor.motion_state == "external_dodge")
-	assert(is_equal_approx(motor.get_debug_data().get("actual_speed", 0.0), 8.0))
+	assert(is_equal_approx(float(motor.get_debug_data().get("actual_speed", 0.0)), 8.0))
 	assert(is_equal_approx(motor.get_attack_momentum_retention(), 0.32))
 	assert(is_equal_approx(motor.get_dodge_exit_momentum_retention(), 0.68))
 
@@ -84,6 +85,33 @@ func _ready() -> void:
 	assert(motor.motion_state == "idle")
 	assert(motor.get_debug_data().has("reversal_weight"))
 	assert(motor.get_debug_data().has("turn_angle_degrees"))
+
+	var shared_player: CharacterBody3D = PlayerScene.instantiate() as CharacterBody3D
+	shared_player.name = "SharedPlayer"
+	shared_player.position = Vector3(0.0, 3.0, 0.0)
+	add_child(shared_player)
+	await get_tree().process_frame
+	var shared_motor: PlayerGroundMotionMotor = (
+		shared_player.get_node_or_null("GroundMotionMotor") as PlayerGroundMotionMotor
+	)
+	var shared_visual: GraceWireMotionVisual = (
+		shared_player.get_node_or_null("GraceVisualV1") as GraceWireMotionVisual
+	)
+	assert(shared_motor != null)
+	assert(shared_motor.profile != null)
+	assert(is_equal_approx(shared_motor.profile.maximum_speed, 5.0))
+	assert(shared_visual != null)
+	shared_motor.get_desired_velocity(Vector2(0.0, -1.0), 5.0, false)
+	shared_motor.resolve_planar_velocity(Vector3.ZERO, Vector3(0.0, 0.0, -5.0), true, 1.0 / 60.0)
+	shared_motor.record_post_move(shared_motor.resolved_velocity)
+	shared_visual.sample_animation_pose(1.0 / 60.0)
+	var visual_debug: Dictionary = shared_visual.get_animation_debug_data()
+	assert(visual_debug.has("ground_motion_state"))
+	assert(visual_debug.has("ground_target_speed"))
+	assert(visual_debug.has("ground_braking_weight"))
+	assert(shared_player.has_method("get_combat_motion_debug_data"))
+	var controller_debug: Dictionary = shared_player.call("get_combat_motion_debug_data") as Dictionary
+	assert(controller_debug.has("ground_motion"))
 
 	print("GROUND_MOTION_MOTOR_SMOKE_TEST: PASS")
 	get_tree().quit(0)

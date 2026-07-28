@@ -13,6 +13,9 @@ var control_pose_sample: Dictionary = {}
 
 
 func _ready() -> void:
+	# WeaponController advances the gameplay attack at the default priority. Sample
+	# Grace afterward, then let the wire renderer and residual blade animator follow.
+	process_priority = 40
 	super._ready()
 	add_to_group("grace_wire_motion_rig")
 	if wire_skeleton_renderer != null:
@@ -63,6 +66,10 @@ func set_wire_outfit(outfit_id: String) -> void:
 
 func get_animation_debug_data() -> Dictionary:
 	var debug_data: Dictionary = super.get_animation_debug_data()
+	var right_hand_position: Vector3 = control_pose_sample.get(
+		"right_hand_position",
+		Vector3.ZERO
+	)
 	debug_data["rig_mode"] = "wire_skeleton"
 	debug_data["control_pose_id"] = str(control_pose_sample.get("profile_id", ""))
 	debug_data["control_pose_phase"] = str(control_pose_sample.get("phase", "idle"))
@@ -70,9 +77,7 @@ func get_animation_debug_data() -> Dictionary:
 		float(control_pose_sample.get("phase_weight", 0.0)),
 		0.01
 	)
-	debug_data["right_hand_drive"] = (
-		control_pose_sample.get("right_hand_position", Vector3.ZERO) as Vector3
-	).length()
+	debug_data["right_hand_drive"] = right_hand_position.length()
 	if wire_skeleton_renderer != null:
 		var wire_data: Dictionary = wire_skeleton_renderer.get_debug_data()
 		var grounding: Dictionary = wire_data.get("grounding", {}) as Dictionary

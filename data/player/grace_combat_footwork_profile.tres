@@ -17,3 +17,5 @@ minimum_motion_duration = 0.05
 maximum_motion_duration = 0.45
 pose_strength = 1.0
 pose_response = 22.0
+direction_alignment_strength = 0.9
+maximum_visual_alignment_degrees = 72.0

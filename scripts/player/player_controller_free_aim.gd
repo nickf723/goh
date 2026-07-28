@@ -1,9 +1,14 @@
 extends "res://scripts/player/player_controller.gd"
 
+const GameplayEffectAccessFreeAimScript = preload(
+	"res://scripts/effects/gameplay_effect_access.gd"
+)
+
 @export_range(0.0, 1.0, 0.01) var unlocked_cast_max_upward_component: float = 0.45
 
 var combat_motion_velocity: Vector3 = Vector3.ZERO
 var combat_motion_timer: float = 0.0
+var dodge_exit_pending: bool = false
 
 @onready var aerial_locomotion: PlayerAerialLocomotion = get_node_or_null("AerialLocomotion") as PlayerAerialLocomotion
 @onready var metal_tether_controller: Node = get_node_or_null("MetalTetherController")
@@ -41,6 +46,7 @@ func begin_combat_motion(direction: Vector3, distance: float, duration: float) -
 	horizontal_direction.y = 0.0
 	if horizontal_direction.length() <= 0.01:
 		return
+	dodge_exit_pending = false
 	combat_motion_timer = duration
 	var desired_velocity: Vector3 = horizontal_direction.normalized() * (distance / duration)
 	var existing_velocity := Vector3(velocity.x, 0.0, velocity.z)
@@ -59,6 +65,7 @@ func cancel_combat_motion() -> void:
 func _physics_process(delta: float) -> void:
 	if defense_controller != null and defense_controller.is_hit_reaction_active():
 		cancel_combat_motion()
+		dodge_exit_pending = false
 		velocity = defense_controller.get_hit_reaction_velocity()
 		if ground_motion_motor != null:
 			ground_motion_motor.capture_external_velocity(velocity, "hit")
@@ -71,28 +78,34 @@ func _physics_process(delta: float) -> void:
 		return
 	if riding_controller != null and riding_controller.should_handle_locomotion():
 		cancel_combat_motion()
+		dodge_exit_pending = false
 		if riding_controller.process_locomotion(delta):
 			return
 	if swimming_controller != null and swimming_controller.should_handle_locomotion():
 		cancel_combat_motion()
+		dodge_exit_pending = false
 		if swimming_controller.process_locomotion(delta):
 			return
 	if climbing_controller != null:
 		climbing_controller.update_climb_detection()
 		if climbing_controller.should_handle_locomotion():
 			cancel_combat_motion()
+			dodge_exit_pending = false
 			if climbing_controller.process_locomotion(delta):
 				return
 	if metal_tether_controller != null and metal_tether_controller.has_method("should_handle_locomotion") and bool(metal_tether_controller.call("should_handle_locomotion")):
 		cancel_combat_motion()
+		dodge_exit_pending = false
 		if bool(metal_tether_controller.call("process_locomotion", delta)):
 			return
 	if aerial_locomotion != null and aerial_locomotion.flight_active:
 		cancel_combat_motion()
+		dodge_exit_pending = false
 		if aerial_locomotion.process_locomotion(delta):
 			return
 	if dodge_controller != null and dodge_controller.is_dodge_active():
 		cancel_combat_motion()
+		dodge_exit_pending = true
 		var dodge_velocity: Vector3 = dodge_controller.get_dodge_velocity()
 		if ground_motion_motor != null:
 			ground_motion_motor.capture_external_velocity(dodge_velocity, "dodge")
@@ -108,6 +121,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if is_defeated:
 		cancel_combat_motion()
+		dodge_exit_pending = false
 		if ground_motion_motor != null:
 			ground_motion_motor.reset_motion()
 		super._physics_process(delta)
@@ -132,12 +146,19 @@ func _physics_process(delta: float) -> void:
 func _process_standard_motion(delta: float) -> void:
 	if is_defeated:
 		velocity = Vector3.ZERO
+		dodge_exit_pending = false
 		if ground_motion_motor != null:
 			ground_motion_motor.reset_motion()
 		move_and_slide()
 		return
 	var requested: Vector3 = _get_requested_ground_velocity()
 	var current := Vector3(velocity.x, 0.0, velocity.z)
+	if dodge_exit_pending:
+		var retention: float = ground_motion_motor.get_dodge_exit_momentum_retention() if ground_motion_motor != null else 0.68
+		current *= retention
+		velocity.x = current.x
+		velocity.z = current.z
+		dodge_exit_pending = false
 	var resolved: Vector3 = requested
 	if ground_motion_motor != null:
 		resolved = ground_motion_motor.resolve_planar_velocity(current, requested, is_on_floor(), delta)
@@ -167,7 +188,10 @@ func _get_requested_ground_velocity() -> Vector3:
 	var configured_speed: float = move_speed
 	if ground_motion_motor != null:
 		configured_speed = ground_motion_motor.get_configured_maximum_speed(move_speed)
-	var effective_speed: float = GameplayEffectAccessScript.modify_float("movement_speed", configured_speed) * movement_multiplier
+	var effective_speed: float = GameplayEffectAccessFreeAimScript.modify_float(
+		"movement_speed",
+		configured_speed
+	) * movement_multiplier
 	if ground_motion_motor != null:
 		return ground_motion_motor.get_desired_velocity(input_vector, effective_speed, has_lock_on_target())
 	if input_vector.length() <= 0.01:
@@ -195,6 +219,7 @@ func get_combat_motion_debug_data() -> Dictionary:
 	return {
 		"combat_motion": snapped(combat_motion_timer, 0.01),
 		"combat_velocity": combat_motion_velocity,
+		"dodge_exit_pending": dodge_exit_pending,
 		"step_up": step_up_controller.get_debug_data() if step_up_controller != null else {},
 		"ground_motion": ground_motion_motor.get_debug_data() if ground_motion_motor != null else {},
 	}

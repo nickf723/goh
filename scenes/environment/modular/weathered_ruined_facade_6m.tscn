@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/modular_outdoor_environment_piece.gd" id="1_piece"]
+
+[node name="WeatheredRuinedFacade6m" type="Node3D"]
+script = ExtResource("1_piece")
+piece_id = "weathered_ruined_facade_6m"
+display_name = "Weathered Ruined Facade 6m"
+category = "architecture"
+piece_type = "ruined_facade"
+footprint = Vector3(6.2, 3.9, 0.85)
+requires_collision = true
+variant_seed = 11

@@ -60,6 +60,13 @@ func _ready() -> void:
 	vertical.apply_gravity(1.0 / 60.0, 18.0)
 	assert(actor.velocity.y >= -GraceVerticalProfile.terminal_fall_speed)
 
+	# A ledge departure has no authored jump apex. Near-zero airborne velocity should
+	# enter a fall immediately so coyote time remains forgiving without adding float.
+	vertical.reset_motion()
+	actor.velocity.y = 0.0
+	vertical.prepare_frame(1.0 / 60.0, false, false)
+	assert(vertical.vertical_state == "falling")
+
 	vertical.reset_motion()
 	assert(vertical.begin_debug_jump(4.5))
 	vertical.jump_hold_elapsed = GraceVerticalProfile.minimum_hold_seconds
@@ -146,10 +153,12 @@ func _ready() -> void:
 	assert(shared_vertical.vertical_state in ["launch", "rising"])
 	visual.sample_animation_pose(1.0)
 	wire.sample_now(1.0)
+	assert(visual.presentation_state == "jump")
 	assert(wire.has_finite_pose())
 	var launch_debug: Dictionary = visual.get_animation_debug_data()
 	assert(str(launch_debug.get("vertical_motion_state", "")) in ["launch", "rising"])
 	assert(float(launch_debug.get("vertical_velocity", 0.0)) > 0.0)
+	assert(bool(launch_debug.get("vertical_visual_override", false)))
 
 	player.position = Vector3(0.0, 3.2, 0.0)
 	player.velocity = Vector3(0.0, -7.5, 0.0)
@@ -171,9 +180,11 @@ func _ready() -> void:
 
 	visual.sample_animation_pose(1.0 / 60.0)
 	wire.sample_now(1.0)
+	assert(visual.presentation_state == "landing")
 	var landing_debug: Dictionary = visual.get_animation_debug_data()
 	assert(landing_debug.has("vertical_landing_kind"))
 	assert(landing_debug.has("vertical_landing_strength"))
+	assert(bool(landing_debug.get("vertical_visual_override", false)))
 	assert(wire.has_finite_pose())
 	var controller_debug: Dictionary = player.call("get_combat_motion_debug_data") as Dictionary
 	assert(controller_debug.has("vertical_motion"))

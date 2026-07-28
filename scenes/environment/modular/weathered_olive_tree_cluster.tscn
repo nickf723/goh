@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/modular_outdoor_environment_piece.gd" id="1_piece"]
+
+[node name="WeatheredOliveTreeCluster" type="Node3D"]
+script = ExtResource("1_piece")
+piece_id = "weathered_olive_tree_cluster"
+display_name = "Weathered Olive Tree Cluster"
+category = "vegetation"
+piece_type = "olive_tree_cluster"
+footprint = Vector3(4.2, 5.5, 4.2)
+requires_collision = false
+variant_seed = 19

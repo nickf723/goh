@@ -1,0 +1,66 @@
+[gd_scene load_steps=9 format=3]
+
+[sub_resource type="StandardMaterial3D" id="Material_shaft"]
+albedo_color = Color(0.16, 0.07, 0.045, 1)
+metallic = 0.35
+roughness = 0.48
+
+[sub_resource type="StandardMaterial3D" id="Material_blade"]
+albedo_color = Color(0.96, 0.3, 0.08, 1)
+metallic = 0.72
+roughness = 0.22
+emission_enabled = true
+emission = Color(1, 0.16, 0.025, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="StandardMaterial3D" id="Material_accent"]
+albedo_color = Color(1, 0.78, 0.2, 1)
+metallic = 0.58
+roughness = 0.24
+emission_enabled = true
+emission = Color(1, 0.48, 0.06, 1)
+emission_energy_multiplier = 1.8
+
+[sub_resource type="BoxMesh" id="Mesh_shaft"]
+size = Vector3(0.085, 0.085, 2.25)
+
+[sub_resource type="BoxMesh" id="Mesh_collar"]
+size = Vector3(0.24, 0.18, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_spear_tip"]
+size = Vector3(0.16, 0.08, 0.62)
+
+[sub_resource type="BoxMesh" id="Mesh_axe_blade"]
+size = Vector3(0.56, 0.08, 0.38)
+
+[sub_resource type="BoxMesh" id="Mesh_back_hook"]
+size = Vector3(0.34, 0.07, 0.22)
+
+[node name="PrototypeEmberHalberdRig" type="Node3D"]
+
+[node name="Shaft" type="MeshInstance3D" parent="."]
+position = Vector3(0.12, 0, -0.78)
+mesh = SubResource("Mesh_shaft")
+material_override = SubResource("Material_shaft")
+
+[node name="Collar" type="MeshInstance3D" parent="."]
+position = Vector3(0.12, 0, -1.75)
+mesh = SubResource("Mesh_collar")
+material_override = SubResource("Material_accent")
+
+[node name="SpearTip" type="MeshInstance3D" parent="."]
+position = Vector3(0.12, 0, -2.08)
+mesh = SubResource("Mesh_spear_tip")
+material_override = SubResource("Material_blade")
+
+[node name="AxeBlade" type="MeshInstance3D" parent="."]
+position = Vector3(0.37, 0, -1.84)
+rotation_degrees = Vector3(0, 24, 0)
+mesh = SubResource("Mesh_axe_blade")
+material_override = SubResource("Material_blade")
+
+[node name="BackHook" type="MeshInstance3D" parent="."]
+position = Vector3(-0.12, 0, -1.78)
+rotation_degrees = Vector3(0, -32, 0)
+mesh = SubResource("Mesh_back_hook")
+material_override = SubResource("Material_accent")

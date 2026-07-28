@@ -101,6 +101,37 @@ func _ready() -> void:
 	assert(not footwork.blocked)
 	assert(footwork.motion_phase == "settle")
 
+	# Repeat the same curve in only three coarse frames. Interval integration should
+	# preserve authored travel instead of overshooting because one frame spans most
+	# of the plant or drive section.
+	assert(footwork.begin_attack(
+		opening_cut,
+		Vector3.FORWARD,
+		weapon.get_attack_speed(),
+		Vector3.ZERO,
+		opening_cut.movement_duration
+	))
+	var coarse_position: Vector3 = Vector3.ZERO
+	var coarse_frame_count: int = 3
+	var coarse_delta: float = footwork.motion_duration / float(coarse_frame_count)
+	for _coarse_frame: int in range(coarse_frame_count):
+		var coarse_before: Vector3 = coarse_position
+		var coarse_velocity: Vector3 = footwork.sample_root_velocity(coarse_delta)
+		coarse_position += coarse_velocity * coarse_delta
+		footwork.record_post_move(coarse_before, coarse_position, coarse_delta)
+	assert(not footwork.is_root_motion_active())
+	assert(absf(coarse_position.length() - opening_cut.movement_distance) < 0.04)
+
+	# Reset the footwork sample while keeping the same gameplay attack alive so the
+	# visual windup and strike can be compared deterministically.
+	assert(footwork.begin_attack(
+		opening_cut,
+		Vector3.FORWARD,
+		weapon.get_attack_speed(),
+		Vector3.ZERO,
+		opening_cut.movement_duration
+	))
+
 	var attack_speed: float = weapon.get_attack_speed()
 	var startup: float = opening_cut.get_startup_duration(attack_speed)
 	var active: float = opening_cut.get_active_duration(attack_speed)
@@ -156,6 +187,7 @@ func _ready() -> void:
 	assert(footwork.motion_direction.x > before_steering.x)
 	assert(footwork.steering_angle_degrees > 0.0)
 	assert(footwork.steering_angle_degrees <= GraceFootworkProfile.maximum_steering_degrees + 0.1)
+	assert(weapon.attack_forward_override.distance_to(footwork.motion_direction) < 0.001)
 
 	weapon.cancel_current_attack("blocking test reset")
 	GameState.set_stat("stamina", 100)

@@ -11,6 +11,9 @@ const WeaponCharacterPoseCatalogScript = preload(
 @onready var ground_motion_motor: PlayerGroundMotionMotor = (
 	get_parent().get_node_or_null("GroundMotionMotor") as PlayerGroundMotionMotor
 )
+@onready var dodge_motion_controller: PlayerDodgeController = (
+	get_parent().get_node_or_null("PlayerDodgeController") as PlayerDodgeController
+)
 
 var control_pose_sample: Dictionary = {}
 var motion_accent_root_position: Vector3 = Vector3.ZERO
@@ -19,8 +22,8 @@ var motion_accent_body_rotation: Vector3 = Vector3.ZERO
 
 
 func _ready() -> void:
-	# WeaponController advances gameplay first. Grace then samples body intent, the
-	# wire skeleton follows her, and the residual blade animator runs last.
+	# Gameplay controllers advance first. Grace samples their intent, the wire
+	# skeleton follows her, and the residual blade animator runs last.
 	process_priority = 40
 	super._ready()
 	add_to_group("grace_wire_motion_rig")
@@ -29,11 +32,13 @@ func _ready() -> void:
 
 
 func sample_animation_pose(delta: float) -> void:
-	_remove_ground_motion_accent()
+	_remove_motion_accent()
 	control_pose_sample = _resolve_control_pose_sample()
 	super.sample_animation_pose(delta)
 	_pose_controlled_hands(delta)
 	_apply_ground_motion_accent()
+	_apply_dodge_motion_accent()
+	_apply_dodge_iframe_highlight()
 	sync_animation_anchors()
 
 
@@ -94,6 +99,17 @@ func get_animation_debug_data() -> Dictionary:
 		debug_data["ground_turn_angle"] = float(ground_motion.get("turn_angle_degrees", 0.0))
 		debug_data["ground_braking_weight"] = float(ground_motion.get("braking_weight", 0.0))
 		debug_data["ground_reversal_weight"] = float(ground_motion.get("reversal_weight", 0.0))
+	if dodge_motion_controller != null:
+		var dodge_motion: Dictionary = dodge_motion_controller.get_debug_data()
+		debug_data["dodge_phase"] = str(dodge_motion.get("phase", "idle"))
+		debug_data["dodge_progress"] = float(dodge_motion.get("progress", 0.0))
+		debug_data["dodge_kind"] = str(dodge_motion.get("kind", "forward"))
+		debug_data["dodge_speed"] = float(dodge_motion.get("speed", 0.0))
+		debug_data["dodge_iframe"] = bool(dodge_motion.get("iframe", false))
+		debug_data["dodge_iframe_weight"] = float(dodge_motion.get("iframe_weight", 0.0))
+		debug_data["dodge_chain_count"] = int(dodge_motion.get("chain_count", 0))
+		debug_data["dodge_chain_ready"] = bool(dodge_motion.get("chain_ready", false))
+		debug_data["dodge_buffered_follow_up"] = str(dodge_motion.get("buffered_follow_up", ""))
 	if wire_skeleton_renderer != null:
 		var wire_data: Dictionary = wire_skeleton_renderer.get_debug_data()
 		var grounding: Dictionary = wire_data.get("grounding", {}) as Dictionary
@@ -137,7 +153,7 @@ func _pose_controlled_hands(delta: float) -> void:
 	pose_node(right_hand, right_rotation, right_position, delta, response)
 
 
-func _remove_ground_motion_accent() -> void:
+func _remove_motion_accent() -> void:
 	if visual_root != null:
 		visual_root.position -= motion_accent_root_position
 		visual_root.rotation -= motion_accent_root_rotation
@@ -150,6 +166,8 @@ func _remove_ground_motion_accent() -> void:
 
 func _apply_ground_motion_accent() -> void:
 	if ground_motion_motor == null or not control_pose_sample.is_empty():
+		return
+	if dodge_motion_controller != null and dodge_motion_controller.is_dodge_active():
 		return
 	if presentation_state not in ["idle", "locomotion"]:
 		return
@@ -164,11 +182,67 @@ func _apply_ground_motion_accent() -> void:
 	motion_accent_root_rotation.z = -local_direction.x * (0.045 * turning + 0.035 * reversal)
 	motion_accent_body_rotation.x = -0.025 * acceleration + 0.075 * braking - 0.035 * reversal
 	motion_accent_body_rotation.y = -local_direction.x * (0.055 * turning + 0.08 * reversal)
+	_apply_motion_accent()
+
+
+func _apply_dodge_motion_accent() -> void:
+	if dodge_motion_controller == null or not dodge_motion_controller.is_dodge_active():
+		return
+	if not control_pose_sample.is_empty():
+		return
+	var profile: DodgeMotionProfile = dodge_motion_controller.profile
+	var progress: float = dodge_motion_controller.get_normalized_progress()
+	var phase: String = dodge_motion_controller.get_dodge_phase()
+	var pose_weight: float = dodge_motion_controller.get_visual_pose_weight()
+	var local_direction: Vector3 = dodge_motion_controller.dodge_direction
+	if actor != null:
+		local_direction = actor.global_transform.basis.inverse() * local_direction
+
+	var launch_compression: float = profile.launch_compression if profile != null else 0.05
+	var landing_compression: float = profile.landing_compression if profile != null else 0.08
+	var body_lean: float = profile.body_lean_radians if profile != null else 0.18
+	var launch_weight: float = 1.0 - smoothstep(0.0, maxf(dodge_motion_controller.get_launch_end(), 0.01), progress)
+	var landing_weight: float = 0.0
+	if phase in ["landing", "recovery"]:
+		landing_weight = smoothstep(
+			dodge_motion_controller.get_travel_end(),
+			1.0,
+			progress
+		)
+
+	motion_accent_root_position.y = -launch_compression * launch_weight - landing_compression * landing_weight
+	motion_accent_root_rotation.z = -local_direction.x * body_lean * 0.55 * pose_weight
+	motion_accent_body_rotation.x = -local_direction.z * body_lean * pose_weight
+	motion_accent_body_rotation.y = -local_direction.x * body_lean * 0.35 * pose_weight
+	_apply_motion_accent()
+
+
+func _apply_motion_accent() -> void:
 	if visual_root != null:
 		visual_root.position += motion_accent_root_position
 		visual_root.rotation += motion_accent_root_rotation
 	if body_root != null:
 		body_root.rotation += motion_accent_body_rotation
+
+
+func _apply_dodge_iframe_highlight() -> void:
+	if wire_skeleton_renderer == null:
+		return
+	var weight: float = 0.0
+	var peak_energy: float = 2.15
+	if dodge_motion_controller != null:
+		weight = dodge_motion_controller.get_iframe_visual_weight()
+		if dodge_motion_controller.profile != null:
+			peak_energy = dodge_motion_controller.profile.iframe_emission_multiplier
+	var energy: float = lerpf(1.35, peak_energy, weight)
+	for material: StandardMaterial3D in [
+		wire_skeleton_renderer.center_material,
+		wire_skeleton_renderer.left_material,
+		wire_skeleton_renderer.right_material,
+		wire_skeleton_renderer.joint_material,
+	]:
+		if material != null:
+			material.emission_energy_multiplier = energy
 
 
 func _sync_anchor_transform(

@@ -4,7 +4,7 @@ The modular environment kit is the first production-facing bridge between proced
 
 ## Scope
 
-The v1 **Weathered Cloister** kit contains:
+The original **Weathered Cloister** family contains:
 
 ```text
 weathered_stone_floor_4m
@@ -21,6 +21,18 @@ weathered_wall_sconce
 weathered_water_channel_4m
 ```
 
+The **Weathered Village Outdoor** extension adds:
+
+```text
+weathered_village_road_4m
+weathered_low_wall_4m
+weathered_ruined_corner_4m
+weathered_ruined_facade_6m
+weathered_timber_fence_4m
+weathered_rubble_cluster
+weathered_olive_tree_cluster
+```
+
 Each asset is a reusable `.tscn` under `scenes/environment/modular/`. The catalog at `scripts/environment/modular_environment_catalog.gd` is the canonical lookup and validation owner.
 
 ## Visual target
@@ -28,23 +40,23 @@ Each asset is a reusable `.tscn` under `scenes/environment/modular/`. The catalo
 This is still stylized low-poly prototype art, but it is no longer raw debug geometry. Pieces use:
 
 - layered silhouettes rather than single boxes;
-- shared weathered stone, wet stone, timber, metal, moss, glow, and water materials;
+- shared weathered stone, wet stone, plaster, earth, timber, metal, moss, foliage, glow, and water materials;
 - world-space color variation to reduce flat surfaces;
 - continuous hidden collision beneath visual breakup where needed;
-- architectural trim, masonry courses, braces, slats, hoops, moss, and localized lighting;
-- consistent four-meter architecture dimensions.
+- architectural trim, masonry courses, braces, slats, hoops, roots, rubble, and localized lighting;
+- consistent four-meter construction dimensions with a six-meter ruined façade.
 
-The kit deliberately stops before imported production meshes, authored UV textures, decals, lightmaps, or final art direction.
+The kit deliberately stops before imported production meshes, authored UV textures, decals, lightmaps, foliage LODs, or final art direction.
 
 ## Ownership boundary
 
 The reusable kit owns:
 
-- repeated architecture and prop scenes;
+- repeated architecture, terrain-edge vocabulary, vegetation clusters, and prop scenes;
 - collision and pivots;
 - material identity;
 - catalog lookup and validation;
-- benchmark sets for scale, camera, joins, lighting, and authored-scene integration.
+- benchmark sets for scale, camera, joins, lighting, outdoor density, and authored-scene integration.
 
 Authored levels still own:
 
@@ -65,7 +77,7 @@ scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn
 
 The **Weathered Cloister** is a coherent walkable set, not an asset grid. It demonstrates a continuous entrance, cloister walks, water channel, masonry walls, columns, timber frames, warm sconces, raised stairs, an operable iron gate, and a small prop gallery.
 
-## Story-integrated benchmark
+## Interior story benchmark
 
 ```text
 scenes/levels/prototypes/prototype_drowned_bell_v1.tscn
@@ -73,9 +85,20 @@ scripts/levels/drowned_bell_benchmark_remaster_pass.gd
 docs/drowned_chapel_benchmark_remaster_v1_test.md
 ```
 
-The **Drowned Chapel Benchmark** applies the same kit to a complete persistent quest. Repeated visible architecture is modular, while the existing authored shell remains as continuous support collision. This preserves the finished quest and Global Playability guarantees while testing modular floors, walls, arches, pillars, timber frames, sconces, water transitions, presentation pedestals, and physical props under real exploration pressure.
+The **Drowned Chapel Benchmark** applies the kit to a complete persistent quest. Repeated visible architecture is modular, while the existing authored shell remains as continuous support collision. The memorial arcade, bell frame, rose window, pool shape, and quest machinery remain bespoke.
 
-The memorial arcade, bell frame, rose window, pool shape, and quest machinery remain bespoke. This is the intended boundary: common construction repeats, landmarks remember where they are.
+## Outdoor story benchmark
+
+```text
+scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn
+scripts/levels/ruined_village_outdoor_remaster_pass.gd
+data/set_layouts/ruined_village_outdoor_remaster_v1.json
+docs/ruined_village_approach_v1_test.md
+```
+
+The **Ruined Village Outdoor Remaster** proves the same pipeline across a broad route with long sightlines, branching elemental crossings, open combat, terrain grades, ruined homes, vegetation, and a distant church landmark. Roads and ruined-building presentation reuse the original support terrain and foundations. Low walls and fences retain physical collision, while rubble and olive clusters remain nonblocking dressing.
+
+The outdoor layout also carries protected routes, interaction zones, a combat clearing, and landmark zones through the shared readability auditor. This keeps the village broad and legible rather than turning the road into a decorated corridor.
 
 ## Promotion rule
 
@@ -83,4 +106,4 @@ Add a new kit piece only when at least two authored spaces need the same structu
 
 ## Next use
 
-The next environment milestone should apply the proven kit to a larger existing route, preferably the Church Trial or Ruined Village Approach. That second story-integrated application should reveal which additions are genuinely reusable, such as corners, ruined wall variants, ceiling or vault pieces, railings, doors, and terrain-to-architecture transitions.
+The interior and outdoor benchmarks now cover the first reusable production loop. Perform a focused friction review before expanding the catalog again. Future authored content should reuse these pieces and add only patterns proven necessary by a real quest, town, dungeon, or Wilds landmark.

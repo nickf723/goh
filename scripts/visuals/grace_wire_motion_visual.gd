@@ -27,6 +27,7 @@ var motion_accent_left_leg_position: Vector3 = Vector3.ZERO
 var motion_accent_left_leg_rotation: Vector3 = Vector3.ZERO
 var motion_accent_right_leg_position: Vector3 = Vector3.ZERO
 var motion_accent_right_leg_rotation: Vector3 = Vector3.ZERO
+var footwork_alignment_yaw_degrees: float = 0.0
 
 
 func _ready() -> void:
@@ -130,6 +131,10 @@ func get_animation_debug_data() -> Dictionary:
 		debug_data["footwork_requested_distance"] = float(footwork.get("requested_distance", 0.0))
 		debug_data["footwork_actual_distance"] = float(footwork.get("actual_distance", 0.0))
 		debug_data["footwork_blocked"] = bool(footwork.get("blocked", false))
+		debug_data["footwork_alignment_yaw"] = snappedf(
+			footwork_alignment_yaw_degrees,
+			0.1
+		)
 	if wire_skeleton_renderer != null:
 		var wire_data: Dictionary = wire_skeleton_renderer.get_debug_data()
 		var grounding: Dictionary = wire_data.get("grounding", {}) as Dictionary
@@ -194,6 +199,7 @@ func _remove_motion_accent() -> void:
 	motion_accent_left_leg_rotation = Vector3.ZERO
 	motion_accent_right_leg_position = Vector3.ZERO
 	motion_accent_right_leg_rotation = Vector3.ZERO
+	footwork_alignment_yaw_degrees = 0.0
 
 
 func _apply_ground_motion_accent() -> void:
@@ -259,16 +265,9 @@ func _apply_combat_footwork_accent(delta: float) -> void:
 	var sample: Dictionary = combat_footwork_controller.get_visual_pose()
 	if sample.is_empty():
 		return
-	var strength: float = (
-		combat_footwork_controller.profile.pose_strength
-		if combat_footwork_controller.profile != null
-		else 1.0
-	)
-	var response: float = (
-		combat_footwork_controller.profile.pose_response
-		if combat_footwork_controller.profile != null
-		else 22.0
-	)
+	var footwork_profile: CombatFootworkProfile = combat_footwork_controller.profile
+	var strength: float = footwork_profile.pose_strength if footwork_profile != null else 1.0
+	var response: float = footwork_profile.pose_response if footwork_profile != null else 22.0
 	var root_position: Vector3 = (
 		sample.get("root_position", Vector3.ZERO) as Vector3
 	) * strength
@@ -287,6 +286,34 @@ func _apply_combat_footwork_accent(delta: float) -> void:
 	var right_leg_rotation: Vector3 = (
 		sample.get("right_leg_rotation", Vector3.ZERO) as Vector3
 	) * strength
+
+	# Moving attacks can travel away from the actor's current camera-facing yaw.
+	# Rotate only the visual body toward the committed attack heading, preserving
+	# camera and collision orientation while keeping feet, hands, blade, and hit
+	# geometry on the same readable line.
+	if actor != null:
+		var local_direction: Vector3 = (
+			actor.global_transform.basis.orthonormalized().inverse()
+			* combat_footwork_controller.motion_direction
+		)
+		local_direction.y = 0.0
+		if local_direction.length_squared() > 0.0001:
+			local_direction = local_direction.normalized()
+			var desired_yaw: float = atan2(-local_direction.x, -local_direction.z)
+			var alignment_strength: float = (
+				footwork_profile.direction_alignment_strength
+				if footwork_profile != null
+				else 0.9
+			)
+			var maximum_yaw: float = deg_to_rad(
+				footwork_profile.maximum_visual_alignment_degrees
+				if footwork_profile != null
+				else 72.0
+			)
+			var alignment_yaw: float = clampf(desired_yaw, -maximum_yaw, maximum_yaw)
+			alignment_yaw *= clampf(alignment_strength, 0.0, 1.0)
+			root_rotation.y += alignment_yaw
+			footwork_alignment_yaw_degrees = rad_to_deg(alignment_yaw)
 
 	# Root and leg targets deliberately replace locomotion bob and stride during an
 	# attack. This is what makes a planted foot remain planted instead of continuing

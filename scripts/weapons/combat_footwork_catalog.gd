@@ -368,6 +368,17 @@ const POSITION_PARTS: Array[String] = [
 	"right_leg_position",
 ]
 
+const ALL_POSE_PARTS: Array[String] = [
+	"root_rotation",
+	"body_rotation",
+	"left_leg_rotation",
+	"right_leg_rotation",
+	"root_position",
+	"body_position",
+	"left_leg_position",
+	"right_leg_position",
+]
+
 
 static func has_profile(profile_id: String) -> bool:
 	return profile_id != "" and PROFILES.has(profile_id)
@@ -471,7 +482,9 @@ static func sample_attack_pose(
 		"phase_weight": float(phase.get("weight", 0.0)),
 	}
 	for part_id: String in ROTATION_PARTS:
-		sample[part_id] = _degrees_to_radians(_sample_profile_vector(profile, part_id, phase))
+		sample[part_id] = _degrees_to_radians(
+			_sample_profile_vector(profile, part_id, phase)
+		)
 	for part_id: String in POSITION_PARTS:
 		sample[part_id] = _sample_profile_vector(profile, part_id, phase)
 	return sample
@@ -492,8 +505,8 @@ static func validate_catalog() -> Array[String]:
 			if float(profile.get(speed_field, -1.0)) < 0.0:
 				failures.append(profile_id + " has invalid " + speed_field)
 		for prefix: String in ["windup_", "strike_", "recovery_"]:
-			for part_id: String in ROTATION_PARTS + POSITION_PARTS:
-				var field_name: String = prefix + part_id
+			for part_id: String in ALL_POSE_PARTS:
+				var field_name: String = _get_profile_field_name(prefix, part_id)
 				var value: Variant = profile.get(field_name, null)
 				if not value is Vector3 or not (value as Vector3).is_finite():
 					failures.append(profile_id + " has invalid " + field_name)
@@ -538,9 +551,18 @@ static func _sample_profile_vector(
 	part_id: String,
 	phase: Dictionary
 ) -> Vector3:
-	var windup: Vector3 = profile.get("windup_" + part_id, Vector3.ZERO)
-	var strike: Vector3 = profile.get("strike_" + part_id, Vector3.ZERO)
-	var recovery: Vector3 = profile.get("recovery_" + part_id, Vector3.ZERO)
+	var windup: Vector3 = profile.get(
+		_get_profile_field_name("windup_", part_id),
+		Vector3.ZERO
+	)
+	var strike: Vector3 = profile.get(
+		_get_profile_field_name("strike_", part_id),
+		Vector3.ZERO
+	)
+	var recovery: Vector3 = profile.get(
+		_get_profile_field_name("recovery_", part_id),
+		Vector3.ZERO
+	)
 	var weight: float = clampf(float(phase.get("weight", 0.0)), 0.0, 1.0)
 	match str(phase.get("phase", "idle")):
 		"startup":
@@ -551,6 +573,11 @@ static func _sample_profile_vector(
 			return strike.lerp(recovery, weight)
 		_:
 			return Vector3.ZERO
+
+
+static func _get_profile_field_name(prefix: String, part_id: String) -> String:
+	var suffix: String = "_degrees" if ROTATION_PARTS.has(part_id) else ""
+	return prefix + part_id + suffix
 
 
 static func _degrees_to_radians(degrees: Vector3) -> Vector3:

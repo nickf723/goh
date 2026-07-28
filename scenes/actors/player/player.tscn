@@ -63,7 +63,7 @@ material_override = ExtResource("2_mpktj")
 mesh = SubResource("CapsuleMesh_qhqgy")
 
 [node name="GraceVisualV1" parent="." instance=ExtResource("9_grace")]
-position = Vector3(0, -1, 0)
+position = Vector3(0, -0.92, 0)
 
 [node name="SpatialProfileController" type="Node" parent="."]
 script = ExtResource("34_spatial_controller")

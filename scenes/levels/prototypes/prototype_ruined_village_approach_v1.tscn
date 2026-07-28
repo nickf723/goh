@@ -18,6 +18,7 @@
 [ext_resource type="Script" path="res://scripts/presentation/lightning_arc_renderer.gd" id="16_arc_renderer"]
 [ext_resource type="Script" path="res://scripts/weather/storm_lightning_attractor.gd" id="17_storm_attractor"]
 [ext_resource type="Script" path="res://scripts/perception/perception_stimulus_manager.gd" id="18_stimulus_manager"]
+[ext_resource type="Script" path="res://scripts/levels/ruined_village_outdoor_remaster_pass.gd" id="19_outdoor_remaster"]
 
 [node name="PrototypeRuinedVillageApproach" type="Node3D"]
 script = ExtResource("1_director")
@@ -40,6 +41,9 @@ reload_message = "Returning to the church-ground checkpoint..."
 
 [node name="TraversalGrade" type="Node" parent="."]
 script = ExtResource("6_traversal")
+
+[node name="OutdoorRemasterPass" type="Node" parent="."]
+script = ExtResource("19_outdoor_remaster")
 
 [node name="SaveWorldSync" type="Node" parent="."]
 script = ExtResource("7_sync")

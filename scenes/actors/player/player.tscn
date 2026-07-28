@@ -37,6 +37,8 @@
 [ext_resource type="Resource" path="res://data/player/grace_spatial_profile.tres" id="35_spatial_profile"]
 [ext_resource type="Script" path="res://scripts/player/player_step_up_controller.gd" id="36_step_up"]
 [ext_resource type="Script" path="res://scripts/visuals/player_weapon_control_animator.gd" id="37_weapon_control"]
+[ext_resource type="Script" path="res://scripts/player/player_ground_motion_motor.gd" id="38_ground_motion"]
+[ext_resource type="Resource" path="res://data/player/grace_ground_motion_profile.tres" id="39_ground_profile"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.46
@@ -75,6 +77,10 @@ profile = ExtResource("35_spatial_profile")
 
 [node name="StepUpController" type="Node" parent="."]
 script = ExtResource("36_step_up")
+
+[node name="GroundMotionMotor" type="Node" parent="."]
+script = ExtResource("38_ground_motion")
+profile = ExtResource("39_ground_profile")
 
 [node name="EquipmentAppearanceController" type="Node" parent="."]
 script = ExtResource("30_outfit_appearance")

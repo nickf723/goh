@@ -301,6 +301,11 @@ func get_debug_data() -> Dictionary:
 func _on_attack_started(attack: WeaponAttackDefinition) -> void:
 	if attack == null or active_attack == attack or not can_handle_attack(attack):
 		return
+	# The shared player routes grounded attacks through this controller before the
+	# signal is emitted. This fallback exists for other actors, but must never pull
+	# an aerial technique into a ground-plant pose or ground root-motion path.
+	if actor != null and not actor.is_on_floor():
+		return
 	var direction: Vector3 = -actor.global_transform.basis.z if actor != null else Vector3.FORWARD
 	if weapon_controller != null and weapon_controller.has_method("get_attack_forward"):
 		direction = weapon_controller.call("get_attack_forward") as Vector3
@@ -375,6 +380,10 @@ func _apply_steering_direction(requested_direction: Vector3, delta: float) -> vo
 	var turn_weight: float = minf(1.0, maximum_frame_turn / turn_angle)
 	motion_direction = motion_direction.slerp(blended_direction, turn_weight).normalized()
 	steering_angle_degrees = rad_to_deg(original_motion_direction.angle_to(motion_direction))
+	# Keep root travel and combat geometry on one heading. The total bend remains
+	# capped by the footwork profile, so this cannot become unrestricted homing.
+	if weapon_controller != null:
+		weapon_controller.attack_forward_override = motion_direction
 
 
 func _direction_from_input(input_vector: Vector2) -> Vector3:

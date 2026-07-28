@@ -12,6 +12,7 @@ var feedback: PlayerMotionFeedback
 var climbing: PlayerClimbingController
 var ground_motion: PlayerGroundMotionMotor
 var dodge_motion: PlayerDodgeController
+var combat_footwork: PlayerCombatFootworkController
 var status_label: Label
 var pose_index: int = -1
 
@@ -26,9 +27,14 @@ func _ready() -> void:
 		climbing = player.get_node_or_null("ClimbingController") as PlayerClimbingController
 		ground_motion = player.get_node_or_null("GroundMotionMotor") as PlayerGroundMotionMotor
 		dodge_motion = player.get_node_or_null("PlayerDodgeController") as PlayerDodgeController
+		combat_footwork = (
+			player.get_node_or_null("CombatFootworkController") as PlayerCombatFootworkController
+		)
 	_configure_player()
 	_build_hud()
-	GameState.set_objective("Accelerate, stop, reverse, dodge, recover, fight, and inspect Grace's transitions.")
+	GameState.set_objective(
+		"Accelerate, stop, reverse, dodge, plant, drive attacks, and inspect Grace's transitions."
+	)
 
 
 func _process(_delta: float) -> void:
@@ -95,6 +101,8 @@ func _reset_lab() -> void:
 		dodge_motion.cancel_dodge("lab_reset")
 		dodge_motion.cooldown_timer = 0.0
 		dodge_motion.chain_count = 0
+	if combat_footwork != null:
+		combat_footwork.cancel_footwork("lab_reset")
 	if player != null:
 		player.global_position = Vector3(0, 1.1, 8.0)
 		player.rotation = Vector3.ZERO
@@ -175,6 +183,15 @@ func _build_course() -> void:
 	_add_box_body("SideDodgeLeft", Vector3(0.13, 0.045, 2.3), Vector3(-3.0, 0.035, -7.45), Color(0.24, 0.74, 1.0), false)
 	_add_box_body("SideDodgeRight", Vector3(0.13, 0.045, 2.3), Vector3(3.0, 0.035, -7.45), Color(1.0, 0.36, 0.72), false)
 
+	# The western lane isolates attack footwork. The three lines correspond to the
+	# plant, drive, and settle sections of the authored root-motion curve.
+	_add_box_body("FootworkPlantLine", Vector3(3.6, 0.045, 0.13), Vector3(-8.0, 0.035, 1.9), Color(0.34, 0.9, 0.58), false)
+	_add_box_body("FootworkDriveLine", Vector3(3.6, 0.045, 0.13), Vector3(-8.0, 0.035, 0.45), Color(1.0, 0.68, 0.2), false)
+	_add_box_body("FootworkSettleLine", Vector3(3.6, 0.045, 0.13), Vector3(-8.0, 0.035, -1.0), Color(0.68, 0.42, 1.0), false)
+	_add_box_body("FootworkStopWall", Vector3(3.8, 1.6, 0.34), Vector3(-8.0, 0.8, -3.2), Color(0.48, 0.12, 0.2))
+	_add_box_body("FootworkLeftPlant", Vector3(0.13, 0.045, 2.2), Vector3(-9.15, 0.035, 0.4), Color(0.24, 0.74, 1.0), false)
+	_add_box_body("FootworkRightPlant", Vector3(0.13, 0.045, 2.2), Vector3(-6.85, 0.035, 0.4), Color(1.0, 0.36, 0.72), false)
+
 	var title := Label3D.new()
 	title.text = "GRACE MOTION SHOWCASE"
 	title.position = Vector3(0, 7.0, -7.2)
@@ -185,7 +202,7 @@ func _build_course() -> void:
 	title.modulate = Color(0.72, 0.88, 1.0)
 	add_child(title)
 	var instructions := Label3D.new()
-	instructions.text = "START • BRAKE • REVERSE • FIGURE 8 • STAIRS   |   DODGE / CHAIN / ATTACK / CAST / GUARD   |   P POSES • O LIVE • F8 RESET"
+	instructions.text = "START • BRAKE • REVERSE • STAIRS   |   DODGE / CHAIN   |   PLANT / DRIVE / SETTLE ATTACKS   |   P POSES • O LIVE • F8 RESET"
 	instructions.position = Vector3(0, 6.2, -7.1)
 	instructions.font_size = 17
 	instructions.pixel_size = 0.008
@@ -234,7 +251,7 @@ func _build_hud() -> void:
 	add_child(layer)
 	var panel := PanelContainer.new()
 	panel.position = Vector2(20, 20)
-	panel.custom_minimum_size = Vector2(700, 168)
+	panel.custom_minimum_size = Vector2(760, 196)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.012, 0.022, 0.043, 0.9)
 	style.border_color = Color(0.3, 0.66, 1.0, 0.85)
@@ -255,6 +272,7 @@ func _update_hud() -> void:
 	var feedback_data: Dictionary = feedback.get_debug_data() if feedback != null else {}
 	var motor: Dictionary = ground_motion.get_debug_data() if ground_motion != null else {}
 	var dodge: Dictionary = dodge_motion.get_debug_data() if dodge_motion != null else {}
+	var footwork: Dictionary = combat_footwork.get_debug_data() if combat_footwork != null else {}
 	var acceleration: Vector3 = animation.get("acceleration", Vector3.ZERO)
 	status_label.text = (
 		"ANIMATION  •  " + str(animation.get("presentation_state", "idle")).to_upper()
@@ -270,11 +288,16 @@ func _update_hud() -> void:
 		+ "     SPEED " + str(dodge.get("speed", 0.0))
 		+ "     I-FRAME " + ("YES" if bool(dodge.get("iframe", false)) else "NO")
 		+ "     CHAIN " + str(dodge.get("chain_count", 0))
-		+ "\nWINDOWS  •  ATTACK " + ("OPEN" if bool(dodge.get("attack_cancel_ready", false)) else "-")
-		+ "     CAST " + ("OPEN" if bool(dodge.get("cast_cancel_ready", false)) else "-")
-		+ "     GUARD " + ("OPEN" if bool(dodge.get("guard_cancel_ready", false)) else "-")
-		+ "     NEXT DODGE " + ("OPEN" if bool(dodge.get("chain_ready", false)) else "-")
-		+ "     BUFFER " + str(dodge.get("buffered_follow_up", ""))
+		+ "\nFOOTWORK  •  " + str(footwork.get("phase", "idle")).to_upper()
+		+ "     " + str(footwork.get("profile_name", "-")).to_upper()
+		+ "     PLANT " + str(footwork.get("plant_foot", "-")).to_upper()
+		+ "     PROGRESS " + str(footwork.get("progress", 0.0))
+		+ "     SPEED " + str(footwork.get("speed", 0.0))
+		+ "\nROOT MOTION  •  REQUEST " + str(footwork.get("requested_distance", 0.0))
+		+ "     EXPECT " + str(footwork.get("expected_distance", 0.0))
+		+ "     ACTUAL " + str(footwork.get("actual_distance", 0.0))
+		+ "     STEER " + str(footwork.get("steering_angle_degrees", 0.0)) + "°"
+		+ "     BLOCKED " + ("YES" if bool(footwork.get("blocked", false)) else "NO")
 		+ "\nINTENT  •  TURN " + str(motor.get("turn_angle_degrees", 0.0)) + "°"
 		+ "     BRAKE " + str(motor.get("braking_weight", 0.0))
 		+ "     REVERSE " + str(motor.get("reversal_weight", 0.0))

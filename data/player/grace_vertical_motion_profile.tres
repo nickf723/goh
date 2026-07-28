@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="VerticalMotionProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/player/vertical_motion_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+coyote_seconds = 0.12
+jump_buffer_seconds = 0.12
+launch_velocity_multiplier = 1.0
+jump_release_velocity_multiplier = 0.52
+minimum_hold_seconds = 0.035
+minimum_release_velocity = 0.45
+launch_phase_seconds = 0.08
+rising_gravity_scale = 1.0
+apex_gravity_scale = 0.72
+falling_gravity_scale = 1.18
+jump_cut_gravity_scale = 1.55
+apex_velocity_threshold = 0.65
+terminal_fall_speed = 22.0
+minimum_landing_speed = 2.8
+soft_landing_speed = 4.6
+hard_landing_speed = 8.8
+minimum_landing_pose_seconds = 0.1
+maximum_landing_pose_seconds = 0.28
+launch_compression = 0.065
+rising_extension = 0.035
+apex_float = 0.025
+falling_brace_radians = 0.14
+landing_compression = 0.12
+pose_response = 20.0

@@ -32,6 +32,7 @@ var wire_renderer: AvatarWireSkeletonRenderer
 var camera: Camera3D
 
 var initialized: bool = false
+var stable_actor_instance_id: int = -1
 var baseline_snapshot: Dictionary = {}
 var active_definition: PlayableAvatarDefinition
 var manifestation_remaining: float = 0.0
@@ -101,6 +102,7 @@ func _initialize_manager() -> void:
 		push_error("PlayerAvatarManager: " + last_error)
 		return
 
+	stable_actor_instance_id = actor.get_instance_id()
 	baseline_snapshot = _capture_configuration()
 	active_definition = null
 	manifestation_remaining = 0.0
@@ -108,6 +110,14 @@ func _initialize_manager() -> void:
 	initialized = true
 	last_transition_result = "ready"
 	_apply_anchor_metadata(default_avatar_definition)
+
+
+func refresh_baseline_from_current() -> bool:
+	if not initialized or active_definition != null or transition_in_progress:
+		return false
+	baseline_snapshot = _capture_configuration()
+	last_transition_result = "baseline_refreshed"
+	return not baseline_snapshot.is_empty()
 
 
 func incarnate_by_id(avatar_id: String, force_debug: bool = false) -> bool:
@@ -144,6 +154,9 @@ func incarnate(
 
 	transition_in_progress = true
 	var safety_snapshot: Dictionary = _capture_configuration()
+	# Grace may have changed equipment or selected a different spell since startup.
+	# Capture the current mortal configuration immediately before every incarnation.
+	baseline_snapshot = safety_snapshot
 	var runtime_anchor: Dictionary = _capture_runtime_anchor()
 	var from_avatar_id: String = get_active_avatar_id()
 	avatar_transition_started.emit(from_avatar_id, definition.avatar_id)
@@ -207,7 +220,7 @@ func dismiss_avatar(reason: String = "dismissed") -> bool:
 	last_transition_result = "dismissed"
 	last_error = ""
 	avatar_dismissed.emit(previous_id, reason)
-	_show_message("Grace returns. ")
+	_show_message("Grace returns.")
 	return true
 
 
@@ -239,8 +252,9 @@ func is_avatar_unlocked(definition: PlayableAvatarDefinition) -> bool:
 		return false
 	if definition.required_unlock_id == "":
 		return true
-	if GameState.has_method("has_unlock") and GameState.has_unlock(definition.required_unlock_id):
-		return true
+	if GameState.has_method("has_unlock"):
+		if bool(GameState.call("has_unlock", definition.required_unlock_id)):
+			return true
 	return OS.is_debug_build() and definition.debug_available
 
 
@@ -253,12 +267,10 @@ func get_avatar_definition(avatar_id: String) -> PlayableAvatarDefinition:
 
 func get_avatar_definitions() -> Array[PlayableAvatarDefinition]:
 	var definitions: Array[PlayableAvatarDefinition] = []
-	for definition: PlayableAvatarDefinition in [
-		default_avatar_definition,
-		prototype_avatar_definition,
-	]:
-		if definition != null and not definitions.has(definition):
-			definitions.append(definition)
+	if default_avatar_definition != null:
+		definitions.append(default_avatar_definition)
+	if prototype_avatar_definition != null and not definitions.has(prototype_avatar_definition):
+		definitions.append(prototype_avatar_definition)
 	for definition: PlayableAvatarDefinition in additional_avatar_definitions:
 		if definition != null and not definitions.has(definition):
 			definitions.append(definition)
@@ -297,15 +309,11 @@ func get_manifestation_ratio() -> float:
 
 func get_debug_data() -> Dictionary:
 	var current_camera: Camera3D = get_viewport().get_camera_3d() if is_inside_tree() else null
-	var active_summary: Dictionary = (
-		active_definition.get_debug_summary()
-		if active_definition != null
-		else (
-			default_avatar_definition.get_debug_summary()
-			if default_avatar_definition != null
-			else {}
-		)
-	)
+	var active_summary: Dictionary = {}
+	if active_definition != null:
+		active_summary = active_definition.get_debug_summary()
+	elif default_avatar_definition != null:
+		active_summary = default_avatar_definition.get_debug_summary()
 	return {
 		"initialized": initialized,
 		"active_avatar_id": get_active_avatar_id(),
@@ -313,7 +321,8 @@ func get_debug_data() -> Dictionary:
 		"incarnated": is_incarnated(),
 		"manifestation_remaining": snappedf(manifestation_remaining, 0.01),
 		"manifestation_ratio": snappedf(get_manifestation_ratio(), 0.01),
-		"stable_actor_instance_id": actor.get_instance_id() if actor != null else -1,
+		"stable_actor_instance_id": stable_actor_instance_id,
+		"current_actor_instance_id": actor.get_instance_id() if actor != null else -1,
 		"stable_actor_path": str(actor.get_path()) if actor != null and actor.is_inside_tree() else "",
 		"camera_preserved": camera != null and current_camera == camera,
 		"health_anchor": GameState.get_stat("health"),
@@ -455,7 +464,11 @@ func _restore_configuration(snapshot: Dictionary) -> bool:
 	weapon_controller.equip_weapon(weapon_value as WeaponDefinition)
 	ability_caster.set("loadout", loadout_value as AbilityLoadout)
 	var ability_count: int = (loadout_value as AbilityLoadout).get_equipped_ability_count()
-	var restored_index: int = clampi(int(snapshot.get("ability_index", 0)), 0, maxi(ability_count - 1, 0))
+	var restored_index: int = clampi(
+		int(snapshot.get("ability_index", 0)),
+		0,
+		maxi(ability_count - 1, 0)
+	)
 	ability_caster.set("current_ability_index", restored_index)
 	ability_caster.set("focus_element_index", int(snapshot.get("focus_element_index", 0)))
 	ability_caster.set("focus_spell_index", int(snapshot.get("focus_spell_index", 0)))
@@ -480,10 +493,12 @@ func _restore_runtime_anchor(
 	var should_preserve_transform: bool = definition == null or definition.preserve_world_transform
 	var should_preserve_velocity: bool = definition == null or definition.preserve_velocity
 	var should_preserve_target: bool = definition == null or definition.preserve_lock_on_target
-	if should_preserve_transform:
-		actor.global_transform = runtime_anchor.get("transform", actor.global_transform) as Transform3D
-	if should_preserve_velocity:
-		actor.velocity = runtime_anchor.get("velocity", actor.velocity) as Vector3
+	var transform_value: Variant = runtime_anchor.get("transform", null)
+	var velocity_value: Variant = runtime_anchor.get("velocity", null)
+	if should_preserve_transform and transform_value is Transform3D:
+		actor.global_transform = transform_value
+	if should_preserve_velocity and velocity_value is Vector3:
+		actor.velocity = velocity_value
 	if should_preserve_target:
 		var target: Variant = runtime_anchor.get("lock_on_target", null)
 		actor.set("lock_on_target", target if target == null or is_instance_valid(target) else null)
@@ -516,7 +531,7 @@ func _validate_live_contract(definition: PlayableAvatarDefinition) -> Array[Stri
 		failures.append("ability loadout does not match " + definition.avatar_id)
 	if wire_renderer != null and wire_renderer.active_avatar_id != definition.avatar_id:
 		failures.append("wire presentation does not match " + definition.avatar_id)
-	if actor != null and actor.get_instance_id() != int(_capture_runtime_anchor().get("actor_instance_id", actor.get_instance_id())):
+	if actor == null or actor.get_instance_id() != stable_actor_instance_id:
 		failures.append("stable actor anchor changed")
 	if camera != null and get_viewport().get_camera_3d() != camera:
 		failures.append("player camera ownership changed")
@@ -526,7 +541,7 @@ func _validate_live_contract(definition: PlayableAvatarDefinition) -> Array[Stri
 func _quiesce_actions(reason: String) -> void:
 	if ability_caster != null:
 		if ability_caster.has_method("cancel_ground_targeting"):
-			ability_caster.call("cancel_ground_targeting", false)
+			ability_caster.call("cancel_ground_targeting")
 		if ability_caster.has_method("cancel_charged_firebolt"):
 			ability_caster.call("cancel_charged_firebolt", false)
 		if ability_caster.has_method("close_focus_spell_menu"):

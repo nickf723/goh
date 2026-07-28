@@ -2,6 +2,7 @@ extends Node
 
 const VillageScene: PackedScene = preload("res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn")
 const EncounterData: EncounterDefinition = preload("res://data/encounters/village_square_ambush.tres")
+const OutdoorRemasterFixture = preload("res://scripts/tests/ruined_village_outdoor_remaster_test_fixture.gd")
 
 var failures: Array[String] = []
 var village: Node
@@ -12,11 +13,12 @@ func _ready() -> void:
 	village = VillageScene.instantiate()
 	add_child(village)
 
-	await get_tree().process_frame
-	await get_tree().process_frame
+	for _index: int in range(14):
+		await get_tree().process_frame
 	await get_tree().physics_frame
 
 	validate_level_structure()
+	validate_outdoor_remaster()
 	validate_encounter_definition()
 	validate_two_solution_gate()
 	await validate_water_ice_bridge()
@@ -54,7 +56,7 @@ func validate_level_structure() -> void:
 
 	var geometry: Node = village.get_node_or_null("GeneratedGeometry")
 	if geometry == null or geometry.get_child_count() < 34:
-		failures.append("procedural terrain and traversal ramps did not build the expected density")
+		failures.append("procedural support terrain and traversal ramps did not build the expected density")
 
 	if get_tree().get_nodes_in_group("ruined_village_traversal_ready").size() != 1:
 		failures.append("traversal grading did not finish")
@@ -71,6 +73,15 @@ func validate_level_structure() -> void:
 	var player: Node3D = village.get_node_or_null("Player") as Node3D
 	if player != null and abs(player.rotation_degrees.y) > 0.01:
 		failures.append("Grace must face down the village route on entry")
+
+
+func validate_outdoor_remaster() -> void:
+	var raw_failures: Variant = OutdoorRemasterFixture.call("run", village)
+	if not raw_failures is Array:
+		failures.append("outdoor remaster fixture returned an invalid result")
+		return
+	for failure: Variant in raw_failures as Array:
+		failures.append(str(failure))
 
 
 func validate_encounter_definition() -> void:

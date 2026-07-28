@@ -51,9 +51,15 @@ class_name WeaponAttackDefinition
 @export var recovery_offset: Vector3 = Vector3.ZERO
 
 @export_group("Character Control Pose")
-# Optional authored whole-body pose profile. Empty keeps the legacy weapon-only
+# Optional authored upper-body pose profile. Empty keeps the legacy weapon-only
 # presentation, allowing existing weapons to migrate one moveset at a time.
 @export var character_pose_id: String = ""
+
+@export_group("Combat Footwork")
+# Optional authored lower-body and root-motion style. The movement distance and
+# duration above remain the gameplay contract; this id controls how Grace plants,
+# drives, settles, steers, and distributes that same motion through her body.
+@export var footwork_profile_id: String = ""
 
 
 func get_startup_duration(attack_speed: float = 1.0) -> float:

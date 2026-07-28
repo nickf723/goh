@@ -41,7 +41,6 @@ func process_jump_hover(delta: float) -> void:
 		requested_direction = Vector3.ZERO
 
 	_resolve_horizontal_motion(
-		move_input,
 		requested_direction,
 		move_speed,
 		was_on_floor,
@@ -134,10 +133,14 @@ func process_jump_hover(delta: float) -> void:
 				actor.velocity.y -= gravity_value * delta
 
 	if vertical_motion_controller != null:
-		vertical_motion_controller.note_pre_move_velocity()
 		coyote_timer = vertical_motion_controller.coyote_remaining
 
 	apply_airflow(delta, grounded_airflow_response if was_on_floor else airborne_airflow_response)
+	# Airflow can alter vertical speed immediately before collision. Capture the final
+	# pre-move value so landing class, feedback, and hard-impact presentation agree
+	# with the velocity that actually reached the floor.
+	if vertical_motion_controller != null:
+		vertical_motion_controller.note_pre_move_velocity()
 	if was_on_floor and step_up_controller != null:
 		step_up_controller.try_step_up(
 			Vector3(actor.velocity.x, 0.0, actor.velocity.z),
@@ -194,7 +197,6 @@ func get_debug_data() -> Dictionary:
 
 
 func _resolve_horizontal_motion(
-	move_input: Vector2,
 	requested_direction: Vector3,
 	move_speed: float,
 	was_on_floor: bool,

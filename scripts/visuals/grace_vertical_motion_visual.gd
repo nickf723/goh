@@ -1,6 +1,23 @@
 extends "res://scripts/visuals/grace_wire_motion_visual.gd"
 class_name GraceVerticalMotionVisual
 
+const VERTICAL_STATE_BLOCKERS: Array[String] = [
+	"riding",
+	"swim_surface",
+	"swim_underwater",
+	"climb",
+	"mantle",
+	"defeated",
+	"hit",
+	"dodge",
+	"attack",
+	"guard",
+	"cast",
+	"item",
+	"interact",
+	"flight",
+]
+
 @onready var vertical_motion_controller: PlayerVerticalMotionController = (
 	get_parent().get_node_or_null("VerticalMotionController") as PlayerVerticalMotionController
 )
@@ -27,6 +44,22 @@ func sample_animation_pose(delta: float) -> void:
 	sync_animation_anchors()
 
 
+func resolve_presentation_state() -> String:
+	var inherited_state: String = super.resolve_presentation_state()
+	if vertical_motion_controller == null:
+		return inherited_state
+	if VERTICAL_STATE_BLOCKERS.has(inherited_state):
+		return inherited_state
+	match vertical_motion_controller.vertical_state:
+		"launch", "rising", "apex":
+			return "jump"
+		"falling":
+			return "fall"
+		"landing":
+			return "landing"
+	return inherited_state
+
+
 func get_animation_debug_data() -> Dictionary:
 	var debug_data: Dictionary = super.get_animation_debug_data()
 	if vertical_motion_controller != null:
@@ -42,6 +75,11 @@ func get_animation_debug_data() -> Dictionary:
 		debug_data["vertical_landing_strength"] = float(vertical.get("landing_strength", 0.0))
 		debug_data["vertical_peak_downward_speed"] = float(
 			vertical.get("peak_downward_speed", 0.0)
+		)
+		debug_data["vertical_visual_override"] = (
+			vertical_motion_controller.vertical_state
+			in ["launch", "rising", "apex", "falling", "landing"]
+			and not VERTICAL_STATE_BLOCKERS.has(presentation_state)
 		)
 	return debug_data
 

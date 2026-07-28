@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Grace is temporarily represented by a luminous wire skeleton so movement, combat poses, weapon alignment, grounding, and transition quality can be judged without costume geometry concealing the underlying motion.
+Grace is temporarily represented by a luminous wire skeleton so movement, combat poses, weapon alignment, grounding, avatar identity, and transition quality can be judged without costume geometry concealing the underlying motion.
 
 This is a production-development rig, not Grace's final visual design. The previous `grace_visual_v1.tscn` remains in the repository for later reference and art reintegration.
 
@@ -14,7 +14,7 @@ The shared player scene now instances:
 scenes/actors/player/grace_wire_visual_v1.tscn
 ```
 
-Every scene using the shared player therefore receives the same wire motion rig.
+Every scene using the shared player therefore receives the same wire motion rig and avatar-aware presentation contract.
 
 The rig displays:
 
@@ -23,26 +23,27 @@ The rig displays:
 - two-segment legs with solved knees;
 - hands, ankles, feet, and visible joint markers;
 - left and right limb color separation;
-- outfit identity through wire-palette changes instead of temporary costume meshes;
+- outfit or avatar identity through wire-palette changes;
 - the equipped weapon attached to the animated right-hand orientation.
 
 ## Architecture
 
-`GraceVerticalMotionVisual` extends the wire-motion stack over the existing `StylizedActorVisual` state resolver. Current locomotion, traversal, combat, casting, item, damage, swimming, riding, and defeat states remain authoritative.
+`GraceIncarnationMotionVisual` extends the vertical and wire-motion stack over the existing `StylizedActorVisual` state resolver. Current locomotion, traversal, combat, casting, item, damage, swimming, riding, and defeat states remain authoritative.
 
-`GraceWireSkeletonRenderer` converts the animated control pivots into a canonical 19-joint diagnostic pose. Elbows and knees use a two-bone geometric solve with stable preferred bend directions. Eighteen rendered segments connect the resulting joint set.
+`AvatarWireSkeletonRenderer` extends the canonical 19-joint diagnostic pose with avatar identity and reversible palette state. Elbows and knees still use the shared two-bone geometric solve. Eighteen rendered segments connect the resulting joint set.
 
-The current player-motion stack separates seven layers:
+The current player-motion and avatar stack separates eight layers:
 
-1. `PlayerGroundMotionMotor` resolves ordinary movement intention into planar velocity.
-2. `PlayerVerticalMotionController` resolves jump intention, ascent, apex, fall, and landing state.
-3. `PlayerDodgeController` resolves launch, protected travel, landing, recovery, and follow-up windows.
-4. `PlayerCombatFootworkController` distributes attack travel through plant, drive, and settle root motion.
-5. `CharacterBody3D` remains responsible for collision and physical movement.
-6. `StylizedActorVisual` and the authored pose catalogs resolve presentation targets.
-7. `GraceWireSkeletonRenderer` makes the resulting humanoid motion legible.
+1. `PlayerAvatarManager` applies a mortal or divine identity to the stable player proxy.
+2. `PlayerGroundMotionMotor` resolves ordinary movement intention into planar velocity.
+3. `PlayerVerticalMotionController` resolves jump intention, ascent, apex, fall, and landing state.
+4. `PlayerDodgeController` resolves launch, protected travel, landing, recovery, and follow-up windows.
+5. `PlayerCombatFootworkController` distributes attack travel through plant, drive, and settle root motion.
+6. `CharacterBody3D` remains responsible for collision and physical movement.
+7. `StylizedActorVisual` and the authored pose catalogs resolve presentation targets.
+8. `AvatarWireSkeletonRenderer` makes the resulting humanoid motion and active avatar legible.
 
-A future skinned Grace model can consume the same motion and pose contracts instead of forcing combat and locomotion to be retuned around finished art.
+A future skinned Grace or god model can consume the same motion, avatar, and pose contracts instead of forcing combat and locomotion to be retuned around finished art.
 
 ## Grounding pass
 
@@ -56,7 +57,7 @@ During grounded states, the renderer probes beneath each ankle and toe independe
 - landing compression;
 - guard, dodge, attack, cast, and locomotion poses.
 
-The foot segment can tilt between its ankle and toe probes, which makes surface angle visible without rotating Grace's whole collision body. Corrections are range-limited and smoothed so distant terrain cannot pull a foot downward and minor height changes do not create jitter.
+The foot segment can tilt between its ankle and toe probes, which makes surface angle visible without rotating the whole collision body. Corrections are range-limited and smoothed so distant terrain cannot pull a foot downward and minor height changes do not create jitter.
 
 Ground probing is disabled during jumping, falling, climbing, mantling, swimming, riding, flight, and defeat. Airborne attacks and hit reactions therefore remain airborne rather than having their feet magnetized to the nearest floor.
 
@@ -69,14 +70,14 @@ This is visual grounding only. It does not alter collision, movement, slope hand
 Before an ordinary grounded move, dodge, or authored attack lunge, the controller:
 
 1. detects a mostly vertical obstruction in the requested direction;
-2. verifies that Grace has overhead clearance;
-3. verifies that her capsule can occupy the raised forward position;
+2. verifies that the player has overhead clearance;
+3. verifies that the capsule can occupy the raised forward position;
 4. searches downward for a walkable landing surface;
 5. raises the body by the measured step height before normal movement continues.
 
 The default maximum rise is `0.40` world units, enough for the animation-showcase steps and ordinary architectural stairs while remaining too small to replace jumping or mantling. The shared character also uses a modest floor snap so descending steps remains continuous.
 
-This is gameplay movement rather than visual-only grounding, but it does not change Grace's jump height, collision dimensions, climbing permissions, or combat timings.
+This is gameplay movement rather than visual-only grounding, but it does not change jump height, collision dimensions, climbing permissions, or combat timings.
 
 ## Ground motion motor pass
 
@@ -112,7 +113,7 @@ Buffered Intention → Launch → Rising → Apex → Falling → Landing
 
 The full held jump retains Grace's existing `4.5` launch velocity. Releasing Jump while rising creates a compact short hop. Apex gravity is slightly reduced for readability, while downward gravity becomes stronger after the crest so falling remains decisive.
 
-`GraceVerticalMotionVisual` maps the controller's live state to the wire rig. Launch compresses before extending, the apex releases tension briefly, falling progressively braces the body, and landing strength controls the final absorption. Exact takeoff and landing signals now drive motion rings and the existing camera impulse.
+`GraceVerticalMotionVisual` maps the controller's live state to the wire rig. Launch compresses before extending, the apex releases tension briefly, falling progressively braces the body, and landing strength controls the final absorption. Exact takeoff and landing signals drive motion rings and the existing camera impulse.
 
 Advanced double jump, hover, airflow, flight, and controlled descent extend the same contract instead of maintaining a second unrelated vertical-motion memory. The complete implementation lives in:
 
@@ -155,7 +156,7 @@ The first sword set covers Opening Cut, Returning Cut, Rising Cut, Circular Cut,
 
 ## Combat footwork and root motion pass
 
-The same ten sword attacks now carry lower-body footwork profiles. Their existing movement distance and movement duration remain authoritative, while `CombatFootworkCatalog` reshapes travel into:
+The same ten sword attacks carry lower-body footwork profiles. Their existing movement distance and movement duration remain authoritative, while `CombatFootworkCatalog` reshapes travel into:
 
 ```text
 Plant → Drive → Settle
@@ -171,6 +172,38 @@ The wire rig replaces ordinary stride motion with authored attack-leg targets du
 docs/GRACE_COMBAT_FOOTWORK_ROOT_MOTION_V1.md
 ```
 
+## Divine Incarnation avatar proxy pass
+
+The wire body now supports reversible avatar identity without replacing the mature shared `Player` node.
+
+`PlayerAvatarManager` preserves the same physical actor, camera, lock-on target, world transform, velocity, health, objective, interaction systems, and progression anchor. A `PlayableAvatarDefinition` swaps the active movement profiles, weapon, spells, and wire presentation as one validated transaction.
+
+The first prototype is Ruvia:
+
+- Fire-only current spell mastery;
+- a prototype ember halberd;
+- a more aggressive ground profile;
+- a forward-biased dodge;
+- more committed combat steering;
+- a stronger vertical profile;
+- scarlet, ember, and gold wire presentation.
+
+In debug builds:
+
+```text
+F9 = Ruvia ↔ Grace
+```
+
+The active god travels through the same world body. Dismissing the incarnation restores Grace's pre-incarnation kit at the god's current location and with the current shared health pool.
+
+Invalid or partially applied incarnations roll back. A live watchdog also restores Grace if the active weapon, spells, movement profiles, wire identity, actor instance, or camera no longer match the incarnation contract.
+
+The complete architecture and limitations live in:
+
+```text
+docs/DIVINE_INCARNATION_AVATAR_PROXY_V0_1.md
+```
+
 ## Outfit behavior during the wire phase
 
 `GraceWireEquipmentAppearance` preserves outfit feedback without adding costume meshes over the diagnostic skeleton:
@@ -180,7 +213,9 @@ docs/GRACE_COMBAT_FOOTWORK_ROOT_MOTION_V1.md
 - Apprentice Robe shifts the rig toward violet, cyan, and gold;
 - Ironweave Jacket shifts the rig toward steel and red.
 
-The actual outfit models remain future art work.
+An active avatar palette takes precedence over outfit coloring. Dismissal or rollback restores the captured mortal outfit presentation.
+
+The actual outfit and god models remain future art work.
 
 ## Validation
 
@@ -192,6 +227,7 @@ scenes/tests/ground_motion_motor_smoke_test.tscn
 scenes/tests/dodge_motion_smoke_test.tscn
 scenes/tests/combat_footwork_smoke_test.tscn
 scenes/tests/vertical_motion_smoke_test.tscn
+scenes/tests/avatar_incarnation_smoke_test.tscn
 ```
 
 Together they verify:
@@ -211,8 +247,11 @@ Together they verify:
 - authored pose and footwork coverage for every practice-sword attack;
 - torso, hand, weapon, root, and leg motion changing across windup and strike;
 - attack plant, drive, settle, steering, distance, and wall-block behavior;
+- Divine Incarnation definition validity, atomic swap, stable actor and camera ownership;
+- transform, velocity, lock-on, health, objective, weapon, spell, and profile preservation;
+- Ruvia Fire loadout, halberd rig, avatar palette, dismissal, expiry, and watchdog rollback;
 - air and external velocity handoffs;
-- animation, grounding, step, vertical, weapon-control, dodge, footwork, and motion diagnostics.
+- animation, grounding, step, vertical, weapon-control, dodge, footwork, avatar, and motion diagnostics.
 
 Expected terminal markers:
 
@@ -222,6 +261,7 @@ GROUND_MOTION_MOTOR_SMOKE_TEST: PASS
 DODGE_MOTION_SMOKE_TEST: PASS
 COMBAT_FOOTWORK_SMOKE_TEST: PASS
 VERTICAL_MOTION_SMOKE_TEST: PASS
+AVATAR_INCARNATION_SMOKE_TEST: PASS
 ```
 
 ## Manual review
@@ -248,31 +288,36 @@ Review these in order:
 12. Perform every Light and Heavy sword branch in the western footwork lane.
 13. Watch the support foot, hip drive, hand path, and blade in that order.
 14. Attack into the footwork wall and confirm translation stops without wall shudder.
-15. Attack and dodge up and down stairs, then immediately jump or land.
-16. Climb and mantle the wall, confirming the feet release from ground probing.
-17. Press `P` to cycle deterministic poses and `O` to restore live control.
-18. Use the existing reset action to restore the course.
+15. Press `F9` away from the spawn point and confirm Ruvia appears without a teleport or camera change.
+16. Compare Ruvia's run, jump, dodge, landing, spells, and ember halberd with Grace.
+17. Move elsewhere, change health, and press `F9` again. Grace should return at the current location with current health.
+18. Repeat the swap after locomotion, landing, dodge recovery, and a completed attack.
+19. Attack and dodge up and down stairs, then immediately jump or land.
+20. Climb and mantle the wall, confirming the feet release from ground probing.
+21. Press `P` to cycle deterministic poses and `O` to restore live control.
+22. Use the existing reset action to restore Grace and reset the course.
 
 ## Intentionally unchanged
 
 - player collision dimensions and spatial profile;
-- maximum horizontal movement speed and full-jump launch velocity;
-- weapon damage, hit geometry, timing, and combo behavior;
+- Grace's maximum horizontal movement speed and full-jump launch velocity;
+- sword damage, hit geometry, timing, and combo behavior;
 - authored sword movement distance and duration;
 - dodge balance, spell behavior, and guard balance;
 - climbing, swimming, riding, and sustained-flight rules;
 - fall damage and landing stagger;
-- Grace's final face, body, clothing, hair, and material direction.
+- final Grace and Ruvia character art;
+- final halberd moveset, divine techniques, transformation cinematic, sound, rumble, and production VFX.
 
 ## Next refinement axis
 
-The diagnostic body now has first-pass contracts for grounding, stairs, ground response, jumping, falling, landing, dodge recovery, sword ownership, and combat footwork.
+The diagnostic body now has first-pass contracts for grounding, stairs, ground response, jumping, falling, landing, dodge recovery, sword ownership, combat footwork, and safe avatar identity.
 
 The next coherent sequence is:
 
-1. the first Divine Incarnation avatar using the shared movement contracts;
-2. avatar-control transfer and safe return to Grace;
-3. transition interruption and animation-cancel readability across avatar swaps;
-4. remaining weapon-class hand paths and body weight transfer;
-5. companion and boss control drivers for the same avatar body;
-6. final skinned-character retargeting.
+1. manually validate Grace ↔ Ruvia transition safety;
+2. author Ruvia's dedicated halberd graph, hand paths, and footwork;
+3. separate avatar intent from the player input source through control drivers;
+4. reuse Ruvia as a player-controlled incarnation, AI ally, boss, and cutscene actor;
+5. connect production access to Warlock Mastery and manifestation-resource rules;
+6. replace diagnostic wire avatars with skinned character models and final VFX.

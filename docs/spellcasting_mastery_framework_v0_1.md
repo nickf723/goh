@@ -35,7 +35,7 @@ Every tradition advances through the same four structural stages:
 - `trial`
 - `mastery`
 
-Stages must normally unlock in order. Each stage is represented by a cataloged achievement with an ID such as:
+Stages must normally unlock in order. Each stage is represented by a cataloged achievement-shaped milestone with an ID such as:
 
 ```text
 spellcasting.warlock.initiation
@@ -44,13 +44,19 @@ spellcasting.warlock.trial
 spellcasting.warlock.mastery
 ```
 
-The achievement is stored inside the existing persistent unlock ledger under a namespaced key:
+The milestone is stored inside the existing save-slot unlock ledger under a namespaced key:
 
 ```text
 achievement::spellcasting.warlock.mastery
 ```
 
-This reuses `GameState` save and load behavior instead of creating a second progression save format.
+This reuses `GameState` save and load behavior instead of creating a second progression save format. Every definition and stored row explicitly declares:
+
+```text
+persistence_scope = save_slot
+```
+
+That scope is deliberate. Spellcasting mastery belongs to Grace's current journey and resets with a new run. A future platform or profile achievement bridge may mirror selected mastery milestones without turning story progression into account-global state.
 
 ## Capstone hooks
 
@@ -92,9 +98,9 @@ The resolver only reports compatibility in v0.1. It does not alter cost, cast ti
 - `scripts/progression/spellcasting_tradition_catalog.gd`
   - canonical tradition, stage, capstone, and generated achievement definitions;
 - `scripts/progression/achievement_catalog.gd`
-  - known achievement definitions and validation;
+  - known achievement definitions, save-slot scope metadata, and validation;
 - `scripts/progression/achievement_service.gd`
-  - persistent namespaced achievement ledger over `GameState` unlocks;
+  - namespaced save-slot achievement ledger over `GameState` unlocks;
 - `scripts/progression/spellcasting_mastery_service.gd`
   - sequential progression, mastery rows, capstone readiness, debug mastery, and reset;
 - `scripts/abilities/spellcasting_tradition_resolver.gd`
@@ -119,14 +125,16 @@ The regression verifies:
 - eight traditions and four ordered stages;
 - 32 generated stage achievements;
 - sequential progression and idempotent completion;
-- persistence through the existing unlock ledger;
+- save-slot scope on definitions and stored rows;
+- capture, cleanup, and restoration through the namespaced ledger;
+- isolation from unrelated unlocks;
 - Warlock mastery exposing `divine_incarnation`;
 - debug mastery and clean reset;
 - automatic, explicit, blocked, and exclusive spell compatibility.
 
 ## Intentionally out of scope
 
-- platform achievements;
+- platform or profile-wide achievements;
 - mastery UI or notifications;
 - player-facing unlock conditions and authored trials;
 - tradition-specific cast animation, cost, targeting, or payload transformations;

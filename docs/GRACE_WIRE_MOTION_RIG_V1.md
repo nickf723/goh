@@ -32,19 +32,20 @@ The rig displays:
 
 `GraceWireSkeletonRenderer` converts the animated control pivots into a canonical 19-joint diagnostic pose. Elbows and knees use a two-bone geometric solve with stable preferred bend directions. Eighteen rendered segments connect the resulting joint set.
 
-The rig intentionally separates three layers:
+The current player-motion stack separates four layers:
 
-1. The `CharacterBody3D` remains responsible for collision and movement.
-2. `StylizedActorVisual` remains responsible for state selection and target poses.
-3. `GraceWireSkeletonRenderer` makes the resulting humanoid motion legible.
+1. `PlayerGroundMotionMotor` resolves movement intention into planar velocity.
+2. `CharacterBody3D` remains responsible for collision and physical movement.
+3. `StylizedActorVisual` resolves presentation states and target poses.
+4. `GraceWireSkeletonRenderer` makes the resulting humanoid motion legible.
 
-A future skinned Grace model can consume the same pose contract instead of forcing combat and locomotion to be retuned around finished art.
+A future skinned Grace model can consume the same motion and pose contracts instead of forcing combat and locomotion to be retuned around finished art.
 
 ## Grounding pass
 
 The shared visual baseline is aligned to the bottom of Grace's capsule so the joint spheres no longer begin below a flat floor.
 
-During grounded states, the renderer also probes beneath each ankle and toe independently. A valid floor hit adjusts only that contact point, then recomputes the corresponding knee. This gives the wire rig lightweight adaptation to:
+During grounded states, the renderer probes beneath each ankle and toe independently. A valid floor hit adjusts only that contact point, then recomputes the corresponding knee. This gives the wire rig lightweight adaptation to:
 
 - flat floors;
 - shallow slopes;
@@ -72,11 +73,33 @@ Before an ordinary grounded move, dodge, or authored attack lunge, the controlle
 
 The default maximum rise is `0.40` world units, enough for the animation-showcase steps and ordinary architectural stairs while remaining too small to replace jumping or mantling. The shared character also uses a modest floor snap so descending steps remains continuous.
 
-This is gameplay movement rather than visual-only grounding, but it does not change Grace's speed, jump height, collision dimensions, climbing permissions, or combat timings.
+This is gameplay movement rather than visual-only grounding, but it does not change Grace's jump height, collision dimensions, climbing permissions, or combat timings.
+
+## Ground motion motor pass
+
+Grace's ordinary movement no longer assigns complete horizontal velocity every physics frame. `PlayerGroundMotionMotor` now distinguishes:
+
+- acceleration from rest;
+- cruising at requested speed;
+- braking after input release;
+- sharp turns;
+- 180-degree reversals;
+- analog stick magnitude;
+- lock-on strafing and retreat;
+- air steering and momentum retention;
+- attack, dodge, and hit-reaction handoffs.
+
+Grace keeps the same `5.0` maximum travel speed. Her acceleration is fast enough to preserve responsiveness, while braking is stronger and reversals cross through zero instead of teleporting between opposing velocities.
+
+The wire visual reads the motor's smoothed intent weights for restrained acceleration lean, planted braking, reversal compression, and turn posture. The full implementation and tuning notes live in:
+
+```text
+docs/GRACE_GROUND_MOTION_MOTOR_V1.md
+```
 
 ## Player-driven sword poses
 
-The practice sword no longer supplies nearly all visible motion through a rotating weapon pivot. Each authored sword attack now names a whole-body control profile in `WeaponCharacterPoseCatalog`.
+The practice sword no longer supplies nearly all visible motion through a rotating weapon pivot. Each authored sword attack names a whole-body control profile in `WeaponCharacterPoseCatalog`.
 
 A profile coordinates:
 
@@ -104,35 +127,41 @@ The actual outfit models remain future art work.
 
 ## Validation
 
-The focused regression scene is:
+The rig and integrated combat regression is:
 
 ```text
 scenes/tests/grace_animation_smoke_test.tscn
 ```
 
-It verifies:
+The focused ground-motion regression is:
+
+```text
+scenes/tests/ground_motion_motor_smoke_test.tscn
+```
+
+Together they verify:
 
 - installation on the shared player;
 - all existing presentation states;
 - exactly 19 joints and 18 bone segments;
 - finite joint solutions in every forced pose;
-- correct vertical body ordering;
-- both feet contacting a known flat test floor without penetrating or hovering;
+- both feet contacting a known flat floor without penetrating or hovering;
 - grounding during locomotion and grounded action states;
 - grounding release during climb and mantle states;
-- a measured `0.28`-unit physical step without jumping;
+- a measured physical step without jumping;
 - authored pose coverage for every practice-sword attack;
 - torso, hand, and weapon motion changing across windup and strike;
-- weapon-local rotation remaining subordinate to the character pose;
 - delayed slash-trail activation during the active phase;
-- outfit palette forwarding;
-- weapon-hand orientation synchronization;
-- animation, grounding, step, weapon-control, and motion-feedback diagnostics.
+- analog target-speed shaping;
+- acceleration, braking, turning, and reversal response;
+- air and external velocity handoffs;
+- animation, grounding, step, weapon-control, and motion diagnostics.
 
-Expected terminal marker:
+Expected terminal markers:
 
 ```text
 GraceAnimationSmokeTest: PASS
+GROUND_MOTION_MOTOR_SMOKE_TEST: PASS
 ```
 
 ## Manual review
@@ -145,36 +174,37 @@ scenes/levels/prototypes/prototype_animation_showcase_lab_v1.tscn
 
 Review these in order:
 
-1. Stand still on the runway and confirm both foot joints rest above the surface.
-2. Walk up and down every landing step without jumping.
-3. Start and stop repeatedly. Watch whether the pelvis, spine, knees, and feet settle cleanly.
-4. Run tight circles and reverse direction. Watch torso lean, limb phase continuity, and foot jitter.
-5. Jump from each landing step. Compare small and hard landing compression.
-6. Climb and mantle the wall. Confirm the feet release from ground probing immediately.
-7. Perform the complete Light sequence and watch the torso initiate each direction change.
-8. Perform Heavy from neutral and after Light attacks. Compare overhead, rising, cleaving, thrusting, and orbit poses.
-9. Watch whether the right hand appears to lead the blade while the left arm balances the action.
-10. Confirm slash trails remain absent during anticipation and appear with the actual strike.
-11. Test attacks while moving, dodging, and locked on.
-12. Press `P` to cycle deterministic states and `O` to return to live control.
+1. Stand still and confirm both foot joints rest above the surface.
+2. Accelerate from the green line and compare target speed with actual speed.
+3. Release movement at the orange line and inspect the planted stop.
+4. Reverse at the violet line and watch Grace compress while velocity crosses zero.
+5. Run figure eights around the four blue markers.
+6. Use partial controller input and compare low-speed travel with a full stick.
+7. Walk up and down every landing step without jumping.
+8. Jump from each landing step and compare small and hard landing compression.
+9. Climb and mantle the wall, confirming the feet release from ground probing.
+10. Perform the complete Light and Heavy sword branches while moving.
+11. Enter and exit attacks, dodges, and lock-on strafing without stopping first.
+12. Press `P` to cycle deterministic poses and `O` to restore live control.
 13. Use the existing reset action to restore the course.
 
 ## Intentionally unchanged
 
 - player collision dimensions and spatial profile;
-- movement speed, gravity, and jump values;
+- maximum movement speed, gravity, and jump height;
 - weapon damage, hit geometry, timing, and combo behavior;
+- dodge duration, distance, and invulnerability;
 - spell behavior and costs;
-- camera, lock-on, swimming, riding, climbing, mantling, and recovery mechanics;
+- camera, lock-on targeting, swimming, riding, climbing, mantling, and recovery mechanics;
 - Grace's final face, body, clothing, hair, and material direction.
 
 ## Next refinement axis
 
-With grounding, ordinary stairs, and first-pass sword ownership established, the next pass should tune the motion itself in this order:
+With grounding, stairs, sword ownership, and ground-motion response established, the next pass should proceed in this order:
 
-1. ground acceleration, braking, and directional reversal;
-2. combat footwork and attack-root motion;
-3. dodge startup, travel curve, and recovery control;
-4. remaining weapon-class hand paths and body weight transfer;
-5. jump, fall, and landing continuity;
-6. transition interruption and animation-cancel readability.
+1. combat footwork and attack-root motion curves;
+2. dodge startup, travel curve, and recovery control;
+3. remaining weapon-class hand paths and body weight transfer;
+4. jump, fall, and landing continuity;
+5. transition interruption and animation-cancel readability;
+6. final skinned-character retargeting.

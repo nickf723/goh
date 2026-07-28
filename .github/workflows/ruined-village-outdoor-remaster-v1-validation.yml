@@ -1,0 +1,165 @@
+name: Ruined Village outdoor remaster v1 validation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ruined-village-outdoor-remaster-v1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out validation branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Align canonical feature and capability inventories
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry_path = Path("data/features/feature_registry.json")
+          registry = json.loads(registry_path.read_text(encoding="utf-8"))
+          village = next(row for row in registry["features"] if row["id"] == "ruined_village_approach")
+          village["version"] = "v1.0"
+          village["description"] = (
+              "Outdoor Italy story route combining exploration, environmental storytelling, weapon combat, "
+              "elemental route solving, optional Sound discovery, checkpointing, and direct Church Trial entry, "
+              "now carried by the reusable Weathered Village outdoor kit, Grace spatial profile, protected route "
+              "and combat-space readability contracts, and the original persistent gameplay state."
+          )
+          dependencies = list(village.get("dependencies", []))
+          if "modular_environment_showcase" not in dependencies:
+              dependencies.append("modular_environment_showcase")
+          village["dependencies"] = dependencies
+          controls = list(village.get("controls", []))
+          for control in ["CAMERA", "JUMP"]:
+              if control not in controls:
+                  controls.insert(1 if control == "CAMERA" else 3, control)
+          village["controls"] = controls
+          village["manual_test"] = "docs/ruined_village_approach_v1_test.md"
+          village["limitations"] = [
+              "The outdoor kit remains stylized primitive-based prototype art rather than imported production meshes.",
+              "Broad support terrain and traversal ramps remain authored blockout geometry beneath the modular presentation.",
+              "The playable footprint is compressed while implying a broader village region.",
+              "Current Goblin and Gremlin archetypes stand in for future location-specific enemies.",
+              "The church facade and towers remain bespoke procedural landmarks awaiting a later production-art pass."
+          ]
+          village["timeout_seconds"] = 15
+          registry_path.write_text(json.dumps(registry, indent=2) + "\n", encoding="utf-8")
+
+          capability_path = Path("data/features/capability_inventory.json")
+          capability = json.loads(capability_path.read_text(encoding="utf-8"))
+          capability["updated"] = "2026-07-28"
+          authored = next(row for row in capability["capabilities"] if row["id"] == "authored_environment_composition")
+          for owner in [
+              "scripts/environment/modular_outdoor_environment_piece.gd",
+              "scripts/levels/ruined_village_outdoor_remaster_pass.gd",
+              "data/set_layouts/ruined_village_outdoor_remaster_v1.json"
+          ]:
+              if owner not in authored["owner_files"]:
+                  authored["owner_files"].append(owner)
+          for alias in [
+              "outdoor environment kit",
+              "village road kit",
+              "ruined village remaster",
+              "ruined facade",
+              "terrain transition",
+              "outdoor modular benchmark"
+          ]:
+              if alias not in authored["aliases"]:
+                  authored["aliases"].append(alias)
+          authored["next_use"] = (
+              "The interior and outdoor benchmarks are proven. Run a focused asset-pipeline friction review, then "
+              "prioritize new authored content and add kit pieces only when a real level proves repeated need."
+          )
+          authored["story_reference"] = "The Drowned Bell; Ruined Village Approach"
+          authored["limitations"] = [
+              "The reusable families remain stylized primitive-based benchmarks rather than final imported production art.",
+              "The Weathered Cloister and Weathered Village families do not yet cover every regional material language.",
+              "Terrain sculpting, foliage LODs, decals, lightmaps, and final art direction remain authored production work."
+          ]
+
+          readability = next(row for row in capability["capabilities"] if row["id"] == "player_spatial_profile_and_set_readability")
+          for owner in [
+              "scripts/levels/ruined_village_outdoor_remaster_pass.gd",
+              "data/set_layouts/ruined_village_outdoor_remaster_v1.json",
+              "scripts/tests/ruined_village_outdoor_remaster_test_fixture.gd"
+          ]:
+              if owner not in readability["owner_files"]:
+                  readability["owner_files"].append(owner)
+          for alias in [
+              "outdoor route readability",
+              "vegetation density",
+              "open combat space",
+              "landmark sightline"
+          ]:
+              if alias not in readability["aliases"]:
+                  readability["aliases"].append(alias)
+          readability["next_use"] = (
+              "Reuse the Grace profile and readability-plan contract in future authored spaces. Do not add another "
+              "generic density or clearance framework unless a real level exposes a missing contract."
+          )
+          readability["story_reference"] = "The Drowned Bell; Ruined Village Approach"
+          capability_path.write_text(json.dumps(capability, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Validate repository inventories
+        run: |
+          python scripts/ci/validate_capability_inventory.py
+          python scripts/ci/validate_feature_registry.py
+          git diff --check
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project
+        run: godot --headless --path . --editor --quit
+
+      - name: Test expanded modular catalog
+        run: timeout 75s godot --headless --path . scenes/tests/modular_environment_showcase_smoke_test.tscn
+
+      - name: Test Ruined Village outdoor remaster and gameplay regressions
+        run: timeout 90s godot --headless --path . scenes/tests/ruined_village_approach_smoke_test.tscn
+
+      - name: Test Drowned Bell environment regression
+        run: timeout 75s godot --headless --path . scenes/tests/drowned_bell_environment_smoke_test.tscn
+
+      - name: Boot Ruined Village directly
+        run: timeout 40s godot --headless --path . scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn --quit-after 9
+
+      - name: Run complete registered feature inventory
+        run: python scripts/ci/run_feature_registry.py --godot godot
+
+      - name: Commit verified inventory alignment to main
+        run: |
+          cp data/features/feature_registry.json /tmp/feature_registry.json
+          cp data/features/capability_inventory.json /tmp/capability_inventory.json
+          git config user.name "goh-validation-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          cp /tmp/feature_registry.json data/features/feature_registry.json
+          cp /tmp/capability_inventory.json data/features/capability_inventory.json
+          python scripts/ci/validate_capability_inventory.py
+          python scripts/ci/validate_feature_registry.py
+          git add data/features/feature_registry.json data/features/capability_inventory.json
+          if git diff --cached --quiet; then
+            echo "Canonical inventories already aligned."
+          else
+            git commit -m "Register Ruined Village outdoor remaster v1"
+            git push origin main
+          fi

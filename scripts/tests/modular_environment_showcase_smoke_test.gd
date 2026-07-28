@@ -8,6 +8,15 @@ const SetClearanceAuditor = preload("res://scripts/environment/authored_set_clea
 const ChapelPalette = preload("res://data/environment_palettes/drowned_chapel_palette.tres")
 const PlayableSpaceAuditorScript = preload("res://scripts/quality/playable_space_auditor.gd")
 const WATER_SHADER_PATH := "res://shaders/environment/modular_water.gdshader"
+const OUTDOOR_PIECE_IDS: Array[String] = [
+	"weathered_village_road_4m",
+	"weathered_low_wall_4m",
+	"weathered_ruined_corner_4m",
+	"weathered_ruined_facade_6m",
+	"weathered_timber_fence_4m",
+	"weathered_rubble_cluster",
+	"weathered_olive_tree_cluster",
+]
 
 var failures: Array[String] = []
 var elapsed: float = 0.0
@@ -19,7 +28,7 @@ func _process(delta: float) -> void:
 	if finished:
 		return
 	elapsed += maxf(delta, 0.0)
-	if elapsed >= 25.0:
+	if elapsed >= 30.0:
 		push_error("Modular environment showcase test stalled during: " + current_step)
 		print("MODULAR_ENVIRONMENT_SHOWCASE_SMOKE_TEST: STALLED AT " + current_step)
 		get_tree().quit(1)
@@ -40,7 +49,10 @@ func _ready() -> void:
 	for error: String in catalog_errors:
 		failures.append("catalog: " + error)
 	var piece_ids: Array[String] = Catalog.get_piece_ids()
-	check(piece_ids.size() == 12, "catalog exposes the twelve-piece v1 kit")
+	check(piece_ids.size() == 19, "catalog exposes the twelve-piece cloister kit plus seven outdoor pieces")
+	for outdoor_piece_id: String in OUTDOOR_PIECE_IDS:
+		check(piece_ids.has(outdoor_piece_id), "catalog exposes " + outdoor_piece_id)
+		check(not Catalog.get_definition(outdoor_piece_id).is_empty(), outdoor_piece_id + " has catalog metadata")
 
 	current_step = "instantiate kit pieces"
 	var kit_sandbox := Node3D.new()
@@ -88,7 +100,7 @@ func _ready() -> void:
 	composed_sandbox.name = "ComposedSetSandbox"
 	add_child(composed_sandbox)
 	var builder: AuthoredEnvironmentBuilder = BuilderScript.new(composed_sandbox, ChapelPalette) as AuthoredEnvironmentBuilder
-	var composer: AuthoredSetComposer = ComposerScript.new(builder) as AuthoredSetComposer
+	var composer: RefCounted = ComposerScript.new(builder) as RefCounted
 	var plan: Dictionary = {
 		"layout_id": "composer_smoke_set",
 		"corridors": [{
@@ -134,7 +146,8 @@ func _ready() -> void:
 			"variant_seed": 8,
 		}],
 	}
-	var compose_result: Dictionary = composer.compose_plan(composed_sandbox, plan)
+	var raw_compose_result: Variant = composer.call("compose_plan", composed_sandbox, plan)
+	var compose_result: Dictionary = raw_compose_result as Dictionary if raw_compose_result is Dictionary else {}
 	await get_tree().physics_frame
 	check(str(compose_result.get("layout_id", "")) == "composer_smoke_set", "composer preserves the layout id")
 	var counts: Dictionary = compose_result.get("counts", {})

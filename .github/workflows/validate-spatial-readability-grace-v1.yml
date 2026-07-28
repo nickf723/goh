@@ -1,0 +1,37 @@
+name: Spatial readability and Grace silhouette validation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.2
+          use-dotnet: false
+      - name: Validate repository inventories
+        run: |
+          python scripts/ci/validate_capability_inventory.py
+          python scripts/ci/validate_feature_registry.py
+      - name: Import project
+        run: godot --headless --path . --editor --quit
+      - name: Test Drowned Bell environment and readability
+        run: timeout 90s godot --headless --path . scenes/tests/drowned_bell_environment_smoke_test.tscn
+      - name: Test complete Drowned Bell crypt flow
+        run: timeout 90s godot --headless --path . scenes/tests/drowned_bell_crypt_smoke_test.tscn
+      - name: Test shared player architecture
+        run: timeout 75s godot --headless --path . scenes/tests/architecture_contract_smoke_test.tscn
+      - name: Test global playability
+        run: timeout 75s godot --headless --path . scenes/tests/global_playability_framework_smoke_test.tscn
+      - name: Boot Drowned Bell
+        run: timeout 40s godot --headless --path . scenes/levels/prototypes/prototype_drowned_bell_v1.tscn --quit-after 8
+      - name: Run complete registered feature inventory
+        run: python scripts/ci/run_feature_registry.py --godot godot

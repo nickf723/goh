@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/modular_outdoor_environment_piece.gd" id="1_piece"]
+
+[node name="WeatheredLowWall4m" type="Node3D"]
+script = ExtResource("1_piece")
+piece_id = "weathered_low_wall_4m"
+display_name = "Weathered Low Wall 4m"
+category = "architecture"
+piece_type = "low_wall"
+footprint = Vector3(4.2, 1.3, 0.85)
+requires_collision = true
+variant_seed = 5

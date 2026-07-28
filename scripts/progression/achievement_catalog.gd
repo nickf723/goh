@@ -3,6 +3,8 @@ class_name AchievementCatalog
 
 const SpellcastingTraditionCatalogScript = preload("res://scripts/progression/spellcasting_tradition_catalog.gd")
 
+const PERSISTENCE_SCOPE_SAVE_SLOT: String = "save_slot"
+
 
 static func has_definition(achievement_id: String) -> bool:
 	return not get_definition(achievement_id).is_empty()
@@ -11,16 +13,16 @@ static func has_definition(achievement_id: String) -> bool:
 static func get_definition(achievement_id: String) -> Dictionary:
 	if achievement_id == "":
 		return {}
-	for definition: Dictionary in SpellcastingTraditionCatalogScript.get_achievement_definitions():
-		if str(definition.get("id", "")) == achievement_id:
-			return definition.duplicate(true)
+	for raw_definition: Dictionary in SpellcastingTraditionCatalogScript.get_achievement_definitions():
+		if str(raw_definition.get("id", "")) == achievement_id:
+			return _normalize_definition(raw_definition)
 	return {}
 
 
 static func get_definitions() -> Array[Dictionary]:
 	var definitions: Array[Dictionary] = []
-	for definition: Dictionary in SpellcastingTraditionCatalogScript.get_achievement_definitions():
-		definitions.append(definition.duplicate(true))
+	for raw_definition: Dictionary in SpellcastingTraditionCatalogScript.get_achievement_definitions():
+		definitions.append(_normalize_definition(raw_definition))
 	definitions.sort_custom(_sort_definitions)
 	return definitions
 
@@ -51,10 +53,23 @@ static func validate_catalog() -> Array[String]:
 			errors.append(achievement_id + " has no description")
 		if str(definition.get("type", "")) != "achievement":
 			errors.append(achievement_id + " must use achievement type")
+		if str(definition.get("persistence_scope", "")) != PERSISTENCE_SCOPE_SAVE_SLOT:
+			errors.append(achievement_id + " must declare save-slot persistence")
 		if not definition.get("tags", null) is Array:
 			errors.append(achievement_id + " tags must be an Array")
 
 	return errors
+
+
+static func _normalize_definition(raw_definition: Dictionary) -> Dictionary:
+	var definition: Dictionary = raw_definition.duplicate(true)
+	definition["persistence_scope"] = str(
+		definition.get("persistence_scope", PERSISTENCE_SCOPE_SAVE_SLOT)
+	)
+	definition["platform_achievement_id"] = str(
+		definition.get("platform_achievement_id", "")
+	)
+	return definition
 
 
 static func _sort_definitions(a: Dictionary, b: Dictionary) -> bool:

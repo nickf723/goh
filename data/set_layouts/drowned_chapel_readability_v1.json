@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "layout_id": "drowned_chapel_readability_v1",
+  "profile_id": "grace_default_v1",
+  "purpose": "Protect the chapel's travel lanes, camera breathing room, interactable approaches, and landmark hierarchy.",
+  "ignore_piece_ids": [
+    "weathered_stone_floor_4m",
+    "weathered_stone_wall_4m",
+    "weathered_stone_arch_4m",
+    "weathered_stone_stairs_4m",
+    "weathered_water_channel_4m"
+  ],
+  "routes": [
+    {
+      "id": "NaveGoldenPath",
+      "points": [
+        [0.0, 0.2, 23.4],
+        [-1.1, 0.2, 26.8],
+        [-1.4, 0.2, 31.0],
+        [-1.8, 0.2, 35.0]
+      ],
+      "clear_radius": 1.35,
+      "camera_radius": 2.55,
+      "max_physical_intrusions": 0,
+      "max_visible_modules": 4
+    },
+    {
+      "id": "FloodedSideChapelApproach",
+      "points": [
+        [-0.2, 0.2, 28.5],
+        [2.1, 0.2, 29.4],
+        [4.6, -1.4, 29.5]
+      ],
+      "clear_radius": 1.2,
+      "camera_radius": 2.2,
+      "max_physical_intrusions": 0,
+      "max_visible_modules": 4
+    }
+  ],
+  "zones": [
+    {
+      "id": "MemorialPlaqueApproach",
+      "kind": "interaction",
+      "center": [-5.7, 0.45, 27.0],
+      "radius": 1.8,
+      "max_physical_props": 0,
+      "max_visible_modules": 3
+    },
+    {
+      "id": "BellRopeBreathingRoom",
+      "kind": "landmark",
+      "center": [-1.4, 0.3, 31.0],
+      "radius": 2.4,
+      "max_physical_props": 0,
+      "max_visible_modules": 3
+    },
+    {
+      "id": "BurialMechanismApproach",
+      "kind": "interaction",
+      "center": [4.6, -1.65, 29.5],
+      "radius": 1.8,
+      "max_physical_props": 0,
+      "max_visible_modules": 2
+    },
+    {
+      "id": "TuningPlateApproach",
+      "kind": "interaction",
+      "center": [1.2, 0.45, 33.1],
+      "radius": 1.8,
+      "max_physical_props": 0,
+      "max_visible_modules": 3
+    },
+    {
+      "id": "CryptThresholdApproach",
+      "kind": "interaction",
+      "center": [-1.8, 0.35, 35.0],
+      "radius": 1.9,
+      "max_physical_props": 0,
+      "max_visible_modules": 3
+    },
+    {
+      "id": "BellFrameLandmark",
+      "kind": "landmark",
+      "center": [-1.35, 2.5, 30.65],
+      "radius": 2.5,
+      "max_physical_props": 0,
+      "max_visible_modules": 4
+    },
+    {
+      "id": "RoseWindowLandmark",
+      "kind": "landmark",
+      "center": [2.65, 4.45, 36.1],
+      "radius": 2.2,
+      "max_physical_props": 0,
+      "max_visible_modules": 3
+    }
+  ]
+}

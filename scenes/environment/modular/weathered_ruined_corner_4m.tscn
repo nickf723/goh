@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/modular_outdoor_environment_piece.gd" id="1_piece"]
+
+[node name="WeatheredRuinedCorner4m" type="Node3D"]
+script = ExtResource("1_piece")
+piece_id = "weathered_ruined_corner_4m"
+display_name = "Weathered Ruined Corner 4m"
+category = "architecture"
+piece_type = "ruined_corner"
+footprint = Vector3(4.2, 3, 4.2)
+requires_collision = true
+variant_seed = 7

@@ -9,21 +9,21 @@
 [ext_resource type="Material" path="res://art/materials/characters/grace_leather_v1.tres" id="7_leather"]
 
 [sub_resource type="CylinderMesh" id="Mesh_robe_skirt"]
-top_radius = 0.34
-bottom_radius = 0.58
-height = 1.05
+top_radius = 0.31
+bottom_radius = 0.5
+height = 1.0
 radial_segments = 12
 rings = 1
 
 [sub_resource type="CapsuleMesh" id="Mesh_torso"]
-radius = 0.31
+radius = 0.29
 height = 0.72
 radial_segments = 12
 rings = 4
 
 [sub_resource type="CylinderMesh" id="Mesh_sash"]
-top_radius = 0.37
-bottom_radius = 0.37
+top_radius = 0.34
+bottom_radius = 0.34
 height = 0.13
 radial_segments = 12
 
@@ -52,28 +52,28 @@ radial_segments = 8
 rings = 3
 
 [sub_resource type="CapsuleMesh" id="Mesh_arm"]
-radius = 0.085
+radius = 0.075
 height = 0.68
 radial_segments = 8
 rings = 3
 
 [sub_resource type="CylinderMesh" id="Mesh_cuff"]
-top_radius = 0.105
-bottom_radius = 0.105
+top_radius = 0.095
+bottom_radius = 0.095
 height = 0.12
 radial_segments = 10
 
 [sub_resource type="SphereMesh" id="Mesh_hand"]
-radius = 0.105
-height = 0.21
+radius = 0.095
+height = 0.19
 radial_segments = 10
 rings = 5
 
 [sub_resource type="BoxMesh" id="Mesh_boot"]
-size = Vector3(0.24, 0.22, 0.42)
+size = Vector3(0.22, 0.22, 0.4)
 
 [sub_resource type="BoxMesh" id="Mesh_boot_sole"]
-size = Vector3(0.265, 0.055, 0.445)
+size = Vector3(0.245, 0.055, 0.425)
 
 [sub_resource type="BoxMesh" id="Mesh_sash_tail"]
 size = Vector3(0.17, 0.58, 0.055)

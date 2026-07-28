@@ -52,6 +52,9 @@ jobs:
       - name: Run Grace wire motion rig test
         run: godot --headless --path . res://scenes/tests/grace_animation_smoke_test.tscn
 
+      - name: Run Grace ground motion motor test
+        run: godot --headless --path . res://scenes/tests/ground_motion_motor_smoke_test.tscn
+
       - name: Export Windows v0.1 build
         run: |
           mkdir -p build/windows

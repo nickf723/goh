@@ -70,7 +70,7 @@ Before an ordinary grounded move, dodge, or authored attack lunge, the controlle
 4. searches downward for a walkable landing surface;
 5. raises the body by the measured step height before normal movement continues.
 
-The default maximum rise is `0.36` world units, enough for the animation-showcase steps and ordinary architectural stairs while remaining too small to replace jumping or mantling. The shared character also uses a modest floor snap so descending steps remains continuous.
+The default maximum rise is `0.40` world units, enough for the animation-showcase steps and ordinary architectural stairs while remaining too small to replace jumping or mantling. The shared character also uses a modest floor snap so descending steps remains continuous.
 
 This is gameplay movement rather than visual-only grounding, but it does not change Grace's speed, jump height, collision dimensions, climbing permissions, or combat timings.
 

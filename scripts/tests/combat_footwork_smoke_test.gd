@@ -176,6 +176,7 @@ func _ready() -> void:
 	assert(str(visual_debug.get("footwork_plant_foot", "")) == "right")
 	assert(visual_debug.has("footwork_requested_distance"))
 	assert(visual_debug.has("footwork_actual_distance"))
+	assert(visual_debug.has("footwork_alignment_yaw"))
 
 	weapon.cancel_current_attack("steering test reset")
 	GameState.set_stat("stamina", 100)
@@ -188,6 +189,32 @@ func _ready() -> void:
 	assert(footwork.steering_angle_degrees > 0.0)
 	assert(footwork.steering_angle_degrees <= GraceFootworkProfile.maximum_steering_degrees + 0.1)
 	assert(weapon.attack_forward_override.distance_to(footwork.motion_direction) < 0.001)
+
+	# The collision body and camera may keep their prior yaw during a movement-led
+	# attack. The wire presentation should still turn toward the committed root and
+	# hit direction, capped by the avatar profile rather than rotating without limit.
+	assert(footwork.begin_attack(
+		opening_cut,
+		Vector3.RIGHT,
+		weapon.get_attack_speed(),
+		Vector3.ZERO,
+		opening_cut.movement_duration
+	))
+	weapon.current_attack_elapsed = startup + active * 0.45
+	visual.sample_animation_pose(1.0)
+	wire.sample_now(1.0)
+	var aligned_debug: Dictionary = visual.get_animation_debug_data()
+	var alignment_yaw: float = absf(
+		float(aligned_debug.get("footwork_alignment_yaw", 0.0))
+	)
+	assert(alignment_yaw > 20.0)
+	assert(
+		alignment_yaw
+		<= GraceFootworkProfile.maximum_visual_alignment_degrees
+		* GraceFootworkProfile.direction_alignment_strength
+		+ 0.1
+	)
+	assert(wire.has_finite_pose())
 
 	weapon.cancel_current_attack("blocking test reset")
 	GameState.set_stat("stamina", 100)

@@ -61,6 +61,9 @@ jobs:
       - name: Run Grace combat footwork test
         run: godot --headless --path . res://scenes/tests/combat_footwork_smoke_test.tscn
 
+      - name: Run Grace vertical motion continuity test
+        run: godot --headless --path . res://scenes/tests/vertical_motion_smoke_test.tscn
+
       - name: Export Windows v0.1 build
         run: |
           mkdir -p build/windows

@@ -30,6 +30,9 @@ jobs:
       - name: Validate feature registry
         run: python scripts/ci/validate_feature_registry.py
 
+      - name: Validate capability inventory
+        run: python scripts/ci/validate_capability_inventory.py
+
       - name: Install Godot 4.6 and export templates
         uses: chickensoft-games/setup-godot@v2
         with:
@@ -48,6 +51,9 @@ jobs:
 
       - name: Run registered feature scenes and tests
         run: python scripts/ci/run_feature_registry.py --godot godot
+
+      - name: Run spellcasting mastery foundation test
+        run: godot --headless --path . res://scenes/tests/spellcasting_mastery_smoke_test.tscn
 
       - name: Export Windows v0.1 build
         run: |

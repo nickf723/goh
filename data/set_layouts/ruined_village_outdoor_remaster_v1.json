@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "layout_id": "ruined_village_outdoor_remaster_v1",
+  "profile_id": "grace_default_v1",
+  "purpose": "Second story-integrated modular environment benchmark for roads, ruins, vegetation density, outdoor combat space, and long-range landmark guidance.",
+  "retire_detail_prefixes": [
+    "RuinedHouse",
+    "RubbleCluster",
+    "OliveTree"
+  ],
+  "retire_geometry_prefixes": [
+    "RoadSegment"
+  ],
+  "support_shell_prefixes": [
+    "RuinedHouse"
+  ],
+  "retire_root_nodes": [
+    "THEVANISHEDVILLAGELabel",
+    "VILLAGESQUARELabel",
+    "ABANDONEDARMORYLabel"
+  ],
+  "ignore_piece_ids": [
+    "weathered_village_road_4m",
+    "weathered_olive_tree_cluster"
+  ],
+  "modules": [
+    {"id": "ArrivalRoad00", "piece_id": "weathered_village_road_4m", "position": [0.0, 0.08, 61.0], "scale": [1.45, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 30},
+    {"id": "ArrivalRoad01", "piece_id": "weathered_village_road_4m", "position": [0.0, 0.08, 57.0], "scale": [1.45, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 31},
+    {"id": "ArrivalRoad02", "piece_id": "weathered_village_road_4m", "position": [0.0, 0.08, 53.0], "scale": [1.45, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 32},
+    {"id": "ArrivalRoad03", "piece_id": "weathered_village_road_4m", "position": [0.0, 0.08, 49.0], "scale": [1.45, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 33},
+    {"id": "ArrivalRoad04", "piece_id": "weathered_village_road_4m", "position": [0.0, 0.08, 45.0], "scale": [1.45, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 34},
+    {"id": "ArrivalRoad05", "piece_id": "weathered_village_road_4m", "position": [0.0, 0.08, 41.0], "scale": [1.45, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 35},
+
+    {"id": "ArrivalRampRoad00", "piece_id": "weathered_village_road_4m", "position": [0.0, 0.48, 37.0], "rotation": [0.1745, 0.0, 0.0], "scale": [1.36, 1.0, 1.03], "collision_mode": "support_shell", "variant_seed": 36},
+    {"id": "ArrivalRampRoad01", "piece_id": "weathered_village_road_4m", "position": [0.0, 1.18, 33.0], "rotation": [0.1745, 0.0, 0.0], "scale": [1.36, 1.0, 1.03], "collision_mode": "support_shell", "variant_seed": 37},
+    {"id": "ArrivalRampRoad02", "piece_id": "weathered_village_road_4m", "position": [0.0, 1.88, 29.0], "rotation": [0.1745, 0.0, 0.0], "scale": [1.36, 1.0, 1.03], "collision_mode": "support_shell", "variant_seed": 38},
+    {"id": "ArrivalRampRoad03", "piece_id": "weathered_village_road_4m", "position": [0.0, 2.58, 25.0], "rotation": [0.1745, 0.0, 0.0], "scale": [1.36, 1.0, 1.03], "collision_mode": "support_shell", "variant_seed": 39},
+
+    {"id": "VillageRoad00", "piece_id": "weathered_village_road_4m", "position": [0.0, 3.08, 21.0], "scale": [1.48, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 40},
+    {"id": "VillageRoad01", "piece_id": "weathered_village_road_4m", "position": [0.0, 3.08, 17.0], "scale": [1.48, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 41},
+    {"id": "VillageRoad02", "piece_id": "weathered_village_road_4m", "position": [0.0, 3.08, 13.0], "scale": [1.48, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 42},
+    {"id": "VillageRoad03", "piece_id": "weathered_village_road_4m", "position": [0.0, 3.08, 9.0], "scale": [1.48, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 43},
+    {"id": "VillageRoad04", "piece_id": "weathered_village_road_4m", "position": [0.0, 3.12, 5.0], "scale": [1.48, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 44},
+    {"id": "VillageRoad05", "piece_id": "weathered_village_road_4m", "position": [0.0, 3.18, 1.0], "scale": [1.48, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 45},
+    {"id": "VillageRoad06", "piece_id": "weathered_village_road_4m", "position": [0.0, 3.18, -3.0], "scale": [1.48, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 46},
+    {"id": "VillageRoad07", "piece_id": "weathered_village_road_4m", "position": [0.0, 3.18, -7.0], "scale": [1.48, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 47},
+
+    {"id": "LeftRavineBranch00", "piece_id": "weathered_village_road_4m", "position": [-3.2, 3.18, -9.4], "rotation": [0.0, 0.48, 0.0], "scale": [1.2, 1.0, 1.0], "collision_mode": "support_shell", "variant_seed": 48},
+    {"id": "LeftRavineBranch01", "piece_id": "weathered_village_road_4m", "position": [-7.3, 3.14, -12.0], "rotation": [0.0, 0.28, 0.0], "scale": [1.2, 1.0, 1.0], "collision_mode": "support_shell", "variant_seed": 49},
+    {"id": "RightRavineBranch00", "piece_id": "weathered_village_road_4m", "position": [3.2, 3.18, -9.4], "rotation": [0.0, -0.48, 0.0], "scale": [1.2, 1.0, 1.0], "collision_mode": "support_shell", "variant_seed": 50},
+    {"id": "RightRavineBranch01", "piece_id": "weathered_village_road_4m", "position": [7.3, 3.14, -12.0], "rotation": [0.0, -0.28, 0.0], "scale": [1.2, 1.0, 1.0], "collision_mode": "support_shell", "variant_seed": 51},
+
+    {"id": "ChurchRoad00", "piece_id": "weathered_village_road_4m", "position": [0.0, 8.08, -52.0], "scale": [1.75, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 52},
+    {"id": "ChurchRoad01", "piece_id": "weathered_village_road_4m", "position": [0.0, 8.08, -56.0], "scale": [1.75, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 53},
+    {"id": "ChurchRoad02", "piece_id": "weathered_village_road_4m", "position": [0.0, 8.08, -60.0], "scale": [1.75, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 54},
+    {"id": "ChurchRoad03", "piece_id": "weathered_village_road_4m", "position": [0.0, 8.08, -64.0], "scale": [1.75, 1.0, 1.02], "collision_mode": "support_shell", "variant_seed": 55},
+
+    {"id": "ArrivalFoundationCorner", "piece_id": "weathered_ruined_corner_4m", "position": [8.0, 0.38, 47.0], "rotation": [0.0, 0.17, 0.0], "scale": [1.2, 0.82, 1.0], "collision_mode": "support_shell", "variant_seed": 60},
+    {"id": "NorthWestFacade", "piece_id": "weathered_ruined_facade_6m", "position": [-10.6, 3.22, 28.0], "rotation": [0.0, 1.5708, 0.0], "scale": [1.0, 0.9, 1.0], "collision_mode": "none", "variant_seed": 61},
+    {"id": "NorthWestCorner", "piece_id": "weathered_ruined_corner_4m", "position": [-14.2, 3.22, 31.0], "rotation": [0.0, 3.1416, 0.0], "collision_mode": "none", "variant_seed": 62},
+    {"id": "NorthEastFacade", "piece_id": "weathered_ruined_facade_6m", "position": [10.6, 3.22, 26.0], "rotation": [0.0, -1.5708, 0.0], "scale": [1.0, 0.86, 1.0], "collision_mode": "none", "variant_seed": 63},
+    {"id": "NorthEastCorner", "piece_id": "weathered_ruined_corner_4m", "position": [14.2, 3.22, 29.0], "rotation": [0.0, 0.0, 0.0], "collision_mode": "none", "variant_seed": 64},
+    {"id": "SouthWestFacade", "piece_id": "weathered_ruined_facade_6m", "position": [-13.6, 3.22, 10.0], "rotation": [0.0, 1.5708, 0.0], "scale": [0.94, 0.8, 1.0], "collision_mode": "none", "variant_seed": 65},
+    {"id": "SouthWestCorner", "piece_id": "weathered_ruined_corner_4m", "position": [-17.0, 3.22, 12.0], "rotation": [0.0, 3.1416, 0.0], "scale": [0.9, 0.82, 0.9], "collision_mode": "none", "variant_seed": 66},
+    {"id": "SouthEastFacade", "piece_id": "weathered_ruined_facade_6m", "position": [13.6, 3.22, 11.0], "rotation": [0.0, -1.5708, 0.0], "scale": [0.96, 0.82, 1.0], "collision_mode": "none", "variant_seed": 67},
+    {"id": "SouthEastCorner", "piece_id": "weathered_ruined_corner_4m", "position": [17.0, 3.22, 13.0], "rotation": [0.0, 0.0, 0.0], "scale": [0.9, 0.86, 0.9], "collision_mode": "none", "variant_seed": 68},
+
+    {"id": "ArrivalFenceWest", "piece_id": "weathered_timber_fence_4m", "position": [-8.2, 0.0, 52.5], "rotation": [0.0, 1.5708, 0.0], "collision_mode": "own", "variant_seed": 70},
+    {"id": "ArrivalFenceEast", "piece_id": "weathered_timber_fence_4m", "position": [8.2, 0.0, 52.5], "rotation": [0.0, 1.5708, 0.0], "collision_mode": "own", "variant_seed": 71},
+    {"id": "SquareWallNorthWest", "piece_id": "weathered_low_wall_4m", "position": [-16.2, 3.1, 5.2], "rotation": [0.0, 0.0, 0.0], "collision_mode": "own", "variant_seed": 72},
+    {"id": "SquareWallNorthEast", "piece_id": "weathered_low_wall_4m", "position": [16.2, 3.1, 5.2], "rotation": [0.0, 0.0, 0.0], "collision_mode": "own", "variant_seed": 73},
+    {"id": "SquareWallSouthWest", "piece_id": "weathered_low_wall_4m", "position": [-16.2, 3.1, -6.4], "rotation": [0.0, 0.0, 0.0], "collision_mode": "own", "variant_seed": 74},
+    {"id": "SquareWallSouthEast", "piece_id": "weathered_low_wall_4m", "position": [16.2, 3.1, -6.4], "rotation": [0.0, 0.0, 0.0], "collision_mode": "own", "variant_seed": 75},
+    {"id": "ChurchWallWest", "piece_id": "weathered_low_wall_4m", "position": [-10.0, 8.0, -58.5], "rotation": [0.0, 1.5708, 0.0], "collision_mode": "own", "variant_seed": 76},
+    {"id": "ChurchWallEast", "piece_id": "weathered_low_wall_4m", "position": [10.0, 8.0, -58.5], "rotation": [0.0, 1.5708, 0.0], "collision_mode": "own", "variant_seed": 77},
+
+    {"id": "RubbleNorthWest", "piece_id": "weathered_rubble_cluster", "position": [-8.8, 3.05, 20.0], "rotation": [0.0, 0.2, 0.0], "collision_mode": "none", "variant_seed": 80},
+    {"id": "RubbleNorthEast", "piece_id": "weathered_rubble_cluster", "position": [9.2, 3.05, 19.0], "rotation": [0.0, -0.28, 0.0], "collision_mode": "none", "variant_seed": 81},
+    {"id": "RubbleSquareWest", "piece_id": "weathered_rubble_cluster", "position": [-12.2, 3.15, -5.2], "rotation": [0.0, 0.42, 0.0], "collision_mode": "none", "variant_seed": 82},
+    {"id": "RubbleSquareEast", "piece_id": "weathered_rubble_cluster", "position": [12.4, 3.15, -5.0], "rotation": [0.0, -0.34, 0.0], "collision_mode": "none", "variant_seed": 83},
+
+    {"id": "OliveArrivalWest", "piece_id": "weathered_olive_tree_cluster", "position": [-13.5, 0.0, 62.5], "scale": [0.95, 0.95, 0.95], "collision_mode": "none", "variant_seed": 90},
+    {"id": "OliveArrivalEast", "piece_id": "weathered_olive_tree_cluster", "position": [13.5, 0.0, 63.5], "scale": [0.9, 0.9, 0.9], "collision_mode": "none", "variant_seed": 91},
+    {"id": "OliveVillageWest", "piece_id": "weathered_olive_tree_cluster", "position": [-20.0, 3.0, 23.0], "scale": [0.82, 0.82, 0.82], "collision_mode": "none", "variant_seed": 92},
+    {"id": "OliveVillageEast", "piece_id": "weathered_olive_tree_cluster", "position": [20.0, 3.0, 22.0], "scale": [0.88, 0.88, 0.88], "collision_mode": "none", "variant_seed": 93},
+    {"id": "OliveSquareWest", "piece_id": "weathered_olive_tree_cluster", "position": [-20.5, 3.0, -4.0], "scale": [0.78, 0.78, 0.78], "collision_mode": "none", "variant_seed": 94},
+    {"id": "OliveSquareEast", "piece_id": "weathered_olive_tree_cluster", "position": [20.5, 3.0, -3.0], "scale": [0.82, 0.82, 0.82], "collision_mode": "none", "variant_seed": 95}
+  ],
+  "routes": [
+    {
+      "id": "ArrivalRoadRoute",
+      "points": [[0.0, 0.2, 64.0], [0.0, 0.2, 40.0], [0.0, 3.2, 22.0]],
+      "clear_radius": 1.5,
+      "camera_radius": 3.0,
+      "max_physical_intrusions": 0,
+      "max_visible_modules": 4
+    },
+    {
+      "id": "VillageMainRoad",
+      "points": [[0.0, 3.2, 22.0], [0.0, 3.2, 8.0], [0.0, 3.2, -8.0]],
+      "clear_radius": 1.6,
+      "camera_radius": 3.2,
+      "max_physical_intrusions": 0,
+      "max_visible_modules": 6
+    },
+    {
+      "id": "LeftRavineRoute",
+      "points": [[0.0, 3.2, -8.0], [-10.0, 3.2, -14.0], [-10.0, 3.2, -36.0], [-8.0, 6.0, -46.0]],
+      "clear_radius": 1.45,
+      "camera_radius": 2.8,
+      "max_physical_intrusions": 0,
+      "max_visible_modules": 4
+    },
+    {
+      "id": "RightRavineRoute",
+      "points": [[0.0, 3.2, -8.0], [10.0, 3.2, -14.0], [10.0, 3.2, -36.0], [8.0, 6.0, -46.0]],
+      "clear_radius": 1.45,
+      "camera_radius": 2.8,
+      "max_physical_intrusions": 0,
+      "max_visible_modules": 4
+    },
+    {
+      "id": "ChurchApproachRoute",
+      "points": [[0.0, 6.0, -46.0], [0.0, 8.2, -53.0], [0.0, 8.2, -66.5]],
+      "clear_radius": 1.7,
+      "camera_radius": 3.3,
+      "max_physical_intrusions": 0,
+      "max_visible_modules": 4
+    },
+    {
+      "id": "OptionalMemoryRoute",
+      "points": [[0.0, 3.2, 8.0], [-5.0, 3.2, 6.5], [-10.5, 3.7, 4.8]],
+      "clear_radius": 1.25,
+      "camera_radius": 2.6,
+      "max_physical_intrusions": 0,
+      "max_visible_modules": 6
+    }
+  ],
+  "zones": [
+    {"id": "ArrivalCraterApproach", "kind": "interaction", "center": [2.8, 0.5, 58.0], "radius": 2.1, "max_physical_props": 0, "max_visible_modules": 3},
+    {"id": "LiftedFoundationApproach", "kind": "interaction", "center": [-6.0, 4.0, 17.0], "radius": 2.1, "max_physical_props": 0, "max_visible_modules": 4},
+    {"id": "EmptyHearthApproach", "kind": "interaction", "center": [8.0, 3.8, 14.0], "radius": 2.1, "max_physical_props": 0, "max_visible_modules": 4},
+    {"id": "SoundMemoryApproach", "kind": "interaction", "center": [-10.5, 3.7, 4.8], "radius": 2.2, "max_physical_props": 0, "max_visible_modules": 4},
+    {"id": "VillageSquareCombat", "kind": "combat", "center": [0.0, 3.2, -1.0], "radius": 9.5, "max_physical_props": 0, "max_visible_modules": 6},
+    {"id": "DebrisGateApproach", "kind": "interaction", "center": [10.0, 3.35, -24.5], "radius": 2.5, "max_physical_props": 0, "max_visible_modules": 2},
+    {"id": "IceBridgeApproach", "kind": "interaction", "center": [-10.0, 3.05, -25.5], "radius": 2.5, "max_physical_props": 0, "max_visible_modules": 2},
+    {"id": "ChurchCheckpointApproach", "kind": "interaction", "center": [-6.0, 8.55, -54.0], "radius": 2.2, "max_physical_props": 0, "max_visible_modules": 3},
+    {"id": "ChurchEntranceLandmark", "kind": "landmark", "center": [0.0, 12.0, -71.0], "radius": 5.5, "max_physical_props": 0, "max_visible_modules": 4},
+    {"id": "VillageWellLandmark", "kind": "landmark", "center": [0.0, 4.5, 28.0], "radius": 3.2, "max_physical_props": 0, "max_visible_modules": 4}
+  ]
+}

@@ -18,6 +18,10 @@ var dodge_exit_pending: bool = false
 @onready var riding_controller: PlayerRidingController = get_node_or_null("RidingController") as PlayerRidingController
 @onready var step_up_controller: PlayerStepUpController = get_node_or_null("StepUpController") as PlayerStepUpController
 @onready var ground_motion_motor: PlayerGroundMotionMotor = get_node_or_null("GroundMotionMotor") as PlayerGroundMotionMotor
+@onready var combat_footwork_controller: PlayerCombatFootworkController = (
+	get_node_or_null("CombatFootworkController") as PlayerCombatFootworkController
+)
+@onready var shared_weapon_controller: WeaponController = get_node_or_null("WeaponController") as WeaponController
 
 
 func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
@@ -46,7 +50,29 @@ func begin_combat_motion(direction: Vector3, distance: float, duration: float) -
 	horizontal_direction.y = 0.0
 	if horizontal_direction.length() <= 0.01:
 		return
+
 	dodge_exit_pending = false
+	if (
+		is_on_floor()
+		and combat_footwork_controller != null
+		and shared_weapon_controller != null
+		and shared_weapon_controller.current_attack != null
+		and combat_footwork_controller.can_handle_attack(
+			shared_weapon_controller.current_attack
+		)
+	):
+		var current_planar_velocity := Vector3(velocity.x, 0.0, velocity.z)
+		if combat_footwork_controller.begin_attack(
+			shared_weapon_controller.current_attack,
+			horizontal_direction,
+			shared_weapon_controller.get_attack_speed(),
+			current_planar_velocity,
+			duration
+		):
+			combat_motion_timer = 0.0
+			combat_motion_velocity = Vector3.ZERO
+			return
+
 	combat_motion_timer = duration
 	var desired_velocity: Vector3 = horizontal_direction.normalized() * (distance / duration)
 	var existing_velocity := Vector3(velocity.x, 0.0, velocity.z)
@@ -57,14 +83,16 @@ func begin_combat_motion(direction: Vector3, distance: float, duration: float) -
 		combat_motion_velocity = desired_velocity
 
 
-func cancel_combat_motion() -> void:
+func cancel_combat_motion(reason: String = "cancelled") -> void:
 	combat_motion_timer = 0.0
 	combat_motion_velocity = Vector3.ZERO
+	if combat_footwork_controller != null:
+		combat_footwork_controller.cancel_footwork(reason)
 
 
 func _physics_process(delta: float) -> void:
 	if defense_controller != null and defense_controller.is_hit_reaction_active():
-		cancel_combat_motion()
+		cancel_combat_motion("hit_reaction")
 		dodge_exit_pending = false
 		velocity = defense_controller.get_hit_reaction_velocity()
 		if ground_motion_motor != null:
@@ -77,34 +105,34 @@ func _physics_process(delta: float) -> void:
 		_record_motion()
 		return
 	if riding_controller != null and riding_controller.should_handle_locomotion():
-		cancel_combat_motion()
+		cancel_combat_motion("riding")
 		dodge_exit_pending = false
 		if riding_controller.process_locomotion(delta):
 			return
 	if swimming_controller != null and swimming_controller.should_handle_locomotion():
-		cancel_combat_motion()
+		cancel_combat_motion("swimming")
 		dodge_exit_pending = false
 		if swimming_controller.process_locomotion(delta):
 			return
 	if climbing_controller != null:
 		climbing_controller.update_climb_detection()
 		if climbing_controller.should_handle_locomotion():
-			cancel_combat_motion()
+			cancel_combat_motion("climbing")
 			dodge_exit_pending = false
 			if climbing_controller.process_locomotion(delta):
 				return
 	if metal_tether_controller != null and metal_tether_controller.has_method("should_handle_locomotion") and bool(metal_tether_controller.call("should_handle_locomotion")):
-		cancel_combat_motion()
+		cancel_combat_motion("metal_tether")
 		dodge_exit_pending = false
 		if bool(metal_tether_controller.call("process_locomotion", delta)):
 			return
 	if aerial_locomotion != null and aerial_locomotion.flight_active:
-		cancel_combat_motion()
+		cancel_combat_motion("flight")
 		dodge_exit_pending = false
 		if aerial_locomotion.process_locomotion(delta):
 			return
 	if dodge_controller != null and dodge_controller.is_dodge_active():
-		cancel_combat_motion()
+		cancel_combat_motion("dodge")
 		dodge_exit_pending = true
 		var dodge_velocity: Vector3 = dodge_controller.get_dodge_velocity()
 		if ground_motion_motor != null:
@@ -114,18 +142,22 @@ func _physics_process(delta: float) -> void:
 		_finish_step_up()
 		_record_motion()
 		return
-	if combat_motion_timer <= 0.0:
-		if aerial_locomotion != null and aerial_locomotion.process_locomotion(delta):
-			return
-		_process_standard_motion(delta)
-		return
 	if is_defeated:
-		cancel_combat_motion()
+		cancel_combat_motion("defeated")
 		dodge_exit_pending = false
 		if ground_motion_motor != null:
 			ground_motion_motor.reset_motion()
 		super._physics_process(delta)
 		return
+	if combat_footwork_controller != null and combat_footwork_controller.is_root_motion_active():
+		_process_combat_footwork(delta)
+		return
+	if combat_motion_timer <= 0.0:
+		if aerial_locomotion != null and aerial_locomotion.process_locomotion(delta):
+			return
+		_process_standard_motion(delta)
+		return
+
 	combat_motion_timer -= delta
 	velocity.x = combat_motion_velocity.x
 	velocity.z = combat_motion_velocity.z
@@ -140,7 +172,26 @@ func _physics_process(delta: float) -> void:
 	_finish_step_up()
 	_record_motion()
 	if combat_motion_timer <= 0.0:
-		cancel_combat_motion()
+		combat_motion_timer = 0.0
+		combat_motion_velocity = Vector3.ZERO
+
+
+func _process_combat_footwork(delta: float) -> void:
+	var footwork_velocity: Vector3 = combat_footwork_controller.sample_root_velocity(delta)
+	velocity.x = footwork_velocity.x
+	velocity.z = footwork_velocity.z
+	if ground_motion_motor != null:
+		ground_motion_motor.capture_external_velocity(footwork_velocity, "attack_footwork")
+	if not is_on_floor():
+		velocity.y -= gravity * delta
+	elif velocity.y < 0.0:
+		velocity.y = -0.1
+	var before_position: Vector3 = global_position
+	_try_step_up(footwork_velocity, delta)
+	move_and_slide()
+	_finish_step_up()
+	combat_footwork_controller.record_post_move(before_position, global_position, delta)
+	_record_motion()
 
 
 func _process_standard_motion(delta: float) -> void:
@@ -222,4 +273,5 @@ func get_combat_motion_debug_data() -> Dictionary:
 		"dodge_exit_pending": dodge_exit_pending,
 		"step_up": step_up_controller.get_debug_data() if step_up_controller != null else {},
 		"ground_motion": ground_motion_motor.get_debug_data() if ground_motion_motor != null else {},
+		"combat_footwork": combat_footwork_controller.get_debug_data() if combat_footwork_controller != null else {},
 	}

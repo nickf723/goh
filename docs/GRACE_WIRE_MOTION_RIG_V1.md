@@ -58,6 +58,39 @@ Ground probing is disabled during jumping, falling, climbing, mantling, swimming
 
 This is visual grounding only. It does not alter collision, movement, slope handling, jump physics, or gameplay position.
 
+## Step navigation pass
+
+`PlayerStepUpController` gives the shared player a narrow physical stair contract instead of requiring a jump for every vertical riser.
+
+Before an ordinary grounded move, dodge, or authored attack lunge, the controller:
+
+1. detects a mostly vertical obstruction in the requested direction;
+2. verifies that Grace has overhead clearance;
+3. verifies that her capsule can occupy the raised forward position;
+4. searches downward for a walkable landing surface;
+5. raises the body by the measured step height before normal movement continues.
+
+The default maximum rise is `0.36` world units, enough for the animation-showcase steps and ordinary architectural stairs while remaining too small to replace jumping or mantling. The shared character also uses a modest floor snap so descending steps remains continuous.
+
+This is gameplay movement rather than visual-only grounding, but it does not change Grace's speed, jump height, collision dimensions, climbing permissions, or combat timings.
+
+## Player-driven sword poses
+
+The practice sword no longer supplies nearly all visible motion through a rotating weapon pivot. Each authored sword attack now names a whole-body control profile in `WeaponCharacterPoseCatalog`.
+
+A profile coordinates:
+
+- anticipation through the torso and head;
+- shoulder-driven cuts rather than wrist-only arcs;
+- a solved hand path that gives the elbow useful work;
+- counterbalancing motion from the free arm;
+- a small residual weapon-local rotation for grip articulation;
+- a quiet windup followed by a trail that begins with the active cut.
+
+`PlayerWeaponControlAnimator` takes control only when an attack has an authored profile. Hammer, lance, and future weapon attacks without a profile retain their existing presentation until they receive their own pass.
+
+The first sword set covers Opening Cut, Returning Cut, Rising Cut, Circular Cut, Reprise Thrust, Guardbreaker, Rising Break, Crowd Cleave, Driving Thrust, and Orbit Finisher. Damage, hit geometry, stamina costs, combo links, active frames, recovery frames, and cancellation rules are unchanged.
+
 ## Outfit behavior during the wire phase
 
 `GraceWireEquipmentAppearance` preserves outfit feedback without adding costume meshes over the diagnostic skeleton:
@@ -87,9 +120,14 @@ It verifies:
 - both feet contacting a known flat test floor without penetrating or hovering;
 - grounding during locomotion and grounded action states;
 - grounding release during climb and mantle states;
+- a measured `0.28`-unit physical step without jumping;
+- authored pose coverage for every practice-sword attack;
+- torso, hand, and weapon motion changing across windup and strike;
+- weapon-local rotation remaining subordinate to the character pose;
+- delayed slash-trail activation during the active phase;
 - outfit palette forwarding;
 - weapon-hand orientation synchronization;
-- animation, grounding, and motion-feedback diagnostics.
+- animation, grounding, step, weapon-control, and motion-feedback diagnostics.
 
 Expected terminal marker:
 
@@ -108,32 +146,35 @@ scenes/levels/prototypes/prototype_animation_showcase_lab_v1.tscn
 Review these in order:
 
 1. Stand still on the runway and confirm both foot joints rest above the surface.
-2. Start and stop repeatedly. Watch whether the pelvis, spine, knees, and feet settle cleanly.
-3. Run tight circles and reverse direction. Watch torso lean, limb phase continuity, and foot jitter.
-4. Cross the landing steps and inspect whether each foot adapts without stretching unnaturally.
+2. Walk up and down every landing step without jumping.
+3. Start and stop repeatedly. Watch whether the pelvis, spine, knees, and feet settle cleanly.
+4. Run tight circles and reverse direction. Watch torso lean, limb phase continuity, and foot jitter.
 5. Jump from each landing step. Compare small and hard landing compression.
 6. Climb and mantle the wall. Confirm the feet release from ground probing immediately.
-7. Test Light, Heavy, guard, dodge, and casting while moving.
-8. Watch the weapon grip through attack windup, strike, and recovery.
-9. Press `P` to cycle deterministic states and `O` to return to live control.
-10. Use the existing reset action to restore the course.
+7. Perform the complete Light sequence and watch the torso initiate each direction change.
+8. Perform Heavy from neutral and after Light attacks. Compare overhead, rising, cleaving, thrusting, and orbit poses.
+9. Watch whether the right hand appears to lead the blade while the left arm balances the action.
+10. Confirm slash trails remain absent during anticipation and appear with the actual strike.
+11. Test attacks while moving, dodging, and locked on.
+12. Press `P` to cycle deterministic states and `O` to return to live control.
+13. Use the existing reset action to restore the course.
 
 ## Intentionally unchanged
 
-- player collision and spatial profile;
-- movement speed, gravity, jump values, and slope physics;
-- weapon movesets, damage, timing, and hit detection;
+- player collision dimensions and spatial profile;
+- movement speed, gravity, and jump values;
+- weapon damage, hit geometry, timing, and combo behavior;
 - spell behavior and costs;
-- camera, lock-on, traversal, swimming, riding, and recovery mechanics;
+- camera, lock-on, swimming, riding, climbing, mantling, and recovery mechanics;
 - Grace's final face, body, clothing, hair, and material direction.
 
 ## Next refinement axis
 
-With silhouette noise and flat-floor penetration removed, the next pass should tune the motion itself in this order:
+With grounding, ordinary stairs, and first-pass sword ownership established, the next pass should tune the motion itself in this order:
 
 1. ground acceleration, braking, and directional reversal;
 2. combat footwork and attack-root motion;
 3. dodge startup, travel curve, and recovery control;
-4. weapon-specific hand paths and body weight transfer;
+4. remaining weapon-class hand paths and body weight transfer;
 5. jump, fall, and landing continuity;
 6. transition interruption and animation-cancel readability.

@@ -50,6 +50,11 @@ class_name WeaponAttackDefinition
 @export var strike_offset: Vector3 = Vector3.ZERO
 @export var recovery_offset: Vector3 = Vector3.ZERO
 
+@export_group("Character Control Pose")
+# Optional authored whole-body pose profile. Empty keeps the legacy weapon-only
+# presentation, allowing existing weapons to migrate one moveset at a time.
+@export var character_pose_id: String = ""
+
 
 func get_startup_duration(attack_speed: float = 1.0) -> float:
 	return startup_time / max(attack_speed, 0.05)

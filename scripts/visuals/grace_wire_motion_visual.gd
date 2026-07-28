@@ -8,13 +8,19 @@ const WeaponCharacterPoseCatalogScript = preload(
 @onready var wire_skeleton_renderer: GraceWireSkeletonRenderer = (
 	get_node_or_null("WireSkeletonRenderer") as GraceWireSkeletonRenderer
 )
+@onready var ground_motion_motor: PlayerGroundMotionMotor = (
+	get_parent().get_node_or_null("GroundMotionMotor") as PlayerGroundMotionMotor
+)
 
 var control_pose_sample: Dictionary = {}
+var motion_accent_root_position: Vector3 = Vector3.ZERO
+var motion_accent_root_rotation: Vector3 = Vector3.ZERO
+var motion_accent_body_rotation: Vector3 = Vector3.ZERO
 
 
 func _ready() -> void:
-	# WeaponController advances the gameplay attack at the default priority. Sample
-	# Grace afterward, then let the wire renderer and residual blade animator follow.
+	# WeaponController advances gameplay first. Grace then samples body intent, the
+	# wire skeleton follows her, and the residual blade animator runs last.
 	process_priority = 40
 	super._ready()
 	add_to_group("grace_wire_motion_rig")
@@ -23,9 +29,11 @@ func _ready() -> void:
 
 
 func sample_animation_pose(delta: float) -> void:
+	_remove_ground_motion_accent()
 	control_pose_sample = _resolve_control_pose_sample()
 	super.sample_animation_pose(delta)
 	_pose_controlled_hands(delta)
+	_apply_ground_motion_accent()
 	sync_animation_anchors()
 
 
@@ -54,7 +62,6 @@ func sync_animation_anchors() -> void:
 	_sync_anchor_transform(left_hand, left_hand_anchor)
 	_sync_anchor_transform(right_hand, right_hand_anchor)
 	_sync_anchor_transform(body_root, chest_vfx_anchor, Vector3(0.0, 0.34, -0.18))
-
 	if right_hand_anchor != null and weapon_hand_anchor != null:
 		weapon_hand_anchor.global_transform = right_hand_anchor.global_transform
 
@@ -78,6 +85,15 @@ func get_animation_debug_data() -> Dictionary:
 		0.01
 	)
 	debug_data["right_hand_drive"] = right_hand_position.length()
+	if ground_motion_motor != null:
+		var ground_motion: Dictionary = ground_motion_motor.get_debug_data()
+		debug_data["ground_motion_state"] = str(ground_motion.get("state", "idle"))
+		debug_data["ground_target_speed"] = float(ground_motion.get("target_speed", 0.0))
+		debug_data["ground_actual_speed"] = float(ground_motion.get("actual_speed", 0.0))
+		debug_data["ground_input_strength"] = float(ground_motion.get("input_strength", 0.0))
+		debug_data["ground_turn_angle"] = float(ground_motion.get("turn_angle_degrees", 0.0))
+		debug_data["ground_braking_weight"] = float(ground_motion.get("braking_weight", 0.0))
+		debug_data["ground_reversal_weight"] = float(ground_motion.get("reversal_weight", 0.0))
 	if wire_skeleton_renderer != null:
 		var wire_data: Dictionary = wire_skeleton_renderer.get_debug_data()
 		var grounding: Dictionary = wire_data.get("grounding", {}) as Dictionary
@@ -112,25 +128,47 @@ func _resolve_control_pose_sample() -> Dictionary:
 
 
 func _pose_controlled_hands(delta: float) -> void:
-	var left_rotation: Vector3 = control_pose_sample.get(
-		"left_hand_rotation",
-		Vector3.ZERO
-	)
-	var right_rotation: Vector3 = control_pose_sample.get(
-		"right_hand_rotation",
-		Vector3.ZERO
-	)
-	var left_position: Vector3 = control_pose_sample.get(
-		"left_hand_position",
-		Vector3.ZERO
-	)
-	var right_position: Vector3 = control_pose_sample.get(
-		"right_hand_position",
-		Vector3.ZERO
-	)
+	var left_rotation: Vector3 = control_pose_sample.get("left_hand_rotation", Vector3.ZERO)
+	var right_rotation: Vector3 = control_pose_sample.get("right_hand_rotation", Vector3.ZERO)
+	var left_position: Vector3 = control_pose_sample.get("left_hand_position", Vector3.ZERO)
+	var right_position: Vector3 = control_pose_sample.get("right_hand_position", Vector3.ZERO)
 	var response: float = pose_response * (1.35 if not control_pose_sample.is_empty() else 1.0)
 	pose_node(left_hand, left_rotation, left_position, delta, response)
 	pose_node(right_hand, right_rotation, right_position, delta, response)
+
+
+func _remove_ground_motion_accent() -> void:
+	if visual_root != null:
+		visual_root.position -= motion_accent_root_position
+		visual_root.rotation -= motion_accent_root_rotation
+	if body_root != null:
+		body_root.rotation -= motion_accent_body_rotation
+	motion_accent_root_position = Vector3.ZERO
+	motion_accent_root_rotation = Vector3.ZERO
+	motion_accent_body_rotation = Vector3.ZERO
+
+
+func _apply_ground_motion_accent() -> void:
+	if ground_motion_motor == null or not control_pose_sample.is_empty():
+		return
+	if presentation_state not in ["idle", "locomotion"]:
+		return
+	var motion: Dictionary = ground_motion_motor.get_debug_data()
+	var acceleration: float = float(motion.get("acceleration_weight", 0.0))
+	var braking: float = float(motion.get("braking_weight", 0.0))
+	var reversal: float = float(motion.get("reversal_weight", 0.0))
+	var turning: float = float(motion.get("turning_weight", 0.0))
+	var local_direction: Vector3 = motion.get("local_direction", Vector3.ZERO)
+
+	motion_accent_root_position.y = -0.025 * braking - 0.055 * reversal
+	motion_accent_root_rotation.z = -local_direction.x * (0.045 * turning + 0.035 * reversal)
+	motion_accent_body_rotation.x = -0.025 * acceleration + 0.075 * braking - 0.035 * reversal
+	motion_accent_body_rotation.y = -local_direction.x * (0.055 * turning + 0.08 * reversal)
+	if visual_root != null:
+		visual_root.position += motion_accent_root_position
+		visual_root.rotation += motion_accent_root_rotation
+	if body_root != null:
+		body_root.rotation += motion_accent_body_rotation
 
 
 func _sync_anchor_transform(

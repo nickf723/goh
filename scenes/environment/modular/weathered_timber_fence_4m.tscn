@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/modular_outdoor_environment_piece.gd" id="1_piece"]
+
+[node name="WeatheredTimberFence4m" type="Node3D"]
+script = ExtResource("1_piece")
+piece_id = "weathered_timber_fence_4m"
+display_name = "Weathered Timber Fence 4m"
+category = "architecture"
+piece_type = "timber_fence"
+footprint = Vector3(4.1, 1.35, 0.45)
+requires_collision = true
+variant_seed = 13

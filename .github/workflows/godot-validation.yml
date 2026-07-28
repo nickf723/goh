@@ -55,6 +55,9 @@ jobs:
       - name: Run Grace ground motion motor test
         run: godot --headless --path . res://scenes/tests/ground_motion_motor_smoke_test.tscn
 
+      - name: Run Grace dodge motion and recovery test
+        run: godot --headless --path . res://scenes/tests/dodge_motion_smoke_test.tscn
+
       - name: Export Windows v0.1 build
         run: |
           mkdir -p build/windows

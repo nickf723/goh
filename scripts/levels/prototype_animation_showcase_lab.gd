@@ -14,6 +14,7 @@ var ground_motion: PlayerGroundMotionMotor
 var vertical_motion: PlayerVerticalMotionController
 var dodge_motion: PlayerDodgeController
 var combat_footwork: PlayerCombatFootworkController
+var avatar_manager: PlayerAvatarManager
 var status_label: Label
 var pose_index: int = -1
 
@@ -34,10 +35,11 @@ func _ready() -> void:
 		combat_footwork = (
 			player.get_node_or_null("CombatFootworkController") as PlayerCombatFootworkController
 		)
+		avatar_manager = player.get_node_or_null("AvatarManager") as PlayerAvatarManager
 	_configure_player()
 	_build_hud()
 	GameState.set_objective(
-		"Accelerate, jump, cross the apex, land, dodge, plant attacks, and inspect Grace's transitions."
+		"Test Grace's complete motion body, then press F9 to incarnate Ruvia through the same stable player anchor."
 	)
 
 
@@ -97,6 +99,9 @@ func _clear_pose() -> void:
 
 func _reset_lab() -> void:
 	_clear_pose()
+	if avatar_manager != null and avatar_manager.is_incarnated():
+		if not avatar_manager.dismiss_avatar("lab_reset"):
+			avatar_manager.emergency_restore("lab_reset")
 	if climbing != null:
 		climbing.reset_climbing()
 	if ground_motion != null:
@@ -199,9 +204,10 @@ func _build_course() -> void:
 	_add_box_body("FootworkRightPlant", Vector3(0.13, 0.045, 2.2), Vector3(-6.85, 0.035, 0.4), Color(1.0, 0.36, 0.72), false)
 
 	_build_vertical_lane()
+	_build_incarnation_marker()
 
 	var title := Label3D.new()
-	title.text = "GRACE MOTION SHOWCASE"
+	title.text = "AVATAR MOTION SHOWCASE"
 	title.position = Vector3(0, 7.0, -7.2)
 	title.font_size = 38
 	title.pixel_size = 0.008
@@ -210,7 +216,7 @@ func _build_course() -> void:
 	title.modulate = Color(0.72, 0.88, 1.0)
 	add_child(title)
 	var instructions := Label3D.new()
-	instructions.text = "GROUND • JUMP / APEX / LAND • DODGE / CHAIN • PLANT / DRIVE / SETTLE • P POSES • O LIVE • F8 RESET"
+	instructions.text = "GROUND • JUMP / LAND • DODGE • ATTACK FOOTWORK • F9 RUVIA / GRACE • P POSES • O LIVE • F8 RESET"
 	instructions.position = Vector3(0, 6.2, -7.1)
 	instructions.font_size = 17
 	instructions.pixel_size = 0.008
@@ -280,6 +286,26 @@ func _build_vertical_lane() -> void:
 	add_child(label)
 
 
+func _build_incarnation_marker() -> void:
+	var marker_position := Vector3(4.4, 0.035, 7.0)
+	_add_box_body(
+		"DivineIncarnationMarker",
+		Vector3(2.6, 0.05, 2.0),
+		marker_position,
+		Color(1.0, 0.22, 0.045),
+		false
+	)
+	var label := Label3D.new()
+	label.text = "F9 • DIVINE INCARNATION\nRUVIA ↔ GRACE"
+	label.position = marker_position + Vector3(0.0, 1.55, 0.0)
+	label.font_size = 21
+	label.pixel_size = 0.007
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.outline_size = 7
+	label.modulate = Color(1.0, 0.62, 0.18)
+	add_child(label)
+
+
 func _add_box_body(
 	body_name: String,
 	size: Vector3,
@@ -319,7 +345,7 @@ func _build_hud() -> void:
 	add_child(layer)
 	var panel := PanelContainer.new()
 	panel.position = Vector2(20, 20)
-	panel.custom_minimum_size = Vector2(800, 250)
+	panel.custom_minimum_size = Vector2(840, 280)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.012, 0.022, 0.043, 0.9)
 	style.border_color = Color(0.3, 0.66, 1.0, 0.85)
@@ -342,9 +368,16 @@ func _update_hud() -> void:
 	var vertical: Dictionary = vertical_motion.get_debug_data() if vertical_motion != null else {}
 	var dodge: Dictionary = dodge_motion.get_debug_data() if dodge_motion != null else {}
 	var footwork: Dictionary = combat_footwork.get_debug_data() if combat_footwork != null else {}
+	var avatar: Dictionary = avatar_manager.get_debug_data() if avatar_manager != null else {}
 	var acceleration: Vector3 = animation.get("acceleration", Vector3.ZERO)
 	status_label.text = (
-		"ANIMATION  •  " + str(animation.get("presentation_state", "idle")).to_upper()
+		"AVATAR  •  " + str(avatar.get("active_avatar_name", "Grace")).to_upper()
+		+ "     MODE " + ("INCARNATED" if bool(avatar.get("incarnated", false)) else "ANCHOR")
+		+ "     WEAPON " + str(avatar.get("weapon_class", "none")).to_upper()
+		+ "     SPELLS " + str(avatar.get("spell_count", 0))
+		+ "     CAMERA " + ("STABLE" if bool(avatar.get("camera_preserved", false)) else "CHECK")
+		+ "     ROLLBACKS " + str(avatar.get("rollback_count", 0))
+		+ "\nANIMATION  •  " + str(animation.get("presentation_state", "idle")).to_upper()
 		+ "  •  " + str(animation.get("state_elapsed", 0.0)) + "s"
 		+ "     FORCED " + str(animation.get("forced_state", "none")).to_upper()
 		+ "\nMOTOR  •  " + str(motor.get("state", "legacy")).to_upper()

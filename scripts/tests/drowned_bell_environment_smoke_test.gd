@@ -3,6 +3,7 @@ extends Node
 const SceneUnderTest: PackedScene = preload("res://scenes/levels/prototypes/prototype_drowned_bell_v1.tscn")
 const EnvironmentAuditor = preload("res://scripts/environment/authored_environment_auditor.gd")
 const SetClearanceAuditor = preload("res://scripts/environment/authored_set_clearance_auditor.gd")
+const SpatialReadabilityFixture = preload("res://scripts/tests/spatial_readability_test_fixture.gd")
 
 var failures: Array[String] = []
 var elapsed: float = 0.0
@@ -52,7 +53,7 @@ func _ready() -> void:
 		check(str(benchmark_data.get("set_id", "")) == "drowned_chapel_benchmark_v1", "benchmark publishes its canonical set id")
 		check(int(benchmark_data.get("module_count", 0)) >= 60, "benchmark uses a substantial repeated modular vocabulary")
 		check(int(benchmark_data.get("support_shell_piece_count", 0)) >= 55, "architecture modules reuse the continuous support shell")
-		check(int(benchmark_data.get("physical_prop_count", 0)) >= 3, "freestanding props retain physical collision")
+		check(int(benchmark_data.get("physical_prop_count", 0)) >= 3, "freestanding props retain physical collision before readability pruning")
 		check(int(benchmark_data.get("hidden_legacy_meshes", 0)) >= 25, "replaced procedural surfaces are visually retired")
 		var categories: Array = benchmark_data.get("categories", [])
 		for category: String in ["architecture", "prop", "lighting", "water"]:
@@ -175,6 +176,8 @@ func _ready() -> void:
 		Vector3(-1.8, 2.0, 35.0),
 	]:
 		check(_has_ground_below(mission, point, 6.0), "golden-path point has supporting collision at %s" % str(point))
+
+	failures.append_array(SpatialReadabilityFixture.run(self, mission))
 
 	mission.queue_free()
 	await get_tree().process_frame

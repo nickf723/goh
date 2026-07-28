@@ -45,11 +45,9 @@ The Authored Quest Framework is owned by `scripts/quests/authored_quest_runtime.
 
 ## Exploration
 
-Ruined Village Approach and Church Trial are story-integrated vertical slices. Wilds Expedition owns the five-segment outdoor route and authored Cypress, Wet Woodland, and Pine Ridge layouts. Regional Expedition Map owns route selection and regional persistence.
+Ruined Village Approach and Church Trial are story-integrated vertical slices. Wilds Expedition owns the five-segment outdoor route and authored Cypress, Wet Woodland, and Pine Ridge layouts. Regional Expedition Map owns route selection and regional persistence. The completed Drowned Bell quest combines water traversal, resonance investigation, a coherent chapel and crypt, three Listener-resolution routes, return dialogue, rewards, global playability, authored environment contracts, data-driven set composition, and spatial readability zones.
 
-The completed Drowned Bell quest combines water traversal, resonance investigation, a coherent chapel and crypt, three Listener-resolution routes, return dialogue, rewards, global playability, authored environment contracts, data-driven set composition, and spatial readability zones.
-
-The Ruined Village Approach is the first large outdoor modular benchmark. It preserves the existing clues, combat, elemental ravine routes, Sound memory, checkpoint, persistence, and Church Trial handoff while replacing repeated road, house, wall, fence, rubble, and olive-tree presentation through `scripts/levels/ruined_village_outdoor_remaster_pass.gd` and `data/set_layouts/ruined_village_outdoor_remaster_v1.json`.
+The Ruined Village Approach is the second story-integrated modular benchmark and the first outdoor proof. Its original terrain and traversal geometry remain the support shell while `scripts/levels/ruined_village_outdoor_remaster_pass.gd` composes modular roads, low walls, ruined corners and façades, timber fences, rubble, and olive-tree clusters from `data/set_layouts/ruined_village_outdoor_remaster_v1.json`. The working clues, encounter, elemental ravine routes, optional Sound memory, checkpoint, weather, and Church Trial handoff remain unchanged.
 
 ## Playability and authored-space quality
 
@@ -57,9 +55,9 @@ The reusable playability layer lives under `scripts/quality/` and `scripts/playe
 
 The reusable environment-composition layer lives under `scripts/environment/`. It provides palette-driven prototype materials, collision-matched architectural primitives, stair runs, pillars, archways, non-blocking dressing, local lights, build statistics, and an authored-environment auditor. Level-specific passes retain responsibility for layout, landmarks, sightlines, mood, prop placement, and environmental storytelling.
 
-The Authored Set Composer adds a data-first assembly layer through `scripts/environment/authored_set_composer.gd`, `scripts/environment/authored_set_clearance_auditor.gd`, and `data/set_layouts/`. It builds corridors, opening-aware walls, continuous-ramp stairs, modular catalog placements, and simple support geometry from compact plans. The Drowned Bell crypt passage is the first connected-space proof, and the Ruined Village uses it for a broad outdoor module plan.
+The Authored Set Composer adds a data-first assembly layer through `scripts/environment/authored_set_composer.gd`, `scripts/environment/authored_set_clearance_auditor.gd`, and `data/set_layouts/`. It builds corridors, opening-aware walls, continuous-ramp stairs, modular catalog placements, and simple support geometry from compact plans. The Drowned Bell crypt passage is the first connected-interior proof, while the Ruined Village demonstrates longer outdoor placement plans and support-shell reuse.
 
-`AuthoredSetReadabilityAuditor` separately protects route collision, camera breathing room, interaction approaches, landmark hierarchy, combat space, and density budgets. `AuthoredSetReadabilityDebug` can visualize those contracts while tuning a set. Drowned Chapel and Ruined Village now provide complementary interior and outdoor reference plans.
+`AuthoredSetReadabilityAuditor` separately protects route collision, camera breathing room, interaction approaches, landmark hierarchy, combat clearings, and density budgets. `AuthoredSetReadabilityDebug` can visualize those contracts while tuning a set. Drowned Chapel and Ruined Village each own a level-specific readability plan.
 
 Architecture and manual quality gates are documented in:
 
@@ -72,33 +70,22 @@ docs/SPATIAL_READABILITY_AND_GRACE_SILHOUETTE_V1.md
 docs/drowned_chapel_environment_v2_2_test.md
 docs/drowned_chapel_benchmark_remaster_v1_test.md
 docs/drowned_bell_v3_test.md
-docs/ruined_village_approach_v1_test.md
+docs/ruined_village_outdoor_remaster_v1_test.md
 ```
 
 These frameworks are safety and construction scaffolds, not substitutes for continuous authored collision, natural boundaries, readable sightlines, deliberate composition, visual rhythm, or human playtesting.
 
 ## Modular environment assets
 
-Repeated architecture, terrain vocabulary, vegetation clusters, and props have production-facing scene owners under `scenes/environment/modular/`, with shared weathered materials under `art/materials/environment/modular/` and canonical lookup through `scripts/environment/modular_environment_catalog.gd`. The catalog currently contains nineteen pieces across the original Weathered Cloister and Weathered Village Outdoor families.
+Repeated architecture and props have production-facing scene owners under `scenes/environment/modular/`, with shared weathered materials under `art/materials/environment/modular/` and canonical lookup through `scripts/environment/modular_environment_catalog.gd`. The dedicated Weathered Cloister showcase is `scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn`.
 
-The dedicated Weathered Cloister showcase is `scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn`.
+The indoor Weathered Cloister family includes floors, walls, arches, stairs, pillars, timber frames, gates, pedestals, crates, barrels, sconces, and water-edge pieces. The outdoor village extension adds roads, low ruined walls, ruined corners, doorway façades, timber fences, rubble clusters, and olive-tree clusters.
 
-The Drowned Chapel is the first story-integrated interior benchmark. `scripts/levels/drowned_bell_benchmark_remaster_pass.gd` places reusable floors, walls, arches, pillars, timber frames, sconces, water-edge pieces, pedestals, crates, and barrels over the chapel's proven continuous support shell. The memorial arcade, bell frame, rose window, pool geometry, and quest machinery remain bespoke.
-
-The Ruined Village is the first story-integrated outdoor benchmark. It adds reusable village roads, low walls, ruined corners, ruined façades, timber fences, rubble clusters, and olive-tree clusters. Roads and façades reuse the existing support terrain and foundations; low walls and fences remain physical; rubble and foliage remain nonblocking.
+The Drowned Chapel and Ruined Village are the two story-integrated benchmarks. Repeated visible architecture is modular, while proven authored shells retain traversal collision. Common construction repeats; story landmarks remember where they are.
 
 The modular kit extends the authored environment-composition capability rather than replacing it. Use modular scenes for repeated construction vocabulary. Keep blocking support, bespoke landmarks, floor plans, sightlines, mood, and environmental storytelling authored per level.
 
-Architecture and manual quality gates are documented in:
-
-```text
-docs/MODULAR_ENVIRONMENT_AND_PROP_KIT_V1.md
-docs/modular_environment_showcase_v1_test.md
-docs/drowned_chapel_benchmark_remaster_v1_test.md
-docs/ruined_village_approach_v1_test.md
-```
-
-The interior and outdoor benchmarks now cover the first reusable asset pipeline. The next environment step should be a short friction review, followed by new authored content that reuses the existing kit and adds pieces only when a real level proves the need.
+The next step is a compact environment-pipeline friction review, followed by new authored content. Add another kit piece only when a later story space demonstrates a repeated need rather than expanding the catalog speculatively.
 
 ## Development infrastructure
 
@@ -110,7 +97,7 @@ The interior and outdoor benchmarks now cover the first reusable asset pipeline.
 - Playable Space Auditor: recovery, water-exit, interaction, and guidance contracts
 - Authored Environment Auditor: collision-paired surfaces and assembly integrity
 - Authored Set Clearance Auditor: corridor, doorway, and stair clearance contracts
-- Authored Set Readability Auditor: protected routes, interaction approaches, camera envelopes, combat space, and density warnings
+- Authored Set Readability Auditor: protected routes, interaction approaches, camera envelopes, combat clearings, and density warnings
 
 ## Planning rule
 

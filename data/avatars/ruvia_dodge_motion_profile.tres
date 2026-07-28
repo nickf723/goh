@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="DodgeMotionProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/player/dodge_motion_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+distance = 1.84
+duration = 0.27
+cooldown = 0.15
+stamina_cost = 1
+launch_end = 0.14
+travel_end = 0.61
+landing_end = 0.85
+launch_speed_multiplier = 0.84
+peak_speed_multiplier = 1.42
+travel_exit_multiplier = 1.04
+recovery_exit_multiplier = 0.25
+forward_distance_multiplier = 1.08
+side_distance_multiplier = 0.93
+backward_distance_multiplier = 0.85
+backstep_distance_multiplier = 0.78
+steering_start = 0.59
+steering_end = 0.86
+steering_strength = 0.34
+steering_turn_speed_degrees = 235.0
+invulnerability_start = 0.1
+invulnerability_end = 0.69
+attack_cancel_start = 0.0
+cast_cancel_start = 0.68
+guard_cancel_start = 0.78
+chain_start = 0.78
+chain_end = 0.95
+maximum_consecutive_dodges = 2
+input_buffer_seconds = 0.18
+iframe_emission_multiplier = 2.45
+launch_compression = 0.065
+landing_compression = 0.095
+body_lean_radians = 0.2

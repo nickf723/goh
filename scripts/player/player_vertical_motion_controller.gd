@@ -53,6 +53,7 @@ func prepare_frame(
 	jump_buffer_remaining = maxf(jump_buffer_remaining - step, 0.0)
 	launch_remaining = maxf(launch_remaining - step, 0.0)
 	landing_remaining = maxf(landing_remaining - step, 0.0)
+	last_external_state = ""
 
 	if allow_jump_input and Input.is_action_just_pressed("jump"):
 		queue_jump_request()
@@ -336,6 +337,7 @@ func _register_landing(impact_speed: float) -> void:
 	last_landing_strength = get_landing_strength(last_landing_speed)
 	landing_duration = get_landing_pose_duration(last_landing_speed)
 	landing_remaining = landing_duration if last_landing_strength > 0.0 else 0.0
+	last_external_state = ""
 	if landing_remaining > 0.0:
 		_set_vertical_state("landing")
 	else:
@@ -352,9 +354,11 @@ func _update_air_state() -> void:
 	var threshold: float = get_apex_velocity_threshold()
 	if actor.velocity.y > threshold:
 		_set_vertical_state("rising")
-	elif actor.velocity.y >= -threshold:
+	elif active_jump_kind != "" and actor.velocity.y >= -threshold:
 		_set_vertical_state("apex")
 	else:
+		# Walking from a ledge and leaving a hover both begin a fall. Only a real
+		# jump is allowed to claim the low-velocity crest as its authored apex.
 		_set_vertical_state("falling")
 
 
@@ -428,9 +432,15 @@ func get_gravity_scale(vertical_velocity: float, cut_active: bool = false) -> fl
 
 
 func classify_landing(impact_speed: float) -> String:
-	return profile.classify_landing(impact_speed) if profile != null else (
-		"hard" if impact_speed >= 8.8 else "firm" if impact_speed >= 4.6 else "light"
-	)
+	if profile != null:
+		return profile.classify_landing(impact_speed)
+	if impact_speed < 2.8:
+		return "settled"
+	if impact_speed < 4.6:
+		return "light"
+	if impact_speed < 8.8:
+		return "firm"
+	return "hard"
 
 
 func get_landing_strength(impact_speed: float) -> float:

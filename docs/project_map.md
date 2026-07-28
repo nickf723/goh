@@ -19,6 +19,8 @@ Actor → Tool → Action → Payload → Target → Receiver → Reaction → C
 
 The shared Player scene contains movement, camera, lock-on, action state, health/stamina/mana/stance recovery, defense and Perfect Guard, ability casting, data-driven weapons, Dodge, quick items, Soul Grip, Metal Tether, aerial locomotion, climbing, swimming, riding, summons, stealth, equipment appearance, gameplay HUD layers, and last-resort playable-space recovery.
 
+Grace's physical envelope and prototype silhouette are explicit data through `data/player/grace_spatial_profile.tres`, applied by `scripts/player/player_spatial_profile_controller.gd`. The profile owns capsule dimensions, silhouette measurements, authored-space clearance, and route or interaction radii without changing Grace's character identity or animation hierarchy.
+
 Primary paths: `scenes/actors/player/player.tscn`, `scripts/player/`, `scripts/abilities/`, `scripts/weapons/`, `scripts/items/`, and `scripts/ui/`.
 
 ## Combat
@@ -43,7 +45,7 @@ The Authored Quest Framework is owned by `scripts/quests/authored_quest_runtime.
 
 ## Exploration
 
-Ruined Village Approach and Church Trial are story-integrated vertical slices. Wilds Expedition owns the five-segment outdoor route and authored Cypress, Wet Woodland, and Pine Ridge layouts. Regional Expedition Map owns route selection and regional persistence. The completed Drowned Bell quest combines water traversal, resonance investigation, a coherent chapel and crypt, three Listener-resolution routes, return dialogue, rewards, global playability, and authored environment contracts.
+Ruined Village Approach and Church Trial are story-integrated vertical slices. Wilds Expedition owns the five-segment outdoor route and authored Cypress, Wet Woodland, and Pine Ridge layouts. Regional Expedition Map owns route selection and regional persistence. The completed Drowned Bell quest combines water traversal, resonance investigation, a coherent chapel and crypt, three Listener-resolution routes, return dialogue, rewards, global playability, authored environment contracts, data-driven set composition, and spatial readability zones.
 
 ## Playability and authored-space quality
 
@@ -53,6 +55,8 @@ The reusable environment-composition layer lives under `scripts/environment/`. I
 
 The Authored Set Composer adds a data-first assembly layer through `scripts/environment/authored_set_composer.gd`, `scripts/environment/authored_set_clearance_auditor.gd`, and `data/set_layouts/`. It builds corridors, opening-aware walls, continuous-ramp stairs, modular catalog placements, and simple support geometry from compact plans. The Drowned Bell crypt passage is the first story-integrated proof. Use it when connected dimensions or repeated placements would otherwise be scattered across unrelated magic numbers.
 
+`AuthoredSetReadabilityAuditor` separately protects route collision, camera breathing room, interaction approaches, landmark hierarchy, and density budgets. `AuthoredSetReadabilityDebug` can visualize those contracts while tuning a set. The Drowned Chapel uses `data/set_layouts/drowned_chapel_readability_v1.json` as the first story-integrated readability plan.
+
 Architecture and manual quality gates are documented in:
 
 ```text
@@ -60,17 +64,21 @@ docs/GLOBAL_PLAYABILITY_FRAMEWORK_V1.md
 docs/global_playability_framework_v1_test.md
 docs/AUTHORED_ENVIRONMENT_COMPOSITION_V1.md
 docs/AUTHORED_SET_COMPOSER_V1.md
+docs/SPATIAL_READABILITY_AND_GRACE_SILHOUETTE_V1.md
 docs/drowned_chapel_environment_v2_2_test.md
+docs/drowned_chapel_benchmark_remaster_v1_test.md
 docs/drowned_bell_v3_test.md
 ```
 
-These frameworks are safety and construction scaffolds, not substitutes for continuous authored collision, natural boundaries, readable sightlines, deliberate composition, or human playtesting.
+These frameworks are safety and construction scaffolds, not substitutes for continuous authored collision, natural boundaries, readable sightlines, deliberate composition, visual rhythm, or human playtesting.
 
 ## Modular environment assets
 
 Repeated architecture and props have production-facing scene owners under `scenes/environment/modular/`, with shared weathered materials under `art/materials/environment/modular/` and canonical lookup through `scripts/environment/modular_environment_catalog.gd`. The dedicated Weathered Cloister showcase is `scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn`.
 
 The Drowned Chapel is the first story-integrated modular benchmark. `scripts/levels/drowned_bell_benchmark_remaster_pass.gd` places reusable floors, walls, arches, pillars, timber frames, sconces, water-edge pieces, pedestals, crates, and barrels over the chapel's proven continuous support shell. Repeated architecture disables duplicate collision, while freestanding props remain physical. The memorial arcade, bell frame, rose window, pool geometry, and quest machinery remain bespoke.
+
+`scripts/levels/drowned_bell_spatial_readability_pass.gd` then removes redundant repeated structure, restages physical props against the walls, reduces signal clutter, and audits the chapel against its readability plan.
 
 The modular kit extends the authored environment-composition capability rather than replacing it. Use modular scenes for repeated construction vocabulary. Keep blocking support, bespoke landmarks, floor plans, sightlines, mood, and environmental storytelling authored per level.
 
@@ -82,7 +90,7 @@ docs/modular_environment_showcase_v1_test.md
 docs/drowned_chapel_benchmark_remaster_v1_test.md
 ```
 
-The next meaningful proof is a larger existing route, likely Church Trial or Ruined Village Approach. Expand the kit only when that second application exposes a repeated need such as corners, ruined-wall variants, ceilings, vaults, railings, doors, or terrain transitions.
+The next meaningful proof is the Ruined Village Approach. Expand the kit only when that outdoor application exposes a repeated need such as corners, ruined-wall variants, ceilings, vaults, railings, doors, terrain transitions, vegetation-density zones, or open combat-space declarations.
 
 ## Development infrastructure
 
@@ -94,9 +102,10 @@ The next meaningful proof is a larger existing route, likely Church Trial or Rui
 - Playable Space Auditor: recovery, water-exit, interaction, and guidance contracts
 - Authored Environment Auditor: collision-paired surfaces and assembly integrity
 - Authored Set Clearance Auditor: corridor, doorway, and stair clearance contracts
+- Authored Set Readability Auditor: protected routes, interaction approaches, camera envelopes, and density warnings
 
 ## Planning rule
 
-Search the capability inventory using the user’s language and aliases, inspect canonical owners, and classify work as integration, authored content, polish, extension, consolidation, or genuinely new. Do not resuggest implemented capabilities as new.
+Search the capability inventory using the user's language and aliases, inspect canonical owners, and classify work as integration, authored content, polish, extension, consolidation, or genuinely new. Do not resuggest implemented capabilities as new.
 
-Automated checks prove technical contracts. Nick’s manual playtest remains authoritative for feel, clarity, staging, pacing, and visual quality.
+Automated checks prove technical contracts. Nick's manual playtest remains authoritative for feel, clarity, staging, pacing, density, silhouette, and visual quality.

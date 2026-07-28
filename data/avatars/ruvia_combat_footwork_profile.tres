@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CombatFootworkProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/player/combat_footwork_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+steering_start = 0.58
+steering_end = 0.86
+steering_strength = 0.16
+steering_turn_speed_degrees = 150.0
+maximum_steering_degrees = 12.0
+blocked_distance_ratio = 0.24
+blocked_frames_to_stop = 2
+minimum_expected_displacement = 0.004
+stop_root_motion_when_blocked = true
+minimum_motion_duration = 0.05
+maximum_motion_duration = 0.45
+pose_strength = 1.08
+pose_response = 24.0
+direction_alignment_strength = 0.95
+maximum_visual_alignment_degrees = 76.0

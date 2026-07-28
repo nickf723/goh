@@ -28,18 +28,19 @@ The rig displays:
 
 ## Architecture
 
-`GraceWireMotionVisual` extends the existing `StylizedActorVisual` state resolver. Current locomotion, traversal, combat, casting, item, damage, swimming, riding, and defeat states remain authoritative.
+`GraceVerticalMotionVisual` extends the wire-motion stack over the existing `StylizedActorVisual` state resolver. Current locomotion, traversal, combat, casting, item, damage, swimming, riding, and defeat states remain authoritative.
 
 `GraceWireSkeletonRenderer` converts the animated control pivots into a canonical 19-joint diagnostic pose. Elbows and knees use a two-bone geometric solve with stable preferred bend directions. Eighteen rendered segments connect the resulting joint set.
 
-The current player-motion stack separates six layers:
+The current player-motion stack separates seven layers:
 
 1. `PlayerGroundMotionMotor` resolves ordinary movement intention into planar velocity.
-2. `PlayerDodgeController` resolves launch, protected travel, landing, recovery, and follow-up windows.
-3. `PlayerCombatFootworkController` distributes attack travel through plant, drive, and settle root motion.
-4. `CharacterBody3D` remains responsible for collision and physical movement.
-5. `StylizedActorVisual` and the authored pose catalogs resolve presentation targets.
-6. `GraceWireSkeletonRenderer` makes the resulting humanoid motion legible.
+2. `PlayerVerticalMotionController` resolves jump intention, ascent, apex, fall, and landing state.
+3. `PlayerDodgeController` resolves launch, protected travel, landing, recovery, and follow-up windows.
+4. `PlayerCombatFootworkController` distributes attack travel through plant, drive, and settle root motion.
+5. `CharacterBody3D` remains responsible for collision and physical movement.
+6. `StylizedActorVisual` and the authored pose catalogs resolve presentation targets.
+7. `GraceWireSkeletonRenderer` makes the resulting humanoid motion legible.
 
 A future skinned Grace model can consume the same motion and pose contracts instead of forcing combat and locomotion to be retuned around finished art.
 
@@ -97,6 +98,26 @@ The wire visual reads the motor's smoothed intent weights for restrained acceler
 
 ```text
 docs/GRACE_GROUND_MOTION_MOTOR_V1.md
+```
+
+## Vertical motion continuity pass
+
+Ordinary jumping now uses the same profile-driven design language as ground motion and dodge:
+
+```text
+Buffered Intention → Launch → Rising → Apex → Falling → Landing
+```
+
+`PlayerVerticalMotionController` provides coyote time, landing-side input buffering, variable jump height, phase-shaped gravity, terminal fall-speed safety, impact memory, and light, firm, or hard landing classification.
+
+The full held jump retains Grace's existing `4.5` launch velocity. Releasing Jump while rising creates a compact short hop. Apex gravity is slightly reduced for readability, while downward gravity becomes stronger after the crest so falling remains decisive.
+
+`GraceVerticalMotionVisual` maps the controller's live state to the wire rig. Launch compresses before extending, the apex releases tension briefly, falling progressively braces the body, and landing strength controls the final absorption. Exact takeoff and landing signals now drive motion rings and the existing camera impulse.
+
+Advanced double jump, hover, airflow, flight, and controlled descent extend the same contract instead of maintaining a second unrelated vertical-motion memory. The complete implementation lives in:
+
+```text
+docs/GRACE_VERTICAL_MOTION_CONTINUITY_V1.md
 ```
 
 ## Dodge motion and recovery pass
@@ -170,6 +191,7 @@ scenes/tests/grace_animation_smoke_test.tscn
 scenes/tests/ground_motion_motor_smoke_test.tscn
 scenes/tests/dodge_motion_smoke_test.tscn
 scenes/tests/combat_footwork_smoke_test.tscn
+scenes/tests/vertical_motion_smoke_test.tscn
 ```
 
 Together they verify:
@@ -182,15 +204,15 @@ Together they verify:
 - grounding during locomotion and grounded action states;
 - grounding release during climb and mantle states;
 - a measured physical step without jumping;
+- analog target-speed shaping, acceleration, braking, turning, and reversal;
+- coyote time, jump buffering, short-hop release, phase gravity, apex, fall, and landing state;
+- impact classification and exact motion-feedback synchronization;
+- dodge phase, I-frame, steering, chain, and follow-up behavior;
 - authored pose and footwork coverage for every practice-sword attack;
 - torso, hand, weapon, root, and leg motion changing across windup and strike;
-- delayed slash-trail activation during the active phase;
-- analog target-speed shaping;
-- acceleration, braking, turning, and reversal response;
-- dodge phase, I-frame, steering, chain, and follow-up behavior;
 - attack plant, drive, settle, steering, distance, and wall-block behavior;
 - air and external velocity handoffs;
-- animation, grounding, step, weapon-control, dodge, footwork, and motion diagnostics.
+- animation, grounding, step, vertical, weapon-control, dodge, footwork, and motion diagnostics.
 
 Expected terminal markers:
 
@@ -199,6 +221,7 @@ GraceAnimationSmokeTest: PASS
 GROUND_MOTION_MOTOR_SMOKE_TEST: PASS
 DODGE_MOTION_SMOKE_TEST: PASS
 COMBAT_FOOTWORK_SMOKE_TEST: PASS
+VERTICAL_MOTION_SMOKE_TEST: PASS
 ```
 
 ## Manual review
@@ -212,39 +235,44 @@ scenes/levels/prototypes/prototype_animation_showcase_lab_v1.tscn
 Review these in order:
 
 1. Stand still and confirm both foot joints rest above the surface.
-2. Accelerate from the green line and compare target speed with actual speed.
-3. Release movement at the orange line and inspect the planted stop.
-4. Reverse at the violet line and watch Grace compress while velocity crosses zero.
-5. Run figure eights around the blue markers.
-6. Use partial controller input and compare low-speed travel with a full stick.
-7. Walk up and down every landing step without jumping.
-8. Test forward, side, backward, and lock-on backstep dodges in the dodge lane.
-9. Chain a second dodge and test dash-strike, cast, and guard exits.
-10. Perform every Light and Heavy sword branch in the western footwork lane.
-11. Watch the support foot, hip drive, hand path, and blade in that order.
-12. Attack into the footwork wall and confirm translation stops without wall shudder.
-13. Attack up and down stairs and while entering from ordinary movement.
-14. Climb and mantle the wall, confirming the feet release from ground probing.
-15. Press `P` to cycle deterministic poses and `O` to restore live control.
-16. Use the existing reset action to restore the course.
+2. Accelerate, brake, reverse, and run figure eights through the central lane.
+3. Use partial controller input and compare low-speed travel with a full stick.
+4. Walk up and down every landing step without jumping.
+5. In the eastern lane, tap Jump for a short hop and hold Jump for the full arc.
+6. Watch Launch, Rising, Apex, Falling, and Landing in the HUD.
+7. Walk from a ledge and jump during the coyote window.
+8. Press Jump shortly before landing to test the buffered relaunch.
+9. Drop from the eastern platform and compare its landing with low-step impacts.
+10. Test forward, side, backward, and lock-on backstep dodges in the dodge lane.
+11. Chain a second dodge and test dash-strike, cast, and guard exits.
+12. Perform every Light and Heavy sword branch in the western footwork lane.
+13. Watch the support foot, hip drive, hand path, and blade in that order.
+14. Attack into the footwork wall and confirm translation stops without wall shudder.
+15. Attack and dodge up and down stairs, then immediately jump or land.
+16. Climb and mantle the wall, confirming the feet release from ground probing.
+17. Press `P` to cycle deterministic poses and `O` to restore live control.
+18. Use the existing reset action to restore the course.
 
 ## Intentionally unchanged
 
 - player collision dimensions and spatial profile;
-- maximum movement speed, gravity, and jump height;
+- maximum horizontal movement speed and full-jump launch velocity;
 - weapon damage, hit geometry, timing, and combo behavior;
 - authored sword movement distance and duration;
 - dodge balance, spell behavior, and guard balance;
-- camera, lock-on targeting, swimming, riding, climbing, mantling, and recovery mechanics;
+- climbing, swimming, riding, and sustained-flight rules;
+- fall damage and landing stagger;
 - Grace's final face, body, clothing, hair, and material direction.
 
 ## Next refinement axis
 
-With grounding, stairs, ground response, dodge recovery, sword ownership, and combat footwork established, the next pass should proceed in this order:
+The diagnostic body now has first-pass contracts for grounding, stairs, ground response, jumping, falling, landing, dodge recovery, sword ownership, and combat footwork.
 
-1. jump, apex, fall, and landing continuity;
-2. transition interruption and animation-cancel readability;
-3. remaining weapon-class hand paths and body weight transfer;
-4. the first Divine Incarnation avatar using the shared movement contracts;
-5. companion and boss control drivers for that same avatar body;
+The next coherent sequence is:
+
+1. the first Divine Incarnation avatar using the shared movement contracts;
+2. avatar-control transfer and safe return to Grace;
+3. transition interruption and animation-cancel readability across avatar swaps;
+4. remaining weapon-class hand paths and body weight transfer;
+5. companion and boss control drivers for the same avatar body;
 6. final skinned-character retargeting.

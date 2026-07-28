@@ -2,7 +2,7 @@ extends Node
 class_name PlayerStepUpController
 
 @export_group("Step Navigation")
-@export_range(0.08, 0.6, 0.01) var maximum_step_height: float = 0.36
+@export_range(0.08, 0.6, 0.01) var maximum_step_height: float = 0.4
 @export_range(0.0, 0.2, 0.005) var minimum_step_height: float = 0.035
 @export_range(0.01, 0.3, 0.005) var forward_probe_distance: float = 0.11
 @export_range(0.01, 0.25, 0.005) var landing_probe_extra: float = 0.08

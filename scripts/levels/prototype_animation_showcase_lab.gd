@@ -10,6 +10,7 @@ var player: CharacterBody3D
 var visual: StylizedActorVisual
 var feedback: PlayerMotionFeedback
 var climbing: PlayerClimbingController
+var ground_motion: PlayerGroundMotionMotor
 var status_label: Label
 var pose_index: int = -1
 
@@ -22,9 +23,10 @@ func _ready() -> void:
 		visual = player.get_node_or_null("GraceVisualV1") as StylizedActorVisual
 		feedback = player.get_node_or_null("PlayerMotionFeedback") as PlayerMotionFeedback
 		climbing = player.get_node_or_null("ClimbingController") as PlayerClimbingController
+		ground_motion = player.get_node_or_null("GroundMotionMotor") as PlayerGroundMotionMotor
 	_configure_player()
 	_build_hud()
-	GameState.set_objective("Run, turn, jump, land, climb, mantle, fight, and inspect Grace's transitions.")
+	GameState.set_objective("Accelerate, stop, reverse, turn, climb, fight, and inspect Grace's transitions.")
 
 
 func _process(_delta: float) -> void:
@@ -83,6 +85,8 @@ func _reset_lab() -> void:
 	_clear_pose()
 	if climbing != null:
 		climbing.reset_climbing()
+	if ground_motion != null:
+		ground_motion.reset_motion()
 	if player != null:
 		player.global_position = Vector3(0, 1.1, 8.0)
 		player.rotation = Vector3.ZERO
@@ -132,8 +136,28 @@ func _build_course() -> void:
 	wall.add_to_group("climbable")
 	wall.set_meta("climb_surface", "wood")
 	_add_box_body("ClimbTop", Vector3(4.2, 0.4, 3.4), Vector3(5.5, 5.0, -1.7), Color(0.32, 0.24, 0.15))
+
+	# Long lanes expose start, stop, and reversal response. The offset gates invite
+	# figure-eight turns without adding collision noise to the movement test.
 	_add_box_body("TurnMarkerLeft", Vector3(0.16, 0.04, 8.0), Vector3(-2.2, 0.03, 1.5), Color(0.12, 0.52, 0.9), false)
 	_add_box_body("TurnMarkerRight", Vector3(0.16, 0.04, 8.0), Vector3(2.2, 0.03, 1.5), Color(0.12, 0.52, 0.9), false)
+	_add_box_body("StartLine", Vector3(4.6, 0.045, 0.13), Vector3(0, 0.035, 6.4), Color(0.18, 0.82, 0.48), false)
+	_add_box_body("BrakeLine", Vector3(4.6, 0.045, 0.13), Vector3(0, 0.035, 3.8), Color(1.0, 0.48, 0.18), false)
+	_add_box_body("ReverseLine", Vector3(4.6, 0.045, 0.13), Vector3(0, 0.035, 1.2), Color(0.88, 0.28, 0.86), false)
+	for marker_data: Dictionary in [
+		{"name": "FigureEightNW", "position": Vector3(-2.4, 0.06, -2.0)},
+		{"name": "FigureEightNE", "position": Vector3(2.4, 0.06, -2.0)},
+		{"name": "FigureEightSW", "position": Vector3(-2.4, 0.06, -5.0)},
+		{"name": "FigureEightSE", "position": Vector3(2.4, 0.06, -5.0)},
+	]:
+		_add_box_body(
+			str(marker_data["name"]),
+			Vector3(0.32, 0.12, 0.32),
+			marker_data["position"] as Vector3,
+			Color(0.38, 0.72, 1.0),
+			false
+		)
+
 	var title := Label3D.new()
 	title.text = "GRACE MOTION SHOWCASE"
 	title.position = Vector3(0, 7.0, -7.2)
@@ -144,7 +168,7 @@ func _build_course() -> void:
 	title.modulate = Color(0.72, 0.88, 1.0)
 	add_child(title)
 	var instructions := Label3D.new()
-	instructions.text = "RUN • TURN • JUMP • LAND • CLIMB   |   ATTACK / GUARD / DODGE / CAST   |   P CYCLES POSES • O LIVE MODE • F8 RESET"
+	instructions.text = "START • BRAKE • REVERSE • FIGURE 8 • STAIRS   |   ATTACK / DODGE / LOCK-ON   |   P POSES • O LIVE • F8 RESET"
 	instructions.position = Vector3(0, 6.2, -7.1)
 	instructions.font_size = 17
 	instructions.pixel_size = 0.008
@@ -193,7 +217,7 @@ func _build_hud() -> void:
 	add_child(layer)
 	var panel := PanelContainer.new()
 	panel.position = Vector2(20, 20)
-	panel.custom_minimum_size = Vector2(510, 108)
+	panel.custom_minimum_size = Vector2(610, 138)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.012, 0.022, 0.043, 0.9)
 	style.border_color = Color(0.3, 0.66, 1.0, 0.85)
@@ -211,17 +235,23 @@ func _update_hud() -> void:
 	if status_label == null or visual == null:
 		return
 	var animation: Dictionary = visual.get_animation_debug_data()
-	var motion: Dictionary = feedback.get_debug_data() if feedback != null else {}
+	var feedback_data: Dictionary = feedback.get_debug_data() if feedback != null else {}
+	var motor: Dictionary = ground_motion.get_debug_data() if ground_motion != null else {}
 	var acceleration: Vector3 = animation.get("acceleration", Vector3.ZERO)
 	status_label.text = (
 		"ANIMATION  •  " + str(animation.get("presentation_state", "idle")).to_upper()
 		+ "  •  " + str(animation.get("state_elapsed", 0.0)) + "s"
 		+ "     FORCED " + str(animation.get("forced_state", "none")).to_upper()
-		+ "\nMOTION  •  WEIGHT " + str(animation.get("movement_weight", 0.0))
-		+ "     TURN " + str(animation.get("turn_velocity", 0.0))
+		+ "\nMOTOR  •  " + str(motor.get("state", "legacy")).to_upper()
+		+ "     TARGET " + str(motor.get("target_speed", 0.0))
+		+ "     ACTUAL " + str(motor.get("actual_speed", 0.0))
+		+ "     INPUT " + str(motor.get("input_strength", 0.0))
+		+ "\nINTENT  •  TURN " + str(motor.get("turn_angle_degrees", 0.0)) + "°"
+		+ "     BRAKE " + str(motor.get("braking_weight", 0.0))
+		+ "     REVERSE " + str(motor.get("reversal_weight", 0.0))
 		+ "     ACCEL " + str(snappedf(acceleration.length(), 0.1))
-		+ "\nFEEDBACK  •  FOOT " + str(motion.get("footstep_side", "left")).to_upper()
-		+ "     LIVE EFFECTS " + str(motion.get("live_effects", 0))
+		+ "\nFEEDBACK  •  FOOT " + str(feedback_data.get("footstep_side", "left")).to_upper()
+		+ "     LIVE EFFECTS " + str(feedback_data.get("live_effects", 0))
 		+ "     LANDING " + str(animation.get("landing", 0.0)) + "s"
 	)
 

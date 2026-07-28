@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/modular_outdoor_environment_piece.gd" id="1_piece"]
+
+[node name="WeatheredRubbleCluster" type="Node3D"]
+script = ExtResource("1_piece")
+piece_id = "weathered_rubble_cluster"
+display_name = "Weathered Rubble Cluster"
+category = "prop"
+piece_type = "rubble_cluster"
+footprint = Vector3(2.8, 1, 2.8)
+requires_collision = false
+variant_seed = 17

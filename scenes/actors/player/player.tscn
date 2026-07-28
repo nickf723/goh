@@ -42,6 +42,8 @@
 [ext_resource type="Resource" path="res://data/player/grace_dodge_motion_profile.tres" id="40_dodge_profile"]
 [ext_resource type="Script" path="res://scripts/player/player_combat_footwork_controller.gd" id="41_footwork"]
 [ext_resource type="Resource" path="res://data/player/grace_combat_footwork_profile.tres" id="42_footwork_profile"]
+[ext_resource type="Script" path="res://scripts/player/player_vertical_motion_controller.gd" id="43_vertical_motion"]
+[ext_resource type="Resource" path="res://data/player/grace_vertical_motion_profile.tres" id="44_vertical_profile"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.46
@@ -85,6 +87,10 @@ script = ExtResource("36_step_up")
 script = ExtResource("38_ground_motion")
 profile = ExtResource("39_ground_profile")
 
+[node name="VerticalMotionController" type="Node" parent="."]
+script = ExtResource("43_vertical_motion")
+profile = ExtResource("44_vertical_profile")
+
 [node name="CombatFootworkController" type="Node" parent="."]
 script = ExtResource("41_footwork")
 profile = ExtResource("42_footwork_profile")
@@ -96,7 +102,7 @@ script = ExtResource("30_outfit_appearance")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 
 [node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot" unique_id=1805100342]
-transform = Transform3D(1, 0, 0, 0, 0.9659258, 0.25881904, 0, -0.25881904, 0.9659258, 0, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 0.9659258, 0.25881904, 0, -0.25881904, 0.9659258, 0, 0, 0, 1, 0, 0)
 spring_length = 6.0
 
 [node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D" unique_id=1002768703]

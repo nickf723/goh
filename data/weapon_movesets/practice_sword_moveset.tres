@@ -24,6 +24,7 @@ next_light_attack_id = "sword_reprise"
 trail_color = Color(0.72, 0.88, 1, 0.78)
 windup_rotation_degrees = Vector3(0, -58, -8)
 strike_rotation_degrees = Vector3(0, 68, 6)
+character_pose_id = "sword_cut_right"
 
 [sub_resource type="Resource" id="Attack_sword_l2"]
 script = ExtResource("1_attack")
@@ -46,6 +47,7 @@ next_light_attack_id = "sword_reprise"
 trail_color = Color(0.7, 0.86, 1, 0.78)
 windup_rotation_degrees = Vector3(0, 62, 8)
 strike_rotation_degrees = Vector3(0, -72, -6)
+character_pose_id = "sword_cut_left"
 
 [sub_resource type="Resource" id="Attack_sword_l3"]
 script = ExtResource("1_attack")
@@ -69,6 +71,7 @@ next_light_attack_id = "sword_reprise"
 trail_color = Color(0.76, 0.9, 1, 0.8)
 windup_rotation_degrees = Vector3(24, -66, -28)
 strike_rotation_degrees = Vector3(-20, 74, 24)
+character_pose_id = "sword_rising_right"
 
 [sub_resource type="Resource" id="Attack_sword_l4"]
 script = ExtResource("1_attack")
@@ -95,6 +98,7 @@ trail_start_scale = Vector3(0.5, 0.9, 1)
 trail_end_scale = Vector3(1.2, 1.6, 1)
 windup_rotation_degrees = Vector3(0, -110, -12)
 strike_rotation_degrees = Vector3(0, 150, 12)
+character_pose_id = "sword_spin_right"
 
 [sub_resource type="Resource" id="Attack_sword_reprise"]
 script = ExtResource("1_attack")
@@ -126,6 +130,7 @@ windup_rotation_degrees = Vector3(0, -16, 74)
 strike_rotation_degrees = Vector3(0, 2, 90)
 windup_offset = Vector3(0, 0, 0.2)
 strike_offset = Vector3(0, 0, -0.42)
+character_pose_id = "sword_thrust"
 
 [sub_resource type="Resource" id="Attack_sword_h0"]
 script = ExtResource("1_attack")
@@ -154,6 +159,7 @@ trail_start_scale = Vector3(0.5, 0.9, 1)
 trail_end_scale = Vector3(1.1, 1.7, 1)
 windup_rotation_degrees = Vector3(-82, 0, 0)
 strike_rotation_degrees = Vector3(76, 0, 0)
+character_pose_id = "sword_overhead"
 
 [sub_resource type="Resource" id="Attack_sword_h1"]
 script = ExtResource("1_attack")
@@ -180,6 +186,7 @@ hit_stop_duration = 0.075
 trail_color = Color(0.98, 0.72, 0.3, 0.86)
 windup_rotation_degrees = Vector3(68, -42, -18)
 strike_rotation_degrees = Vector3(-72, 48, 18)
+character_pose_id = "sword_rising_heavy"
 
 [sub_resource type="Resource" id="Attack_sword_h2"]
 script = ExtResource("1_attack")
@@ -208,6 +215,7 @@ trail_start_scale = Vector3(0.6, 1, 1)
 trail_end_scale = Vector3(1.35, 1.8, 1)
 windup_rotation_degrees = Vector3(0, 105, 12)
 strike_rotation_degrees = Vector3(0, -145, -12)
+character_pose_id = "sword_cleave_left"
 
 [sub_resource type="Resource" id="Attack_sword_h3"]
 script = ExtResource("1_attack")
@@ -238,6 +246,7 @@ windup_rotation_degrees = Vector3(0, -20, 82)
 strike_rotation_degrees = Vector3(0, 4, 90)
 windup_offset = Vector3(0, 0, 0.28)
 strike_offset = Vector3(0, 0, -0.55)
+character_pose_id = "sword_thrust_heavy"
 
 [sub_resource type="Resource" id="Attack_sword_h4"]
 script = ExtResource("1_attack")
@@ -266,6 +275,7 @@ trail_start_scale = Vector3(0.7, 1.1, 1)
 trail_end_scale = Vector3(1.55, 2, 1)
 windup_rotation_degrees = Vector3(0, -145, -18)
 strike_rotation_degrees = Vector3(0, 210, 18)
+character_pose_id = "sword_orbit"
 
 [resource]
 script = ExtResource("2_moveset")

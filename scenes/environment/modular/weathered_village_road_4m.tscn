@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/modular_outdoor_environment_piece.gd" id="1_piece"]
+
+[node name="WeatheredVillageRoad4m" type="Node3D"]
+script = ExtResource("1_piece")
+piece_id = "weathered_village_road_4m"
+display_name = "Weathered Village Road 4m"
+category = "terrain"
+piece_type = "village_road"
+footprint = Vector3(4, 0.35, 4)
+requires_collision = true
+variant_seed = 3

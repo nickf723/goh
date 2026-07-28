@@ -2,6 +2,7 @@ extends Node
 class_name PlayerMotionFeedback
 
 signal footstep_emitted(side: String)
+signal jump_emitted(kind: String)
 signal landing_emitted(strength: float)
 signal motion_state_changed(previous_state: String, next_state: String)
 
@@ -14,9 +15,16 @@ var previous_stride_bucket: int = 0
 var grip_timer: float = 0.0
 var footstep_side: bool = false
 var live_effects: Array[Node3D] = []
+var last_jump_kind: String = "none"
+var last_landing_kind: String = "none"
+var last_landing_speed: float = 0.0
+var last_landing_strength: float = 0.0
 
 @onready var actor: CharacterBody3D = get_parent() as CharacterBody3D
 @onready var visual: StylizedActorVisual = get_parent().get_node_or_null("GraceVisualV1") as StylizedActorVisual
+@onready var vertical_motion: PlayerVerticalMotionController = (
+	get_parent().get_node_or_null("VerticalMotionController") as PlayerVerticalMotionController
+)
 
 
 func _ready() -> void:
@@ -24,6 +32,20 @@ func _ready() -> void:
 	if visual != null:
 		previous_state = visual.presentation_state
 		previous_stride_bucket = floori(visual.stride_phase / maxf(footstep_phase_interval, 0.01))
+	if vertical_motion != null:
+		if not vertical_motion.jump_started.is_connected(_on_jump_started):
+			vertical_motion.jump_started.connect(_on_jump_started)
+		if not vertical_motion.landed.is_connected(_on_vertical_landed):
+			vertical_motion.landed.connect(_on_vertical_landed)
+
+
+func _exit_tree() -> void:
+	if vertical_motion == null:
+		return
+	if vertical_motion.jump_started.is_connected(_on_jump_started):
+		vertical_motion.jump_started.disconnect(_on_jump_started)
+	if vertical_motion.landed.is_connected(_on_vertical_landed):
+		vertical_motion.landed.disconnect(_on_vertical_landed)
 
 
 func _process(delta: float) -> void:
@@ -57,16 +79,45 @@ func _update_footsteps() -> void:
 
 func _on_motion_state_changed(previous: String, next: String) -> void:
 	motion_state_changed.emit(previous, next)
-	if next == "landing":
+	# The vertical-motion controller owns exact landing impact and timing. Retain the
+	# older visual-state fallback for actors that do not install that controller.
+	if next == "landing" and vertical_motion == null:
 		_spawn_landing_pulse(visual.landing_strength)
 		landing_emitted.emit(visual.landing_strength)
 		_apply_landing_camera_impulse(visual.landing_strength)
+
+
+func _on_jump_started(kind: String, launch_velocity: float) -> void:
+	last_jump_kind = kind
+	var strength: float = clampf(launch_velocity / 6.5, 0.35, 1.0)
+	_spawn_takeoff_pulse(strength)
+	jump_emitted.emit(kind)
+
+
+func _on_vertical_landed(kind: String, impact_speed: float, strength: float) -> void:
+	last_landing_kind = kind
+	last_landing_speed = impact_speed
+	last_landing_strength = strength
+	if strength <= 0.0:
+		return
+	_spawn_landing_pulse(strength)
+	landing_emitted.emit(strength)
+	_apply_landing_camera_impulse(strength)
 
 
 func _spawn_footstep_pulse() -> void:
 	var origin: Vector3 = _get_feet_position()
 	origin.x += 0.16 if footstep_side else -0.16
 	_spawn_ground_ring(origin, 0.22, Color(0.56, 0.72, 0.9, 0.34), 0.24)
+
+
+func _spawn_takeoff_pulse(strength: float) -> void:
+	_spawn_ground_ring(
+		_get_feet_position(),
+		lerpf(0.28, 0.52, strength),
+		Color(0.48, 0.82, 1.0, 0.42),
+		0.26
+	)
 
 
 func _spawn_landing_pulse(strength: float) -> void:
@@ -182,5 +233,9 @@ func get_debug_data() -> Dictionary:
 		"stride_bucket": previous_stride_bucket,
 		"footstep_side": "right" if footstep_side else "left",
 		"grip_timer": snappedf(grip_timer, 0.01),
+		"last_jump_kind": last_jump_kind,
+		"last_landing_kind": last_landing_kind,
+		"last_landing_speed": snappedf(last_landing_speed, 0.01),
+		"last_landing_strength": snappedf(last_landing_strength, 0.01),
 		"live_effects": live_effects.size(),
 	}

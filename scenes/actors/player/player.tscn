@@ -39,6 +39,7 @@
 [ext_resource type="Script" path="res://scripts/visuals/player_weapon_control_animator.gd" id="37_weapon_control"]
 [ext_resource type="Script" path="res://scripts/player/player_ground_motion_motor.gd" id="38_ground_motion"]
 [ext_resource type="Resource" path="res://data/player/grace_ground_motion_profile.tres" id="39_ground_profile"]
+[ext_resource type="Resource" path="res://data/player/grace_dodge_motion_profile.tres" id="40_dodge_profile"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.46
@@ -189,6 +190,7 @@ script = ExtResource("29_stealth")
 
 [node name="PlayerDodgeController" type="Node" parent="." unique_id=1337799175]
 script = ExtResource("8_fp13k")
+profile = ExtResource("40_dodge_profile")
 
 [node name="SoulGripController" type="Node3D" parent="."]
 script = ExtResource("12_soul_grip")

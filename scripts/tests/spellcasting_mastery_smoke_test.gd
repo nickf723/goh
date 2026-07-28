@@ -7,20 +7,26 @@ const SpellcastingTraditionCatalogScript = preload("res://scripts/progression/sp
 const SpellcastingTraditionResolverScript = preload("res://scripts/abilities/spellcasting_tradition_resolver.gd")
 const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
 
+const UNRELATED_UNLOCK_ID: String = "spellcasting_mastery_test_unrelated_unlock"
+
 var failures: Array[String] = []
 
 
 func _ready() -> void:
-	var previous_achievements: Dictionary = AchievementServiceScript.capture_state()
+	var previous_unlocks: Dictionary = GameState.get_unlock_snapshot()
 	AchievementServiceScript.clear_all()
+	GameState.grant_unlock(UNRELATED_UNLOCK_ID, {
+		"type": UnlockCatalogScript.TYPE_PERMISSION,
+		"display_name": "Unrelated Test Unlock",
+		"description": "Confirms achievement cleanup stays inside its namespace.",
+	})
 
 	validate_catalogs()
 	validate_sequential_mastery()
 	validate_debug_mastery()
 	validate_spell_compatibility()
 
-	AchievementServiceScript.clear_all()
-	AchievementServiceScript.restore_state(previous_achievements)
+	GameState.apply_saved_unlocks({"unlocks": previous_unlocks})
 
 	if failures.is_empty():
 		print("SPELLCASTING_MASTERY_SMOKE_TEST: PASS")
@@ -40,6 +46,13 @@ func validate_catalogs() -> void:
 		failures.append("expected eight spellcasting traditions")
 	if AchievementCatalogScript.get_definitions().size() != 32:
 		failures.append("expected four mastery achievements for each of eight traditions")
+	if AchievementServiceScript.get_persistence_scope() != "save_slot":
+		failures.append("achievement service did not declare save-slot persistence")
+
+	for definition: Dictionary in AchievementCatalogScript.get_definitions():
+		if str(definition.get("persistence_scope", "")) != "save_slot":
+			failures.append("achievement definition has the wrong persistence scope")
+			break
 
 	var warlock_capstone: Dictionary = SpellcastingTraditionCatalogScript.get_capstone("warlock")
 	if str(warlock_capstone.get("id", "")) != "divine_incarnation":
@@ -77,11 +90,13 @@ func validate_sequential_mastery() -> void:
 	)
 	var storage_id: String = AchievementServiceScript.get_storage_id(mastery_achievement_id)
 	if not GameState.has_unlock(storage_id):
-		failures.append("Warlock mastery was not stored in the persistent unlock ledger")
+		failures.append("Warlock mastery was not stored in the save-slot unlock ledger")
 
 	var mastery_row: Dictionary = AchievementServiceScript.get_unlocked_row(mastery_achievement_id)
 	if str(mastery_row.get("type", "")) != UnlockCatalogScript.TYPE_ACHIEVEMENT:
 		failures.append("mastery ledger row did not use the achievement unlock type")
+	if str(mastery_row.get("persistence_scope", "")) != "save_slot":
+		failures.append("mastery ledger row did not retain save-slot scope")
 	var evidence: Dictionary = mastery_row.get("evidence", {}) as Dictionary
 	if str(evidence.get("fixture", "")) != "sequential_warlock":
 		failures.append("mastery ledger did not preserve achievement evidence")
@@ -96,6 +111,25 @@ func validate_sequential_mastery() -> void:
 	var duplicate: Dictionary = SpellcastingMasteryServiceScript.advance("warlock")
 	if not bool(duplicate.get("ok", false)) or not bool(duplicate.get("already_complete", false)):
 		failures.append("advancing an already mastered tradition was not idempotent")
+
+	var snapshot: Dictionary = AchievementServiceScript.capture_state()
+	if AchievementServiceScript.clear_all() != 4:
+		failures.append("achievement capture test did not clear the four Warlock stages")
+	if SpellcastingMasteryServiceScript.is_mastered("warlock"):
+		failures.append("clearing achievements left Warlock mastered")
+	if not GameState.has_unlock(UNRELATED_UNLOCK_ID):
+		failures.append("achievement cleanup removed an unrelated unlock")
+
+	AchievementServiceScript.restore_state(snapshot)
+	if not SpellcastingMasteryServiceScript.is_mastered("warlock"):
+		failures.append("captured Warlock mastery did not restore")
+	if str(
+		AchievementServiceScript.get_unlocked_row(mastery_achievement_id).get(
+			"persistence_scope",
+			""
+		)
+	) != "save_slot":
+		failures.append("restored mastery lost its persistence scope")
 
 
 func validate_debug_mastery() -> void:
@@ -114,6 +148,8 @@ func validate_debug_mastery() -> void:
 		failures.append("mastery reset did not revoke all 32 stage achievements")
 	if not AchievementServiceScript.get_unlocked_achievement_ids().is_empty():
 		failures.append("mastery reset left achievement rows behind")
+	if not GameState.has_unlock(UNRELATED_UNLOCK_ID):
+		failures.append("mastery reset removed an unrelated unlock")
 
 
 func validate_spell_compatibility() -> void:
@@ -186,5 +222,9 @@ func make_ability(
 	ability.element = element
 	ability.category = category
 	ability.roles = roles.duplicate()
-	ability.delivery_type = "instant" if category == AbilityDefinition.AbilityCategory.INSTANT else "projectile"
+	ability.delivery_type = (
+		"instant"
+		if category == AbilityDefinition.AbilityCategory.INSTANT
+		else "projectile"
+	)
 	return ability

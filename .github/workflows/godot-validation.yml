@@ -49,6 +49,9 @@ jobs:
       - name: Run registered feature scenes and tests
         run: python scripts/ci/run_feature_registry.py --godot godot
 
+      - name: Run Grace wire motion rig test
+        run: godot --headless --path . res://scenes/tests/grace_animation_smoke_test.tscn
+
       - name: Export Windows v0.1 build
         run: |
           mkdir -p build/windows

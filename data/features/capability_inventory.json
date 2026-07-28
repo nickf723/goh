@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-07-27",
+  "updated": "2026-07-28",
   "purpose": "Canonical capability memory for planning. Search this before proposing new mechanics.",
   "lifecycle_values": [
     "canonical",
@@ -592,11 +592,54 @@
       ],
       "implemented": true,
       "do_not_resuggest": true,
-      "next_use": "Apply the reusable scenes to the Drowned Chapel benchmark and future dungeons instead of rebuilding repeated architecture and props from raw runtime primitives. Keep layout, landmarks, and environmental storytelling authored.",
+      "next_use": "Apply the reusable scenes and authored-space standards to the Ruined Village Approach; add kit pieces only when that second application proves repeated need.",
       "story_reference": "The Drowned Bell",
       "limitations": [
         "The v1 reusable kit is a stylized primitive-based benchmark rather than final imported production art.",
         "Only one weathered architecture family is represented so far."
+      ]
+    },
+    {
+      "id": "player_spatial_profile_and_set_readability",
+      "display_name": "Grace Spatial Profile, Authored Set Clearance, and Readability",
+      "lifecycle": [
+        "canonical",
+        "story_integrated"
+      ],
+      "owner_files": [
+        "scripts/player/player_spatial_profile.gd",
+        "scripts/player/player_spatial_profile_controller.gd",
+        "data/player/grace_spatial_profile.tres",
+        "scripts/environment/authored_set_composer.gd",
+        "scripts/environment/authored_set_clearance_auditor.gd",
+        "scripts/environment/authored_set_readability_auditor.gd",
+        "scripts/environment/authored_set_readability_debug.gd",
+        "data/set_layouts/",
+        "scripts/levels/drowned_bell_crypt_layout_pass.gd",
+        "scripts/levels/drowned_bell_spatial_readability_pass.gd"
+      ],
+      "canonical_scene": "scenes/levels/prototypes/prototype_drowned_bell_v1.tscn",
+      "aliases": [
+        "player spatial profile",
+        "Grace collision envelope",
+        "Grace silhouette",
+        "slim Grace",
+        "authored set composer",
+        "set clearance",
+        "composition density",
+        "camera breathing room",
+        "interaction approach zones",
+        "protected travel routes",
+        "spatial readability",
+        "de-crowd level",
+        "clearance debug overlay"
+      ],
+      "implemented": true,
+      "do_not_resuggest": true,
+      "next_use": "Apply the profile and readability-plan contract to the Ruined Village Approach before adding more generic set-building mechanics.",
+      "limitations": [
+        "Density budgets warn about crowding but do not replace authored composition judgment.",
+        "The debug overlay is runtime-only rather than a full editor plugin."
       ]
     },
     {

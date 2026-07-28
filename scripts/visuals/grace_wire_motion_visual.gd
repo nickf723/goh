@@ -34,10 +34,16 @@ func get_animation_debug_data() -> Dictionary:
 	debug_data["rig_mode"] = "wire_skeleton"
 	if wire_skeleton_renderer != null:
 		var wire_data: Dictionary = wire_skeleton_renderer.get_debug_data()
+		var grounding: Dictionary = wire_data.get("grounding", {}) as Dictionary
 		debug_data["wire_joint_count"] = int(wire_data.get("joint_count", 0))
 		debug_data["wire_segment_count"] = int(wire_data.get("segment_count", 0))
 		debug_data["wire_finite_pose"] = bool(wire_data.get("finite_pose", false))
 		debug_data["wire_outfit_id"] = str(wire_data.get("outfit_id", ""))
+		debug_data["wire_grounding_active"] = bool(grounding.get("active", false))
+		debug_data["wire_left_ground_hit"] = bool(grounding.get("left_hit", false))
+		debug_data["wire_right_ground_hit"] = bool(grounding.get("right_hit", false))
+		debug_data["wire_left_toe_offset"] = float(grounding.get("left_toe_offset", 0.0))
+		debug_data["wire_right_toe_offset"] = float(grounding.get("right_toe_offset", 0.0))
 	return debug_data
 
 

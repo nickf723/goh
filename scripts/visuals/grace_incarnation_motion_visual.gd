@@ -1,0 +1,50 @@
+extends "res://scripts/visuals/grace_vertical_motion_visual.gd"
+class_name GraceIncarnationMotionVisual
+
+
+func _ready() -> void:
+	super._ready()
+	add_to_group("grace_incarnation_motion_visual")
+
+
+func get_animation_debug_data() -> Dictionary:
+	var debug_data: Dictionary = super.get_animation_debug_data()
+	var avatar_wire: AvatarWireSkeletonRenderer = (
+		wire_skeleton_renderer as AvatarWireSkeletonRenderer
+	)
+	if avatar_wire != null:
+		debug_data["active_avatar_id"] = avatar_wire.active_avatar_id
+		debug_data["active_avatar_name"] = avatar_wire.active_avatar_display_name
+		debug_data["active_avatar_element"] = avatar_wire.active_avatar_element
+		debug_data["avatar_palette_override"] = avatar_wire.avatar_palette_override_active
+		debug_data["avatar_base_emission"] = avatar_wire.avatar_emission_multiplier
+	return debug_data
+
+
+func _apply_dodge_iframe_highlight() -> void:
+	if wire_skeleton_renderer == null:
+		return
+	var base_energy: float = 1.35
+	var avatar_wire: AvatarWireSkeletonRenderer = (
+		wire_skeleton_renderer as AvatarWireSkeletonRenderer
+	)
+	if avatar_wire != null:
+		base_energy = avatar_wire.avatar_emission_multiplier
+	var weight: float = 0.0
+	var peak_energy: float = maxf(base_energy * 1.32, 2.15)
+	if dodge_motion_controller != null:
+		weight = dodge_motion_controller.get_iframe_visual_weight()
+		if dodge_motion_controller.profile != null:
+			peak_energy = maxf(
+				dodge_motion_controller.profile.iframe_emission_multiplier,
+				base_energy * 1.18
+			)
+	var energy: float = lerpf(base_energy, peak_energy, weight)
+	for material: StandardMaterial3D in [
+		wire_skeleton_renderer.center_material,
+		wire_skeleton_renderer.left_material,
+		wire_skeleton_renderer.right_material,
+		wire_skeleton_renderer.joint_material,
+	]:
+		if material != null:
+			material.emission_energy_multiplier = energy

@@ -11,6 +11,7 @@ var combat_motion_timer: float = 0.0
 @onready var climbing_controller: PlayerClimbingController = get_node_or_null("ClimbingController") as PlayerClimbingController
 @onready var swimming_controller: PlayerSwimmingController = get_node_or_null("SwimmingController") as PlayerSwimmingController
 @onready var riding_controller: PlayerRidingController = get_node_or_null("RidingController") as PlayerRidingController
+@onready var step_up_controller: PlayerStepUpController = get_node_or_null("StepUpController") as PlayerStepUpController
 
 
 func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
@@ -113,13 +114,17 @@ func _physics_process(delta: float) -> void:
 
 	if dodge_controller != null and dodge_controller.is_dodge_active():
 		cancel_combat_motion()
+		_try_step_up(dodge_controller.get_dodge_velocity(), delta)
 		super._physics_process(delta)
+		_finish_step_up()
 		return
 
 	if combat_motion_timer <= 0.0:
 		if aerial_locomotion != null and aerial_locomotion.process_locomotion(delta):
 			return
+		_try_step_up(_get_requested_ground_velocity(), delta)
 		super._physics_process(delta)
+		_finish_step_up()
 		return
 
 	if is_defeated:
@@ -136,14 +141,48 @@ func _physics_process(delta: float) -> void:
 	elif velocity.y < 0.0:
 		velocity.y = -0.1
 
+	_try_step_up(combat_motion_velocity, delta)
 	move_and_slide()
+	_finish_step_up()
 
 	if combat_motion_timer <= 0.0:
 		cancel_combat_motion()
+
+
+func _get_requested_ground_velocity() -> Vector3:
+	var input_vector: Vector2 = Input.get_vector(
+		"move_left",
+		"move_right",
+		"move_forward",
+		"move_back"
+	)
+	if input_vector.length() <= 0.01:
+		return Vector3(velocity.x, 0.0, velocity.z)
+
+	var direction: Vector3 = (
+		global_transform.basis.x * input_vector.x
+		+ global_transform.basis.z * input_vector.y
+	)
+	direction.y = 0.0
+	if direction.length_squared() <= 0.0001:
+		return Vector3.ZERO
+	return direction.normalized() * move_speed
+
+
+func _try_step_up(horizontal_velocity: Vector3, delta: float) -> bool:
+	if step_up_controller == null:
+		return false
+	return step_up_controller.try_step_up(horizontal_velocity, delta)
+
+
+func _finish_step_up() -> void:
+	if step_up_controller != null:
+		step_up_controller.finish_step()
 
 
 func get_combat_motion_debug_data() -> Dictionary:
 	return {
 		"combat_motion": snapped(combat_motion_timer, 0.01),
 		"combat_velocity": combat_motion_velocity,
+		"step_up": step_up_controller.get_debug_data() if step_up_controller != null else {},
 	}

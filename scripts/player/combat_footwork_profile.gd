@@ -21,6 +21,8 @@ class_name CombatFootworkProfile
 @export_group("Presentation")
 @export_range(0.0, 2.0, 0.05) var pose_strength: float = 1.0
 @export_range(1.0, 40.0, 0.5) var pose_response: float = 22.0
+@export_range(0.0, 1.0, 0.01) var direction_alignment_strength: float = 0.9
+@export_range(0.0, 120.0, 1.0) var maximum_visual_alignment_degrees: float = 72.0
 
 
 func validate_profile() -> Array[String]:
@@ -43,4 +45,8 @@ func validate_profile() -> Array[String]:
 		failures.append("maximum_motion_duration must not be shorter than minimum_motion_duration")
 	if pose_strength < 0.0:
 		failures.append("pose_strength must not be negative")
+	if direction_alignment_strength < 0.0 or direction_alignment_strength > 1.0:
+		failures.append("direction_alignment_strength must be in [0, 1]")
+	if maximum_visual_alignment_degrees < 0.0:
+		failures.append("maximum_visual_alignment_degrees must not be negative")
 	return failures

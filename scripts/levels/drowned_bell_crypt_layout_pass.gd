@@ -12,7 +12,7 @@ var world: Node3D
 var crypt_root: Node3D
 var composed_root: Node3D
 var builder: AuthoredEnvironmentBuilder
-var composer: AuthoredSetComposer
+var composer: RefCounted
 var layout_data: Dictionary = {}
 var compose_result: Dictionary = {}
 var audit_result: Dictionary = {}
@@ -61,8 +61,9 @@ func _install() -> void:
 	crypt_root.add_child(composed_root)
 
 	builder = BuilderScript.new(composed_root, ChapelPalette) as AuthoredEnvironmentBuilder
-	composer = ComposerScript.new(builder) as AuthoredSetComposer
-	compose_result = composer.compose_plan(composed_root, layout_data)
+	composer = ComposerScript.new(builder) as RefCounted
+	var raw_compose_result: Variant = composer.call("compose_plan", composed_root, layout_data)
+	compose_result = raw_compose_result as Dictionary if raw_compose_result is Dictionary else {}
 	_configure_passage_water()
 	_configure_drained_walkway()
 	_configure_exit_anchors()
@@ -70,7 +71,7 @@ func _install() -> void:
 
 	audit_result = ClearanceAuditor.audit(composed_root)
 	composed_root.set_meta("clearance_audit", audit_result.duplicate(true))
-	composed_root.set_meta("compose_counts", composer.get_build_counts())
+	composed_root.set_meta("compose_counts", _get_compose_counts())
 	for error: String in audit_result.get("errors", []):
 		push_error("Drowned Bell set clearance: " + error)
 	for warning: String in audit_result.get("warnings", []):
@@ -241,6 +242,13 @@ func _build_passage_dressing() -> void:
 		)
 
 
+func _get_compose_counts() -> Dictionary:
+	if composer == null:
+		return {}
+	var raw_counts: Variant = composer.call("get_build_counts")
+	return raw_counts as Dictionary if raw_counts is Dictionary else {}
+
+
 func _has_property(object: Object, property_name: String) -> bool:
 	for property_variant: Variant in object.get_property_list():
 		if not property_variant is Dictionary:
@@ -256,7 +264,7 @@ func get_debug_data() -> Dictionary:
 		"installed": installed,
 		"layout_id": str(layout_data.get("layout_id", "")),
 		"layout_source": LAYOUT_PATH,
-		"compose_counts": composer.get_build_counts() if composer != null else {},
+		"compose_counts": _get_compose_counts(),
 		"audit": audit_result.duplicate(true),
 		"composed_root": composed_root != null,
 	}

@@ -14,6 +14,17 @@ class_name GraceWireSkeletonRenderer
 @export_range(0.015, 0.12, 0.002) var joint_radius: float = 0.045
 @export var hide_source_meshes: bool = true
 
+@export_group("Foot Grounding")
+@export_range(0.01, 0.12, 0.002) var ground_contact_clearance: float = 0.05
+@export_range(0.0, 0.08, 0.002) var ankle_ground_lift: float = 0.02
+@export_range(0.05, 0.6, 0.01) var ground_probe_up: float = 0.24
+@export_range(0.1, 1.2, 0.01) var ground_probe_down: float = 0.48
+@export_range(0.0, 0.4, 0.01) var ground_max_lift: float = 0.2
+@export_range(0.0, 0.3, 0.01) var ground_max_drop: float = 0.1
+@export_range(1.0, 40.0, 0.5) var grounding_response: float = 24.0
+@export_range(0.0, 1.0, 0.01) var minimum_ground_normal_dot: float = 0.45
+@export var grounding_collision_mask: int = 0xFFFFFFFF
+
 const JOINT_IDS: Array[String] = [
 	"pelvis",
 	"spine",
@@ -57,7 +68,22 @@ const BONE_PAIRS: Array = [
 	["right_ankle", "right_toe"],
 ]
 
+const GROUNDED_STATES: Array[String] = [
+	"idle",
+	"locomotion",
+	"landing",
+	"exhausted",
+	"attack",
+	"guard",
+	"dodge",
+	"hit",
+	"cast",
+	"item",
+	"interact",
+]
+
 var visual: StylizedActorVisual
+var actor: CharacterBody3D
 var source_visual_root: Node3D
 var source_body_root: Node3D
 var source_head_root: Node3D
@@ -71,6 +97,18 @@ var source_right_leg: Node3D
 var joint_nodes: Dictionary = {}
 var bone_nodes: Dictionary = {}
 var joint_positions: Dictionary = {}
+var grounding_offsets: Dictionary = {
+	"left_ankle": 0.0,
+	"left_toe": 0.0,
+	"right_ankle": 0.0,
+	"right_toe": 0.0,
+}
+var grounding_hits: Dictionary = {
+	"left_ankle": false,
+	"left_toe": false,
+	"right_ankle": false,
+	"right_toe": false,
+}
 
 var center_material: StandardMaterial3D
 var left_material: StandardMaterial3D
@@ -82,6 +120,8 @@ var current_outfit_id: String = ""
 func _ready() -> void:
 	process_priority = 100
 	visual = get_parent() as StylizedActorVisual
+	if visual != null:
+		actor = visual.get_parent() as CharacterBody3D
 	_resolve_sources()
 	if hide_source_meshes and source_visual_root != null:
 		_hide_meshes(source_visual_root)
@@ -91,16 +131,16 @@ func _ready() -> void:
 	call_deferred("sample_now")
 
 
-func _process(_delta: float) -> void:
-	sample_now()
+func _process(delta: float) -> void:
+	sample_now(delta)
 
 
-func sample_now() -> void:
+func sample_now(delta: float = 0.0) -> void:
 	if source_visual_root == null:
 		_resolve_sources()
 	if not _has_required_sources():
 		return
-	_update_joint_positions()
+	_update_joint_positions(delta)
 	_update_wire_visuals()
 
 
@@ -139,6 +179,19 @@ func has_finite_pose() -> bool:
 	return true
 
 
+func get_grounding_debug_data() -> Dictionary:
+	return {
+		"active": _should_apply_grounding(),
+		"left_hit": bool(grounding_hits.get("left_ankle", false)) or bool(grounding_hits.get("left_toe", false)),
+		"right_hit": bool(grounding_hits.get("right_ankle", false)) or bool(grounding_hits.get("right_toe", false)),
+		"left_ankle_offset": snappedf(float(grounding_offsets.get("left_ankle", 0.0)), 0.001),
+		"left_toe_offset": snappedf(float(grounding_offsets.get("left_toe", 0.0)), 0.001),
+		"right_ankle_offset": snappedf(float(grounding_offsets.get("right_ankle", 0.0)), 0.001),
+		"right_toe_offset": snappedf(float(grounding_offsets.get("right_toe", 0.0)), 0.001),
+		"contact_clearance": ground_contact_clearance,
+	}
+
+
 func get_debug_data() -> Dictionary:
 	return {
 		"rig_mode": "wire_skeleton",
@@ -147,6 +200,7 @@ func get_debug_data() -> Dictionary:
 		"finite_pose": has_finite_pose(),
 		"outfit_id": current_outfit_id,
 		"state": visual.presentation_state if visual != null else "unknown",
+		"grounding": get_grounding_debug_data(),
 	}
 
 
@@ -217,7 +271,7 @@ func _build_wire_visuals() -> void:
 		bone_nodes[_bone_key(start_id, end_id)] = bone
 
 
-func _update_joint_positions() -> void:
+func _update_joint_positions(delta: float) -> void:
 	var left_hip: Vector3 = _node_point(source_left_leg)
 	var right_hip: Vector3 = _node_point(source_right_leg)
 	var pelvis: Vector3 = (left_hip + right_hip) * 0.5 + Vector3.UP * 0.07
@@ -248,6 +302,30 @@ func _update_joint_positions() -> void:
 
 	var left_ankle: Vector3 = _node_point(source_left_leg, Vector3(0.0, -leg_reach, 0.0))
 	var right_ankle: Vector3 = _node_point(source_right_leg, Vector3(0.0, -leg_reach, 0.0))
+	var left_toe: Vector3 = _node_point(
+		source_left_leg,
+		Vector3(0.0, -leg_reach - 0.015, -foot_length)
+	)
+	var right_toe: Vector3 = _node_point(
+		source_right_leg,
+		Vector3(0.0, -leg_reach - 0.015, -foot_length)
+	)
+
+	left_ankle = _ground_joint(
+		"left_ankle",
+		left_ankle,
+		ground_contact_clearance + ankle_ground_lift,
+		delta
+	)
+	left_toe = _ground_joint("left_toe", left_toe, ground_contact_clearance, delta)
+	right_ankle = _ground_joint(
+		"right_ankle",
+		right_ankle,
+		ground_contact_clearance + ankle_ground_lift,
+		delta
+	)
+	right_toe = _ground_joint("right_toe", right_toe, ground_contact_clearance, delta)
+
 	var left_knee: Vector3 = _solve_two_bone_joint(
 		left_hip,
 		left_ankle,
@@ -261,14 +339,6 @@ func _update_joint_positions() -> void:
 		upper_leg_length,
 		lower_leg_length,
 		_get_knee_bend_direction(1.0)
-	)
-	var left_toe: Vector3 = _node_point(
-		source_left_leg,
-		Vector3(0.0, -leg_reach - 0.015, -foot_length)
-	)
-	var right_toe: Vector3 = _node_point(
-		source_right_leg,
-		Vector3(0.0, -leg_reach - 0.015, -foot_length)
 	)
 
 	joint_positions = {
@@ -292,6 +362,82 @@ func _update_joint_positions() -> void:
 		"right_ankle": right_ankle,
 		"right_toe": right_toe,
 	}
+
+
+func _ground_joint(
+	joint_id: String,
+	local_point: Vector3,
+	clearance: float,
+	delta: float
+) -> Vector3:
+	var target_offset: float = 0.0
+	var hit_found: bool = false
+
+	if _should_apply_grounding():
+		var hit: Dictionary = _probe_ground(local_point)
+		if not hit.is_empty():
+			var hit_position_value: Variant = hit.get("position", null)
+			var hit_normal_value: Variant = hit.get("normal", Vector3.UP)
+			if hit_position_value is Vector3 and hit_normal_value is Vector3:
+				var hit_position: Vector3 = hit_position_value
+				var hit_normal: Vector3 = hit_normal_value
+				if hit_normal.normalized().dot(Vector3.UP) >= minimum_ground_normal_dot:
+					var ground_local_y: float = to_local(hit_position).y
+					var desired_y: float = ground_local_y + clearance
+					var raw_offset: float = desired_y - local_point.y
+					if raw_offset >= -ground_max_drop and raw_offset <= ground_max_lift:
+						target_offset = clampf(raw_offset, -ground_max_drop, ground_max_lift)
+						hit_found = true
+
+	var current_offset: float = float(grounding_offsets.get(joint_id, 0.0))
+	var blend_weight: float = 1.0
+	if delta > 0.0:
+		blend_weight = 1.0 - exp(-grounding_response * delta)
+	var resolved_offset: float = lerpf(
+		current_offset,
+		target_offset,
+		clampf(blend_weight, 0.0, 1.0)
+	)
+	if absf(resolved_offset) < 0.0005:
+		resolved_offset = 0.0
+
+	grounding_offsets[joint_id] = resolved_offset
+	grounding_hits[joint_id] = hit_found
+	local_point.y += resolved_offset
+	return local_point
+
+
+func _probe_ground(local_point: Vector3) -> Dictionary:
+	if not is_inside_tree():
+		return {}
+	var world: World3D = get_world_3d()
+	if world == null:
+		return {}
+
+	var world_point: Vector3 = to_global(local_point)
+	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.new()
+	query.from = world_point + Vector3.UP * ground_probe_up
+	query.to = world_point - Vector3.UP * ground_probe_down
+	query.collision_mask = grounding_collision_mask
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+
+	var excluded: Array[RID] = []
+	if actor != null:
+		excluded.append(actor.get_rid())
+	query.exclude = excluded
+	return world.direct_space_state.intersect_ray(query)
+
+
+func _should_apply_grounding() -> bool:
+	if visual == null:
+		return false
+	var state: String = visual.presentation_state
+	if not GROUNDED_STATES.has(state):
+		return false
+	if visual.debug_forced_state != "":
+		return true
+	return actor != null and actor.is_on_floor()
 
 
 func _update_wire_visuals() -> void:

@@ -5,6 +5,11 @@ const AchievementCatalogScript = preload("res://scripts/progression/achievement_
 const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
 
 const STORAGE_PREFIX: String = "achievement::"
+const PERSISTENCE_SCOPE: String = AchievementCatalogScript.PERSISTENCE_SCOPE_SAVE_SLOT
+
+
+static func get_persistence_scope() -> String:
+	return PERSISTENCE_SCOPE
 
 
 static func get_storage_id(achievement_id: String) -> String:
@@ -42,6 +47,7 @@ static func unlock(achievement_id: String, evidence: Dictionary = {}) -> Diction
 	definition["achievement_id"] = achievement_id
 	definition["storage_id"] = storage_id
 	definition["type"] = UnlockCatalogScript.TYPE_ACHIEVEMENT
+	definition["persistence_scope"] = PERSISTENCE_SCOPE
 	definition["unlocked_at"] = Time.get_datetime_string_from_system(false, true)
 	definition["evidence"] = evidence.duplicate(true)
 	GameState.grant_unlock(storage_id, definition)

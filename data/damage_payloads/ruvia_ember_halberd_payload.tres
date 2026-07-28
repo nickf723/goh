@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 1
+stance_damage = 1
+element = "fire"
+source_name = "Ruvia's Ember Halberd"
+hit_type = "melee"
+status_effect = "burning"
+status_duration = 1.4
+status_strength = 1.0
+tags = Array[String](["physical", "melee", "weapon", "fire", "pierce", "divine_incarnation"])
+knockback_strength = 1.7
+knockback_up_strength = 0.08

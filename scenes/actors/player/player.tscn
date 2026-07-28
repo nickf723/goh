@@ -35,6 +35,8 @@
 [ext_resource type="Script" path="res://scripts/player/player_recovery_controller.gd" id="33_recovery"]
 [ext_resource type="Script" path="res://scripts/player/player_spatial_profile_controller.gd" id="34_spatial_controller"]
 [ext_resource type="Resource" path="res://data/player/grace_spatial_profile.tres" id="35_spatial_profile"]
+[ext_resource type="Script" path="res://scripts/player/player_step_up_controller.gd" id="36_step_up"]
+[ext_resource type="Script" path="res://scripts/visuals/player_weapon_control_animator.gd" id="37_weapon_control"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.46
@@ -53,6 +55,8 @@ radius = 2.0
 
 [node name="Player" type="CharacterBody3D" unique_id=439123255]
 script = ExtResource("1_3vyb7")
+floor_snap_length = 0.42
+floor_constant_speed = true
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=309120136]
 shape = SubResource("CapsuleShape3D_g2els")
@@ -68,6 +72,9 @@ position = Vector3(0, -0.92, 0)
 [node name="SpatialProfileController" type="Node" parent="."]
 script = ExtResource("34_spatial_controller")
 profile = ExtResource("35_spatial_profile")
+
+[node name="StepUpController" type="Node" parent="."]
+script = ExtResource("36_step_up")
 
 [node name="EquipmentAppearanceController" type="Node" parent="."]
 script = ExtResource("30_outfit_appearance")
@@ -121,6 +128,9 @@ mesh = SubResource("BoxMesh_qdyt2")
 transform = Transform3D(-2.4041263e-08, 0, 1, 0, 1.1, 0, -0.55, 0, -4.371139e-08, 0.2, 0, -0.55)
 visible = false
 mesh = SubResource("PlaneMesh_qdyt2")
+
+[node name="PlayerWeaponControlAnimator" type="Node" parent="."]
+script = ExtResource("37_weapon_control")
 
 [node name="PlayerActionState" type="Node" parent="." unique_id=449087462]
 script = ExtResource("7_g2g7f")

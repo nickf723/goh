@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="PlayerSpatialProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/player/player_spatial_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "grace_default_v1"
+collision_radius = 0.46
+collision_height = 1.92
+safe_destination_margin = 0.05
+robe_top_radius = 0.31
+robe_bottom_radius = 0.5
+robe_height = 1.0
+torso_radius = 0.29
+arm_radius = 0.075
+cuff_radius = 0.095
+hand_radius = 0.095
+sash_radius = 0.34
+boot_width = 0.22
+boot_depth = 0.4
+visual_width = 0.94
+visual_height = 1.96
+land_clearance = Vector2(4, 3.8)
+swim_clearance = Vector2(5.5, 5)
+camera_clearance = Vector2(6, 5)
+primary_route_radius = 1.35
+camera_route_radius = 2.55
+interaction_radius = 1.8
+landmark_radius = 2.4
+combat_radius = 5.5

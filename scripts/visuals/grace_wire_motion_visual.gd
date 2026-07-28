@@ -14,11 +14,19 @@ const WeaponCharacterPoseCatalogScript = preload(
 @onready var dodge_motion_controller: PlayerDodgeController = (
 	get_parent().get_node_or_null("PlayerDodgeController") as PlayerDodgeController
 )
+@onready var combat_footwork_controller: PlayerCombatFootworkController = (
+	get_parent().get_node_or_null("CombatFootworkController") as PlayerCombatFootworkController
+)
 
 var control_pose_sample: Dictionary = {}
 var motion_accent_root_position: Vector3 = Vector3.ZERO
 var motion_accent_root_rotation: Vector3 = Vector3.ZERO
+var motion_accent_body_position: Vector3 = Vector3.ZERO
 var motion_accent_body_rotation: Vector3 = Vector3.ZERO
+var motion_accent_left_leg_position: Vector3 = Vector3.ZERO
+var motion_accent_left_leg_rotation: Vector3 = Vector3.ZERO
+var motion_accent_right_leg_position: Vector3 = Vector3.ZERO
+var motion_accent_right_leg_rotation: Vector3 = Vector3.ZERO
 
 
 func _ready() -> void:
@@ -38,6 +46,7 @@ func sample_animation_pose(delta: float) -> void:
 	_pose_controlled_hands(delta)
 	_apply_ground_motion_accent()
 	_apply_dodge_motion_accent()
+	_apply_combat_footwork_accent()
 	_apply_dodge_iframe_highlight()
 	sync_animation_anchors()
 
@@ -110,6 +119,17 @@ func get_animation_debug_data() -> Dictionary:
 		debug_data["dodge_chain_count"] = int(dodge_motion.get("chain_count", 0))
 		debug_data["dodge_chain_ready"] = bool(dodge_motion.get("chain_ready", false))
 		debug_data["dodge_buffered_follow_up"] = str(dodge_motion.get("buffered_follow_up", ""))
+	if combat_footwork_controller != null:
+		var footwork: Dictionary = combat_footwork_controller.get_debug_data()
+		debug_data["footwork_active"] = bool(footwork.get("active", false))
+		debug_data["footwork_root_active"] = bool(footwork.get("root_motion_active", false))
+		debug_data["footwork_profile_id"] = str(footwork.get("profile_id", ""))
+		debug_data["footwork_phase"] = str(footwork.get("phase", "idle"))
+		debug_data["footwork_progress"] = float(footwork.get("progress", 0.0))
+		debug_data["footwork_plant_foot"] = str(footwork.get("plant_foot", "both"))
+		debug_data["footwork_requested_distance"] = float(footwork.get("requested_distance", 0.0))
+		debug_data["footwork_actual_distance"] = float(footwork.get("actual_distance", 0.0))
+		debug_data["footwork_blocked"] = bool(footwork.get("blocked", false))
 	if wire_skeleton_renderer != null:
 		var wire_data: Dictionary = wire_skeleton_renderer.get_debug_data()
 		var grounding: Dictionary = wire_data.get("grounding", {}) as Dictionary
@@ -158,10 +178,22 @@ func _remove_motion_accent() -> void:
 		visual_root.position -= motion_accent_root_position
 		visual_root.rotation -= motion_accent_root_rotation
 	if body_root != null:
+		body_root.position -= motion_accent_body_position
 		body_root.rotation -= motion_accent_body_rotation
+	if left_leg != null:
+		left_leg.position -= motion_accent_left_leg_position
+		left_leg.rotation -= motion_accent_left_leg_rotation
+	if right_leg != null:
+		right_leg.position -= motion_accent_right_leg_position
+		right_leg.rotation -= motion_accent_right_leg_rotation
 	motion_accent_root_position = Vector3.ZERO
 	motion_accent_root_rotation = Vector3.ZERO
+	motion_accent_body_position = Vector3.ZERO
 	motion_accent_body_rotation = Vector3.ZERO
+	motion_accent_left_leg_position = Vector3.ZERO
+	motion_accent_left_leg_rotation = Vector3.ZERO
+	motion_accent_right_leg_position = Vector3.ZERO
+	motion_accent_right_leg_rotation = Vector3.ZERO
 
 
 func _apply_ground_motion_accent() -> void:
@@ -217,12 +249,61 @@ func _apply_dodge_motion_accent() -> void:
 	_apply_motion_accent()
 
 
+func _apply_combat_footwork_accent() -> void:
+	if combat_footwork_controller == null:
+		return
+	if not combat_footwork_controller.is_visual_footwork_active():
+		return
+	if presentation_state != "attack":
+		return
+	var sample: Dictionary = combat_footwork_controller.get_visual_pose()
+	if sample.is_empty():
+		return
+	var strength: float = (
+		combat_footwork_controller.profile.pose_strength
+		if combat_footwork_controller.profile != null
+		else 1.0
+	)
+	motion_accent_root_position = (
+		sample.get("root_position", Vector3.ZERO) as Vector3
+	) * strength
+	motion_accent_root_rotation = (
+		sample.get("root_rotation", Vector3.ZERO) as Vector3
+	) * strength
+	motion_accent_body_position = (
+		sample.get("body_position", Vector3.ZERO) as Vector3
+	) * strength
+	motion_accent_body_rotation = (
+		sample.get("body_rotation", Vector3.ZERO) as Vector3
+	) * strength
+	motion_accent_left_leg_position = (
+		sample.get("left_leg_position", Vector3.ZERO) as Vector3
+	) * strength
+	motion_accent_left_leg_rotation = (
+		sample.get("left_leg_rotation", Vector3.ZERO) as Vector3
+	) * strength
+	motion_accent_right_leg_position = (
+		sample.get("right_leg_position", Vector3.ZERO) as Vector3
+	) * strength
+	motion_accent_right_leg_rotation = (
+		sample.get("right_leg_rotation", Vector3.ZERO) as Vector3
+	) * strength
+	_apply_motion_accent()
+
+
 func _apply_motion_accent() -> void:
 	if visual_root != null:
 		visual_root.position += motion_accent_root_position
 		visual_root.rotation += motion_accent_root_rotation
 	if body_root != null:
+		body_root.position += motion_accent_body_position
 		body_root.rotation += motion_accent_body_rotation
+	if left_leg != null:
+		left_leg.position += motion_accent_left_leg_position
+		left_leg.rotation += motion_accent_left_leg_rotation
+	if right_leg != null:
+		right_leg.position += motion_accent_right_leg_position
+		right_leg.rotation += motion_accent_right_leg_rotation
 
 
 func _apply_dodge_iframe_highlight() -> void:

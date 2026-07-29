@@ -1,6 +1,28 @@
 extends "res://scripts/tests/avatar_control_driver_manifestation_smoke_test.gd"
 
 
+func _validate_manifested_contract(
+	player: CharacterBody3D,
+	actor: ManifestedAvatarActor,
+	manager: PlayerManifestationManager,
+	camera_before: Camera3D
+) -> void:
+	super._validate_manifested_contract(
+		player,
+		actor,
+		manager,
+		camera_before
+	)
+	_expect(
+		not actor.is_in_group("combat_targetable"),
+		"Grace's targeting assist excludes manifested Ruvia"
+	)
+	_expect(
+		actor.is_in_group("friendly_manifestation"),
+		"Manifested Ruvia exposes explicit friendly identity"
+	)
+
+
 func _validate_resource_isolation(
 	player: CharacterBody3D,
 	actor: ManifestedAvatarActor

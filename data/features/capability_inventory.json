@@ -176,6 +176,46 @@
       "do_not_resuggest": true
     },
     {
+      "id": "spellcasting_traditions_and_achievements",
+      "display_name": "Spellcasting Traditions, Mastery, and Achievement Ledger",
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/progression/spellcasting_tradition_catalog.gd",
+        "scripts/progression/achievement_catalog.gd",
+        "scripts/progression/achievement_service.gd",
+        "scripts/progression/spellcasting_mastery_service.gd",
+        "scripts/abilities/spellcasting_tradition_resolver.gd"
+      ],
+      "canonical_scene": "scenes/tests/spellcasting_mastery_smoke_test.tscn",
+      "aliases": [
+        "spellcasting traditions",
+        "magical traditions",
+        "sorcerer mastery",
+        "wizard mastery",
+        "druid mastery",
+        "warlock covenant",
+        "patron magic",
+        "theurgy",
+        "bardic magic",
+        "artifice mastery",
+        "ritualism",
+        "spellcasting achievements",
+        "achievement system",
+        "divine incarnation gateway"
+      ],
+      "implemented": true,
+      "do_not_resuggest": true,
+      "next_use": "Integrate Sorcery and Wizardry as Grace's baseline casting relationships, then use Warlock mastery as the progression gateway to Divine Incarnation.",
+      "limitations": [
+        "V0.1 reports spell compatibility but does not transform casting behavior.",
+        "Platform achievements, authored trials, mastery UI, patron relationships, summoning, and avatar swapping remain future integrations.",
+        "Tradition labels and non-Warlock capstone identities remain development-facing placeholders."
+      ]
+    },
+    {
       "id": "ground_targeting",
       "display_name": "Ground Targeting and Field Spells",
       "lifecycle": [

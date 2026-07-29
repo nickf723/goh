@@ -5,6 +5,7 @@ const TYPE_SPELL: String = "spell"
 const TYPE_MODIFIER: String = "modifier"
 const TYPE_PASSIVE: String = "passive"
 const TYPE_PERMISSION: String = "permission"
+const TYPE_ACHIEVEMENT: String = "achievement"
 
 const UNLOCK_DEFS: Dictionary = {
 	"church_trial_sigil": {

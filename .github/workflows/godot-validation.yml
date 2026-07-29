@@ -52,6 +52,9 @@ jobs:
       - name: Run player records and species persistence test
         run: godot --headless --path . res://scenes/tests/species_knowledge_smoke_test.tscn
 
+      - name: Run spellcasting mastery and achievement test
+        run: godot --headless --path . res://scenes/tests/spellcasting_mastery_smoke_test.tscn
+
       - name: Run Grace wire motion rig test
         run: godot --headless --path . res://scenes/tests/grace_animation_smoke_test.tscn
 

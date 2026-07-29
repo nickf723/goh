@@ -4,6 +4,9 @@ class_name ManifestedElementalAuthorityController
 const ManifestedFireFieldScene: PackedScene = preload(
 	"res://scenes/actions/manifested_fire_field.tscn"
 )
+const ManifestedProjectileScene: PackedScene = preload(
+	"res://scenes/actions/manifested_generic_projectile.tscn"
+)
 
 
 func _ready() -> void:
@@ -24,6 +27,42 @@ func _pay_authority_cost(
 
 func _refund_authority_cost(_mana_cost: int) -> void:
 	pass
+
+
+func _cast_authority_projectile(
+	ability: AbilityDefinition,
+	cast_origin: Vector3,
+	cast_direction: Vector3
+) -> bool:
+	if ability == null:
+		return false
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		return false
+	var ability_instance: Node = ManifestedProjectileScene.instantiate()
+	var base_payload: Resource = ability.get_action_payload()
+	if base_payload is DamagePayload:
+		var authority_payload: DamagePayload = modify_spell_payload(
+			ability,
+			base_payload as DamagePayload
+		)
+		if ability_instance.has_method("set_payload"):
+			ability_instance.call("set_payload", authority_payload)
+	if ability_instance.has_method("set_source_actor"):
+		ability_instance.call("set_source_actor", actor)
+	scene_root.add_child(ability_instance)
+	if ability_instance is Node3D:
+		(ability_instance as Node3D).global_position = cast_origin
+	if "speed" in ability_instance:
+		ability_instance.set(
+			"speed",
+			float(ability_instance.get("speed"))
+			* profile.projectile_speed_multiplier
+		)
+	if ability_instance.has_method("launch"):
+		ability_instance.call("launch", cast_direction)
+	last_cast_instance = ability_instance
+	return true
 
 
 func _spawn_fire_field_at(

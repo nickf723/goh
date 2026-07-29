@@ -6,7 +6,7 @@ const DivineSpecialRadialMenuScript = preload(
 	"res://scripts/ui/divine_special_radial_menu.gd"
 )
 const DivineSpecialInputRouterScript = preload(
-	"res://scripts/divine_specials/player_divine_special_input_router.gd"
+	"res://scripts/divine_specials/player_divine_special_input_router_platform.gd"
 )
 
 @export var show_debug_controls: bool = true

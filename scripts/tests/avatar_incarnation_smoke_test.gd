@@ -144,7 +144,12 @@ func _ready() -> void:
 	assert(weapon.equipped_weapon.weapon_class == "halberd")
 	assert(weapon.runtime_weapon_rig != null)
 	assert(ability_caster.get("loadout") == RuviaAvatar.ability_loadout)
-	for spell: AbilityDefinition in RuviaAvatar.ability_loadout.equipped_abilities:
+	for spell_index: int in range(
+		RuviaAvatar.ability_loadout.get_equipped_ability_count()
+	):
+		var spell: AbilityDefinition = (
+			RuviaAvatar.ability_loadout.get_equipped_ability(spell_index)
+		)
 		assert(spell != null and spell.element == "fire")
 
 	assert(wire.active_avatar_id == "ruvia")

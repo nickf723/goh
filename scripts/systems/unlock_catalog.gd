@@ -6,6 +6,7 @@ const TYPE_MODIFIER: String = "modifier"
 const TYPE_PASSIVE: String = "passive"
 const TYPE_PERMISSION: String = "permission"
 const TYPE_ACHIEVEMENT: String = "achievement"
+const TYPE_DIVINE_SPECIAL: String = "divine_special"
 
 const UNLOCK_DEFS: Dictionary = {
 	"church_trial_sigil": {
@@ -93,6 +94,38 @@ const UNLOCK_DEFS: Dictionary = {
 		"hooks": ["on_cast", "on_projectile_spawned", "on_hit", "on_chain_jump"],
 		"tags": ["lightning", "projectile", "chain", "upgrade", "interrupt"],
 		"effect_preview": "Cast Lightning Spark after unlocking this upgrade. The spark can arc to nearby targets after impact.",
+	},
+	"divine_special.ruvia.caldera_drop": {
+		"id": "divine_special.ruvia.caldera_drop",
+		"display_name": "Caldera Drop",
+		"type": TYPE_DIVINE_SPECIAL,
+		"menu_category": "Divine Specials",
+		"description": "Call Ruvia into a stance-shattering radial descent that clears light projectiles and leaves a burning crater.",
+		"source": "Ruvia Patron Mark",
+		"tags": ["ruvia", "fire", "divine_special", "burst", "stance_break"],
+		"effect_preview": "Spend full Divine Charge to strike a locked target or aimed ground point with Caldera Drop.",
+	},
+	"divine_special.ruvia.wildfire_procession": {
+		"id": "divine_special.ruvia.wildfire_procession",
+		"display_name": "Wildfire Procession",
+		"type": TYPE_DIVINE_SPECIAL,
+		"menu_category": "Divine Specials",
+		"description": "Send a marching line of eruptions across the battlefield, leaving linked Fire terrain behind it.",
+		"source": "Deepened Ruvia Pact",
+		"requires": ["divine_special.ruvia.caldera_drop"],
+		"tags": ["ruvia", "fire", "divine_special", "traveling", "area_control"],
+		"effect_preview": "Spend full Divine Charge to launch eight advancing Fire eruptions along Grace's aim direction.",
+	},
+	"divine_special.ruvia.hearth_first_flame": {
+		"id": "divine_special.ruvia.hearth_first_flame",
+		"display_name": "Hearth of the First Flame",
+		"type": TYPE_DIVINE_SPECIAL,
+		"menu_category": "Divine Specials",
+		"description": "Establish Ruvia's protective domain, sheltering Grace from Fire while sustaining pressure on enemies.",
+		"source": "Ruvia Covenant Trial",
+		"requires": ["divine_special.ruvia.wildfire_procession"],
+		"tags": ["ruvia", "fire", "divine_special", "domain", "protection"],
+		"effect_preview": "Spend full Divine Charge to create a ten-second Hearth around Grace.",
 	},
 }
 

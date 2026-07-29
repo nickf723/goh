@@ -16,7 +16,7 @@
 [ext_resource type="Script" path="res://scripts/airflow/airflow_response.gd" id="14_airflow"]
 [ext_resource type="Script" path="res://scripts/player/metal_tether_spell_controller.gd" id="15_metal_tether"]
 [ext_resource type="Script" path="res://scripts/player/player_resource_controller.gd" id="16_resources"]
-[ext_resource type="Script" path="res://scripts/player/player_defense_controller.gd" id="17_defense"]
+[ext_resource type="Script" path="res://scripts/player/player_defense_controller_elemental.gd" id="17_defense"]
 [ext_resource type="Script" path="res://scripts/player/player_quick_item_controller.gd" id="18_quick_items"]
 [ext_resource type="Resource" path="res://data/items/healing_flask.tres" id="19_flask"]
 [ext_resource type="PackedScene" path="res://scenes/ui/quick_item_belt_ui.tscn" id="20_quick_ui"]
@@ -36,7 +36,7 @@
 [ext_resource type="Script" path="res://scripts/player/player_spatial_profile_controller.gd" id="34_spatial_controller"]
 [ext_resource type="Resource" path="res://data/player/grace_spatial_profile.tres" id="35_spatial_profile"]
 [ext_resource type="Script" path="res://scripts/player/player_step_up_controller.gd" id="36_step_up"]
-[ext_resource type="Script" path="res://scripts/visuals/player_weapon_control_animator.gd" id="37_weapon_control"]
+[ext_resource type="Script" path="res://scripts/visuals/player_weapon_control_animator_authority.gd" id="37_weapon_control"]
 [ext_resource type="Script" path="res://scripts/player/player_ground_motion_motor.gd" id="38_ground_motion"]
 [ext_resource type="Resource" path="res://data/player/grace_ground_motion_profile.tres" id="39_ground_profile"]
 [ext_resource type="Resource" path="res://data/player/grace_dodge_motion_profile.tres" id="40_dodge_profile"]
@@ -44,10 +44,12 @@
 [ext_resource type="Resource" path="res://data/player/grace_combat_footwork_profile.tres" id="42_footwork_profile"]
 [ext_resource type="Script" path="res://scripts/player/player_vertical_motion_controller.gd" id="43_vertical_motion"]
 [ext_resource type="Resource" path="res://data/player/grace_vertical_motion_profile.tres" id="44_vertical_profile"]
-[ext_resource type="Script" path="res://scripts/player/player_avatar_manager.gd" id="45_avatar_manager"]
+[ext_resource type="Script" path="res://scripts/player/player_avatar_manager_elemental.gd" id="45_avatar_manager"]
 [ext_resource type="Resource" path="res://data/avatars/grace_avatar_definition.tres" id="46_grace_avatar"]
 [ext_resource type="Resource" path="res://data/avatars/ruvia_incarnation_prototype.tres" id="47_ruvia_avatar"]
 [ext_resource type="Script" path="res://scripts/settings/player_preference_service.gd" id="48_preferences"]
+[ext_resource type="Script" path="res://scripts/player/player_elemental_authority_controller.gd" id="49_authority"]
+[ext_resource type="Script" path="res://scripts/player/player_status_receiver.gd" id="50_status_receiver"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.46
@@ -98,6 +100,12 @@ profile = ExtResource("44_vertical_profile")
 [node name="CombatFootworkController" type="Node" parent="."]
 script = ExtResource("41_footwork")
 profile = ExtResource("42_footwork_profile")
+
+[node name="ElementalAuthorityController" type="Node" parent="."]
+script = ExtResource("49_authority")
+
+[node name="StatusReceiver" type="Node" parent="."]
+script = ExtResource("50_status_receiver")
 
 [node name="AvatarManager" type="Node" parent="."]
 script = ExtResource("45_avatar_manager")

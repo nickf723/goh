@@ -115,7 +115,7 @@ func update_focus_help_copy() -> void:
 	if last_input_mode == INPUT_MODE_CONTROLLER:
 		var hand_roles: Dictionary = get_hand_role_summary()
 		focus_spell_help_label.text = (
-			"Right stick: choose   "
+			"D-pad / right stick: browse   "
 			+ str(hand_roles.get("cast", "ZL"))
 			+ ": quick cast   A: equip   Release "
 			+ str(hand_roles.get("focus", "L"))

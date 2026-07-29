@@ -6,10 +6,9 @@ func _input(event: InputEvent) -> void:
 		return
 	var button_event: InputEventJoypadButton = event as InputEventJoypadButton
 	var handled: bool = false
-	if button_event.button_index in [left_shoulder_button, right_shoulder_button]:
-		handled = handle_shoulder_button(
+	if button_event.button_index == special_button:
+		handled = handle_special_button(
 			button_event.device,
-			button_event.button_index,
 			button_event.pressed,
 			Time.get_ticks_msec()
 		)
@@ -17,9 +16,9 @@ func _input(event: InputEvent) -> void:
 		button_event.pressed
 		and button_event.button_index
 		== get_cancel_button_for_device(button_event.device)
-		and is_chord_active(button_event.device)
+		and is_gesture_active(button_event.device)
 	):
-		handled = cancel_active_chord(button_event.device, "player_cancel")
+		handled = cancel_active_gesture(button_event.device, "player_cancel")
 	if handled:
 		get_viewport().set_input_as_handled()
 
@@ -31,8 +30,7 @@ func get_cancel_button_for_device(device: int) -> int:
 		or "switch" in controller_name
 		or "pro controller" in controller_name
 	):
-		# Godot/SDL normalizes the physical bottom face button to logical A.
-		# On Nintendo hardware that physical button is labelled B.
+		# Godot/SDL normalizes Nintendo's physical B button to logical A.
 		return 0
 	# Xbox B and PlayStation Circle use the logical right face button.
 	return cancel_button

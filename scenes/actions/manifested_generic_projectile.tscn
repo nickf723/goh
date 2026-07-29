@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/avatars/manifested_generic_projectile.gd" id="1_projectile"]
+[ext_resource type="Script" path="res://scripts/presentation/ice_projectile_vfx.gd" id="2_ice_vfx"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_projectile"]
+radius = 0.25
+
+[node name="ManifestedGenericProjectile" type="Node3D"]
+script = ExtResource("1_projectile")
+
+[node name="ElementVisualRoot" type="Node3D" parent="."]
+
+[node name="HitArea" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HitArea"]
+shape = SubResource("SphereShape3D_projectile")
+
+[node name="ProceduralIceVfx" type="Node3D" parent="."]
+script = ExtResource("2_ice_vfx")

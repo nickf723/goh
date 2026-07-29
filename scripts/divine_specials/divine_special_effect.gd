@@ -95,7 +95,11 @@ func _finish_special(
 		return
 	finished = true
 	finish_success = success
-	finish_reason = reason if reason != "" else ("completed" if success else "cancelled")
+	finish_reason = (
+		reason
+		if reason != ""
+		else ("completed" if success else "cancelled")
+	)
 	_cleanup_special()
 	var result: Dictionary = get_debug_data()
 	result.merge(extra_result, true)
@@ -122,12 +126,12 @@ func spawn_patron_projection(
 		if instance != null:
 			instance.queue_free()
 		return null
-	projection_visual = instance as Node3D
 	var scene_root: Node = get_tree().current_scene
 	if scene_root == null:
-		projection_visual.queue_free()
-		projection_visual = null
+		instance.queue_free()
 		return null
+
+	projection_visual = instance as Node3D
 	scene_root.add_child(projection_visual)
 	projection_visual.global_position = world_position
 	projection_visual.rotation.y = world_yaw
@@ -168,6 +172,7 @@ func spawn_pulse_disc(
 	scene_root.add_child(disc)
 	disc.global_position = world_position
 	disc.scale = Vector3(start_radius, 1.0, start_radius)
+	var resolved_duration: float = maxf(duration, 0.05)
 	var tween: Tween = disc.create_tween()
 	tween.set_trans(Tween.TRANS_QUAD)
 	tween.set_ease(Tween.EASE_OUT)
@@ -175,21 +180,13 @@ func spawn_pulse_disc(
 		disc,
 		"scale",
 		Vector3(end_radius, 0.35, end_radius),
-		maxf(duration, 0.05)
+		resolved_duration
 	)
 	tween.parallel().tween_method(
-		func(alpha: float) -> void:
-			var material: StandardMaterial3D = (
-				disc.material_override as StandardMaterial3D
-			)
-			if material == null:
-				return
-			var next_color: Color = material.albedo_color
-			next_color.a = alpha
-			material.albedo_color = next_color,
+		_set_mesh_alpha.bind(disc),
 		color.a,
 		0.0,
-		maxf(duration, 0.05)
+		resolved_duration
 	)
 	tween.finished.connect(disc.queue_free)
 	return disc
@@ -218,6 +215,7 @@ func spawn_flash_sphere(
 	scene_root.add_child(flash)
 	flash.global_position = world_position
 	flash.scale = Vector3.ONE * start_radius
+	var resolved_duration: float = maxf(duration, 0.05)
 	var tween: Tween = flash.create_tween()
 	tween.set_trans(Tween.TRANS_EXPO)
 	tween.set_ease(Tween.EASE_OUT)
@@ -225,24 +223,29 @@ func spawn_flash_sphere(
 		flash,
 		"scale",
 		Vector3.ONE * end_radius,
-		maxf(duration, 0.05)
+		resolved_duration
 	)
 	tween.parallel().tween_method(
-		func(alpha: float) -> void:
-			var material: StandardMaterial3D = (
-				flash.material_override as StandardMaterial3D
-			)
-			if material == null:
-				return
-			var next_color: Color = material.albedo_color
-			next_color.a = alpha
-			material.albedo_color = next_color,
+		_set_mesh_alpha.bind(flash),
 		color.a,
 		0.0,
-		maxf(duration, 0.05)
+		resolved_duration
 	)
 	tween.finished.connect(flash.queue_free)
 	return flash
+
+
+func _set_mesh_alpha(alpha: float, mesh_instance: MeshInstance3D) -> void:
+	if mesh_instance == null or not is_instance_valid(mesh_instance):
+		return
+	var material: StandardMaterial3D = (
+		mesh_instance.material_override as StandardMaterial3D
+	)
+	if material == null:
+		return
+	var next_color: Color = material.albedo_color
+	next_color.a = clampf(alpha, 0.0, 1.0)
+	material.albedo_color = next_color
 
 
 func make_visual_material(color: Color) -> StandardMaterial3D:
@@ -270,7 +273,10 @@ func get_targets_in_radius(
 	shape.radius = safe_radius
 	var query: PhysicsShapeQueryParameters3D = PhysicsShapeQueryParameters3D.new()
 	query.shape = shape
-	query.transform = Transform3D(Basis.IDENTITY, center + Vector3.UP * 0.8)
+	query.transform = Transform3D(
+		Basis.IDENTITY,
+		center + Vector3.UP * 0.8
+	)
 	query.collision_mask = 0xFFFFFFFF
 	query.collide_with_bodies = true
 	query.collide_with_areas = true
@@ -288,14 +294,26 @@ func get_targets_in_radius(
 		):
 			var collider: Node = result.get("collider") as Node
 			var target: Node = resolve_payload_target(collider)
-			_append_unique_target(target, center, safe_radius, seen, targets)
+			_append_unique_target(
+				target,
+				center,
+				safe_radius,
+				seen,
+				targets
+			)
 			if targets.size() >= maximum_targets:
 				return targets
 
 	for group_name: String in ["enemy", "combat_targetable", "lock_on_target"]:
 		for candidate: Node in get_tree().get_nodes_in_group(group_name):
 			var target: Node = resolve_payload_target(candidate)
-			_append_unique_target(target, center, safe_radius, seen, targets)
+			_append_unique_target(
+				target,
+				center,
+				safe_radius,
+				seen,
+				targets
+			)
 			if targets.size() >= maximum_targets:
 				return targets
 	return targets
@@ -353,6 +371,8 @@ func _find_payload_target_in_children(root: Node) -> Node:
 
 
 func _is_payload_target(candidate: Node) -> bool:
+	if candidate == null:
+		return false
 	return (
 		candidate.has_method("receive_damage_payload")
 		or candidate.get_node_or_null("PayloadReceiver") != null
@@ -369,7 +389,9 @@ func apply_payload_to_target(
 ) -> bool:
 	if target == null or payload == null or is_friendly_target(target):
 		return false
-	var resolved_payload: DamagePayload = payload.duplicate(true) as DamagePayload
+	var resolved_payload: DamagePayload = (
+		payload.duplicate(true) as DamagePayload
+	)
 	if resolved_payload == null:
 		resolved_payload = payload
 	var resolved_force: float = (
@@ -474,7 +496,11 @@ func get_target_world_position(target: Node) -> Vector3:
 				return aim_value as Vector3
 		return (target as Node3D).global_position
 	var parent: Node = target.get_parent() if target != null else null
-	return (parent as Node3D).global_position if parent is Node3D else target_position
+	return (
+		(parent as Node3D).global_position
+		if parent is Node3D
+		else target_position
+	)
 
 
 func project_point_to_floor(
@@ -501,10 +527,14 @@ func project_point_to_floor(
 	var result: Dictionary = world.direct_space_state.intersect_ray(query)
 	if result.is_empty():
 		return point
-	var normal: Vector3 = result.get("normal", Vector3.UP) as Vector3
+	var normal_value: Variant = result.get("normal", Vector3.UP)
+	if not (normal_value is Vector3):
+		return point
+	var normal: Vector3 = normal_value as Vector3
 	if normal.dot(Vector3.UP) < 0.48:
 		return point
-	return result.get("position", point) as Vector3
+	var position_value: Variant = result.get("position", point)
+	return position_value as Vector3 if position_value is Vector3 else point
 
 
 func spawn_ally_safe_fire_field(
@@ -536,10 +566,7 @@ func spawn_ally_safe_fire_field(
 	var field: Node3D = instance as Node3D
 	field.global_position = world_position
 	var authority_profile: ElementalAuthorityProfile = null
-	if (
-		definition != null
-		and definition.patron_avatar_definition != null
-	):
+	if definition != null and definition.patron_avatar_definition != null:
 		authority_profile = (
 			definition.patron_avatar_definition.elemental_authority_profile
 		)
@@ -566,6 +593,8 @@ func clear_hostile_projectiles(center: Vector3, radius: float) -> int:
 		if not (candidate is GenericProjectile):
 			continue
 		var projectile: GenericProjectile = candidate as GenericProjectile
+		if projectile.is_queued_for_deletion():
+			continue
 		if projectile.global_position.distance_to(center) > radius:
 			continue
 		if _is_friendly_projectile(projectile):
@@ -578,6 +607,8 @@ func clear_hostile_projectiles(center: Vector3, radius: float) -> int:
 
 func _get_descendants(root: Node) -> Array[Node]:
 	var descendants: Array[Node] = []
+	if root == null:
+		return descendants
 	for child: Node in root.get_children():
 		descendants.append(child)
 		descendants.append_array(_get_descendants(child))
@@ -605,8 +636,13 @@ func get_debug_data() -> Dictionary:
 		"elapsed": snappedf(elapsed, 0.01),
 		"target_position": target_position,
 		"cast_direction": cast_direction,
-		"performer_is_owner": performer_actor != null and performer_actor == owner_actor,
-		"projection_active": projection_visual != null and is_instance_valid(projection_visual),
+		"performer_is_owner": (
+			performer_actor != null and performer_actor == owner_actor
+		),
+		"projection_active": (
+			projection_visual != null
+			and is_instance_valid(projection_visual)
+		),
 		"targets_hit": targets_hit,
 		"projectiles_cleared": projectiles_cleared,
 		"persistent_nodes_spawned": persistent_nodes_spawned,

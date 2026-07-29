@@ -97,6 +97,9 @@ jobs:
       - name: Run Divine Special controller input and radial test
         run: godot --headless --path . res://scenes/tests/divine_special_input_smoke_test.tscn
 
+      - name: Run Focus and Divine selection quirks test
+        run: godot --headless --path . res://scenes/tests/controller_selection_quirks_smoke_test.tscn
+
       - name: Run showcase mana recovery test
         run: godot --headless --path . res://scenes/tests/showcase_mana_recovery_smoke_test.tscn
 

@@ -21,6 +21,11 @@ const VERTICAL_STATE_BLOCKERS: Array[String] = [
 @onready var vertical_motion_controller: PlayerVerticalMotionController = (
 	get_parent().get_node_or_null("VerticalMotionController") as PlayerVerticalMotionController
 )
+# Resolve the controller at this layer as well. This avoids relying on inherited
+# @onready symbol resolution while keeping the shared wire visual contract intact.
+@onready var vertical_footwork_controller: PlayerCombatFootworkController = (
+	get_parent().get_node_or_null("CombatFootworkController") as PlayerCombatFootworkController
+)
 
 var vertical_root_position: Vector3 = Vector3.ZERO
 var vertical_root_rotation: Vector3 = Vector3.ZERO
@@ -90,8 +95,8 @@ func _apply_vertical_accent() -> void:
 	if dodge_motion_controller != null and dodge_motion_controller.is_dodge_active():
 		return
 	if (
-		combat_footwork_controller != null
-		and combat_footwork_controller.is_visual_footwork_active()
+		vertical_footwork_controller != null
+		and vertical_footwork_controller.is_visual_footwork_active()
 	):
 		return
 	if not control_pose_sample.is_empty():

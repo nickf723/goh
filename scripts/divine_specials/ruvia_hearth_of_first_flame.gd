@@ -37,7 +37,10 @@ func begin_special() -> bool:
 	field_flare_remaining = 0.0
 	immunity_token = str(get_instance_id())
 	owner_actor.set_meta("divine_special_fire_immunity", true)
-	owner_actor.set_meta("divine_special_fire_immunity_token", immunity_token)
+	owner_actor.set_meta(
+		"divine_special_fire_immunity_token",
+		immunity_token
+	)
 	_remove_owner_burning()
 	_build_domain_visuals()
 	if performer_actor == null or performer_actor != owner_actor:
@@ -64,7 +67,10 @@ func _process(delta: float) -> void:
 	var step: float = maxf(delta, 0.0)
 	duration_remaining = maxf(duration_remaining - step, 0.0)
 	pulse_remaining = maxf(pulse_remaining - step, 0.0)
-	field_flare_remaining = maxf(field_flare_remaining - step, 0.0)
+	field_flare_remaining = maxf(
+		field_flare_remaining - step,
+		0.0
+	)
 	_update_domain_visual()
 	if pulse_remaining <= 0.0:
 		pulse_remaining = maxf(pulse_interval, 0.1)
@@ -90,7 +96,9 @@ func _build_domain_visuals() -> void:
 		return
 	domain_visual = MeshInstance3D.new()
 	domain_visual.name = "HearthDomainDisc"
-	domain_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	domain_visual.cast_shadow = (
+		GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	)
 	var disc_mesh: CylinderMesh = CylinderMesh.new()
 	disc_mesh.top_radius = 1.0
 	disc_mesh.bottom_radius = 1.0
@@ -106,7 +114,9 @@ func _build_domain_visuals() -> void:
 
 	domain_core = MeshInstance3D.new()
 	domain_core.name = "HearthDomainCore"
-	domain_core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	domain_core.cast_shadow = (
+		GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	)
 	var core_mesh: CylinderMesh = CylinderMesh.new()
 	core_mesh.top_radius = 0.6
 	core_mesh.bottom_radius = 1.3
@@ -183,8 +193,12 @@ func _apply_domain_pulse() -> void:
 func _remove_owner_burning() -> void:
 	if owner_actor == null:
 		return
-	var status_receiver: Node = owner_actor.get_node_or_null("StatusReceiver")
-	if status_receiver != null and status_receiver.has_method("remove_status"):
+	var status_receiver: Node = owner_actor.get_node_or_null(
+		"StatusReceiver"
+	)
+	if status_receiver != null and status_receiver.has_method(
+		"remove_status"
+	):
 		status_receiver.call("remove_status", "burning")
 
 
@@ -214,6 +228,10 @@ func _flare_fire_fields() -> int:
 		var field: FireField = candidate as FireField
 		if field.global_position.distance_to(target_position) > domain_radius:
 			continue
+		# Hearth magnifies Grace's Ruvia-authority terrain, never an enemy's Fire
+		# Field. This prevents the protective domain from feeding hostile hazards.
+		if field.authority_owner_actor != owner_actor:
+			continue
 		if field.has_method("authority_flare"):
 			field.call("authority_flare", 0.18, 0.35, 0.2)
 			flared += 1
@@ -228,8 +246,13 @@ func _cleanup_special() -> void:
 				""
 			)
 		) == immunity_token:
-			owner_actor.set_meta("divine_special_fire_immunity", false)
-			owner_actor.remove_meta("divine_special_fire_immunity_token")
+			owner_actor.set_meta(
+				"divine_special_fire_immunity",
+				false
+			)
+			owner_actor.remove_meta(
+				"divine_special_fire_immunity_token"
+			)
 	if domain_visual != null and is_instance_valid(domain_visual):
 		domain_visual.queue_free()
 	if domain_core != null and is_instance_valid(domain_core):
@@ -241,13 +264,21 @@ func _cleanup_special() -> void:
 
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
-	data["duration_remaining"] = snappedf(duration_remaining, 0.01)
+	data["duration_remaining"] = snappedf(
+		duration_remaining,
+		0.01
+	)
 	data["domain_radius"] = domain_radius
 	data["pulses_completed"] = pulses_completed
 	data["fields_flared"] = fields_flared
 	data["stance_restored"] = stance_restored
 	data["owner_fire_immunity"] = (
 		owner_actor != null
-		and bool(owner_actor.get_meta("divine_special_fire_immunity", false))
+		and bool(
+			owner_actor.get_meta(
+				"divine_special_fire_immunity",
+				false
+			)
+		)
 	)
 	return data

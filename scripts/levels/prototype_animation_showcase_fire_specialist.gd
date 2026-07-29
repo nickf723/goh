@@ -4,6 +4,9 @@ class_name PrototypeAnimationShowcaseFireSpecialist
 const CombatFeelDummyScene: PackedScene = preload(
 	"res://scenes/actors/enemies/combat_feel_dummy.tscn"
 )
+const EnemyStatusReceiverScript = preload(
+	"res://scripts/combat/status_receiver.gd"
+)
 
 var elemental_authority: PlayerElementalAuthorityController
 var showcase_weapon: WeaponController
@@ -146,5 +149,9 @@ func _build_fire_specialist_targets(bay_center: Vector3) -> void:
 			continue
 		var target_3d: Node3D = target as Node3D
 		target_3d.name = "FireSpecialistTarget" + str(target_index + 1)
+		if target_3d.get_node_or_null("StatusReceiver") == null:
+			var status_receiver: Node = EnemyStatusReceiverScript.new()
+			status_receiver.name = "StatusReceiver"
+			target_3d.add_child(status_receiver)
 		add_child(target_3d)
 		target_3d.global_position = target_positions[target_index]

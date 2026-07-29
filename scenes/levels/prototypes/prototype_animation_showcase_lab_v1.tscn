@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/levels/prototype_animation_showcase_lab.gd" id="1_lab"]
+[ext_resource type="Script" path="res://scripts/levels/prototype_animation_showcase_fire_specialist.gd" id="1_lab"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="PackedScene" path="res://scenes/actors/enemies/combat_feel_dummy.tscn" id="4_dummy"]

@@ -19,6 +19,7 @@ class_name PlayableAvatarDefinition
 @export var weapon_definition: WeaponDefinition
 @export var ability_loadout: AbilityLoadout
 @export_range(0, 32, 1) var starting_ability_index: int = 0
+@export var elemental_authority_profile: ElementalAuthorityProfile
 
 @export_group("Movement Identity")
 @export var ground_motion_profile: GroundMotionProfile
@@ -59,6 +60,17 @@ func validate_definition() -> Array[String]:
 		failures.append(avatar_id + ": ability_loadout has no equipped abilities")
 	elif starting_ability_index < 0 or starting_ability_index >= ability_loadout.get_equipped_ability_count():
 		failures.append(avatar_id + ": starting_ability_index is outside the equipped loadout")
+	if avatar_kind == "divine_incarnation":
+		if elemental_authority_profile == null:
+			failures.append(avatar_id + ": divine incarnations require elemental authority")
+		else:
+			for profile_failure: String in elemental_authority_profile.validate_profile():
+				failures.append(avatar_id + ": " + profile_failure)
+			if not elemental_authority_profile.matches_element(element):
+				failures.append(avatar_id + ": authority element must match avatar element")
+	elif elemental_authority_profile != null:
+		for profile_failure: String in elemental_authority_profile.validate_profile():
+			failures.append(avatar_id + ": " + profile_failure)
 	if ground_motion_profile == null:
 		failures.append(avatar_id + ": ground_motion_profile is required")
 	elif not ground_motion_profile.validate_profile().is_empty():
@@ -100,7 +112,8 @@ func get_equipped_element_rows() -> Array[String]:
 	var elements: Array[String] = []
 	if ability_loadout == null:
 		return elements
-	for ability: AbilityDefinition in ability_loadout.equipped_abilities:
+	for ability_index: int in range(ability_loadout.get_equipped_ability_count()):
+		var ability: AbilityDefinition = ability_loadout.get_equipped_ability(ability_index)
 		if ability == null or ability.element == "" or elements.has(ability.element):
 			continue
 		elements.append(ability.element)
@@ -110,7 +123,8 @@ func get_equipped_element_rows() -> Array[String]:
 func has_only_matching_element_spells() -> bool:
 	if element == "" or ability_loadout == null:
 		return true
-	for ability: AbilityDefinition in ability_loadout.equipped_abilities:
+	for ability_index: int in range(ability_loadout.get_equipped_ability_count()):
+		var ability: AbilityDefinition = ability_loadout.get_equipped_ability(ability_index)
 		if ability != null and ability.element != element:
 			return false
 	return true
@@ -131,5 +145,15 @@ func get_debug_summary() -> Dictionary:
 		"spell_count": ability_loadout.get_equipped_ability_count() if ability_loadout != null else 0,
 		"spell_elements": get_equipped_element_rows(),
 		"matching_element_only": has_only_matching_element_spells(),
+		"authority_id": (
+			elemental_authority_profile.authority_id
+			if elemental_authority_profile != null
+			else "none"
+		),
+		"authority_element": (
+			elemental_authority_profile.element
+			if elemental_authority_profile != null
+			else "none"
+		),
 		"wire_override": override_wire_palette,
 	}

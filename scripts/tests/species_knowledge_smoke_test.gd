@@ -53,6 +53,8 @@ func _ready() -> void:
 	)
 
 	var learned_snapshot: Dictionary = species_knowledge.call("get_snapshot") as Dictionary
+	_validate_game_state_bridge(learned_snapshot)
+
 	species_knowledge.call("reset_all")
 	_expect(
 		int(species_knowledge.call("get_rank", "goose")) == 0,
@@ -91,6 +93,58 @@ func _ready() -> void:
 	_expect(int(summary.get("species_observed", 0)) == 1, "Summary counts observed species")
 	_expect(int(summary.get("observations", 0)) == 2, "Summary counts field notes")
 	_finish()
+
+
+func _validate_game_state_bridge(learned_snapshot: Dictionary) -> void:
+	_expect(
+		GameState.has_method("_append_player_records_to_save"),
+		"GameState exposes the player-record save bridge"
+	)
+	_expect(
+		GameState.has_method("_apply_player_records_from_save"),
+		"GameState exposes the player-record load bridge"
+	)
+	if (
+		not GameState.has_method("_append_player_records_to_save")
+		or not GameState.has_method("_apply_player_records_from_save")
+	):
+		return
+
+	var save_probe: Dictionary = {"version": 11}
+	GameState.call("_append_player_records_to_save", save_probe)
+	_expect(int(save_probe.get("version", 0)) == 12, "Save bridge advances records version")
+	_expect(
+		save_probe.get("species_knowledge", null) is Dictionary,
+		"Save bridge writes species knowledge"
+	)
+
+	species_knowledge.call("reset_all")
+	GameState.call("_apply_player_records_from_save", save_probe)
+	var bridge_restored: Dictionary = (
+		species_knowledge.call("get_species_data", "goose") as Dictionary
+	)
+	_expect(
+		int(bridge_restored.get("points", 0)) == 4,
+		"Load bridge restores species points"
+	)
+	_expect(
+		(bridge_restored.get("discoveries", {}) as Dictionary).size() == 2,
+		"Load bridge restores species discoveries"
+	)
+
+	GameState.call("_apply_player_records_from_save", {"version": 11})
+	var legacy_reset: Dictionary = (
+		species_knowledge.call("get_species_data", "goose") as Dictionary
+	)
+	_expect(
+		int(legacy_reset.get("points", -1)) == 0,
+		"Older save without records begins with empty study progress"
+	)
+	_expect(
+		(legacy_reset.get("discoveries", {}) as Dictionary).is_empty(),
+		"Older save without records has no phantom observations"
+	)
+	species_knowledge.call("apply_snapshot", learned_snapshot)
 
 
 func _expect(condition: bool, message: String) -> void:

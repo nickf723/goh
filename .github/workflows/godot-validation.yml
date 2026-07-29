@@ -49,6 +49,9 @@ jobs:
       - name: Run registered feature scenes and tests
         run: python scripts/ci/run_feature_registry.py --godot godot
 
+      - name: Run player records and species persistence test
+        run: godot --headless --path . res://scenes/tests/species_knowledge_smoke_test.tscn
+
       - name: Run Grace wire motion rig test
         run: godot --headless --path . res://scenes/tests/grace_animation_smoke_test.tscn
 

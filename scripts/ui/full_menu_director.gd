@@ -1,7 +1,7 @@
 extends "res://scripts/ui/full_menu_director_core.gd"
 
-const FullMenuMasteryShellScript = preload(
-	"res://scripts/ui/full_menu_shell_mastery.gd"
+const FullMenuSettingsShellScript = preload(
+	"res://scripts/ui/full_menu_shell_settings.gd"
 )
 const SpellcastingMasteryServiceScript = preload(
 	"res://scripts/progression/spellcasting_mastery_service.gd"
@@ -24,7 +24,7 @@ func ensure_full_menu_shell() -> void:
 	if existing_shell is Control and existing_shell.has_method("show_menu"):
 		full_menu_shell = existing_shell as Control
 		return
-	full_menu_shell = FullMenuMasteryShellScript.new()
+	full_menu_shell = FullMenuSettingsShellScript.new()
 	full_menu_shell.name = "FullMenuShell"
 	full_menu_shell.process_mode = Node.PROCESS_MODE_ALWAYS
 	game_ui.add_child(full_menu_shell)

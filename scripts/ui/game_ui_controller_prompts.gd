@@ -18,10 +18,8 @@ func _ready() -> void:
 
 func _input(event: InputEvent) -> void:
 	var detected_mode: String = detect_input_mode(event)
-
 	if detected_mode == "":
 		return
-
 	set_input_mode(detected_mode)
 
 
@@ -40,7 +38,9 @@ func hide_prompt() -> void:
 
 func show_spell_focus_menu(menu_data: Dictionary) -> void:
 	super.show_spell_focus_menu(menu_data)
-	var selected_spell_name: String = str(menu_data.get("selected_spell_name", "None"))
+	var selected_spell_name: String = str(
+		menu_data.get("selected_spell_name", "None")
+	)
 	focus_spell_selected_label.text = "Selected: " + selected_spell_name
 	update_focus_help_copy()
 
@@ -51,42 +51,32 @@ func detect_input_mode(event: InputEvent) -> String:
 		if button_event.pressed:
 			return INPUT_MODE_CONTROLLER
 		return ""
-
 	if event is InputEventJoypadMotion:
 		var motion_event: InputEventJoypadMotion = event as InputEventJoypadMotion
 		if abs(motion_event.axis_value) >= 0.35:
 			return INPUT_MODE_CONTROLLER
 		return ""
-
 	if event is InputEventKey:
 		var key_event: InputEventKey = event as InputEventKey
 		if key_event.pressed and not key_event.echo:
 			return INPUT_MODE_KEYBOARD
 		return ""
-
 	if event is InputEventMouseButton:
 		var mouse_button: InputEventMouseButton = event as InputEventMouseButton
 		if mouse_button.pressed:
 			return INPUT_MODE_KEYBOARD
 		return ""
-
 	if event is InputEventMouseMotion:
 		return INPUT_MODE_KEYBOARD
-
 	return ""
 
 
 func set_input_mode(mode: String) -> void:
-	if mode == "":
+	if mode == "" or mode == last_input_mode:
 		return
-
-	if mode == last_input_mode:
-		return
-
 	last_input_mode = mode
 	update_input_mode_label()
 	update_focus_help_copy()
-
 	if prompt_is_visible:
 		show_prompt(current_prompt_text)
 
@@ -94,7 +84,6 @@ func set_input_mode(mode: String) -> void:
 func ensure_input_mode_label() -> void:
 	if input_mode_label != null:
 		return
-
 	input_mode_label = Label.new()
 	input_mode_label.name = "InputModeLabel"
 	input_mode_label.anchor_left = 1.0
@@ -107,7 +96,10 @@ func ensure_input_mode_label() -> void:
 	input_mode_label.offset_bottom = 98.0
 	input_mode_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	input_mode_label.visible = false
-	input_mode_label.add_theme_color_override("font_color", Color(0.68, 0.76, 0.9, 0.78))
+	input_mode_label.add_theme_color_override(
+		"font_color",
+		Color(0.68, 0.76, 0.9, 0.78)
+	)
 	input_mode_label.add_theme_font_size_override("font_size", 12)
 	add_child(input_mode_label)
 
@@ -120,22 +112,42 @@ func update_input_mode_label() -> void:
 func update_focus_help_copy() -> void:
 	if focus_spell_help_label == null:
 		return
-
 	if last_input_mode == INPUT_MODE_CONTROLLER:
-		focus_spell_help_label.text = "D-pad: choose   RT/A/B: equip   Menu release: close"
+		var hand_roles: Dictionary = get_hand_role_summary()
+		focus_spell_help_label.text = (
+			"Right stick: choose   "
+			+ str(hand_roles.get("cast", "ZL"))
+			+ ": quick cast   A: equip   Release "
+			+ str(hand_roles.get("focus", "L"))
+			+ ": close"
+		)
 	else:
-		focus_spell_help_label.text = "Arrows/wheel: choose   Q/Enter/Space/click: equip   Release Tab: close"
+		focus_spell_help_label.text = (
+			"Arrows/wheel: choose   Q/Enter/Space/click: equip   Release Tab: close"
+		)
+
+
+func get_hand_role_summary() -> Dictionary:
+	var router: Node = get_tree().get_first_node_in_group(
+		"player_control_router"
+	)
+	if router != null and router.has_method("get_hand_role_summary"):
+		var summary_result: Variant = router.call("get_hand_role_summary")
+		if summary_result is Dictionary:
+			return summary_result as Dictionary
+	return {
+		"focus": "L",
+		"cast": "ZL",
+	}
 
 
 func get_interact_prompt_prefix() -> String:
 	if last_input_mode == INPUT_MODE_CONTROLLER:
-		return "B: "
-
+		return "A: "
 	return "E: "
 
 
 func get_input_mode_display_name() -> String:
 	if last_input_mode == INPUT_MODE_CONTROLLER:
 		return "Controller"
-
 	return "Keyboard / Mouse"

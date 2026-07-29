@@ -59,6 +59,15 @@ func _update_hud() -> void:
 
 func _build_divine_special_range() -> void:
 	var range_center: Vector3 = Vector3(7.4, 0.035, -7.2)
+	# The base motion floor ends before the complete Procession lane. This dedicated
+	# platform keeps all eight eruption markers, clustered targets, and the Hearth
+	# radius on one continuous physical surface rather than hanging over the void.
+	_add_box_body(
+		"DivineSpecialRangeFloor",
+		Vector3(10.8, 0.25, 18.0),
+		Vector3(7.4, -0.125, -12.0),
+		Color(0.075, 0.045, 0.04)
+	)
 	_add_box_body(
 		"CalderaDropMarker",
 		Vector3(4.6, 0.045, 4.6),

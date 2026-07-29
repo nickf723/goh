@@ -39,7 +39,6 @@ var item_use_lock_timer: float = 0.0
 
 func _ready() -> void:
 	add_to_group("debuggable")
-
 	if not GameState.player_defeated.is_connected(_on_player_defeated):
 		GameState.player_defeated.connect(_on_player_defeated)
 
@@ -51,37 +50,26 @@ func _process(delta: float) -> void:
 func update_locks(delta: float) -> void:
 	if attack_lock_timer > 0.0:
 		attack_lock_timer -= delta
-
 		if attack_lock_timer <= 0.0:
 			end_attack()
-
 	if cast_lock_timer > 0.0:
 		cast_lock_timer -= delta
-
 		if cast_lock_timer <= 0.0:
 			is_casting = false
-
 	if interact_lock_timer > 0.0:
 		interact_lock_timer -= delta
-
 		if interact_lock_timer <= 0.0:
 			is_interacting = false
-
 	if dodge_lock_timer > 0.0:
 		dodge_lock_timer -= delta
-
 		if dodge_lock_timer <= 0.0:
 			end_dodge()
-
 	if stagger_lock_timer > 0.0:
 		stagger_lock_timer -= delta
-
 		if stagger_lock_timer <= 0.0:
 			end_stagger()
-
 	if item_use_lock_timer > 0.0:
 		item_use_lock_timer -= delta
-
 		if item_use_lock_timer <= 0.0:
 			end_item_use()
 
@@ -89,16 +77,12 @@ func update_locks(delta: float) -> void:
 func can_move() -> bool:
 	if is_defeated or is_staggered:
 		return false
-
 	if is_interacting:
 		return false
-
 	if is_dodging:
 		return false
-
 	if is_focus_menu_open and not allow_movement_during_focus_menu:
 		return false
-
 	return true
 
 
@@ -112,70 +96,52 @@ func flight_restrictions_apply() -> bool:
 func can_attack() -> bool:
 	if is_defeated or is_manipulating or is_staggered or is_guarding or is_using_item:
 		return false
-
 	if flight_restrictions_apply() and not allow_attacking_during_flight:
 		return false
-
 	if is_attacking or is_casting or is_interacting or is_dodging:
 		return false
-
 	if is_focus_menu_open and not allow_attacking_during_focus_menu:
 		return false
-
 	return true
 
 
 func can_cast() -> bool:
 	if is_defeated or is_manipulating or is_staggered or is_guarding or is_using_item:
 		return false
-
 	if flight_restrictions_apply() and not allow_casting_during_flight:
 		return false
-
 	if is_attacking and not attack_allows_cast_cancel:
 		return false
-
 	if is_casting or is_interacting or is_dodging:
 		return false
-
 	if is_focus_menu_open and not allow_casting_during_focus_menu:
 		return false
-
 	return true
 
 
 func can_interact() -> bool:
 	if is_defeated or is_manipulating or is_staggered or is_guarding or is_using_item:
 		return false
-
 	if flight_restrictions_apply() and not allow_interaction_during_flight:
 		return false
-
 	if is_attacking or is_casting or is_interacting or is_dodging:
 		return false
-
 	if is_focus_menu_open and not allow_interaction_during_focus_menu:
 		return false
-
 	return true
 
 
 func can_dodge() -> bool:
 	if is_defeated or is_manipulating or is_staggered or is_using_item:
 		return false
-
 	if flight_restrictions_apply() and not allow_dodging_during_flight:
 		return false
-
 	if is_attacking and not attack_allows_dodge_cancel:
 		return false
-
 	if is_casting or is_interacting or is_dodging:
 		return false
-
 	if is_focus_menu_open and not allow_dodging_during_focus_menu:
 		return false
-
 	return true
 
 
@@ -201,7 +167,6 @@ func set_attack_cancel_permissions(allow_cast: bool, allow_dodge: bool) -> void:
 		attack_allows_cast_cancel = false
 		attack_allows_dodge_cancel = false
 		return
-
 	attack_allows_cast_cancel = allow_cast
 	attack_allows_dodge_cancel = allow_dodge
 
@@ -218,7 +183,6 @@ func begin_cast(lock_duration: float = 0.18) -> void:
 	end_guard()
 	if is_attacking and attack_allows_cast_cancel:
 		end_attack()
-
 	is_casting = true
 	cast_lock_timer = max(lock_duration, 0.01)
 
@@ -235,7 +199,6 @@ func begin_dodge(lock_duration: float = 0.28) -> void:
 	end_guard()
 	if is_attacking and attack_allows_dodge_cancel:
 		end_attack()
-
 	is_dodging = true
 	dodge_lock_timer = max(lock_duration, 0.01)
 
@@ -349,6 +312,13 @@ func clear_action_locks() -> void:
 	cast_lock_timer = 0.0
 	interact_lock_timer = 0.0
 	dodge_lock_timer = 0.0
+
+
+func set_defeated(value: bool) -> void:
+	if value:
+		_on_player_defeated()
+	else:
+		reset_for_respawn()
 
 
 func _on_player_defeated() -> void:

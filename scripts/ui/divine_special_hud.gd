@@ -10,6 +10,7 @@ var title_label: Label
 var charge_bar: ProgressBar
 var status_label: Label
 var hint_label: Label
+var charge_fill_style: StyleBoxFlat
 var refresh_remaining: float = 0.0
 
 
@@ -84,6 +85,12 @@ func _build_hud() -> void:
 	charge_bar.value = 0.0
 	charge_bar.show_percentage = false
 	charge_bar.custom_minimum_size = Vector2(304.0, 14.0)
+	charge_bar.add_theme_stylebox_override(
+		"background",
+		_make_charge_background()
+	)
+	charge_fill_style = _make_charge_fill()
+	charge_bar.add_theme_stylebox_override("fill", charge_fill_style)
 	stack.add_child(charge_bar)
 
 	status_label = Label.new()
@@ -121,6 +128,31 @@ func _make_panel_style() -> StyleBoxFlat:
 	return style
 
 
+func _make_charge_background() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.045, 0.04, 0.94)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(0.45, 0.16, 0.07, 0.74)
+	style.corner_radius_top_left = 7
+	style.corner_radius_top_right = 7
+	style.corner_radius_bottom_left = 7
+	style.corner_radius_bottom_right = 7
+	return style
+
+
+func _make_charge_fill() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(1.0, 0.28, 0.04, 0.96)
+	style.corner_radius_top_left = 7
+	style.corner_radius_top_right = 7
+	style.corner_radius_bottom_left = 7
+	style.corner_radius_bottom_right = 7
+	return style
+
+
 func _update_hud() -> void:
 	if panel == null:
 		return
@@ -148,8 +180,14 @@ func _update_hud() -> void:
 		float(debug.get("maximum_charge", 100.0)),
 		0.01
 	)
+	var ratio: float = clampf(charge / maximum, 0.0, 1.0)
 	charge_bar.max_value = maximum
 	charge_bar.value = charge
+	if charge_fill_style != null:
+		charge_fill_style.bg_color = Color(1.0, 0.25, 0.035, 0.96).lerp(
+			Color(1.0, 0.82, 0.16, 1.0),
+			ratio
+		)
 	var state: String = "RECHARGING"
 	if bool(debug.get("active", false)):
 		state = "ACTIVE"
@@ -157,7 +195,7 @@ func _update_hud() -> void:
 		state = "READY"
 	status_label.text = (
 		"DIVINE CHARGE "
-		+ str(roundi(charge / maximum * 100.0))
+		+ str(roundi(ratio * 100.0))
 		+ "% • "
 		+ state
 	)

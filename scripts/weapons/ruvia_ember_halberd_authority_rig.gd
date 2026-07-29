@@ -4,6 +4,8 @@ class_name RuviaEmberHalberdAuthorityRig
 @export_range(0.5, 8.0, 0.1) var solar_spread_radius: float = 4.2
 @export_range(0.1, 5.0, 0.1) var solar_spread_duration: float = 1.5
 @export_range(0.1, 3.0, 0.05) var solar_spread_strength: float = 0.75
+@export_range(0.5, 12.0, 0.1) var reaping_pull_strength: float = 5.2
+@export_range(0.0, 4.0, 0.1) var reaping_pull_up_strength: float = 0.35
 
 var authority_cast_active: bool = false
 var authority_cast_id: String = ""
@@ -11,6 +13,8 @@ var authority_cast_progress: float = 0.0
 var authority_cast_heat: float = 0.0
 var solar_spread_count: int = 0
 var total_solar_spread_count: int = 0
+var reaping_pull_count: int = 0
+var total_reaping_pull_count: int = 0
 
 @onready var spear_tip_node: Node3D = get_node_or_null("SpearTip") as Node3D
 @onready var butt_cap_node: Node3D = get_node_or_null("ButtCap") as Node3D
@@ -64,14 +68,57 @@ func on_weapon_targets_hit(
 	attack: WeaponAttackDefinition
 ) -> void:
 	super.on_weapon_targets_hit(targets, attack)
+	reaping_pull_count = 0
 	solar_spread_count = 0
-	if (
-		attack == null
-		or attack.attack_id != "ruvia_halberd_h4"
-		or targets.is_empty()
-		or weapon_controller == null
-	):
+	if attack == null or targets.is_empty() or weapon_controller == null:
 		return
+	if attack.attack_id == "ruvia_halberd_h2":
+		_apply_reaping_hook_pull(targets)
+	if attack.attack_id == "ruvia_halberd_h4":
+		_apply_solar_descent_spread(targets)
+
+
+func _apply_reaping_hook_pull(targets: Array[Node]) -> void:
+	var actor: Node3D = weapon_controller.get_actor()
+	if actor == null:
+		return
+	for target: Node in targets:
+		if target == null or not is_instance_valid(target):
+			continue
+		var target_body: CharacterBody3D = _find_character_body(target)
+		var target_position: Vector3 = (
+			target_body.global_position
+			if target_body != null
+			else _get_target_position(target)
+		)
+		var pull_direction: Vector3 = actor.global_position - target_position
+		pull_direction.y = 0.0
+		if pull_direction.length_squared() <= 0.001:
+			continue
+		pull_direction = pull_direction.normalized()
+		var force_receiver: Node = _find_named_component(
+			target,
+			"ForceReceiver"
+		)
+		if force_receiver != null and force_receiver.has_method("apply_impulse"):
+			force_receiver.call(
+				"apply_impulse",
+				pull_direction,
+				reaping_pull_strength,
+				reaping_pull_up_strength,
+				"Ruvia • Reaping Hook"
+			)
+			reaping_pull_count += 1
+		elif target_body != null:
+			target_body.velocity += (
+				pull_direction * reaping_pull_strength
+				+ Vector3.UP * reaping_pull_up_strength
+			)
+			reaping_pull_count += 1
+	total_reaping_pull_count += reaping_pull_count
+
+
+func _apply_solar_descent_spread(targets: Array[Node]) -> void:
 	var actor: Node3D = weapon_controller.get_actor()
 	if actor == null:
 		return
@@ -123,6 +170,8 @@ func get_debug_data() -> Dictionary:
 	data["authority_cast_heat"] = snappedf(authority_cast_heat, 0.01)
 	data["solar_spread_count"] = solar_spread_count
 	data["total_solar_spread_count"] = total_solar_spread_count
+	data["reaping_pull_count"] = reaping_pull_count
+	data["total_reaping_pull_count"] = total_reaping_pull_count
 	return data
 
 
@@ -133,12 +182,37 @@ func _apply_conduit_heat() -> void:
 
 
 func _find_status_receiver(root: Node) -> Node:
+	return _find_named_component(root, "StatusReceiver")
+
+
+func _find_named_component(root: Node, component_name: String) -> Node:
 	if root == null:
 		return null
+	if root.name == component_name:
+		return root
+	var direct: Node = root.get_node_or_null(component_name)
+	if direct != null:
+		return direct
 	for child: Node in root.get_children():
-		if child.name == "StatusReceiver":
-			return child
-		var deeper: Node = _find_status_receiver(child)
+		var deeper: Node = _find_named_component(child, component_name)
 		if deeper != null:
 			return deeper
 	return null
+
+
+func _find_character_body(root: Node) -> CharacterBody3D:
+	var current: Node = root
+	while current != null:
+		if current is CharacterBody3D:
+			return current as CharacterBody3D
+		current = current.get_parent()
+	return null
+
+
+func _get_target_position(target: Node) -> Vector3:
+	if target is Node3D:
+		return (target as Node3D).global_position
+	var parent: Node = target.get_parent() if target != null else null
+	if parent is Node3D:
+		return (parent as Node3D).global_position
+	return global_position

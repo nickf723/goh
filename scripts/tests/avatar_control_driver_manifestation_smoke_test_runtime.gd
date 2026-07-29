@@ -21,6 +21,17 @@ func _validate_manifested_contract(
 		actor.is_in_group("friendly_manifestation"),
 		"Manifested Ruvia exposes explicit friendly identity"
 	)
+	_expect(
+		actor.visual is ManifestedAvatarMotionVisual,
+		"Manifestation uses a resource-isolated motion visual"
+	)
+	var stamina_before: int = GameState.get_stat("stamina")
+	GameState.set_stat("stamina", 0)
+	_expect(
+		actor.visual.resolve_presentation_state() != "exhausted",
+		"Grace's empty stamina does not exhaust autonomous Ruvia"
+	)
+	GameState.set_stat("stamina", stamina_before)
 
 
 func _validate_resource_isolation(

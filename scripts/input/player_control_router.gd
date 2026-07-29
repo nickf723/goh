@@ -62,6 +62,12 @@ func _finish_setup() -> void:
 
 
 func _process(delta: float) -> void:
+	advance_quick_item_hold(delta)
+
+
+func advance_quick_item_hold(delta: float) -> void:
+	if get_tree().paused:
+		return
 	if quick_item_button_down and not quick_item_hold_consumed:
 		quick_item_hold_elapsed += maxf(delta, 0.0)
 		if quick_item_hold_elapsed >= quick_item_hold_seconds:
@@ -72,14 +78,15 @@ func _process(delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	_resolve_bindings()
 
-	if event.is_action_pressed("spell_menu"):
-		if handle_focus_action(true):
-			get_viewport().set_input_as_handled()
-		return
-	if event.is_action_released("spell_menu"):
-		if handle_focus_action(false):
-			get_viewport().set_input_as_handled()
-		return
+	if event is InputEventJoypadButton:
+		if event.is_action_pressed("spell_menu"):
+			if handle_focus_action(true):
+				get_viewport().set_input_as_handled()
+			return
+		if event.is_action_released("spell_menu"):
+			if handle_focus_action(false):
+				get_viewport().set_input_as_handled()
+			return
 
 	if event is InputEventJoypadMotion and is_focus_open():
 		if handle_focus_stick_motion(event as InputEventJoypadMotion):
@@ -87,6 +94,8 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if not (event is InputEventJoypadButton):
+		return
+	if get_tree().paused:
 		return
 	var button_event: InputEventJoypadButton = event as InputEventJoypadButton
 
@@ -155,7 +164,10 @@ func handle_focus_stick_motion(event: InputEventJoypadMotion) -> bool:
 			return false
 		focus_axis_x_latched = true
 		if ability_caster.has_method("cycle_focus_element"):
-			ability_caster.call("cycle_focus_element", 1 if event.axis_value > 0.0 else -1)
+			ability_caster.call(
+				"cycle_focus_element",
+				1 if event.axis_value > 0.0 else -1
+			)
 			return true
 	if event.axis == JOY_AXIS_RIGHT_Y:
 		if absf(event.axis_value) <= focus_stick_exit_deadzone:
@@ -165,7 +177,10 @@ func handle_focus_stick_motion(event: InputEventJoypadMotion) -> bool:
 			return false
 		focus_axis_y_latched = true
 		if ability_caster.has_method("cycle_focus_spell"):
-			ability_caster.call("cycle_focus_spell", 1 if event.axis_value > 0.0 else -1)
+			ability_caster.call(
+				"cycle_focus_spell",
+				1 if event.axis_value > 0.0 else -1
+			)
 			return true
 	return false
 
@@ -239,7 +254,11 @@ func get_quick_spell_names() -> Array[String]:
 		return names
 	for ability_index: int in resolved_favorite_indices:
 		var ability: Variant = loadout.call("get_equipped_ability", ability_index)
-		names.append(str(ability.get("display_name")) if ability != null else "Empty")
+		names.append(
+			str(ability.get("display_name"))
+			if ability != null
+			else "Empty"
+		)
 	return names
 
 
@@ -247,7 +266,11 @@ func get_selected_quick_spell_name() -> String:
 	var names: Array[String] = get_quick_spell_names()
 	if names.is_empty():
 		return "None"
-	selected_favorite_cursor = clampi(selected_favorite_cursor, 0, names.size() - 1)
+	selected_favorite_cursor = clampi(
+		selected_favorite_cursor,
+		0,
+		names.size() - 1
+	)
 	return names[selected_favorite_cursor]
 
 
@@ -265,7 +288,10 @@ func handle_quick_item_button(device: int, pressed: bool) -> bool:
 		quick_item_hold_consumed = false
 		quick_item_device = device
 		return true
-	if not quick_item_button_down or (quick_item_device >= 0 and device != quick_item_device):
+	if (
+		not quick_item_button_down
+		or (quick_item_device >= 0 and device != quick_item_device)
+	):
 		return false
 	quick_item_button_down = false
 	quick_item_device = -1
@@ -282,7 +308,10 @@ func cycle_quick_item() -> bool:
 		return false
 	for step: int in range(1, 5):
 		var candidate: int = (selected_quick_item_slot + step) % 4
-		var item: Variant = quick_item_controller.call("get_slot_item", candidate)
+		var item: Variant = quick_item_controller.call(
+			"get_slot_item",
+			candidate
+		)
 		if item == null:
 			continue
 		selected_quick_item_slot = candidate
@@ -297,7 +326,10 @@ func _use_selected_quick_item() -> bool:
 	_resolve_bindings()
 	if quick_item_controller == null:
 		return false
-	return bool(quick_item_controller.call("try_use_slot", selected_quick_item_slot))
+	return bool(quick_item_controller.call(
+		"try_use_slot",
+		selected_quick_item_slot
+	))
 
 
 func _initialize_selected_quick_item() -> void:
@@ -317,7 +349,10 @@ func get_quick_item_neighbor_slot(direction: int) -> int:
 	if quick_item_controller == null:
 		return -1
 	for step: int in range(1, 5):
-		var candidate: int = posmod(selected_quick_item_slot + step * direction, 4)
+		var candidate: int = posmod(
+			selected_quick_item_slot + step * direction,
+			4
+		)
 		if quick_item_controller.call("get_slot_item", candidate) != null:
 			return candidate
 	return -1
@@ -325,8 +360,15 @@ func get_quick_item_neighbor_slot(direction: int) -> int:
 
 func get_hand_role_summary() -> Dictionary:
 	_resolve_bindings()
-	if input_bootstrap != null and input_bootstrap.has_method("get_hand_role_summary"):
-		return input_bootstrap.call("get_hand_role_summary") as Dictionary
+	if (
+		input_bootstrap != null
+		and input_bootstrap.has_method("get_hand_role_summary")
+	):
+		var summary_result: Variant = input_bootstrap.call(
+			"get_hand_role_summary"
+		)
+		if summary_result is Dictionary:
+			return summary_result as Dictionary
 	return {
 		"preset": "combat_right_magic_left",
 		"focus": "L",
@@ -350,7 +392,12 @@ func _show_selected_quick_item() -> void:
 		"get_slot_charges",
 		selected_quick_item_slot
 	))
-	_show_message("Quick item: " + str(item.get("display_name")) + " ×" + str(count))
+	_show_message(
+		"Quick item: "
+		+ str(item.get("display_name"))
+		+ " ×"
+		+ str(count)
+	)
 
 
 func _sanitize_legacy_dpad_bindings() -> void:
@@ -360,7 +407,9 @@ func _sanitize_legacy_dpad_bindings() -> void:
 		for input_event: InputEvent in InputMap.action_get_events(action_name):
 			if not (input_event is InputEventJoypadButton):
 				continue
-			var button: int = (input_event as InputEventJoypadButton).button_index
+			var button: int = (
+				input_event as InputEventJoypadButton
+			).button_index
 			if button in [
 				JOY_BUTTON_DPAD_UP,
 				JOY_BUTTON_DPAD_DOWN,
@@ -373,7 +422,9 @@ func _sanitize_legacy_dpad_bindings() -> void:
 func _ensure_quick_loadout_hud() -> void:
 	if actor == null or actor.get_node_or_null("QuickLoadoutHUD") != null:
 		return
-	var hud_script: Script = load("res://scripts/ui/player_quick_loadout_hud.gd") as Script
+	var hud_script: Script = load(
+		"res://scripts/ui/player_quick_loadout_hud.gd"
+	) as Script
 	if hud_script == null:
 		return
 	var hud: Node = hud_script.new()
@@ -388,12 +439,21 @@ func _resolve_bindings() -> void:
 		return
 	if ability_caster == null or not is_instance_valid(ability_caster):
 		ability_caster = actor.get_node_or_null("AbilityCaster")
-	if quick_item_controller == null or not is_instance_valid(quick_item_controller):
-		quick_item_controller = actor.get_node_or_null("PlayerQuickItemController")
+	if (
+		quick_item_controller == null
+		or not is_instance_valid(quick_item_controller)
+	):
+		quick_item_controller = actor.get_node_or_null(
+			"PlayerQuickItemController"
+		)
 	if action_state == null or not is_instance_valid(action_state):
-		action_state = actor.get_node_or_null("PlayerActionState") as PlayerActionState
+		action_state = actor.get_node_or_null(
+			"PlayerActionState"
+		) as PlayerActionState
 	if input_bootstrap == null or not is_instance_valid(input_bootstrap):
-		input_bootstrap = actor.get_node_or_null("WeaponController/WeaponInputBootstrap")
+		input_bootstrap = actor.get_node_or_null(
+			"WeaponController/WeaponInputBootstrap"
+		)
 
 
 func _show_message(message: String) -> void:

@@ -1,14 +1,22 @@
-# Full Menu Shell v1 Test
+# Field Kit Journal and Codex v2 Test
 
 ## Goal
 
-Add a structured, pause-style menu that can become the home for loadouts, weapons, augments, journals, quests, codex entries, and system options.
+The pause-style Field Kit should expose Grace's actual records rather than decorative placeholders.
 
-This is a structure pass, not a full inventory/loadout editing pass.
+This pass integrates three existing systems:
 
-## What exists now
+```text
+GameState quests        → Journal
+SpeciesKnowledge        → Codex / Field Studies
+ComboRuleRegistry       → Codex / Elemental Reactions
+```
 
-Open the full menu with:
+It does not introduce a second quest database, bestiary database, or reaction registry.
+
+## Opening and navigation
+
+Open the Field Kit with:
 
 ```text
 Tab or M
@@ -20,91 +28,128 @@ Close it with:
 Tab, M, or Esc
 ```
 
-Switch tabs with:
+Switch tabs with the displayed keyboard or controller tab controls. The current shell contains:
+
+- Loadout
+- Magic
+- Items
+- Relics
+- Grace
+- Journal
+- Codex
+- System
+
+## Journal
+
+The Journal reads `GameState.get_quest_rows()` every time it is rebuilt.
+
+It shows:
+
+- the authoritative current objective;
+- active, completed, and failed quest counts;
+- separate sections for each quest state;
+- quest title and description;
+- live objective;
+- player-facing stage progress;
+- current stage text for active quests;
+- completed optional-goal count.
+
+A zero-based stored stage such as `stage = 1` in a three-stage quest is presented as:
 
 ```text
-A/D, Left/Right, Up/Down, or 1-4
+Step 2/3
 ```
 
-## Current tabs
+No hard-coded main-thread placeholder remains.
 
-### Loadout
+## Codex
 
-Shows equipped spells as physical menu cards. Each spell card includes:
+### Field Studies
 
-- Slot number
-- Display name
-- Element
-- Delivery type
-- Targeting style
-- Trait profile
-- Costs
-- Roles
-- Combo tags
-- Status tags
-- Design notes
+The first Codex section reads the live `SpeciesKnowledge` rows. Each species card can show:
 
-Also shows the currently equipped weapon if the player has a `WeaponController` with an `equipped_weapon`.
+- observed or unobserved state;
+- knowledge rank and rank title;
+- points toward the next threshold;
+- distinct observation labels;
+- earned capabilities;
+- the next insight.
 
-### Journal
+Goose is currently the only authored species.
 
-Shows:
+### Elemental Reactions
 
-- Current objective from the existing UI
-- Placeholder main quest/clue structure
+The second section continues to read `ComboRuleRegistry.get_debug_matrix_rows()`, but formats those rows as player-readable reaction cards.
 
-### Codex
+For example:
 
-Shows current `ComboRuleRegistry` rows so the reaction grammar is visible in-game.
+```text
+toxic_ignition → Toxic Ignition
+wet_conduction → Wet Conduction
+fanned_flames  → Fanned Flames
+```
 
-This should include generic and hazard combo rules, such as:
+Trigger tags, target requirements, status requirements, and area radius remain visible without exposing raw underscored IDs as the primary title.
 
-- Fire + oily -> ignite oil
-- Lightning + wet -> wet conduction
-- Ice + wet -> wet freeze
-- Force + frozen -> shatter
-- Air + poison cloud -> cloud spread
-- Air + fire field -> fanned flames
-- Fire + poison cloud -> toxic ignition
+## Automated validation
 
-### System
+The registered Field Inventory smoke test now drives the real shell through:
 
-Shows placeholder controls/settings structure.
+```text
+scenes/tests/field_inventory_smoke_test.tscn
+```
 
-## Architecture
+In addition to inventory and quick-belt behavior, it seeds:
 
-- `scripts/ui/full_menu_shell.gd`
-  - Visual shell and tab layout.
-  - Renders Loadout, Journal, Codex, and System tabs.
-- `scripts/ui/full_menu_director.gd`
-  - Autoload director.
-  - Adds the shell to the existing `game_ui` CanvasLayer.
-  - Opens/closes the menu.
-  - Pauses gameplay while open.
-  - Builds menu data from the current scene.
-- `project.godot`
-  - Registers `FullMenuDirector` as an autoload.
+- one staged active quest;
+- two distinct Goose observations.
 
-## Test steps
+It then verifies that the Journal renders the live title, objective, and `Step 2/3`, and that the Codex renders Goose observations plus readable elemental reactions.
 
-1. Pull branch `agent/full-menu-shell-v1`.
-2. Open the project in Godot.
-3. Confirm no parser errors from:
-   - `full_menu_shell.gd`
-   - `full_menu_director.gd`
-4. Run the usual dev scene.
-5. Press `Tab` or `M`.
-6. Confirm the menu opens and gameplay pauses.
-7. Switch through Loadout, Journal, Codex, and System.
-8. Confirm the Loadout tab shows the current spell cards.
-9. Confirm the Codex tab shows combo rule rows.
-10. Press `Esc`, `Tab`, or `M` to close.
-11. Confirm gameplay resumes.
+The focused species snapshot test remains:
 
-## Expected known limitations
+```text
+scenes/tests/species_knowledge_smoke_test.tscn
+```
 
-- No actual swapping yet.
-- No augments yet.
-- No inventory screen yet.
-- No quest database yet.
-- The current goal is structure and visibility so future systems have an obvious place to attach.
+## Manual test: Journal
+
+1. Run `scenes/levels/prototypes/prototype_broken_waystation_mission_v1.tscn`.
+2. Speak to Tamsin and accept **The Relay Response**.
+3. Open the Field Kit and choose **Journal**.
+4. Confirm the current objective matches the HUD.
+5. Confirm **The Relay Response** appears under **Active Quests**.
+6. Advance the mission through the eastern relay.
+7. Reopen the Journal after each stage and confirm the objective and step advance.
+8. Complete the quest.
+9. Reopen the Journal and confirm it moved to **Completed** without losing its final objective.
+
+## Manual test: Codex
+
+1. Run `scenes/levels/prototypes/prototype_goose_study_lab_v1.tscn`.
+2. Open the Codex before studying a Goose.
+3. Confirm Goose appears as **Unobserved** with no field observations.
+4. Record Walking Gait.
+5. Reopen the Codex and confirm one observation appears.
+6. Repeat Walking Gait and confirm it is not duplicated.
+7. Record Preferred Food.
+8. Confirm the rank, capability list, knowledge total, and next insight update.
+9. Scroll into **Elemental Reactions**.
+10. Confirm reaction names are readable and retain their trigger and target requirements.
+
+## Manual test: persistence
+
+1. Earn at least one Goose observation.
+2. Save at a bed in a scene using the standard `GameState` save flow.
+3. Restart or reload from that save.
+4. Open the Codex.
+5. Confirm the Goose points, distinct observations, and derived capability unlocks return.
+6. Load an older save without a `species_knowledge` section and confirm it still loads with empty species records.
+
+## Expected limitations
+
+- Journal and Codex entries are read-only.
+- Goose is the only species definition.
+- There is no search, filtering, map pinning, illustration gallery, or unread badge.
+- Elemental reactions are currently globally visible rather than discovered one by one.
+- Final typography, icons, creature art, and parchment treatment are future presentation work.

@@ -6,7 +6,7 @@ class_name RuviaManifestationControlDriver
 
 func _ready() -> void:
 	super._ready()
-	driver_id = "ruvia_companion_ai"
+	driver_id = "companion_ai"
 	display_name = "Ruvia Companion AI"
 	add_to_group("ruvia_manifestation_control_driver")
 

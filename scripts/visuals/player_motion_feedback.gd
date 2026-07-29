@@ -10,6 +10,10 @@ signal motion_state_changed(previous_state: String, next_state: String)
 @export var climbing_grip_interval: float = 0.28
 @export var maximum_live_effects: int = 16
 
+@export_group("Player Preferences")
+@export_range(0.0, 1.0, 0.05) var visual_effect_scale: float = 1.0
+@export_range(0.0, 1.0, 0.05) var camera_impulse_scale: float = 1.0
+
 var previous_state: String = "idle"
 var previous_stride_bucket: int = 0
 var grip_timer: float = 0.0
@@ -130,7 +134,8 @@ func _spawn_landing_pulse(strength: float) -> void:
 
 
 func _spawn_ground_ring(origin: Vector3, radius: float, color: Color, duration: float) -> void:
-	if get_tree().current_scene == null:
+	var preference_scale: float = clampf(visual_effect_scale, 0.0, 1.0)
+	if preference_scale <= 0.001 or get_tree().current_scene == null:
 		return
 	var ring := MeshInstance3D.new()
 	ring.name = "MotionPulse"
@@ -144,10 +149,12 @@ func _spawn_ground_ring(origin: Vector3, radius: float, color: Color, duration: 
 	var material := StandardMaterial3D.new()
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = color
+	var scaled_color: Color = color
+	scaled_color.a *= preference_scale
+	material.albedo_color = scaled_color
 	material.emission_enabled = true
 	material.emission = Color(color.r, color.g, color.b)
-	material.emission_energy_multiplier = 1.1
+	material.emission_energy_multiplier = lerpf(0.45, 1.1, preference_scale)
 	ring.material_override = material
 	get_tree().current_scene.add_child(ring)
 	ring.global_position = origin + Vector3.UP * 0.025
@@ -155,13 +162,20 @@ func _spawn_ground_ring(origin: Vector3, radius: float, color: Color, duration: 
 	var tween := ring.create_tween()
 	tween.set_trans(Tween.TRANS_QUAD)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.parallel().tween_property(ring, "scale", Vector3(1.8, 0.15, 1.8), duration)
+	var expansion: float = lerpf(1.35, 1.8, preference_scale)
+	tween.parallel().tween_property(
+		ring,
+		"scale",
+		Vector3(expansion, 0.15, expansion),
+		duration
+	)
 	tween.parallel().tween_property(material, "albedo_color:a", 0.0, duration)
 	tween.finished.connect(ring.queue_free)
 
 
 func _spawn_grip_mote() -> void:
-	if get_tree().current_scene == null:
+	var preference_scale: float = clampf(visual_effect_scale, 0.0, 1.0)
+	if preference_scale <= 0.001 or get_tree().current_scene == null:
 		return
 	var use_left: bool = int(Time.get_ticks_msec() / 280) % 2 == 0
 	var anchor_path: String = "GraceVisualV1/LeftHandAnchor" if use_left else "GraceVisualV1/RightHandAnchor"
@@ -178,13 +192,14 @@ func _spawn_grip_mote() -> void:
 	var material := StandardMaterial3D.new()
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = Color(0.65, 0.82, 1.0, 0.7)
+	material.albedo_color = Color(0.65, 0.82, 1.0, 0.7 * preference_scale)
 	material.emission_enabled = true
 	material.emission = Color(0.42, 0.7, 1.0)
-	material.emission_energy_multiplier = 1.8
+	material.emission_energy_multiplier = lerpf(0.7, 1.8, preference_scale)
 	mote.material_override = material
 	get_tree().current_scene.add_child(mote)
 	mote.global_position = anchor.global_position
+	mote.scale = Vector3.ONE * lerpf(0.72, 1.0, preference_scale)
 	_track_effect(mote)
 	var tween := mote.create_tween()
 	tween.parallel().tween_property(mote, "global_position:y", mote.global_position.y - 0.22, 0.34)
@@ -193,11 +208,14 @@ func _spawn_grip_mote() -> void:
 
 
 func _apply_landing_camera_impulse(strength: float) -> void:
+	var scaled_strength: float = strength * clampf(camera_impulse_scale, 0.0, 1.0)
+	if scaled_strength <= 0.001:
+		return
 	var camera: Camera3D = get_viewport().get_camera_3d()
 	if camera == null:
 		return
 	var original_offset: float = camera.v_offset
-	camera.v_offset = original_offset - 0.045 * strength
+	camera.v_offset = original_offset - 0.045 * scaled_strength
 	var tween := camera.create_tween()
 	tween.set_trans(Tween.TRANS_QUAD)
 	tween.set_ease(Tween.EASE_OUT)
@@ -237,5 +255,7 @@ func get_debug_data() -> Dictionary:
 		"last_landing_kind": last_landing_kind,
 		"last_landing_speed": snappedf(last_landing_speed, 0.01),
 		"last_landing_strength": snappedf(last_landing_strength, 0.01),
+		"visual_effect_scale": snappedf(visual_effect_scale, 0.05),
+		"camera_impulse_scale": snappedf(camera_impulse_scale, 0.05),
 		"live_effects": live_effects.size(),
 	}

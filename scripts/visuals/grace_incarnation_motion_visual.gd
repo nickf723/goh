@@ -1,10 +1,33 @@
 extends "res://scripts/visuals/grace_vertical_motion_visual.gd"
 class_name GraceIncarnationMotionVisual
 
+const WeaponPoseCatalogRouterScript = preload(
+	"res://scripts/weapons/weapon_pose_catalog_router.gd"
+)
+
+@onready var incarnation_weapon_controller: WeaponController = (
+	get_parent().get_node_or_null("WeaponController") as WeaponController
+)
+
 
 func _ready() -> void:
 	super._ready()
 	add_to_group("grace_incarnation_motion_visual")
+
+
+func _resolve_control_pose_sample() -> Dictionary:
+	if incarnation_weapon_controller == null:
+		return super._resolve_control_pose_sample()
+	var attack: WeaponAttackDefinition = incarnation_weapon_controller.current_attack
+	if attack == null:
+		return {}
+	if not WeaponPoseCatalogRouterScript.has_profile(attack.character_pose_id):
+		return super._resolve_control_pose_sample()
+	return WeaponPoseCatalogRouterScript.sample_attack(
+		attack,
+		incarnation_weapon_controller.current_attack_elapsed,
+		incarnation_weapon_controller.get_attack_speed()
+	)
 
 
 func get_animation_debug_data() -> Dictionary:

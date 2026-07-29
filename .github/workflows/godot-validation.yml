@@ -30,6 +30,9 @@ jobs:
       - name: Validate feature registry
         run: python scripts/ci/validate_feature_registry.py
 
+      - name: Validate capability inventory
+        run: python scripts/ci/validate_capability_inventory.py
+
       - name: Install Godot 4.6 and export templates
         uses: chickensoft-games/setup-godot@v2
         with:

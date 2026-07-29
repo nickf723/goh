@@ -17,9 +17,9 @@ func run_tests() -> void:
 	original_stats = GameState.get_stat_snapshot()
 	_prepare_stats()
 
-	var floor: StaticBody3D = _make_floor()
+	var floor := _make_floor()
 	add_child(floor)
-	var player: CharacterBody3D = PlayerScene.instantiate() as CharacterBody3D
+	var player := PlayerScene.instantiate() as CharacterBody3D
 	player.name = "PlayerHUDV2TestPlayer"
 	player.position = Vector3(0.0, 0.96, 0.0)
 	add_child(player)
@@ -29,10 +29,8 @@ func run_tests() -> void:
 	await get_tree().process_frame
 	await get_tree().physics_frame
 
-	var hud: PlayerHUDV2 = player.get_node_or_null(
-		"PlayerHUDV2"
-	) as PlayerHUDV2
-	var status_receiver: PlayerStatusReceiver = player.get_node_or_null(
+	var hud := player.get_node_or_null("PlayerHUDV2") as PlayerHUDV2
+	var status_receiver := player.get_node_or_null(
 		"StatusReceiver"
 	) as PlayerStatusReceiver
 	var control_router: Node = player.get_node_or_null("PlayerControlRouter")
@@ -53,20 +51,30 @@ func run_tests() -> void:
 		bool(debug.get("legacy_suppressed", false)),
 		"Legacy gameplay HUD presentation is suppressed"
 	)
+	var old_divine := player.get_node("DivineSpecialHUD") as CanvasLayer
+	var old_items := player.get_node("QuickItemBeltUI") as CanvasLayer
 	_expect(
-		not (player.get_node("DivineSpecialHUD") as CanvasLayer).visible,
+		old_divine != null and not old_divine.visible,
 		"Legacy Divine Special HUD is hidden"
 	)
 	_expect(
-		not (player.get_node("QuickItemBeltUI") as CanvasLayer).visible,
+		old_items != null and not old_items.visible,
 		"Legacy quick-item belt is hidden"
 	)
 
 	GameState.set_stat("health", 37)
 	hud.refresh_data(true)
-	var health_row: Dictionary = hud.stat_rows.get("health", {}) as Dictionary
-	var health_bar: ProgressBar = health_row.get("bar") as ProgressBar
-	var health_value: Label = health_row.get("value") as Label
+	var health_bar: ProgressBar
+	var health_value: Label
+	var health_row_value: Variant = hud.stat_rows.get("health", {})
+	if health_row_value is Dictionary:
+		var health_row: Dictionary = health_row_value
+		var bar_value: Variant = health_row.get("bar")
+		var label_value: Variant = health_row.get("value")
+		if bar_value is ProgressBar:
+			health_bar = bar_value
+		if label_value is Label:
+			health_value = label_value
 	_expect(
 		health_bar != null and is_equal_approx(health_bar.value, 37.0),
 		"Health bar reflects live GameState data"
@@ -103,7 +111,7 @@ func run_tests() -> void:
 		"name": "Wayfarer",
 		"text": "The first flame still burns in the wilds.",
 		"choice": "◆  I will prove myself.",
-		"accent": Color(0.35, 0.58, 0.82, 1.0),
+		"accent": Color(0.35, 0.58, 0.82),
 	})
 	debug = hud.get_debug_data()
 	_expect(
@@ -121,8 +129,11 @@ func run_tests() -> void:
 	)
 
 	var quick_names_result: Variant = control_router.call("get_quick_spell_names")
+	var quick_name_count: int = 0
+	if quick_names_result is Array:
+		quick_name_count = quick_names_result.size()
 	_expect(
-		quick_names_result is Array and (quick_names_result as Array).size() == 3,
+		quick_name_count == 3,
 		"Bottom-left HUD reads the three-spell quick ribbon"
 	)
 
@@ -144,11 +155,11 @@ func _prepare_stats() -> void:
 
 
 func _make_floor() -> StaticBody3D:
-	var floor: StaticBody3D = StaticBody3D.new()
+	var floor := StaticBody3D.new()
 	floor.name = "PlayerHUDV2TestFloor"
 	floor.position = Vector3(0.0, -0.1, 0.0)
-	var collision: CollisionShape3D = CollisionShape3D.new()
-	var shape: BoxShape3D = BoxShape3D.new()
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
 	shape.size = Vector3(30.0, 0.2, 30.0)
 	collision.shape = shape
 	floor.add_child(collision)
@@ -164,10 +175,7 @@ func _restore_stats() -> void:
 	GameState.stats = original_stats.duplicate(true)
 	for stat_value: Variant in GameState.stats.keys():
 		var stat_id: String = str(stat_value)
-		GameState.stat_changed.emit(
-			stat_id,
-			int(GameState.stats[stat_value])
-		)
+		GameState.stat_changed.emit(stat_id, int(GameState.stats[stat_value]))
 
 
 func _finish(

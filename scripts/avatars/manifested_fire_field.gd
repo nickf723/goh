@@ -1,4 +1,4 @@
-extends "res://scripts/abilities/fire_field.gd"
+extends "res://scripts/actions/fire_field.gd"
 class_name ManifestedFireField
 
 

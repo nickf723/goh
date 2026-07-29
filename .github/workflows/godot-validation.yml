@@ -79,6 +79,9 @@ jobs:
       - name: Run Divine Incarnation avatar proxy test
         run: godot --headless --path . res://scenes/tests/avatar_incarnation_smoke_test.tscn
 
+      - name: Run Ruvia halberd combat language test
+        run: godot --headless --path . res://scenes/tests/ruvia_halberd_combat_smoke_test.tscn
+
       - name: Export Windows v0.1 build
         run: |
           mkdir -p build/windows

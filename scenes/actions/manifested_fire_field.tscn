@@ -1,0 +1,42 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/avatars/manifested_fire_field.gd" id="1_fire_field"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_fire"]
+radius = 1.0
+height = 2.0
+radial_segments = 24
+rings = 12
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fire"]
+albedo_color = Color(1.0, 0.32, 0.05, 0.44)
+transparency = 1
+emission_enabled = true
+emission = Color(1.0, 0.22, 0.02, 1.0)
+emission_energy_multiplier = 0.65
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_fire"]
+radius = 3.0
+
+[node name="ManifestedFireField" type="Node3D"]
+script = ExtResource("1_fire_field")
+radius = 3.0
+lifetime = 5.0
+tick_interval = 0.3
+spawn_distance = 3.25
+spawn_height = 0.06
+visual_height_scale = 0.18
+
+[node name="FieldVisual" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_fire")
+material_override = SubResource("StandardMaterial3D_fire")
+scale = Vector3(3, 0.54, 3)
+
+[node name="HitArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HitArea"]
+shape = SubResource("SphereShape3D_fire")

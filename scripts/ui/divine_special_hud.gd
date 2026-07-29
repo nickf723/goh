@@ -127,9 +127,9 @@ func _build_hud() -> void:
 	hint_label.name = "Hints"
 	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	hint_label.text = (
-		"L+R TAP ACTIVATE • HOLD SELECT • B CANCEL • F6 REFILL"
+		"D-PAD DOWN TAP ACTIVATE • HOLD SELECT • B CANCEL • F6 REFILL"
 		if OS.is_debug_build() and show_debug_controls
-		else "L+R TAP ACTIVATE • HOLD SELECT • B CANCEL"
+		else "D-PAD DOWN TAP ACTIVATE • HOLD SELECT • B CANCEL"
 	)
 	hint_label.visible = true
 	hint_label.add_theme_color_override(

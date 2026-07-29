@@ -50,6 +50,9 @@
 [ext_resource type="Script" path="res://scripts/settings/player_preference_service.gd" id="48_preferences"]
 [ext_resource type="Script" path="res://scripts/player/player_elemental_authority_controller.gd" id="49_authority"]
 [ext_resource type="Script" path="res://scripts/player/player_status_receiver.gd" id="50_status_receiver"]
+[ext_resource type="Script" path="res://scripts/avatars/player_avatar_control_driver.gd" id="51_player_driver"]
+[ext_resource type="Script" path="res://scripts/player/player_manifestation_manager.gd" id="52_manifestation_manager"]
+[ext_resource type="PackedScene" path="res://scenes/actors/avatars/manifested_avatar_actor.tscn" id="53_manifestation_scene"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.46
@@ -111,6 +114,14 @@ script = ExtResource("50_status_receiver")
 script = ExtResource("45_avatar_manager")
 default_avatar_definition = ExtResource("46_grace_avatar")
 prototype_avatar_definition = ExtResource("47_ruvia_avatar")
+
+[node name="PlayerControlDriver" type="Node" parent="."]
+script = ExtResource("51_player_driver")
+
+[node name="ManifestationManager" type="Node" parent="."]
+script = ExtResource("52_manifestation_manager")
+prototype_avatar_definition = ExtResource("47_ruvia_avatar")
+manifestation_scene = ExtResource("53_manifestation_scene")
 
 [node name="EquipmentAppearanceController" type="Node" parent="."]
 script = ExtResource("30_outfit_appearance")

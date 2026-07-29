@@ -197,22 +197,15 @@ func _compact_description(value: String) -> String:
 
 func _build_controller_hint(device: int) -> String:
 	var controller_name: String = Input.get_joy_name(device).to_lower()
-	var shoulder_text: String = "L + R"
 	var cancel_text: String = "B"
-	if "xbox" in controller_name or "xinput" in controller_name:
-		shoulder_text = "LB + RB"
-		cancel_text = "B"
-	elif (
+	if (
 		"playstation" in controller_name
 		or "dualsense" in controller_name
 		or "dualshock" in controller_name
 	):
-		shoulder_text = "L1 + R1"
 		cancel_text = "CIRCLE"
 	return (
-		"RIGHT STICK SELECT  •  RELEASE "
-		+ shoulder_text
-		+ " ACTIVATE  •  "
+		"RIGHT STICK SELECT  •  RELEASE DOWN KEEP SELECTION  •  "
 		+ cancel_text
 		+ " CANCEL"
 	)

@@ -87,7 +87,9 @@ func is_unlocked(force_debug: bool = false) -> bool:
 		GameState.call("has_unlock", required_unlock_id)
 	):
 		return true
-	return force_debug and debug_available and OS.is_debug_build()
+	# Runtime debug input only passes true from an OS debug build. Regressions can
+	# also force deterministic catalog access without depending on engine flavor.
+	return force_debug and debug_available
 
 
 func get_debug_summary() -> Dictionary:

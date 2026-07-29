@@ -82,6 +82,9 @@ jobs:
       - name: Run Ruvia halberd combat language test
         run: godot --headless --path . res://scenes/tests/ruvia_halberd_combat_smoke_test.tscn
 
+      - name: Run Ruvia Fire specialist mechanics test
+        run: godot --headless --path . res://scenes/tests/ruvia_fire_specialist_smoke_test.tscn
+
       - name: Export Windows v0.1 build
         run: |
           mkdir -p build/windows

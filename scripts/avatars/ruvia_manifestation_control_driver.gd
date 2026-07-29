@@ -24,6 +24,25 @@ func notify_action_result(
 		)
 
 
+func _get_owned_fields() -> Array[Node]:
+	var fields: Array[Node] = []
+	if controlled_actor == null:
+		return fields
+	var authority: Node = controlled_actor.get_node_or_null(
+		"ElementalAuthorityController"
+	)
+	if authority == null or not authority.has_method("get_owned_fields"):
+		return fields
+	var fields_value: Variant = authority.call("get_owned_fields")
+	if not (fields_value is Array):
+		return fields
+	var raw_fields: Array = fields_value as Array
+	for field_value: Variant in raw_fields:
+		if field_value is Node and is_instance_valid(field_value):
+			fields.append(field_value as Node)
+	return fields
+
+
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["failed_action_retry"] = failed_action_retry_seconds

@@ -43,8 +43,11 @@ func resolve_incoming_attack(
 			last_authority_result.get("authority_id", "none")
 		)
 		result["negated_element"] = payload.element
+		result["damage"] = 0
+		result["stance_damage"] = 0
 		result["health_damage"] = 0
 		result["stance_cost"] = 0
+		show_message(str(result.get("message", "")))
 		player_hit.emit(result)
 		emit_defense_state()
 		return result

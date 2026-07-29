@@ -1,161 +1,113 @@
-# Controller Action Grammar v1.1
+# Controller Action Grammar v1.2
 
-This document inventories the current player actions and defines the controller grammar for the next input refactor.
+This document defines the authoritative player-facing controller grammar after the first direct implementation pass.
 
 ## Design rules
 
 1. One physical control has one stable player-facing meaning.
-2. Context reuse is allowed only when the meaning still feels related.
+2. Context reuse is allowed only when the contextual meaning remains physically related.
 3. Attacks never participate in chords or tap-versus-hold delays.
-4. The shoulders are divided by hand role: one hand owns weapons and one owns magic.
-5. The weapon-hand and magic-hand shoulder pairs can be mirrored as a complete accessibility preset.
-6. Tap-versus-hold gestures belong only on actions where a short recognition delay is acceptable.
-7. Runtime scripts must not silently rewrite bindings owned by other systems.
-8. Controller, keyboard, HUD prompts, settings, and tests must read from one authoritative binding catalog.
+4. One shoulder pair owns weapons and the opposite pair owns magic.
+5. The two shoulder pairs can be mirrored as a complete handedness preset.
+6. D-pad tap-versus-hold gestures are reserved for actions where a short recognition delay is acceptable.
+7. Browsing and activation are separate operations.
+8. Controller, keyboard, HUD prompts, settings, and regressions should read from one authoritative binding layer.
 
-## Current controller map
+## Default preset: combat right, magic left
 
-| Control | Current action | Contextual actions |
-|---|---|---|
-| Left stick | Move | Climb, swim, fly, ride |
-| Right stick | Camera | Focus radial selection, Divine Special selection, lock-on target switching |
-| Left-stick click | Crouch toggle | None |
-| Right-stick click | Lock on | None |
-| A / right face | Interact | Dialogue confirm, mount or dismount, stealth takedown |
-| B / bottom face | Dodge | Cancel, swim or flight descend, drop from climb |
-| X / top face | Jump | Swim or flight ascend, mount jump, climb jump |
-| Y / left face | Guard | Perfect Guard, swim sprint, mount gallop |
-| L | Light attack | Dialogue history |
-| R | Heavy attack | None |
-| ZL | Focus spell menu | None |
-| ZR | Cast selected spell | Release sustained Flight when Flight remains selected |
-| L + R | Divine Special | Tap activates; hold opens radial |
-| D-pad Up | Quick item Up | Focus spell navigation |
-| D-pad Left | Quick item Left | Focus element navigation |
-| D-pad Right | Quick item Right | Focus element navigation |
-| D-pad Down | Special context tap or wheel | Focus spell navigation |
-| Plus | Full menu | Close full menu |
-| Minus | Quest journal | Close journal |
-
-## Current conflicts and inconsistencies
-
-### Attack chord
-
-L and R are immediate attacks but also form the Divine Special chord. The router must cancel attacks, refund stamina, distinguish sequential combos from simultaneous input, and handle failed charge checks. This is a large mechanical tax for one gesture.
-
-### Duplicate contextual ownership
-
-Interact, RidingController, and SpecialContextController all own portions of mounting, dismounting, animal study, familiar commands, and nearby contextual behavior. D-pad Down therefore duplicates work that already belongs conceptually to Interact.
-
-### D-pad mismatch
-
-The quick belt contains four slots, but the controller removes D-pad Down from the fourth item slot at runtime so Special Context can use it. The HUD and data model describe four controller slots while the player can directly access only three.
-
-### Hidden runtime remapping
-
-The project InputMap includes a face-button Light Attack binding. PlayerDefenseController removes that event at runtime and assigns the same physical button to Guard. The editor map, documentation, prompts, and runtime can therefore disagree.
-
-### Keyboard collisions
-
-- `J` is both Light Attack and Quest Journal.
-- `Tab` is both Full Menu and Special Context.
-- `R` is both Next Ability and Restart Scene, though defeat state limits the collision.
-- `C` is Dodge and Flight Descend, which is acceptable because the meanings align contextually.
-- `H` is quick healing and dialogue history, which is acceptable only while dialogue fully captures input.
-
-### Menu fragmentation
-
-Full Menu and Quest Journal are separate paused interfaces on Plus and Minus even though the journal can naturally be a tab inside the full menu.
-
-## Recommended final controller map
-
-### Default preset: combat right, magic left
-
-| Control | Recommended meaning |
+| Control | Meaning |
 |---|---|
 | Left stick | Move |
-| Right stick | Camera or current radial selection |
+| Right stick | Camera or selection inside the active radial/menu |
 | Left-stick click | Crouch |
 | Right-stick click | Lock on |
-| A / right face | Interact or confirm; hold for contextual command wheel |
-| B / bottom face | Dodge, descend, drop, or cancel |
+| A / right face | Interact or confirm |
+| B / bottom face | Dodge, descend, drop, back, or cancel |
 | X / top face | Jump or ascend |
-| Y / left face | Guard or exertion action such as sprint, gallop, or flight boost |
+| Y / left face | Guard or contextual exertion |
 | R | Light attack |
 | ZR | Heavy attack |
 | L | Hold Focus and open the full spell-selection layer |
 | ZL | Cast selected spell |
-| D-pad Up tap | Cycle to the next quick item |
-| D-pad Up hold | Use the selected quick item |
-| D-pad Left | Select the previous favorited quick spell |
-| D-pad Right | Select the next favorited quick spell |
-| D-pad Down tap | Activate the selected Divine Special |
-| D-pad Down hold | Open the Divine Special radial; release to activate |
+| D-pad Up tap | Cycle quick item |
+| D-pad Up hold | Use selected quick item |
+| D-pad Left / Right | Cycle the three favorited quick spells |
+| D-pad Down tap | Attempt to activate the selected Divine Special |
+| D-pad Down hold | Open the Divine Special selector |
 | Plus | Unified full menu |
-| Minus | Reserved for a future map, photo mode, or accessibility shortcut |
+| Minus | Reserved |
 
-### Mirrored preset: combat left, magic right
+## Mirrored preset: combat left, magic right
 
-The preset swaps the complete shoulder pairs rather than remapping individual actions independently.
+The mirrored preset swaps complete shoulder pairs rather than remapping four unrelated actions.
 
 | Control | Mirrored meaning |
 |---|---|
 | L | Light attack |
 | ZL | Heavy attack |
-| R | Hold Focus and open the full spell-selection layer |
+| R | Hold Focus |
 | ZR | Cast selected spell |
 
-This preserves the same internal grammar on either side:
+The internal grammar remains identical:
 
 ```text
 Bumper = quick or setup action
 Trigger = committed or powerful action
 ```
 
-On the combat hand, the bumper is Light Attack and the trigger is Heavy Attack. On the magic hand, the bumper opens Focus and the trigger casts.
+F4 switches between the two presets in debug builds. A persistent settings-menu option remains future work.
 
-## D-pad loadout grammar
+## D-pad grammar
 
-### Quick items on Up
-
-D-pad Up belongs exclusively to quick items.
+### Outside Focus
 
 ```text
-Tap Up                 Cycle to the next equipped quick item
-Hold Up past threshold Use the currently selected quick item once
-Release after use      Do not also cycle
+Up tap       Cycle quick item
+Up hold      Use selected quick item
+Left         Previous favorited quick spell
+Right        Next favorited quick spell
+Down tap     Activate selected Divine Special if ready
+Down hold    Browse Divine Specials
 ```
 
-Recommended hold threshold: `0.28` seconds. Quick-item use may begin as soon as the threshold is crossed. The item itself can retain its existing drinking, throwing, or activation duration.
+The three quick-spell favorites initially resolve to the first three equipped spells. Selection is immediate and persistent, while casting still uses the magic-hand trigger.
 
-The HUD should show one selected item prominently, with its quantity, and briefly reveal the neighboring belt entries after a tap. The underlying belt may still contain four or more configured items even though the controller exposes one active selection.
+### Inside Focus
 
-### Favorited spells on Left and Right
-
-D-pad Left and Right navigate a small quick-spell ribbon rather than the full spell library.
+While the magic bumper is held, the D-pad changes context and belongs entirely to the full spell browser:
 
 ```text
-Tap Left   Select the previous favorited spell
-Tap Right  Select the next favorited spell
+Left / Right   Previous or next element
+Up / Down      Previous or next spell in that element
 ```
 
-The quick ribbon should initially contain three player-configured favorites. Selection is immediate and persistent. Casting still occurs through the magic-hand trigger, so navigating the ribbon never spends mana or accidentally casts.
+The right stick offers the same navigation. D-pad quick items, quick spells, and Divine Specials are suppressed until Focus closes.
 
-The full Focus interface remains available for browsing every learned spell, changing elements, inspecting spell details, and replacing quick favorites. The ribbon is for repeatedly using a compact combat loadout without reopening the library.
+### Quick items
 
-### Divine Specials on Down
-
-D-pad Down belongs exclusively to Divine Specials.
+D-pad Up uses a `0.28` second threshold:
 
 ```text
-Tap Down                 Activate the currently selected Divine Special
-Hold Down past threshold Open the Divine Special radial
-Right stick              Select an unlocked Special
-Release Down             Activate the highlighted Special
-B                         Cancel without spending charge
+Release before threshold   Cycle to the next equipped item
+Cross the hold threshold   Begin using the selected item once
+Release after use begins   Do not also cycle
 ```
 
-Divine Specials no longer touch weapon input, stamina refunds, or attack startup cancellation.
+The item keeps its authored drink, throw, or activation duration after the input gesture resolves.
+
+### Divine Specials
+
+Selection is deliberately separate from activation:
+
+```text
+Tap Down                 Attempt to activate the selected Special
+Hold Down                Open the selector at any charge level
+Right stick              Change the selected unlocked Special
+Release after holding    Keep the selection and close without activating
+B / Circle               Cancel the selector without changing charge
+```
+
+A player may therefore organize the next Divine Special while the meter is still recharging. Changing or confirming a selection never consumes charge. Only a later quick tap attempts activation.
 
 ## Context grammar
 
@@ -167,46 +119,42 @@ Divine Specials no longer touch weapon input, stamina refunds, or attack startup
 - Y guards.
 - The combat-hand bumper and trigger perform Light and Heavy attacks.
 - The magic-hand bumper opens Focus and the trigger casts.
-- D-pad Left and Right rotate through three favorited spells.
-- D-pad Up cycles or uses quick items.
-- D-pad Down owns Divine Specials.
+- D-pad Left and Right rotate through favorite spells outside Focus.
+- D-pad Up cycles or uses quick items outside Focus.
+- D-pad Down owns Divine Special activation and selection outside Focus.
 
 ### Swimming
 
 - X ascends.
 - B descends.
 - Y swims faster.
-- A interacts with contextual water objects.
-- Shoulder hand roles remain stable if combat or spell use is permitted in water.
+- A interacts with water-context objects.
 
 ### Flight
 
 - X ascends.
 - B descends.
-- Y boosts or brakes once flight depth needs that action.
-- Recasting the active Flight spell may still release concentration.
-- Shoulder hand roles remain stable.
+- Y may later boost or brake.
+- Recasting the active Flight spell may release concentration.
 
 ### Climbing
 
 - Movement controls climbing direction.
 - X jumps away or mantles when valid.
 - B drops.
-- Combat, Focus, casting, quick items, and Divine Specials are suppressed unless a later traversal ability explicitly permits them.
+- Combat and loadout actions remain suppressed unless a later traversal upgrade explicitly permits them.
 
 ### Riding
 
 - A mounts, dismounts, or interacts.
 - X jumps.
 - Y gallops.
-- B may become an emergency dismount only if playtesting needs one.
 - Shoulder hand roles remain stable for mounted combat and magic.
 
 ### Stealth
 
 - Left-stick click toggles crouch.
-- A performs a contextual takedown when one is valid; otherwise it interacts normally.
-- Shoulder hand roles remain stable so stealth attacks and magic do not require a separate control vocabulary.
+- A performs a contextual takedown when valid, otherwise it interacts normally.
 
 ### Menus and dialogue
 
@@ -214,45 +162,27 @@ Divine Specials no longer touch weapon input, stamina refunds, or attack startup
 - B cancels or backs out.
 - D-pad and left stick navigate.
 - Shoulder buttons may change tabs only inside paused menus.
-- Plus opens one full menu containing the Journey or Quest tab.
 
-## Recommended refactor order
+## Implemented architecture
 
-### Pass 1: Single source of truth and handedness preset
+`WeaponInputBootstrap` owns the shoulder preset and D-pad action bindings. It installs `PlayerControlRouter`, whose contextual extension routes the D-pad into Focus navigation while Focus is open.
 
-Create one binding catalog or input director that owns action names, keyboard keys, mouse buttons, controller buttons, prompt labels, and the selected handedness preset. Remove cross-system event deletion and ad hoc InputMap mutation.
+The Divine Special router owns only D-pad Down outside Focus. It allows selection at incomplete charge and separates held-radial release from quick-tap activation.
 
-### Pass 2: Rebuild the shoulder grammar
+## Regression contract
 
-For the default preset, bind R to Light Attack, ZR to Heavy Attack, L to Focus, and ZL to Cast. Add the mirrored preset as a complete pair swap. Remove the old shoulder-chord route from Divine Specials.
+The controller regressions verify:
 
-### Pass 3: Rebuild the D-pad grammar
-
-- Up becomes one tap-or-hold quick-item action.
-- Left and Right navigate the three-slot quick-spell ribbon.
-- Down owns the existing tap-or-hold Divine Special interface.
-
-Delete the old four-direction quick-item controller bindings and the old Focus D-pad navigation assumptions after the replacements are functional.
-
-### Pass 4: Merge contextual actions into Interact
-
-Tap A performs the primary interaction. Holding A opens commands only when a familiar, mount, study target, or other contextual system supplies options. Remove the standalone `special_context` binding.
-
-### Pass 5: Unify paused menus
-
-Move the quest journal into the full menu and reserve Minus. Remove the separate controller action and eliminate the keyboard `J` collision.
-
-### Pass 6: Regression contract
-
-Verify every physical control in both handedness presets across ground combat, Focus, quick spells, quick items, Divine Specials, dialogue, swimming, flight, climbing, riding, stealth, and paused menus. Tests should assert the final runtime map rather than only checking that actions exist.
-
-## First implementation slice
-
-The first implementation slice should combine Pass 1 and the smallest part of Pass 2:
-
-1. Introduce the authoritative binding catalog with `combat_right_magic_left` and `combat_left_magic_right` presets.
-2. Move Light, Heavy, Focus, and Cast to the selected shoulder pair.
-3. Move Divine Special to D-pad Down while preserving its existing tap, hold, radial, cancel, and release behavior.
-4. Remove shoulder attack conversion and stamina refund behavior.
-
-Quick-item and quick-spell D-pad behavior should follow in the next slice so each gesture can receive focused regression coverage.
+- both hand-role presets;
+- removal of hidden legacy controller bindings;
+- Focus hold and release;
+- D-pad and right-stick Focus navigation;
+- three-spell quick-ribbon cycling;
+- quick-item tap-versus-hold behavior;
+- Divine selection while recharging;
+- selection-only held-radial release;
+- low-charge tap rejection;
+- full-charge tap activation exactly once;
+- controller-device isolation;
+- attack preservation;
+- radial cancellation and time restoration.

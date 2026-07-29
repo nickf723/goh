@@ -59,6 +59,7 @@
 [ext_resource type="Resource" path="res://data/divine_specials/ruvia_wildfire_procession.tres" id="57_procession"]
 [ext_resource type="Resource" path="res://data/divine_specials/ruvia_hearth_of_first_flame.tres" id="58_hearth"]
 [ext_resource type="Script" path="res://scripts/ui/divine_special_hud.gd" id="59_special_hud"]
+[ext_resource type="Script" path="res://scripts/ui/player_hud_v2.gd" id="60_hud_v2"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.46
@@ -135,6 +136,9 @@ special_definitions = Array[ExtResource("54_special_definition")]([ExtResource("
 
 [node name="DivineSpecialHUD" type="CanvasLayer" parent="."]
 script = ExtResource("59_special_hud")
+
+[node name="PlayerHUDV2" type="CanvasLayer" parent="."]
+script = ExtResource("60_hud_v2")
 
 [node name="EquipmentAppearanceController" type="Node" parent="."]
 script = ExtResource("30_outfit_appearance")

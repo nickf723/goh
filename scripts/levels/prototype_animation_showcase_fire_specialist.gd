@@ -135,9 +135,9 @@ func _build_fire_specialist_bay() -> void:
 func _build_fire_specialist_targets(bay_center: Vector3) -> void:
 	var target_positions: Array[Vector3] = [
 		bay_center + Vector3(0.0, -0.035, -1.0),
-		bay_center + Vector3(-1.3, -0.035, -4.9),
-		bay_center + Vector3(0.0, -0.035, -5.45),
-		bay_center + Vector3(1.3, -0.035, -4.9),
+		bay_center + Vector3(-1.45, -0.035, -3.65),
+		bay_center + Vector3(0.0, -0.035, -4.15),
+		bay_center + Vector3(1.45, -0.035, -3.65),
 	]
 	for target_index: int in range(target_positions.size()):
 		var target: Node = CombatFeelDummyScene.instantiate()
@@ -146,5 +146,5 @@ func _build_fire_specialist_targets(bay_center: Vector3) -> void:
 			continue
 		var target_3d: Node3D = target as Node3D
 		target_3d.name = "FireSpecialistTarget" + str(target_index + 1)
-		target_3d.global_position = target_positions[target_index]
 		add_child(target_3d)
+		target_3d.global_position = target_positions[target_index]

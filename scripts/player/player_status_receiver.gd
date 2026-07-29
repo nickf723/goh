@@ -27,12 +27,23 @@ func _process(delta: float) -> void:
 	var expired_statuses: Array[String] = []
 	for status_name_variant: Variant in active_statuses.keys():
 		var status_name: String = str(status_name_variant)
+		if not active_statuses.has(status_name):
+			continue
 		var status: Dictionary = active_statuses[status_name] as Dictionary
-		status["duration"] = maxf(float(status.get("duration", 0.0)) - maxf(delta, 0.0), 0.0)
-		status["tick_timer"] = float(status.get("tick_timer", 1.0)) - maxf(delta, 0.0)
+		status["duration"] = maxf(
+			float(status.get("duration", 0.0)) - maxf(delta, 0.0),
+			0.0
+		)
+		status["tick_timer"] = (
+			float(status.get("tick_timer", 1.0)) - maxf(delta, 0.0)
+		)
 		if float(status.get("tick_timer", 0.0)) <= 0.0:
 			status["tick_timer"] = 1.0
 			_apply_status_tick(status_name, status)
+			# Authority can remove a status while resolving its tick. Never write the
+			# stale dictionary back and accidentally resurrect it.
+			if not active_statuses.has(status_name):
+				continue
 		active_statuses[status_name] = status
 		if float(status.get("duration", 0.0)) <= 0.0:
 			expired_statuses.append(status_name)
@@ -61,6 +72,7 @@ func apply_status(
 		total_blocked_statuses += 1
 		status_blocked.emit(normalized_status, source)
 		return
+	_resolve_status_conflicts(normalized_status)
 	active_statuses[normalized_status] = {
 		"duration": duration,
 		"strength": maxf(strength, 0.0),
@@ -95,6 +107,7 @@ func sustain_status(
 		total_blocked_statuses += 1
 		status_blocked.emit(normalized_status, source)
 		return
+	_resolve_status_conflicts(normalized_status)
 	if not active_statuses.has(normalized_status):
 		apply_status(normalized_status, duration, strength, source)
 		return
@@ -149,7 +162,12 @@ func get_status_strength(status_name: String) -> float:
 	var normalized_status: String = status_name.strip_edges().to_lower()
 	if not active_statuses.has(normalized_status):
 		return 0.0
-	return float((active_statuses[normalized_status] as Dictionary).get("strength", 0.0))
+	return float(
+		(active_statuses[normalized_status] as Dictionary).get(
+			"strength",
+			0.0
+		)
+	)
 
 
 func get_movement_multiplier() -> float:
@@ -164,24 +182,50 @@ func blocks_actions() -> bool:
 	return has_status("stunned") or has_status("frozen") or has_status("staggered")
 
 
+func _resolve_status_conflicts(new_status: String) -> void:
+	match new_status:
+		"wet":
+			remove_status("oily")
+			remove_status("burning")
+		"burning":
+			remove_status("chill")
+		"frozen":
+			remove_status("burning")
+		"steamed":
+			remove_status("frozen")
+			remove_status("burning")
+			remove_status("chill")
+		_:
+			pass
+
+
 func _apply_status_tick(status_name: String, status: Dictionary) -> void:
 	if status_name not in ["burning", "poisoned"]:
 		return
-	var element: String = str(status.get("element", _get_status_element(status_name)))
+	var element: String = str(
+		status.get("element", _get_status_element(status_name))
+	)
 	var payload: DamagePayload = DamagePayload.new()
 	payload.amount = maxi(roundi(float(status.get("strength", 1.0))), 1)
 	payload.stance_damage = 0
 	payload.element = element
-	payload.source_name = str(status.get("source", status_name.capitalize()))
+	payload.source_name = str(
+		status.get("source", status_name.capitalize())
+	)
 	payload.hit_type = "status"
 	payload.tags = [element, status_name, "status", "player_status"]
 	if authority_controller != null:
-		var authority_result: Dictionary = authority_controller.resolve_incoming_payload(payload)
+		var authority_result: Dictionary = (
+			authority_controller.resolve_incoming_payload(payload)
+		)
 		if bool(authority_result.get("immune", false)):
 			remove_status(status_name)
 			last_result = "negated_tick:" + status_name
 			return
-		var resolved_value: Variant = authority_result.get("payload", payload)
+		var resolved_value: Variant = authority_result.get(
+			"payload",
+			payload
+		)
 		if resolved_value is DamagePayload:
 			payload = resolved_value as DamagePayload
 	if payload.amount <= 0:
@@ -215,9 +259,19 @@ func get_debug_data() -> Dictionary:
 		rows.append(
 			status_name
 			+ "("
-			+ str(snappedf(float(status.get("duration", 0.0)), 0.1))
+			+ str(
+				snappedf(
+					float(status.get("duration", 0.0)),
+					0.1
+				)
+			)
 			+ "s x"
-			+ str(snappedf(float(status.get("strength", 0.0)), 0.1))
+			+ str(
+				snappedf(
+					float(status.get("strength", 0.0)),
+					0.1
+				)
+			)
 			+ ")"
 		)
 	return {

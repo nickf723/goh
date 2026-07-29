@@ -1,6 +1,10 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/combat_feel_dummy.gd" id="1_dummy"]
+[ext_resource type="Script" path="res://scripts/enemies/combat_feel_dummy_force_receiver.gd" id="2_force"]
 
 [node name="CombatFeelDummy" type="CharacterBody3D" groups=["enemy", "combat_targetable"]]
 script = ExtResource("1_dummy")
+
+[node name="ForceReceiver" type="Node" parent="."]
+script = ExtResource("2_force")

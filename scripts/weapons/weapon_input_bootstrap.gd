@@ -4,7 +4,7 @@ class_name WeaponInputBootstrap
 signal hand_role_preset_changed(preset: int, summary: Dictionary)
 
 const PlayerControlRouterScript = preload(
-	"res://scripts/input/player_control_router.gd"
+	"res://scripts/input/player_control_router_contextual.gd"
 )
 
 const PRESET_COMBAT_RIGHT_MAGIC_LEFT: int = 0

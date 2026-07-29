@@ -2,6 +2,54 @@ extends "res://scripts/weapons/weapon_controller.gd"
 class_name SafeWeaponController
 
 
+var _gesture_attack_stamina_spent: int = 0
+
+
+func _ready() -> void:
+	super._ready()
+	if not attack_finished.is_connected(_on_safe_attack_finished):
+		attack_finished.connect(_on_safe_attack_finished)
+
+
+func start_attack(attack: WeaponAttackDefinition) -> bool:
+	var stamina_before: int = GameState.get_stat("stamina")
+	var started: bool = super.start_attack(attack)
+	_gesture_attack_stamina_spent = (
+		maxi(stamina_before - GameState.get_stat("stamina"), 0)
+		if started
+		else 0
+	)
+	return started
+
+
+func cancel_current_attack(reason: String = "cancelled") -> void:
+	super.cancel_current_attack(reason)
+	_gesture_attack_stamina_spent = 0
+
+
+func cancel_startup_attack_for_special(
+	reason: String = "divine_special_chord"
+) -> bool:
+	if current_attack == null:
+		return false
+	if current_phase != "startup" or attack_hit_applied:
+		return false
+	var refund: int = _gesture_attack_stamina_spent
+	# Call the base implementation directly so the tracked cost survives until
+	# after the attack is fully cancelled.
+	super.cancel_current_attack(reason)
+	_gesture_attack_stamina_spent = 0
+	if refund > 0:
+		GameState.restore_stamina(refund)
+	return true
+
+
+func _on_safe_attack_finished(_attack_id: String) -> void:
+	# The base controller emits before starting any buffered follow-up, so this
+	# clears the completed attack without erasing the next attack's tracked cost.
+	_gesture_attack_stamina_spent = 0
+
+
 func _get_locked_weak_point(actor: Node3D, attack: WeaponAttackDefinition) -> Node:
 	if actor == null or attack == null:
 		return null

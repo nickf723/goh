@@ -1,6 +1,14 @@
 extends CanvasLayer
 class_name DivineSpecialHUD
 
+
+const DivineSpecialRadialMenuScript = preload(
+	"res://scripts/ui/divine_special_radial_menu.gd"
+)
+const DivineSpecialInputRouterScript = preload(
+	"res://scripts/divine_specials/player_divine_special_input_router.gd"
+)
+
 @export var show_debug_controls: bool = true
 @export_range(0.02, 1.0, 0.01) var refresh_interval: float = 0.08
 
@@ -17,6 +25,7 @@ var refresh_remaining: float = 0.0
 func _ready() -> void:
 	layer = 18
 	_build_hud()
+	call_deferred("_ensure_controller_input")
 	call_deferred("_resolve_controller")
 	add_to_group("divine_special_hud")
 
@@ -32,6 +41,20 @@ func _process(delta: float) -> void:
 	if controller == null or not is_instance_valid(controller):
 		_resolve_controller()
 	_update_hud()
+
+
+func _ensure_controller_input() -> void:
+	var player: Node = get_parent()
+	if player == null:
+		return
+	if player.get_node_or_null("DivineSpecialRadialMenu") == null:
+		var radial_menu: Node = DivineSpecialRadialMenuScript.new()
+		radial_menu.name = "DivineSpecialRadialMenu"
+		player.add_child(radial_menu)
+	if player.get_node_or_null("DivineSpecialInputRouter") == null:
+		var input_router: Node = DivineSpecialInputRouterScript.new()
+		input_router.name = "DivineSpecialInputRouter"
+		player.add_child(input_router)
 
 
 func _resolve_controller() -> void:
@@ -103,8 +126,12 @@ func _build_hud() -> void:
 	hint_label = Label.new()
 	hint_label.name = "Hints"
 	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	hint_label.text = "F11 ACTIVATE • SHIFT+F11 CYCLE • F6 REFILL"
-	hint_label.visible = OS.is_debug_build() and show_debug_controls
+	hint_label.text = (
+		"L+R TAP ACTIVATE • HOLD SELECT • B CANCEL • F6 REFILL"
+		if OS.is_debug_build() and show_debug_controls
+		else "L+R TAP ACTIVATE • HOLD SELECT • B CANCEL"
+	)
+	hint_label.visible = true
 	hint_label.add_theme_color_override(
 		"font_color",
 		Color(0.84, 0.72, 0.58, 0.86)

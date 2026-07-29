@@ -7,6 +7,7 @@
 [ext_resource type="Resource" path="res://data/avatars/ruvia_dodge_motion_profile.tres" id="5_dodge"]
 [ext_resource type="Resource" path="res://data/avatars/ruvia_combat_footwork_profile.tres" id="6_footwork"]
 [ext_resource type="Resource" path="res://data/avatars/ruvia_vertical_motion_profile.tres" id="7_vertical"]
+[ext_resource type="Resource" path="res://data/avatars/ruvia_fire_authority_profile.tres" id="8_authority"]
 
 [resource]
 script = ExtResource("1_definition")
@@ -15,14 +16,15 @@ display_name = "Ruvia"
 avatar_kind = "divine_incarnation"
 element = "fire"
 patron_id = "ruvia"
-description = "Debug-stage Divine Incarnation prototype. Grace remains the health, camera, world-position, and progression anchor while Ruvia supplies Fire mastery, her signature weapon identity, and a more aggressive motion profile."
-tags = Array[String](["god", "patron", "fire", "divine_incarnation", "prototype"])
+description = "Debug-stage Divine Incarnation prototype. Grace remains the health, camera, world-position, and progression anchor while Ruvia supplies absolute Fire authority, her signature halberd combat language, Fire spell weaving, and an aggressive motion profile."
+tags = Array[String](["god", "patron", "fire", "divine_incarnation", "prototype", "elemental_authority"])
 required_unlock_id = "spellcasting.warlock.mastery"
 debug_available = true
 manifestation_duration = 0.0
 weapon_definition = ExtResource("2_weapon")
 ability_loadout = ExtResource("3_loadout")
 starting_ability_index = 0
+elemental_authority_profile = ExtResource("8_authority")
 ground_motion_profile = ExtResource("4_ground")
 dodge_motion_profile = ExtResource("5_dodge")
 combat_footwork_profile = ExtResource("6_footwork")

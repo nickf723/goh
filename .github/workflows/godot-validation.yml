@@ -67,6 +67,9 @@ jobs:
       - name: Run Grace ground motion motor test
         run: godot --headless --path . res://scenes/tests/ground_motion_motor_smoke_test.tscn
 
+      - name: Run continuous stair traversal test
+        run: godot --headless --path . res://scenes/tests/stair_traversal_smoke_test.tscn
+
       - name: Run Grace dodge motion and recovery test
         run: godot --headless --path . res://scenes/tests/dodge_motion_smoke_test.tscn
 
@@ -84,6 +87,9 @@ jobs:
 
       - name: Run Ruvia Fire specialist mechanics test
         run: godot --headless --path . res://scenes/tests/ruvia_fire_specialist_smoke_test.tscn
+
+      - name: Run showcase mana recovery test
+        run: godot --headless --path . res://scenes/tests/showcase_mana_recovery_smoke_test.tscn
 
       - name: Export Windows v0.1 build
         run: |

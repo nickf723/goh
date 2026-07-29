@@ -103,6 +103,9 @@ jobs:
       - name: Run portrait-driven player HUD v2 test
         run: godot --headless --path . res://scenes/tests/player_hud_v2_smoke_test.tscn
 
+      - name: Run compact HUD posture and targeting test
+        run: godot --headless --path . res://scenes/tests/hud_posture_targeting_smoke_test.tscn
+
       - name: Run showcase mana recovery test
         run: godot --headless --path . res://scenes/tests/showcase_mana_recovery_smoke_test.tscn
 

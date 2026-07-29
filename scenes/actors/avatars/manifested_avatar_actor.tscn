@@ -1,6 +1,6 @@
 [gd_scene load_steps=24 format=3]
 
-[ext_resource type="Script" path="res://scripts/avatars/manifested_avatar_actor.gd" id="1_actor"]
+[ext_resource type="Script" path="res://scripts/avatars/ruvia_manifested_avatar_actor.gd" id="1_actor"]
 [ext_resource type="Resource" path="res://data/avatars/ruvia_incarnation_prototype.tres" id="2_avatar"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/grace_wire_visual_v1.tscn" id="3_visual"]
 [ext_resource type="Script" path="res://scripts/player/player_step_up_controller.gd" id="4_step"]

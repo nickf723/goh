@@ -46,10 +46,13 @@ func _build_hud() -> void:
 	panel = PanelContainer.new()
 	panel.name = "DivineSpecialPanel"
 	panel.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	panel.offset_left = -330.0
-	panel.offset_top = -112.0
-	panel.offset_right = -18.0
-	panel.offset_bottom = -18.0
+	# The quick-item belt occupies the lowest-right shelf. Divine Charge lives
+	# immediately above it so both remain readable at ordinary window sizes.
+	panel.offset_left = -360.0
+	panel.offset_top = -246.0
+	panel.offset_right = -24.0
+	panel.offset_bottom = -150.0
+	panel.add_theme_stylebox_override("panel", _make_panel_style())
 	add_child(panel)
 
 	var margin: MarginContainer = MarginContainer.new()
@@ -67,6 +70,11 @@ func _build_hud() -> void:
 	title_label.name = "Title"
 	title_label.text = "DIVINE SPECIAL"
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	title_label.add_theme_color_override(
+		"font_color",
+		Color(1.0, 0.63, 0.17, 1.0)
+	)
+	title_label.add_theme_font_size_override("font_size", 12)
 	stack.add_child(title_label)
 
 	charge_bar = ProgressBar.new()
@@ -75,13 +83,14 @@ func _build_hud() -> void:
 	charge_bar.max_value = 100.0
 	charge_bar.value = 0.0
 	charge_bar.show_percentage = false
-	charge_bar.custom_minimum_size = Vector2(280.0, 14.0)
+	charge_bar.custom_minimum_size = Vector2(304.0, 14.0)
 	stack.add_child(charge_bar)
 
 	status_label = Label.new()
 	status_label.name = "Status"
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	status_label.text = "DIVINE CHARGE 0%"
+	status_label.add_theme_font_size_override("font_size", 11)
 	stack.add_child(status_label)
 
 	hint_label = Label.new()
@@ -89,7 +98,27 @@ func _build_hud() -> void:
 	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	hint_label.text = "F11 ACTIVATE • SHIFT+F11 CYCLE • F6 REFILL"
 	hint_label.visible = OS.is_debug_build() and show_debug_controls
+	hint_label.add_theme_color_override(
+		"font_color",
+		Color(0.84, 0.72, 0.58, 0.86)
+	)
+	hint_label.add_theme_font_size_override("font_size", 9)
 	stack.add_child(hint_label)
+
+
+func _make_panel_style() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.025, 0.018, 0.02, 0.82)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(1.0, 0.34, 0.07, 0.48)
+	style.corner_radius_top_left = 12
+	style.corner_radius_top_right = 12
+	style.corner_radius_bottom_left = 12
+	style.corner_radius_bottom_right = 12
+	return style
 
 
 func _update_hud() -> void:
@@ -106,10 +135,19 @@ func _update_hud() -> void:
 	var patron_name: String = str(
 		debug.get("selected_patron", "divine")
 	).capitalize()
-	var selected_name: String = str(debug.get("selected_name", "Divine Special"))
-	title_label.text = patron_name.to_upper() + " • " + selected_name.to_upper()
+	var selected_name: String = str(
+		debug.get("selected_name", "Divine Special")
+	)
+	title_label.text = (
+		patron_name.to_upper()
+		+ " • "
+		+ selected_name.to_upper()
+	)
 	var charge: float = float(debug.get("charge", 0.0))
-	var maximum: float = maxf(float(debug.get("maximum_charge", 100.0)), 0.01)
+	var maximum: float = maxf(
+		float(debug.get("maximum_charge", 100.0)),
+		0.01
+	)
 	charge_bar.max_value = maximum
 	charge_bar.value = charge
 	var state: String = "RECHARGING"

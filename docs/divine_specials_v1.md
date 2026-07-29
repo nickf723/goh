@@ -28,7 +28,11 @@ The standard player owns:
 ```text
 Player/DivineSpecialController
 Player/DivineSpecialHUD
+Player/DivineSpecialInputRouter
+Player/DivineSpecialRadialMenu
 ```
+
+The HUD installs the input router and radial menu at runtime so every scene using the shared player receives the same production controls.
 
 The controller has one charge pool shared by every patron and every unlocked Special.
 
@@ -189,6 +193,34 @@ Every Special has an action timeout. Cleanup occurs on:
 
 A failed validation or invalid scene does not consume Divine Charge. Charge is spent only after an effect is configured and agrees to begin.
 
+## Controller controls
+
+| Controller | Divine Special chord |
+|---|---|
+| Nintendo Pro Controller | `L + R` |
+| Xbox controller | `LB + RB` |
+| PlayStation controller | `L1 + R1` |
+
+The chord grammar is:
+
+```text
+Quick press and release     Activate the selected Divine Special
+Hold for 0.18 seconds       Open the Divine Special radial
+Right stick while holding   Select an unlocked Special
+Release while radial open   Activate the selected Special
+B / Circle while holding    Cancel without spending charge
+```
+
+The router reads raw joypad events per device rather than defining a third ordinary InputMap action. A shoulder press therefore still reaches the existing Light or Heavy attack immediately.
+
+When the opposite shoulder arrives within `0.10` seconds, the router may convert the gesture into a Divine Special chord. Conversion is only legal while the ordinary attack remains in startup and before its hit frame. The safe weapon controller cancels that startup and refunds the exact stamina spent by that attack.
+
+If charge is unavailable, the chord is rejected before attack cancellation. The ordinary Light or Heavy input remains alive. Sequential shoulder presses outside the simultaneous window also remain ordinary combo inputs.
+
+One joypad owns each active chord. Inputs from separate controllers cannot combine.
+
+The radial uses the shared focus-menu action lock and slows time to `0.35`. Movement remains governed by the existing focus-menu preference, while attacks, dodges, interaction, and item use remain blocked. Cancellation and release restore the previous menu state and time scale.
+
 ## Debug controls
 
 ```text
@@ -202,7 +234,7 @@ F7           Restore showcase mana
 F8           Reset the animation showcase
 ```
 
-The production input and radial selection interface remain future work. The debug controls intentionally exercise the complete definition and execution path rather than bypassing it.
+The keyboard controls remain development shortcuts. They exercise the same definition and execution path as the controller gesture rather than bypassing the player-facing system.
 
 ## Showcase
 
@@ -218,13 +250,14 @@ The eastern Divine Specials range contains:
 - a large Hearth radius;
 - an eight-segment Wildfire Procession lane;
 - several clustered training targets;
-- F11, Shift+F11, and F6 instructions.
+- controller and keyboard instructions.
 
 The player HUD shows:
 
 - selected patron and Special;
 - Divine Charge percentage;
 - ready, recharging, or active state;
+- controller chord guidance;
 - last completion result;
 - targets hit;
 - hostile projectiles cleared;
@@ -234,30 +267,43 @@ Suggested review:
 
 1. Use Caldera Drop against the central cluster and inspect the inner and outer impact rings.
 2. Walk through the crater afterward and confirm Grace remains safe while enemies Burn.
-3. Cycle to Wildfire Procession and aim down the marked lane.
+3. Hold the shoulder chord, move the right stick to Wildfire Procession, and release while aiming down the marked lane.
 4. Confirm the eruptions advance in sequence rather than appearing simultaneously.
-5. Cycle to Hearth of the First Flame.
+5. Refill, open the radial, select Hearth of the First Flame, and release.
 6. Stand in Fire, spend stance, and let hostile projectiles enter the domain.
 7. Confirm the domain protects Grace, restores stance, and pressures enemies.
-8. Press F10, then activate a Special. Autonomous Ruvia should dismiss before the Special starts.
-9. Press F9 to incarnate Ruvia and activate Caldera Drop. No duplicate patron projection should appear.
-10. Return to Grace and confirm the same shared Divine Charge remains in use.
+8. Open the radial and cancel with B or Circle. Charge and ordinary control should be preserved.
+9. Press F10, then activate a Special. Autonomous Ruvia should dismiss before the Special starts.
+10. Press F9 to incarnate Ruvia and activate Caldera Drop. No duplicate patron projection should appear.
+11. Return to Grace and confirm the same shared Divine Charge remains in use.
 
 ## Regression
 
-Focused scene:
+Effect and charge scene:
 
 ```text
 scenes/tests/divine_specials_smoke_test.tscn
 ```
 
-Expected Output marker:
+Expected output marker:
 
 ```text
 DIVINE_SPECIALS_SMOKE_TEST: PASS
 ```
 
-The regression covers:
+Controller input and radial scene:
+
+```text
+scenes/tests/divine_special_input_smoke_test.tscn
+```
+
+Expected output marker:
+
+```text
+DIVINE_SPECIAL_INPUT_SMOKE_TEST: PASS
+```
+
+The combined regressions cover:
 
 - installation on the shared player;
 - all three Ruvia definitions;
@@ -268,9 +314,14 @@ The regression covers:
 - safe cancellation and metadata cleanup;
 - automatic Manifestation dismissal;
 - Incarnated Ruvia as the direct performer;
-- restoration to Grace after the Incarnation test.
+- immediate Light input and exact startup stamina refund;
+- sequential Light-to-Heavy input outside the chord window;
+- unavailable-charge attack preservation;
+- same-device chord ownership;
+- radial selection, cancellation, and time restoration;
+- exactly one activation per release.
 
-The main Godot validation workflow runs this scene after the Avatar Control Driver and Manifestation regression.
+The main Godot validation workflow runs both focused scenes.
 
 ## Deliberate v1 boundaries
 
@@ -278,7 +329,8 @@ The main Godot validation workflow runs this scene after the Avatar Control Driv
 - The patron projection uses the diagnostic wire body.
 - Special charge is runtime state and is not yet persisted in the save slot.
 - Combat recharge currently observes connected weapon attacks and Elemental Authority casts, not every possible reaction or perfect-defense event.
-- The production Special radial and controller bindings are not implemented.
+- Battlefield targeting previews are not implemented yet.
+- The radial uses text prompts rather than final platform glyph assets.
 - Enemy AI does not yet recognize Special telegraphs or deliberately flee domains.
 - Projectile clearing scans current projectile actors and is prototype-scale rather than the final optimized registry.
 - Special balance and recharge times are first-pass values.

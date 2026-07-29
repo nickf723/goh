@@ -13,9 +13,11 @@ var field_flare_remaining: float = 0.0
 var immunity_token: String = ""
 var domain_visual: MeshInstance3D
 var domain_core: MeshInstance3D
+var owner_status_receiver: PlayerStatusReceiver
 var pulses_completed: int = 0
 var fields_flared: int = 0
 var stance_restored: int = 0
+var burning_rejections: int = 0
 
 
 func begin_special() -> bool:
@@ -41,6 +43,7 @@ func begin_special() -> bool:
 		"divine_special_fire_immunity_token",
 		immunity_token
 	)
+	_bind_owner_status_guard()
 	_remove_owner_burning()
 	_build_domain_visuals()
 	if performer_actor == null or performer_actor != owner_actor:
@@ -86,8 +89,33 @@ func _process(delta: float) -> void:
 				"pulses_completed": pulses_completed,
 				"fields_flared": fields_flared,
 				"stance_restored": stance_restored,
+				"burning_rejections": burning_rejections,
 			}
 		)
+
+
+func _bind_owner_status_guard() -> void:
+	owner_status_receiver = owner_actor.get_node_or_null(
+		"StatusReceiver"
+	) as PlayerStatusReceiver
+	if owner_status_receiver == null:
+		return
+	if not owner_status_receiver.status_applied.is_connected(
+		_on_owner_status_applied
+	):
+		owner_status_receiver.status_applied.connect(
+			_on_owner_status_applied
+		)
+
+
+func _on_owner_status_applied(
+	status_name: String,
+	_status_data: Dictionary
+) -> void:
+	if status_name.strip_edges().to_lower() != "burning":
+		return
+	burning_rejections += 1
+	_remove_owner_burning()
 
 
 func _build_domain_visuals() -> void:
@@ -191,15 +219,12 @@ func _apply_domain_pulse() -> void:
 
 
 func _remove_owner_burning() -> void:
-	if owner_actor == null:
-		return
-	var status_receiver: Node = owner_actor.get_node_or_null(
-		"StatusReceiver"
-	)
-	if status_receiver != null and status_receiver.has_method(
-		"remove_status"
-	):
-		status_receiver.call("remove_status", "burning")
+	if owner_status_receiver == null:
+		owner_status_receiver = owner_actor.get_node_or_null(
+			"StatusReceiver"
+		) as PlayerStatusReceiver
+	if owner_status_receiver != null:
+		owner_status_receiver.remove_status("burning")
 
 
 func _restore_owner_stance() -> void:
@@ -239,6 +264,14 @@ func _flare_fire_fields() -> int:
 
 
 func _cleanup_special() -> void:
+	if owner_status_receiver != null and is_instance_valid(owner_status_receiver):
+		if owner_status_receiver.status_applied.is_connected(
+			_on_owner_status_applied
+		):
+			owner_status_receiver.status_applied.disconnect(
+				_on_owner_status_applied
+			)
+	owner_status_receiver = null
 	if owner_actor != null and is_instance_valid(owner_actor):
 		if str(
 			owner_actor.get_meta(
@@ -272,6 +305,7 @@ func get_debug_data() -> Dictionary:
 	data["pulses_completed"] = pulses_completed
 	data["fields_flared"] = fields_flared
 	data["stance_restored"] = stance_restored
+	data["burning_rejections"] = burning_rejections
 	data["owner_fire_immunity"] = (
 		owner_actor != null
 		and bool(

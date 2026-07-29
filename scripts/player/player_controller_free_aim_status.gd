@@ -13,6 +13,12 @@ func _ready() -> void:
 	) as PlayerStatusReceiver
 
 
+func handle_lock_on_target_switch_input() -> void:
+	if is_focus_spell_menu_open():
+		return
+	super.handle_lock_on_target_switch_input()
+
+
 func _get_requested_ground_velocity() -> Vector3:
 	var requested: Vector3 = super._get_requested_ground_velocity()
 	if player_status_receiver == null:

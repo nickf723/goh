@@ -1,0 +1,108 @@
+[gd_scene load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://scripts/avatars/manifested_avatar_actor.gd" id="1_actor"]
+[ext_resource type="Resource" path="res://data/avatars/ruvia_incarnation_prototype.tres" id="2_avatar"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/grace_wire_visual_v1.tscn" id="3_visual"]
+[ext_resource type="Script" path="res://scripts/player/player_step_up_controller.gd" id="4_step"]
+[ext_resource type="Script" path="res://scripts/player/player_ground_motion_motor.gd" id="5_ground"]
+[ext_resource type="Resource" path="res://data/avatars/ruvia_ground_motion_profile.tres" id="6_ground_profile"]
+[ext_resource type="Script" path="res://scripts/player/player_vertical_motion_controller.gd" id="7_vertical"]
+[ext_resource type="Resource" path="res://data/avatars/ruvia_vertical_motion_profile.tres" id="8_vertical_profile"]
+[ext_resource type="Script" path="res://scripts/avatars/manifested_combat_footwork_controller.gd" id="9_footwork"]
+[ext_resource type="Resource" path="res://data/avatars/ruvia_combat_footwork_profile.tres" id="10_footwork_profile"]
+[ext_resource type="Script" path="res://scripts/avatars/manifested_elemental_authority_controller.gd" id="11_authority"]
+[ext_resource type="Resource" path="res://data/avatars/ruvia_fire_authority_profile.tres" id="12_authority_profile"]
+[ext_resource type="Script" path="res://scripts/avatars/manifested_avatar_status_receiver.gd" id="13_status"]
+[ext_resource type="Script" path="res://scripts/avatars/manifested_weapon_controller.gd" id="14_weapon"]
+[ext_resource type="Resource" path="res://data/weapons/ruvia_ember_halberd_prototype.tres" id="15_weapon_definition"]
+[ext_resource type="Script" path="res://scripts/visuals/player_weapon_control_animator_authority.gd" id="16_animator"]
+[ext_resource type="Script" path="res://scripts/player/player_action_state.gd" id="17_action_state"]
+[ext_resource type="Script" path="res://scripts/avatars/manifested_dodge_controller.gd" id="18_dodge"]
+[ext_resource type="Resource" path="res://data/avatars/ruvia_dodge_motion_profile.tres" id="19_dodge_profile"]
+[ext_resource type="Script" path="res://scripts/avatars/companion_avatar_control_driver.gd" id="20_driver"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_manifested"]
+radius = 0.42
+height = 1.86
+
+[sub_resource type="BoxMesh" id="BoxMesh_weapon"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_trail"]
+
+[node name="ManifestedAvatarActor" type="CharacterBody3D"]
+collision_layer = 0
+collision_mask = 1
+floor_snap_length = 0.42
+floor_constant_speed = true
+safe_margin = 0.003
+script = ExtResource("1_actor")
+avatar_definition = ExtResource("2_avatar")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape_manifested")
+
+[node name="GraceVisualV1" parent="." instance=ExtResource("3_visual")]
+position = Vector3(0, -0.92, 0)
+
+[node name="StepUpController" type="Node" parent="."]
+script = ExtResource("4_step")
+
+[node name="GroundMotionMotor" type="Node" parent="."]
+script = ExtResource("5_ground")
+profile = ExtResource("6_ground_profile")
+
+[node name="VerticalMotionController" type="Node" parent="."]
+script = ExtResource("7_vertical")
+profile = ExtResource("8_vertical_profile")
+
+[node name="CombatFootworkController" type="Node" parent="."]
+script = ExtResource("9_footwork")
+profile = ExtResource("10_footwork_profile")
+
+[node name="ElementalAuthorityController" type="Node" parent="."]
+script = ExtResource("11_authority")
+profile = ExtResource("12_authority_profile")
+
+[node name="StatusReceiver" type="Node" parent="."]
+script = ExtResource("13_status")
+
+[node name="WeaponController" type="Node3D" parent="."]
+script = ExtResource("14_weapon")
+equipped_weapon = ExtResource("15_weapon_definition")
+use_camera_direction = false
+show_debug_prints = false
+print_attack_debug = false
+
+[node name="HandAnchor" type="Node3D" parent="WeaponController"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.43, -0.16, -0.02)
+
+[node name="WeaponVisualPivot" type="Node3D" parent="WeaponController/HandAnchor"]
+
+[node name="WeaponModelRoot" type="Node3D" parent="WeaponController/HandAnchor/WeaponVisualPivot"]
+
+[node name="SwordMesh" type="MeshInstance3D" parent="WeaponController/HandAnchor/WeaponVisualPivot/WeaponModelRoot"]
+visible = false
+transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.65, 0.15, 0, -0.45)
+mesh = SubResource("BoxMesh_weapon")
+
+[node name="SlashTrail" type="MeshInstance3D" parent="WeaponController/HandAnchor/WeaponVisualPivot"]
+transform = Transform3D(-2.4041263e-08, 0, 1, 0, 1.1, 0, -0.55, 0, -4.371139e-08, 0.2, 0, -0.55)
+visible = false
+mesh = SubResource("PlaneMesh_trail")
+
+[node name="PlayerWeaponControlAnimator" type="Node" parent="."]
+script = ExtResource("16_animator")
+
+[node name="PlayerActionState" type="Node" parent="."]
+script = ExtResource("17_action_state")
+allow_movement_during_focus_menu = false
+allow_casting_during_focus_menu = false
+
+[node name="PlayerDodgeController" type="Node" parent="."]
+script = ExtResource("18_dodge")
+profile = ExtResource("19_dodge_profile")
+use_camera_relative_direction = false
+show_debug_prints = false
+
+[node name="CompanionControlDriver" type="Node" parent="."]
+script = ExtResource("20_driver")

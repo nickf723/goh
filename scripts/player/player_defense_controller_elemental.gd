@@ -18,6 +18,28 @@ func resolve_incoming_attack(
 	attacker: Node3D = null
 ) -> Dictionary:
 	last_authority_result.clear()
+	if (
+		payload != null
+		and actor != null
+		and payload.element.strip_edges().to_lower() == "fire"
+		and bool(actor.get_meta("divine_special_fire_immunity", false))
+	):
+		last_outcome = "divine_special_fire_immunity"
+		var hearth_result: Dictionary = make_result(
+			"divine_special_fire_immunity",
+			payload,
+			"The Hearth drinks " + payload.source_name + " before it reaches Grace."
+		)
+		hearth_result["divine_special"] = "ruvia_hearth_first_flame"
+		hearth_result["negated_element"] = "fire"
+		hearth_result["damage"] = 0
+		hearth_result["stance_damage"] = 0
+		hearth_result["health_damage"] = 0
+		hearth_result["stance_cost"] = 0
+		show_message(str(hearth_result.get("message", "")))
+		player_hit.emit(hearth_result)
+		emit_defense_state()
+		return hearth_result
 	if payload == null or elemental_authority_controller == null:
 		return super.resolve_incoming_attack(payload, attacker)
 
@@ -72,5 +94,9 @@ func get_debug_data() -> Dictionary:
 		)
 		if elemental_authority_controller != null
 		else "none"
+	)
+	data["hearth_fire_immunity"] = (
+		actor != null
+		and bool(actor.get_meta("divine_special_fire_immunity", false))
 	)
 	return data

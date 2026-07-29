@@ -91,6 +91,9 @@ jobs:
       - name: Run avatar control driver and manifestation test
         run: godot --headless --path . res://scenes/tests/avatar_control_driver_manifestation_smoke_test.tscn
 
+      - name: Run Divine Specials charge and Ruvia effects test
+        run: godot --headless --path . res://scenes/tests/divine_specials_smoke_test.tscn
+
       - name: Run showcase mana recovery test
         run: godot --headless --path . res://scenes/tests/showcase_mana_recovery_smoke_test.tscn
 

@@ -97,7 +97,7 @@ func _is_friendly_target(target: Node) -> bool:
 	if target == null:
 		return false
 	var root: Node = target
-	while root.get_parent() != null and not root is CharacterBody3D:
+	while root.get_parent() != null and not (root is CharacterBody3D):
 		root = root.get_parent()
 	if root.is_in_group("friendly_actor") or root.is_in_group("player"):
 		return true

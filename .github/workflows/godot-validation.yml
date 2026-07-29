@@ -94,6 +94,9 @@ jobs:
       - name: Run Divine Specials charge and Ruvia effects test
         run: godot --headless --path . res://scenes/tests/divine_specials_smoke_test.tscn
 
+      - name: Run Divine Special controller input and radial test
+        run: godot --headless --path . res://scenes/tests/divine_special_input_smoke_test.tscn
+
       - name: Run showcase mana recovery test
         run: godot --headless --path . res://scenes/tests/showcase_mana_recovery_smoke_test.tscn
 

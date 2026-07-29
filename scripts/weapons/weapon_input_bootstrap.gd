@@ -6,6 +6,9 @@ signal hand_role_preset_changed(preset: int, summary: Dictionary)
 const PlayerControlRouterScript = preload(
 	"res://scripts/input/player_control_router_contextual.gd"
 )
+const PlayerPresentationScript = preload(
+	"res://scripts/ui/player_hud_combat_presentation.gd"
+)
 
 const PRESET_COMBAT_RIGHT_MAGIC_LEFT: int = 0
 const PRESET_COMBAT_LEFT_MAGIC_RIGHT: int = 1
@@ -53,6 +56,7 @@ func _ready() -> void:
 	ensure_dpad_actions()
 	apply_hand_role_preset(hand_role_preset, false)
 	call_deferred("install_player_control_router")
+	call_deferred("install_player_presentation_polish")
 	add_to_group("debuggable")
 
 
@@ -139,6 +143,19 @@ func install_player_control_router() -> void:
 	var router: Node = PlayerControlRouterScript.new()
 	router.name = "PlayerControlRouter"
 	player.add_child(router)
+
+
+func install_player_presentation_polish() -> void:
+	var weapon_controller: Node = get_parent()
+	var player: Node = weapon_controller.get_parent() if weapon_controller != null else null
+	if (
+		player == null
+		or player.get_node_or_null("PlayerHUDCombatPresentation") != null
+	):
+		return
+	var presentation: Node = PlayerPresentationScript.new()
+	presentation.name = "PlayerHUDCombatPresentation"
+	player.add_child(presentation)
 
 
 func ensure_action(action_name: StringName) -> void:

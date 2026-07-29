@@ -1,6 +1,10 @@
 extends "res://scripts/levels/prototype_animation_showcase_lab.gd"
 class_name PrototypeAnimationShowcaseFireSpecialist
 
+const CombatFeelDummyScene: PackedScene = preload(
+	"res://scenes/actors/enemies/combat_feel_dummy.tscn"
+)
+
 var elemental_authority: PlayerElementalAuthorityController
 var showcase_weapon: WeaponController
 
@@ -100,6 +104,7 @@ func _build_fire_specialist_bay() -> void:
 			),
 			false
 		)
+	_build_fire_specialist_targets(bay_center)
 	var field_label: Label3D = Label3D.new()
 	field_label.text = (
 		"RUVIA FIRE WEAVING\n"
@@ -113,7 +118,11 @@ func _build_fire_specialist_bay() -> void:
 	field_label.modulate = Color(1.0, 0.62, 0.18)
 	add_child(field_label)
 	var tip_label: Label3D = Label3D.new()
-	tip_label.text = "LIGHT 1/2 → FIREBOLT\nLIGHT 3 → FIRE FIELD"
+	tip_label.text = (
+		"LIGHT 1/2 → FIREBOLT\n"
+		+ "LIGHT 3 → FIRE FIELD\n"
+		+ "GROUP → SOLAR DESCENT"
+	)
 	tip_label.position = bay_center + Vector3(0.0, 1.1, 1.8)
 	tip_label.font_size = 14
 	tip_label.pixel_size = 0.006
@@ -121,3 +130,21 @@ func _build_fire_specialist_bay() -> void:
 	tip_label.outline_size = 5
 	tip_label.modulate = Color(1.0, 0.82, 0.46)
 	add_child(tip_label)
+
+
+func _build_fire_specialist_targets(bay_center: Vector3) -> void:
+	var target_positions: Array[Vector3] = [
+		bay_center + Vector3(0.0, -0.035, -1.0),
+		bay_center + Vector3(-1.3, -0.035, -4.9),
+		bay_center + Vector3(0.0, -0.035, -5.45),
+		bay_center + Vector3(1.3, -0.035, -4.9),
+	]
+	for target_index: int in range(target_positions.size()):
+		var target: Node = CombatFeelDummyScene.instantiate()
+		if not target is Node3D:
+			target.queue_free()
+			continue
+		var target_3d: Node3D = target as Node3D
+		target_3d.name = "FireSpecialistTarget" + str(target_index + 1)
+		target_3d.global_position = target_positions[target_index]
+		add_child(target_3d)

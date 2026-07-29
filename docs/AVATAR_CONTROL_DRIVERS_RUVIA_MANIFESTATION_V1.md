@@ -55,10 +55,12 @@ The companion driver reads:
 - current action readiness;
 - separation and stuck state.
 
+Ruvia's scene uses `RuviaManifestationControlDriver`, a thin specialist adapter over the generic companion driver. It preserves the common `companion_ai` contract while giving failed actions a stable retry rhythm and exposing Ruvia-specific diagnostics.
+
 It uses Ruvia's authored combat vocabulary rather than generic companion attacks:
 
 ```text
-distant target        -> Firebolt or close distance
+distant target         -> Firebolt or close distance
 crowded at close range -> Haft Check, then Fire Field
 near owned field       -> Reaping Hook
 inside owned field     -> Scorching Thrust and burning wake
@@ -91,7 +93,7 @@ scenes/actors/avatars/manifested_avatar_actor.tscn
 It contains:
 
 ```text
-ManifestedAvatarActor
+RuviaManifestedAvatarActor
 ├── GraceVisualV1 / AvatarWireSkeletonRenderer
 ├── StepUpController
 ├── GroundMotionMotor
@@ -103,10 +105,10 @@ ManifestedAvatarActor
 ├── PlayerWeaponControlAnimator
 ├── PlayerActionState
 ├── ManifestedDodgeController
-└── CompanionControlDriver
+└── RuviaManifestationControlDriver
 ```
 
-The scene is definition-driven. Ruvia is its first configured avatar, but the actor shell does not hard-code her identity.
+`ManifestedAvatarActor` is the reusable body contract. `RuviaManifestedAvatarActor` is the current patron-specific adapter. The scene accepts a `PlayableAvatarDefinition`, but its v1 elemental and decision adapters are deliberately Ruvia-focused. A second god will prove which remaining pieces should move into generic data and which should remain specialist behavior.
 
 The actor deliberately does not own:
 
@@ -125,7 +127,9 @@ This is not the final companion resource balance. It is the first safe ownership
 
 ## Friendly-fire rules
 
-The manifestation body has no combat collision layer, but still collides with authored environment through its mask. Grace does not collide against it, preventing doorway traps.
+The manifestation body has no combat collision layer, but still collides with authored environment through its mask. Grace and Ruvia receive mutual collision exceptions, preventing doorway traps.
+
+The Ruvia adapter also removes the manifestation from `combat_targetable`, so Grace's lock-on and soft-aim candidate search cannot select her.
 
 The manifested weapon controller filters:
 
@@ -133,6 +137,8 @@ The manifested weapon controller filters:
 - player-group actors;
 - friendly actors;
 - the manifestation's mortal owner.
+
+Manifested Firebolt uses `ManifestedGenericProjectile`, which ignores Grace, friendly actors, and its mortal owner for its entire lifetime.
 
 Manifested Fire Fields use `ManifestedFireField`, which refuses to apply Burning to Grace or friendly actors. Hostile targets retain the normal Fire Field, Burning, flare, and reaction behavior.
 
@@ -202,7 +208,7 @@ The Fire specialist bay now includes an F10 manifestation marker and HUD diagnos
 
 Suggested review:
 
-1. Press F10 with no nearby target and inspect Ruvia's formation behavior.
+1. Press F10 and inspect Ruvia's formation behavior before entering the target cluster.
 2. Approach the distant targets and watch her choose between closing and Firebolt.
 3. Crowd her near the closest target and look for Haft Check followed by Fire Field.
 4. Move a target near an owned field and watch for Reaping Hook.
@@ -210,8 +216,9 @@ Suggested review:
 6. Cluster Burning targets and watch for Solar Descent.
 7. Run up and down the staircase while Ruvia follows.
 8. Move far enough to trigger safe recall.
-9. Press F9 while she is manifested. She should dismiss before control transfers.
-10. Return to Grace with F9, then press F10 to manifest her again.
+9. Confirm Grace cannot lock onto Ruvia and Ruvia's Firebolt and Fire Fields cannot harm Grace.
+10. Press F9 while she is manifested. She should dismiss before control transfers.
+11. Return to Grace with F9, then press F10 to manifest her again.
 
 ## Regression
 
@@ -234,7 +241,8 @@ The regression checks:
 - camera preservation;
 - Ruvia movement, weapon, authority, and wire contracts;
 - no Grace mana or stamina spending;
-- ally-safe manifested Fire Fields;
+- ally-safe manifested Firebolt and Fire Fields;
+- exclusion from Grace's targeting candidates;
 - hostile-target selection and meaningful companion intention;
 - deterministic scripted intention;
 - safe recall;
@@ -250,4 +258,4 @@ The regression checks:
 - The companion has local health plumbing, but encounter-facing defeat balance remains future work.
 - There is no production manifestation cost, covenant meter, or cooldown yet.
 - Invocation will build on the scripted driver rather than creating another summon architecture.
-- A second god remains the next proof that the actor shell is truly avatar-generic.
+- A second god remains the next proof that the actor shell and driver contract generalize beyond Ruvia.

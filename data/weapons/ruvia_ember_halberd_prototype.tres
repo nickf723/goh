@@ -2,14 +2,14 @@
 
 [ext_resource type="Script" path="res://scripts/weapons/weapon_definition.gd" id="1_definition"]
 [ext_resource type="Resource" path="res://data/damage_payloads/ruvia_ember_halberd_payload.tres" id="2_payload"]
-[ext_resource type="Resource" path="res://data/weapon_movesets/training_spear_moveset.tres" id="3_moveset"]
+[ext_resource type="Resource" path="res://data/weapon_movesets/ruvia_ember_halberd_moveset.tres" id="3_moveset"]
 [ext_resource type="PackedScene" path="res://scenes/weapons/prototype_ember_halberd_rig.tscn" id="4_rig"]
 
 [resource]
 script = ExtResource("1_definition")
 weapon_class = "halberd"
 display_name = "Ruvia's Ember Halberd"
-description = "Prototype signature halberd for Ruvia's Divine Incarnation. It currently borrows precision spear forms while the dedicated halberd moveset is authored."
+description = "Ruvia's two-handed signature weapon. Its dedicated forms alternate blade sweeps, shaft control, rising hooks, committed thrusts, and divine Fire finishers."
 damage = 2
 stance_damage = 2
 range = 4.25
@@ -26,5 +26,5 @@ visual_accent_color = Color(1, 0.74, 0.18, 1)
 visual_scale = 1.03
 runtime_rig_scene = ExtResource("4_rig")
 scaling_stats = Array[String](["power", "skill", "fire"])
-scaling_note = "Ruvia prototype identity: committed reach, Fire pressure, and decisive forward momentum."
+scaling_note = "Ruvia identity: the rear hand drives force, the front hand guides the shaft, and planted Fire footwork carries the blade through its target."
 light_payload = ExtResource("2_payload")

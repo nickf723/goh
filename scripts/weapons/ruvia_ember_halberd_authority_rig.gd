@@ -96,8 +96,9 @@ func _apply_reaping_hook_pull(targets: Array[Node]) -> void:
 		if pull_direction.length_squared() <= 0.001:
 			continue
 		pull_direction = pull_direction.normalized()
+		var motion_target: Node = target_body if target_body != null else target
 		var force_receiver: Node = _find_named_component(
-			target,
+			motion_target,
 			"ForceReceiver"
 		)
 		if force_receiver != null and force_receiver.has_method("apply_impulse"):
@@ -109,6 +110,15 @@ func _apply_reaping_hook_pull(targets: Array[Node]) -> void:
 				"Ruvia • Reaping Hook"
 			)
 			reaping_pull_count += 1
+		elif "recoil_velocity" in motion_target:
+			var recoil_value: Variant = motion_target.get("recoil_velocity")
+			if recoil_value is Vector3:
+				motion_target.set(
+					"recoil_velocity",
+					(recoil_value as Vector3)
+					+ pull_direction * reaping_pull_strength
+				)
+				reaping_pull_count += 1
 		elif target_body != null:
 			target_body.velocity += (
 				pull_direction * reaping_pull_strength

@@ -53,6 +53,12 @@
 [ext_resource type="Script" path="res://scripts/avatars/player_avatar_control_driver.gd" id="51_player_driver"]
 [ext_resource type="Script" path="res://scripts/player/player_manifestation_manager.gd" id="52_manifestation_manager"]
 [ext_resource type="PackedScene" path="res://scenes/actors/avatars/manifested_avatar_actor.tscn" id="53_manifestation_scene"]
+[ext_resource type="Script" path="res://scripts/divine_specials/divine_special_definition.gd" id="54_special_definition"]
+[ext_resource type="Script" path="res://scripts/divine_specials/player_divine_special_controller.gd" id="55_special_controller"]
+[ext_resource type="Resource" path="res://data/divine_specials/ruvia_caldera_drop.tres" id="56_caldera"]
+[ext_resource type="Resource" path="res://data/divine_specials/ruvia_wildfire_procession.tres" id="57_procession"]
+[ext_resource type="Resource" path="res://data/divine_specials/ruvia_hearth_of_first_flame.tres" id="58_hearth"]
+[ext_resource type="Script" path="res://scripts/ui/divine_special_hud.gd" id="59_special_hud"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.46
@@ -122,6 +128,13 @@ script = ExtResource("51_player_driver")
 script = ExtResource("52_manifestation_manager")
 prototype_avatar_definition = ExtResource("47_ruvia_avatar")
 manifestation_scene = ExtResource("53_manifestation_scene")
+
+[node name="DivineSpecialController" type="Node" parent="."]
+script = ExtResource("55_special_controller")
+special_definitions = Array[ExtResource("54_special_definition")]([ExtResource("56_caldera"), ExtResource("57_procession"), ExtResource("58_hearth")])
+
+[node name="DivineSpecialHUD" type="CanvasLayer" parent="."]
+script = ExtResource("59_special_hud")
 
 [node name="EquipmentAppearanceController" type="Node" parent="."]
 script = ExtResource("30_outfit_appearance")

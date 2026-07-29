@@ -37,7 +37,9 @@ func begin_special() -> bool:
 		Color(1.0, 0.36, 0.035, 0.62),
 		0.08
 	)
-	_run_procession()
+	# Let the controller commit ownership, charge, timeout, protection, and
+	# diagnostics before the first eruption changes the battlefield.
+	call_deferred("_run_procession")
 	return true
 
 
@@ -45,7 +47,9 @@ func _run_procession() -> void:
 	for eruption_index: int in range(maxi(eruption_count, 1)):
 		if finished or not is_inside_tree():
 			return
-		var distance: float = 1.8 + float(eruption_index) * eruption_spacing
+		var distance: float = (
+			1.8 + float(eruption_index) * eruption_spacing
+		)
 		var raw_point: Vector3 = path_origin + cast_direction * distance
 		var eruption_point: Vector3 = project_point_to_floor(raw_point)
 		_spawn_eruption(eruption_point, eruption_index)
@@ -61,7 +65,9 @@ func _run_procession() -> void:
 			"eruptions_spawned": eruptions_spawned,
 			"fields_spawned": fields_spawned,
 			"path_length": snappedf(
-				1.8 + float(maxi(eruption_count - 1, 0)) * eruption_spacing,
+				1.8
+				+ float(maxi(eruption_count - 1, 0))
+				* eruption_spacing,
 				0.1
 			),
 		}
@@ -112,7 +118,11 @@ func _spawn_eruption(point: Vector3, eruption_index: int) -> void:
 		"traveling_burst",
 		"area_control",
 	]
-	for target: Node in get_targets_in_radius(point, eruption_radius, 20):
+	for target: Node in get_targets_in_radius(
+		point,
+		eruption_radius,
+		20
+	):
 		apply_payload_to_target(
 			target,
 			payload,

@@ -15,6 +15,7 @@ const EnemyStatusReceiverScript = preload(
 
 var elemental_authority: PlayerElementalAuthorityController
 var showcase_weapon: WeaponController
+var manifestation_manager: PlayerManifestationManager
 var showcase_mana_delay_remaining: float = 0.0
 var showcase_mana_accumulator: float = 0.0
 var observed_showcase_mana: int = 0
@@ -29,10 +30,13 @@ func _ready() -> void:
 		showcase_weapon = player.get_node_or_null(
 			"WeaponController"
 		) as WeaponController
+		manifestation_manager = player.get_node_or_null(
+			"ManifestationManager"
+		) as PlayerManifestationManager
 	_configure_showcase_mana()
 	_build_fire_specialist_bay()
 	GameState.set_objective(
-		"Press F9 for Ruvia. Weave Firebolt from Cinder Sweep, plant Fire Field after Haft Check, pull through it with Reaping Hook, flare it with Ember Wheel, then thrust through it. Mana rapidly recovers; F7 refills it immediately."
+		"F9 incarnates Ruvia. F10 manifests her beside Grace. Test autonomous Firebolt, Haft Check into Fire Field, Hook pulls, field flares, thrust wakes, stairs, recall, and safe incarnation transfer. Mana rapidly recovers; F7 refills it."
 	)
 
 
@@ -56,6 +60,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _reset_lab() -> void:
+	if manifestation_manager != null:
+		manifestation_manager.dismiss_manifestation("lab_reset")
 	super._reset_lab()
 	_refill_showcase_mana(false)
 
@@ -128,6 +134,19 @@ func _update_hud() -> void:
 		var runtime_value: Variant = weapon_debug.get("runtime_rig", {})
 		if runtime_value is Dictionary:
 			rig_data = runtime_value as Dictionary
+	var manifestation: Dictionary = (
+		manifestation_manager.get_debug_data()
+		if manifestation_manager != null
+		else {}
+	)
+	var manifestation_actor: Dictionary = {}
+	var actor_value: Variant = manifestation.get("actor", {})
+	if actor_value is Dictionary:
+		manifestation_actor = actor_value as Dictionary
+	var driver: Dictionary = {}
+	var driver_value: Variant = manifestation_actor.get("driver", {})
+	if driver_value is Dictionary:
+		driver = driver_value as Dictionary
 	var current_mana: int = GameState.get_stat("mana")
 	var maximum_mana: int = GameState.get_stat("max_mana")
 	var recharge_state: String = "FULL"
@@ -176,6 +195,30 @@ func _update_hud() -> void:
 			if bool(rig_data.get("authority_cast_active", false))
 			else "READY"
 		)
+		+ "\nMANIFESTATION  •  "
+		+ ("ACTIVE" if bool(manifestation.get("active", false)) else "READY")
+		+ "     F10 TOGGLE     DRIVER "
+		+ str(manifestation.get("driver_id", "none")).to_upper()
+		+ "     TARGET "
+		+ str(manifestation.get("target", "none")).to_upper()
+		+ "     ACTION "
+		+ str(manifestation.get("last_action", "none")).to_upper()
+		+ "     FIELDS "
+		+ str(manifestation.get("owned_fields", 0))
+		+ "     RECALLS "
+		+ str(manifestation.get("total_recalls", 0))
+		+ "\nCOMPANION PLAN  •  "
+		+ str(driver.get("decision_reason", "waiting")).to_upper()
+		+ "     RANGE "
+		+ str(driver.get("target_distance", -1.0))
+		+ "     CLUSTER "
+		+ str(driver.get("cluster_count", 0))
+		+ "     BURNING "
+		+ ("YES" if bool(driver.get("target_burning", false)) else "NO")
+		+ "     FIELD PLAN "
+		+ str(driver.get("pending_spell", "none")).to_upper()
+		+ "     STUCK "
+		+ str(manifestation.get("stuck_timer", 0.0))
 	)
 
 
@@ -227,18 +270,41 @@ func _build_fire_specialist_bay() -> void:
 	add_child(field_label)
 	var tip_label: Label3D = Label3D.new()
 	tip_label.text = (
-		"LIGHT 1/2 → FIREBOLT\n"
+		"F9 → PLAY RUVIA\n"
+		+ "F10 → MANIFEST RUVIA\n"
+		+ "LIGHT 1/2 → FIREBOLT\n"
 		+ "LIGHT 3 → FIRE FIELD\n"
 		+ "GROUP → SOLAR DESCENT\n"
 		+ "F7 → REFILL MANA"
 	)
-	tip_label.position = bay_center + Vector3(0.0, 1.1, 1.8)
+	tip_label.position = bay_center + Vector3(0.0, 1.28, 1.8)
 	tip_label.font_size = 14
 	tip_label.pixel_size = 0.006
 	tip_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	tip_label.outline_size = 5
 	tip_label.modulate = Color(1.0, 0.82, 0.46)
 	add_child(tip_label)
+	_build_manifestation_marker(bay_center)
+
+
+func _build_manifestation_marker(bay_center: Vector3) -> void:
+	var marker_position: Vector3 = bay_center + Vector3(4.35, 0.02, 1.55)
+	_add_box_body(
+		"ManifestationControlMarker",
+		Vector3(2.4, 0.05, 1.7),
+		marker_position,
+		Color(1.0, 0.18, 0.055),
+		false
+	)
+	var label: Label3D = Label3D.new()
+	label.text = "F10 • RUVIA MANIFESTATION\nAI DRIVER • SAFE RECALL • F9 TRANSFER"
+	label.position = marker_position + Vector3.UP * 1.25
+	label.font_size = 16
+	label.pixel_size = 0.006
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.outline_size = 6
+	label.modulate = Color(1.0, 0.52, 0.12)
+	add_child(label)
 
 
 func _build_fire_specialist_targets(bay_center: Vector3) -> void:
@@ -250,7 +316,7 @@ func _build_fire_specialist_targets(bay_center: Vector3) -> void:
 	]
 	for target_index: int in range(target_positions.size()):
 		var target: Node = CombatFeelDummyScene.instantiate()
-		if not target is Node3D:
+		if not (target is Node3D):
 			target.queue_free()
 			continue
 		var target_3d: Node3D = target as Node3D

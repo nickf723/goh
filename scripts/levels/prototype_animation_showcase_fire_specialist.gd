@@ -16,7 +16,7 @@ func _ready() -> void:
 		) as WeaponController
 	_build_fire_specialist_bay()
 	GameState.set_objective(
-		"Press F9 for Ruvia. Weave Firebolt from Cinder Sweep, plant Fire Field after Haft Check, flare it with Ember Wheel, then thrust through it."
+		"Press F9 for Ruvia. Weave Firebolt from Cinder Sweep, plant Fire Field after Haft Check, pull through it with Reaping Hook, flare it with Ember Wheel, then thrust through it."
 	)
 
 
@@ -54,10 +54,16 @@ func _update_hud() -> void:
 		+ str(authority.get("total_wake_segments", 0))
 		+ "     FLARES "
 		+ str(authority.get("total_field_flares", 0))
+		+ "     PULLS "
+		+ str(rig_data.get("total_reaping_pull_count", 0))
 		+ "     NEGATED "
 		+ str(authority.get("negated_hits", 0))
 		+ "     CONDUIT "
-		+ ("ACTIVE" if bool(rig_data.get("authority_cast_active", false)) else "READY")
+		+ (
+			"ACTIVE"
+			if bool(rig_data.get("authority_cast_active", false))
+			else "READY"
+		)
 	)
 
 
@@ -81,12 +87,24 @@ func _build_fire_specialist_bay() -> void:
 		_add_box_body(
 			"ScorchingThrustWakeMarker" + str(marker_index),
 			Vector3(1.0, 0.05, 0.16),
-			bay_center + Vector3(0.0, 0.02, -2.1 - float(marker_index) * 0.8),
-			Color(1.0, 0.55 + float(marker_index) * 0.07, 0.08),
+			bay_center
+			+ Vector3(
+				0.0,
+				0.02,
+				-2.1 - float(marker_index) * 0.8
+			),
+			Color(
+				1.0,
+				0.55 + float(marker_index) * 0.07,
+				0.08
+			),
 			false
 		)
 	var field_label: Label3D = Label3D.new()
-	field_label.text = "RUVIA FIRE WEAVING\nHAFT + FIELD • WHEEL FLARE • THRUST WAKE"
+	field_label.text = (
+		"RUVIA FIRE WEAVING\n"
+		+ "HAFT + FIELD • HOOK PULL • WHEEL FLARE • THRUST WAKE"
+	)
 	field_label.position = bay_center + Vector3(0.0, 2.0, 0.0)
 	field_label.font_size = 18
 	field_label.pixel_size = 0.007

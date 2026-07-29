@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/visuals/grace_incarnation_motion_visual.gd" id="1_motion"]
+[ext_resource type="Script" path="res://scripts/visuals/grace_elemental_authority_motion_visual.gd" id="1_motion"]
 [ext_resource type="Script" path="res://scripts/visuals/avatar_wire_skeleton_renderer.gd" id="2_wire"]
 
 [node name="GraceVisualV1" type="Node3D"]

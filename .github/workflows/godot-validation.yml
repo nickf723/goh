@@ -55,6 +55,9 @@ jobs:
       - name: Run spellcasting mastery and achievement test
         run: godot --headless --path . res://scenes/tests/spellcasting_mastery_smoke_test.tscn
 
+      - name: Run player preferences and accessibility test
+        run: godot --headless --path . res://scenes/tests/player_preferences_smoke_test.tscn
+
       - name: Run Grace wire motion rig test
         run: godot --headless --path . res://scenes/tests/grace_animation_smoke_test.tscn
 

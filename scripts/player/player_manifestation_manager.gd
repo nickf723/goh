@@ -41,27 +41,27 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	owner_actor = get_parent() as CharacterBody3D
 	if owner_actor != null:
-		avatar_manager = owner_actor.get_node_or_null(
-			"AvatarManager"
-		) as PlayerAvatarManager
-	if avatar_manager != null and not avatar_manager.avatar_transition_started.is_connected(
-		_on_avatar_transition_started
-	):
-		avatar_manager.avatar_transition_started.connect(
+		avatar_manager = owner_actor.get_node_or_null("AvatarManager") as PlayerAvatarManager
+	if (
+		avatar_manager != null
+		and not avatar_manager.avatar_transition_started.is_connected(
 			_on_avatar_transition_started
 		)
+	):
+		avatar_manager.avatar_transition_started.connect(_on_avatar_transition_started)
 	add_to_group("player_manifestation_manager")
 	add_to_group("warlock_manifestation_manager")
 	add_to_group("debuggable")
 
 
 func _exit_tree() -> void:
-	if avatar_manager != null and avatar_manager.avatar_transition_started.is_connected(
-		_on_avatar_transition_started
-	):
-		avatar_manager.avatar_transition_started.disconnect(
+	if (
+		avatar_manager != null
+		and avatar_manager.avatar_transition_started.is_connected(
 			_on_avatar_transition_started
 		)
+	):
+		avatar_manager.avatar_transition_started.disconnect(_on_avatar_transition_started)
 	if active_manifestation != null and is_instance_valid(active_manifestation):
 		active_manifestation.prepare_for_dismissal("scene_exit")
 		active_manifestation.queue_free()
@@ -76,13 +76,10 @@ func _process(delta: float) -> void:
 		lifetime_remaining = 0.0
 		last_result = "manifestation_lost"
 		return
-	if active_manifestation == null:
+	if not has_active_manifestation():
 		return
 	if lifetime_remaining > 0.0:
-		lifetime_remaining = maxf(
-			lifetime_remaining - maxf(delta, 0.0),
-			0.0
-		)
+		lifetime_remaining = maxf(lifetime_remaining - maxf(delta, 0.0), 0.0)
 		if lifetime_remaining <= 0.0:
 			dismiss_manifestation("duration_expired")
 
@@ -90,7 +87,7 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not debug_input_enabled or not OS.is_debug_build():
 		return
-	if not event is InputEventKey:
+	if not (event is InputEventKey):
 		return
 	var key_event: InputEventKey = event as InputEventKey
 	if not key_event.pressed or key_event.echo:
@@ -105,11 +102,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func manifest_prototype(force_debug: bool = false) -> bool:
-	return manifest_avatar(
-		prototype_avatar_definition,
-		force_debug,
-		null
-	)
+	return manifest_avatar(prototype_avatar_definition, force_debug, null)
 
 
 func manifest_avatar(
@@ -124,8 +117,7 @@ func manifest_avatar(
 		)
 	if has_active_manifestation():
 		if active_definition == definition:
-			active_manifestation.recall_to_owner("manifestation_toggle")
-			return true
+			return recall_manifestation("manifestation_refresh")
 		dismiss_manifestation("avatar_switch")
 	if avatar_manager != null and avatar_manager.is_incarnated():
 		return _fail(
@@ -139,14 +131,12 @@ func manifest_avatar(
 		and definition.required_unlock_id != ""
 		and not GameState.has_unlock(definition.required_unlock_id)
 	):
-		failures.append(
-			definition.display_name + " is not unlocked for manifestation."
-		)
+		failures.append(definition.display_name + " is not unlocked for manifestation.")
 	if not failures.is_empty():
 		return _fail(definition.avatar_id, failures)
 
 	var instance: Node = manifestation_scene.instantiate()
-	if not instance is ManifestedAvatarActor:
+	if not (instance is ManifestedAvatarActor):
 		if instance != null:
 			instance.queue_free()
 		return _fail(
@@ -195,9 +185,7 @@ func dismiss_manifestation(reason: String = "dismissed") -> bool:
 		return false
 	var actor: ManifestedAvatarActor = active_manifestation
 	var previous_avatar_id: String = (
-		active_definition.avatar_id
-		if active_definition != null
-		else "unknown"
+		active_definition.avatar_id if active_definition != null else "unknown"
 	)
 	active_manifestation = null
 	active_definition = null
@@ -216,12 +204,7 @@ func dismiss_manifestation(reason: String = "dismissed") -> bool:
 func recall_manifestation(reason: String = "recalled") -> bool:
 	if not has_active_manifestation():
 		return false
-	var recalled_ok: bool = active_manifestation.recall_to_owner(reason)
-	if recalled_ok:
-		total_recalls += 1
-		last_result = "recalled"
-		manifestation_recalled.emit(active_manifestation, reason)
-	return recalled_ok
+	return active_manifestation.recall_to_owner(reason)
 
 
 func has_active_manifestation() -> bool:
@@ -253,7 +236,7 @@ func get_safe_manifestation_transform(
 	for offset: Vector3 in candidate_offsets:
 		var candidate: Vector3 = owner_actor.global_position + offset
 		var floor_position: Variant = _find_floor_position(candidate, requesting_actor)
-		if not floor_position is Vector3:
+		if not (floor_position is Vector3):
 			continue
 		var actor_position: Vector3 = (
 			floor_position as Vector3
@@ -270,7 +253,6 @@ func get_safe_manifestation_transform(
 		owner_actor.global_position
 		+ owner_basis.x * summon_side_distance
 		+ owner_basis.z * summon_back_distance
-		+ Vector3.UP * actor_center_height
 	)
 	return fallback
 
@@ -292,13 +274,11 @@ func _find_floor_position(
 	if requesting_actor != null:
 		exclusions.append(requesting_actor.get_rid())
 	query.exclude = exclusions
-	var result: Dictionary = get_viewport().world_3d.direct_space_state.intersect_ray(
-		query
-	)
+	var result: Dictionary = owner_actor.get_world_3d().direct_space_state.intersect_ray(query)
 	if result.is_empty():
 		return null
 	var normal_value: Variant = result.get("normal", Vector3.ZERO)
-	if not normal_value is Vector3:
+	if not (normal_value is Vector3):
 		return null
 	var normal: Vector3 = normal_value as Vector3
 	if normal.dot(Vector3.UP) < 0.55:
@@ -326,10 +306,7 @@ func _position_is_clear(
 	if requesting_actor != null:
 		exclusions.append(requesting_actor.get_rid())
 	query.exclude = exclusions
-	return get_viewport().world_3d.direct_space_state.intersect_shape(
-		query,
-		8
-	).is_empty()
+	return owner_actor.get_world_3d().direct_space_state.intersect_shape(query, 8).is_empty()
 
 
 func _connect_manifestation(actor: ManifestedAvatarActor) -> void:
@@ -360,9 +337,7 @@ func _on_avatar_transition_started(
 		dismiss_manifestation("divine_incarnation_transfer")
 
 
-func _on_manifestation_defeated(
-	actor: ManifestedAvatarActor
-) -> void:
+func _on_manifestation_defeated(actor: ManifestedAvatarActor) -> void:
 	if actor == active_manifestation:
 		dismiss_manifestation("defeated")
 
@@ -411,16 +386,8 @@ func get_debug_data() -> Dictionary:
 	)
 	return {
 		"active": has_active_manifestation(),
-		"avatar_id": (
-			active_definition.avatar_id
-			if active_definition != null
-			else "none"
-		),
-		"avatar_name": (
-			active_definition.display_name
-			if active_definition != null
-			else "none"
-		),
+		"avatar_id": active_definition.avatar_id if active_definition != null else "none",
+		"avatar_name": active_definition.display_name if active_definition != null else "none",
 		"lifetime_remaining": snappedf(lifetime_remaining, 0.01),
 		"driver_id": str(actor_data.get("driver_id", "none")),
 		"target": str(actor_data.get("target", "none")),

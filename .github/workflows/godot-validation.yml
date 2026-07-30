@@ -115,6 +115,9 @@ jobs:
       - name: Run spell capability manifest and interaction recipes test
         run: godot --headless --path . res://scenes/tests/spell_capability_manifest_smoke_test.tscn
 
+      - name: Run reaction-aware tactical AI test
+        run: godot --headless --path . res://scenes/tests/reaction_tactical_ai_smoke_test.tscn
+
       - name: Run portrait-driven player HUD v2 test
         run: godot --headless --path . res://scenes/tests/player_hud_v2_smoke_test.tscn
 

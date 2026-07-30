@@ -135,7 +135,11 @@ func get_placement_name() -> String:
 
 
 func get_summary() -> String:
-	var parts: Array[String] = [profile_id, get_shape_name(), get_placement_name()]
+	var parts: Array[String] = [
+		profile_id,
+		get_shape_name(),
+		get_placement_name(),
+	]
 	if maximum_range > 0.0:
 		parts.append("range=" + str(snappedf(maximum_range, 0.1)))
 	match preview_shape:
@@ -189,8 +193,12 @@ func to_config() -> Dictionary:
 func apply_config(config: Dictionary) -> void:
 	if config.has("profile_id"):
 		profile_id = str(config["profile_id"])
-	preview_shape = _parse_shape(config.get("shape", config.get("preview_shape", preview_shape)))
-	placement_mode = _parse_placement(config.get("placement", config.get("placement_mode", placement_mode)))
+	preview_shape = _parse_shape(
+		config.get("shape", config.get("preview_shape", preview_shape))
+	)
+	placement_mode = _parse_placement(
+		config.get("placement", config.get("placement_mode", placement_mode))
+	)
 	maximum_range = _read_float(config, "range", maximum_range)
 	minimum_range = _read_float(config, "minimum_range", minimum_range)
 	radius = _read_float(config, "radius", radius)
@@ -200,26 +208,53 @@ func apply_config(config: Dictionary) -> void:
 	initial_distance = _read_float(config, "initial_distance", initial_distance)
 	cursor_speed = _read_float(config, "speed", cursor_speed)
 	input_deadzone = _read_float(config, "deadzone", input_deadzone)
-	ground_y_offset = _read_float(config, "ground_y_offset", ground_y_offset)
+	ground_y_offset = _read_float(
+		config,
+		"ground_y_offset",
+		ground_y_offset
+	)
 	clamp_to_range = bool(config.get("clamp_to_range", clamp_to_range))
 	require_ground = bool(config.get("require_ground", require_ground))
-	require_line_of_sight = bool(config.get("require_line_of_sight", require_line_of_sight))
-	allow_through_obstacles = bool(config.get("allow_through_obstacles", allow_through_obstacles))
-	valid_color = _read_color(config, "valid_color", config.get("disc_color", valid_color) as Color if config.get("disc_color", null) is Color else valid_color)
+	require_line_of_sight = bool(
+		config.get("require_line_of_sight", require_line_of_sight)
+	)
+	allow_through_obstacles = bool(
+		config.get("allow_through_obstacles", allow_through_obstacles)
+	)
+	var legacy_color: Color = valid_color
+	var legacy_color_value: Variant = config.get("disc_color", null)
+	if legacy_color_value is Color:
+		legacy_color = legacy_color_value as Color
+	valid_color = _read_color(config, "valid_color", legacy_color)
 	invalid_color = _read_color(config, "invalid_color", invalid_color)
 	neutral_color = _read_color(config, "neutral_color", neutral_color)
-	fill_alpha = _read_float(config, "fill_alpha", _read_float(config, "disc_alpha", fill_alpha))
+	fill_alpha = _read_float(
+		config,
+		"fill_alpha",
+		_read_float(config, "disc_alpha", fill_alpha)
+	)
 	outline_alpha = _read_float(config, "outline_alpha", outline_alpha)
-	emission_energy = _read_float(config, "emission_energy", emission_energy)
+	emission_energy = _read_float(
+		config,
+		"emission_energy",
+		emission_energy
+	)
 	pulse_speed = _read_float(config, "pulse_speed", pulse_speed)
 	pulse_size = _read_float(config, "pulse_size", pulse_size)
 	show_range_ring = bool(config.get("show_range_ring", show_range_ring))
-	show_direction_line = bool(config.get("show_direction_line", show_direction_line))
-	show_center_marker = bool(config.get("show_center_marker", show_center_marker))
+	show_direction_line = bool(
+		config.get("show_direction_line", show_direction_line)
+	)
+	show_center_marker = bool(
+		config.get("show_center_marker", show_center_marker)
+	)
 	preview_label = str(config.get("preview_label", preview_label))
 
 
-static func from_config(config: Dictionary, fallback_id: String = "runtime_targeting") -> SpellTargetingProfile:
+static func from_config(
+	config: Dictionary,
+	fallback_id: String = "runtime_targeting"
+) -> SpellTargetingProfile:
 	var profile := SpellTargetingProfile.new()
 	profile.profile_id = fallback_id
 	profile.apply_config(config)
@@ -228,7 +263,11 @@ static func from_config(config: Dictionary, fallback_id: String = "runtime_targe
 
 func _parse_shape(value: Variant) -> int:
 	if value is int:
-		return clampi(int(value), PreviewShape.NONE, PreviewShape.TARGET_LOCK)
+		return clampi(
+			int(value),
+			PreviewShape.NONE,
+			PreviewShape.TARGET_LOCK
+		)
 	match str(value).to_lower():
 		"none":
 			return PreviewShape.NONE
@@ -250,7 +289,11 @@ func _parse_shape(value: Variant) -> int:
 
 func _parse_placement(value: Variant) -> int:
 	if value is int:
-		return clampi(int(value), PlacementMode.FREE_GROUND, PlacementMode.BALLISTIC)
+		return clampi(
+			int(value),
+			PlacementMode.FREE_GROUND,
+			PlacementMode.BALLISTIC
+		)
 	match str(value).to_lower():
 		"free_ground", "ground":
 			return PlacementMode.FREE_GROUND
@@ -264,11 +307,19 @@ func _parse_placement(value: Variant) -> int:
 			return PlacementMode.FORWARD
 
 
-func _read_float(config: Dictionary, key: String, fallback: float) -> float:
+func _read_float(
+	config: Dictionary,
+	key: String,
+	fallback: float
+) -> float:
 	var value: Variant = config.get(key, fallback)
 	return fallback if value == null else float(value)
 
 
-func _read_color(config: Dictionary, key: String, fallback: Color) -> Color:
+func _read_color(
+	config: Dictionary,
+	key: String,
+	fallback: Color
+) -> Color:
 	var value: Variant = config.get(key, fallback)
 	return value as Color if value is Color else fallback

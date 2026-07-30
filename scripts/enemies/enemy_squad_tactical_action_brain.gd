@@ -17,6 +17,12 @@ const ActionCandidate = preload(
 const DecisionRecorderScript = preload(
 	"res://scripts/ai/tactical_decision_recorder.gd"
 )
+const RoleAllocator = preload(
+	"res://scripts/ai/squad_role_allocator.gd"
+)
+const RoleCatalog = preload(
+	"res://scripts/ai/squad_role_catalog.gd"
+)
 
 @export_group("Squad Coordination")
 @export var enable_squad_coordination: bool = true
@@ -25,6 +31,10 @@ const DecisionRecorderScript = preload(
 @export_range(0.1, 2.0, 0.05) var lane_reservation_seconds: float = 0.55
 @export_range(0.1, 2.0, 0.05) var cover_request_seconds: float = 0.7
 
+@export_group("Squad Role")
+@export var tactical_squad_role_id: String = "auto"
+@export var auto_assign_squad_role: bool = true
+
 @export_group("Decision Replay")
 @export_range(4, 128, 1) var decision_history_capacity: int = 48
 @export var record_tactical_decisions: bool = true
@@ -32,21 +42,36 @@ const DecisionRecorderScript = preload(
 var last_coordination_result: Dictionary = {}
 var coordination_frame: int = -1
 var decision_recorder: TacticalDecisionRecorder
+var squad_role_assignment: Dictionary = {}
 
 
 func _ready() -> void:
 	super._ready()
+	_ensure_squad_role_assignment()
 	_ensure_decision_recorder()
 	add_to_group("tactical_decision_source")
 
 
 func _begin_tactical_evaluation() -> void:
 	coordination_frame = -1
+	_ensure_squad_role_assignment()
 	super._begin_tactical_evaluation()
 
 
 func _ensure_tactical_snapshot() -> void:
 	super._ensure_tactical_snapshot()
+	var assignment: Dictionary = _ensure_squad_role_assignment()
+	tactical_snapshot["squad_role_id"] = str(
+		assignment.get("role_id", "generalist")
+	)
+	tactical_snapshot["squad_role_name"] = str(
+		assignment.get("role_name", "Generalist")
+	)
+	var role_context: Dictionary = RoleAllocator.get_squad_context(
+		get_tactical_squad_id()
+	)
+	for role_key: Variant in role_context.keys():
+		tactical_snapshot[role_key] = role_context[role_key]
 	if not enable_squad_coordination:
 		return
 	var frame: int = Engine.get_process_frames()
@@ -66,8 +91,16 @@ func _ensure_tactical_snapshot() -> void:
 
 func _finalize_tactical_decision(option: EnemyActionOption) -> void:
 	super._finalize_tactical_decision(option)
+	last_tactical_decision["squad_role_id"] = get_tactical_squad_role_id()
+	last_tactical_decision["squad_role_name"] = get_tactical_squad_role_name()
+	last_tactical_decision["squad_role_assignment"] = (
+		squad_role_assignment.duplicate(true)
+	)
 	if not enable_squad_coordination:
-		last_coordination_result = {"enabled": false}
+		last_coordination_result = {
+			"enabled": false,
+			"squad_role": squad_role_assignment.duplicate(true),
+		}
 		_record_tactical_frame("decision")
 		return
 	if option == null:
@@ -76,6 +109,7 @@ func _finalize_tactical_decision(option: EnemyActionOption) -> void:
 			"enabled": true,
 			"reserved": false,
 			"reason": "No selected action",
+			"squad_role": squad_role_assignment.duplicate(true),
 		}
 		_record_tactical_frame("decision")
 		return
@@ -109,7 +143,10 @@ func _reserve_selected_option(option: EnemyActionOption) -> void:
 			str(emergency.get("emergency_id", "emergency")),
 			0.5,
 			100.0,
-			{"action": option.get_display_name()}
+			{
+				"action": option.get_display_name(),
+				"squad_role": get_tactical_squad_role_id(),
+			}
 		)
 		result_rows.append(emergency_result)
 	else:
@@ -127,7 +164,10 @@ func _reserve_selected_option(option: EnemyActionOption) -> void:
 					target_id,
 					reaction_reservation_seconds,
 					float(selected.get("total_score", 0.0)),
-					{"action": option.get_display_name()}
+					{
+						"action": option.get_display_name(),
+						"squad_role": get_tactical_squad_role_id(),
+					}
 				)
 			)
 		var setup: Dictionary = _first_opportunity(
@@ -144,7 +184,10 @@ func _reserve_selected_option(option: EnemyActionOption) -> void:
 					target_id,
 					reaction_reservation_seconds,
 					float(selected.get("total_score", 0.0)),
-					{"action": option.get_display_name()}
+					{
+						"action": option.get_display_name(),
+						"squad_role": get_tactical_squad_role_id(),
+					}
 				)
 			)
 
@@ -159,7 +202,10 @@ func _reserve_selected_option(option: EnemyActionOption) -> void:
 				target_id,
 				lane_reservation_seconds,
 				float(selected.get("total_score", 0.0)),
-				{"action": option.get_display_name()}
+				{
+					"action": option.get_display_name(),
+					"squad_role": get_tactical_squad_role_id(),
+				}
 			)
 		)
 	if _candidate_requests_cover(candidate):
@@ -172,7 +218,10 @@ func _reserve_selected_option(option: EnemyActionOption) -> void:
 				["cover_requested"],
 				target_id,
 				cover_request_seconds,
-				{"action": option.get_display_name()}
+				{
+					"action": option.get_display_name(),
+					"squad_role": get_tactical_squad_role_id(),
+				}
 			)
 		)
 	last_coordination_result = {
@@ -181,11 +230,15 @@ func _reserve_selected_option(option: EnemyActionOption) -> void:
 		"owner_id": owner_id,
 		"target_id": target_id,
 		"action": option.get_display_name(),
+		"squad_role": squad_role_assignment.duplicate(true),
 		"results": result_rows,
 		"blackboard": Blackboard.get_coordination_context(
 			get_tactical_squad_id(),
 			0,
 			target_id
+		),
+		"role_context": RoleAllocator.get_squad_context(
+			get_tactical_squad_id()
 		),
 	}
 
@@ -201,6 +254,49 @@ func get_tactical_squad_id() -> String:
 	if actor != null and actor.get_parent() != null:
 		return "enemy_encounter_" + str(actor.get_parent().get_instance_id())
 	return "enemy_squad"
+
+
+func get_tactical_squad_role_id() -> String:
+	return str(
+		_ensure_squad_role_assignment().get("role_id", "generalist")
+	)
+
+
+func get_tactical_squad_role_name() -> String:
+	return str(
+		_ensure_squad_role_assignment().get("role_name", "Generalist")
+	)
+
+
+func get_tactical_squad_role_assignment() -> Dictionary:
+	return _ensure_squad_role_assignment().duplicate(true)
+
+
+func refresh_tactical_squad_role() -> Dictionary:
+	var owner_id: int = actor.get_instance_id() if actor != null else get_instance_id()
+	RoleAllocator.release_owner(owner_id, get_tactical_squad_id())
+	squad_role_assignment.clear()
+	tactical_frame = -1
+	coordination_frame = -1
+	return _ensure_squad_role_assignment()
+
+
+func _ensure_squad_role_assignment() -> Dictionary:
+	if not squad_role_assignment.is_empty():
+		return squad_role_assignment
+	var owner_id: int = actor.get_instance_id() if actor != null else get_instance_id()
+	var owner_name: String = actor.name if actor != null else name
+	var configured_role: String = tactical_squad_role_id
+	if not auto_assign_squad_role and configured_role.strip_edges().to_lower() == "auto":
+		configured_role = "generalist"
+	squad_role_assignment = RoleAllocator.assign_from_enemy_options(
+		get_tactical_squad_id(),
+		owner_id,
+		owner_name,
+		configured_role,
+		action_options
+	)
+	return squad_role_assignment
 
 
 func on_action_completed(action: EnemyCombatActionDefinition) -> void:
@@ -227,6 +323,9 @@ func finish_action_state() -> void:
 
 func _exit_tree() -> void:
 	_release_coordination("actor removed")
+	var owner_id: int = actor.get_instance_id() if actor != null else get_instance_id()
+	RoleAllocator.release_owner(owner_id, get_tactical_squad_id())
+	squad_role_assignment.clear()
 
 
 func _release_coordination(reason: String, record_release: bool = true) -> void:
@@ -244,10 +343,14 @@ func _release_coordination(reason: String, record_release: bool = true) -> void:
 		"squad_id": get_tactical_squad_id(),
 		"owner_id": owner_id,
 		"target_id": target_id,
+		"squad_role": squad_role_assignment.duplicate(true),
 		"blackboard": Blackboard.get_coordination_context(
 			get_tactical_squad_id(),
 			0,
 			target_id
+		),
+		"role_context": RoleAllocator.get_squad_context(
+			get_tactical_squad_id()
 		),
 	}
 	if record_release:
@@ -305,6 +408,8 @@ func _record_tactical_frame(event_name: String) -> void:
 			"state": str(state),
 			"selection": last_selection_summary,
 			"action_summary": last_action_summary,
+			"squad_role_id": get_tactical_squad_role_id(),
+			"squad_role_name": get_tactical_squad_role_name(),
 		}
 	)
 
@@ -325,5 +430,11 @@ func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["squad_coordination"] = last_coordination_result.duplicate(true)
 	data["squad_id"] = get_tactical_squad_id()
+	data["squad_role_id"] = get_tactical_squad_role_id()
+	data["squad_role_name"] = get_tactical_squad_role_name()
+	data["squad_role_assignment"] = squad_role_assignment.duplicate(true)
+	data["squad_role_context"] = RoleAllocator.get_squad_context(
+		get_tactical_squad_id()
+	)
 	data["decision_replay"] = _ensure_decision_recorder().get_debug_data()
 	return data

@@ -20,8 +20,14 @@ static func evaluate(
 	candidate: TacticalActionCandidate,
 	snapshot: Dictionary
 ) -> Dictionary:
+	if candidate == null:
+		return BaseEvaluator.evaluate(candidate, snapshot)
+	var original_maximum_distance: float = candidate.maximum_distance
+	if _is_non_approach_action(candidate):
+		candidate.maximum_distance = maxf(candidate.maximum_distance, 3.0)
 	var result: Dictionary = BaseEvaluator.evaluate(candidate, snapshot)
-	if candidate == null or not bool(result.get("valid", false)):
+	candidate.maximum_distance = original_maximum_distance
+	if not bool(result.get("valid", false)):
 		return result
 	if candidate.applies_states.is_empty():
 		return result
@@ -91,6 +97,16 @@ static func evaluate(
 	elif not penalties.is_empty():
 		result["primary_reason"] = penalties[0]
 	return result
+
+
+static func _is_non_approach_action(
+	candidate: TacticalActionCandidate
+) -> bool:
+	return (
+		candidate.action_kind in ["defense", "support"]
+		or candidate.movement_mode == "away_from_target"
+		or candidate.has_tag("retreat")
+	)
 
 
 static func _candidate_sets_up_rule(

@@ -11,13 +11,14 @@ const TACTICAL_AI_LAB_FEATURE: Dictionary = {
 	"category": "Systems Laboratory",
 	"version": "v1",
 	"status": "development_tool",
-	"description": "Decision-step laboratory and tactical flight recorder for reaction-aware AI, squad reservations, protected setup states, engagement lanes, cover requests, and emergency overrides.",
+	"description": "Decision-step laboratory and tactical flight recorder for reaction-aware AI, complementary squad roles, reservations, protected setup states, engagement lanes, cover requests, and emergency overrides.",
 	"scene": "res://scenes/levels/prototypes/prototype_tactical_ai_lab_v1.tscn",
 	"validation_scenes": [
 		"res://scenes/levels/prototypes/prototype_tactical_ai_lab_v1.tscn",
 	],
 	"automated_tests": [
 		"res://scenes/tests/tactical_ai_lab_replay_smoke_test.tscn",
+		"res://scenes/tests/squad_role_archetype_smoke_test.tscn",
 	],
 	"dependencies": [
 		"elemental_reaction_lab",

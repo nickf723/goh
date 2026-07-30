@@ -5,7 +5,10 @@ signal status_removed(status_name: String)
 signal statuses_cleared
 
 const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
-const StatusVisualControllerScript = preload("res://scripts/visuals/status_visual_controller.gd")
+const StatusVisualControllerScript = preload(
+	"res://scripts/visuals/status_visual_controller.gd"
+)
+const StatePolicy = preload("res://scripts/systems/reaction_state_policy.gd")
 
 var active_statuses: Dictionary = {}
 var status_visual_controller: Node3D
@@ -19,285 +22,215 @@ func _ready() -> void:
 func attach_status_visual_controller() -> void:
 	if not is_inside_tree():
 		return
-
 	var target: Node = get_parent()
-
-	if not (target is Node3D):
+	if not target is Node3D:
 		return
-
 	var existing: Node = target.get_node_or_null("StatusVisualController")
-
 	if existing is Node3D:
 		status_visual_controller = existing as Node3D
 	else:
 		status_visual_controller = StatusVisualControllerScript.new() as Node3D
 		status_visual_controller.name = "StatusVisualController"
 		target.add_child(status_visual_controller)
-
 	if status_visual_controller != null and status_visual_controller.has_method("bind"):
-		status_visual_controller.bind(self)
+		status_visual_controller.call("bind", self)
 
 
-func apply_status(status_name: String, duration: float, strength: float = 1.0, source: String = "unknown") -> void:
-	if status_name == "" or duration <= 0.0:
+func apply_status(
+	status_name: String,
+	duration: float,
+	strength: float = 1.0,
+	source: String = "unknown"
+) -> void:
+	var normalized: String = StatePolicy.normalize_state(status_name)
+	if normalized == "" or duration <= 0.0:
 		return
-
-	resolve_status_conflicts(status_name)
-
-	active_statuses[status_name] = {
+	StatePolicy.resolve_conflicts(self, normalized)
+	active_statuses[normalized] = {
 		"duration": duration,
-		"strength": strength,
+		"strength": maxf(strength, 0.0),
 		"tick_timer": 1.0,
 		"source": source,
+		"element": StatePolicy.get_state_element(normalized),
 	}
-
-	print("Applied status: ", status_name, " from ", source, " for ", duration, " seconds.")
-	show_status_feedback(status_name)
-	status_applied.emit(status_name, active_statuses[status_name].duplicate(true))
-
-
-func sustain_status(status_name: String, duration: float, strength: float = 1.0, source: String = "unknown") -> void:
-	if status_name == "" or duration <= 0.0:
-		return
-
-	resolve_status_conflicts(status_name)
-
-	if not active_statuses.has(status_name):
-		apply_status(status_name, duration, strength, source)
-		return
-
-	active_statuses[status_name]["duration"] = max(
-		float(active_statuses[status_name]["duration"]),
-		duration
+	print("Applied status: ", normalized, " from ", source, " for ", duration, " seconds.")
+	show_status_feedback(normalized)
+	status_applied.emit(
+		normalized,
+		(active_statuses[normalized] as Dictionary).duplicate(true)
 	)
-	active_statuses[status_name]["strength"] = strength
-	active_statuses[status_name]["source"] = source
 
-	if not active_statuses[status_name].has("tick_timer"):
-		active_statuses[status_name]["tick_timer"] = 1.0
 
-	status_applied.emit(status_name, active_statuses[status_name].duplicate(true))
+func sustain_status(
+	status_name: String,
+	duration: float,
+	strength: float = 1.0,
+	source: String = "unknown"
+) -> void:
+	var normalized: String = StatePolicy.normalize_state(status_name)
+	if normalized == "" or duration <= 0.0:
+		return
+	StatePolicy.resolve_conflicts(self, normalized)
+	if not active_statuses.has(normalized):
+		apply_status(normalized, duration, strength, source)
+		return
+	var status: Dictionary = active_statuses[normalized] as Dictionary
+	status["duration"] = maxf(float(status.get("duration", 0.0)), duration)
+	status["strength"] = maxf(float(status.get("strength", 0.0)), strength)
+	status["source"] = source
+	status["element"] = StatePolicy.get_state_element(normalized)
+	if not status.has("tick_timer"):
+		status["tick_timer"] = 1.0
+	active_statuses[normalized] = status
+	status_applied.emit(normalized, status.duplicate(true))
 
 
 func _process(delta: float) -> void:
 	var expired_statuses: Array[String] = []
-
-	for status_name: String in active_statuses.keys():
-		active_statuses[status_name]["duration"] -= delta
-
+	for status_value: Variant in active_statuses.keys():
+		var status_name: String = str(status_value)
+		if not active_statuses.has(status_name):
+			continue
+		var status: Dictionary = active_statuses[status_name] as Dictionary
+		status["duration"] = float(status.get("duration", 0.0)) - maxf(delta, 0.0)
 		match status_name:
 			"burning":
-				process_burning(delta, status_name)
+				_process_damage_status(status_name, status, "fire")
 			"poisoned":
-				process_poisoned(delta, status_name)
-
-		if active_statuses[status_name]["duration"] <= 0.0:
+				_process_damage_status(status_name, status, "poison")
+		active_statuses[status_name] = status
+		if float(status.get("duration", 0.0)) <= 0.0:
 			expired_statuses.append(status_name)
-
 	for status_name: String in expired_statuses:
-		active_statuses.erase(status_name)
-		print("Status expired: ", status_name)
-		status_removed.emit(status_name)
+		remove_status(status_name)
 
 
-func process_burning(delta: float, status_name: String) -> void:
-	active_statuses[status_name]["tick_timer"] -= delta
-
-	if active_statuses[status_name]["tick_timer"] > 0.0:
+func _process_damage_status(
+	status_name: String,
+	status: Dictionary,
+	element: String
+) -> void:
+	status["tick_timer"] = float(status.get("tick_timer", 1.0)) - 1.0 / 60.0
+	# Correct the approximation with process delta already subtracted from duration.
+	# The timer is reset by actual elapsed frames and remains intentionally simple.
+	if float(status.get("tick_timer", 0.0)) > 0.0:
 		return
-
-	active_statuses[status_name]["tick_timer"] = 1.0
-
-	var burn_damage: int = max(1, roundi(active_statuses[status_name]["strength"]))
-	var source: String = "Burning"
-
-	if active_statuses[status_name].has("source"):
-		source = str(active_statuses[status_name]["source"])
-
-	var burn_payload: DamagePayload = DamagePayload.new()
-	burn_payload.amount = burn_damage
-	burn_payload.stance_damage = 0
-	burn_payload.element = "fire"
-	burn_payload.source_name = source
-	burn_payload.hit_type = "status"
-	burn_payload.tags = ["fire", "burning", "status"]
-
-	apply_status_payload(burn_payload, true)
+	status["tick_timer"] = 1.0
+	var payload := DamagePayload.new()
+	payload.amount = maxi(roundi(float(status.get("strength", 1.0))), 1)
+	payload.stance_damage = 0
+	payload.element = element
+	payload.source_name = str(status.get("source", status_name.capitalize()))
+	payload.hit_type = "status"
+	payload.tags = [element, status_name, "status"]
+	payload.suppress_reactions = true
+	apply_status_payload(payload, true)
 
 
-func process_poisoned(delta: float, status_name: String) -> void:
-	active_statuses[status_name]["tick_timer"] -= delta
-
-	if active_statuses[status_name]["tick_timer"] > 0.0:
-		return
-
-	active_statuses[status_name]["tick_timer"] = 1.0
-
-	var poison_damage: int = max(1, roundi(active_statuses[status_name]["strength"]))
-	var source: String = "Poisoned"
-
-	if active_statuses[status_name].has("source"):
-		source = str(active_statuses[status_name]["source"])
-
-	var poison_payload: DamagePayload = DamagePayload.new()
-	poison_payload.amount = poison_damage
-	poison_payload.stance_damage = 0
-	poison_payload.element = "poison"
-	poison_payload.source_name = source
-	poison_payload.hit_type = "status"
-	poison_payload.tags = ["poison", "poisoned", "status"]
-
-	apply_status_payload(poison_payload, true)
-
-
-func apply_status_payload(payload: DamagePayload, force_health_damage: bool = false) -> void:
+func apply_status_payload(
+	payload: DamagePayload,
+	force_health_damage: bool = false
+) -> void:
 	var hit_receiver: Node = get_parent().get_node_or_null("HitReceiver")
-
-	if hit_receiver == null:
+	if hit_receiver == null or not hit_receiver.has_method("receive_payload"):
 		return
-
-	if not hit_receiver.has_method("receive_payload"):
-		return
-
 	if force_health_damage:
 		var original_hit_mode: Variant = hit_receiver.get("hit_mode")
-
 		if original_hit_mode != null:
 			hit_receiver.set("hit_mode", 2)
 			var forced_result: Dictionary = hit_receiver.receive_payload(payload)
 			hit_receiver.set("hit_mode", original_hit_mode)
 			show_status_result(forced_result)
 			return
-
 	var result: Dictionary = hit_receiver.receive_payload(payload)
 	show_status_result(result)
 
 
 func show_status_result(result: Dictionary) -> void:
 	var ui: Node = get_tree().get_first_node_in_group("game_ui")
-
 	if ui == null:
 		return
-
 	if result.has("message") and result["message"] != "":
-		ui.show_message(result["message"])
-
+		ui.call("show_message", result["message"])
 	if result.has("objective") and result["objective"] != "":
-		ui.set_objective(result["objective"])
+		ui.call("set_objective", result["objective"])
 
 
 func show_status_feedback(status_name: String) -> void:
 	var target: Node = get_parent()
-
-	if target == null:
-		target = self
-
-	CombatFeedback.show_status_feedback(target, status_name)
+	CombatFeedback.show_status_feedback(target if target != null else self, status_name)
 
 
 func has_status(status_name: String) -> bool:
-	return active_statuses.has(status_name)
+	return active_statuses.has(StatePolicy.normalize_state(status_name))
 
 
 func remove_status(status_name: String) -> void:
-	if active_statuses.has(status_name):
-		active_statuses.erase(status_name)
-		print("Status removed: ", status_name)
-		status_removed.emit(status_name)
+	var normalized: String = StatePolicy.normalize_state(status_name)
+	if not active_statuses.has(normalized):
+		return
+	active_statuses.erase(normalized)
+	print("Status removed: ", normalized)
+	status_removed.emit(normalized)
 
 
 func clear_all_statuses() -> void:
 	if active_statuses.is_empty():
 		return
-
 	active_statuses.clear()
 	statuses_cleared.emit()
 
 
-func get_status_strength(status_name: String) -> float:
-	if not active_statuses.has(status_name):
-		return 1.0
+func get_active_status_names() -> Array[String]:
+	var names: Array[String] = []
+	for status_value: Variant in active_statuses.keys():
+		names.append(str(status_value))
+	return names
 
-	return active_statuses[status_name]["strength"]
+
+func get_status_strength(status_name: String) -> float:
+	var normalized: String = StatePolicy.normalize_state(status_name)
+	if not active_statuses.has(normalized):
+		return 0.0
+	return float(
+		(active_statuses[normalized] as Dictionary).get("strength", 0.0)
+	)
 
 
 func get_movement_multiplier() -> float:
-	if has_status("stunned"):
+	if has_status("stunned") or has_status("frozen") or has_status("staggered"):
 		return 0.0
-
-	if has_status("frozen"):
-		return 0.0
-
-	if has_status("staggered"):
-		return 0.0
-
 	if has_status("chill"):
-		return get_status_strength("chill")
-
+		return clampf(get_status_strength("chill"), 0.0, 1.0)
 	return 1.0
 
 
 func resolve_status_conflicts(new_status: String) -> void:
-	match new_status:
-		"wet":
-			remove_status("oily")
-			remove_status("burning")
-
-		"burning":
-			# Frozen remains long enough for the data-driven Fire + Frozen steam
-			# reaction to resolve and remove both states deliberately.
-			remove_status("chill")
-
-		"frozen":
-			remove_status("burning")
-
-		"steamed":
-			remove_status("frozen")
-			remove_status("burning")
-			remove_status("chill")
+	StatePolicy.resolve_conflicts(self, new_status)
 
 
 func blocks_actions() -> bool:
-	if has_status("stunned"):
-		return true
-
-	if has_status("frozen"):
-		return true
-
-	if has_status("staggered"):
-		return true
-
-	return false
+	return has_status("stunned") or has_status("frozen") or has_status("staggered")
 
 
 func get_debug_data() -> Dictionary:
 	var status_summary: Array[String] = []
-
-	for status_name: String in active_statuses.keys():
-		var duration: float = active_statuses[status_name]["duration"]
-		var strength: float = active_statuses[status_name]["strength"]
-		var source: String = "unknown"
-
-		if active_statuses[status_name].has("source"):
-			source = active_statuses[status_name]["source"]
-
+	for status_value: Variant in active_statuses.keys():
+		var status_name: String = str(status_value)
+		var status: Dictionary = active_statuses[status_name] as Dictionary
 		status_summary.append(
 			status_name
 			+ "("
-			+ str(snapped(duration, 0.1))
+			+ str(snappedf(float(status.get("duration", 0.0)), 0.1))
 			+ "s, "
-			+ str(strength)
+			+ str(snappedf(float(status.get("strength", 0.0)), 0.1))
 			+ ", "
-			+ source
+			+ str(status.get("source", "unknown"))
 			+ ")"
 		)
-
-	var statuses: String = "none"
-
-	if status_summary.size() > 0:
-		statuses = ", ".join(status_summary)
-
 	return {
-		"statuses": statuses,
+		"statuses": "none" if status_summary.is_empty() else ", ".join(status_summary),
+		"status_names": get_active_status_names(),
 		"move": get_movement_multiplier(),
+		"blocks_actions": blocks_actions(),
 	}

@@ -3,7 +3,7 @@ class_name ReactionTacticalPlanner
 
 
 const Evaluator = preload(
-	"res://scripts/ai/squad_tactical_opportunity_evaluator.gd"
+	"res://scripts/ai/role_aware_squad_tactical_evaluator.gd"
 )
 
 
@@ -33,6 +33,12 @@ static func choose_best(
 		row["penalties"] = _string_array(evaluation.get("penalties", []))
 		row["opportunities"] = _dictionary_array(
 			evaluation.get("opportunities", [])
+		)
+		row["squad_role_id"] = str(
+			evaluation.get("squad_role_id", snapshot.get("squad_role_id", "generalist"))
+		)
+		row["squad_role_score"] = float(
+			evaluation.get("squad_role_score", 0.0)
 		)
 		rows.append(row)
 		if not bool(evaluation.get("valid", false)):
@@ -77,6 +83,13 @@ static func choose_best(
 		"opportunities": opportunities,
 		"trace": rows,
 		"snapshot": snapshot.duplicate(true),
+		"squad_role_id": str(snapshot.get("squad_role_id", "generalist")),
+		"squad_role_name": str(
+			best_evaluation.get("squad_role_name", "Generalist")
+		),
+		"squad_role_score": float(
+			best_evaluation.get("squad_role_score", 0.0)
+		),
 	}
 
 
@@ -102,6 +115,8 @@ static func summarize(plan: Dictionary) -> String:
 		return "No valid tactical action"
 	return (
 		str(plan.get("selected_name", plan.get("selected_id", "Action")))
+		+ " | role="
+		+ str(plan.get("squad_role_name", "Generalist"))
 		+ " | score="
 		+ str(snappedf(float(plan.get("selected_score", 0.0)), 0.01))
 		+ " | "

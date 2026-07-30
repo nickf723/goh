@@ -195,10 +195,10 @@ func _append_match(
 	reasons: Array[String],
 	matched_traits: Array[String],
 	reason: String,
-	trait: String
+	trait_id: String
 ) -> void:
 	_append_unique(reasons, reason)
-	_append_unique(matched_traits, trait)
+	_append_unique(matched_traits, trait_id)
 
 
 func _dictionary_array(value: Variant) -> Array[Dictionary]:

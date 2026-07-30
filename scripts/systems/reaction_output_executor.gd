@@ -26,7 +26,9 @@ static func apply_to_target(
 
 
 static func _remove_statuses(rule: Resource, target: Node) -> void:
-	var status_receiver: Node = target.get_node_or_null("StatusReceiver") if target != null else null
+	if target == null:
+		return
+	var status_receiver: Node = target.get_node_or_null("StatusReceiver")
 	if status_receiver == null or not status_receiver.has_method("remove_status"):
 		return
 	for status_name: String in _get_strings(rule, "remove_statuses"):
@@ -47,11 +49,10 @@ static func _apply_status(
 		return
 	var source_name: String = _get_string(rule, "output_status_source", "")
 	if source_name == "":
-		source_name = _get_string(
-			rule,
-			"reaction_id",
-			parent_payload.source_name if parent_payload != null else "reaction"
-		)
+		var fallback_source: String = "reaction"
+		if parent_payload != null:
+			fallback_source = parent_payload.source_name
+		source_name = _get_string(rule, "reaction_id", fallback_source)
 	status_receiver.call(
 		"apply_status",
 		status_name,
@@ -83,10 +84,13 @@ static func _apply_damage(
 	)
 	reaction_payload.hit_type = _get_string(rule, "output_hit_type", "reaction")
 	reaction_payload.tags = _get_strings(rule, "output_tags")
+	var chain_id: String = ""
+	if transaction != null:
+		chain_id = transaction.transaction_id
 	reaction_payload.inherit_reaction_lineage(
 		parent_payload,
 		_get_string(rule, "rule_id", "reaction"),
-		transaction.transaction_id if transaction != null else ""
+		chain_id
 	)
 	reaction_payload.suppress_reactions = not _get_bool(
 		rule,
@@ -120,8 +124,12 @@ static func _call_reaction_method(
 static func _get_target_position(target: Node) -> Vector3:
 	if target is Node3D:
 		return (target as Node3D).global_position
-	var parent: Node = target.get_parent() if target != null else null
-	return (parent as Node3D).global_position if parent is Node3D else Vector3.ZERO
+	if target == null:
+		return Vector3.ZERO
+	var parent: Node = target.get_parent()
+	if parent is Node3D:
+		return (parent as Node3D).global_position
+	return Vector3.ZERO
 
 
 static func _get_string(rule: Resource, key: String, fallback: String) -> String:

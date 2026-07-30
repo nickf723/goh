@@ -210,10 +210,12 @@ func _test_runtime_adapters() -> void:
 	_expect(threat_brain != null, "Threat-aware enemy brain instantiates")
 	if threat_brain != null:
 		threat_brain.set("tactical_squad_id", "runtime_role_smoke")
-		threat_brain.set(
-			"action_options",
-			[GremlinBiteOption, GremlinPounceOption, GremlinBackstepOption]
-		)
+		var threat_options: Array[EnemyActionOption] = [
+			GremlinBiteOption,
+			GremlinPounceOption,
+			GremlinBackstepOption,
+		]
+		threat_brain.set("action_options", threat_options)
 		var assignment_value: Variant = threat_brain.call(
 			"refresh_tactical_squad_role"
 		)

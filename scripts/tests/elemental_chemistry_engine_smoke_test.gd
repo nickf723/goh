@@ -44,6 +44,7 @@ func run_tests() -> void:
 	_test_legacy_wet_conduction()
 	_test_quench()
 	_test_deep_freeze()
+	_test_cold_priority_conflict()
 	_test_resonant_reveal()
 	_test_conductive_overload()
 	_test_depth_guard()
@@ -62,7 +63,10 @@ func _test_catalog_contract() -> void:
 		_expect(priority <= previous_priority, "Reaction catalog is priority sorted")
 		previous_priority = priority
 		var rule_id: String = str(row.get("rule", ""))
-		_expect(rule_id != "" and not seen_rules.has(rule_id), "Reaction rule IDs are unique")
+		_expect(
+			rule_id != "" and not seen_rules.has(rule_id),
+			"Reaction rule IDs are unique"
+		)
 		seen_rules[rule_id] = true
 	for expected_rule: String in [
 		"water_x_burning",
@@ -83,7 +87,10 @@ func _test_same_impact_setup_isolation() -> void:
 		str(payload_receiver.get("last_reaction_summary")) == "none",
 		"A payload cannot react with the status it applies on the same impact"
 	)
-	_expect(status_receiver.call("has_status", "wet"), "Direct Wet applies after chemistry")
+	_expect(
+		bool(status_receiver.call("has_status", "wet")),
+		"Direct Wet applies after chemistry"
+	)
 
 
 func _test_legacy_wet_conduction() -> void:
@@ -95,7 +102,10 @@ func _test_legacy_wet_conduction() -> void:
 		str(payload_receiver.get("last_reaction_summary")).contains("wet_conduction"),
 		"Legacy Wet Conduction still resolves"
 	)
-	_expect(status_receiver.call("has_status", "stunned"), "Wet Conduction applies Stunned")
+	_expect(
+		bool(status_receiver.call("has_status", "stunned")),
+		"Wet Conduction applies Stunned"
+	)
 	_expect(_transaction_id() != "", "Legacy reaction receives a transaction ID")
 
 
@@ -110,9 +120,18 @@ func _test_quench() -> void:
 		str(payload_receiver.get("last_reaction_summary")).contains("quench"),
 		"Water plus Burning resolves Quench"
 	)
-	_expect(status_receiver.call("has_status", "steamed"), "Quench produces Steamed")
-	_expect(not status_receiver.call("has_status", "burning"), "Quench removes Burning")
-	_expect(not status_receiver.call("has_status", "wet"), "Quench consumes incoming Wet")
+	_expect(
+		bool(status_receiver.call("has_status", "steamed")),
+		"Quench produces Steamed"
+	)
+	_expect(
+		not bool(status_receiver.call("has_status", "burning")),
+		"Quench removes Burning"
+	)
+	_expect(
+		not bool(status_receiver.call("has_status", "wet")),
+		"Quench consumes incoming Wet"
+	)
 	var snapshot: Dictionary = _transaction_snapshot()
 	_expect(
 		StatePolicy.snapshot_has_status(snapshot, "burning"),
@@ -131,8 +150,47 @@ func _test_deep_freeze() -> void:
 		str(payload_receiver.get("last_reaction_summary")).contains("deep_freeze"),
 		"Ice plus Chill resolves Deep Freeze"
 	)
-	_expect(status_receiver.call("has_status", "frozen"), "Deep Freeze applies Frozen")
-	_expect(not status_receiver.call("has_status", "chill"), "Deep Freeze consumes Chill")
+	_expect(
+		bool(status_receiver.call("has_status", "frozen")),
+		"Deep Freeze applies Frozen"
+	)
+	_expect(
+		not bool(status_receiver.call("has_status", "chill")),
+		"Deep Freeze consumes Chill"
+	)
+
+
+func _test_cold_priority_conflict() -> void:
+	_reset_target()
+	status_receiver.call("apply_status", "wet", 5.0, 1.0, "setup")
+	status_receiver.call("apply_status", "chill", 5.0, 0.6, "setup")
+	var payload: DamagePayload = _make_payload("ice", ["ice"])
+	payload.status_effect = "chill"
+	payload.status_duration = 5.0
+	target.call("receive_damage_payload", payload)
+	var summary: String = str(payload_receiver.get("last_reaction_summary"))
+	_expect(summary.contains("wet_freeze"), "Higher-priority Wet Freeze wins")
+	_expect(
+		not summary.contains("deep_freeze"),
+		"Exclusive cold resolution suppresses Deep Freeze"
+	)
+	var transaction: Dictionary = _transaction_data()
+	var suppressed: Variant = transaction.get("suppressed", [])
+	var found_exclusive_suppression: bool = false
+	if suppressed is Array:
+		for entry_value: Variant in suppressed as Array:
+			if not entry_value is Dictionary:
+				continue
+			var entry: Dictionary = entry_value as Dictionary
+			if (
+				str(entry.get("rule", "")) == "ice_x_chill"
+				and str(entry.get("reason", "")).contains("exclusive group")
+			):
+				found_exclusive_suppression = true
+	_expect(
+		found_exclusive_suppression,
+		"Losing cold rule records exclusive-group suppression"
+	)
 
 
 func _test_resonant_reveal() -> void:
@@ -144,8 +202,14 @@ func _test_resonant_reveal() -> void:
 		str(payload_receiver.get("last_reaction_summary")).contains("resonant_reveal"),
 		"Sound plus Obscured resolves Resonant Reveal"
 	)
-	_expect(status_receiver.call("has_status", "revealed"), "Resonant Reveal applies Revealed")
-	_expect(not status_receiver.call("has_status", "obscured"), "Reveal removes Obscured")
+	_expect(
+		bool(status_receiver.call("has_status", "revealed")),
+		"Resonant Reveal applies Revealed"
+	)
+	_expect(
+		not bool(status_receiver.call("has_status", "obscured")),
+		"Reveal removes Obscured"
+	)
 
 
 func _test_conductive_overload() -> void:
@@ -157,9 +221,15 @@ func _test_conductive_overload() -> void:
 		str(payload_receiver.get("last_reaction_summary")).contains("conductive_overload"),
 		"Lightning plus Conductive resolves Overload"
 	)
-	_expect(status_receiver.call("has_status", "stunned"), "Overload applies Stunned")
-	_expect(not status_receiver.call("has_status", "conductive"), "Overload consumes Conductive")
-	var transaction: Dictionary = payload_receiver.get("last_transaction_data") as Dictionary
+	_expect(
+		bool(status_receiver.call("has_status", "stunned")),
+		"Overload applies Stunned"
+	)
+	_expect(
+		not bool(status_receiver.call("has_status", "conductive")),
+		"Overload consumes Conductive"
+	)
+	var transaction: Dictionary = _transaction_data()
 	var triggered: Variant = transaction.get("triggered_rules", [])
 	_expect(
 		triggered is Array and (triggered as Array).has("lightning_x_conductive"),
@@ -182,7 +252,7 @@ func _test_depth_guard() -> void:
 		str(payload_receiver.get("last_reaction_summary")) == "none",
 		"Reaction depth limit suppresses additional chemistry"
 	)
-	var transaction: Dictionary = payload_receiver.get("last_transaction_data") as Dictionary
+	var transaction: Dictionary = _transaction_data()
 	var suppressed: Variant = transaction.get("suppressed", [])
 	_expect(
 		suppressed is Array and not (suppressed as Array).is_empty(),
@@ -220,14 +290,21 @@ func _reset_target() -> void:
 			hit_receiver.call("reset_stance")
 
 
+func _transaction_data() -> Dictionary:
+	var transaction_value: Variant = payload_receiver.get("last_transaction_data")
+	return (
+		(transaction_value as Dictionary)
+		if transaction_value is Dictionary
+		else {}
+	)
+
+
 func _transaction_id() -> String:
-	var transaction: Dictionary = payload_receiver.get("last_transaction_data") as Dictionary
-	return str(transaction.get("transaction_id", ""))
+	return str(_transaction_data().get("transaction_id", ""))
 
 
 func _transaction_snapshot() -> Dictionary:
-	var transaction: Dictionary = payload_receiver.get("last_transaction_data") as Dictionary
-	var snapshot: Variant = transaction.get("target_snapshot", {})
+	var snapshot: Variant = _transaction_data().get("target_snapshot", {})
 	return snapshot as Dictionary if snapshot is Dictionary else {}
 
 

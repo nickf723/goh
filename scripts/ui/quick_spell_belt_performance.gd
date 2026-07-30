@@ -22,6 +22,8 @@ func _finish_setup() -> void:
 	super._finish_setup()
 	if not setup_complete:
 		return
+	_update_responsive_scale()
+	_align_focus_panel()
 	last_focus_state = focus_assignment_visible
 	last_radial_state = _is_special_radial_open()
 	last_viewport_width = _get_viewport_width()

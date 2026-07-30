@@ -9,6 +9,9 @@ const PlayerControlRouterScript = preload(
 const PlayerPresentationScript = preload(
 	"res://scripts/ui/player_hud_combat_presentation.gd"
 )
+const ShowcaseTelemetryGateScript = preload(
+	"res://scripts/ui/showcase_telemetry_gate.gd"
+)
 
 const PRESET_COMBAT_RIGHT_MAGIC_LEFT: int = 0
 const PRESET_COMBAT_LEFT_MAGIC_RIGHT: int = 1
@@ -57,6 +60,7 @@ func _ready() -> void:
 	apply_hand_role_preset(hand_role_preset, false)
 	call_deferred("install_player_control_router")
 	call_deferred("install_player_presentation_polish")
+	call_deferred("install_showcase_telemetry_gate")
 	add_to_group("debuggable")
 
 
@@ -156,6 +160,19 @@ func install_player_presentation_polish() -> void:
 	var presentation: Node = PlayerPresentationScript.new()
 	presentation.name = "PlayerHUDCombatPresentation"
 	player.add_child(presentation)
+
+
+func install_showcase_telemetry_gate() -> void:
+	var weapon_controller: Node = get_parent()
+	var player: Node = weapon_controller.get_parent() if weapon_controller != null else null
+	if (
+		player == null
+		or player.get_node_or_null("ShowcaseTelemetryGate") != null
+	):
+		return
+	var gate: Node = ShowcaseTelemetryGateScript.new()
+	gate.name = "ShowcaseTelemetryGate"
+	player.add_child(gate)
 
 
 func ensure_action(action_name: StringName) -> void:
@@ -272,4 +289,5 @@ func get_debug_data() -> Dictionary:
 		"quick_spell_next_action": str(QUICK_SPELL_NEXT_ACTION),
 		"divine_special_action": str(DIVINE_SPECIAL_ACTION),
 		"authoritative_controller_bindings": true,
+		"showcase_telemetry_gate": true,
 	}

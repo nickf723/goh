@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="ComboRule" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+
+[resource]
+script = ExtResource("1_combo_rule")
+rule_id = "lightning_x_conductive"
+display_name = "Overload"
+description = "Lightning discharges a prepared conductive state into a stronger control pulse."
+incoming_tags = Array[String](["lightning"])
+target_statuses = Array[String](["conductive"])
+priority = 76
+exclusive_group = "electrical_resolution"
+reaction_id = "conductive_overload"
+reaction_name = "Overload"
+feedback_text = "{target}'s conductive charge overloads."
+visual_style = "conduct"
+visual_color = Color(0.58, 0.68, 1, 1)
+visual_radius = 1.65
+visual_duration = 0.44
+output_status = "stunned"
+output_status_duration = 1.6
+output_status_strength = 1.0
+output_status_source = "lightning_x_conductive"
+remove_statuses = Array[String](["conductive"])
+output_stance_damage = 4
+output_element = "lightning"
+output_source_name = "Conductive Overload"
+output_tags = Array[String](["lightning", "conductive", "stunned", "reaction"])
+area_effect_radius = 1.8
+area_output_status = "electrified"
+area_output_status_duration = 1.1
+area_output_status_strength = 1.0
+area_output_status_source = "conductive_overload"
+area_output_damage = 1
+area_output_element = "lightning"
+area_output_tags = Array[String](["lightning", "reaction", "area", "chain"])
+debug_tags = Array[String](["elemental", "electricity", "setup_payoff"])
+design_notes = "A generic prepared-conductor payoff distinct from Wet Conduction. The area pulse is intentionally small for the first pass."

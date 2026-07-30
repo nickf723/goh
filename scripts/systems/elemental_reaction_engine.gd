@@ -19,16 +19,15 @@ static func resolve_payload_transaction(
 		snapshot,
 		4
 	)
-	var batch: Dictionary = _empty_batch(transaction)
+	var reactions: Array[Dictionary] = []
+	var batch: Dictionary = _empty_batch(transaction, reactions)
 	if target == null or payload == null:
 		return batch
 	if payload.suppress_reactions:
 		transaction.record_suppressed("all", target, "payload suppresses reactions")
-		batch["transaction"] = transaction.get_debug_data()
-		batch["suppressed"] = transaction.suppressed.duplicate(true)
+		_finalize_batch(batch, transaction)
 		return batch
 
-	var reactions: Array[Dictionary] = batch["reactions"] as Array[Dictionary]
 	for rule: Resource in RuleCatalog.get_rules():
 		if not _rule_matches(rule, snapshot, payload):
 			continue
@@ -52,7 +51,6 @@ static func resolve_payload_transaction(
 			exclusive_group
 		):
 			continue
-
 		transaction.mark_triggered(rule_id, target, exclusive_group)
 		var result: Dictionary = OutputExecutor.apply_to_target(
 			rule,
@@ -66,9 +64,7 @@ static func resolve_payload_transaction(
 			batch["consume_incoming_status"] = true
 		if _get_bool(rule, "stop_after_match", false):
 			break
-
-	batch["transaction"] = transaction.get_debug_data()
-	batch["suppressed"] = transaction.suppressed.duplicate(true)
+	_finalize_batch(batch, transaction)
 	return batch
 
 
@@ -84,16 +80,15 @@ static func resolve_hazard_transaction(
 		snapshot,
 		4
 	)
-	var batch: Dictionary = _empty_batch(transaction)
+	var reactions: Array[Dictionary] = []
+	var batch: Dictionary = _empty_batch(transaction, reactions)
 	if hazard == null or payload == null:
 		return batch
 	if payload.suppress_reactions:
 		transaction.record_suppressed("all", hazard, "payload suppresses reactions")
-		batch["transaction"] = transaction.get_debug_data()
-		batch["suppressed"] = transaction.suppressed.duplicate(true)
+		_finalize_batch(batch, transaction)
 		return batch
 
-	var reactions: Array[Dictionary] = batch["reactions"] as Array[Dictionary]
 	for rule: Resource in RuleCatalog.get_rules():
 		if not _rule_matches(rule, snapshot, payload):
 			continue
@@ -117,7 +112,6 @@ static func resolve_hazard_transaction(
 			exclusive_group
 		):
 			continue
-
 		transaction.mark_triggered(rule_id, hazard, exclusive_group)
 		var result: Dictionary = OutputExecutor.apply_to_target(
 			rule,
@@ -132,20 +126,28 @@ static func resolve_hazard_transaction(
 			batch["consume_incoming_status"] = true
 		if _get_bool(rule, "stop_after_match", false):
 			break
-
-	batch["transaction"] = transaction.get_debug_data()
-	batch["suppressed"] = transaction.suppressed.duplicate(true)
+	_finalize_batch(batch, transaction)
 	return batch
 
 
-static func _empty_batch(transaction: ReactionTransaction) -> Dictionary:
-	var reactions: Array[Dictionary] = []
+static func _empty_batch(
+	transaction: ReactionTransaction,
+	reactions: Array[Dictionary]
+) -> Dictionary:
 	return {
 		"reactions": reactions,
 		"consume_incoming_status": false,
 		"transaction": transaction.get_debug_data(),
 		"suppressed": [],
 	}
+
+
+static func _finalize_batch(
+	batch: Dictionary,
+	transaction: ReactionTransaction
+) -> void:
+	batch["transaction"] = transaction.get_debug_data()
+	batch["suppressed"] = transaction.suppressed.duplicate(true)
 
 
 static func _rule_matches(
@@ -160,7 +162,6 @@ static func _rule_matches(
 	var incoming_any: Array[String] = _get_strings(rule, "incoming_any_tags")
 	if not incoming_any.is_empty() and not _payload_has_any(payload, incoming_any):
 		return false
-
 	for required: String in _get_strings(rule, "target_tags"):
 		if not StatePolicy.snapshot_has_tag_or_status(snapshot, required):
 			return false
@@ -173,7 +174,6 @@ static func _rule_matches(
 				break
 		if not any_tag_matches:
 			return false
-
 	for required_status: String in _get_strings(rule, "target_statuses"):
 		if not StatePolicy.snapshot_has_status(snapshot, required_status):
 			return false

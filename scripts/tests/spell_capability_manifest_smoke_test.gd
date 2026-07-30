@@ -71,6 +71,17 @@ func run_tests() -> void:
 		"Audit reports design gaps without treating them as parser failures"
 	)
 
+	var json_report: String = Manifest.to_json(bundle)
+	var parsed_json: Variant = JSON.parse_string(json_report)
+	_expect(parsed_json is Dictionary, "Manifest exports valid JSON")
+	var markdown_report: String = Manifest.to_markdown(bundle)
+	_expect(
+		markdown_report.contains("## Element coverage")
+		and markdown_report.contains("## Reaction reachability")
+		and markdown_report.contains("### Firebolt"),
+		"Manifest exports readable Markdown sections"
+	)
+
 	var reachable_count: int = 0
 	for reaction: Dictionary in reactions:
 		if bool(reaction.get("reachable", false)):

@@ -1,6 +1,7 @@
 extends "res://scripts/enemies/enemy_action_selection_brain.gd"
 class_name EnemyTacticalActionBrain
 
+
 const WorldSnapshot = preload(
 	"res://scripts/ai/tactical_world_snapshot.gd"
 )
@@ -8,7 +9,7 @@ const ActionCandidate = preload(
 	"res://scripts/ai/tactical_action_candidate.gd"
 )
 const Evaluator = preload(
-	"res://scripts/ai/tactical_opportunity_evaluator.gd"
+	"res://scripts/ai/squad_tactical_opportunity_evaluator.gd"
 )
 
 @export_group("Reaction Tactics")

@@ -17,7 +17,7 @@ const ActionCandidate = preload(
 
 @export_group("Squad Coordination")
 @export var enable_squad_coordination: bool = true
-@export var tactical_squad_id: String = "enemy_squad"
+@export var tactical_squad_id: String = "auto"
 @export_range(0.1, 3.0, 0.05) var reaction_reservation_seconds: float = 0.9
 @export_range(0.1, 2.0, 0.05) var lane_reservation_seconds: float = 0.55
 
@@ -151,12 +151,14 @@ func _reserve_selected_option(option: EnemyActionOption) -> void:
 
 func get_tactical_squad_id() -> String:
 	var configured: String = tactical_squad_id.strip_edges().to_lower()
-	if configured != "":
+	if configured not in ["", "auto"]:
 		return configured
 	if actor != null and actor.has_meta("tactical_squad_id"):
 		var metadata_value: String = str(actor.get_meta("tactical_squad_id"))
 		if metadata_value.strip_edges() != "":
 			return metadata_value.strip_edges().to_lower()
+	if actor != null and actor.get_parent() != null:
+		return "enemy_encounter_" + str(actor.get_parent().get_instance_id())
 	return "enemy_squad"
 
 

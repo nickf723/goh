@@ -87,17 +87,18 @@ func sustain_status(
 
 func _process(delta: float) -> void:
 	var expired_statuses: Array[String] = []
+	var step: float = maxf(delta, 0.0)
 	for status_value: Variant in active_statuses.keys():
 		var status_name: String = str(status_value)
 		if not active_statuses.has(status_name):
 			continue
 		var status: Dictionary = active_statuses[status_name] as Dictionary
-		status["duration"] = float(status.get("duration", 0.0)) - maxf(delta, 0.0)
+		status["duration"] = float(status.get("duration", 0.0)) - step
 		match status_name:
 			"burning":
-				_process_damage_status(status_name, status, "fire")
+				_process_damage_status(status_name, status, "fire", step)
 			"poisoned":
-				_process_damage_status(status_name, status, "poison")
+				_process_damage_status(status_name, status, "poison", step)
 		active_statuses[status_name] = status
 		if float(status.get("duration", 0.0)) <= 0.0:
 			expired_statuses.append(status_name)
@@ -108,11 +109,10 @@ func _process(delta: float) -> void:
 func _process_damage_status(
 	status_name: String,
 	status: Dictionary,
-	element: String
+	element: String,
+	delta: float
 ) -> void:
-	status["tick_timer"] = float(status.get("tick_timer", 1.0)) - 1.0 / 60.0
-	# Correct the approximation with process delta already subtracted from duration.
-	# The timer is reset by actual elapsed frames and remains intentionally simple.
+	status["tick_timer"] = float(status.get("tick_timer", 1.0)) - delta
 	if float(status.get("tick_timer", 0.0)) > 0.0:
 		return
 	status["tick_timer"] = 1.0

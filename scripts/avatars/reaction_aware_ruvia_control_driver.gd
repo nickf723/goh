@@ -23,6 +23,12 @@ const ClaimRegistry = preload(
 const DecisionRecorderScript = preload(
 	"res://scripts/ai/tactical_decision_recorder.gd"
 )
+const RoleAllocator = preload(
+	"res://scripts/ai/squad_role_allocator.gd"
+)
+const RoleCatalog = preload(
+	"res://scripts/ai/squad_role_catalog.gd"
+)
 
 @export_group("Reaction Coordination")
 @export_range(0.0, 20.0, 0.5) var reaction_override_threshold: float = 7.0
@@ -30,6 +36,9 @@ const DecisionRecorderScript = preload(
 @export var tactical_squad_id: String = "grace_party"
 @export_range(0.1, 3.0, 0.05) var reaction_reservation_seconds: float = 1.0
 @export_range(0.1, 2.0, 0.05) var owner_intent_seconds: float = 0.65
+
+@export_group("Squad Role")
+@export var tactical_squad_role_id: String = "payoff_specialist"
 
 @export_group("Decision Replay")
 @export_range(4, 128, 1) var decision_history_capacity: int = 48
@@ -40,21 +49,25 @@ var last_coordination_result: Dictionary = {}
 var last_owner_intent_signature: String = ""
 var next_owner_intent_refresh_at: float = 0.0
 var decision_recorder: TacticalDecisionRecorder
+var squad_role_assignment: Dictionary = {}
 
 
 func _ready() -> void:
 	super._ready()
+	_ensure_squad_role_assignment()
 	_ensure_decision_recorder()
 	add_to_group("tactical_decision_source")
 
 
 func bind_actor(actor: Node3D, owner: Node3D = null) -> void:
 	_release_coordination("rebound", false)
+	_release_squad_role()
 	super.bind_actor(actor, owner)
 	last_reaction_plan.clear()
 	last_coordination_result.clear()
 	last_owner_intent_signature = ""
 	next_owner_intent_refresh_at = 0.0
+	_ensure_squad_role_assignment()
 	_ensure_decision_recorder().clear()
 
 
@@ -84,6 +97,7 @@ func _build_combat_intent(intent: AvatarActionIntent) -> void:
 		if current_target != null
 		else 0
 	)
+	var role_assignment: Dictionary = _ensure_squad_role_assignment()
 	var coordination: Dictionary = Blackboard.get_coordination_context(
 		get_tactical_squad_id(),
 		owner_id,
@@ -109,12 +123,25 @@ func _build_combat_intent(intent: AvatarActionIntent) -> void:
 	)
 	for key: Variant in coordination.keys():
 		snapshot[key] = coordination[key]
+	snapshot["squad_role_id"] = str(
+		role_assignment.get("role_id", "payoff_specialist")
+	)
+	snapshot["squad_role_name"] = str(
+		role_assignment.get("role_name", "Payoff Specialist")
+	)
+	var role_context: Dictionary = RoleAllocator.get_squad_context(
+		get_tactical_squad_id()
+	)
+	for role_key: Variant in role_context.keys():
+		snapshot[role_key] = role_context[role_key]
 	var plan: Dictionary = Planner.choose_best(candidates, snapshot)
 	last_reaction_plan = _serializable_plan(plan)
 	last_coordination_result = {
 		"squad_id": get_tactical_squad_id(),
 		"owner_id": owner_id,
 		"target_id": target_id,
+		"squad_role": role_assignment.duplicate(true),
+		"role_context": role_context,
 		"blackboard": coordination,
 		"reservation": "not requested",
 	}
@@ -138,6 +165,10 @@ func _build_combat_intent(intent: AvatarActionIntent) -> void:
 		"owner_id": owner_id,
 		"target_id": target_id,
 		"selected_spell": selected_spell,
+		"squad_role": role_assignment.duplicate(true),
+		"role_context": RoleAllocator.get_squad_context(
+			get_tactical_squad_id()
+		),
 		"reservation": reservation_result.duplicate(true),
 		"blackboard": Blackboard.get_coordination_context(
 			get_tactical_squad_id(),
@@ -244,7 +275,10 @@ func _reserve_plan_opportunity(
 				target_id,
 				reaction_reservation_seconds,
 				float(plan.get("selected_score", 0.0)),
-				{"spell_id": selected_spell}
+				{
+					"spell_id": selected_spell,
+					"squad_role": get_tactical_squad_role_id(),
+				}
 			)
 		if type_id == "reaction_setup":
 			return ClaimRegistry.reserve_setup(
@@ -255,7 +289,10 @@ func _reserve_plan_opportunity(
 				target_id,
 				reaction_reservation_seconds,
 				float(plan.get("selected_score", 0.0)),
-				{"spell_id": selected_spell}
+				{
+					"spell_id": selected_spell,
+					"squad_role": get_tactical_squad_role_id(),
+				}
 			)
 	return {
 		"granted": false,
@@ -295,11 +332,68 @@ func notify_action_result(
 
 func _exit_tree() -> void:
 	_release_coordination("companion removed")
+	_release_squad_role()
 
 
 func get_tactical_squad_id() -> String:
 	var normalized: String = tactical_squad_id.strip_edges().to_lower()
 	return normalized if normalized != "" else "grace_party"
+
+
+func get_tactical_squad_role_id() -> String:
+	return str(
+		_ensure_squad_role_assignment().get(
+			"role_id",
+			RoleCatalog.normalize_role_id(tactical_squad_role_id)
+		)
+	)
+
+
+func get_tactical_squad_role_name() -> String:
+	return str(
+		_ensure_squad_role_assignment().get(
+			"role_name",
+			RoleCatalog.get_profile(tactical_squad_role_id).display_name
+		)
+	)
+
+
+func get_tactical_squad_role_assignment() -> Dictionary:
+	return _ensure_squad_role_assignment().duplicate(true)
+
+
+func _ensure_squad_role_assignment() -> Dictionary:
+	if not squad_role_assignment.is_empty():
+		return squad_role_assignment
+	var owner_id: int = (
+		controlled_actor.get_instance_id()
+		if controlled_actor != null
+		else get_instance_id()
+	)
+	var owner_name: String = (
+		controlled_actor.name if controlled_actor != null else name
+	)
+	var candidates: Array[TacticalActionCandidate] = []
+	for record: Dictionary in SpellLibrary.get_records(reaction_spell_ids):
+		candidates.append(ActionCandidate.from_spell_record(record))
+	squad_role_assignment = RoleAllocator.assign_role(
+		get_tactical_squad_id(),
+		owner_id,
+		owner_name,
+		tactical_squad_role_id,
+		candidates
+	)
+	return squad_role_assignment
+
+
+func _release_squad_role() -> void:
+	var owner_id: int = (
+		controlled_actor.get_instance_id()
+		if controlled_actor != null
+		else get_instance_id()
+	)
+	RoleAllocator.release_owner(owner_id, get_tactical_squad_id())
+	squad_role_assignment.clear()
 
 
 func _release_coordination(reason: String, record_release: bool = true) -> void:
@@ -322,6 +416,10 @@ func _release_coordination(reason: String, record_release: bool = true) -> void:
 		"target_id": target_id,
 		"released": released_count,
 		"reason": reason,
+		"squad_role": squad_role_assignment.duplicate(true),
+		"role_context": RoleAllocator.get_squad_context(
+			get_tactical_squad_id()
+		),
 		"blackboard": Blackboard.get_coordination_context(
 			get_tactical_squad_id(),
 			0,
@@ -361,6 +459,8 @@ func _record_tactical_frame(event_name: String) -> void:
 			"tactical_mode": tactical_mode,
 			"decision_reason": last_decision_reason,
 			"target_distance": last_target_distance,
+			"squad_role_id": get_tactical_squad_role_id(),
+			"squad_role_name": get_tactical_squad_role_name(),
 		}
 	)
 
@@ -419,6 +519,12 @@ func get_debug_data() -> Dictionary:
 	)
 	data["squad_coordination"] = last_coordination_result.duplicate(true)
 	data["squad_id"] = get_tactical_squad_id()
+	data["squad_role_id"] = get_tactical_squad_role_id()
+	data["squad_role_name"] = get_tactical_squad_role_name()
+	data["squad_role_assignment"] = squad_role_assignment.duplicate(true)
+	data["squad_role_context"] = RoleAllocator.get_squad_context(
+		get_tactical_squad_id()
+	)
 	data["owner_intent_signature"] = last_owner_intent_signature
 	data["decision_replay"] = _ensure_decision_recorder().get_debug_data()
 	return data

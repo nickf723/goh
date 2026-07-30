@@ -6,11 +6,12 @@ const PerformanceDockScript = preload(
 )
 
 var dock_replacement_pending: bool = false
+var performance_dock_installed: bool = false
 
 
 func _process(delta: float) -> void:
 	super._process(delta)
-	if not dock_replacement_pending:
+	if not performance_dock_installed and not dock_replacement_pending:
 		dock_replacement_pending = true
 		call_deferred("_ensure_performance_command_dock")
 
@@ -28,12 +29,14 @@ func _ensure_performance_command_dock() -> void:
 			and existing_script.resource_path
 			== "res://scripts/ui/quick_spell_belt_performance.gd"
 		):
+			performance_dock_installed = true
 			return
 		actor.remove_child(existing)
 		existing.queue_free()
 	var presentation: Node = PerformanceDockScript.new()
 	presentation.name = "QuickSpellBeltPresentation"
 	actor.add_child(presentation)
+	performance_dock_installed = true
 
 
 func is_ground_targeting_active() -> bool:
@@ -122,4 +125,5 @@ func get_input_mode_debug_data() -> Dictionary:
 			if is_ground_targeting_active()
 			else ("focus_library" if is_focus_open() else "camera")
 		),
+		"optimized_dock_installed": performance_dock_installed,
 	}

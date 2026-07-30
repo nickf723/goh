@@ -14,6 +14,9 @@ const LaneRegistry = preload(
 const ActionCandidate = preload(
 	"res://scripts/ai/tactical_action_candidate.gd"
 )
+const DecisionRecorderScript = preload(
+	"res://scripts/ai/tactical_decision_recorder.gd"
+)
 
 @export_group("Squad Coordination")
 @export var enable_squad_coordination: bool = true
@@ -22,8 +25,19 @@ const ActionCandidate = preload(
 @export_range(0.1, 2.0, 0.05) var lane_reservation_seconds: float = 0.55
 @export_range(0.1, 2.0, 0.05) var cover_request_seconds: float = 0.7
 
+@export_group("Decision Replay")
+@export_range(4, 128, 1) var decision_history_capacity: int = 48
+@export var record_tactical_decisions: bool = true
+
 var last_coordination_result: Dictionary = {}
 var coordination_frame: int = -1
+var decision_recorder: TacticalDecisionRecorder
+
+
+func _ready() -> void:
+	super._ready()
+	_ensure_decision_recorder()
+	add_to_group("tactical_decision_source")
 
 
 func _begin_tactical_evaluation() -> void:
@@ -54,16 +68,19 @@ func _finalize_tactical_decision(option: EnemyActionOption) -> void:
 	super._finalize_tactical_decision(option)
 	if not enable_squad_coordination:
 		last_coordination_result = {"enabled": false}
+		_record_tactical_frame("decision")
 		return
 	if option == null:
-		_release_coordination("no selected action")
+		_release_coordination("no selected action", false)
 		last_coordination_result = {
 			"enabled": true,
 			"reserved": false,
 			"reason": "No selected action",
 		}
+		_record_tactical_frame("decision")
 		return
 	_reserve_selected_option(option)
+	_record_tactical_frame("decision")
 
 
 func _reserve_selected_option(option: EnemyActionOption) -> void:
@@ -212,9 +229,29 @@ func _exit_tree() -> void:
 	_release_coordination("actor removed")
 
 
-func _release_coordination(reason: String) -> void:
+func _release_coordination(reason: String, record_release: bool = true) -> void:
 	var owner_id: int = actor.get_instance_id() if actor != null else get_instance_id()
-	Blackboard.release_owner(owner_id, reason, get_tactical_squad_id())
+	var target_id: int = player.get_instance_id() if player != null else 0
+	var released_count: int = Blackboard.release_owner(
+		owner_id,
+		reason,
+		get_tactical_squad_id()
+	)
+	last_coordination_result = {
+		"enabled": enable_squad_coordination,
+		"released": released_count,
+		"reason": reason,
+		"squad_id": get_tactical_squad_id(),
+		"owner_id": owner_id,
+		"target_id": target_id,
+		"blackboard": Blackboard.get_coordination_context(
+			get_tactical_squad_id(),
+			0,
+			target_id
+		),
+	}
+	if record_release:
+		_record_tactical_frame("coordination_release")
 
 
 func _candidate_uses_melee_lane(candidate: TacticalActionCandidate) -> bool:
@@ -244,6 +281,42 @@ func _first_opportunity(
 	return {}
 
 
+func _ensure_decision_recorder() -> TacticalDecisionRecorder:
+	if decision_recorder == null:
+		decision_recorder = DecisionRecorderScript.new().configure(
+			decision_history_capacity
+		)
+	return decision_recorder
+
+
+func _record_tactical_frame(event_name: String) -> void:
+	if not record_tactical_decisions:
+		return
+	var recorder: TacticalDecisionRecorder = _ensure_decision_recorder()
+	var source_id: int = actor.get_instance_id() if actor != null else get_instance_id()
+	var source_name: String = actor.name if actor != null else name
+	recorder.record_frame(
+		source_id,
+		source_name,
+		event_name,
+		last_tactical_decision,
+		last_coordination_result,
+		{
+			"state": str(state) if "state" in self else "unknown",
+			"selection": last_selection_summary,
+			"action_summary": last_action_summary,
+		}
+	)
+
+
+func get_tactical_decision_recorder() -> TacticalDecisionRecorder:
+	return _ensure_decision_recorder()
+
+
+func get_tactical_decision_timeline() -> Dictionary:
+	return _ensure_decision_recorder().to_dictionary()
+
+
 func get_coordination_debug_data() -> Dictionary:
 	return last_coordination_result.duplicate(true)
 
@@ -252,4 +325,5 @@ func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["squad_coordination"] = last_coordination_result.duplicate(true)
 	data["squad_id"] = get_tactical_squad_id()
+	data["decision_replay"] = _ensure_decision_recorder().get_debug_data()
 	return data

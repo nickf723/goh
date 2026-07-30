@@ -302,7 +302,7 @@ func _record_tactical_frame(event_name: String) -> void:
 		last_tactical_decision,
 		last_coordination_result,
 		{
-			"state": str(state) if "state" in self else "unknown",
+			"state": str(state),
 			"selection": last_selection_summary,
 			"action_summary": last_action_summary,
 		}

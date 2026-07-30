@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://scenes/levels/prototypes/prototype_elemental_reaction_lab_v1.tscn" id="1_lab"]
 [ext_resource type="PackedScene" path="res://scenes/levels/prototypes/environmental_chemistry_station_v1.tscn" id="2_station"]
+[ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator.gd" id="3_regen"]
 
 [node name="PrototypeEnvironmentalChemistryLab" type="Node3D"]
 
@@ -9,3 +10,9 @@
 
 [node name="EnvironmentalChemistryStation" parent="." instance=ExtResource("2_station")]
 position = Vector3(-8.4, 0, 13.0)
+
+[node name="LabResourceRegenerator" type="Node" parent="."]
+script = ExtResource("3_regen")
+mana_per_second = 18.0
+stamina_per_second = 10.0
+focus_per_second = 8.0

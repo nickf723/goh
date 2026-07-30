@@ -30,7 +30,10 @@ class_name ComboRule
 @export var exclusive_group: String = ""
 @export_range(1, 8, 1) var max_triggers_per_transaction: int = 1
 @export_range(0, 8, 1) var maximum_reaction_depth: int = 4
+# Whether this rule may be activated by damage produced by another reaction.
 @export var allow_reaction_payloads: bool = true
+# Whether this rule's own output damage may open another chemistry transaction.
+@export var output_triggers_reactions: bool = false
 # Stops lower-priority rules after this one resolves.
 @export var stop_after_match: bool = false
 # Prevents the incoming payload's direct status from being applied afterward.

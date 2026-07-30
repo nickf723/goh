@@ -30,6 +30,8 @@ const ClaimRegistry = preload(
 
 var last_reaction_plan: Dictionary = {}
 var last_coordination_result: Dictionary = {}
+var last_owner_intent_signature: String = ""
+var next_owner_intent_refresh_at: float = 0.0
 
 
 func bind_actor(actor: Node3D, owner: Node3D = null) -> void:
@@ -37,6 +39,8 @@ func bind_actor(actor: Node3D, owner: Node3D = null) -> void:
 	super.bind_actor(actor, owner)
 	last_reaction_plan.clear()
 	last_coordination_result.clear()
+	last_owner_intent_signature = ""
+	next_owner_intent_refresh_at = 0.0
 
 
 func _build_combat_intent(intent: AvatarActionIntent) -> void:
@@ -144,15 +148,32 @@ func _broadcast_owner_intent() -> void:
 	var tags: Array[String] = _get_owner_selected_spell_tags()
 	if tags.is_empty():
 		return
+	tags.sort()
+	var target_id: int = (
+		current_target.get_instance_id()
+		if current_target != null
+		else 0
+	)
+	var signature: String = ",".join(tags) + "@" + str(target_id)
+	var now_seconds: float = float(Time.get_ticks_msec()) / 1000.0
+	if (
+		signature == last_owner_intent_signature
+		and now_seconds < next_owner_intent_refresh_at
+	):
+		return
 	Blackboard.broadcast_intent(
 		get_tactical_squad_id(),
 		owner_actor.get_instance_id(),
 		owner_actor.name,
 		"selected_spell",
 		tags,
-		current_target.get_instance_id() if current_target != null else 0,
+		target_id,
 		owner_intent_seconds,
 		{"source": "Grace selected spell"}
+	)
+	last_owner_intent_signature = signature
+	next_owner_intent_refresh_at = (
+		now_seconds + maxf(owner_intent_seconds * 0.5, 0.1)
 	)
 
 
@@ -300,4 +321,5 @@ func get_debug_data() -> Dictionary:
 	)
 	data["squad_coordination"] = last_coordination_result.duplicate(true)
 	data["squad_id"] = get_tactical_squad_id()
+	data["owner_intent_signature"] = last_owner_intent_signature
 	return data

@@ -1,5 +1,4 @@
 extends "res://scripts/enemies/enemy_tactical_action_brain.gd"
-class_name EnemySquadTacticalActionBrain
 
 
 const Blackboard = preload(
@@ -20,9 +19,6 @@ const DecisionRecorderScript = preload(
 const RoleAllocator = preload(
 	"res://scripts/ai/squad_role_allocator.gd"
 )
-const RoleCatalog = preload(
-	"res://scripts/ai/squad_role_catalog.gd"
-)
 
 @export_group("Squad Coordination")
 @export var enable_squad_coordination: bool = true
@@ -41,7 +37,7 @@ const RoleCatalog = preload(
 
 var last_coordination_result: Dictionary = {}
 var coordination_frame: int = -1
-var decision_recorder: TacticalDecisionRecorder
+var decision_recorder: RefCounted = null
 var squad_role_assignment: Dictionary = {}
 
 
@@ -93,9 +89,7 @@ func _finalize_tactical_decision(option: EnemyActionOption) -> void:
 	super._finalize_tactical_decision(option)
 	last_tactical_decision["squad_role_id"] = get_tactical_squad_role_id()
 	last_tactical_decision["squad_role_name"] = get_tactical_squad_role_name()
-	last_tactical_decision["squad_role_assignment"] = (
-		squad_role_assignment.duplicate(true)
-	)
+	last_tactical_decision["squad_role_assignment"] = squad_role_assignment.duplicate(true)
 	if not enable_squad_coordination:
 		last_coordination_result = {
 			"enabled": false,
@@ -121,11 +115,8 @@ func _reserve_selected_option(option: EnemyActionOption) -> void:
 	var owner_id: int = actor.get_instance_id() if actor != null else get_instance_id()
 	var owner_name: String = actor.name if actor != null else name
 	var target_id: int = player.get_instance_id() if player != null else 0
-	var selected_value: Variant = last_tactical_decision.get("selected", {})
-	var selected: Dictionary = (
-		(selected_value as Dictionary).duplicate(true)
-		if selected_value is Dictionary
-		else {}
+	var selected: Dictionary = _dictionary(
+		last_tactical_decision.get("selected", {})
 	)
 	var opportunities: Array[Dictionary] = _dictionary_array(
 		selected.get("opportunities", [])
@@ -136,19 +127,20 @@ func _reserve_selected_option(option: EnemyActionOption) -> void:
 		"emergency_override"
 	)
 	if not emergency.is_empty():
-		var emergency_result: Dictionary = Blackboard.reserve_emergency(
-			get_tactical_squad_id(),
-			owner_id,
-			owner_name,
-			str(emergency.get("emergency_id", "emergency")),
-			0.5,
-			100.0,
-			{
-				"action": option.get_display_name(),
-				"squad_role": get_tactical_squad_role_id(),
-			}
+		result_rows.append(
+			Blackboard.reserve_emergency(
+				get_tactical_squad_id(),
+				owner_id,
+				owner_name,
+				str(emergency.get("emergency_id", "emergency")),
+				0.5,
+				100.0,
+				{
+					"action": option.get_display_name(),
+					"squad_role": get_tactical_squad_role_id(),
+				}
+			)
 		)
-		result_rows.append(emergency_result)
 	else:
 		var payoff: Dictionary = _first_opportunity(
 			opportunities,
@@ -245,7 +237,7 @@ func _reserve_selected_option(option: EnemyActionOption) -> void:
 
 func get_tactical_squad_id() -> String:
 	var configured: String = tactical_squad_id.strip_edges().to_lower()
-	if configured not in ["", "auto"]:
+	if configured != "" and configured != "auto":
 		return configured
 	if actor != null and actor.has_meta("tactical_squad_id"):
 		var metadata_value: String = str(actor.get_meta("tactical_squad_id"))
@@ -384,21 +376,21 @@ func _first_opportunity(
 	return {}
 
 
-func _ensure_decision_recorder() -> TacticalDecisionRecorder:
+func _ensure_decision_recorder() -> RefCounted:
 	if decision_recorder == null:
-		decision_recorder = DecisionRecorderScript.new().configure(
-			decision_history_capacity
-		)
+		decision_recorder = DecisionRecorderScript.new()
+		decision_recorder.call("configure", decision_history_capacity)
 	return decision_recorder
 
 
 func _record_tactical_frame(event_name: String) -> void:
 	if not record_tactical_decisions:
 		return
-	var recorder: TacticalDecisionRecorder = _ensure_decision_recorder()
+	var recorder: RefCounted = _ensure_decision_recorder()
 	var source_id: int = actor.get_instance_id() if actor != null else get_instance_id()
 	var source_name: String = actor.name if actor != null else name
-	recorder.record_frame(
+	recorder.call(
+		"record_frame",
 		source_id,
 		source_name,
 		event_name,
@@ -414,12 +406,13 @@ func _record_tactical_frame(event_name: String) -> void:
 	)
 
 
-func get_tactical_decision_recorder() -> TacticalDecisionRecorder:
+func get_tactical_decision_recorder() -> RefCounted:
 	return _ensure_decision_recorder()
 
 
 func get_tactical_decision_timeline() -> Dictionary:
-	return _ensure_decision_recorder().to_dictionary()
+	var value: Variant = _ensure_decision_recorder().call("to_dictionary")
+	return _dictionary(value)
 
 
 func get_coordination_debug_data() -> Dictionary:
@@ -436,5 +429,10 @@ func get_debug_data() -> Dictionary:
 	data["squad_role_context"] = RoleAllocator.get_squad_context(
 		get_tactical_squad_id()
 	)
-	data["decision_replay"] = _ensure_decision_recorder().get_debug_data()
+	var recorder_debug: Variant = _ensure_decision_recorder().call("get_debug_data")
+	data["decision_replay"] = _dictionary(recorder_debug)
 	return data
+
+
+func _dictionary(value: Variant) -> Dictionary:
+	return (value as Dictionary).duplicate(true) if value is Dictionary else {}

@@ -124,6 +124,12 @@ jobs:
       - name: Run squad tactical pairing test
         run: godot --headless --path . res://scenes/tests/squad_tactical_pairing_smoke_test.tscn
 
+      - name: Run tactical AI lab replay test
+        run: godot --headless --path . res://scenes/tests/tactical_ai_lab_replay_smoke_test.tscn
+
+      - name: Run tactical AI Control Center test
+        run: godot --headless --path . res://scenes/tests/tactical_ai_control_center_smoke_test.tscn
+
       - name: Run portrait-driven player HUD v2 test
         run: godot --headless --path . res://scenes/tests/player_hud_v2_smoke_test.tscn
 

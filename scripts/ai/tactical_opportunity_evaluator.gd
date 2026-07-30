@@ -1,6 +1,7 @@
 extends RefCounted
 class_name TacticalOpportunityEvaluator
 
+
 const ReactionCatalog = preload(
 	"res://scripts/systems/reaction_rule_catalog.gd"
 )
@@ -10,11 +11,16 @@ const StatePolicy = preload(
 
 const REACTION_BASE_SCORE: float = 10.0
 const SETUP_BASE_SCORE: float = 6.5
+const RESERVED_PAYOFF_PENALTY: float = 18.0
+const RESERVED_SETUP_PENALTY: float = 9.0
+const PAIRED_SETUP_BONUS: float = 4.0
 const REDUNDANT_STATE_PENALTY: float = 4.5
 const FRIENDLY_FIRE_PENALTY: float = 18.0
 const DANGER_APPROACH_PENALTY: float = 13.0
 const DANGER_RETREAT_BONUS: float = 7.5
 const LOW_HEALTH_DEFENSE_BONUS: float = 10.0
+const EMERGENCY_DEFENSE_BONUS: float = 18.0
+const OCCUPIED_LANE_PENALTY: float = 16.0
 
 
 static func evaluate(
@@ -45,6 +51,12 @@ static func evaluate(
 	var claimed_reactions: Array[String] = _strings(
 		snapshot.get("claimed_reactions", [])
 	)
+	var claimed_setup_reactions: Array[String] = _strings(
+		snapshot.get("claimed_setup_reactions", [])
+	)
+	var claimed_payoff_reactions: Array[String] = _strings(
+		snapshot.get("claimed_payoff_reactions", claimed_reactions)
+	)
 
 	for rule: Resource in ReactionCatalog.get_rules():
 		if rule == null:
@@ -57,7 +69,14 @@ static func evaluate(
 		var rule_id: String = str(rule.get("rule_id"))
 		var priority: int = int(rule.get("priority"))
 		var reaction_score: float = REACTION_BASE_SCORE + float(priority) * 0.035
-		if claimed_reactions.has(reaction_id) or claimed_reactions.has(rule_id):
+		if (
+			claimed_payoff_reactions.has(reaction_id)
+			or claimed_payoff_reactions.has(rule_id)
+		):
+			reaction_score -= RESERVED_PAYOFF_PENALTY
+			penalties.append("Squad payoff already reserved: " + reaction_id)
+			valid = false
+		elif claimed_reactions.has(reaction_id) or claimed_reactions.has(rule_id):
 			reaction_score -= 6.0
 			penalties.append("An ally already claimed " + reaction_id)
 		if relation == "ally" and candidate.has_capability("damage"):
@@ -82,6 +101,10 @@ static func evaluate(
 		preferred_tags,
 		_strings(snapshot.get("available_followup_tags", []))
 	)
+	_append_many(
+		preferred_tags,
+		_strings(snapshot.get("squad_intent_tags", []))
+	)
 	if not preferred_tags.is_empty():
 		for rule: Resource in ReactionCatalog.get_rules():
 			if rule == null:
@@ -90,7 +113,28 @@ static func evaluate(
 				continue
 			if not _tags_match_rule(preferred_tags, rule):
 				continue
-			var setup_score: float = SETUP_BASE_SCORE + float(int(rule.get("priority"))) * 0.02
+			var reaction_id: String = str(rule.get("reaction_id"))
+			var rule_id: String = str(rule.get("rule_id"))
+			var setup_score: float = (
+				SETUP_BASE_SCORE + float(int(rule.get("priority"))) * 0.02
+			)
+			if (
+				claimed_setup_reactions.has(reaction_id)
+				or claimed_setup_reactions.has(rule_id)
+			):
+				setup_score -= RESERVED_SETUP_PENALTY
+				penalties.append("Squad setup already reserved: " + reaction_id)
+				valid = false
+			elif (
+				claimed_payoff_reactions.has(reaction_id)
+				or claimed_payoff_reactions.has(rule_id)
+			):
+				setup_score += PAIRED_SETUP_BONUS
+				reasons.append(
+					"Complete the reserved "
+					+ str(rule.get("reaction_name"))
+					+ " plan"
+				)
 			score += setup_score
 			reasons.append(
 				"Set up " + str(rule.get("reaction_name"))
@@ -98,8 +142,8 @@ static func evaluate(
 			)
 			opportunities.append({
 				"type": "reaction_setup",
-				"rule_id": str(rule.get("rule_id")),
-				"reaction_id": str(rule.get("reaction_id")),
+				"rule_id": rule_id,
+				"reaction_id": reaction_id,
 				"reaction_name": str(rule.get("reaction_name")),
 				"score": setup_score,
 			})
@@ -111,16 +155,40 @@ static func evaluate(
 			penalties.append("Target already has " + normalized)
 
 	var actor_health: float = float(actor.get("health_fraction", 1.0))
-	if actor_health <= 0.35:
+	if actor_health <= 0.2 and candidate.has_capability("defense"):
+		score += EMERGENCY_DEFENSE_BONUS
+		reasons.append("Emergency survival overrides the current squad plan")
+		opportunities.append({
+			"type": "emergency_override",
+			"emergency_id": "critical_defense",
+			"score": EMERGENCY_DEFENSE_BONUS,
+		})
+	elif actor_health <= 0.35:
 		if candidate.has_capability("defense"):
 			score += LOW_HEALTH_DEFENSE_BONUS
 			reasons.append("Low health favors defense")
-		elif candidate.movement_mode == "away_from_target" or candidate.has_tag("retreat"):
+		elif (
+			candidate.movement_mode == "away_from_target"
+			or candidate.has_tag("retreat")
+		):
 			score += LOW_HEALTH_DEFENSE_BONUS * 0.8
 			reasons.append("Low health favors retreat")
 		elif candidate.has_capability("damage"):
 			score -= 2.0
 			penalties.append("Aggression is risky at low health")
+
+	var target_id: int = int(target.get("instance_id", 0))
+	var occupied_lanes: Array[String] = _strings(
+		snapshot.get("occupied_engagement_lanes", [])
+	)
+	if _requires_approach(candidate) and _lane_is_occupied(
+		occupied_lanes,
+		"melee",
+		target_id
+	):
+		score -= OCCUPIED_LANE_PENALTY
+		penalties.append("The squad melee lane is already occupied")
+		valid = false
 
 	var path_danger: Dictionary = _dictionary(snapshot.get("path_danger", {}))
 	var path_blocked: bool = bool(path_danger.get("blocked", false))
@@ -132,7 +200,10 @@ static func evaluate(
 			if float(path_danger.get("maximum_severity", 0.0)) >= 1.0:
 				valid = false
 				penalties.append("Severe hazard vetoes direct approach")
-		elif candidate.movement_mode == "away_from_target" or candidate.has_tag("retreat"):
+		elif (
+			candidate.movement_mode == "away_from_target"
+			or candidate.has_tag("retreat")
+		):
 			score += DANGER_RETREAT_BONUS
 			reasons.append("Retreat exits dangerous terrain")
 		elif candidate.has_tag("ranged") or candidate.has_tag("projectile"):
@@ -146,7 +217,11 @@ static func evaluate(
 			valid = false
 
 	var target_health: float = float(target.get("health_fraction", 1.0))
-	if relation == "hostile" and target_health <= 0.2 and candidate.has_capability("damage"):
+	if (
+		relation == "hostile"
+		and target_health <= 0.2
+		and candidate.has_capability("damage")
+	):
 		score += 2.5
 		reasons.append("Finish a weakened target")
 
@@ -232,6 +307,21 @@ static func _requires_approach(candidate: TacticalActionCandidate) -> bool:
 	if candidate.has_tag("melee") and not candidate.has_tag("projectile"):
 		return true
 	return candidate.maximum_distance <= 2.5
+
+
+static func _lane_is_occupied(
+	lanes: Array[String],
+	lane_id: String,
+	target_id: int
+) -> bool:
+	var exact: String = lane_id.strip_edges().to_lower() + "@" + str(target_id)
+	for lane: String in lanes:
+		var normalized: String = lane.strip_edges().to_lower()
+		if normalized == exact:
+			return true
+		if target_id == 0 and normalized.begins_with(lane_id + "@"):
+			return true
+	return false
 
 
 static func _describe_target_state(rule: Resource) -> String:

@@ -44,7 +44,10 @@ static func get_preview_summary(
 	ability: AbilityDefinition,
 	runtime_config: Dictionary = {}
 ) -> Dictionary:
-	var profile: SpellTargetingProfile = build_profile(ability, runtime_config)
+	var profile: SpellTargetingProfile = build_profile(
+		ability,
+		runtime_config
+	)
 	return {
 		"profile_id": profile.profile_id,
 		"shape": profile.get_shape_name(),
@@ -71,8 +74,30 @@ static func _get_authored_profile(
 		var profile_value: Variant = ability.call("get_targeting_profile")
 		if profile_value is SpellTargetingProfile:
 			return profile_value as SpellTargetingProfile
-	var raw_profile: Variant = ability.get("targeting_profile")
-	return raw_profile as SpellTargetingProfile if raw_profile is SpellTargetingProfile else null
+	var raw_profile: Variant = _get_property_if_present(
+		ability,
+		"targeting_profile"
+	)
+	return (
+		raw_profile as SpellTargetingProfile
+		if raw_profile is SpellTargetingProfile
+		else null
+	)
+
+
+static func _get_property_if_present(
+	object: Object,
+	property_name: String
+) -> Variant:
+	if object == null:
+		return null
+	for property_value: Variant in object.get_property_list():
+		if not property_value is Dictionary:
+			continue
+		var property: Dictionary = property_value as Dictionary
+		if str(property.get("name", "")) == property_name:
+			return object.get(property_name)
+	return null
 
 
 static func _apply_inference(
@@ -80,16 +105,31 @@ static func _apply_inference(
 	ability: AbilityDefinition,
 	config: Dictionary
 ) -> void:
-	var explicit_shape: bool = config.has("shape") or config.has("preview_shape")
-	var explicit_placement: bool = config.has("placement") or config.has("placement_mode")
+	var explicit_shape: bool = (
+		config.has("shape") or config.has("preview_shape")
+	)
+	var explicit_placement: bool = (
+		config.has("placement") or config.has("placement_mode")
+	)
+	var explicit_color: bool = (
+		config.has("valid_color") or config.has("disc_color")
+	)
 	var targeting_style: String = ""
 	var delivery_type: String = ""
 	if ability != null:
 		targeting_style = ability.get_targeting_style().to_lower()
 		delivery_type = ability.get_delivery_type().to_lower()
 
-	if not explicit_shape and profile.preview_shape == SpellTargetingProfile.PreviewShape.POINT:
-		profile.preview_shape = _infer_shape(targeting_style, delivery_type, config)
+	if (
+		not explicit_shape
+		and profile.preview_shape
+		== SpellTargetingProfile.PreviewShape.POINT
+	):
+		profile.preview_shape = _infer_shape(
+			targeting_style,
+			delivery_type,
+			config
+		)
 	if not explicit_placement:
 		profile.placement_mode = _infer_placement(
 			profile.preview_shape,
@@ -103,16 +143,27 @@ static func _apply_inference(
 	]:
 		profile.radius = float(config.get("radius", profile.radius))
 	if profile.preview_shape == SpellTargetingProfile.PreviewShape.LINE:
-		profile.length = float(config.get("length", profile.maximum_range))
+		profile.length = float(
+			config.get("length", profile.maximum_range)
+		)
 	if profile.preview_shape == SpellTargetingProfile.PreviewShape.CONE:
-		profile.length = float(config.get("length", profile.maximum_range))
+		profile.length = float(
+			config.get("length", profile.maximum_range)
+		)
 
-	if profile.placement_mode == SpellTargetingProfile.PlacementMode.FREE_GROUND:
+	if (
+		profile.placement_mode
+		== SpellTargetingProfile.PlacementMode.FREE_GROUND
+	):
 		profile.require_ground = bool(config.get("require_ground", true))
 		profile.clamp_to_range = bool(config.get("clamp_to_range", true))
 
 	if ability != null:
-		profile.valid_color = _element_color(ability.element, profile.valid_color)
+		if not explicit_color:
+			profile.valid_color = _element_color(
+				ability.element,
+				profile.valid_color
+			)
 		if profile.preview_label == "":
 			profile.preview_label = ability.display_name
 
@@ -122,7 +173,10 @@ static func _infer_shape(
 	delivery_type: String,
 	config: Dictionary
 ) -> int:
-	if config.has("radius") and float(config.get("radius", 0.0)) > 0.0:
+	if (
+		config.has("radius")
+		and float(config.get("radius", 0.0)) > 0.0
+	):
 		return SpellTargetingProfile.PreviewShape.CIRCLE
 	match targeting_style:
 		"ground", "ground_aoe", "area", "aoe", "field", "trap":
@@ -164,7 +218,12 @@ static func _infer_placement(
 			return SpellTargetingProfile.PlacementMode.BALLISTIC
 		_:
 			pass
-	if targeting_style in ["ground", "ground_aoe", "field", "trap"]:
+	if targeting_style in [
+		"ground",
+		"ground_aoe",
+		"field",
+		"trap",
+	]:
 		return SpellTargetingProfile.PlacementMode.FREE_GROUND
 	if delivery_type in ["lob", "ballistic"]:
 		return SpellTargetingProfile.PlacementMode.BALLISTIC
@@ -173,22 +232,40 @@ static func _infer_placement(
 
 static func _normalize(profile: SpellTargetingProfile) -> void:
 	profile.maximum_range = maxf(profile.maximum_range, 0.0)
+	var minimum_ceiling: float = (
+		profile.maximum_range
+		if profile.maximum_range > 0.0
+		else profile.minimum_range
+	)
 	profile.minimum_range = clampf(
 		profile.minimum_range,
 		0.0,
-		profile.maximum_range if profile.maximum_range > 0.0 else profile.minimum_range
+		minimum_ceiling
 	)
 	profile.radius = maxf(profile.radius, 0.05)
 	profile.length = maxf(profile.length, 0.05)
 	profile.width = maxf(profile.width, 0.05)
-	profile.angle_degrees = clampf(profile.angle_degrees, 1.0, 179.0)
+	profile.angle_degrees = clampf(
+		profile.angle_degrees,
+		1.0,
+		179.0
+	)
+	var initial_ceiling: float = (
+		profile.maximum_range
+		if profile.maximum_range > 0.0
+		else profile.initial_distance
+	)
 	profile.initial_distance = clampf(
 		profile.initial_distance,
 		profile.minimum_range,
-		profile.maximum_range if profile.maximum_range > 0.0 else profile.initial_distance
+		initial_ceiling
 	)
 	profile.cursor_speed = maxf(profile.cursor_speed, 0.1)
-	profile.input_deadzone = clampf(profile.input_deadzone, 0.0, 0.95)
+	profile.input_deadzone = clampf(
+		profile.input_deadzone,
+		0.0,
+		0.95
+	)
 	profile.fill_alpha = clampf(profile.fill_alpha, 0.0, 1.0)
 	profile.outline_alpha = clampf(profile.outline_alpha, 0.0, 1.0)
 
@@ -199,7 +276,10 @@ static func _get_profile_id(ability: AbilityDefinition) -> String:
 	return ability.get_spell_id() + "_targeting"
 
 
-static func _element_color(element: String, fallback: Color) -> Color:
+static func _element_color(
+	element: String,
+	fallback: Color
+) -> Color:
 	match element.to_lower():
 		"water":
 			return Color(0.16, 0.48, 0.95, 1.0)

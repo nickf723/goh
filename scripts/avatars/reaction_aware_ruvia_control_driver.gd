@@ -16,7 +16,7 @@ const SpellLibrary = preload(
 
 @export_group("Reaction Coordination")
 @export_range(0.0, 20.0, 0.5) var reaction_override_threshold: float = 7.0
-@export var reaction_spell_ids: Array[String] = [FIREBOLT, FIRE_FIELD]
+@export var reaction_spell_ids: Array[String] = ["firebolt", "fire_field"]
 
 var last_reaction_plan: Dictionary = {}
 
@@ -28,7 +28,7 @@ func _build_combat_intent(intent: AvatarActionIntent) -> void:
 	var candidates: Array[TacticalActionCandidate] = []
 	for record: Dictionary in SpellLibrary.get_records(reaction_spell_ids):
 		var candidate: TacticalActionCandidate = ActionCandidate.from_spell_record(record)
-		candidate.base_score = 1.5 if candidate.action_id == FIREBOLT else 0.5
+		candidate.base_score = 1.5 if candidate.action_id == "firebolt" else 0.5
 		candidate.current_distance = last_target_distance
 		candidate.affordable = spell_cooldown_remaining <= 0.0
 		candidates.append(candidate)
@@ -69,6 +69,8 @@ func _can_consider_reaction_override(intent: AvatarActionIntent) -> bool:
 	if not is_instance_valid(controlled_actor) or not is_instance_valid(current_target):
 		return false
 	if spell_cooldown_remaining > 0.0:
+		return false
+	if decision_remaining > 0.0 or post_action_reassessment_remaining > 0.0:
 		return false
 	if last_target_distance < 0.0 or last_target_distance > spell_range:
 		return false

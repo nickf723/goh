@@ -151,14 +151,19 @@ func _get_feature_errors(feature_id: String) -> Array[String]:
 	if feature_id != str(TACTICAL_AI_LAB_FEATURE.get("id", "")):
 		return FeatureRegistryScript.get_feature_errors(feature_id, registry_result)
 	var errors: Array[String] = []
-	for field_name: String in ["scene", "manual_test"]:
-		var path: String = str(TACTICAL_AI_LAB_FEATURE.get(field_name, ""))
-		if path == "" or not ResourceLoader.exists(path):
-			errors.append(field_name + " is unavailable: " + path)
+	var scene_path: String = str(TACTICAL_AI_LAB_FEATURE.get("scene", ""))
+	if scene_path == "" or not ResourceLoader.exists(scene_path):
+		errors.append("scene is unavailable: " + scene_path)
 	for path_value: Variant in TACTICAL_AI_LAB_FEATURE.get("automated_tests", []):
 		var path: String = str(path_value)
 		if not ResourceLoader.exists(path):
 			errors.append("automated test is unavailable: " + path)
+	var manual_path: String = str(TACTICAL_AI_LAB_FEATURE.get("manual_test", ""))
+	var resolved_manual_path: String = (
+		manual_path if manual_path.begins_with("res://") else "res://" + manual_path
+	)
+	if manual_path == "" or not FileAccess.file_exists(resolved_manual_path):
+		errors.append("manual test is unavailable: " + manual_path)
 	return errors
 
 

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SquadRoleProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/squad_role_profile.gd" id="1_role"]
+
+[resource]
+script = ExtResource("1_role")
+role_id = "generalist"
+display_name = "Generalist"
+description = "Flexible squad member that accepts whichever action is locally useful."
+assignment_priority = -1.0
+maximum_per_squad = 12
+duplicate_penalty = 0.0
+preferred_capabilities = Array[String](["damage", "control", "defense", "movement", "utility"])
+capability_bonus = 0.35
+tag_bonus = 0.0
+opportunity_bonus = 0.5
+action_kind_bonus = 0.0
+movement_bonus = 0.0
+discouraged_penalty = 0.0

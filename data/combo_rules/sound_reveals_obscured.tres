@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ComboRule" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+
+[resource]
+script = ExtResource("1_combo_rule")
+rule_id = "sound_x_obscured"
+display_name = "Resonant Reveal"
+description = "Sound resolves concealment into a temporary revealed state."
+incoming_tags = Array[String](["sound"])
+target_statuses = Array[String](["obscured"])
+priority = 72
+exclusive_group = "visibility_resolution"
+consume_incoming_status = false
+reaction_id = "resonant_reveal"
+reaction_name = "Resonant Reveal"
+feedback_text = "{target} is outlined by the returning sound."
+visual_style = "reveal"
+visual_color = Color(1, 0.56, 0.12, 1)
+visual_radius = 1.8
+visual_duration = 0.5
+output_status = "revealed"
+output_status_duration = 4.0
+output_status_strength = 1.0
+output_status_source = "sound_x_obscured"
+remove_statuses = Array[String](["obscured"])
+output_element = "sound"
+output_source_name = "Resonant Reveal"
+output_tags = Array[String](["sound", "reveal", "detection", "reaction"])
+debug_tags = Array[String](["elemental", "detection", "sound"])
+design_notes = "Provides a status-level contract now; RevealableReceiver presentation can consume the revealed status later."

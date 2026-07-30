@@ -20,6 +20,7 @@ const ActionCandidate = preload(
 @export var tactical_squad_id: String = "auto"
 @export_range(0.1, 3.0, 0.05) var reaction_reservation_seconds: float = 0.9
 @export_range(0.1, 2.0, 0.05) var lane_reservation_seconds: float = 0.55
+@export_range(0.1, 2.0, 0.05) var cover_request_seconds: float = 0.7
 
 var last_coordination_result: Dictionary = {}
 var coordination_frame: int = -1
@@ -144,6 +145,19 @@ func _reserve_selected_option(option: EnemyActionOption) -> void:
 				{"action": option.get_display_name()}
 			)
 		)
+	if _candidate_requests_cover(candidate):
+		result_rows.append(
+			Blackboard.broadcast_intent(
+				get_tactical_squad_id(),
+				owner_id,
+				owner_name,
+				"cover_request",
+				["cover_requested"],
+				target_id,
+				cover_request_seconds,
+				{"action": option.get_display_name()}
+			)
+		)
 	last_coordination_result = {
 		"enabled": true,
 		"squad_id": get_tactical_squad_id(),
@@ -209,6 +223,15 @@ func _candidate_uses_melee_lane(candidate: TacticalActionCandidate) -> bool:
 	if candidate.has_tag("melee") and not candidate.has_tag("projectile"):
 		return true
 	return candidate.maximum_distance <= 2.5
+
+
+func _candidate_requests_cover(candidate: TacticalActionCandidate) -> bool:
+	if candidate == null:
+		return false
+	return (
+		candidate.movement_mode == "away_from_target"
+		or candidate.has_tag("retreat")
+	)
 
 
 func _first_opportunity(

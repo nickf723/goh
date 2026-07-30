@@ -18,9 +18,11 @@ var total_blocked_statuses: int = 0
 
 func _ready() -> void:
 	actor = get_parent()
-	authority_controller = actor.get_node_or_null(
-		"ElementalAuthorityController"
-	) as PlayerElementalAuthorityController if actor != null else null
+	authority_controller = null
+	if actor != null:
+		authority_controller = actor.get_node_or_null(
+			"ElementalAuthorityController"
+		) as PlayerElementalAuthorityController
 	var receiver_group: String = get_receiver_group()
 	if receiver_group != "":
 		add_to_group(receiver_group)

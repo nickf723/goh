@@ -68,9 +68,10 @@ func cycle_quick_spell(direction: int) -> bool:
 	if ability_caster == null or resolved_favorite_indices.is_empty() or direction == 0:
 		_show_message("No quick spells are configured.")
 		return false
+	var direction_sign: int = 1 if direction > 0 else -1
 	for step: int in range(1, QUICK_SPELL_SLOT_COUNT + 1):
 		var candidate: int = posmod(
-			selected_favorite_cursor + step * signi(direction),
+			selected_favorite_cursor + step * direction_sign,
 			QUICK_SPELL_SLOT_COUNT
 		)
 		if candidate >= resolved_favorite_indices.size():
@@ -222,7 +223,7 @@ func _find_first_occupied_slot() -> int:
 	return 0
 
 
-func get_quick_spell_names() -> Array[String]:
+func get_all_quick_spell_names() -> Array[String]:
 	_refresh_favorite_indices()
 	var names: Array[String] = []
 	var loadout: AbilityLoadout = _get_current_loadout()
@@ -236,8 +237,16 @@ func get_quick_spell_names() -> Array[String]:
 	return names
 
 
+func get_quick_spell_names() -> Array[String]:
+	var window_rows: Array[Dictionary] = get_quick_spell_window_rows()
+	var names: Array[String] = []
+	for row: Dictionary in window_rows:
+		names.append(str(row.get("name", "Empty")))
+	return names
+
+
 func get_quick_spell_slot_rows() -> Array[Dictionary]:
-	var names: Array[String] = get_quick_spell_names()
+	var names: Array[String] = get_all_quick_spell_names()
 	var spell_ids: Array[String] = _get_saved_spell_ids()
 	var rows: Array[Dictionary] = []
 	for slot_index: int in range(QUICK_SPELL_SLOT_COUNT):
@@ -269,7 +278,7 @@ func get_quick_spell_window_rows() -> Array[Dictionary]:
 
 
 func get_selected_quick_spell_name() -> String:
-	var names: Array[String] = get_quick_spell_names()
+	var names: Array[String] = get_all_quick_spell_names()
 	if names.is_empty():
 		return "None"
 	return names[clampi(selected_favorite_cursor, 0, names.size() - 1)]

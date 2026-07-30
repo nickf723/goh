@@ -8,11 +8,13 @@ var actor: CharacterBody3D
 var hud: PlayerHUDV2
 var router: Node
 var belt_panel: PanelContainer
+var belt_hint_label: Label
 var slot_panels: Array[PanelContainer] = []
 var slot_labels: Array[Label] = []
 var reveal_remaining: float = 0.0
 var display_alpha: float = 0.0
 var setup_complete: bool = false
+var focus_assignment_visible: bool = false
 
 
 func _ready() -> void:
@@ -40,9 +42,28 @@ func _process(delta: float) -> void:
 		return
 	_refresh_compact_window()
 	_refresh_all_slots()
-	if reveal_remaining > 0.0:
+	focus_assignment_visible = (
+		router != null
+		and router.has_method("is_focus_open")
+		and bool(router.call("is_focus_open"))
+	)
+	if reveal_remaining > 0.0 and not focus_assignment_visible:
 		reveal_remaining = maxf(reveal_remaining - maxf(delta, 0.0), 0.0)
-	var target_alpha: float = 1.0 if reveal_remaining > 0.0 else 0.0
+	if belt_hint_label != null:
+		belt_hint_label.text = (
+			"FOCUS  •  PRESS 1–0 TO ASSIGN THE SELECTED SPELL"
+			if focus_assignment_visible
+			else "QUICK SPELLS  •  1–0 SELECT"
+		)
+		belt_hint_label.add_theme_color_override(
+			"font_color",
+			Color(1.0, 0.74, 0.28, 1.0)
+			if focus_assignment_visible
+			else Color(0.64, 0.74, 0.9, 0.9)
+		)
+	var target_alpha: float = (
+		1.0 if focus_assignment_visible or reveal_remaining > 0.0 else 0.0
+	)
 	display_alpha = move_toward(
 		display_alpha,
 		target_alpha,
@@ -86,7 +107,7 @@ func _build_belt() -> void:
 	belt_panel.anchor_right = 0.5
 	belt_panel.anchor_bottom = 1.0
 	belt_panel.offset_left = -445.0
-	belt_panel.offset_top = -118.0
+	belt_panel.offset_top = -142.0
 	belt_panel.offset_right = 445.0
 	belt_panel.offset_bottom = -34.0
 	belt_panel.visible = false
@@ -105,14 +126,28 @@ func _build_belt() -> void:
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 11)
 	margin.add_theme_constant_override("margin_right", 11)
-	margin.add_theme_constant_override("margin_top", 9)
+	margin.add_theme_constant_override("margin_top", 8)
 	margin.add_theme_constant_override("margin_bottom", 9)
 	belt_panel.add_child(margin)
+
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 6)
+	margin.add_child(stack)
+
+	belt_hint_label = Label.new()
+	belt_hint_label.text = "QUICK SPELLS  •  1–0 SELECT"
+	belt_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	belt_hint_label.add_theme_font_size_override("font_size", 10)
+	belt_hint_label.add_theme_color_override(
+		"font_color",
+		Color(0.64, 0.74, 0.9, 0.9)
+	)
+	stack.add_child(belt_hint_label)
 
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 6)
-	margin.add_child(row)
+	stack.add_child(row)
 
 	for slot_index: int in range(10):
 		var slot_panel := PanelContainer.new()
@@ -265,5 +300,6 @@ func get_debug_data() -> Dictionary:
 		"setup_complete": setup_complete,
 		"slot_count": slot_labels.size(),
 		"visible": belt_panel != null and belt_panel.visible,
+		"focus_assignment_visible": focus_assignment_visible,
 		"reveal_remaining": snappedf(reveal_remaining, 0.01),
 	}

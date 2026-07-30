@@ -9,7 +9,7 @@ const ActionCandidate = preload(
 	"res://scripts/ai/tactical_action_candidate.gd"
 )
 const Evaluator = preload(
-	"res://scripts/ai/squad_tactical_opportunity_evaluator.gd"
+	"res://scripts/ai/role_aware_squad_tactical_evaluator.gd"
 )
 
 @export_group("Reaction Tactics")
@@ -66,6 +66,18 @@ func score_action_option(option: EnemyActionOption, distance: float) -> float:
 		"opportunities": _dictionary_array(
 			evaluation.get("opportunities", [])
 		),
+		"squad_role_id": str(
+			evaluation.get(
+				"squad_role_id",
+				tactical_snapshot.get("squad_role_id", "generalist")
+			)
+		),
+		"squad_role_name": str(
+			evaluation.get("squad_role_name", "Generalist")
+		),
+		"squad_role_score": float(
+			evaluation.get("squad_role_score", 0.0)
+		),
 	}
 	return total_score
 
@@ -117,6 +129,10 @@ func _finalize_tactical_decision(option: EnemyActionOption) -> void:
 		"candidates": rows,
 		"target_statuses": _snapshot_strings("target", "statuses"),
 		"path_danger": tactical_snapshot.get("path_danger", {}),
+		"squad_role_id": str(
+			tactical_snapshot.get("squad_role_id", "generalist")
+		),
+		"squad_roles": tactical_snapshot.get("squad_roles", []),
 	}
 
 

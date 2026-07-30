@@ -44,9 +44,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key_event: InputEventKey = event as InputEventKey
 	if not key_event.pressed or key_event.echo:
 		return
-	var key: Key = key_event.physical_keycode as Key
+	var key: Key = key_event.physical_keycode
 	if key == KEY_NONE:
-		key = key_event.keycode as Key
+		key = key_event.keycode
 	if key == telemetry_toggle_key:
 		set_telemetry_visible(not telemetry_visible)
 		get_viewport().set_input_as_handled()

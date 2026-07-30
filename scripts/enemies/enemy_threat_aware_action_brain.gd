@@ -1,4 +1,4 @@
-extends "res://scripts/enemies/enemy_action_selection_brain.gd"
+extends "res://scripts/enemies/enemy_tactical_action_brain.gd"
 class_name EnemyThreatAwareActionBrain
 
 @export_group("Threat Awareness")

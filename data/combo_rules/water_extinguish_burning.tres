@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ComboRule" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/combo_rule.gd" id="1_combo_rule"]
+
+[resource]
+script = ExtResource("1_combo_rule")
+rule_id = "water_x_burning"
+display_name = "Quench"
+description = "Water collapses an active burning state into a brief steam veil."
+incoming_tags = Array[String](["water"])
+target_statuses = Array[String](["burning"])
+priority = 95
+exclusive_group = "temperature_resolution"
+consume_incoming_status = true
+reaction_id = "quench"
+reaction_name = "Quench"
+feedback_text = "{target}'s flames collapse into steam."
+visual_style = "steam"
+visual_color = Color(0.72, 0.9, 1, 1)
+visual_radius = 1.45
+visual_duration = 0.48
+output_status = "steamed"
+output_status_duration = 1.4
+output_status_strength = 1.0
+output_status_source = "water_x_burning"
+remove_statuses = Array[String](["burning"])
+output_element = "water"
+output_source_name = "Quench"
+output_tags = Array[String](["water", "steam", "quench", "reaction"])
+debug_tags = Array[String](["elemental", "temperature", "water", "fire"])
+design_notes = "Resolves before direct Wet application, and consumes that incoming status so the result is Steam rather than Wet plus Steam."

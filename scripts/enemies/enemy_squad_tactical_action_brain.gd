@@ -194,7 +194,7 @@ func _release_coordination(reason: String) -> void:
 
 
 func _candidate_uses_melee_lane(candidate: TacticalActionCandidate) -> bool:
-	if candidate == null:
+	if candidate == null or candidate.action_kind != "attack":
 		return false
 	if candidate.has_tag("melee") and not candidate.has_tag("projectile"):
 		return true

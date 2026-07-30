@@ -19,7 +19,7 @@
 [ext_resource type="Script" path="res://scripts/player/player_action_state.gd" id="17_action_state"]
 [ext_resource type="Script" path="res://scripts/avatars/manifested_dodge_controller.gd" id="18_dodge"]
 [ext_resource type="Resource" path="res://data/avatars/ruvia_dodge_motion_profile.tres" id="19_dodge_profile"]
-[ext_resource type="Script" path="res://scripts/avatars/ruvia_manifestation_control_driver.gd" id="20_driver"]
+[ext_resource type="Script" path="res://scripts/avatars/reaction_aware_ruvia_control_driver.gd" id="20_driver"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_manifested"]
 radius = 0.42

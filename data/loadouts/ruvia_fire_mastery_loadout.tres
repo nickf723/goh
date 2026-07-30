@@ -7,6 +7,6 @@
 
 [resource]
 script = ExtResource("2_loadout")
-quick_slot_count = 8
+quick_slot_count = 10
 learned_abilities = Array[ExtResource("1_ability")]([ExtResource("3_firebolt"), ExtResource("4_fire_field")])
 equipped_abilities = Array[ExtResource("1_ability")]([ExtResource("3_firebolt"), ExtResource("4_fire_field")])

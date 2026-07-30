@@ -24,9 +24,13 @@ static func begin(
 	var transaction := ReactionTransaction.new()
 	transaction.maximum_depth = maxi(maximum_reaction_depth, 0)
 	transaction.transaction_id = _make_transaction_id(payload, target)
-	transaction.depth = 0
+	transaction.depth = payload.reaction_depth if payload != null else 0
 	transaction.target_snapshot = target_state.duplicate(true)
 	transaction.source_payload_summary = _summarize_payload(payload)
+	if payload != null:
+		for rule_id: String in payload.reaction_history:
+			if rule_id != "":
+				transaction.triggered_rules.append(rule_id)
 	return transaction
 
 
@@ -36,8 +40,11 @@ func can_trigger(
 	max_triggers: int = 1,
 	exclusive_group: String = ""
 ) -> bool:
-	if depth > maximum_depth:
+	if depth >= maximum_depth:
 		record_suppressed(rule_id, target, "reaction depth limit")
+		return false
+	if triggered_rules.has(rule_id):
+		record_suppressed(rule_id, target, "rule already exists in payload lineage")
 		return false
 	var key: String = make_rule_target_key(rule_id, target)
 	if int(triggered_keys.get(key, 0)) >= maxi(max_triggers, 1):
@@ -91,6 +98,8 @@ func get_debug_data() -> Dictionary:
 
 
 static func _make_transaction_id(payload: DamagePayload, target: Node) -> String:
+	if payload != null and payload.reaction_chain_id != "":
+		return payload.reaction_chain_id
 	var number: int = next_transaction_number
 	next_transaction_number += 1
 	var source_name: String = payload.source_name if payload != null else "payload"
@@ -116,4 +125,5 @@ static func _summarize_payload(payload: DamagePayload) -> Dictionary:
 		"tags": payload.tags.duplicate(),
 		"damage": payload.amount,
 		"stance_damage": payload.stance_damage,
+		"reaction": payload.get_reaction_debug_data(),
 	}

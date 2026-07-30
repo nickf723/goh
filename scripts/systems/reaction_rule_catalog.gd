@@ -30,7 +30,9 @@ static func get_rules() -> Array[Resource]:
 	]:
 		if rule != null and not rules.has(rule):
 			rules.append(rule)
-	rules.sort_custom(_sort_rules)
+	rules.sort_custom(func(a: Resource, b: Resource) -> bool:
+		return _sort_rules(a, b)
+	)
 	return rules
 
 
@@ -67,6 +69,8 @@ static func get_debug_rows() -> Array[Dictionary]:
 			"target_all": _string_array(rule.get("target_tags")),
 			"target_statuses": _string_array(rule.get("target_statuses")),
 			"consume_incoming_status": bool(rule.get("consume_incoming_status")),
+			"output_triggers_reactions": bool(rule.get("output_triggers_reactions")),
+			"maximum_depth": int(rule.get("maximum_reaction_depth")),
 		})
 	return rows
 

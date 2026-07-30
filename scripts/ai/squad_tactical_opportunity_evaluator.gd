@@ -13,6 +13,7 @@ const StatePolicy = preload(
 )
 
 const RESERVED_PAYOFF_SETUP_BONUS: float = 10.5
+const RESERVED_SETUP_VETO_PENALTY: float = 18.0
 
 
 static func evaluate(
@@ -22,16 +23,16 @@ static func evaluate(
 	var result: Dictionary = BaseEvaluator.evaluate(candidate, snapshot)
 	if candidate == null or not bool(result.get("valid", false)):
 		return result
+	if candidate.applies_states.is_empty():
+		return result
+	var claimed_setups: Array[String] = _strings(
+		snapshot.get("claimed_setup_reactions", [])
+	)
 	var claimed_payoffs: Array[String] = _strings(
 		snapshot.get(
 			"claimed_payoff_reactions",
 			snapshot.get("claimed_reactions", [])
 		)
-	)
-	if claimed_payoffs.is_empty() or candidate.applies_states.is_empty():
-		return result
-	var claimed_setups: Array[String] = _strings(
-		snapshot.get("claimed_setup_reactions", [])
 	)
 	var opportunities: Array[Dictionary] = _dictionary_array(
 		result.get("opportunities", [])
@@ -39,15 +40,26 @@ static func evaluate(
 	var reasons: Array[String] = _strings_preserve_case(
 		result.get("reasons", [])
 	)
+	var penalties: Array[String] = _strings_preserve_case(
+		result.get("penalties", [])
+	)
 	var score: float = float(result.get("score", 0.0))
+	var valid: bool = bool(result.get("valid", true))
 	for rule: Resource in ReactionCatalog.get_rules():
 		if rule == null or not _candidate_sets_up_rule(candidate, rule):
 			continue
 		var reaction_id: String = str(rule.get("reaction_id")).to_lower()
 		var rule_id: String = str(rule.get("rule_id")).to_lower()
-		if not claimed_payoffs.has(reaction_id) and not claimed_payoffs.has(rule_id):
-			continue
 		if claimed_setups.has(reaction_id) or claimed_setups.has(rule_id):
+			score -= RESERVED_SETUP_VETO_PENALTY
+			penalties.append(
+				"Squad setup already reserved: " + reaction_id
+			)
+			valid = false
+			continue
+		if claimed_payoffs.is_empty():
+			continue
+		if not claimed_payoffs.has(reaction_id) and not claimed_payoffs.has(rule_id):
 			continue
 		if _has_rule_opportunity(opportunities, rule_id):
 			continue
@@ -69,11 +81,15 @@ static func evaluate(
 			"score": bonus,
 			"paired_reservation": true,
 		})
+	result["valid"] = valid
 	result["score"] = score
 	result["reasons"] = reasons
+	result["penalties"] = penalties
 	result["opportunities"] = opportunities
 	if not reasons.is_empty():
 		result["primary_reason"] = reasons[0]
+	elif not penalties.is_empty():
+		result["primary_reason"] = penalties[0]
 	return result
 
 

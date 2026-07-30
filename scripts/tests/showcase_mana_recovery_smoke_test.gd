@@ -3,6 +3,9 @@ extends Node
 const ShowcaseScript = preload(
 	"res://scripts/levels/prototype_animation_showcase_fire_specialist.gd"
 )
+const TelemetryGateScript = preload(
+	"res://scripts/ui/showcase_telemetry_gate.gd"
+)
 
 var failures: Array[String] = []
 var original_stats: Dictionary = {}
@@ -35,6 +38,7 @@ func _ready() -> void:
 	_expect(showcase.showcase_mana_delay_remaining == 0.0, "Manual refill clears the recovery delay")
 	_expect(showcase.showcase_mana_accumulator == 0.0, "Manual refill clears fractional recovery")
 
+	_validate_telemetry_gate()
 	showcase.free()
 	_restore_stats()
 	if failures.is_empty():
@@ -44,6 +48,30 @@ func _ready() -> void:
 	for failure: String in failures:
 		push_error("SHOWCASE_MANA_RECOVERY_SMOKE_TEST: " + failure)
 	get_tree().quit(1)
+
+
+func _validate_telemetry_gate() -> void:
+	var gate: ShowcaseTelemetryGate = (
+		TelemetryGateScript.new() as ShowcaseTelemetryGate
+	)
+	var panel := PanelContainer.new()
+	var label := Label.new()
+	panel.add_child(label)
+	gate.telemetry_panel = panel
+
+	gate.set_telemetry_visible(false, false)
+	_expect(
+		not panel.visible and not gate.telemetry_visible,
+		"Showcase telemetry is hidden for the normal play view"
+	)
+	gate.set_telemetry_visible(true, false)
+	_expect(
+		panel.visible and gate.telemetry_visible,
+		"Showcase telemetry remains available on demand"
+	)
+
+	panel.free()
+	gate.free()
 
 
 func _expect(condition: bool, label: String) -> void:

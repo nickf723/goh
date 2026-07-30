@@ -1,11 +1,49 @@
 extends Node
 class_name ReactionResolver
 
-const ComboRuleRegistryScript = preload("res://scripts/systems/combo_rule_registry.gd")
+
+const ReactionEngine = preload(
+	"res://scripts/systems/elemental_reaction_engine.gd"
+)
+const RuleCatalog = preload(
+	"res://scripts/systems/reaction_rule_catalog.gd"
+)
+const StatePolicy = preload(
+	"res://scripts/systems/reaction_state_policy.gd"
+)
 
 
-static func resolve_payload_reactions(target: Node, payload: DamagePayload) -> Array[Dictionary]:
-	return ComboRuleRegistryScript.resolve_payload_reactions(target, payload)
+static func resolve_payload_transaction(
+	target: Node,
+	payload: DamagePayload
+) -> Dictionary:
+	return ReactionEngine.resolve_payload_transaction(target, payload)
+
+
+static func resolve_payload_reactions(
+	target: Node,
+	payload: DamagePayload
+) -> Array[Dictionary]:
+	var batch: Dictionary = resolve_payload_transaction(target, payload)
+	var reactions: Array[Dictionary] = []
+	var raw: Variant = batch.get("reactions", [])
+	if raw is Array:
+		for reaction_value: Variant in raw as Array:
+			if reaction_value is Dictionary:
+				reactions.append(reaction_value as Dictionary)
+	return reactions
+
+
+static func resolve_hazard_transaction(
+	hazard: Node,
+	payload: DamagePayload,
+	source_position: Vector3 = Vector3.ZERO
+) -> Dictionary:
+	return ReactionEngine.resolve_hazard_transaction(
+		hazard,
+		payload,
+		source_position
+	)
 
 
 static func resolve_hazard_reactions(
@@ -13,16 +51,30 @@ static func resolve_hazard_reactions(
 	payload: DamagePayload,
 	source_position: Vector3 = Vector3.ZERO
 ) -> Array[Dictionary]:
-	return ComboRuleRegistryScript.resolve_hazard_reactions(
+	var batch: Dictionary = resolve_hazard_transaction(
 		hazard,
 		payload,
 		source_position
 	)
+	var reactions: Array[Dictionary] = []
+	var raw: Variant = batch.get("reactions", [])
+	if raw is Array:
+		for reaction_value: Variant in raw as Array:
+			if reaction_value is Dictionary:
+				reactions.append(reaction_value as Dictionary)
+	return reactions
 
 
 static func target_has_status_or_tag(target: Node, name: String) -> bool:
-	return ComboRuleRegistryScript.target_has_status_or_tag(target, name)
+	return StatePolicy.snapshot_has_tag_or_status(
+		StatePolicy.capture_target_state(target),
+		name
+	)
 
 
 static func get_debug_matrix_rows() -> Array[Dictionary]:
-	return ComboRuleRegistryScript.get_debug_matrix_rows()
+	return RuleCatalog.get_debug_rows()
+
+
+static func validate_rules() -> Array[String]:
+	return RuleCatalog.validate_catalog()

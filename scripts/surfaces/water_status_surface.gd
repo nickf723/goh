@@ -24,8 +24,4 @@ func _is_valid_water_overlap(raw_target: Node, target: Node) -> bool:
 		return false
 	if not target.is_in_group("player"):
 		return true
-	if raw_target == target:
-		return true
-	if target is PhysicsBody3D:
-		return overlaps_body(target as Node3D)
-	return false
+	return raw_target == target and target is PhysicsBody3D

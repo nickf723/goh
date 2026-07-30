@@ -109,6 +109,9 @@ jobs:
       - name: Run spell targeting profile and preview test
         run: godot --headless --path . res://scenes/tests/spell_targeting_profile_smoke_test.tscn
 
+      - name: Run reaction lab playability test
+        run: godot --headless --path . res://scenes/tests/reaction_lab_playability_smoke_test.tscn
+
       - name: Run elemental chemistry transaction test
         run: godot --headless --path . res://scenes/tests/elemental_chemistry_engine_smoke_test.tscn
 

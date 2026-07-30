@@ -17,7 +17,10 @@ func cast_from_player(
 	return super.cast_from_player(player, cast_lock_duration, allow_charge)
 
 
-func try_player_ability_channel(player: Node3D, ability: AbilityDefinition) -> Dictionary:
+func try_player_ability_channel(
+	player: Node3D,
+	ability: AbilityDefinition
+) -> Dictionary:
 	if player == null or ability == null:
 		return {"handled": false, "success": false}
 	if action_state != null and not action_state.can_cast():
@@ -29,11 +32,16 @@ func try_player_ability_channel(player: Node3D, ability: AbilityDefinition) -> D
 		if not bool(child.call("can_handle_ability", ability)):
 			continue
 		if not child.has_method("begin_ability_channel"):
-			push_warning(child.name + " claims an ability but cannot begin its channel.")
+			push_warning(
+				child.name
+				+ " claims an ability but cannot begin its channel."
+			)
 			return {"handled": true, "success": false}
 		return {
 			"handled": true,
-			"success": bool(child.call("begin_ability_channel", player, ability)),
+			"success": bool(
+				child.call("begin_ability_channel", player, ability)
+			),
 		}
 
 	return {"handled": false, "success": false}
@@ -47,10 +55,34 @@ func begin_ground_targeting(
 	ability: AbilityDefinition,
 	ground_spell: Dictionary
 ) -> bool:
-	var started: bool = super.begin_ground_targeting(player, ability, ground_spell)
+	var started: bool = super.begin_ground_targeting(
+		player,
+		ability,
+		ground_spell
+	)
 	if started:
 		_hide_focus_library_ui()
 	return started
+
+
+func confirm_ground_targeting() -> bool:
+	if not is_ground_targeting():
+		return false
+	var controller: RefCounted = get_ground_targeting_controller()
+	if (
+		controller.has_method("is_target_valid")
+		and not bool(controller.call("is_target_valid"))
+	):
+		var reason: String = "That spell cannot be placed there."
+		if controller.has_method("get_invalid_reason"):
+			var reported: String = str(
+				controller.call("get_invalid_reason")
+			)
+			if reported != "":
+				reason = reported
+		show_feedback(reason)
+		return true
+	return super.confirm_ground_targeting()
 
 
 func is_focus_library_open() -> bool:
@@ -79,8 +111,13 @@ func _hide_focus_library_ui() -> void:
 
 
 func get_input_mode_debug_data() -> Dictionary:
-	return {
+	var data: Dictionary = {
 		"ground_targeting": is_ground_targeting(),
 		"focus_modal": focus_spell_menu_open,
 		"focus_library_visible": is_focus_library_open(),
 	}
+	if is_ground_targeting():
+		var controller: RefCounted = get_ground_targeting_controller()
+		if controller.has_method("get_debug_data"):
+			data["targeting"] = controller.call("get_debug_data")
+	return data

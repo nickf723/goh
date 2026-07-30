@@ -36,10 +36,7 @@ class_name SquadRoleProfile
 @export_range(0.0, 12.0, 0.25) var discouraged_penalty: float = 3.0
 
 
-func evaluate_candidate(
-	candidate: TacticalActionCandidate,
-	evaluation: Dictionary = {}
-) -> Dictionary:
+func evaluate_candidate(candidate: Variant, evaluation: Dictionary = {}) -> Dictionary:
 	if candidate == null:
 		return {
 			"score": 0.0,
@@ -53,65 +50,40 @@ func evaluate_candidate(
 	var matched_traits: Array[String] = []
 
 	for capability: String in preferred_capabilities:
-		if candidate.has_capability(capability):
+		if _candidate_has_capability(candidate, capability):
 			score += capability_bonus
-			_append_match(
-				reasons,
-				matched_traits,
-				"Role favors " + _label(capability),
-				"capability:" + _normalize(capability)
-			)
-	for tag: String in preferred_tags:
-		if candidate.has_tag(tag):
+			_append_match(reasons, matched_traits, "Role favors " + _label(capability), "capability:" + _normalize(capability))
+	for tag_name: String in preferred_tags:
+		if _candidate_has_tag(candidate, tag_name):
 			score += tag_bonus
-			_append_match(
-				reasons,
-				matched_traits,
-				"Role favors " + _label(tag),
-				"tag:" + _normalize(tag)
-			)
-	if preferred_action_kinds.has(_normalize(candidate.action_kind)):
-		score += action_kind_bonus
-		_append_match(
-			reasons,
-			matched_traits,
-			"Role favors " + _label(candidate.action_kind) + " actions",
-			"kind:" + _normalize(candidate.action_kind)
-		)
-	if preferred_movement_modes.has(_normalize(candidate.movement_mode)):
-		score += movement_bonus
-		_append_match(
-			reasons,
-			matched_traits,
-			"Role favors " + _label(candidate.movement_mode) + " movement",
-			"movement:" + _normalize(candidate.movement_mode)
-		)
+			_append_match(reasons, matched_traits, "Role favors " + _label(tag_name), "tag:" + _normalize(tag_name))
 
-	var opportunities: Array[Dictionary] = _dictionary_array(
-		evaluation.get("opportunities", [])
-	)
-	for opportunity: Dictionary in opportunities:
+	var action_kind: String = _candidate_string(candidate, "action_kind")
+	if preferred_action_kinds.has(_normalize(action_kind)):
+		score += action_kind_bonus
+		_append_match(reasons, matched_traits, "Role favors " + _label(action_kind) + " actions", "kind:" + _normalize(action_kind))
+	var movement_mode: String = _candidate_string(candidate, "movement_mode")
+	if preferred_movement_modes.has(_normalize(movement_mode)):
+		score += movement_bonus
+		_append_match(reasons, matched_traits, "Role favors " + _label(movement_mode) + " movement", "movement:" + _normalize(movement_mode))
+
+	for opportunity: Dictionary in _dictionary_array(evaluation.get("opportunities", [])):
 		var type_id: String = _normalize(str(opportunity.get("type", "")))
 		if preferred_opportunity_types.has(type_id):
 			score += opportunity_bonus
-			_append_match(
-				reasons,
-				matched_traits,
-				"Role claims " + _label(type_id),
-				"opportunity:" + type_id
-			)
+			_append_match(reasons, matched_traits, "Role claims " + _label(type_id), "opportunity:" + type_id)
 		if discouraged_opportunity_types.has(type_id):
 			score -= discouraged_penalty
 			_append_unique(penalties, "Role avoids " + _label(type_id))
 
 	for capability: String in discouraged_capabilities:
-		if candidate.has_capability(capability):
+		if _candidate_has_capability(candidate, capability):
 			score -= discouraged_penalty
 			_append_unique(penalties, "Role avoids " + _label(capability))
-	for tag: String in discouraged_tags:
-		if candidate.has_tag(tag):
+	for tag_name: String in discouraged_tags:
+		if _candidate_has_tag(candidate, tag_name):
 			score -= discouraged_penalty
-			_append_unique(penalties, "Role avoids " + _label(tag))
+			_append_unique(penalties, "Role avoids " + _label(tag_name))
 
 	return {
 		"score": score,
@@ -121,40 +93,31 @@ func evaluate_candidate(
 	}
 
 
-func is_assignment_eligible(
-	candidates: Array[TacticalActionCandidate]
-) -> bool:
-	if (
-		assignment_required_any_capabilities.is_empty()
-		and assignment_required_any_tags.is_empty()
-		and assignment_required_any_action_kinds.is_empty()
-	):
+func is_assignment_eligible(candidates: Array) -> bool:
+	if assignment_required_any_capabilities.is_empty() and assignment_required_any_tags.is_empty() and assignment_required_any_action_kinds.is_empty():
 		return true
-	for candidate: TacticalActionCandidate in candidates:
+	for candidate: Variant in candidates:
 		if candidate == null:
 			continue
 		for capability: String in assignment_required_any_capabilities:
-			if candidate.has_capability(capability):
+			if _candidate_has_capability(candidate, capability):
 				return true
-		for tag: String in assignment_required_any_tags:
-			if candidate.has_tag(tag):
+		for tag_name: String in assignment_required_any_tags:
+			if _candidate_has_tag(candidate, tag_name):
 				return true
-		if assignment_required_any_action_kinds.has(
-			_normalize(candidate.action_kind)
-		):
+		if assignment_required_any_action_kinds.has(_normalize(_candidate_string(candidate, "action_kind"))):
 			return true
 	return false
 
 
-func get_assignment_fit(candidates: Array[TacticalActionCandidate]) -> float:
+func get_assignment_fit(candidates: Array) -> float:
 	if not is_assignment_eligible(candidates):
 		return -INF
 	var best_fit: float = base_score_bias
-	for candidate: TacticalActionCandidate in candidates:
+	for candidate: Variant in candidates:
 		if candidate == null:
 			continue
-		var evaluation: Dictionary = evaluate_candidate(candidate)
-		best_fit = maxf(best_fit, float(evaluation.get("score", 0.0)))
+		best_fit = maxf(best_fit, float(evaluate_candidate(candidate).get("score", 0.0)))
 	return best_fit + assignment_priority
 
 
@@ -176,13 +139,9 @@ func to_debug_data() -> Dictionary:
 		"description": description,
 		"assignment_priority": assignment_priority,
 		"maximum_per_squad": maximum_per_squad,
-		"assignment_required_any_capabilities": (
-			assignment_required_any_capabilities.duplicate()
-		),
+		"assignment_required_any_capabilities": assignment_required_any_capabilities.duplicate(),
 		"assignment_required_any_tags": assignment_required_any_tags.duplicate(),
-		"assignment_required_any_action_kinds": (
-			assignment_required_any_action_kinds.duplicate()
-		),
+		"assignment_required_any_action_kinds": assignment_required_any_action_kinds.duplicate(),
 		"preferred_capabilities": preferred_capabilities.duplicate(),
 		"preferred_tags": preferred_tags.duplicate(),
 		"preferred_opportunity_types": preferred_opportunity_types.duplicate(),
@@ -191,12 +150,21 @@ func to_debug_data() -> Dictionary:
 	}
 
 
-func _append_match(
-	reasons: Array[String],
-	matched_traits: Array[String],
-	reason: String,
-	trait_id: String
-) -> void:
+func _candidate_has_capability(candidate: Variant, capability: String) -> bool:
+	return candidate is Object and candidate.has_method("has_capability") and bool(candidate.call("has_capability", capability))
+
+
+func _candidate_has_tag(candidate: Variant, tag_name: String) -> bool:
+	return candidate is Object and candidate.has_method("has_tag") and bool(candidate.call("has_tag", tag_name))
+
+
+func _candidate_string(candidate: Variant, property_name: String) -> String:
+	if not candidate is Object:
+		return ""
+	return str(candidate.get(property_name))
+
+
+func _append_match(reasons: Array[String], matched_traits: Array[String], reason: String, trait_id: String) -> void:
 	_append_unique(reasons, reason)
 	_append_unique(matched_traits, trait_id)
 
@@ -204,7 +172,7 @@ func _append_match(
 func _dictionary_array(value: Variant) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	if value is Array:
-		for raw: Variant in value as Array:
+		for raw: Variant in value:
 			if raw is Dictionary:
 				result.append((raw as Dictionary).duplicate(true))
 	return result

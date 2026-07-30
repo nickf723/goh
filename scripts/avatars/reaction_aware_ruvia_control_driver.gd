@@ -20,6 +20,9 @@ const Blackboard = preload(
 const ClaimRegistry = preload(
 	"res://scripts/ai/reaction_claim_registry.gd"
 )
+const DecisionRecorderScript = preload(
+	"res://scripts/ai/tactical_decision_recorder.gd"
+)
 
 @export_group("Reaction Coordination")
 @export_range(0.0, 20.0, 0.5) var reaction_override_threshold: float = 7.0
@@ -28,19 +31,31 @@ const ClaimRegistry = preload(
 @export_range(0.1, 3.0, 0.05) var reaction_reservation_seconds: float = 1.0
 @export_range(0.1, 2.0, 0.05) var owner_intent_seconds: float = 0.65
 
+@export_group("Decision Replay")
+@export_range(4, 128, 1) var decision_history_capacity: int = 48
+@export var record_tactical_decisions: bool = true
+
 var last_reaction_plan: Dictionary = {}
 var last_coordination_result: Dictionary = {}
 var last_owner_intent_signature: String = ""
 var next_owner_intent_refresh_at: float = 0.0
+var decision_recorder: TacticalDecisionRecorder
+
+
+func _ready() -> void:
+	super._ready()
+	_ensure_decision_recorder()
+	add_to_group("tactical_decision_source")
 
 
 func bind_actor(actor: Node3D, owner: Node3D = null) -> void:
-	_release_coordination("rebound")
+	_release_coordination("rebound", false)
 	super.bind_actor(actor, owner)
 	last_reaction_plan.clear()
 	last_coordination_result.clear()
 	last_owner_intent_signature = ""
 	next_owner_intent_refresh_at = 0.0
+	_ensure_decision_recorder().clear()
 
 
 func _build_combat_intent(intent: AvatarActionIntent) -> void:
@@ -96,21 +111,42 @@ func _build_combat_intent(intent: AvatarActionIntent) -> void:
 		snapshot[key] = coordination[key]
 	var plan: Dictionary = Planner.choose_best(candidates, snapshot)
 	last_reaction_plan = _serializable_plan(plan)
+	last_coordination_result = {
+		"squad_id": get_tactical_squad_id(),
+		"owner_id": owner_id,
+		"target_id": target_id,
+		"blackboard": coordination,
+		"reservation": "not requested",
+	}
 	if not Planner.has_meaningful_opportunity(
 		plan,
 		maxf(reaction_override_threshold, 0.0)
 	):
+		_record_tactical_frame("decision")
 		return
 	var selected_spell: String = str(plan.get("selected_id", ""))
 	if selected_spell == "":
+		_record_tactical_frame("decision")
 		return
 	var reservation_result: Dictionary = _reserve_plan_opportunity(
 		plan,
 		selected_spell,
 		target_id
 	)
-	last_coordination_result = reservation_result.duplicate(true)
+	last_coordination_result = {
+		"squad_id": get_tactical_squad_id(),
+		"owner_id": owner_id,
+		"target_id": target_id,
+		"selected_spell": selected_spell,
+		"reservation": reservation_result.duplicate(true),
+		"blackboard": Blackboard.get_coordination_context(
+			get_tactical_squad_id(),
+			0,
+			target_id
+		),
+	}
 	if not bool(reservation_result.get("granted", false)):
+		_record_tactical_frame("reservation_denied")
 		return
 	intent.attack_id = ""
 	intent.spell_id = selected_spell
@@ -122,6 +158,7 @@ func _build_combat_intent(intent: AvatarActionIntent) -> void:
 	)
 	tactical_mode = "reaction"
 	last_decision_reason = intent.action_reason
+	_record_tactical_frame("decision")
 
 
 func _can_consider_reaction_override(intent: AvatarActionIntent) -> bool:
@@ -265,14 +302,75 @@ func get_tactical_squad_id() -> String:
 	return normalized if normalized != "" else "grace_party"
 
 
-func _release_coordination(reason: String) -> void:
+func _release_coordination(reason: String, record_release: bool = true) -> void:
 	if controlled_actor == null:
 		return
-	Blackboard.release_owner(
-		controlled_actor.get_instance_id(),
+	var owner_id: int = controlled_actor.get_instance_id()
+	var target_id: int = (
+		current_target.get_instance_id()
+		if current_target != null
+		else 0
+	)
+	var released_count: int = Blackboard.release_owner(
+		owner_id,
 		reason,
 		get_tactical_squad_id()
 	)
+	last_coordination_result = {
+		"squad_id": get_tactical_squad_id(),
+		"owner_id": owner_id,
+		"target_id": target_id,
+		"released": released_count,
+		"reason": reason,
+		"blackboard": Blackboard.get_coordination_context(
+			get_tactical_squad_id(),
+			0,
+			target_id
+		),
+	}
+	if record_release:
+		_record_tactical_frame("coordination_release")
+
+
+func _ensure_decision_recorder() -> TacticalDecisionRecorder:
+	if decision_recorder == null:
+		decision_recorder = DecisionRecorderScript.new().configure(
+			decision_history_capacity
+		)
+	return decision_recorder
+
+
+func _record_tactical_frame(event_name: String) -> void:
+	if not record_tactical_decisions:
+		return
+	var source_id: int = (
+		controlled_actor.get_instance_id()
+		if controlled_actor != null
+		else get_instance_id()
+	)
+	var source_name: String = (
+		controlled_actor.name if controlled_actor != null else name
+	)
+	_ensure_decision_recorder().record_frame(
+		source_id,
+		source_name,
+		event_name,
+		last_reaction_plan,
+		last_coordination_result,
+		{
+			"tactical_mode": tactical_mode,
+			"decision_reason": last_decision_reason,
+			"target_distance": last_target_distance,
+		}
+	)
+
+
+func get_tactical_decision_recorder() -> TacticalDecisionRecorder:
+	return _ensure_decision_recorder()
+
+
+func get_tactical_decision_timeline() -> Dictionary:
+	return _ensure_decision_recorder().to_dictionary()
 
 
 func _serializable_plan(plan: Dictionary) -> Dictionary:
@@ -322,4 +420,5 @@ func get_debug_data() -> Dictionary:
 	data["squad_coordination"] = last_coordination_result.duplicate(true)
 	data["squad_id"] = get_tactical_squad_id()
 	data["owner_intent_signature"] = last_owner_intent_signature
+	data["decision_replay"] = _ensure_decision_recorder().get_debug_data()
 	return data

@@ -177,6 +177,7 @@ func _render(frame: Dictionary, debug: Dictionary) -> void:
 	)
 
 	var decision: Dictionary = _dictionary(frame.get("decision", {}))
+	var metadata: Dictionary = _dictionary(frame.get("metadata", {}))
 	var selected: Dictionary = _dictionary(decision.get("selected", {}))
 	var selected_name: String = str(
 		selected.get(
@@ -187,13 +188,31 @@ func _render(frame: Dictionary, debug: Dictionary) -> void:
 	var selected_score: float = float(
 		selected.get("total_score", decision.get("selected_score", 0.0))
 	)
+	var role_name: String = str(
+		selected.get(
+			"squad_role_name",
+			decision.get(
+				"squad_role_name",
+				metadata.get("squad_role_name", "Generalist")
+			)
+		)
+	)
+	var role_score: float = float(
+		selected.get(
+			"squad_role_score",
+			decision.get("squad_role_score", 0.0)
+		)
+	)
 	var reason: String = str(
 		selected.get("reason", decision.get("reason", "No tactical reason"))
 	)
 	decision_label.text = (
-		str(frame.get("source_name", "Actor")) + " • " + str(frame.get("event", "decision"))
+		str(frame.get("source_name", "Actor"))
+		+ " • " + role_name
+		+ " • " + str(frame.get("event", "decision"))
 		+ "\nSELECTED: " + selected_name
 		+ "\nSCORE: " + str(snappedf(selected_score, 0.01))
+		+ " • ROLE: " + _signed_score(role_score)
 		+ "\nWHY: " + reason
 	)
 
@@ -210,6 +229,9 @@ func _render(frame: Dictionary, debug: Dictionary) -> void:
 		var score: float = float(
 			row.get("total_score", row.get("selected_score", 0.0))
 		)
+		var candidate_role_score: float = float(
+			row.get("squad_role_score", 0.0)
+		)
 		var row_reason: String = str(row.get("reason", ""))
 		if row_reason == "":
 			var penalties: Array[String] = _string_array(row.get("penalties", []))
@@ -219,6 +241,7 @@ func _render(frame: Dictionary, debug: Dictionary) -> void:
 			)
 		candidate_lines.append(
 			validity + " " + name_text + "  " + str(snappedf(score, 0.01))
+			+ "  role " + _signed_score(candidate_role_score)
 			+ "\n    " + row_reason
 		)
 	candidates_label.text = "\n".join(candidate_lines)
@@ -229,6 +252,12 @@ func _render(frame: Dictionary, debug: Dictionary) -> void:
 		coordination.get("squad_id", decision.get("squad_id", "none"))
 	)
 	coordination_lines.append("Squad: " + squad_id)
+	var role_context: Dictionary = _dictionary(
+		coordination.get("role_context", {})
+	)
+	coordination_lines.append(
+		"Roles: " + _format_role_counts(role_context.get("squad_role_counts", {}))
+	)
 	var blackboard: Dictionary = _dictionary(coordination.get("blackboard", coordination))
 	coordination_lines.append(
 		"Setup: " + _join_or_none(blackboard.get("claimed_setup_reactions", []))
@@ -243,6 +272,22 @@ func _render(frame: Dictionary, debug: Dictionary) -> void:
 		"Intents: " + _join_or_none(blackboard.get("squad_intent_tags", []))
 	)
 	coordination_label.text = "\n".join(coordination_lines)
+
+
+func _signed_score(value: float) -> String:
+	var snapped_value: float = snappedf(value, 0.01)
+	return ("+" if snapped_value > 0.0 else "") + str(snapped_value)
+
+
+func _format_role_counts(value: Variant) -> String:
+	if not value is Dictionary:
+		return "none"
+	var counts: Dictionary = value as Dictionary
+	var rows: Array[String] = []
+	for key: Variant in counts.keys():
+		rows.append(str(key).replace("_", " ") + " x" + str(counts[key]))
+	rows.sort()
+	return "none" if rows.is_empty() else ", ".join(rows)
 
 
 func _join_or_none(value: Variant) -> String:

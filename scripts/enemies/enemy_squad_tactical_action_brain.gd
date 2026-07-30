@@ -22,12 +22,22 @@ const ActionCandidate = preload(
 @export_range(0.1, 2.0, 0.05) var lane_reservation_seconds: float = 0.55
 
 var last_coordination_result: Dictionary = {}
+var coordination_frame: int = -1
+
+
+func _begin_tactical_evaluation() -> void:
+	coordination_frame = -1
+	super._begin_tactical_evaluation()
 
 
 func _ensure_tactical_snapshot() -> void:
 	super._ensure_tactical_snapshot()
 	if not enable_squad_coordination:
 		return
+	var frame: int = Engine.get_process_frames()
+	if coordination_frame == frame:
+		return
+	coordination_frame = frame
 	var owner_id: int = actor.get_instance_id() if actor != null else get_instance_id()
 	var target_id: int = player.get_instance_id() if player != null else 0
 	var context: Dictionary = Blackboard.get_coordination_context(

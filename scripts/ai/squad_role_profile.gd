@@ -9,6 +9,11 @@ class_name SquadRoleProfile
 @export_range(1, 12, 1) var maximum_per_squad: int = 2
 @export_range(0.0, 20.0, 0.25) var duplicate_penalty: float = 4.0
 
+@export_group("Assignment Requirements")
+@export var assignment_required_any_capabilities: Array[String] = []
+@export var assignment_required_any_tags: Array[String] = []
+@export var assignment_required_any_action_kinds: Array[String] = []
+
 @export_group("Preferred Traits")
 @export var preferred_capabilities: Array[String] = []
 @export var preferred_tags: Array[String] = []
@@ -116,7 +121,34 @@ func evaluate_candidate(
 	}
 
 
+func is_assignment_eligible(
+	candidates: Array[TacticalActionCandidate]
+) -> bool:
+	if (
+		assignment_required_any_capabilities.is_empty()
+		and assignment_required_any_tags.is_empty()
+		and assignment_required_any_action_kinds.is_empty()
+	):
+		return true
+	for candidate: TacticalActionCandidate in candidates:
+		if candidate == null:
+			continue
+		for capability: String in assignment_required_any_capabilities:
+			if candidate.has_capability(capability):
+				return true
+		for tag: String in assignment_required_any_tags:
+			if candidate.has_tag(tag):
+				return true
+		if assignment_required_any_action_kinds.has(
+			_normalize(candidate.action_kind)
+		):
+			return true
+	return false
+
+
 func get_assignment_fit(candidates: Array[TacticalActionCandidate]) -> float:
+	if not is_assignment_eligible(candidates):
+		return -INF
 	var best_fit: float = base_score_bias
 	for candidate: TacticalActionCandidate in candidates:
 		if candidate == null:
@@ -144,6 +176,13 @@ func to_debug_data() -> Dictionary:
 		"description": description,
 		"assignment_priority": assignment_priority,
 		"maximum_per_squad": maximum_per_squad,
+		"assignment_required_any_capabilities": (
+			assignment_required_any_capabilities.duplicate()
+		),
+		"assignment_required_any_tags": assignment_required_any_tags.duplicate(),
+		"assignment_required_any_action_kinds": (
+			assignment_required_any_action_kinds.duplicate()
+		),
 		"preferred_capabilities": preferred_capabilities.duplicate(),
 		"preferred_tags": preferred_tags.duplicate(),
 		"preferred_opportunity_types": preferred_opportunity_types.duplicate(),

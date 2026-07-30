@@ -25,7 +25,7 @@ const DEFAULT_ELEMENT_ORDER: Array[String] = [
 
 # Keyboard 1-9 and 0 map to ten combat-ready spell slots. The learned library
 # may remain much larger, while controller input cycles this same ten-slot belt.
-@export_range(10, 10, 1) var quick_slot_count: int = 10
+@export var quick_slot_count: int = 10
 
 
 func get_equipped_ability(index: int) -> AbilityDefinition:

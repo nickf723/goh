@@ -25,11 +25,9 @@ func _physics_process(delta: float) -> void:
 	var force_receiver: Node = get_node_or_null("ForceReceiver")
 	if force_receiver == null or not force_receiver.has_method("consume_external_velocity"):
 		return
-
 	var external_velocity: Vector3 = force_receiver.consume_external_velocity(delta)
 	if external_velocity.length() <= 0.001:
 		return
-
 	global_position += external_velocity * delta
 
 
@@ -42,12 +40,15 @@ func interact() -> Dictionary:
 
 func receive_damage_payload(payload: DamagePayload) -> Dictionary:
 	var payload_receiver: Node = get_node_or_null("PayloadReceiver")
-
 	if payload_receiver != null and payload_receiver.has_method("receive_payload"):
 		return payload_receiver.receive_payload(payload)
-
 	return {
-		"message": payload.source_name + " reaches " + target_label + ", but its receiver is missing.",
+		"message": (
+			payload.source_name
+			+ " reaches "
+			+ target_label
+			+ ", but its receiver is missing."
+		),
 		"objective": ""
 	}
 
@@ -78,20 +79,25 @@ func reset_target() -> void:
 		payload_receiver.set("last_payload_summary", "none")
 		payload_receiver.set("last_reaction_summary", "none")
 		payload_receiver.set("last_reaction_data", {})
+		payload_receiver.set("last_transaction_data", {})
 
 
 func get_inspection_message() -> String:
 	var statuses: String = "none"
 	var status_receiver: Node = get_node_or_null("StatusReceiver")
-
 	if status_receiver != null and status_receiver.has_method("get_debug_data"):
 		statuses = str(status_receiver.get_debug_data().get("statuses", "none"))
 
 	var reaction: String = "none"
+	var transaction: String = "none"
 	var payload_receiver: Node = get_node_or_null("PayloadReceiver")
-
 	if payload_receiver != null:
 		reaction = str(payload_receiver.get("last_reaction_summary"))
+		var transaction_data: Variant = payload_receiver.get("last_transaction_data")
+		if transaction_data is Dictionary:
+			transaction = str(
+				(transaction_data as Dictionary).get("transaction_id", "none")
+			)
 
 	var force_summary: String = "none"
 	var force_receiver: Node = get_node_or_null("ForceReceiver")
@@ -104,6 +110,8 @@ func get_inspection_message() -> String:
 		+ statuses
 		+ " | last reaction: "
 		+ reaction
+		+ " | transaction: "
+		+ transaction
 		+ " | force: "
 		+ force_summary
 	)
@@ -112,7 +120,6 @@ func get_inspection_message() -> String:
 func set_collision_enabled(node: Node, enabled: bool) -> void:
 	if node is CollisionShape3D:
 		(node as CollisionShape3D).disabled = not enabled
-
 	for child: Node in node.get_children():
 		set_collision_enabled(child, enabled)
 
@@ -120,15 +127,19 @@ func set_collision_enabled(node: Node, enabled: bool) -> void:
 func get_debug_data() -> Dictionary:
 	var statuses: String = "none"
 	var status_receiver: Node = get_node_or_null("StatusReceiver")
-
 	if status_receiver != null and status_receiver.has_method("get_debug_data"):
 		statuses = str(status_receiver.get_debug_data().get("statuses", "none"))
 
 	var reaction: String = "none"
+	var transaction: String = "none"
 	var payload_receiver: Node = get_node_or_null("PayloadReceiver")
-
 	if payload_receiver != null:
 		reaction = str(payload_receiver.get("last_reaction_summary"))
+		var transaction_data: Variant = payload_receiver.get("last_transaction_data")
+		if transaction_data is Dictionary:
+			transaction = str(
+				(transaction_data as Dictionary).get("transaction_id", "none")
+			)
 
 	var force_summary: String = "none"
 	var force_receiver: Node = get_node_or_null("ForceReceiver")
@@ -139,5 +150,6 @@ func get_debug_data() -> Dictionary:
 		"lab_target": target_label,
 		"statuses": statuses,
 		"reaction": reaction,
+		"transaction": transaction,
 		"force": force_summary,
 	}

@@ -103,7 +103,8 @@ func _test_lab_scenarios_and_overlay() -> void:
 		"occupied_lane": "spit",
 		"emergency_defense": "guard",
 	}
-	for scenario_id: String in expected.keys():
+	for scenario_value: Variant in expected.keys():
+		var scenario_id: String = str(scenario_value)
 		var plan_value: Variant = lab.call("run_scenario_by_id", scenario_id)
 		var plan: Dictionary = plan_value as Dictionary if plan_value is Dictionary else {}
 		_expect(

@@ -4,6 +4,46 @@ class_name DevelopmentControlCenter
 const FeatureRegistryScript = preload("res://scripts/systems/feature_registry.gd")
 const TITLE_SCENE: String = "res://scenes/ui/prototype_title_menu.tscn"
 const WINDOW_TITLE: String = "Grace of Humanity | Development Control Center v0.8"
+const TACTICAL_AI_LAB_FEATURE: Dictionary = {
+	"id": "tactical_ai_lab",
+	"order": 54,
+	"display_name": "Tactical AI Laboratory",
+	"category": "Systems Laboratory",
+	"version": "v1",
+	"status": "development_tool",
+	"description": "Decision-step laboratory and tactical flight recorder for reaction-aware AI, squad reservations, protected setup states, engagement lanes, cover requests, and emergency overrides.",
+	"scene": "res://scenes/levels/prototypes/prototype_tactical_ai_lab_v1.tscn",
+	"validation_scenes": [
+		"res://scenes/levels/prototypes/prototype_tactical_ai_lab_v1.tscn",
+	],
+	"automated_tests": [
+		"res://scenes/tests/tactical_ai_lab_replay_smoke_test.tscn",
+	],
+	"dependencies": [
+		"elemental_reaction_lab",
+		"enemy_personality_lab",
+	],
+	"controls": [
+		"NAVIGATE",
+		"SELECT",
+		"STEP",
+		"F2 TELEMETRY",
+		"EXPORT",
+		"RESET",
+	],
+	"manual_test": "docs/TACTICAL_AI_LAB_AND_DECISION_REPLAY_V1.md",
+	"temporary_state": "runtime_only",
+	"story_integrated": false,
+	"limitations": [
+		"The laboratory simulates tactical decisions rather than replaying physics or animation.",
+		"The overlay binds to one recorder at a time.",
+		"Runtime levels do not automatically install a global tactical overlay.",
+	],
+	"launchable": true,
+	"visible_in_launcher": true,
+	"ci_validate": true,
+	"timeout_seconds": 8,
+}
 
 @onready var feature_list: ItemList = %FeatureList
 @onready var health_label: Label = %HealthLabel
@@ -49,10 +89,14 @@ func _unhandled_input(event: InputEvent) -> void:
 func reload_registry() -> void:
 	registry_result = FeatureRegistryScript.load_registry()
 	visible_features = FeatureRegistryScript.get_visible_features()
+	_append_supplemental_features()
 	feature_list.clear()
 	selected_feature_index = -1
 
-	health_label.text = FeatureRegistryScript.get_health_summary(registry_result)
+	health_label.text = (
+		FeatureRegistryScript.get_health_summary(registry_result)
+		+ " • " + str(_get_supplemental_feature_count()) + " SUPPLEMENTAL TOOL"
+	)
 	health_label.modulate = (
 		Color(0.42, 1.0, 0.68, 1.0)
 		if bool(registry_result.get("ok", false))
@@ -62,7 +106,7 @@ func reload_registry() -> void:
 	for feature: Dictionary in visible_features:
 		var feature_id: String = str(feature.get("id", "unknown"))
 		var status: String = format_token(str(feature.get("status", "unknown")))
-		var entry_errors: Array[String] = FeatureRegistryScript.get_feature_errors(feature_id, registry_result)
+		var entry_errors: Array[String] = _get_feature_errors(feature_id)
 		var prefix: String = "✓ " if entry_errors.is_empty() else "! "
 		var item_text: String = prefix + str(feature.get("display_name", feature_id)) + "  [" + status + "]"
 		feature_list.add_item(item_text)
@@ -87,6 +131,35 @@ func reload_registry() -> void:
 	update_detail_panel()
 	feature_list.grab_focus()
 	status_label.text = "Registry loaded. NAVIGATE to a feature and SELECT to launch."
+
+
+func _append_supplemental_features() -> void:
+	for feature: Dictionary in visible_features:
+		if str(feature.get("id", "")) == str(TACTICAL_AI_LAB_FEATURE.get("id", "")):
+			return
+	visible_features.append(TACTICAL_AI_LAB_FEATURE.duplicate(true))
+	visible_features.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int(a.get("order", 0)) < int(b.get("order", 0))
+	)
+
+
+func _get_supplemental_feature_count() -> int:
+	return 1
+
+
+func _get_feature_errors(feature_id: String) -> Array[String]:
+	if feature_id != str(TACTICAL_AI_LAB_FEATURE.get("id", "")):
+		return FeatureRegistryScript.get_feature_errors(feature_id, registry_result)
+	var errors: Array[String] = []
+	for field_name: String in ["scene", "manual_test"]:
+		var path: String = str(TACTICAL_AI_LAB_FEATURE.get(field_name, ""))
+		if path == "" or not ResourceLoader.exists(path):
+			errors.append(field_name + " is unavailable: " + path)
+	for path_value: Variant in TACTICAL_AI_LAB_FEATURE.get("automated_tests", []):
+		var path: String = str(path_value)
+		if not ResourceLoader.exists(path):
+			errors.append("automated test is unavailable: " + path)
+	return errors
 
 
 func find_first_enabled_item() -> int:
@@ -114,7 +187,7 @@ func update_detail_panel() -> void:
 		return
 
 	var feature_id: String = str(feature.get("id", "unknown"))
-	var entry_errors: Array[String] = FeatureRegistryScript.get_feature_errors(feature_id, registry_result)
+	var entry_errors: Array[String] = _get_feature_errors(feature_id)
 	var dependencies: Array[String] = resolve_dependency_names(feature)
 	var controls: Array[String] = string_array(feature.get("controls", []))
 	var limitations: Array[String] = string_array(feature.get("limitations", []))
@@ -184,7 +257,7 @@ func launch_selected_feature() -> void:
 		return
 
 	var feature_id: String = str(feature.get("id", "unknown"))
-	var entry_errors: Array[String] = FeatureRegistryScript.get_feature_errors(feature_id, registry_result)
+	var entry_errors: Array[String] = _get_feature_errors(feature_id)
 	if not entry_errors.is_empty():
 		status_label.text = "Launch blocked: " + entry_errors[0]
 		return
@@ -206,7 +279,6 @@ func return_to_title() -> void:
 	if not ResourceLoader.exists(TITLE_SCENE):
 		status_label.text = "Title scene is unavailable: " + TITLE_SCENE
 		return
-
 	var change_error: Error = get_tree().change_scene_to_file(TITLE_SCENE)
 	if change_error != OK:
 		status_label.text = "Could not return to title. Error: " + str(change_error)
@@ -255,6 +327,8 @@ func get_debug_data() -> Dictionary:
 	return {
 		"registry_ok": bool(registry_result.get("ok", false)),
 		"feature_count": visible_features.size(),
+		"supplemental_feature_count": _get_supplemental_feature_count(),
+		"tactical_ai_lab_available": _get_feature_errors("tactical_ai_lab").is_empty(),
 		"selected_feature": str(get_selected_feature().get("id", "none")),
 		"registry_errors": registry_result.get("errors", []),
 	}

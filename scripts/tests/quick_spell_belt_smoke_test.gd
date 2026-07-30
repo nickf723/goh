@@ -36,14 +36,16 @@ func run_tests() -> void:
 
 	var router: Node = player.get_node_or_null("PlayerControlRouter")
 	var ability_caster: Node = player.get_node_or_null("AbilityCaster")
+	var divine_router: Node = player.get_node_or_null("DivineSpecialInputRouter")
 	var belt: QuickSpellBeltPresentation = player.get_node_or_null(
 		"QuickSpellBeltPresentation"
 	) as QuickSpellBeltPresentation
 
 	_expect(router != null, "Ten-slot player control router installs")
 	_expect(ability_caster != null, "Ability caster remains available")
-	_expect(belt != null, "Contextual ten-slot HUD belt installs")
-	if router == null or ability_caster == null or belt == null:
+	_expect(divine_router != null, "Divine Special input router remains available")
+	_expect(belt != null, "Permanent D-pad command dock installs")
+	if router == null or ability_caster == null or divine_router == null or belt == null:
 		_finish(player, floor)
 		return
 
@@ -63,11 +65,25 @@ func run_tests() -> void:
 	_expect(rows.size() == 10, "Quick spell belt exposes ten authoritative slots")
 	_expect(
 		(router.call("get_quick_spell_names") as Array).size() == 3,
-		"Compact HUD remains a three-card window"
+		"Three-card window API remains available for compatibility"
 	)
 	if rows.size() != 10:
 		_finish(player, floor)
 		return
+
+	var initial_dock_debug: Dictionary = belt.get_debug_data()
+	_expect(bool(initial_dock_debug.get("permanent", false)), "Spell belt is permanent")
+	_expect(bool(initial_dock_debug.get("visible", false)), "Permanent command dock is visible")
+	_expect(bool(initial_dock_debug.get("item_tile", false)), "D-pad Up item wing exists")
+	_expect(bool(initial_dock_debug.get("special_tile", false)), "D-pad Down Special wing exists")
+	_expect(
+		bool(initial_dock_debug.get("legacy_quick_concealed", false)),
+		"Old bottom-left quick panel is visually concealed"
+	)
+	_expect(
+		bool(initial_dock_debug.get("focus_aligned", false)),
+		"Focus panel aligns directly above the command dock"
+	)
 
 	_expect(
 		bool(router.call("select_quick_spell_slot", 9, "keyboard", false)),
@@ -122,11 +138,47 @@ func run_tests() -> void:
 	router.call("select_quick_spell_slot", 4, "keyboard", false)
 	await get_tree().process_frame
 	var belt_debug: Dictionary = belt.get_debug_data()
-	_expect(int(belt_debug.get("slot_count", 0)) == 10, "Expanded HUD renders ten slots")
+	_expect(int(belt_debug.get("slot_count", 0)) == 10, "Permanent HUD renders ten slots")
 	_expect(
 		float(belt_debug.get("reveal_remaining", 0.0)) > 0.0,
-		"Keyboard selection briefly reveals the full number row"
+		"Keyboard selection still drives transient feedback"
 	)
+
+	_expect(
+		bool(router.call("handle_focus_action", true)),
+		"Focus opens through the unified controller router"
+	)
+	belt.call("_process", 0.016)
+	belt_debug = belt.get_debug_data()
+	_expect(
+		bool(belt_debug.get("focus_assignment_visible", false)),
+		"Permanent spell belt enters Focus assignment mode"
+	)
+	_expect(
+		not bool(belt_debug.get("item_menu_visible", true))
+		and not bool(belt_debug.get("special_menu_visible", true)),
+		"Focus owns the D-pad without moving item or Special menus"
+	)
+	router.call("handle_focus_action", false)
+	belt.call("_process", 0.016)
+
+	router.call("handle_quick_item_button", 0, true)
+	belt.call("_process", 0.016)
+	_expect(
+		bool(belt.get_debug_data().get("item_menu_visible", false)),
+		"Holding D-pad Up opens the item belt wing"
+	)
+	router.call("handle_quick_item_button", 0, false)
+
+	divine_router.set("force_debug_catalog_access", true)
+	divine_router.call("handle_special_button", 0, true, 1000)
+	divine_router.call("open_radial_for_device", 0)
+	belt.call("_process", 0.016)
+	_expect(
+		bool(belt.get_debug_data().get("special_menu_visible", false)),
+		"Holding D-pad Down opens the dock-aligned Special wing"
+	)
+	divine_router.call("cancel_active_gesture", 0, "command_dock_test_cleanup")
 
 	var save_probe: Dictionary = {"version": 12}
 	GameState.call("_append_player_records_to_save", save_probe)
@@ -190,6 +242,7 @@ func _restore_state() -> void:
 
 
 func _finish(player: Node, floor: Node) -> void:
+	Engine.time_scale = 1.0
 	_restore_state()
 	if is_instance_valid(player):
 		player.queue_free()

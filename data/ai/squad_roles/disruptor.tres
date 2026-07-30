@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="SquadRoleProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/squad_role_profile.gd" id="1_role"]
+
+[resource]
+script = ExtResource("1_role")
+role_id = "disruptor"
+display_name = "Disruptor"
+description = "Breaks enemy tempo with force, stun, slow, displacement, silence, and inconvenient terrain."
+assignment_priority = 0.9
+maximum_per_squad = 1
+duplicate_penalty = 6.5
+preferred_capabilities = Array[String](["control", "setup", "terrain"])
+preferred_tags = Array[String](["stun", "slow", "force", "pull", "push", "silence", "sound", "trap"])
+preferred_opportunity_types = Array[String](["reaction_setup", "cover_response"])
+discouraged_capabilities = Array[String](["defense"])
+capability_bonus = 2.7
+tag_bonus = 1.45
+opportunity_bonus = 3.5
+action_kind_bonus = 1.0
+movement_bonus = 0.75
+discouraged_penalty = 1.25

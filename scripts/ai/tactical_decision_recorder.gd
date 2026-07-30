@@ -12,7 +12,7 @@ var next_sequence: int = 1
 var duplicate_count: int = 0
 
 
-func configure(frame_capacity: int = DEFAULT_MAX_FRAMES) -> TacticalDecisionRecorder:
+func configure(frame_capacity: int = DEFAULT_MAX_FRAMES) -> RefCounted:
 	max_frames = maxi(frame_capacity, 1)
 	_trim_to_capacity()
 	return self

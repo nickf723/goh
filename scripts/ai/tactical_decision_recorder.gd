@@ -178,13 +178,13 @@ func _sanitize(value: Variant, depth: int) -> Variant:
 	if value is StringName or value is NodePath:
 		return str(value)
 	if value is Vector2:
-		var vector2_value: Vector2 = value as Vector2
+		var vector2_value: Vector2 = value
 		return {"x": vector2_value.x, "y": vector2_value.y}
 	if value is Vector3:
-		var vector3_value: Vector3 = value as Vector3
+		var vector3_value: Vector3 = value
 		return {"x": vector3_value.x, "y": vector3_value.y, "z": vector3_value.z}
 	if value is Color:
-		var color_value: Color = value as Color
+		var color_value: Color = value
 		return {
 			"r": color_value.r,
 			"g": color_value.g,
@@ -192,19 +192,21 @@ func _sanitize(value: Variant, depth: int) -> Variant:
 			"a": color_value.a,
 		}
 	if value is Dictionary:
+		var source_dictionary: Dictionary = value
 		var result_dictionary: Dictionary = {}
-		for raw_key: Variant in (value as Dictionary).keys():
+		for raw_key: Variant in source_dictionary.keys():
 			var key: String = str(raw_key)
 			if key in ["selected_candidate", "source_ref"]:
 				continue
 			result_dictionary[key] = _sanitize(
-				(value as Dictionary).get(raw_key),
+				source_dictionary.get(raw_key),
 				depth + 1
 			)
 		return result_dictionary
 	if value is Array:
+		var source_array: Array = value
 		var result_array: Array = []
-		for item: Variant in value as Array:
+		for item: Variant in source_array:
 			result_array.append(_sanitize(item, depth + 1))
 		return result_array
 	if value is Node:
@@ -233,11 +235,13 @@ func _contains_object(value: Variant) -> bool:
 	if value is Object:
 		return true
 	if value is Dictionary:
-		for item: Variant in (value as Dictionary).values():
+		var dictionary: Dictionary = value
+		for item: Variant in dictionary.values():
 			if _contains_object(item):
 				return true
 	if value is Array:
-		for item: Variant in value as Array:
+		var array: Array = value
+		for item: Variant in array:
 			if _contains_object(item):
 				return true
 	return false

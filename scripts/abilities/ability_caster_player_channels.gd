@@ -110,6 +110,40 @@ func _hide_focus_library_ui() -> void:
 		ui.call("hide_spell_menu")
 
 
+# Lock-on may influence only spells that explicitly declare target-lock or
+# homing behavior. Aimed, self, burst, movement, detection, and free-fire
+# abilities follow the camera or Grace's forward direction instead.
+func get_cast_direction(player: Node3D, cast_origin: Vector3) -> Vector3:
+	var ability: AbilityDefinition = get_current_ability()
+	if _ability_uses_lock_on_direction(ability):
+		return super.get_cast_direction(player, cast_origin)
+
+	var direction: Vector3 = -player.global_transform.basis.z
+	var camera: Camera3D = get_viewport().get_camera_3d()
+	if camera != null:
+		direction = -camera.global_transform.basis.z
+	if direction.length() <= 0.01:
+		return Vector3.FORWARD
+	return direction.normalized()
+
+
+func _ability_uses_lock_on_direction(ability: AbilityDefinition) -> bool:
+	if ability == null:
+		return false
+	var targeting_style: String = ability.get_targeting_style().strip_edges().to_lower()
+	var delivery_type: String = ability.get_delivery_type().strip_edges().to_lower()
+	return (
+		targeting_style in [
+			"target",
+			"single_target",
+			"target_lock",
+			"lock_on",
+			"homing",
+		]
+		or delivery_type in ["homing", "target_lock"]
+	)
+
+
 func get_input_mode_debug_data() -> Dictionary:
 	var data: Dictionary = {
 		"ground_targeting": is_ground_targeting(),

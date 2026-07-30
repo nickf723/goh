@@ -14,6 +14,8 @@ const StatePolicy = preload(
 
 const RESERVED_PAYOFF_SETUP_BONUS: float = 10.5
 const RESERVED_SETUP_VETO_PENALTY: float = 18.0
+const PROTECTED_STATE_VETO_PENALTY: float = 22.0
+const COVER_RESPONSE_BONUS: float = 6.0
 
 
 static func evaluate(
@@ -29,8 +31,7 @@ static func evaluate(
 	candidate.maximum_distance = original_maximum_distance
 	if not bool(result.get("valid", false)):
 		return result
-	if candidate.applies_states.is_empty():
-		return result
+
 	var claimed_setups: Array[String] = _strings(
 		snapshot.get("claimed_setup_reactions", [])
 	)
@@ -51,42 +52,78 @@ static func evaluate(
 	)
 	var score: float = float(result.get("score", 0.0))
 	var valid: bool = bool(result.get("valid", true))
-	for rule: Resource in ReactionCatalog.get_rules():
-		if rule == null or not _candidate_sets_up_rule(candidate, rule):
-			continue
-		var reaction_id: String = str(rule.get("reaction_id")).to_lower()
-		var rule_id: String = str(rule.get("rule_id")).to_lower()
-		if claimed_setups.has(reaction_id) or claimed_setups.has(rule_id):
-			score -= RESERVED_SETUP_VETO_PENALTY
-			penalties.append(
-				"Squad setup already reserved: " + reaction_id
+
+	var protected_states: Array[String] = _get_protected_states(
+		claimed_payoffs
+	)
+	var disrupted_state: String = _find_disrupted_protected_state(
+		candidate,
+		opportunities,
+		protected_states
+	)
+	if disrupted_state != "":
+		score -= PROTECTED_STATE_VETO_PENALTY
+		penalties.append(
+			"Squad payoff protects " + disrupted_state
+		)
+		valid = false
+
+	if not candidate.applies_states.is_empty():
+		for rule: Resource in ReactionCatalog.get_rules():
+			if rule == null or not _candidate_sets_up_rule(candidate, rule):
+				continue
+			var reaction_id: String = str(
+				rule.get("reaction_id")
+			).to_lower()
+			var rule_id: String = str(rule.get("rule_id")).to_lower()
+			if claimed_setups.has(reaction_id) or claimed_setups.has(rule_id):
+				score -= RESERVED_SETUP_VETO_PENALTY
+				penalties.append(
+					"Squad setup already reserved: " + reaction_id
+				)
+				valid = false
+				continue
+			if claimed_payoffs.is_empty():
+				continue
+			if (
+				not claimed_payoffs.has(reaction_id)
+				and not claimed_payoffs.has(rule_id)
+			):
+				continue
+			if _has_rule_opportunity(opportunities, rule_id):
+				continue
+			var bonus: float = (
+				RESERVED_PAYOFF_SETUP_BONUS
+				+ float(int(rule.get("priority"))) * 0.02
 			)
-			valid = false
-			continue
-		if claimed_payoffs.is_empty():
-			continue
-		if not claimed_payoffs.has(reaction_id) and not claimed_payoffs.has(rule_id):
-			continue
-		if _has_rule_opportunity(opportunities, rule_id):
-			continue
-		var bonus: float = (
-			RESERVED_PAYOFF_SETUP_BONUS
-			+ float(int(rule.get("priority"))) * 0.02
-		)
-		score += bonus
-		reasons.append(
-			"Complete the reserved "
-			+ str(rule.get("reaction_name"))
-			+ " plan"
-		)
+			score += bonus
+			reasons.append(
+				"Complete the reserved "
+				+ str(rule.get("reaction_name"))
+				+ " plan"
+			)
+			opportunities.append({
+				"type": "reaction_setup",
+				"rule_id": rule_id,
+				"reaction_id": reaction_id,
+				"reaction_name": str(rule.get("reaction_name")),
+				"score": bonus,
+				"paired_reservation": true,
+			})
+
+	var squad_intent_tags: Array[String] = _strings(
+		snapshot.get("squad_intent_tags", [])
+	)
+	if squad_intent_tags.has("cover_requested") and _can_provide_cover(
+		candidate
+	):
+		score += COVER_RESPONSE_BONUS
+		reasons.append("Cover an ally's withdrawal")
 		opportunities.append({
-			"type": "reaction_setup",
-			"rule_id": rule_id,
-			"reaction_id": reaction_id,
-			"reaction_name": str(rule.get("reaction_name")),
-			"score": bonus,
-			"paired_reservation": true,
+			"type": "cover_response",
+			"score": COVER_RESPONSE_BONUS,
 		})
+
 	result["valid"] = valid
 	result["score"] = score
 	result["reasons"] = reasons
@@ -97,6 +134,107 @@ static func evaluate(
 	elif not penalties.is_empty():
 		result["primary_reason"] = penalties[0]
 	return result
+
+
+static func _get_protected_states(
+	claimed_payoffs: Array[String]
+) -> Array[String]:
+	var protected: Array[String] = []
+	if claimed_payoffs.is_empty():
+		return protected
+	for rule: Resource in ReactionCatalog.get_rules():
+		if rule == null:
+			continue
+		var reaction_id: String = str(
+			rule.get("reaction_id")
+		).to_lower()
+		var rule_id: String = str(rule.get("rule_id")).to_lower()
+		if (
+			not claimed_payoffs.has(reaction_id)
+			and not claimed_payoffs.has(rule_id)
+		):
+			continue
+		for state: String in _get_rule_required_states(rule):
+			_append_unique(protected, state)
+	return protected
+
+
+static func _find_disrupted_protected_state(
+	candidate: TacticalActionCandidate,
+	opportunities: Array[Dictionary],
+	protected_states: Array[String]
+) -> String:
+	if protected_states.is_empty():
+		return ""
+	for state: String in candidate.applies_states:
+		for conflict: String in StatePolicy.get_conflicts_for(state):
+			if protected_states.has(conflict):
+				return conflict
+	for opportunity: Dictionary in opportunities:
+		var rule: Resource = _find_rule(
+			str(opportunity.get("rule_id", "")),
+			str(opportunity.get("reaction_id", ""))
+		)
+		if rule == null:
+			continue
+		for removed: String in _property_strings(rule, "remove_statuses"):
+			var normalized_removed: String = StatePolicy.normalize_state(
+				removed
+			)
+			if protected_states.has(normalized_removed):
+				return normalized_removed
+		var output_state: String = StatePolicy.normalize_state(
+			str(rule.get("output_status"))
+		)
+		if output_state != "":
+			for conflict: String in StatePolicy.get_conflicts_for(output_state):
+				if protected_states.has(conflict):
+					return conflict
+	return ""
+
+
+static func _find_rule(
+	rule_id: String,
+	reaction_id: String
+) -> Resource:
+	var normalized_rule: String = rule_id.strip_edges().to_lower()
+	var normalized_reaction: String = reaction_id.strip_edges().to_lower()
+	for rule: Resource in ReactionCatalog.get_rules():
+		if rule == null:
+			continue
+		if (
+			str(rule.get("rule_id")).to_lower() == normalized_rule
+			or str(rule.get("reaction_id")).to_lower()
+			== normalized_reaction
+		):
+			return rule
+	return null
+
+
+static func _get_rule_required_states(rule: Resource) -> Array[String]:
+	var required_states: Array[String] = []
+	for property_name: String in [
+		"target_tags",
+		"target_any_tags",
+		"target_statuses",
+		"target_any_statuses",
+	]:
+		for value: String in _property_strings(rule, property_name):
+			var normalized: String = StatePolicy.normalize_state(value)
+			if StatePolicy.STATUS_ELEMENTS.has(normalized):
+				_append_unique(required_states, normalized)
+	return required_states
+
+
+static func _can_provide_cover(
+	candidate: TacticalActionCandidate
+) -> bool:
+	return (
+		candidate.has_tag("ranged")
+		or candidate.has_tag("projectile")
+		or candidate.has_capability("control")
+		or candidate.action_kind == "support"
+	)
 
 
 static func _is_non_approach_action(
@@ -113,17 +251,7 @@ static func _candidate_sets_up_rule(
 	candidate: TacticalActionCandidate,
 	rule: Resource
 ) -> bool:
-	var required_states: Array[String] = []
-	for property_name: String in [
-		"target_tags",
-		"target_any_tags",
-		"target_statuses",
-		"target_any_statuses",
-	]:
-		for value: String in _property_strings(rule, property_name):
-			var normalized: String = StatePolicy.normalize_state(value)
-			if StatePolicy.STATUS_ELEMENTS.has(normalized):
-				_append_unique(required_states, normalized)
+	var required_states: Array[String] = _get_rule_required_states(rule)
 	for state: String in candidate.applies_states:
 		if required_states.has(StatePolicy.normalize_state(state)):
 			return true

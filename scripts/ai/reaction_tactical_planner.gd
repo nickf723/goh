@@ -1,8 +1,9 @@
 extends RefCounted
 class_name ReactionTacticalPlanner
 
+
 const Evaluator = preload(
-	"res://scripts/ai/tactical_opportunity_evaluator.gd"
+	"res://scripts/ai/squad_tactical_opportunity_evaluator.gd"
 )
 
 
@@ -47,7 +48,6 @@ static func choose_best(
 			best_candidate = candidate
 			best_evaluation = evaluation
 			best_score = total_score
-
 	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		var score_a: float = float(a.get("total_score", -INF))
 		var score_b: float = float(b.get("total_score", -INF))
@@ -55,7 +55,6 @@ static func choose_best(
 			return score_a > score_b
 		return str(a.get("action_id", "")) < str(b.get("action_id", ""))
 	)
-
 	var selected_id: String = ""
 	var selected_name: String = "None"
 	var primary_reason: String = "No valid tactical action"

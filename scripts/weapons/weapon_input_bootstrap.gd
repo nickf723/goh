@@ -4,10 +4,13 @@ class_name WeaponInputBootstrap
 signal hand_role_preset_changed(preset: int, summary: Dictionary)
 
 const PlayerControlRouterScript = preload(
-	"res://scripts/input/player_control_router_contextual.gd"
+	"res://scripts/input/player_control_router_quickbar.gd"
 )
 const PlayerPresentationScript = preload(
 	"res://scripts/ui/player_hud_combat_presentation.gd"
+)
+const QuickSpellBeltScript = preload(
+	"res://scripts/ui/quick_spell_belt_presentation.gd"
 )
 const ShowcaseTelemetryGateScript = preload(
 	"res://scripts/ui/showcase_telemetry_gate.gd"
@@ -60,6 +63,7 @@ func _ready() -> void:
 	apply_hand_role_preset(hand_role_preset, false)
 	call_deferred("install_player_control_router")
 	call_deferred("install_player_presentation_polish")
+	call_deferred("install_quick_spell_belt")
 	call_deferred("install_showcase_telemetry_gate")
 	add_to_group("debuggable")
 
@@ -159,6 +163,19 @@ func install_player_presentation_polish() -> void:
 		return
 	var presentation: Node = PlayerPresentationScript.new()
 	presentation.name = "PlayerHUDCombatPresentation"
+	player.add_child(presentation)
+
+
+func install_quick_spell_belt() -> void:
+	var weapon_controller: Node = get_parent()
+	var player: Node = weapon_controller.get_parent() if weapon_controller != null else null
+	if (
+		player == null
+		or player.get_node_or_null("QuickSpellBeltPresentation") != null
+	):
+		return
+	var presentation: Node = QuickSpellBeltScript.new()
+	presentation.name = "QuickSpellBeltPresentation"
 	player.add_child(presentation)
 
 
@@ -289,5 +306,6 @@ func get_debug_data() -> Dictionary:
 		"quick_spell_next_action": str(QUICK_SPELL_NEXT_ACTION),
 		"divine_special_action": str(DIVINE_SPECIAL_ACTION),
 		"authoritative_controller_bindings": true,
+		"ten_slot_quick_spell_belt": true,
 		"showcase_telemetry_gate": true,
 	}

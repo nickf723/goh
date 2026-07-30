@@ -17,19 +17,13 @@ static func assign_from_enemy_options(
 	owner_id: int,
 	owner_name: String,
 	configured_role_id: String,
-	action_options: Array[EnemyActionOption]
+	action_options: Array
 ) -> Dictionary:
-	var candidates: Array[TacticalActionCandidate] = []
-	for option: EnemyActionOption in action_options:
-		if option != null:
-			candidates.append(ActionCandidate.from_enemy_option(option))
-	return assign_role(
-		squad_id,
-		owner_id,
-		owner_name,
-		configured_role_id,
-		candidates
-	)
+	var candidates: Array = []
+	for option_value: Variant in action_options:
+		if option_value != null:
+			candidates.append(ActionCandidate.from_enemy_option(option_value))
+	return assign_role(squad_id, owner_id, owner_name, configured_role_id, candidates)
 
 
 static func assign_role(
@@ -37,7 +31,7 @@ static func assign_role(
 	owner_id: int,
 	owner_name: String,
 	configured_role_id: String,
-	candidates: Array[TacticalActionCandidate]
+	candidates: Array
 ) -> Dictionary:
 	var normalized_squad: String = _normalize_squad(squad_id)
 	var existing: Dictionary = get_assignment(owner_id, normalized_squad)
@@ -49,58 +43,38 @@ static func assign_role(
 		var explicit_role: String = RoleCatalog.normalize_role_id(configured)
 		if not RoleCatalog.has_role(explicit_role):
 			explicit_role = GENERALIST_ROLE_ID
-		return _store_assignment(
-			normalized_squad,
-			owner_id,
-			owner_name,
-			explicit_role,
-			0.0,
-			true,
-			"Explicit role"
-		)
+		return _store_assignment(normalized_squad, owner_id, owner_name, explicit_role, 0.0, true, "Explicit role")
 
 	var best_role: String = GENERALIST_ROLE_ID
 	var best_score: float = -INF
-	var best_fit: float = -INF
-	for profile: SquadRoleProfile in RoleCatalog.get_profiles(false):
-		if profile == null:
+	for profile_value: Variant in RoleCatalog.get_profiles(false):
+		if not profile_value is Resource:
 			continue
-		var role_id: String = RoleCatalog.normalize_role_id(profile.role_id)
+		var profile: Resource = profile_value as Resource
+		var role_id: String = RoleCatalog.normalize_role_id(str(profile.get("role_id")))
 		var role_count: int = get_role_count(normalized_squad, role_id)
-		if role_count >= profile.maximum_per_squad:
+		var maximum_per_squad: int = int(profile.get("maximum_per_squad"))
+		if role_count >= maximum_per_squad:
 			continue
-		var fit: float = profile.get_assignment_fit(candidates)
+		if not profile.has_method("get_assignment_fit"):
+			continue
+		var fit: float = float(profile.call("get_assignment_fit", candidates))
 		if is_inf(fit) and fit < 0.0:
 			continue
-		var score: float = fit - float(role_count) * profile.duplicate_penalty
-		if score > best_score or (
-			is_equal_approx(score, best_score)
-			and role_id < best_role
-		):
+		var score: float = fit - float(role_count) * float(profile.get("duplicate_penalty"))
+		if score > best_score or (is_equal_approx(score, best_score) and role_id < best_role):
 			best_role = role_id
 			best_score = score
-			best_fit = fit
 
 	if best_score < MINIMUM_SPECIALIST_FIT:
 		best_role = GENERALIST_ROLE_ID
-		best_fit = RoleCatalog.GENERALIST.get_assignment_fit(candidates)
-		best_score = best_fit
+		var generalist: Resource = RoleCatalog.get_profile(GENERALIST_ROLE_ID)
+		best_score = float(generalist.call("get_assignment_fit", candidates)) if generalist.has_method("get_assignment_fit") else 0.0
 
-	return _store_assignment(
-		normalized_squad,
-		owner_id,
-		owner_name,
-		best_role,
-		best_score,
-		false,
-		"Best eligible complementary role"
-	)
+	return _store_assignment(normalized_squad, owner_id, owner_name, best_role, best_score, false, "Best eligible complementary role")
 
 
-static func get_assignment(
-	owner_id: int,
-	squad_id: String = ""
-) -> Dictionary:
+static func get_assignment(owner_id: int, squad_id: String = "") -> Dictionary:
 	for value: Variant in assignments.values():
 		if not value is Dictionary:
 			continue
@@ -122,14 +96,10 @@ static func get_role_count(squad_id: String, role_id: String) -> int:
 	var normalized_role: String = RoleCatalog.normalize_role_id(role_id)
 	var count: int = 0
 	for value: Variant in assignments.values():
-		if not value is Dictionary:
-			continue
-		var row: Dictionary = value as Dictionary
-		if (
-			str(row.get("squad_id", "")) == normalized_squad
-			and str(row.get("role_id", "")) == normalized_role
-		):
-			count += 1
+		if value is Dictionary:
+			var row: Dictionary = value as Dictionary
+			if str(row.get("squad_id", "")) == normalized_squad and str(row.get("role_id", "")) == normalized_role:
+				count += 1
 	return count
 
 
@@ -157,14 +127,9 @@ static func get_squad_context(squad_id: String) -> Dictionary:
 	}
 
 
-static func release_owner(
-	owner_id: int,
-	squad_id: String = ""
-) -> int:
+static func release_owner(owner_id: int, squad_id: String = "") -> int:
 	var released: int = 0
-	var normalized_squad: String = (
-		_normalize_squad(squad_id) if squad_id.strip_edges() != "" else ""
-	)
+	var normalized_squad: String = _normalize_squad(squad_id) if squad_id.strip_edges() != "" else ""
 	for key: Variant in assignments.keys():
 		var value: Variant = assignments.get(key)
 		if not value is Dictionary:
@@ -203,14 +168,14 @@ static func _store_assignment(
 	explicit: bool,
 	reason: String
 ) -> Dictionary:
-	var profile: SquadRoleProfile = RoleCatalog.get_profile(role_id)
+	var profile: Resource = RoleCatalog.get_profile(role_id)
 	var row: Dictionary = {
 		"assignment_id": squad_id + "@" + str(owner_id),
 		"squad_id": squad_id,
 		"owner_id": owner_id,
 		"owner_name": owner_name,
-		"role_id": RoleCatalog.normalize_role_id(profile.role_id),
-		"role_name": profile.display_name,
+		"role_id": RoleCatalog.normalize_role_id(str(profile.get("role_id"))),
+		"role_name": str(profile.get("display_name")),
 		"score": score,
 		"explicit": explicit,
 		"reason": reason,

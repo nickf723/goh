@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dq6m8gaf1u2b7"]
 
-[ext_resource type="Script" uid="uid://dmvne28s0m5qe" path="res://scripts/surfaces/status_surface.gd" id="1_7x63f"]
+[ext_resource type="Script" path="res://scripts/surfaces/water_status_surface.gd" id="1_7x63f"]
 [ext_resource type="Material" path="res://art/materials/prototype/water_blue_readable.tres" id="2_water"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_o6qhy"]

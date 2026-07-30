@@ -3,7 +3,7 @@ class_name ElementalReactionEngine
 
 
 const RuleCatalog = preload("res://scripts/systems/reaction_rule_catalog.gd")
-const LegacyRegistry = preload("res://scripts/systems/combo_rule_registry.gd")
+const OutputExecutor = preload("res://scripts/systems/reaction_output_executor.gd")
 const StatePolicy = preload("res://scripts/systems/reaction_state_policy.gd")
 const TransactionScript = preload("res://scripts/systems/reaction_transaction.gd")
 
@@ -25,10 +25,12 @@ static func resolve_payload_transaction(
 	if payload.suppress_reactions:
 		transaction.record_suppressed("all", target, "payload suppresses reactions")
 		batch["transaction"] = transaction.get_debug_data()
+		batch["suppressed"] = transaction.suppressed.duplicate(true)
 		return batch
 
+	var reactions: Array[Dictionary] = batch["reactions"] as Array[Dictionary]
 	for rule: Resource in RuleCatalog.get_rules():
-		if not _rule_matches(rule, snapshot, payload, false):
+		if not _rule_matches(rule, snapshot, payload):
 			continue
 		var rule_id: String = _get_string(rule, "rule_id", "combo_rule")
 		if payload.is_reaction_payload() and not _get_bool(
@@ -52,9 +54,14 @@ static func resolve_payload_transaction(
 			continue
 
 		transaction.mark_triggered(rule_id, target, exclusive_group)
-		var result: Dictionary = LegacyRegistry.apply_rule(rule, target, payload)
+		var result: Dictionary = OutputExecutor.apply_to_target(
+			rule,
+			target,
+			payload,
+			transaction
+		)
 		_enrich_result(result, rule, transaction, snapshot)
-		(batch["reactions"] as Array[Dictionary]).append(result)
+		reactions.append(result)
 		if _get_bool(rule, "consume_incoming_status", false):
 			batch["consume_incoming_status"] = true
 		if _get_bool(rule, "stop_after_match", false):
@@ -83,10 +90,12 @@ static func resolve_hazard_transaction(
 	if payload.suppress_reactions:
 		transaction.record_suppressed("all", hazard, "payload suppresses reactions")
 		batch["transaction"] = transaction.get_debug_data()
+		batch["suppressed"] = transaction.suppressed.duplicate(true)
 		return batch
 
+	var reactions: Array[Dictionary] = batch["reactions"] as Array[Dictionary]
 	for rule: Resource in RuleCatalog.get_rules():
-		if not _rule_matches(rule, snapshot, payload, true):
+		if not _rule_matches(rule, snapshot, payload):
 			continue
 		var rule_id: String = _get_string(rule, "rule_id", "combo_rule")
 		if payload.is_reaction_payload() and not _get_bool(
@@ -95,6 +104,10 @@ static func resolve_hazard_transaction(
 			true
 		):
 			transaction.record_suppressed(rule_id, hazard, "reaction payload not allowed")
+			continue
+		var rule_depth: int = _get_int(rule, "maximum_reaction_depth", 4)
+		if transaction.depth >= rule_depth:
+			transaction.record_suppressed(rule_id, hazard, "rule depth limit")
 			continue
 		var exclusive_group: String = _get_string(rule, "exclusive_group", "")
 		if not transaction.can_trigger(
@@ -106,14 +119,15 @@ static func resolve_hazard_transaction(
 			continue
 
 		transaction.mark_triggered(rule_id, hazard, exclusive_group)
-		var result: Dictionary = LegacyRegistry.apply_hazard_rule(
+		var result: Dictionary = OutputExecutor.apply_to_target(
 			rule,
 			hazard,
 			payload,
+			transaction,
 			source_position
 		)
 		_enrich_result(result, rule, transaction, snapshot)
-		(batch["reactions"] as Array[Dictionary]).append(result)
+		reactions.append(result)
 		if _get_bool(rule, "consume_incoming_status", false):
 			batch["consume_incoming_status"] = true
 		if _get_bool(rule, "stop_after_match", false):
@@ -137,8 +151,7 @@ static func _empty_batch(transaction: ReactionTransaction) -> Dictionary:
 static func _rule_matches(
 	rule: Resource,
 	snapshot: Dictionary,
-	payload: DamagePayload,
-	is_hazard: bool
+	payload: DamagePayload
 ) -> bool:
 	if rule == null or payload == null:
 		return false
@@ -148,8 +161,7 @@ static func _rule_matches(
 	if not incoming_any.is_empty() and not _payload_has_any(payload, incoming_any):
 		return false
 
-	var target_all: Array[String] = _get_strings(rule, "target_tags")
-	for required: String in target_all:
+	for required: String in _get_strings(rule, "target_tags"):
 		if not StatePolicy.snapshot_has_tag_or_status(snapshot, required):
 			return false
 	var target_any: Array[String] = _get_strings(rule, "target_any_tags")
@@ -177,10 +189,6 @@ static func _rule_matches(
 	for absent_status: String in _get_strings(rule, "required_absent_statuses"):
 		if StatePolicy.snapshot_has_status(snapshot, absent_status):
 			return false
-
-	# Hazard target_tags have historically meant only get_hazard_tags(). The
-	# snapshot already includes those tags, while normal actors also gain statuses
-	# as tags for backward compatibility.
 	return true
 
 

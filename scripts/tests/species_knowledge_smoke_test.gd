@@ -112,10 +112,14 @@ func _validate_game_state_bridge(learned_snapshot: Dictionary) -> void:
 
 	var save_probe: Dictionary = {"version": 11}
 	GameState.call("_append_player_records_to_save", save_probe)
-	_expect(int(save_probe.get("version", 0)) == 12, "Save bridge advances records version")
+	_expect(int(save_probe.get("version", 0)) == 13, "Save bridge advances records version")
 	_expect(
 		save_probe.get("species_knowledge", null) is Dictionary,
 		"Save bridge writes species knowledge"
+	)
+	_expect(
+		save_probe.get("quick_spell_loadouts", null) is Dictionary,
+		"Save bridge writes quick spell belts"
 	)
 
 	species_knowledge.call("reset_all")

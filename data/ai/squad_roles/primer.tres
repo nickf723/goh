@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="SquadRoleProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/squad_role_profile.gd" id="1_role"]
+
+[resource]
+script = ExtResource("1_role")
+role_id = "primer"
+display_name = "Primer"
+description = "Creates statuses and terrain conditions that allies can convert into stronger reactions."
+assignment_priority = 1.5
+maximum_per_squad = 1
+duplicate_penalty = 8.0
+preferred_capabilities = Array[String](["setup", "control", "terrain"])
+preferred_tags = Array[String](["water", "ice", "poison", "sound", "wet", "chill", "obscured"])
+preferred_opportunity_types = Array[String](["reaction_setup"])
+discouraged_opportunity_types = Array[String](["reaction_payoff"])
+capability_bonus = 3.0
+tag_bonus = 1.15
+opportunity_bonus = 5.5
+action_kind_bonus = 1.0
+movement_bonus = 0.75
+discouraged_penalty = 2.0

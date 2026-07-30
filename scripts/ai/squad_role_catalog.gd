@@ -26,13 +26,19 @@ const ALIASES: Dictionary = {
 
 
 static func get_profiles(include_generalist: bool = true) -> Array:
-	var profiles: Array = [PRIMER, PAYOFF_SPECIALIST, PROTECTOR, DISRUPTOR, SKIRMISHER]
+	var profiles: Array = [
+		PRIMER,
+		PAYOFF_SPECIALIST,
+		PROTECTOR,
+		DISRUPTOR,
+		SKIRMISHER,
+	]
 	if include_generalist:
 		profiles.append(GENERALIST)
 	return profiles
 
 
-static func get_profile(role_id: String) -> Resource:
+static func get_profile(role_id: String):
 	var normalized: String = normalize_role_id(role_id)
 	for profile_value: Variant in get_profiles(true):
 		if profile_value is Resource:
@@ -45,7 +51,10 @@ static func get_profile(role_id: String) -> Resource:
 static func has_role(role_id: String) -> bool:
 	var normalized: String = normalize_role_id(role_id)
 	for profile_value: Variant in get_profiles(true):
-		if profile_value is Resource and normalize_role_id(str((profile_value as Resource).get("role_id"))) == normalized:
+		if not profile_value is Resource:
+			continue
+		var profile: Resource = profile_value as Resource
+		if normalize_role_id(str(profile.get("role_id"))) == normalized:
 			return true
 	return false
 
@@ -59,15 +68,28 @@ static func normalize_role_id(role_id: String) -> String:
 	return str(ALIASES.get(normalized, normalized))
 
 
-static func evaluate_candidate(role_id: String, candidate: Variant, evaluation: Dictionary = {}) -> Dictionary:
-	var profile: Resource = get_profile(role_id)
+static func evaluate_candidate(
+	role_id: String,
+	candidate: Variant,
+	evaluation: Dictionary = {}
+) -> Dictionary:
+	var profile_value: Variant = get_profile(role_id)
 	var result: Dictionary = {}
-	if profile != null and profile.has_method("evaluate_candidate"):
-		var value: Variant = profile.call("evaluate_candidate", candidate, evaluation)
-		if value is Dictionary:
-			result = (value as Dictionary).duplicate(true)
-	result["role_id"] = normalize_role_id(str(profile.get("role_id")))
-	result["role_name"] = str(profile.get("display_name"))
+	if profile_value is Resource:
+		var profile: Resource = profile_value as Resource
+		if profile.has_method("evaluate_candidate"):
+			var value: Variant = profile.call(
+				"evaluate_candidate",
+				candidate,
+				evaluation
+			)
+			if value is Dictionary:
+				result = (value as Dictionary).duplicate(true)
+		result["role_id"] = normalize_role_id(str(profile.get("role_id")))
+		result["role_name"] = str(profile.get("display_name"))
+	else:
+		result["role_id"] = "generalist"
+		result["role_name"] = "Generalist"
 	return result
 
 
@@ -95,8 +117,12 @@ static func validate_catalog() -> Array[String]:
 static func get_debug_rows() -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
 	for profile_value: Variant in get_profiles(true):
-		if profile_value is Resource and (profile_value as Resource).has_method("to_debug_data"):
-			var row: Variant = (profile_value as Resource).call("to_debug_data")
-			if row is Dictionary:
-				rows.append((row as Dictionary).duplicate(true))
+		if not profile_value is Resource:
+			continue
+		var profile: Resource = profile_value as Resource
+		if not profile.has_method("to_debug_data"):
+			continue
+		var row: Variant = profile.call("to_debug_data")
+		if row is Dictionary:
+			rows.append((row as Dictionary).duplicate(true))
 	return rows

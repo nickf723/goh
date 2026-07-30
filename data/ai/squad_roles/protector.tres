@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="SquadRoleProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/squad_role_profile.gd" id="1_role"]
+
+[resource]
+script = ExtResource("1_role")
+role_id = "protector"
+display_name = "Protector"
+description = "Keeps the squad intact through guards, cover responses, emergency defense, and space control."
+assignment_priority = 1.0
+maximum_per_squad = 1
+duplicate_penalty = 7.0
+preferred_capabilities = Array[String](["defense", "utility", "control"])
+preferred_tags = Array[String](["guard", "shield", "heal", "cover", "block"])
+preferred_opportunity_types = Array[String](["cover_response", "emergency_override"])
+preferred_action_kinds = Array[String](["defense", "support"])
+preferred_movement_modes = Array[String](["away_from_target"])
+discouraged_tags = Array[String](["reckless"])
+capability_bonus = 2.8
+tag_bonus = 1.4
+opportunity_bonus = 5.0
+action_kind_bonus = 2.0
+movement_bonus = 1.0
+discouraged_penalty = 2.5

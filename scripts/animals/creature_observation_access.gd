@@ -1,7 +1,7 @@
 extends RefCounted
 
 const ObservationServiceScript = preload(
-	"res://scripts/animals/creature_observation_service.gd"
+	"res://scripts/animals/creature_observation_runtime_service.gd"
 )
 
 

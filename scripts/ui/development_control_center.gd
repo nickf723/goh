@@ -45,6 +45,54 @@ const TACTICAL_AI_LAB_FEATURE: Dictionary = {
 	"ci_validate": true,
 	"timeout_seconds": 8,
 }
+const STORM_DRAIN_PACK_FEATURE: Dictionary = {
+	"id": "storm_drain_pack_encounter",
+	"order": 56,
+	"display_name": "Storm Drain Pack",
+	"category": "Combat Encounter",
+	"version": "v1",
+	"status": "development_tool",
+	"description": "Dedicated playable fight against a Primer, Payoff Specialist, Protector, and Skirmisher using Water setup, Lightning payoff, stance support, lane movement, cover requests, and live tactical telemetry.",
+	"scene": "res://scenes/levels/prototypes/prototype_storm_drain_pack_encounter_v1.tscn",
+	"validation_scenes": [
+		"res://scenes/levels/prototypes/prototype_storm_drain_pack_encounter_v1.tscn",
+	],
+	"automated_tests": [
+		"res://scenes/tests/storm_drain_pack_encounter_smoke_test.tscn",
+	],
+	"dependencies": [
+		"elemental_reaction_lab",
+		"enemy_personality_lab",
+		"tactical_ai_lab",
+	],
+	"controls": [
+		"MOVE",
+		"COMBAT",
+		"CAST",
+		"FOCUS",
+		"DIVINE INCARNATION",
+		"F2 TELEMETRY",
+		"TAB NEXT ACTOR",
+		"RESET",
+	],
+	"manual_test": "docs/STORM_DRAIN_PACK_ENCOUNTER_V1.md",
+	"temporary_state": "runtime_only",
+	"story_integrated": false,
+	"limitations": [
+		"Mire Spit uses procedural projectile visuals.",
+		"Guard Screech restores stance but does not yet provide full damage mitigation.",
+		"Hookstep currently commits to one authored lateral direction.",
+		"The tactical overlay observes one actor at a time.",
+	],
+	"launchable": true,
+	"visible_in_launcher": true,
+	"ci_validate": true,
+	"timeout_seconds": 12,
+}
+const SUPPLEMENTAL_FEATURES: Array[Dictionary] = [
+	TACTICAL_AI_LAB_FEATURE,
+	STORM_DRAIN_PACK_FEATURE,
+]
 
 @onready var feature_list: ItemList = %FeatureList
 @onready var health_label: Label = %HealthLabel
@@ -96,7 +144,7 @@ func reload_registry() -> void:
 
 	health_label.text = (
 		FeatureRegistryScript.get_health_summary(registry_result)
-		+ " • " + str(_get_supplemental_feature_count()) + " SUPPLEMENTAL TOOL"
+		+ " • " + str(_get_supplemental_feature_count()) + " SUPPLEMENTAL TOOLS"
 	)
 	health_label.modulate = (
 		Color(0.42, 1.0, 0.68, 1.0)
@@ -135,31 +183,44 @@ func reload_registry() -> void:
 
 
 func _append_supplemental_features() -> void:
-	for feature: Dictionary in visible_features:
-		if str(feature.get("id", "")) == str(TACTICAL_AI_LAB_FEATURE.get("id", "")):
-			return
-	visible_features.append(TACTICAL_AI_LAB_FEATURE.duplicate(true))
+	for supplemental: Dictionary in SUPPLEMENTAL_FEATURES:
+		var supplemental_id: String = str(supplemental.get("id", ""))
+		var already_present: bool = false
+		for feature: Dictionary in visible_features:
+			if str(feature.get("id", "")) == supplemental_id:
+				already_present = true
+				break
+		if not already_present:
+			visible_features.append(supplemental.duplicate(true))
 	visible_features.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return int(a.get("order", 0)) < int(b.get("order", 0))
 	)
 
 
 func _get_supplemental_feature_count() -> int:
-	return 1
+	return SUPPLEMENTAL_FEATURES.size()
+
+
+func _get_supplemental_feature(feature_id: String) -> Dictionary:
+	for feature: Dictionary in SUPPLEMENTAL_FEATURES:
+		if str(feature.get("id", "")) == feature_id:
+			return feature
+	return {}
 
 
 func _get_feature_errors(feature_id: String) -> Array[String]:
-	if feature_id != str(TACTICAL_AI_LAB_FEATURE.get("id", "")):
+	var supplemental: Dictionary = _get_supplemental_feature(feature_id)
+	if supplemental.is_empty():
 		return FeatureRegistryScript.get_feature_errors(feature_id, registry_result)
 	var errors: Array[String] = []
-	var scene_path: String = str(TACTICAL_AI_LAB_FEATURE.get("scene", ""))
+	var scene_path: String = str(supplemental.get("scene", ""))
 	if scene_path == "" or not ResourceLoader.exists(scene_path):
 		errors.append("scene is unavailable: " + scene_path)
-	for path_value: Variant in TACTICAL_AI_LAB_FEATURE.get("automated_tests", []):
+	for path_value: Variant in supplemental.get("automated_tests", []):
 		var path: String = str(path_value)
 		if not ResourceLoader.exists(path):
 			errors.append("automated test is unavailable: " + path)
-	var manual_path: String = str(TACTICAL_AI_LAB_FEATURE.get("manual_test", ""))
+	var manual_path: String = str(supplemental.get("manual_test", ""))
 	var resolved_manual_path: String = (
 		manual_path if manual_path.begins_with("res://") else "res://" + manual_path
 	)
@@ -300,6 +361,8 @@ func resolve_dependency_names(feature: Dictionary) -> Array[String]:
 		var dependency_id: String = str(raw_dependency)
 		var dependency: Dictionary = FeatureRegistryScript.get_feature_by_id(dependency_id)
 		if dependency.is_empty():
+			dependency = _get_supplemental_feature(dependency_id)
+		if dependency.is_empty():
 			names.append(dependency_id + " [MISSING]")
 		else:
 			names.append(str(dependency.get("display_name", dependency_id)))
@@ -335,6 +398,9 @@ func get_debug_data() -> Dictionary:
 		"feature_count": visible_features.size(),
 		"supplemental_feature_count": _get_supplemental_feature_count(),
 		"tactical_ai_lab_available": _get_feature_errors("tactical_ai_lab").is_empty(),
+		"storm_drain_pack_available": (
+			_get_feature_errors("storm_drain_pack_encounter").is_empty()
+		),
 		"selected_feature": str(get_selected_feature().get("id", "none")),
 		"registry_errors": registry_result.get("errors", []),
 	}

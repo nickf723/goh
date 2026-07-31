@@ -55,6 +55,9 @@ jobs:
       - name: Run player records and species persistence test
         run: godot --headless --path . res://scenes/tests/species_knowledge_smoke_test.tscn
 
+      - name: Run Creature Mastery familiar test
+        run: godot --headless --path . res://scenes/tests/creature_mastery_familiar_smoke_test.tscn
+
       - name: Run spellcasting mastery and achievement test
         run: godot --headless --path . res://scenes/tests/spellcasting_mastery_smoke_test.tscn
 
@@ -138,6 +141,9 @@ jobs:
 
       - name: Run multi-target allocation test
         run: godot --headless --path . res://scenes/tests/multi_target_allocation_smoke_test.tscn
+
+      - name: Run Storm Drain AI performance test
+        run: godot --headless --path . res://scenes/tests/storm_drain_ai_performance_smoke_test.tscn
 
       - name: Run tactical AI Control Center test
         run: godot --headless --path . res://scenes/tests/tactical_ai_control_center_smoke_test.tscn

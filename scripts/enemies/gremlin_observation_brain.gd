@@ -17,6 +17,9 @@ func on_action_active_started(action: EnemyCombatActionDefinition) -> void:
 
 func on_action_completed(action) -> void:
 	super.on_action_completed(action)
+	if not action is Resource:
+		return
+	var action_resource: Resource = action as Resource
 	var target_is_player: bool = (
 		is_instance_valid(player)
 		and player.is_in_group("player")
@@ -33,9 +36,9 @@ func on_action_completed(action) -> void:
 		"target_survived": target_survived,
 		"hit_registered": hit_registered,
 	}
-	_report_action_observation("action_completed", action, context)
+	_report_action_observation("action_completed", action_resource, context)
 	if target_is_player and target_survived:
-		_report_action_observation("action_survived", action, context)
+		_report_action_observation("action_survived", action_resource, context)
 
 
 func _finalize_tactical_decision(option) -> void:

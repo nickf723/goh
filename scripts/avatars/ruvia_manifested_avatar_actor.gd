@@ -7,3 +7,4 @@ func _ready() -> void:
 	remove_from_group("combat_targetable")
 	add_to_group("friendly_manifestation")
 	add_to_group("ruvia_manifestation")
+	add_to_group("enemy_targetable")

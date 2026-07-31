@@ -52,13 +52,14 @@ const STORM_DRAIN_PACK_FEATURE: Dictionary = {
 	"category": "Combat Encounter",
 	"version": "v1",
 	"status": "development_tool",
-	"description": "Dedicated playable fight against a Primer, Payoff Specialist, Protector, and Skirmisher using Water setup, Lightning payoff, stance support, lane movement, cover requests, and live tactical telemetry.",
+	"description": "Dedicated playable fight against a Primer, Payoff Specialist, Protector, and Skirmisher using Water setup, Lightning payoff, multi-target allocation, overkill prevention, stance support, lane movement, cover requests, and live tactical telemetry.",
 	"scene": "res://scenes/levels/prototypes/prototype_storm_drain_pack_encounter_v1.tscn",
 	"validation_scenes": [
 		"res://scenes/levels/prototypes/prototype_storm_drain_pack_encounter_v1.tscn",
 	],
 	"automated_tests": [
 		"res://scenes/tests/storm_drain_pack_encounter_smoke_test.tscn",
+		"res://scenes/tests/multi_target_allocation_smoke_test.tscn",
 	],
 	"dependencies": [
 		"elemental_reaction_lab",
@@ -82,12 +83,13 @@ const STORM_DRAIN_PACK_FEATURE: Dictionary = {
 		"Mire Spit uses procedural projectile visuals.",
 		"Guard Screech restores stance but does not yet provide full damage mitigation.",
 		"Hookstep currently commits to one authored lateral direction.",
+		"Target visibility and navigation reachability are approximated by distance.",
 		"The tactical overlay observes one actor at a time.",
 	],
 	"launchable": true,
 	"visible_in_launcher": true,
 	"ci_validate": true,
-	"timeout_seconds": 12,
+	"timeout_seconds": 14,
 }
 const SUPPLEMENTAL_FEATURES: Array[Dictionary] = [
 	TACTICAL_AI_LAB_FEATURE,

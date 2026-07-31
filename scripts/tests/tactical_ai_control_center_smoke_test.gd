@@ -61,11 +61,36 @@ func run_tests() -> void:
 					== "res://scenes/levels/prototypes/prototype_storm_drain_pack_encounter_v1.tscn",
 					"Launcher entry points to the Storm Drain Pack scene"
 				)
+				var tests: Array[String] = _string_array(
+					feature.get("automated_tests", [])
+				)
+				_expect(
+					tests.has(
+						"res://scenes/tests/storm_drain_pack_encounter_smoke_test.tscn"
+					),
+					"Storm Drain launcher keeps the encounter regression"
+				)
+				_expect(
+					tests.has(
+						"res://scenes/tests/multi_target_allocation_smoke_test.tscn"
+					),
+					"Storm Drain launcher validates multi-target allocation"
+				)
 	_expect(found_lab, "Tactical AI Laboratory appears in visible features")
 	_expect(found_encounter, "Storm Drain Pack appears in visible features")
 	control_center.queue_free()
 	await get_tree().process_frame
 	_finish()
+
+
+func _string_array(value: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if value is Array:
+		for raw: Variant in value as Array:
+			var text: String = str(raw)
+			if text != "" and not result.has(text):
+				result.append(text)
+	return result
 
 
 func _expect(condition: bool, label: String) -> void:

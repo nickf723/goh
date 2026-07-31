@@ -7,7 +7,7 @@ const FAMILIAR_TRAINING_YARD_FEATURE: Dictionary = {
 	"category": "Progression and Combat",
 	"version": "v1",
 	"status": "development_tool",
-	"description": "Study Gremlins, unlock and configure a familiar blueprint, summon the prepared creature, and test friendly target allocation against wild mobs and training dummies.",
+	"description": "Encounter and study Gremlins through live combat events, unlock and configure a familiar blueprint, summon the prepared creature, and test friendly target allocation against wild mobs and training dummies.",
 	"scene": "res://scenes/levels/prototypes/prototype_familiar_training_yard_v1.tscn",
 	"validation_scenes": [
 		"res://scenes/levels/prototypes/prototype_familiar_training_yard_v1.tscn",
@@ -16,6 +16,7 @@ const FAMILIAR_TRAINING_YARD_FEATURE: Dictionary = {
 		"res://scenes/tests/species_knowledge_smoke_test.tscn",
 		"res://scenes/tests/creature_mastery_familiar_smoke_test.tscn",
 		"res://scenes/tests/familiar_polish_smoke_test.tscn",
+		"res://scenes/tests/creature_observation_smoke_test.tscn",
 	],
 	"dependencies": [
 		"tactical_ai_lab",
@@ -35,14 +36,15 @@ const FAMILIAR_TRAINING_YARD_FEATURE: Dictionary = {
 	"story_integrated": false,
 	"limitations": [
 		"Presence capacity is one in v1.",
-		"Only Gremlin has a complete familiar blueprint.",
+		"Only Gremlin has a complete familiar blueprint and live observation catalog.",
+		"Study plinths remain available as duplicate-safe developer shortcuts.",
 		"Familiar movement does not yet use NavigationAgent pathfinding.",
 		"Transformation support is architectural only in this slice.",
 	],
 	"launchable": true,
 	"visible_in_launcher": true,
 	"ci_validate": true,
-	"timeout_seconds": 18,
+	"timeout_seconds": 20,
 }
 
 

@@ -1,0 +1,33 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/storm_drain_attack_definition.gd" id="1_attack"]
+[ext_resource type="Resource" path="res://data/damage_payloads/storm_drain_mire_spit_payload.tres" id="2_payload"]
+[ext_resource type="PackedScene" path="res://scenes/actions/storm_drain_enemy_projectile.tscn" id="3_projectile"]
+
+[resource]
+script = ExtResource("1_attack")
+action_id = "storm_drain_mire_spit"
+action_kind = "attack"
+display_name = "Mire Spit"
+role_tags = Array[String](["enemy_action", "enemy_attack", "ranged", "projectile", "water", "wet", "setup", "control", "primer", "conduct_setup"])
+windup_time = 0.48
+active_time = 0.08
+recovery_time = 0.38
+cooldown = 2.6
+movement_mode = "none"
+face_target_during_action = true
+windup_move_speed_multiplier = 0.0
+active_move_speed_multiplier = 0.0
+recovery_move_speed_multiplier = 0.0
+interruptible_during_windup = true
+interruptible_during_active = false
+interruptible_during_recovery = false
+payload = ExtResource("2_payload")
+range = 10.5
+cone_angle_degrees = 80.0
+show_miss_message = false
+delivery_mode = "projectile"
+projectile_scene = ExtResource("3_projectile")
+projectile_speed = 12.5
+projectile_spawn_height = 0.72
+projectile_spawn_distance = 0.72

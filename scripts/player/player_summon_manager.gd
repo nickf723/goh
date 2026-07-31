@@ -59,10 +59,11 @@ func begin_ability_channel(source_player: Node3D, ability: AbilityDefinition) ->
 	if source_player != actor or not can_handle_ability(ability):
 		return false
 	if active_summon != null and is_instance_valid(active_summon):
-		active_summon.set_command(SpectralFamiliar.COMMAND_FOLLOW)
-		active_summon.recall_to_summoner()
+		var dismissed_name: String = active_summon.display_name
+		if not dismiss_summon(false):
+			return false
 		total_recalls += 1
-		_show_message(active_summon.display_name + " recalled.")
+		_show_message(dismissed_name + " dismissed. Cast again to summon the prepared blueprint.")
 		_begin_cast_feedback()
 		return true
 	if cooldown_remaining > 0.0:

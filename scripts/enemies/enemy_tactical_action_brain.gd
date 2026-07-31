@@ -18,22 +18,48 @@ const Evaluator = preload(
 @export_range(2.0, 30.0, 0.5) var tactical_hazard_scan_radius: float = 12.0
 @export var ignored_hazard_tags: Array[String] = []
 
+@export_group("Tactical Performance")
+@export_range(0.0, 0.5, 0.01) var tactical_decision_interval: float = 0.0
+@export_range(0.0, 0.12, 0.005) var tactical_decision_stagger: float = 0.0
+
 var tactical_snapshot: Dictionary = {}
 var tactical_frame: int = -1
 var tactical_rows: Dictionary = {}
 var last_tactical_decision: Dictionary = {}
+
+var tactical_decision_timer: float = 0.0
+var cached_tactical_option: EnemyActionOption = null
+var cached_tactical_target_id: int = 0
+var tactical_cache_initialized: bool = false
+var tactical_evaluation_count: int = 0
+var tactical_cache_hit_count: int = 0
+
+
+func update_timers(delta: float) -> void:
+	super.update_timers(delta)
+	tactical_decision_timer = maxf(tactical_decision_timer - delta, 0.0)
 
 
 func select_action(
 	distance: float,
 	retreat_interrupt_only: bool = false
 ) -> EnemyActionOption:
+	if _can_reuse_tactical_decision(distance, retreat_interrupt_only):
+		tactical_cache_hit_count += 1
+		return cached_tactical_option
+
 	_begin_tactical_evaluation()
+	tactical_evaluation_count += 1
 	var option: EnemyActionOption = super.select_action(
 		distance,
 		retreat_interrupt_only
 	)
 	_finalize_tactical_decision(option)
+
+	if retreat_interrupt_only:
+		invalidate_tactical_decision_cache()
+	else:
+		_cache_tactical_decision(option)
 	return option
 
 
@@ -136,6 +162,98 @@ func _finalize_tactical_decision(option: EnemyActionOption) -> void:
 	}
 
 
+func _can_reuse_tactical_decision(
+	distance: float,
+	retreat_interrupt_only: bool
+) -> bool:
+	if (
+		retreat_interrupt_only
+		or tactical_decision_interval <= 0.0
+		or not tactical_cache_initialized
+		or tactical_decision_timer <= 0.0
+	):
+		return false
+	if cached_tactical_target_id != _current_tactical_target_id():
+		invalidate_tactical_decision_cache()
+		return false
+	if cached_tactical_option == null:
+		return true
+	if not is_instance_valid(cached_tactical_option):
+		invalidate_tactical_decision_cache()
+		return false
+	if not action_options.has(cached_tactical_option):
+		invalidate_tactical_decision_cache()
+		return false
+	if not cached_tactical_option.is_valid_at_distance(distance):
+		invalidate_tactical_decision_cache()
+		return false
+	if not is_option_available(cached_tactical_option):
+		invalidate_tactical_decision_cache()
+		return false
+	return true
+
+
+func _cache_tactical_decision(option: EnemyActionOption) -> void:
+	if tactical_decision_interval <= 0.0:
+		invalidate_tactical_decision_cache()
+		return
+	cached_tactical_option = option
+	cached_tactical_target_id = _current_tactical_target_id()
+	tactical_cache_initialized = true
+	tactical_decision_timer = (
+		maxf(tactical_decision_interval, 0.0)
+		+ _get_tactical_decision_stagger_seconds()
+	)
+
+
+func invalidate_tactical_decision_cache() -> void:
+	cached_tactical_option = null
+	cached_tactical_target_id = 0
+	tactical_cache_initialized = false
+	tactical_decision_timer = 0.0
+	tactical_frame = -1
+	tactical_rows.clear()
+
+
+func _current_tactical_target_id() -> int:
+	return player.get_instance_id() if player != null and is_instance_valid(player) else 0
+
+
+func _get_tactical_decision_stagger_seconds() -> float:
+	if tactical_decision_stagger <= 0.0:
+		return 0.0
+	var source_id: int = get_instance_id()
+	if actor != null and is_instance_valid(actor):
+		source_id = actor.get_instance_id()
+	var bucket: int = source_id % 7
+	return (
+		float(bucket) / 6.0
+		* maxf(tactical_decision_stagger, 0.0)
+	)
+
+
+func on_action_completed(action: EnemyCombatActionDefinition) -> void:
+	super.on_action_completed(action)
+	invalidate_tactical_decision_cache()
+
+
+func interrupt_current_action(reason: String) -> bool:
+	var interrupted: bool = super.interrupt_current_action(reason)
+	if interrupted:
+		invalidate_tactical_decision_cache()
+	return interrupted
+
+
+func cancel_current_action(reason: String) -> void:
+	super.cancel_current_action(reason)
+	invalidate_tactical_decision_cache()
+
+
+func finish_action_state() -> void:
+	super.finish_action_state()
+	invalidate_tactical_decision_cache()
+
+
 func _snapshot_strings(section: String, key: String) -> Array[String]:
 	var section_value: Variant = tactical_snapshot.get(section, {})
 	if not section_value is Dictionary:
@@ -147,12 +265,30 @@ func get_tactical_decision_trace() -> Dictionary:
 	return last_tactical_decision.duplicate(true)
 
 
+func get_tactical_performance_debug_data() -> Dictionary:
+	return {
+		"decision_interval": tactical_decision_interval,
+		"decision_stagger": tactical_decision_stagger,
+		"decision_timer": snappedf(tactical_decision_timer, 0.001),
+		"cache_initialized": tactical_cache_initialized,
+		"cached_action": (
+			cached_tactical_option.get_display_name()
+			if cached_tactical_option != null
+			and is_instance_valid(cached_tactical_option)
+			else "none"
+		),
+		"evaluations": tactical_evaluation_count,
+		"cache_hits": tactical_cache_hit_count,
+	}
+
+
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["tactical_ai"] = last_tactical_decision.duplicate(true)
 	data["tactical_reason"] = str(
 		last_tactical_decision.get("reason", "not evaluated")
 	)
+	data["tactical_performance"] = get_tactical_performance_debug_data()
 	return data
 
 

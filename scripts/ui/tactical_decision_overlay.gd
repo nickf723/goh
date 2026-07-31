@@ -100,8 +100,8 @@ func _build_ui() -> void:
 	root_panel = PanelContainer.new()
 	root_panel.name = "TacticalDecisionPanel"
 	root_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	root_panel.position = Vector2(-590.0, 18.0)
-	root_panel.size = Vector2(570.0, 660.0)
+	root_panel.position = Vector2(-620.0, 18.0)
+	root_panel.size = Vector2(600.0, 760.0)
 	root_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root_panel)
 
@@ -179,6 +179,9 @@ func _render(frame: Dictionary, debug: Dictionary) -> void:
 	var decision: Dictionary = _dictionary(frame.get("decision", {}))
 	var metadata: Dictionary = _dictionary(frame.get("metadata", {}))
 	var selected: Dictionary = _dictionary(decision.get("selected", {}))
+	var target_selection: Dictionary = _dictionary(
+		decision.get("target_selection", {})
+	)
 	var selected_name: String = str(
 		selected.get(
 			"display_name",
@@ -187,6 +190,18 @@ func _render(frame: Dictionary, debug: Dictionary) -> void:
 	)
 	var selected_score: float = float(
 		selected.get("total_score", decision.get("selected_score", 0.0))
+	)
+	var target_name: String = str(
+		decision.get(
+			"target_name",
+			target_selection.get("selected_name", "none")
+		)
+	)
+	var target_score: float = float(
+		target_selection.get("selected_score", 0.0)
+	)
+	var target_reason: String = str(
+		target_selection.get("reason", "No target allocation reason")
 	)
 	var role_name: String = str(
 		selected.get(
@@ -210,17 +225,20 @@ func _render(frame: Dictionary, debug: Dictionary) -> void:
 		str(frame.get("source_name", "Actor"))
 		+ " • " + role_name
 		+ " • " + str(frame.get("event", "decision"))
-		+ "\nSELECTED: " + selected_name
+		+ "\nTARGET: " + target_name
+		+ "  " + _signed_score(target_score)
+		+ "\nWHY TARGET: " + target_reason
+		+ "\nACTION: " + selected_name
 		+ "\nSCORE: " + str(snappedf(selected_score, 0.01))
 		+ " • ROLE: " + _signed_score(role_score)
-		+ "\nWHY: " + reason
+		+ "\nWHY ACTION: " + reason
 	)
 
 	var candidates: Array[Dictionary] = _dictionary_array(
 		decision.get("candidates", decision.get("trace", []))
 	)
-	var candidate_lines: Array[String] = ["CANDIDATES"]
-	for index: int in range(mini(candidates.size(), 6)):
+	var candidate_lines: Array[String] = ["ACTION CANDIDATES"]
+	for index: int in range(mini(candidates.size(), 5)):
 		var row: Dictionary = candidates[index]
 		var validity: String = "✓" if bool(row.get("valid", true)) else "×"
 		var name_text: String = str(
@@ -244,6 +262,19 @@ func _render(frame: Dictionary, debug: Dictionary) -> void:
 			+ "  role " + _signed_score(candidate_role_score)
 			+ "\n    " + row_reason
 		)
+	var target_trace: Array[Dictionary] = _dictionary_array(
+		target_selection.get("trace", [])
+	)
+	if not target_trace.is_empty():
+		candidate_lines.append("TARGET CANDIDATES")
+		for index: int in range(mini(target_trace.size(), 4)):
+			var target_row: Dictionary = target_trace[index]
+			candidate_lines.append(
+				("✓" if bool(target_row.get("valid", true)) else "×")
+				+ " " + str(target_row.get("target_name", "Target"))
+				+ "  " + _signed_score(float(target_row.get("score", 0.0)))
+				+ "\n    " + str(target_row.get("reason", "No target read"))
+			)
 	candidates_label.text = "\n".join(candidate_lines)
 
 	var coordination: Dictionary = _dictionary(frame.get("coordination", {}))
@@ -271,6 +302,15 @@ func _render(frame: Dictionary, debug: Dictionary) -> void:
 	coordination_lines.append(
 		"Intents: " + _join_or_none(blackboard.get("squad_intent_tags", []))
 	)
+	var allocation: Dictionary = _dictionary(
+		coordination.get(
+			"target_allocation",
+			target_selection.get("squad_context", {})
+		)
+	)
+	coordination_lines.append(
+		"Targets: " + _format_target_summaries(allocation.get("target_summaries", []))
+	)
 	coordination_label.text = "\n".join(coordination_lines)
 
 
@@ -287,6 +327,22 @@ func _format_role_counts(value: Variant) -> String:
 	for key: Variant in counts.keys():
 		rows.append(str(key).replace("_", " ") + " x" + str(counts[key]))
 	rows.sort()
+	return "none" if rows.is_empty() else ", ".join(rows)
+
+
+func _format_target_summaries(value: Variant) -> String:
+	if not value is Array:
+		return "none"
+	var rows: Array[String] = []
+	for raw: Variant in value as Array:
+		if not raw is Dictionary:
+			continue
+		var summary: Dictionary = raw as Dictionary
+		rows.append(
+			str(summary.get("target_name", "Target"))
+			+ " x" + str(summary.get("owner_count", 0))
+			+ " dmg " + str(snappedf(float(summary.get("expected_damage", 0.0)), 0.1))
+		)
 	return "none" if rows.is_empty() else ", ".join(rows)
 
 

@@ -33,6 +33,7 @@ func ensure_full_menu_shell() -> void:
 func build_menu_data() -> Dictionary:
 	var data: Dictionary = super.build_menu_data()
 	data["spellcasting_mastery"] = get_spellcasting_mastery_data()
+	data["familiar_mastery"] = get_familiar_mastery_data()
 	return data
 
 
@@ -88,6 +89,46 @@ func get_spellcasting_mastery_data() -> Dictionary:
 	return {
 		"rows": rows,
 		"summary": SpellcastingMasteryServiceScript.get_summary(),
+		"persistence_scope": "save_slot",
+	}
+
+
+func get_familiar_mastery_data() -> Dictionary:
+	var service: Node = get_node_or_null("/root/SpeciesKnowledge")
+	if service == null:
+		return {
+			"rows": [],
+			"summary": {},
+			"equipped_species_id": "",
+			"equipped_name": "None",
+			"persistence_scope": "save_slot",
+		}
+	var rows: Array = []
+	var summary: Dictionary = {}
+	var equipped_species_id: String = ""
+	if service.has_method("get_familiar_rows"):
+		var rows_value: Variant = service.call("get_familiar_rows")
+		if rows_value is Array:
+			rows = rows_value as Array
+	if service.has_method("get_summary"):
+		var summary_value: Variant = service.call("get_summary")
+		if summary_value is Dictionary:
+			summary = summary_value as Dictionary
+	if service.has_method("get_equipped_familiar_species_id"):
+		equipped_species_id = str(service.call("get_equipped_familiar_species_id"))
+	var equipped_name: String = "None"
+	for row_value: Variant in rows:
+		if not row_value is Dictionary:
+			continue
+		var row: Dictionary = row_value as Dictionary
+		if str(row.get("species_id", "")) == equipped_species_id:
+			equipped_name = str(row.get("display_name", equipped_species_id.capitalize()))
+			break
+	return {
+		"rows": rows,
+		"summary": summary,
+		"equipped_species_id": equipped_species_id,
+		"equipped_name": equipped_name,
 		"persistence_scope": "save_slot",
 	}
 

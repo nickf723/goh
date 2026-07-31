@@ -1,0 +1,28 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/storm_drain_attack_definition.gd" id="1_attack"]
+[ext_resource type="Resource" path="res://data/damage_payloads/storm_drain_spark_pounce_payload.tres" id="2_payload"]
+
+[resource]
+script = ExtResource("1_attack")
+action_id = "storm_drain_spark_pounce"
+action_kind = "attack"
+display_name = "Spark Pounce"
+role_tags = Array[String](["enemy_action", "enemy_attack", "melee", "lunge", "gap_closer", "pounce", "lightning", "shock", "payoff", "conductive", "wet_shock"])
+windup_time = 0.42
+active_time = 0.24
+recovery_time = 0.46
+cooldown = 3.15
+movement_mode = "toward_target"
+face_target_during_action = true
+windup_move_speed_multiplier = 0.0
+active_move_speed_multiplier = 3.2
+recovery_move_speed_multiplier = 0.0
+interruptible_during_windup = true
+interruptible_during_active = false
+interruptible_during_recovery = false
+payload = ExtResource("2_payload")
+range = 1.65
+cone_angle_degrees = 120.0
+show_miss_message = false
+delivery_mode = "contact"

@@ -27,6 +27,7 @@ func run_tests() -> void:
 	_test_setup_and_payoff_pairing()
 	_test_duplicate_control_prevention()
 	_test_focus_fire_override()
+	_test_target_claim_release()
 	await _test_live_storm_drain_split()
 	TargetAllocator.clear_all()
 	_finish()
@@ -161,6 +162,35 @@ func _test_focus_fire_override() -> void:
 	)
 
 
+func _test_target_claim_release() -> void:
+	TargetAllocator.clear_all()
+	TargetAllocator.claim_target(
+		"release_test",
+		5,
+		"Owner",
+		501,
+		"Temporary Target",
+		"damage",
+		4.0,
+		[],
+		5.0
+	)
+	_expect(
+		int(TargetAllocator.get_target_context("release_test", 501).get("claim_count", 0)) == 1,
+		"Target claim is registered before release"
+	)
+	var released: int = TargetAllocator.release_target(
+		501,
+		"release_test",
+		"target removed"
+	)
+	_expect(released == 1, "Target removal releases its claims")
+	_expect(
+		int(TargetAllocator.get_target_context("release_test", 501).get("claim_count", 0)) == 0,
+		"Released target leaves no allocation residue"
+	)
+
+
 func _test_live_storm_drain_split() -> void:
 	TargetAllocator.clear_all()
 	var encounter_value: Variant = EncounterScene.instantiate()
@@ -244,10 +274,13 @@ func _test_live_storm_drain_split() -> void:
 		if allocation_debug_value is Dictionary
 		else {}
 	)
-	_expect(
-		not (allocation_debug.get("decision", {}) as Dictionary).is_empty(),
-		"Live target decision remains inspectable"
+	var decision_value: Variant = allocation_debug.get("decision", {})
+	var decision: Dictionary = (
+		decision_value as Dictionary
+		if decision_value is Dictionary
+		else {}
 	)
+	_expect(not decision.is_empty(), "Live target decision remains inspectable")
 
 	var health_before: int = int(ruvia.get("current_health"))
 	spark_brain.set("allocated_target", ruvia)
@@ -255,14 +288,29 @@ func _test_live_storm_drain_split() -> void:
 	var payload := DamagePayload.new()
 	payload.amount = 2
 	payload.stance_damage = 0
-	payload.element = "lightning"
+	payload.element = "neutral"
 	payload.source_name = "Allocation Test Strike"
 	payload.hit_type = "melee"
-	payload.tags = ["lightning", "melee", "enemy_attack"]
+	payload.tags = ["neutral", "melee", "enemy_attack"]
 	spark_brain.call("apply_attack_to_player", payload)
 	_expect(
 		int(ruvia.get("current_health")) == health_before - 2,
 		"Enemy contact damage routes into Ruvia's manifestation health"
+	)
+
+	var ruvia_id: int = ruvia.get_instance_id()
+	ruvia.set("current_health", 0)
+	for member: Node in enemy_root.get_children():
+		var brain: Node = member.get_node_or_null("EnemyBrain")
+		if brain != null and brain.has_method("_refresh_target_allocation"):
+			brain.call("_refresh_target_allocation", true)
+			_expect(
+				int(brain.call("get_current_allocated_target_id")) != ruvia_id,
+				member.name + " reallocates after Ruvia is defeated"
+			)
+	_expect(
+		int(TargetAllocator.get_target_context("storm_drain_pack", ruvia_id).get("claim_count", 0)) == 0,
+		"Defeated live target releases every squad claim"
 	)
 
 	TargetAllocator.clear_all()

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyDefenseDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_defense_definition.gd" id="1_defense"]
+
+[resource]
+script = ExtResource("1_defense")
+action_id = "storm_drain_hookstep"
+action_kind = "defense"
+display_name = "Hookstep"
+role_tags = Array[String](["enemy_action", "defense", "movement", "retreat", "reposition", "dodge", "skirmisher", "cover_request", "ranged_spacing"])
+windup_time = 0.08
+active_time = 0.28
+recovery_time = 0.24
+cooldown = 1.35
+movement_mode = "strafe_left"
+face_target_during_action = true
+windup_move_speed_multiplier = 0.0
+active_move_speed_multiplier = 2.65
+recovery_move_speed_multiplier = 0.0
+interruptible_during_windup = true
+interruptible_during_active = false
+interruptible_during_recovery = false
+debug_notes = "Fast lateral escape that opens the melee lane and requests covering pressure."
+defense_style = "retreat"
+defense_tags = Array[String](["defensive", "evade", "retreat", "spacing", "reposition"])

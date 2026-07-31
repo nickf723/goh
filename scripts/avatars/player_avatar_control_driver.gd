@@ -23,7 +23,9 @@ func _process(delta: float) -> void:
 
 
 func _build_intent(_delta: float, intent: AvatarActionIntent) -> void:
-	if controlled_actor == null:
+	if controlled_actor == null or not is_instance_valid(controlled_actor):
+		controlled_actor = null
+		ability_caster = null
 		return
 	var input_vector: Vector2 = Input.get_vector(
 		"move_left",
@@ -47,7 +49,7 @@ func _build_intent(_delta: float, intent: AvatarActionIntent) -> void:
 		intent.set_movement(world_direction, input_vector.length())
 
 	var target_value: Variant = controlled_actor.get("lock_on_target")
-	if target_value is Node3D and is_instance_valid(target_value):
+	if is_instance_valid(target_value) and target_value is Node3D:
 		intent.target = target_value as Node3D
 		intent.set_facing(intent.target.global_position - controlled_actor.global_position)
 	elif intent.movement_direction.length_squared() > 0.001:
@@ -82,7 +84,12 @@ func _build_intent(_delta: float, intent: AvatarActionIntent) -> void:
 
 
 func _get_selected_spell_id() -> String:
-	if ability_caster == null or not ability_caster.has_method("get_current_ability"):
+	if (
+		ability_caster == null
+		or not is_instance_valid(ability_caster)
+		or not ability_caster.has_method("get_current_ability")
+	):
+		ability_caster = null
 		return "selected_spell"
 	var ability_value: Variant = ability_caster.call("get_current_ability")
 	if ability_value is AbilityDefinition:

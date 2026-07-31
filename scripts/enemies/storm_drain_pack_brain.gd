@@ -8,11 +8,63 @@ extends "res://scripts/enemies/enemy_threat_aware_action_brain.gd"
 @export_range(0.0, 10.0, 0.25) var guard_need_score_per_stance: float = 1.8
 @export_range(0.0, 20.0, 0.5) var guard_full_stance_penalty: float = 10.0
 
+@export_group("Encounter Activation")
+@export var force_encounter_engagement: bool = true
+@export_range(5.0, 60.0, 0.5) var encounter_join_radius: float = 32.0
+
 
 func _ready() -> void:
 	super._ready()
 	if actor != null:
 		actor.add_to_group("storm_drain_pack_member")
+	_resolve_encounter_player()
+	if force_encounter_engagement and player != null:
+		change_state(EnemyState.CHASE)
+
+
+func process_idle(delta: float) -> void:
+	_resolve_encounter_player()
+	if (
+		force_encounter_engagement
+		and player != null
+		and get_distance_to_player() <= encounter_join_radius
+	):
+		change_state(EnemyState.CHASE)
+		return
+	super.process_idle(delta)
+
+
+func process_chase(delta: float) -> void:
+	_resolve_encounter_player()
+	if force_encounter_engagement and player != null:
+		var distance: float = get_distance_to_player()
+		var ordinary_lose_radius: float = get_definition().get_lose_interest_radius()
+		if distance > ordinary_lose_radius and distance <= encounter_join_radius:
+			reset_attack_commit()
+			move_toward_player(delta)
+			last_action_summary = "joining Storm Drain encounter"
+			return
+	super.process_chase(delta)
+
+
+func _resolve_encounter_player() -> void:
+	if player != null and is_instance_valid(player):
+		if not player.is_in_group(player_group):
+			player.add_to_group(player_group)
+		return
+	refresh_player()
+	if player != null and is_instance_valid(player):
+		return
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		return
+	var candidate: Node = scene_root.get_node_or_null("Player")
+	if candidate == null:
+		candidate = scene_root.find_child("Player", true, false)
+	if candidate is Node3D:
+		player = candidate as Node3D
+		if not player.is_in_group(player_group):
+			player.add_to_group(player_group)
 
 
 func score_action_option(option: EnemyActionOption, distance: float) -> float:
@@ -171,4 +223,6 @@ func get_debug_data() -> Dictionary:
 	data["guard_support_radius"] = guard_support_radius
 	data["guard_stance_restore"] = guard_stance_restore
 	data["guard_missing_stance"] = get_nearby_missing_stance()
+	data["encounter_target_resolved"] = player != null and is_instance_valid(player)
+	data["encounter_join_radius"] = encounter_join_radius
 	return data

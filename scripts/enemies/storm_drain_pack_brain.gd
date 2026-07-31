@@ -45,7 +45,7 @@ func _ready() -> void:
 		actor.add_to_group("storm_drain_pack_member")
 	_resolve_encounter_player()
 	_refresh_target_allocation(true)
-	if force_encounter_engagement and player != null:
+	if force_encounter_engagement and is_instance_valid(player):
 		change_state(EnemyState.CHASE)
 
 
@@ -59,7 +59,6 @@ func process_idle(delta: float) -> void:
 	_refresh_target_allocation(false)
 	if (
 		force_encounter_engagement
-		and player != null
 		and is_instance_valid(player)
 		and get_distance_to_player() <= encounter_join_radius
 	):
@@ -71,7 +70,7 @@ func process_idle(delta: float) -> void:
 func process_chase(delta: float) -> void:
 	_resolve_encounter_player()
 	_refresh_target_allocation(false)
-	if force_encounter_engagement and player != null and is_instance_valid(player):
+	if force_encounter_engagement and is_instance_valid(player):
 		var distance: float = get_distance_to_player()
 		var ordinary_lose_radius: float = get_definition().get_lose_interest_radius()
 		if distance > ordinary_lose_radius and distance <= encounter_join_radius:
@@ -83,7 +82,7 @@ func process_chase(delta: float) -> void:
 
 
 func _resolve_encounter_player() -> void:
-	if encounter_player != null and is_instance_valid(encounter_player):
+	if is_instance_valid(encounter_player):
 		if not encounter_player.is_in_group(player_group):
 			encounter_player.add_to_group(player_group)
 	else:
@@ -99,15 +98,15 @@ func _resolve_encounter_player() -> void:
 					candidate = scene_root.find_child("Player", true, false)
 				if candidate is Node3D:
 					encounter_player = candidate as Node3D
-		if encounter_player != null and not encounter_player.is_in_group(player_group):
+		if is_instance_valid(encounter_player) and not encounter_player.is_in_group(player_group):
 			encounter_player.add_to_group(player_group)
-	if player == null or not is_instance_valid(player):
+	if not is_instance_valid(player):
 		player = encounter_player
 
 
 func _refresh_target_allocation(force: bool = false) -> void:
 	if not enable_multi_target_allocation:
-		if encounter_player != null and is_instance_valid(encounter_player):
+		if is_instance_valid(encounter_player):
 			player = encounter_player
 		return
 	if has_running_action():
@@ -152,18 +151,14 @@ func _refresh_target_allocation(force: bool = false) -> void:
 		}
 	)
 	target_evaluation_count += 1
+	var selected: Dictionary = {}
 	var selected_value: Variant = plan.get("selected", {})
-	var selected: Dictionary = (
-		selected_value as Dictionary
-		if selected_value is Dictionary
-		else {}
-	)
+	if selected_value is Dictionary:
+		selected = selected_value as Dictionary
+	var next_target: Node3D = encounter_player
 	var target_value: Variant = selected.get("target_ref")
-	var next_target: Node3D = (
-		target_value as Node3D
-		if target_value is Node3D and is_instance_valid(target_value)
-		else encounter_player
-	)
+	if target_value is Node3D and is_instance_valid(target_value):
+		next_target = target_value as Node3D
 	var switched: bool = next_target != allocated_target
 	allocated_target = next_target
 	player = allocated_target
@@ -225,7 +220,7 @@ func _collect_target_candidates() -> Array[Dictionary]:
 	var candidates: Array[Dictionary] = []
 	for target: Node3D in targets:
 		if not _is_valid_target(target):
-			if target != null and is_instance_valid(target):
+			if is_instance_valid(target):
 				TargetAllocator.release_target(
 					target.get_instance_id(),
 					get_tactical_squad_id(),
@@ -241,12 +236,11 @@ func _collect_target_candidates() -> Array[Dictionary]:
 
 
 func _is_valid_target(target: Node3D) -> bool:
-	return (
-		target != null
-		and is_instance_valid(target)
-		and not target.is_queued_for_deletion()
-		and not TargetCandidate.is_defeated(target)
-	)
+	if not is_instance_valid(target):
+		return false
+	if target.is_queued_for_deletion():
+		return false
+	return not TargetCandidate.is_defeated(target)
 
 
 func _target_stagger_seconds() -> float:
@@ -271,7 +265,9 @@ func _finalize_tactical_decision(option) -> void:
 func _reserve_current_target_for_option(option) -> Dictionary:
 	if option == null or not _is_valid_target(allocated_target):
 		return {}
-	var action_value: Variant = option.call("get_action") if option.has_method("get_action") else null
+	var action_value: Variant = null
+	if option.has_method("get_action"):
+		action_value = option.call("get_action")
 	if not action_value is Resource:
 		return {}
 	var action: Resource = action_value as Resource
@@ -308,8 +304,8 @@ func _reserve_current_target_for_option(option) -> Dictionary:
 	TargetAllocator.release_owner(
 		_get_owner_id(),
 		get_tactical_squad_id(),
-		"attention",
-		"action claim replaces attention"
+		"",
+		"action claim replaced"
 	)
 	return TargetAllocator.claim_target(
 		get_tactical_squad_id(),
@@ -407,7 +403,7 @@ func _perform_projectile_attack(action: EnemyCombatActionDefinition) -> void:
 
 
 func apply_attack_to_player(payload: DamagePayload) -> void:
-	if payload == null or player == null or not is_instance_valid(player):
+	if payload == null or not is_instance_valid(player):
 		return
 	if player == encounter_player or player.is_in_group("player"):
 		super.apply_attack_to_player(payload)
@@ -559,7 +555,7 @@ func get_current_allocated_target_name() -> String:
 
 
 func _target_name(target: Node) -> String:
-	if target == null or not is_instance_valid(target):
+	if not is_instance_valid(target):
 		return "none"
 	if target.has_meta("active_avatar_display_name"):
 		var metadata_name: String = str(target.get_meta("active_avatar_display_name"))
@@ -585,7 +581,7 @@ func get_debug_data() -> Dictionary:
 	data["guard_support_radius"] = guard_support_radius
 	data["guard_stance_restore"] = guard_stance_restore
 	data["guard_missing_stance"] = get_nearby_missing_stance()
-	data["encounter_target_resolved"] = player != null and is_instance_valid(player)
+	data["encounter_target_resolved"] = is_instance_valid(player)
 	data["encounter_join_radius"] = encounter_join_radius
 	data["target_allocation"] = get_target_allocation_debug_data()
 	return data

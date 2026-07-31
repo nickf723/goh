@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyDefenseDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_defense_definition.gd" id="1_defense"]
+
+[resource]
+script = ExtResource("1_defense")
+action_id = "storm_drain_guard_screech"
+action_kind = "defense"
+display_name = "Guard Screech"
+role_tags = Array[String](["enemy_action", "defense", "support", "guard", "shield", "protector", "cover_response", "stance_restore"])
+windup_time = 0.5
+active_time = 0.12
+recovery_time = 0.5
+cooldown = 4.2
+movement_mode = "none"
+face_target_during_action = true
+windup_move_speed_multiplier = 0.0
+active_move_speed_multiplier = 0.0
+recovery_move_speed_multiplier = 0.0
+interruptible_during_windup = true
+interruptible_during_active = false
+interruptible_during_recovery = false
+debug_notes = "Restores one stance point to nearby Storm Drain allies and marks them guarded briefly."
+defense_style = "guard"
+defense_tags = Array[String](["defensive", "support", "guard", "shield", "cover"])

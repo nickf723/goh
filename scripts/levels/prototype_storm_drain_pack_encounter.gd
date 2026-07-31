@@ -5,6 +5,9 @@ class_name PrototypeStormDrainPackEncounter
 const PackMemberScene: PackedScene = preload(
 	"res://scenes/actors/enemies/storm_drain_gremlin_actor.tscn"
 )
+const TargetAllocator = preload(
+	"res://scripts/ai/target_allocation_blackboard.gd"
+)
 const BiteOption: EnemyActionOption = preload(
 	"res://data/enemy_action_options/gremlin_bite_option.tres"
 )
@@ -46,6 +49,8 @@ var encounter_complete: bool = false
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	add_to_group("debuggable")
+	if player != null and not player.is_in_group("player"):
+		player.add_to_group("player")
 	spawn_pack()
 	refill_player_resources()
 	clear_player_statuses()
@@ -85,6 +90,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func spawn_pack() -> void:
 	clear_pack_members()
+	TargetAllocator.clear_all()
 	encounter_complete = false
 	var configs: Array[Dictionary] = [
 		{
@@ -226,6 +232,21 @@ func _member_label(member: Node3D) -> String:
 	return label.text if label != null else member.name
 
 
+func _member_short_name(member: Node3D) -> String:
+	var label_text: String = _member_label(member)
+	var split: PackedStringArray = label_text.split(" • ")
+	return split[0] if split.size() > 0 else label_text
+
+
+func _member_target_name(member: Node3D) -> String:
+	if member == null:
+		return "none"
+	var brain: Node = member.get_node_or_null("EnemyBrain")
+	if brain != null and brain.has_method("get_current_allocated_target_name"):
+		return str(brain.call("get_current_allocated_target_name"))
+	return "none"
+
+
 func _on_pack_member_defeated(member_name: String) -> void:
 	show_message(member_name + " defeated. The surviving roles must adapt.")
 	call_deferred("bind_observed_member")
@@ -254,15 +275,23 @@ func update_pack_status() -> void:
 	var observed: String = "none"
 	if not pack_members.is_empty():
 		observed = _member_label(pack_members[observed_member_index])
+	var target_rows: Array[String] = []
+	for member: Node3D in pack_members:
+		target_rows.append(
+			_member_short_name(member)
+			+ " → "
+			+ _member_target_name(member)
+		)
 	pack_status_label.text = (
-		"STORM DRAIN PACK\n"
-		+ "Alive: " + str(get_alive_pack_count()) + "/4"
+		"STORM DRAIN PACK  •  Alive " + str(get_alive_pack_count()) + "/4"
 		+ "\nObserved: " + observed
+		+ ("\n" + "  |  ".join(target_rows) if not target_rows.is_empty() else "")
 		+ "\nF2 telemetry • Tab next actor • F8 reset"
 	)
 
 
 func clear_pack_members() -> void:
+	TargetAllocator.clear_all()
 	for child: Node in enemy_root.get_children():
 		child.queue_free()
 	pack_members.clear()
@@ -313,10 +342,15 @@ func set_objective(text: String) -> void:
 
 
 func get_debug_data() -> Dictionary:
+	var targets: Dictionary = {}
+	for member: Node3D in pack_members:
+		targets[_member_short_name(member)] = _member_target_name(member)
 	return {
 		"encounter": "storm_drain_pack",
 		"alive": get_alive_pack_count(),
 		"observed_index": observed_member_index,
 		"reset_count": reset_count,
 		"complete": encounter_complete,
+		"targets": targets,
+		"target_allocation": TargetAllocator.get_squad_context("storm_drain_pack"),
 	}

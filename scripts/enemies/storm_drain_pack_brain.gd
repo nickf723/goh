@@ -5,12 +5,26 @@ extends "res://scripts/enemies/enemy_threat_aware_action_brain.gd"
 @export_range(1.0, 20.0, 0.25) var guard_support_radius: float = 8.0
 @export_range(0, 10, 1) var guard_stance_restore: int = 2
 @export_range(0.1, 10.0, 0.1) var guard_status_duration: float = 1.8
+@export_range(0.0, 10.0, 0.25) var guard_need_score_per_stance: float = 1.8
+@export_range(0.0, 20.0, 0.5) var guard_full_stance_penalty: float = 10.0
 
 
 func _ready() -> void:
 	super._ready()
 	if actor != null:
 		actor.add_to_group("storm_drain_pack_member")
+
+
+func score_action_option(option: EnemyActionOption, distance: float) -> float:
+	var score: float = super.score_action_option(option, distance)
+	if option == null or option.get_action() == null:
+		return score
+	if option.get_action().get_action_id() != "storm_drain_guard_screech":
+		return score
+	var missing_stance: int = get_nearby_missing_stance()
+	if missing_stance <= 0:
+		return score - maxf(guard_full_stance_penalty, 0.0)
+	return score + float(missing_stance) * maxf(guard_need_score_per_stance, 0.0)
 
 
 func process_active_action(action: EnemyCombatActionDefinition) -> void:
@@ -101,6 +115,27 @@ func _perform_guard_screech(action: EnemyCombatActionDefinition) -> void:
 	)
 
 
+func get_nearby_missing_stance() -> int:
+	if actor == null:
+		return 0
+	var missing_stance: int = 0
+	for ally_value: Variant in get_tree().get_nodes_in_group("storm_drain_pack_member"):
+		if not ally_value is Node3D:
+			continue
+		var ally: Node3D = ally_value as Node3D
+		if not is_instance_valid(ally):
+			continue
+		if actor.global_position.distance_to(ally.global_position) > guard_support_radius:
+			continue
+		var hit_receiver: Node = ally.get_node_or_null("HitReceiver")
+		if hit_receiver == null:
+			continue
+		var current: int = int(hit_receiver.get("current_stance"))
+		var maximum: int = int(hit_receiver.get("max_stance"))
+		missing_stance += maxi(maximum - current, 0)
+	return missing_stance
+
+
 func _restore_ally_stance(ally: Node) -> bool:
 	var hit_receiver: Node = ally.get_node_or_null("HitReceiver")
 	if hit_receiver == null:
@@ -135,4 +170,5 @@ func get_debug_data() -> Dictionary:
 	data["storm_drain_pack"] = true
 	data["guard_support_radius"] = guard_support_radius
 	data["guard_stance_restore"] = guard_stance_restore
+	data["guard_missing_stance"] = get_nearby_missing_stance()
 	return data

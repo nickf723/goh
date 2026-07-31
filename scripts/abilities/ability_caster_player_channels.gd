@@ -4,6 +4,10 @@ extends "res://scripts/abilities/ability_caster_menu_select.gd"
 # other spell. A matching child component may claim the cast before the normal
 # scene-instantiation path runs.
 
+@export_group("Free Aim Convergence")
+@export_range(10.0, 200.0, 1.0) var camera_aim_distance: float = 90.0
+@export_flags_3d_physics var camera_aim_collision_mask: int = 1
+
 
 func cast_from_player(
 	player: Node3D,
@@ -110,21 +114,60 @@ func _hide_focus_library_ui() -> void:
 		ui.call("hide_spell_menu")
 
 
-# Lock-on may influence only spells that explicitly declare target-lock or
-# homing behavior. Aimed, self, burst, movement, detection, and free-fire
-# abilities follow the camera or Grace's forward direction instead.
+# Hard lock influences only spells that explicitly declare target-lock or
+# homing behavior. Free-fire spells still follow the camera, but converge from
+# Grace's lower cast origin onto the camera's center-ray hit instead of flying
+# parallel beneath the crosshair at close range.
 func get_cast_direction(player: Node3D, cast_origin: Vector3) -> Vector3:
 	var ability: AbilityDefinition = get_current_ability()
 	if _ability_uses_lock_on_direction(ability):
 		return super.get_cast_direction(player, cast_origin)
+	return _get_camera_converged_cast_direction(player, cast_origin)
 
-	var direction: Vector3 = -player.global_transform.basis.z
+
+func _get_camera_converged_cast_direction(
+	player: Node3D,
+	cast_origin: Vector3
+) -> Vector3:
+	var fallback: Vector3 = -player.global_transform.basis.z
 	var camera: Camera3D = get_viewport().get_camera_3d()
-	if camera != null:
-		direction = -camera.global_transform.basis.z
+	if camera == null:
+		return fallback.normalized() if fallback.length() > 0.01 else Vector3.FORWARD
+
+	var viewport_size: Vector2 = camera.get_viewport().get_visible_rect().size
+	var screen_center: Vector2 = viewport_size * 0.5
+	var ray_origin: Vector3 = camera.project_ray_origin(screen_center)
+	var ray_direction: Vector3 = camera.project_ray_normal(screen_center)
+	if ray_direction.length() <= 0.01:
+		ray_direction = -camera.global_transform.basis.z
+	if ray_direction.length() <= 0.01:
+		return fallback.normalized() if fallback.length() > 0.01 else Vector3.FORWARD
+	ray_direction = ray_direction.normalized()
+
+	var aim_point: Vector3 = (
+		ray_origin
+		+ ray_direction * maxf(camera_aim_distance, 1.0)
+	)
+	var world: World3D = player.get_world_3d()
+	if world != null:
+		var query := PhysicsRayQueryParameters3D.create(
+			ray_origin,
+			aim_point
+		)
+		query.collision_mask = camera_aim_collision_mask
+		query.collide_with_areas = true
+		query.collide_with_bodies = true
+		if player is CollisionObject3D:
+			query.exclude = [(player as CollisionObject3D).get_rid()]
+		var hit: Dictionary = world.direct_space_state.intersect_ray(query)
+		var hit_position: Variant = hit.get("position")
+		if hit_position is Vector3:
+			aim_point = hit_position as Vector3
+
+	var direction: Vector3 = aim_point - cast_origin
 	if direction.length() <= 0.01:
-		return Vector3.FORWARD
-	return direction.normalized()
+		direction = ray_direction
+	return direction.normalized() if direction.length() > 0.01 else Vector3.FORWARD
 
 
 func _ability_uses_lock_on_direction(ability: AbilityDefinition) -> bool:

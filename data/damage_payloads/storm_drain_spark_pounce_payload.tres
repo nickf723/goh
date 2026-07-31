@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 2
+stance_damage = 3
+element = "lightning"
+source_name = "Spark Pounce"
+hit_type = "melee"
+status_effect = "stunned"
+status_duration = 0.35
+status_strength = 1.0
+tags = Array[String](["lightning", "shock", "melee", "enemy_attack", "pounce", "gap_closer", "payoff", "conductive", "wet_shock"])
+knockback_strength = 2.5
+knockback_up_strength = 0.2

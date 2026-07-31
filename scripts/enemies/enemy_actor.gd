@@ -3,6 +3,13 @@ class_name EnemyActor
 
 const AirborneReactionControllerScript = preload("res://scripts/combat/airborne_reaction_controller.gd")
 const AirbornePresentationControllerScript = preload("res://scripts/visuals/airborne_presentation_controller.gd")
+const CreatureObservationAccess = preload(
+	"res://scripts/animals/creature_observation_access.gd"
+)
+
+@export_group("Creature Identity")
+@export var creature_species_id: String = ""
+@export var creature_observation_enabled: bool = true
 
 @export_group("Airborne Presentation")
 @export var airborne_presentation_profile: AirbornePresentationProfile
@@ -19,8 +26,22 @@ var airborne_presentation_controller: Node
 
 func _ready() -> void:
 	add_to_group("enemy")
+	_register_creature_observation()
 	ensure_airborne_reaction_controller()
 	ensure_airborne_presentation_controller()
+
+
+func _register_creature_observation() -> void:
+	var normalized_species: String = creature_species_id.strip_edges().to_lower()
+	if not creature_observation_enabled or normalized_species == "":
+		return
+	set_meta("creature_species_id", normalized_species)
+	add_to_group("creature_observable")
+	CreatureObservationAccess.call_service(
+		get_tree(),
+		"register_creature",
+		[self]
+	)
 
 
 func ensure_airborne_reaction_controller() -> void:
@@ -72,6 +93,7 @@ func begin_defeat_cleanup() -> void:
 
 	defeat_cleanup_started = true
 	remove_from_group("enemy")
+	_report_creature_defeat()
 	velocity = Vector3.ZERO
 	collision_layer = 0
 	collision_mask = 0
@@ -111,6 +133,16 @@ func begin_defeat_cleanup() -> void:
 
 	var timer: SceneTreeTimer = get_tree().create_timer(defeat_cleanup_delay)
 	timer.timeout.connect(Callable(self, "_finish_defeat_cleanup"))
+
+
+func _report_creature_defeat() -> void:
+	if not creature_observation_enabled or not has_meta("creature_species_id"):
+		return
+	CreatureObservationAccess.call_service(
+		get_tree(),
+		"report_creature_defeated",
+		[self]
+	)
 
 
 func _finish_defeat_cleanup() -> void:

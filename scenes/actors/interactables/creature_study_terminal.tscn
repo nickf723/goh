@@ -1,0 +1,51 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/interaction/creature_study_terminal.gd" id="1_script"]
+[ext_resource type="Material" path="res://art/materials/church/church_charcoal_stone_v1.tres" id="2_stone"]
+[ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="3_gold"]
+[ext_resource type="Material" path="res://art/materials/prototype/gate_barrier_blue.tres" id="4_glow"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_terminal"]
+size = Vector3(1.25, 1.25, 0.95)
+
+[sub_resource type="BoxMesh" id="BoxMesh_base"]
+size = Vector3(1.1, 1.05, 0.82)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tablet"]
+size = Vector3(0.78, 0.62, 0.08)
+
+[sub_resource type="SphereMesh" id="SphereMesh_orb"]
+radius = 0.15
+height = 0.3
+
+[node name="CreatureStudyTerminal" type="Area3D"]
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.62, 0)
+shape = SubResource("BoxShape_terminal")
+
+[node name="Base" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.52, 0)
+material_override = ExtResource("2_stone")
+mesh = SubResource("BoxMesh_base")
+
+[node name="Tablet" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.82, -0.45)
+rotation_degrees = Vector3(-14, 0, 0)
+material_override = ExtResource("3_gold")
+mesh = SubResource("BoxMesh_tablet")
+
+[node name="StudyOrb" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.22, 0)
+material_override = ExtResource("4_glow")
+mesh = SubResource("SphereMesh_orb")
+
+[node name="Label3D" type="Label3D" parent="."]
+position = Vector3(0, 1.72, 0)
+text = "CREATURE STUDY"
+font_size = 30
+pixel_size = 0.007
+billboard = 1
+modulate = Color(0.64, 0.9, 1, 1)
+outline_size = 5

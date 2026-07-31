@@ -8,3 +8,6 @@ func _ready() -> void:
 	add_to_group("friendly_manifestation")
 	add_to_group("ruvia_manifestation")
 	add_to_group("enemy_targetable")
+	# Layer 2 is reserved here for enemy projectile contact with friendly
+	# manifestations. Grace's ordinary projectiles remain on mask 1 and ignore it.
+	collision_layer = 2

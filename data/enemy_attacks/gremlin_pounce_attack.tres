@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("1_pounce")
+action_id = "gremlin_pounce"
 attack_class = ExtResource("2_pounce")
 use_class_timing = true
 use_class_payload = true

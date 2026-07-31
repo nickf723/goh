@@ -53,7 +53,12 @@ static func sanitize(candidate: Dictionary) -> Dictionary:
 static func is_defeated(target: Node) -> bool:
 	if target == null or not is_instance_valid(target):
 		return true
-	if target.has_method("is_target_defeated"):
+	# Grace's controller also owns an `is_target_defeated(target)` helper for
+	# lock-on logic. Player vitals come from GameState, so never call that method
+	# as though it were a zero-argument target contract.
+	if target.is_in_group("player"):
+		return GameState.get_stat("health") <= 0
+	if _can_call_without_arguments(target, "is_target_defeated"):
 		return bool(target.call("is_target_defeated"))
 	if _has_property(target, "defeated") and bool(target.get("defeated")):
 		return true
@@ -61,8 +66,6 @@ static func is_defeated(target: Node) -> bool:
 	if hit_receiver != null and _has_property(hit_receiver, "current_health"):
 		if int(hit_receiver.get("current_health")) <= 0:
 			return true
-	if target.is_in_group("player"):
-		return GameState.get_stat("health") <= 0
 	return false
 
 
@@ -166,6 +169,27 @@ static func _target_kind(target: Node) -> String:
 	if target.is_in_group("friendly_actor"):
 		return "ally"
 	return "target"
+
+
+static func _can_call_without_arguments(value: Object, method_name: String) -> bool:
+	if value == null or not is_instance_valid(value):
+		return false
+	for method_value: Variant in value.get_method_list():
+		if not method_value is Dictionary:
+			continue
+		var method: Dictionary = method_value as Dictionary
+		if str(method.get("name", "")) != method_name:
+			continue
+		var argument_count: int = 0
+		var arguments_value: Variant = method.get("args", [])
+		if arguments_value is Array:
+			argument_count = (arguments_value as Array).size()
+		var default_count: int = 0
+		var defaults_value: Variant = method.get("default_args", [])
+		if defaults_value is Array:
+			default_count = (defaults_value as Array).size()
+		return maxi(argument_count - default_count, 0) == 0
+	return false
 
 
 static func _has_property(value: Object, property_name: String) -> bool:

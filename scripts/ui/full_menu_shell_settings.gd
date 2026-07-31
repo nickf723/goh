@@ -1,4 +1,4 @@
-extends "res://scripts/ui/full_menu_shell_mastery.gd"
+extends "res://scripts/ui/full_menu_shell_familiar.gd"
 class_name FullMenuShellSettings
 
 

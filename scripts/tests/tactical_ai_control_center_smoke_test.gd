@@ -31,25 +31,38 @@ func run_tests() -> void:
 		"Tactical AI Laboratory supplemental entry resolves"
 	)
 	_expect(
-		int(debug.get("supplemental_feature_count", 0)) == 1,
-		"Control Center reports one supplemental development tool"
+		bool(debug.get("storm_drain_pack_available", false)),
+		"Storm Drain Pack supplemental entry resolves"
+	)
+	_expect(
+		int(debug.get("supplemental_feature_count", 0)) == 2,
+		"Control Center reports two supplemental development tools"
 	)
 	var found_lab: bool = false
+	var found_encounter: bool = false
 	var features_value: Variant = control_center.get("visible_features")
 	if features_value is Array:
 		for feature_value: Variant in features_value as Array:
 			if not feature_value is Dictionary:
 				continue
 			var feature: Dictionary = feature_value as Dictionary
-			if str(feature.get("id", "")) == "tactical_ai_lab":
+			var feature_id: String = str(feature.get("id", ""))
+			if feature_id == "tactical_ai_lab":
 				found_lab = true
 				_expect(
 					str(feature.get("scene", ""))
 					== "res://scenes/levels/prototypes/prototype_tactical_ai_lab_v1.tscn",
 					"Launcher entry points to the tactical laboratory scene"
 				)
-				break
+			elif feature_id == "storm_drain_pack_encounter":
+				found_encounter = true
+				_expect(
+					str(feature.get("scene", ""))
+					== "res://scenes/levels/prototypes/prototype_storm_drain_pack_encounter_v1.tscn",
+					"Launcher entry points to the Storm Drain Pack scene"
+				)
 	_expect(found_lab, "Tactical AI Laboratory appears in visible features")
+	_expect(found_encounter, "Storm Drain Pack appears in visible features")
 	control_center.queue_free()
 	await get_tree().process_frame
 	_finish()

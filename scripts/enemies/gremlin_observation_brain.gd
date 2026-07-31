@@ -5,12 +5,12 @@ const CreatureObservationAccess = preload(
 )
 
 
-func on_action_started(action) -> void:
+func on_action_started(action: EnemyCombatActionDefinition) -> void:
 	super.on_action_started(action)
 	_report_action_observation("action_started", action)
 
 
-func on_action_active_started(action) -> void:
+func on_action_active_started(action: EnemyCombatActionDefinition) -> void:
 	super.on_action_active_started(action)
 	_report_action_observation("action_active", action)
 
@@ -25,14 +25,13 @@ func on_action_completed(action) -> void:
 		target_is_player
 		and GameState.get_stat("health") > 0
 	)
+	var hit_registered: bool = false
+	if action_runner != null:
+		hit_registered = bool(action_runner.hit_registered)
 	var context: Dictionary = {
 		"target_is_player": target_is_player,
 		"target_survived": target_survived,
-		"hit_registered": (
-			bool(action_runner.hit_registered)
-			if action_runner != null
-			else false
-		),
+		"hit_registered": hit_registered,
 	}
 	_report_action_observation("action_completed", action, context)
 	if target_is_player and target_survived:
@@ -47,6 +46,9 @@ func _finalize_tactical_decision(option) -> void:
 	var results: Array = results_value as Array
 	if results.is_empty() or actor == null:
 		return
+	var action_name: String = "none"
+	if option != null and option.has_method("get_display_name"):
+		action_name = str(option.call("get_display_name"))
 	CreatureObservationAccess.call_service(
 		get_tree(),
 		"report_squad_coordination",
@@ -56,11 +58,7 @@ func _finalize_tactical_decision(option) -> void:
 			{
 				"squad_id": get_tactical_squad_id(),
 				"role_id": get_tactical_squad_role_id(),
-				"action": (
-					option.call("get_display_name")
-					if option != null and option.has_method("get_display_name")
-					else "none"
-				),
+				"action": action_name,
 			},
 		]
 	)
@@ -68,7 +66,7 @@ func _finalize_tactical_decision(option) -> void:
 
 func _report_action_observation(
 	event_type: String,
-	action,
+	action: Resource,
 	context: Dictionary = {}
 ) -> void:
 	if actor == null or action == null:

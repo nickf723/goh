@@ -48,9 +48,9 @@ func _build_intent(_delta: float, intent: AvatarActionIntent) -> void:
 		)
 		intent.set_movement(world_direction, input_vector.length())
 
-	var target_value: Variant = controlled_actor.get("lock_on_target")
-	if is_instance_valid(target_value) and target_value is Node3D:
-		intent.target = target_value as Node3D
+	var valid_target: Node3D = _get_valid_lock_on_target()
+	if valid_target != null:
+		intent.target = valid_target
 		intent.set_facing(intent.target.global_position - controlled_actor.global_position)
 	elif intent.movement_direction.length_squared() > 0.001:
 		intent.set_facing(intent.movement_direction)
@@ -81,6 +81,15 @@ func _build_intent(_delta: float, intent: AvatarActionIntent) -> void:
 		intent.guard_requested = true
 	if intent.decision_tag == "idle" and intent.movement_direction.length_squared() > 0.001:
 		intent.decision_tag = "player_move"
+
+
+func _get_valid_lock_on_target() -> Node3D:
+	if controlled_actor == null or not is_instance_valid(controlled_actor):
+		return null
+	var target_value: Variant = controlled_actor.get("lock_on_target")
+	if not is_instance_valid(target_value):
+		return null
+	return target_value as Node3D if target_value is Node3D else null
 
 
 func _get_selected_spell_id() -> String:

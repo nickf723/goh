@@ -121,16 +121,17 @@ static func evaluate(
 		score += maxf(float(options.get("focus_fire_bonus", 100.0)), 0.0)
 		reasons.append("Authored focus-fire override")
 
+	var primary_reason: String = "Closest useful target"
+	if not reasons.is_empty():
+		primary_reason = reasons[0]
+	elif not penalties.is_empty():
+		primary_reason = penalties[0]
 	return {
 		"valid": true,
 		"score": score,
 		"reasons": reasons,
 		"penalties": penalties,
-		"primary_reason": (
-			reasons[0]
-			if not reasons.is_empty()
-			else penalties[0] if not penalties.is_empty() else "Closest useful target"
-		),
+		"primary_reason": primary_reason,
 		"overkill": expected_damage >= current_health,
 		"expected_damage": expected_damage,
 		"owner_count": owner_count,
@@ -155,7 +156,7 @@ static func choose_best(
 			else {}
 		)
 		var evaluation: Dictionary = evaluate(candidate, context, role_id, options)
-		var row: Dictionary = candidate.duplicate(true)
+		var row: Dictionary = candidate.duplicate(false)
 		row.erase("target_ref")
 		row["claim_context"] = context
 		row["valid"] = bool(evaluation.get("valid", false))
@@ -172,7 +173,7 @@ static func choose_best(
 			and int(candidate.get("target_id", 0)) < int(best.get("target_id", 2147483647))
 		):
 			best_score = score
-			best = candidate.duplicate()
+			best = candidate.duplicate(false)
 			best["target_score"] = score
 			best["target_reason"] = str(evaluation.get("primary_reason", "Target selected"))
 	trace.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:

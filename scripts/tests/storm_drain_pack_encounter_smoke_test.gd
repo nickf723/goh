@@ -40,28 +40,28 @@ func run_tests() -> void:
 		"MireGremlin",
 		"primer",
 		"cautious",
-		["storm_drain_mire_spit", "gremlin_bite", "gremlin_backstep"]
+		["Mire Spit", "Gremlin Bite", "Backstep"]
 	)
 	_test_member(
 		enemy_root,
 		"SparkGremlin",
 		"payoff_specialist",
 		"bold",
-		["storm_drain_spark_pounce", "gremlin_bite", "gremlin_backstep"]
+		["Spark Pounce", "Gremlin Bite", "Backstep"]
 	)
 	_test_member(
 		enemy_root,
 		"ShieldGremlin",
 		"protector",
 		"brute",
-		["storm_drain_guard_screech", "gremlin_bite", "gremlin_backstep"]
+		["Guard Screech", "Gremlin Bite", "Backstep"]
 	)
 	_test_member(
 		enemy_root,
 		"RunnerGremlin",
 		"skirmisher",
 		"skittish",
-		["storm_drain_hookstep", "gremlin_pounce", "gremlin_bite"]
+		["Hookstep", "Gremlin Pounce", "Gremlin Bite"]
 	)
 
 	_expect(
@@ -77,6 +77,10 @@ func run_tests() -> void:
 		"Encounter regenerates testing resources"
 	)
 	_expect(
+		str(MireSpitAttack.call("get_action_id")) == "storm_drain_mire_spit",
+		"Mire Spit exposes a stable action id"
+	)
+	_expect(
 		MireSpitAttack.has_method("is_projectile_delivery")
 		and bool(MireSpitAttack.call("is_projectile_delivery")),
 		"Mire Spit uses projectile delivery"
@@ -84,6 +88,10 @@ func run_tests() -> void:
 	_expect(
 		MireSpitAttack.get("projectile_scene") is PackedScene,
 		"Mire Spit owns a projectile scene"
+	)
+	_expect(
+		str(SparkPounceAttack.call("get_action_id")) == "storm_drain_spark_pounce",
+		"Spark Pounce exposes a stable action id"
 	)
 	_expect(
 		SparkPounceAttack.has_method("is_projectile_delivery")
@@ -134,20 +142,26 @@ func _test_member(
 		str(brain.get("personality_id")) == expected_personality,
 		member_name + " keeps its personality"
 	)
-	var action_ids: Array[String] = []
+	var action_names: Array[String] = []
 	var options_value: Variant = brain.get("action_options")
 	if options_value is Array:
 		for option_value: Variant in options_value as Array:
-			if option_value == null or not option_value.has_method("get_action"):
+			if not option_value is Resource:
 				continue
-			var action: Variant = option_value.call("get_action")
-			if action != null and action.has_method("get_action_id"):
-				action_ids.append(str(action.call("get_action_id")))
-	action_ids.sort()
+			var option: Resource = option_value as Resource
+			if not option.has_method("get_action"):
+				continue
+			var action_value: Variant = option.call("get_action")
+			if not action_value is Resource:
+				continue
+			var action: Resource = action_value as Resource
+			if action.has_method("get_display_name"):
+				action_names.append(str(action.call("get_display_name")))
+	action_names.sort()
 	var expected_sorted: Array[String] = expected_actions.duplicate()
 	expected_sorted.sort()
 	_expect(
-		action_ids == expected_sorted,
+		action_names == expected_sorted,
 		member_name + " receives its intended action library"
 	)
 
@@ -165,6 +179,10 @@ func _test_guard_support(enemy_root: Node) -> void:
 	if brain == null or hit_receiver == null:
 		return
 	hit_receiver.set("current_stance", 1)
+	_expect(
+		int(brain.call("get_nearby_missing_stance")) > 0,
+		"Protector detects damaged allied stance"
+	)
 	var restored: bool = bool(brain.call("_restore_ally_stance", mire))
 	_expect(restored, "Guard Screech restores allied stance")
 	_expect(int(hit_receiver.get("current_stance")) > 1, "Guard support changes stance state")

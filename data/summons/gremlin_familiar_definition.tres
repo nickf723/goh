@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SummonDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/summons/summon_definition.gd" id="1_definition"]
+[ext_resource type="PackedScene" path="res://scenes/actors/summons/gremlin_familiar.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_definition")
+summon_id = "gremlin_familiar"
+species_id = "gremlin"
+unlock_id = "gremlin_familiar"
+display_name = "Gremlin Familiar"
+summon_scene = ExtResource("2_scene")
+maximum_active = 1
+presence_cost = 1
+mana_cost = 3
+defeat_cooldown = 6.0
+summon_offset = Vector3(1.7, 0.2, -1.4)
+roles = Array[String](["companion", "combat", "scout", "setup"])
+supported_familiar_roles = Array[String](["skirmisher", "primer"])
+supported_technique_ids = Array[String](["bite", "backstep", "pounce", "mire_spit"])
+transformation_supported = true

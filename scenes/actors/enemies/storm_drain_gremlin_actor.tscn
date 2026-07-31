@@ -21,6 +21,7 @@ radius = 0.62
 
 [node name="StormDrainGremlin" type="CharacterBody3D" groups=["enemy", "storm_drain_pack_member"]]
 script = ExtResource("1_actor")
+creature_species_id = "gremlin"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("SphereShape_body")

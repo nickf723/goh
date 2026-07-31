@@ -66,9 +66,12 @@ personality_id = "skittish"
 action_options = Array[ExtResource("12_option_script")]([ExtResource("13_bite_option"), ExtResource("14_backstep_option")])
 reposition_when_no_action_matches = true
 retreat_speed_multiplier = 0.92
+tactical_decision_interval = 0.12
+tactical_decision_stagger = 0.05
 tactical_squad_id = "storm_drain_pack"
 tactical_squad_role_id = "generalist"
 auto_assign_squad_role = false
+decision_history_capacity = 32
 
 [node name="EnemyTelegraph" type="Node" parent="."]
 script = ExtResource("10_telegraph")

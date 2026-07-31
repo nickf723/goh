@@ -58,6 +58,9 @@ jobs:
       - name: Run Creature Mastery familiar test
         run: godot --headless --path . res://scenes/tests/creature_mastery_familiar_smoke_test.tscn
 
+      - name: Run familiar swapping grounding and aim test
+        run: godot --headless --path . res://scenes/tests/familiar_polish_smoke_test.tscn
+
       - name: Run spellcasting mastery and achievement test
         run: godot --headless --path . res://scenes/tests/spellcasting_mastery_smoke_test.tscn
 

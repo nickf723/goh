@@ -11,10 +11,16 @@ func resolve_reactions(target: Node, payload: DamagePayload) -> Dictionary:
 	if not reactions_value is Array:
 		return batch
 	for reaction_value: Variant in reactions_value as Array:
-		if reaction_value is Dictionary:
-			CreatureObservationAccess.call_service(
-				get_tree(),
-				"report_reaction",
-				[target, reaction_value as Dictionary, payload]
-			)
+		if not reaction_value is Dictionary:
+			continue
+		var reaction: Dictionary = (reaction_value as Dictionary).duplicate(false)
+		if str(reaction.get("reaction_id", "")) == "":
+			reaction["reaction_id"] = str(reaction.get("reaction", ""))
+		if str(reaction.get("reaction_name", "")) == "":
+			reaction["reaction_name"] = str(reaction.get("reaction", ""))
+		CreatureObservationAccess.call_service(
+			get_tree(),
+			"report_reaction",
+			[target, reaction, payload]
+		)
 	return batch

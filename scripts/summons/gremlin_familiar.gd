@@ -28,6 +28,10 @@ const SPECIES_ID: String = "gremlin"
 @export_range(0.1, 2.0, 0.05) var target_claim_duration: float = 0.9
 @export_range(2.0, 20.0, 0.5) var familiar_target_range: float = 14.0
 
+@export_group("Grounded Body")
+@export_range(0.0, 1.5, 0.01) var grounded_visual_height: float = 0.52
+@export_range(0.0, 1.0, 0.01) var grounded_floor_snap: float = 0.36
+
 @export_group("Technique Motion")
 @export_range(2.0, 20.0, 0.5) var pounce_speed: float = 9.5
 @export_range(0.1, 1.0, 0.05) var pounce_duration: float = 0.34
@@ -62,6 +66,8 @@ func _ready() -> void:
 	target_search_range = familiar_target_range
 	attack_range = 1.25
 	attack_interval = 0.72
+	floor_snap_length = grounded_floor_snap
+	floor_constant_speed = true
 	super._ready()
 	add_to_group("gremlin_familiar")
 	add_to_group("enemy_targetable")
@@ -585,6 +591,7 @@ func _build_body() -> void:
 	if visual_value is Node3D:
 		visual_root = visual_value as Node3D
 		visual_root.name = "GremlinVisual"
+		visual_root.position.y = grounded_visual_height
 		visual_root.scale = Vector3.ONE * 0.9
 		add_child(visual_root)
 	var label := Label3D.new()
@@ -600,8 +607,7 @@ func _build_body() -> void:
 
 func _update_visual() -> void:
 	if visual_root != null:
-		visual_root.position.y = sin(elapsed * 4.5) * 0.045
-		visual_root.rotation.z = sin(elapsed * 3.2) * 0.025
+		visual_root.position.y = grounded_visual_height
 	var label: Label3D = get_node_or_null("CommandLabel") as Label3D
 	if label != null:
 		label.text = (
@@ -645,6 +651,7 @@ func get_debug_data() -> Dictionary:
 	data["target_plan"] = last_target_plan.duplicate(true)
 	data["pouncing"] = pounce_remaining > 0.0
 	data["backstepping"] = backstep_remaining > 0.0
+	data["grounded_visual_height"] = grounded_visual_height
 	return data
 
 

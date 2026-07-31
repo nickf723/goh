@@ -132,11 +132,16 @@ func spawn_pack() -> void:
 
 
 func spawn_pack_member(config: Dictionary) -> void:
-	var member: Node3D = PackMemberScene.instantiate() as Node3D
-	if member == null:
+	var member_value: Variant = PackMemberScene.instantiate()
+	if not member_value is Node3D:
 		return
+	var member: Node3D = member_value as Node3D
 	member.name = str(config.get("name", "StormDrainGremlin"))
-	member.position = config.get("position", Vector3.ZERO) as Vector3
+	var position_value: Variant = config.get("position", Vector3.ZERO)
+	var spawn_position: Vector3 = Vector3.ZERO
+	if position_value is Vector3:
+		spawn_position = position_value
+	member.position = spawn_position
 	member.set_meta("tactical_squad_id", "storm_drain_pack")
 	enemy_root.add_child(member)
 	var brain: Node = member.get_node_or_null("EnemyBrain")
@@ -145,23 +150,29 @@ func spawn_pack_member(config: Dictionary) -> void:
 		brain.set("tactical_squad_role_id", str(config.get("role", "generalist")))
 		brain.set("auto_assign_squad_role", false)
 		brain.set("personality_id", str(config.get("personality", "skittish")))
-		brain.set("action_options", config.get("options", []))
+		var options_value: Variant = config.get("options", [])
+		if options_value is Array:
+			brain.set("action_options", options_value)
 		if brain.has_method("refresh_tactical_squad_role"):
 			brain.call_deferred("refresh_tactical_squad_role")
+	var role_color: Color = Color.WHITE
+	var color_value: Variant = config.get("color", Color.WHITE)
+	if color_value is Color:
+		role_color = color_value
 	var role_label: Label3D = member.get_node_or_null("RoleLabel") as Label3D
 	if role_label != null:
 		role_label.text = str(config.get("label", "PACK MEMBER"))
-		role_label.modulate = config.get("color", Color.WHITE) as Color
+		role_label.modulate = role_color
 	var beacon: OmniLight3D = member.get_node_or_null("RoleBeacon") as OmniLight3D
 	if beacon != null:
-		beacon.light_color = config.get("color", Color.WHITE) as Color
+		beacon.light_color = role_color
 	var hit_receiver: Node = member.get_node_or_null("HitReceiver")
 	if hit_receiver != null:
 		hit_receiver.set("target_name", str(config.get("label", member.name)))
 		if hit_receiver.has_signal("health_depleted"):
 			hit_receiver.connect(
 				"health_depleted",
-				Callable(self, "_on_pack_member_defeated").bind(member.name)
+				Callable(self, "_on_pack_member_defeated").bind(str(member.name))
 			)
 	var tags: Node = member.get_node_or_null("TagComponent")
 	if tags != null and tags.has_method("add_tag"):

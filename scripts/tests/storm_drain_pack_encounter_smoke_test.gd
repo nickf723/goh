@@ -34,6 +34,7 @@ func run_tests() -> void:
 	_expect(enemy_root != null, "Encounter exposes EnemyRoot")
 	if enemy_root != null:
 		_expect(enemy_root.get_child_count() == 4, "Encounter spawns four pack members")
+	_test_encounter_activation(encounter, enemy_root)
 
 	_test_member(
 		enemy_root,
@@ -109,12 +110,39 @@ func run_tests() -> void:
 			enemy_root != null and enemy_root.get_child_count() == 4,
 			"Reset creates a fresh four-member pack"
 		)
+		_test_encounter_activation(encounter, enemy_root)
 	else:
 		_expect(false, "Encounter exposes reset_lab")
 
 	encounter.queue_free()
 	await get_tree().process_frame
 	_finish()
+
+
+func _test_encounter_activation(encounter: Node, enemy_root: Node) -> void:
+	var player: Node = encounter.get_node_or_null("Player")
+	_expect(player != null, "Encounter exposes Player")
+	if player == null or enemy_root == null:
+		return
+	_expect(player.is_in_group("player"), "Storm Drain encounter registers Player group")
+	var resolved_count: int = 0
+	var chase_count: int = 0
+	for member: Node in enemy_root.get_children():
+		var brain: Node = member.get_node_or_null("EnemyBrain")
+		if brain == null:
+			continue
+		if brain.has_method("_resolve_encounter_player"):
+			brain.call("_resolve_encounter_player")
+		if brain.get("player") == player:
+			resolved_count += 1
+		if int(brain.get("state")) == 1:
+			chase_count += 1
+		_expect(
+			float(brain.get("encounter_join_radius")) >= 20.0,
+			member.name + " can join from across the dedicated arena"
+		)
+	_expect(resolved_count == 4, "Every pack brain resolves Grace as its target")
+	_expect(chase_count == 4, "Every pack member begins the encounter in CHASE")
 
 
 func _test_member(

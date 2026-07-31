@@ -1,5 +1,4 @@
 extends "res://scripts/ui/full_menu_shell_mastery.gd"
-class_name FullMenuShellFamiliar
 
 
 func render_magic() -> void:
@@ -35,10 +34,12 @@ func get_footer_text() -> String:
 
 
 func _render_familiar_mastery() -> void:
-	var familiar_data: Dictionary = menu_data.get("familiar_mastery", {})
+	var familiar_data: Dictionary = _familiar_dictionary(menu_data.get("familiar_mastery", {}))
+	var rows: Array = []
 	var rows_value: Variant = familiar_data.get("rows", [])
-	var rows: Array = rows_value as Array if rows_value is Array else []
-	var summary: Dictionary = familiar_data.get("summary", {})
+	if rows_value is Array:
+		rows = rows_value as Array
+	var summary: Dictionary = _familiar_dictionary(familiar_data.get("summary", {}))
 	add_section_header("FAMILIAR BLUEPRINTS")
 	add_summary_card([
 		"Unlocked " + str(summary.get("familiars_unlocked", 0)) + "/" + str(summary.get("familiars_available", rows.size())),
@@ -66,15 +67,13 @@ func _render_familiar_row(row: Dictionary) -> void:
 	var equipped: bool = bool(row.get("equipped", false))
 	var rank: int = int(row.get("rank", 0))
 	var rank_title: String = str(row.get("rank_title", "Unknown"))
-	var loadout: Dictionary = row.get("loadout", {})
+	var loadout: Dictionary = _familiar_dictionary(row.get("loadout", {}))
 	var selected_techniques: Array[String] = _familiar_string_array(
 		loadout.get("technique_ids", [])
 	)
-	var subtitle: String = (
-		("EQUIPPED" if equipped else "UNLOCKED")
-		if unlocked
-		else "LOCKED"
-	)
+	var subtitle: String = "LOCKED"
+	if unlocked:
+		subtitle = "EQUIPPED" if equipped else "UNLOCKED"
 	subtitle += "  •  " + rank_title.to_upper() + " RANK " + str(rank)
 	add_text_card(
 		display_name,
@@ -95,11 +94,14 @@ func _render_familiar_row(row: Dictionary) -> void:
 		return
 	var control_grid: GridContainer = make_visual_grid(4)
 	content_box.add_child(control_grid)
+	var equip_badge: String = "SELECT BLUEPRINT"
+	if equipped:
+		equip_badge = "ACTIVE BLUEPRINT"
 	add_visual_action_tile(
 		control_grid,
 		"✦",
 		"Equip " + display_name,
-		"ACTIVE BLUEPRINT" if equipped else "SELECT BLUEPRINT",
+		equip_badge,
 		{"kind": "equip_familiar", "species_id": species_id},
 		"The summon spell will create this prepared familiar."
 	)
@@ -131,34 +133,40 @@ func _render_familiar_row(row: Dictionary) -> void:
 	var technique_grid: GridContainer = make_visual_grid(4)
 	content_box.add_child(technique_grid)
 	var technique_rows_value: Variant = row.get("techniques", [])
-	if technique_rows_value is Array:
-		for technique_value: Variant in technique_rows_value as Array:
-			if not technique_value is Dictionary:
-				continue
-			var technique: Dictionary = technique_value as Dictionary
-			var technique_id: String = str(technique.get("id", ""))
-			var technique_unlocked: bool = bool(technique.get("unlocked", false))
-			var technique_equipped: bool = bool(technique.get("equipped", false))
-			if technique_unlocked:
-				add_visual_action_tile(
-					technique_grid,
-					"◆" if technique_equipped else "◇",
-					str(technique.get("label", technique_id.capitalize())),
-					"EQUIPPED" if technique_equipped else "AVAILABLE",
-					{
-						"kind": "toggle_familiar_technique",
-						"species_id": species_id,
-						"technique_id": technique_id,
-					},
-					str(technique.get("description", ""))
-				)
-			else:
-				add_visual_info_card(
-					"🔒",
-					str(technique.get("label", technique_id.capitalize())),
-					str(technique.get("description", "")),
-					"Requires " + str(technique.get("unlock_id", "more study")).replace("_", " ").capitalize()
-				)
+	if not technique_rows_value is Array:
+		return
+	for technique_value: Variant in technique_rows_value as Array:
+		if not technique_value is Dictionary:
+			continue
+		var technique: Dictionary = technique_value as Dictionary
+		var technique_id: String = str(technique.get("id", ""))
+		var technique_unlocked: bool = bool(technique.get("unlocked", false))
+		var technique_equipped: bool = bool(technique.get("equipped", false))
+		if technique_unlocked:
+			var technique_icon: String = "◇"
+			var technique_badge: String = "AVAILABLE"
+			if technique_equipped:
+				technique_icon = "◆"
+				technique_badge = "EQUIPPED"
+			add_visual_action_tile(
+				technique_grid,
+				technique_icon,
+				str(technique.get("label", technique_id.capitalize())),
+				technique_badge,
+				{
+					"kind": "toggle_familiar_technique",
+					"species_id": species_id,
+					"technique_id": technique_id,
+				},
+				str(technique.get("description", ""))
+			)
+		else:
+			add_visual_info_card(
+				"🔒",
+				str(technique.get("label", technique_id.capitalize())),
+				str(technique.get("description", "")),
+				"Requires " + str(technique.get("unlock_id", "more study")).replace("_", " ").capitalize()
+			)
 
 
 func _render_locked_techniques(row: Dictionary) -> void:
@@ -182,13 +190,13 @@ func _equip_familiar(species_id: String) -> void:
 	var service: Node = get_node_or_null("/root/SpeciesKnowledge")
 	if service == null or not service.has_method("set_equipped_familiar_species"):
 		return
-	var result_value: Variant = service.call("set_equipped_familiar_species", species_id)
-	var result: Dictionary = result_value as Dictionary if result_value is Dictionary else {}
-	_show_familiar_message(
-		("Equipped " + species_id.capitalize() + " familiar.")
-		if bool(result.get("ok", false))
-		else "Familiar equip failed: " + str(result.get("error", "unknown error"))
+	var result: Dictionary = _familiar_dictionary(
+		service.call("set_equipped_familiar_species", species_id)
 	)
+	var message: String = "Familiar equip failed: " + str(result.get("error", "unknown error"))
+	if bool(result.get("ok", false)):
+		message = "Equipped " + species_id.capitalize() + " familiar."
+	_show_familiar_message(message)
 	_refresh_familiar_menu()
 
 
@@ -199,10 +207,11 @@ func _cycle_familiar_field(species_id: String, field_name: String) -> void:
 	var method_name: String = "cycle_familiar_" + field_name
 	if not service.has_method(method_name):
 		return
-	var result_value: Variant = service.call(method_name, species_id, 1)
-	var result: Dictionary = result_value as Dictionary if result_value is Dictionary else {}
+	var result: Dictionary = _familiar_dictionary(
+		service.call(method_name, species_id, 1)
+	)
 	if bool(result.get("ok", false)):
-		var loadout: Dictionary = result.get("loadout", {})
+		var loadout: Dictionary = _familiar_dictionary(result.get("loadout", {}))
 		_show_familiar_message(
 			field_name.capitalize() + ": " + str(loadout.get(field_name, "updated")).replace("_", " ").capitalize()
 		)
@@ -217,13 +226,13 @@ func _toggle_familiar_technique(species_id: String, technique_id: String) -> voi
 	var service: Node = get_node_or_null("/root/SpeciesKnowledge")
 	if service == null or not service.has_method("toggle_familiar_technique"):
 		return
-	var result_value: Variant = service.call("toggle_familiar_technique", species_id, technique_id)
-	var result: Dictionary = result_value as Dictionary if result_value is Dictionary else {}
-	_show_familiar_message(
-		("Updated " + technique_id.replace("_", " ").capitalize() + ".")
-		if bool(result.get("ok", false))
-		else "Technique update failed: " + str(result.get("error", "unknown error"))
+	var result: Dictionary = _familiar_dictionary(
+		service.call("toggle_familiar_technique", species_id, technique_id)
 	)
+	var message: String = "Technique update failed: " + str(result.get("error", "unknown error"))
+	if bool(result.get("ok", false)):
+		message = "Updated " + technique_id.replace("_", " ").capitalize() + "."
+	_show_familiar_message(message)
 	_refresh_familiar_menu()
 
 
@@ -237,9 +246,15 @@ func _show_familiar_message(text: String) -> void:
 		GameState.call("show_system_message", text)
 
 
+func _familiar_dictionary(value: Variant) -> Dictionary:
+	return (value as Dictionary).duplicate(true) if value is Dictionary else {}
+
+
 func _familiar_string_array(value: Variant) -> Array[String]:
 	var result: Array[String] = []
 	if value is Array:
 		for raw: Variant in value as Array:
-			result.append(str(raw))
+			var text: String = str(raw)
+			if text != "":
+				result.append(text)
 	return result

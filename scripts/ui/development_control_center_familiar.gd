@@ -15,6 +15,7 @@ const FAMILIAR_TRAINING_YARD_FEATURE: Dictionary = {
 	"automated_tests": [
 		"res://scenes/tests/species_knowledge_smoke_test.tscn",
 		"res://scenes/tests/creature_mastery_familiar_smoke_test.tscn",
+		"res://scenes/tests/familiar_polish_smoke_test.tscn",
 	],
 	"dependencies": [
 		"tactical_ai_lab",
@@ -41,7 +42,7 @@ const FAMILIAR_TRAINING_YARD_FEATURE: Dictionary = {
 	"launchable": true,
 	"visible_in_launcher": true,
 	"ci_validate": true,
-	"timeout_seconds": 16,
+	"timeout_seconds": 18,
 }
 
 

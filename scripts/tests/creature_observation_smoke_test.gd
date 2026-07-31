@@ -79,26 +79,26 @@ func _test_live_observation_paths() -> void:
 	_expect(str(first.get_meta("creature_species_id", "")) == "gremlin", "Gremlin publishes species identity")
 	var brain: Node = first.get_node_or_null("EnemyBrain")
 	_expect(brain != null, "Observation-aware Gremlin brain resolves")
-	if brain != null:
-		var brain_script: Script = brain.get_script() as Script
-		_expect(
-			brain_script != null
-			and brain_script.resource_path == "res://scripts/enemies/gremlin_observation_brain.gd",
-			"Gremlin uses observation-aware brain layer"
-		)
+	if brain == null:
+		yard.queue_free()
+		return
+	var brain_script: Script = brain.get_script() as Script
+	_expect(
+		brain_script != null
+		and brain_script.resource_path == "res://scripts/enemies/gremlin_observation_brain.gd",
+		"Gremlin uses observation-aware brain layer"
+	)
 
 	_point_camera_at(player, first)
 	observation_service.call("_scan_for_first_sightings")
 	await get_tree().process_frame
 	_expect(_has_discovery("first_encounter"), "Seeing a Gremlin records First Encounter")
 
-	if brain != null:
-		brain.call("on_action_active_started", BackstepAction)
+	brain.call("on_action_active_started", BackstepAction)
 	_expect(_has_discovery("witnessed_backstep"), "Backstep active phase records witnessed technique")
 
-	if brain != null:
-		brain.set("player", player)
-		brain.call("on_action_completed", PounceAction)
+	brain.set("player", player)
+	brain.call("on_action_completed", PounceAction)
 	_expect(_has_discovery("survived_pounce"), "Completing Pounce against living Grace records survival")
 
 	observation_service.call(
@@ -151,8 +151,10 @@ func _test_live_observation_paths() -> void:
 	var data: Dictionary = _species_data()
 	_expect(int(data.get("points", 0)) == 10, "Six live observations award the authored ten knowledge points")
 	_expect(int(data.get("rank", 0)) >= 3, "Live field study reaches Gremlin Bonded rank")
+	var service_debug: Dictionary = {}
 	var service_debug_value: Variant = observation_service.call("get_debug_data")
-	var service_debug: Dictionary = service_debug_value as Dictionary if service_debug_value is Dictionary else {}
+	if service_debug_value is Dictionary:
+		service_debug = service_debug_value as Dictionary
 	_expect(int(service_debug.get("events_reported", 0)) >= 7, "Observation service records event history")
 	_expect(int(service_debug.get("discoveries_awarded", 0)) == 6, "Observation service awards six unique discoveries")
 
@@ -170,7 +172,9 @@ func _point_camera_at(player: Node3D, target: Node3D) -> void:
 
 func _species_data() -> Dictionary:
 	var value: Variant = species_knowledge.call("get_species_data", "gremlin")
-	return value as Dictionary if value is Dictionary else {}
+	if value is Dictionary:
+		return value as Dictionary
+	return {}
 
 
 func _has_discovery(discovery_id: String) -> bool:

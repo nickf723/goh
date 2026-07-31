@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemyActionOption" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_option.gd" id="1_option"]
+[ext_resource type="Resource" path="res://data/enemy_attacks/storm_drain_mire_spit_attack.tres" id="2_action"]
+[ext_resource type="Resource" path="res://data/enemy_action_presentations/storm_drain_mire_spit_presentation.tres" id="3_presentation"]
+
+[resource]
+script = ExtResource("1_option")
+action = ExtResource("2_action")
+presentation = ExtResource("3_presentation")
+selection_role = "ranged"
+minimum_start_distance = 2.6
+maximum_start_distance = 10.5
+selection_weight = 1.2
+contact_range_override = 10.5
+reuse_cooldown_override = 2.6
+debug_label = "Mire Spit"

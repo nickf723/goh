@@ -158,7 +158,9 @@ func _get_camera_converged_cast_direction(
 		query.collide_with_areas = true
 		query.collide_with_bodies = true
 		if player is CollisionObject3D:
-			query.exclude = [(player as CollisionObject3D).get_rid()]
+			var exclusions: Array[RID] = []
+			exclusions.append((player as CollisionObject3D).get_rid())
+			query.exclude = exclusions
 		var hit: Dictionary = world.direct_space_state.intersect_ray(query)
 		var hit_position: Variant = hit.get("position")
 		if hit_position is Vector3:

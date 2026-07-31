@@ -2,13 +2,21 @@ extends RefCounted
 class_name SquadRoleCatalog
 
 
-const GENERALIST = preload("res://data/ai/squad_roles/generalist.tres")
-const PRIMER = preload("res://data/ai/squad_roles/primer.tres")
-const PAYOFF_SPECIALIST = preload("res://data/ai/squad_roles/payoff_specialist.tres")
-const PROTECTOR = preload("res://data/ai/squad_roles/protector.tres")
-const DISRUPTOR = preload("res://data/ai/squad_roles/disruptor.tres")
-const SKIRMISHER = preload("res://data/ai/squad_roles/skirmisher.tres")
-
+const ROLE_PATHS: Dictionary = {
+	"generalist": "res://data/ai/squad_roles/generalist.tres",
+	"primer": "res://data/ai/squad_roles/primer.tres",
+	"payoff_specialist": "res://data/ai/squad_roles/payoff_specialist.tres",
+	"protector": "res://data/ai/squad_roles/protector.tres",
+	"disruptor": "res://data/ai/squad_roles/disruptor.tres",
+	"skirmisher": "res://data/ai/squad_roles/skirmisher.tres",
+}
+const SPECIALIST_ORDER: Array[String] = [
+	"primer",
+	"payoff_specialist",
+	"protector",
+	"disruptor",
+	"skirmisher",
+]
 const ALIASES: Dictionary = {
 	"default": "generalist",
 	"balanced": "generalist",
@@ -24,39 +32,35 @@ const ALIASES: Dictionary = {
 	"ranged": "skirmisher",
 }
 
+static var cached_profiles: Dictionary = {}
+
 
 static func get_profiles(include_generalist: bool = true) -> Array:
-	var profiles: Array = [
-		PRIMER,
-		PAYOFF_SPECIALIST,
-		PROTECTOR,
-		DISRUPTOR,
-		SKIRMISHER,
-	]
+	var profiles: Array = []
+	for role_id: String in SPECIALIST_ORDER:
+		var profile: Resource = _load_profile(role_id)
+		if profile != null:
+			profiles.append(profile)
 	if include_generalist:
-		profiles.append(GENERALIST)
+		var generalist: Resource = _load_profile("generalist")
+		if generalist != null:
+			profiles.append(generalist)
 	return profiles
 
 
 static func get_profile(role_id: String):
 	var normalized: String = normalize_role_id(role_id)
-	for profile_value: Variant in get_profiles(true):
-		if profile_value is Resource:
-			var profile: Resource = profile_value as Resource
-			if normalize_role_id(str(profile.get("role_id"))) == normalized:
-				return profile
-	return GENERALIST
+	if normalized == "auto":
+		normalized = "generalist"
+	var profile: Resource = _load_profile(normalized)
+	if profile != null:
+		return profile
+	return _load_profile("generalist")
 
 
 static func has_role(role_id: String) -> bool:
 	var normalized: String = normalize_role_id(role_id)
-	for profile_value: Variant in get_profiles(true):
-		if not profile_value is Resource:
-			continue
-		var profile: Resource = profile_value as Resource
-		if normalize_role_id(str(profile.get("role_id"))) == normalized:
-			return true
-	return false
+	return normalized != "auto" and ROLE_PATHS.has(normalized)
 
 
 static func normalize_role_id(role_id: String) -> String:
@@ -96,11 +100,11 @@ static func evaluate_candidate(
 static func validate_catalog() -> Array[String]:
 	var errors: Array[String] = []
 	var ids: Dictionary = {}
-	for profile_value: Variant in get_profiles(true):
-		if not profile_value is Resource:
-			errors.append("Squad role catalog contains a null profile")
+	for role_id: String in ROLE_PATHS.keys():
+		var profile: Resource = _load_profile(role_id)
+		if profile == null:
+			errors.append("Squad role profile failed to load: " + role_id)
 			continue
-		var profile: Resource = profile_value as Resource
 		var normalized: String = normalize_role_id(str(profile.get("role_id")))
 		if ids.has(normalized):
 			errors.append("Duplicate squad role id: " + normalized)
@@ -126,3 +130,24 @@ static func get_debug_rows() -> Array[Dictionary]:
 		if row is Dictionary:
 			rows.append((row as Dictionary).duplicate(true))
 	return rows
+
+
+static func clear_cache() -> void:
+	cached_profiles.clear()
+
+
+static func _load_profile(role_id: String) -> Resource:
+	var normalized: String = normalize_role_id(role_id)
+	if normalized == "auto":
+		normalized = "generalist"
+	if cached_profiles.has(normalized):
+		var cached_value: Variant = cached_profiles[normalized]
+		return cached_value as Resource if cached_value is Resource else null
+	var path: String = str(ROLE_PATHS.get(normalized, ""))
+	if path == "" or not ResourceLoader.exists(path):
+		return null
+	var loaded_value: Variant = load(path)
+	if loaded_value is Resource:
+		cached_profiles[normalized] = loaded_value
+		return loaded_value as Resource
+	return null

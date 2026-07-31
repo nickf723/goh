@@ -158,12 +158,13 @@ func _reserve_selected_option(option) -> void:
 			]
 		))
 	if _candidate_requests_cover(candidate):
+		var cover_tags: Array[String] = ["cover_requested"]
 		_append_result(results, _call_service(
 			BLACKBOARD_PATH,
 			"broadcast_intent",
 			[
 				get_tactical_squad_id(), owner_id, owner_name, "cover_request",
-				["cover_requested"], target_id, cover_request_seconds,
+				cover_tags, target_id, cover_request_seconds,
 				{"action": _option_name(option), "squad_role": get_tactical_squad_role_id()},
 			]
 		))

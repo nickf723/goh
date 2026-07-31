@@ -1,0 +1,255 @@
+[gd_scene load_steps=19 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_storm_drain_pack_encounter.gd" id="1_director"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator.gd" id="5_regen"]
+[ext_resource type="PackedScene" path="res://scenes/surfaces/water_patch.tscn" id="6_water"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/lab_reset_console.tscn" id="7_reset"]
+[ext_resource type="Script" path="res://scripts/ui/tactical_decision_overlay.gd" id="8_overlay"]
+[ext_resource type="Material" path="res://art/materials/prototype/floor_stone_gray.tres" id="9_floor"]
+[ext_resource type="Material" path="res://art/materials/prototype/wall_dark_stone.tres" id="10_wall"]
+[ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="11_gold"]
+[ext_resource type="Material" path="res://art/materials/prototype/gate_barrier_blue.tres" id="12_blue"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_floor"]
+size = Vector3(30, 1, 25)
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(30, 1, 25)
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall_long"]
+size = Vector3(30, 4, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_long"]
+size = Vector3(30, 4, 0.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall_short"]
+size = Vector3(0.6, 4, 25)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_short"]
+size = Vector3(0.6, 4, 25)
+
+[sub_resource type="BoxShape3D" id="BoxShape_pillar"]
+size = Vector3(1.4, 3.2, 1.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pillar"]
+size = Vector3(1.4, 3.2, 1.4)
+
+[sub_resource type="TorusMesh" id="TorusMesh_summon"]
+inner_radius = 2.0
+outer_radius = 2.12
+rings = 32
+ring_segments = 8
+
+[node name="PrototypeStormDrainPackEncounterV1" type="Node3D"]
+script = ExtResource("1_director")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="LabResourceRegenerator" type="Node" parent="."]
+script = ExtResource("5_regen")
+mana_per_second = 14.0
+stamina_per_second = 10.0
+focus_per_second = 7.0
+
+[node name="TacticalDecisionOverlay" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+script = ExtResource("8_overlay")
+show_on_start = false
+
+[node name="PackStatusCanvas" type="CanvasLayer" parent="."]
+layer = 8
+
+[node name="PackStatusPanel" type="PanelContainer" parent="PackStatusCanvas"]
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 380.0
+offset_bottom = 132.0
+mouse_filter = 2
+
+[node name="PackStatusLabel" type="Label" parent="PackStatusCanvas/PackStatusPanel"]
+unique_name_in_owner = true
+text = "STORM DRAIN PACK\nAlive: 4/4\nF2 telemetry • Tab next actor"
+theme_override_font_sizes/font_size = 16
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -28, 0)
+light_energy = 1.35
+shadow_enabled = true
+
+[node name="DrainGlow" type="OmniLight3D" parent="."]
+position = Vector3(0, 3.2, 0)
+light_color = Color(0.18, 0.45, 0.72, 1)
+light_energy = 2.2
+omni_range = 18.0
+
+[node name="EntryGlow" type="OmniLight3D" parent="."]
+position = Vector3(0, 2.8, 10.5)
+light_color = Color(0.72, 0.48, 1, 1)
+light_energy = 1.35
+omni_range = 8.0
+
+[node name="ArenaFloor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ArenaFloor"]
+shape = SubResource("BoxShape_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ArenaFloor"]
+material_override = ExtResource("9_floor")
+mesh = SubResource("BoxMesh_floor")
+
+[node name="NorthWall" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.5, -12.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NorthWall"]
+shape = SubResource("BoxShape_wall_long")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NorthWall"]
+material_override = ExtResource("10_wall")
+mesh = SubResource("BoxMesh_wall_long")
+
+[node name="SouthWall" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.5, 12.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SouthWall"]
+shape = SubResource("BoxShape_wall_long")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SouthWall"]
+material_override = ExtResource("10_wall")
+mesh = SubResource("BoxMesh_wall_long")
+
+[node name="WestWall" type="StaticBody3D" parent="."]
+position = Vector3(-15, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WestWall"]
+shape = SubResource("BoxShape_wall_short")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WestWall"]
+material_override = ExtResource("10_wall")
+mesh = SubResource("BoxMesh_wall_short")
+
+[node name="EastWall" type="StaticBody3D" parent="."]
+position = Vector3(15, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EastWall"]
+shape = SubResource("BoxShape_wall_short")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="EastWall"]
+material_override = ExtResource("10_wall")
+mesh = SubResource("BoxMesh_wall_short")
+
+[node name="WaterChannel" parent="." instance=ExtResource("6_water")]
+position = Vector3(0, 0.08, -0.3)
+scale = Vector3(0.88, 1, 3.05)
+surface_name = "Storm Drain Channel"
+status_source = "storm_drain_channel"
+status_duration = 2.4
+show_feedback = false
+frozen_state_duration = 7.0
+
+[node name="WestPillarNorth" type="StaticBody3D" parent="."]
+position = Vector3(-5.2, 1.6, -2.3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WestPillarNorth"]
+shape = SubResource("BoxShape_pillar")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WestPillarNorth"]
+material_override = ExtResource("10_wall")
+mesh = SubResource("BoxMesh_pillar")
+
+[node name="WestPillarSouth" type="StaticBody3D" parent="."]
+position = Vector3(-5.2, 1.6, 4.0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WestPillarSouth"]
+shape = SubResource("BoxShape_pillar")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WestPillarSouth"]
+material_override = ExtResource("10_wall")
+mesh = SubResource("BoxMesh_pillar")
+
+[node name="EastPillarNorth" type="StaticBody3D" parent="."]
+position = Vector3(5.2, 1.6, -1.4)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EastPillarNorth"]
+shape = SubResource("BoxShape_pillar")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="EastPillarNorth"]
+material_override = ExtResource("10_wall")
+mesh = SubResource("BoxMesh_pillar")
+
+[node name="EastPillarSouth" type="StaticBody3D" parent="."]
+position = Vector3(5.2, 1.6, 5.0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EastPillarSouth"]
+shape = SubResource("BoxShape_pillar")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="EastPillarSouth"]
+material_override = ExtResource("10_wall")
+mesh = SubResource("BoxMesh_pillar")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+unique_name_in_owner = true
+position = Vector3(0, 0.96, 10.5)
+
+[node name="ResetConsole" parent="." instance=ExtResource("7_reset")]
+position = Vector3(-11.5, 0, 9.7)
+prompt_text = "Reset Storm Drain Pack"
+
+[node name="EnemyRoot" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="TitleSign" type="Label3D" parent="."]
+position = Vector3(0, 3.4, 10.8)
+billboard = 1
+text = "STORM DRAIN PACK\nBreak their formation, not just their health bars"
+font_size = 46
+pixel_size = 0.008
+modulate = Color(0.7, 0.86, 1, 1)
+outline_size = 7
+
+[node name="RoleLegend" type="Label3D" parent="."]
+position = Vector3(-11.4, 2.5, 5.4)
+billboard = 1
+text = "MIRE primes WET\nSPARK detonates CONDUCT\nSHIELD restores STANCE\nRUNNER opens LANES"
+font_size = 30
+pixel_size = 0.007
+modulate = Color(0.88, 0.9, 1, 1)
+outline_size = 5
+
+[node name="SummonRing" type="MeshInstance3D" parent="."]
+position = Vector3(10.8, 0.12, 8.6)
+material_override = ExtResource("11_gold")
+mesh = SubResource("TorusMesh_summon")
+
+[node name="SummonLabel" type="Label3D" parent="."]
+position = Vector3(10.8, 1.0, 8.6)
+billboard = 1
+text = "RUVIA TEST ZONE\nUse Divine Incarnation"
+font_size = 28
+pixel_size = 0.007
+modulate = Color(1, 0.62, 0.24, 1)
+outline_size = 5
+
+[node name="DrainMarkerNorth" type="Label3D" parent="."]
+position = Vector3(0, 0.55, -8.8)
+rotation_degrees = Vector3(-90, 0, 0)
+text = "WET CHANNEL"
+font_size = 34
+pixel_size = 0.008
+modulate = Color(0.28, 0.7, 1, 1)
+outline_size = 4
+
+[node name="DrainMarkerSouth" type="Label3D" parent="."]
+position = Vector3(0, 0.55, 7.6)
+rotation_degrees = Vector3(-90, 0, 0)
+text = "FREEZE • CLEANSE • AVOID"
+font_size = 28
+pixel_size = 0.007
+modulate = Color(0.56, 0.9, 1, 1)
+outline_size = 4

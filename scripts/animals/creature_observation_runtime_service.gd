@@ -15,6 +15,20 @@ func report_creature_defeated(creature: Node) -> Dictionary:
 	return result
 
 
+func get_pack_member_count(creature: Node) -> int:
+	var pack_key: String = get_pack_key(creature)
+	var live_count: int = 0
+	for value: Variant in get_tree().get_nodes_in_group("creature_observable"):
+		if not value is Node:
+			continue
+		var member: Node = value as Node
+		if not is_instance_valid(member) or member.is_queued_for_deletion():
+			continue
+		if get_pack_key(member) == pack_key and member.is_in_group("enemy"):
+			live_count += 1
+	return live_count
+
+
 func report_reaction(
 	target: Node,
 	reaction: Dictionary,

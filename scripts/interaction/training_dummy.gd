@@ -6,6 +6,7 @@ extends Area3D
 @export var restores_player_stamina_after_failed_use: bool = true
 
 @onready var hit_receiver: Node = $HitReceiver
+@onready var targeting_collision: CollisionShape3D = $CollisionShape3D
 
 
 func interact() -> Dictionary:
@@ -36,3 +37,13 @@ func interact() -> Dictionary:
 
 func receive_magic_hit(power: int = 1) -> Dictionary:
 	return hit_receiver.receive_hit(power)
+
+
+func get_targeting_aim_point() -> Vector3:
+	if targeting_collision != null:
+		return targeting_collision.global_position
+	return global_position
+
+
+func get_targeting_owner() -> Node3D:
+	return self

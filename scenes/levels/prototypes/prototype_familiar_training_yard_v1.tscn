@@ -1,0 +1,237 @@
+[gd_scene load_steps=18 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_familiar_training_yard.gd" id="1_director"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator.gd" id="5_regen"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/creature_study_terminal.tscn" id="6_study"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/lab_reset_console.tscn" id="7_reset"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/training_dummy.tscn" id="8_dummy"]
+[ext_resource type="Material" path="res://art/materials/prototype/floor_stone_gray.tres" id="9_floor"]
+[ext_resource type="Material" path="res://art/materials/prototype/wall_dark_stone.tres" id="10_wall"]
+[ext_resource type="Material" path="res://art/materials/church/church_gold_v1.tres" id="11_gold"]
+[ext_resource type="Material" path="res://art/materials/prototype/gate_barrier_blue.tres" id="12_blue"]
+[ext_resource type="Material" path="res://art/materials/church/church_violet_glow_v1.tres" id="13_violet"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_floor"]
+size = Vector3(30, 1, 25)
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(30, 1, 25)
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall_long"]
+size = Vector3(30, 4, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_long"]
+size = Vector3(30, 4, 0.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall_short"]
+size = Vector3(0.6, 4, 25)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_short"]
+size = Vector3(0.6, 4, 25)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ring"]
+top_radius = 2.4
+bottom_radius = 2.4
+height = 0.12
+radial_segments = 48
+
+[sub_resource type="BoxMesh" id="BoxMesh_gate"]
+size = Vector3(4.6, 3.6, 0.22)
+
+[node name="PrototypeFamiliarTrainingYardV1" type="Node3D"]
+script = ExtResource("1_director")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="LabResourceRegenerator" type="Node" parent="."]
+script = ExtResource("5_regen")
+mana_per_second = 16.0
+stamina_per_second = 10.0
+focus_per_second = 8.0
+
+[node name="FamiliarStatusCanvas" type="CanvasLayer" parent="."]
+layer = 8
+
+[node name="FamiliarStatusPanel" type="PanelContainer" parent="FamiliarStatusCanvas"]
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 720.0
+offset_bottom = 142.0
+mouse_filter = 2
+
+[node name="FamiliarStatusLabel" type="Label" parent="FamiliarStatusCanvas/FamiliarStatusPanel"]
+unique_name_in_owner = true
+text = "CREATURE MASTERY • GREMLIN\nLoading field record..."
+theme_override_font_sizes/font_size = 15
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-54, -32, 0)
+light_energy = 1.4
+shadow_enabled = true
+
+[node name="YardGlow" type="OmniLight3D" parent="."]
+position = Vector3(0, 4.0, 0)
+light_color = Color(0.35, 0.72, 0.58, 1)
+light_energy = 1.8
+omni_range = 20.0
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("BoxShape_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+material_override = ExtResource("9_floor")
+mesh = SubResource("BoxMesh_floor")
+
+[node name="NorthWall" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.5, -12.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NorthWall"]
+shape = SubResource("BoxShape_wall_long")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NorthWall"]
+material_override = ExtResource("10_wall")
+mesh = SubResource("BoxMesh_wall_long")
+
+[node name="SouthWall" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.5, 12.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SouthWall"]
+shape = SubResource("BoxShape_wall_long")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SouthWall"]
+material_override = ExtResource("10_wall")
+mesh = SubResource("BoxMesh_wall_long")
+
+[node name="WestWall" type="StaticBody3D" parent="."]
+position = Vector3(-15, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WestWall"]
+shape = SubResource("BoxShape_wall_short")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WestWall"]
+material_override = ExtResource("10_wall")
+mesh = SubResource("BoxMesh_wall_short")
+
+[node name="EastWall" type="StaticBody3D" parent="."]
+position = Vector3(15, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EastWall"]
+shape = SubResource("BoxShape_wall_short")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="EastWall"]
+material_override = ExtResource("10_wall")
+mesh = SubResource("BoxMesh_wall_short")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+unique_name_in_owner = true
+position = Vector3(0, 0.96, 9.5)
+
+[node name="EnemyRoot" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="DummyLeft" parent="." groups=["familiar_training_dummy"] instance=ExtResource("8_dummy")]
+position = Vector3(-3.0, 0.7, 1.6)
+
+[node name="DummyRight" parent="." groups=["familiar_training_dummy"] instance=ExtResource("8_dummy")]
+position = Vector3(3.0, 0.7, 1.6)
+
+[node name="StudyFirstEncounter" parent="." instance=ExtResource("6_study")]
+position = Vector3(-11.8, 0, 8.2)
+discovery_id = "first_encounter"
+discovery_label = "First Encounter"
+knowledge_points = 1
+prompt_text = "Record first Gremlin encounter"
+
+[node name="StudyPounce" parent="." instance=ExtResource("6_study")]
+position = Vector3(-8.0, 0, 8.2)
+discovery_id = "survived_pounce"
+discovery_label = "Survived Pounce"
+knowledge_points = 1
+prompt_text = "Study Gremlin Pounce"
+
+[node name="StudyBackstep" parent="." instance=ExtResource("6_study")]
+position = Vector3(-4.2, 0, 8.2)
+discovery_id = "witnessed_backstep"
+discovery_label = "Witnessed Backstep"
+knowledge_points = 1
+prompt_text = "Study Gremlin Backstep"
+
+[node name="StudyPack" parent="." instance=ExtResource("6_study")]
+position = Vector3(4.2, 0, 8.2)
+discovery_id = "pack_coordination"
+discovery_label = "Pack Coordination"
+knowledge_points = 2
+prompt_text = "Study Gremlin pack behavior"
+
+[node name="StudyConduct" parent="." instance=ExtResource("6_study")]
+position = Vector3(8.0, 0, 8.2)
+discovery_id = "conduct_susceptibility"
+discovery_label = "Conduct Susceptibility"
+knowledge_points = 4
+prompt_text = "Study Wet and Lightning reactions"
+
+[node name="StudyHabitat" parent="." instance=ExtResource("6_study")]
+position = Vector3(11.8, 0, 8.2)
+discovery_id = "habitat_scavenging"
+discovery_label = "Scavenging Habitat"
+knowledge_points = 1
+prompt_text = "Study Gremlin habitat"
+
+[node name="ResetConsole" parent="." instance=ExtResource("7_reset")]
+position = Vector3(-12.5, 0, -9.5)
+prompt_text = "Reset Familiar Training Yard combat"
+
+[node name="SummonRing" type="MeshInstance3D" parent="."]
+position = Vector3(10.0, 0.08, 2.0)
+material_override = ExtResource("11_gold")
+mesh = SubResource("CylinderMesh_ring")
+
+[node name="SummonRingLabel" type="Label3D" parent="."]
+position = Vector3(10.0, 1.0, 2.0)
+billboard = 1
+text = "FAMILIAR DEPLOYMENT\nEquip in Magic menu • Cast summon spell"
+font_size = 27
+pixel_size = 0.007
+modulate = Color(1, 0.78, 0.28, 1)
+outline_size = 5
+
+[node name="TransformationGate" type="MeshInstance3D" parent="."]
+position = Vector3(-10.5, 1.8, -5.8)
+material_override = ExtResource("13_violet")
+mesh = SubResource("BoxMesh_gate")
+
+[node name="TransformationLabel" type="Label3D" parent="."]
+position = Vector3(-10.5, 4.1, -5.8)
+billboard = 1
+text = "TRANSFORMATION GATE\nGremlin form architecture reserved\nElephant prototype next"
+font_size = 26
+pixel_size = 0.007
+modulate = Color(0.82, 0.58, 1, 1)
+outline_size = 5
+
+[node name="TitleSign" type="Label3D" parent="."]
+position = Vector3(0, 4.2, 10.7)
+billboard = 1
+text = "FAMILIAR TRAINING YARD\nStudy • Configure • Summon • Coordinate"
+font_size = 42
+pixel_size = 0.008
+modulate = Color(0.62, 1, 0.82, 1)
+outline_size = 7
+
+[node name="TrainingInstructions" type="Label3D" parent="."]
+position = Vector3(0, 2.7, 6.4)
+billboard = 1
+text = "First two studies unlock Gremlin Familiar\nTAB or M → Magic → Familiar Blueprints\nEquip a role and techniques before casting"
+font_size = 27
+pixel_size = 0.007
+modulate = Color(0.88, 0.94, 1, 1)
+outline_size = 5

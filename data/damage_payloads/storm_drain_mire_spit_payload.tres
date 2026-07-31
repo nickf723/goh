@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 0
+stance_damage = 1
+element = "water"
+source_name = "Mire Spit"
+hit_type = "projectile"
+status_effect = "wet"
+status_duration = 5.5
+status_strength = 1.0
+tags = Array[String](["water", "wet", "magic", "projectile", "enemy_attack", "setup", "control", "conduct_setup"])
+knockback_strength = 0.8
+knockback_up_strength = 0.05

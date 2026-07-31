@@ -52,13 +52,11 @@ static func is_defeated(target: Node) -> bool:
 		return true
 	if target.has_method("is_target_defeated"):
 		return bool(target.call("is_target_defeated"))
-	var defeated_value: Variant = target.get("defeated")
-	if defeated_value != null and bool(defeated_value):
+	if _has_property(target, "defeated") and bool(target.get("defeated")):
 		return true
 	var hit_receiver: Node = target.get_node_or_null("HitReceiver")
-	if hit_receiver != null:
-		var health_value: Variant = hit_receiver.get("current_health")
-		if health_value != null and int(health_value) <= 0:
+	if hit_receiver != null and _has_property(hit_receiver, "current_health"):
+		if int(hit_receiver.get("current_health")) <= 0:
 			return true
 	if target.is_in_group("player"):
 		return GameState.get_stat("health") <= 0
@@ -71,12 +69,16 @@ static func _capture_health(target: Node) -> Dictionary:
 	if target.is_in_group("player"):
 		current = GameState.get_stat("health")
 		maximum = maxi(GameState.get_stat("max_health"), 1)
-	elif target.get("current_health") != null and target.get("maximum_health") != null:
+	elif _has_property(target, "current_health") and _has_property(target, "maximum_health"):
 		current = int(target.get("current_health"))
 		maximum = maxi(int(target.get("maximum_health")), 1)
 	else:
 		var hit_receiver: Node = target.get_node_or_null("HitReceiver")
-		if hit_receiver != null:
+		if (
+			hit_receiver != null
+			and _has_property(hit_receiver, "current_health")
+			and _has_property(hit_receiver, "max_health")
+		):
 			current = int(hit_receiver.get("current_health"))
 			maximum = maxi(int(hit_receiver.get("max_health")), 1)
 	return {
@@ -90,7 +92,11 @@ static func _capture_stance(target: Node) -> Dictionary:
 	var current: int = 0
 	var maximum: int = 0
 	var hit_receiver: Node = target.get_node_or_null("HitReceiver")
-	if hit_receiver != null:
+	if (
+		hit_receiver != null
+		and _has_property(hit_receiver, "current_stance")
+		and _has_property(hit_receiver, "max_stance")
+	):
 		current = maxi(int(hit_receiver.get("current_stance")), 0)
 		maximum = maxi(int(hit_receiver.get("max_stance")), 0)
 	return {
@@ -140,9 +146,10 @@ static func _target_name(target: Node) -> String:
 		var metadata_name: String = str(target.get_meta("active_avatar_display_name"))
 		if metadata_name != "":
 			return metadata_name
-	var display_value: Variant = target.get("display_name")
-	if display_value != null and str(display_value) != "":
-		return str(display_value)
+	if _has_property(target, "display_name"):
+		var display_name: String = str(target.get("display_name"))
+		if display_name != "":
+			return display_name
 	return str(target.name)
 
 
@@ -156,3 +163,12 @@ static func _target_kind(target: Node) -> String:
 	if target.is_in_group("friendly_actor"):
 		return "ally"
 	return "target"
+
+
+static func _has_property(value: Object, property_name: String) -> bool:
+	if value == null or not is_instance_valid(value):
+		return false
+	for property_value: Variant in value.get_property_list():
+		if property_value is Dictionary and str((property_value as Dictionary).get("name", "")) == property_name:
+			return true
+	return false

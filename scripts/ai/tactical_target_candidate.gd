@@ -2,20 +2,25 @@ extends RefCounted
 class_name TacticalTargetCandidate
 
 
+static var property_names_by_contract: Dictionary = {}
+static var zero_argument_methods_by_contract: Dictionary = {}
+static var reflection_build_count: int = 0
+static var reflection_cache_hit_count: int = 0
+
+
 static func capture(actor: Node3D, target: Node3D) -> Dictionary:
-	if target == null or not is_instance_valid(target):
+	if not is_instance_valid(target):
 		return {}
 	var health: Dictionary = _capture_health(target)
 	var stance: Dictionary = _capture_stance(target)
 	var statuses: Array[String] = _capture_statuses(target)
 	var target_position: Vector3 = _target_position(target)
-	var actor_position: Vector3 = actor.global_position if actor != null else Vector3.ZERO
-	var target_kind: String = _target_kind(target)
+	var actor_position: Vector3 = actor.global_position if is_instance_valid(actor) else Vector3.ZERO
 	return {
 		"target_ref": target,
 		"target_id": target.get_instance_id(),
 		"target_name": _target_name(target),
-		"target_kind": target_kind,
+		"target_kind": _target_kind(target),
 		"position": target_position,
 		"distance": actor_position.distance_to(target_position),
 		"current_health": int(health.get("current", 1)),
@@ -39,11 +44,7 @@ static func sanitize(candidate: Dictionary) -> Dictionary:
 	var position_value: Variant = copy.get("position", Vector3.ZERO)
 	if position_value is Vector3:
 		var position: Vector3 = position_value
-		copy["position"] = {
-			"x": position.x,
-			"y": position.y,
-			"z": position.z,
-		}
+		copy["position"] = {"x": position.x, "y": position.y, "z": position.z}
 	var status_value: Variant = copy.get("statuses", [])
 	if status_value is Array:
 		copy["statuses"] = (status_value as Array).duplicate()
@@ -51,11 +52,8 @@ static func sanitize(candidate: Dictionary) -> Dictionary:
 
 
 static func is_defeated(target: Node) -> bool:
-	if target == null or not is_instance_valid(target):
+	if not is_instance_valid(target):
 		return true
-	# Grace's controller also owns an `is_target_defeated(target)` helper for
-	# lock-on logic. Player vitals come from GameState, so never call that method
-	# as though it were a zero-argument target contract.
 	if target.is_in_group("player"):
 		return GameState.get_stat("health") <= 0
 	if _can_call_without_arguments(target, "is_target_defeated"):
@@ -63,9 +61,8 @@ static func is_defeated(target: Node) -> bool:
 	if _has_property(target, "defeated") and bool(target.get("defeated")):
 		return true
 	var hit_receiver: Node = target.get_node_or_null("HitReceiver")
-	if hit_receiver != null and _has_property(hit_receiver, "current_health"):
-		if int(hit_receiver.get("current_health")) <= 0:
-			return true
+	if is_instance_valid(hit_receiver) and _has_property(hit_receiver, "current_health"):
+		return int(hit_receiver.get("current_health")) <= 0
 	return false
 
 
@@ -81,7 +78,7 @@ static func _capture_health(target: Node) -> Dictionary:
 	else:
 		var hit_receiver: Node = target.get_node_or_null("HitReceiver")
 		if (
-			hit_receiver != null
+			is_instance_valid(hit_receiver)
 			and _has_property(hit_receiver, "current_health")
 			and _has_property(hit_receiver, "max_health")
 		):
@@ -99,7 +96,7 @@ static func _capture_stance(target: Node) -> Dictionary:
 	var maximum: int = 0
 	var hit_receiver: Node = target.get_node_or_null("HitReceiver")
 	if (
-		hit_receiver != null
+		is_instance_valid(hit_receiver)
 		and _has_property(hit_receiver, "current_stance")
 		and _has_property(hit_receiver, "max_stance")
 	):
@@ -108,18 +105,14 @@ static func _capture_stance(target: Node) -> Dictionary:
 	return {
 		"current": current,
 		"maximum": maximum,
-		"fraction": (
-			clampf(float(current) / float(maximum), 0.0, 1.0)
-			if maximum > 0
-			else 1.0
-		),
+		"fraction": clampf(float(current) / float(maximum), 0.0, 1.0) if maximum > 0 else 1.0,
 	}
 
 
 static func _capture_statuses(target: Node) -> Array[String]:
 	var statuses: Array[String] = []
 	var receiver: Node = target.get_node_or_null("StatusReceiver")
-	if receiver == null or not receiver.has_method("get_active_status_names"):
+	if not is_instance_valid(receiver) or not receiver.has_method("get_active_status_names"):
 		return statuses
 	var value: Variant = receiver.call("get_active_status_names")
 	if value is Array:
@@ -133,7 +126,7 @@ static func _capture_statuses(target: Node) -> Array[String]:
 static func _actions_blocked(target: Node) -> bool:
 	var receiver: Node = target.get_node_or_null("StatusReceiver")
 	return (
-		receiver != null
+		is_instance_valid(receiver)
 		and receiver.has_method("blocks_actions")
 		and bool(receiver.call("blocks_actions"))
 	)
@@ -172,30 +165,70 @@ static func _target_kind(target: Node) -> String:
 
 
 static func _can_call_without_arguments(value: Object, method_name: String) -> bool:
-	if value == null or not is_instance_valid(value):
+	if not is_instance_valid(value):
 		return false
+	var contract_key: String = _contract_key(value)
+	if zero_argument_methods_by_contract.has(contract_key):
+		reflection_cache_hit_count += 1
+		var cached: Dictionary = zero_argument_methods_by_contract[contract_key] as Dictionary
+		return bool(cached.get(method_name, false))
+	var methods: Dictionary = {}
 	for method_value: Variant in value.get_method_list():
 		if not method_value is Dictionary:
 			continue
 		var method: Dictionary = method_value as Dictionary
-		if str(method.get("name", "")) != method_name:
+		var name_value: String = str(method.get("name", ""))
+		if name_value == "":
 			continue
-		var argument_count: int = 0
 		var arguments_value: Variant = method.get("args", [])
-		if arguments_value is Array:
-			argument_count = (arguments_value as Array).size()
-		var default_count: int = 0
 		var defaults_value: Variant = method.get("default_args", [])
-		if defaults_value is Array:
-			default_count = (defaults_value as Array).size()
-		return maxi(argument_count - default_count, 0) == 0
-	return false
+		var argument_count: int = (arguments_value as Array).size() if arguments_value is Array else 0
+		var default_count: int = (defaults_value as Array).size() if defaults_value is Array else 0
+		methods[name_value] = maxi(argument_count - default_count, 0) == 0
+	zero_argument_methods_by_contract[contract_key] = methods
+	reflection_build_count += 1
+	return bool(methods.get(method_name, false))
 
 
 static func _has_property(value: Object, property_name: String) -> bool:
-	if value == null or not is_instance_valid(value):
+	if not is_instance_valid(value):
 		return false
+	var contract_key: String = _contract_key(value)
+	if property_names_by_contract.has(contract_key):
+		reflection_cache_hit_count += 1
+		var cached: Dictionary = property_names_by_contract[contract_key] as Dictionary
+		return bool(cached.get(property_name, false))
+	var properties: Dictionary = {}
 	for property_value: Variant in value.get_property_list():
-		if property_value is Dictionary and str((property_value as Dictionary).get("name", "")) == property_name:
-			return true
-	return false
+		if property_value is Dictionary:
+			var name_value: String = str((property_value as Dictionary).get("name", ""))
+			if name_value != "":
+				properties[name_value] = true
+	property_names_by_contract[contract_key] = properties
+	reflection_build_count += 1
+	return bool(properties.get(property_name, false))
+
+
+static func _contract_key(value: Object) -> String:
+	var script_value: Variant = value.get_script()
+	if script_value is Script:
+		var script: Script = script_value as Script
+		if script.resource_path != "":
+			return script.resource_path
+		return "script:" + str(script.get_instance_id())
+	return "native:" + value.get_class()
+
+
+static func clear_contract_cache() -> void:
+	property_names_by_contract.clear()
+	zero_argument_methods_by_contract.clear()
+	reflection_build_count = 0
+	reflection_cache_hit_count = 0
+
+
+static func get_performance_debug_data() -> Dictionary:
+	return {
+		"contract_count": property_names_by_contract.size() + zero_argument_methods_by_contract.size(),
+		"reflection_builds": reflection_build_count,
+		"reflection_cache_hits": reflection_cache_hit_count,
+	}

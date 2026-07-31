@@ -279,6 +279,14 @@ func _reserve_current_target_for_option(option) -> Dictionary:
 	var expected_damage: float = 0.0
 	var control_tags: Array[String] = []
 	var role_id: String = get_tactical_squad_role_id()
+	var action_tags: Array[String] = []
+	if action.has_method("get_role_tags"):
+		var tag_value: Variant = action.call("get_role_tags")
+		if tag_value is Array:
+			for raw_tag: Variant in tag_value as Array:
+				var tag: String = str(raw_tag).strip_edges().to_lower()
+				if tag != "" and not action_tags.has(tag):
+					action_tags.append(tag)
 	if action is EnemyAttackDefinition:
 		var payload: DamagePayload = (action as EnemyAttackDefinition).get_payload()
 		if payload != null:
@@ -291,11 +299,11 @@ func _reserve_current_target_for_option(option) -> Dictionary:
 				claim_kind = "setup"
 			elif payload.status_effect != "":
 				claim_kind = "control"
-			elif payload.tags.has("melee") or action.get_role_tags().has("melee"):
+			elif payload.tags.has("melee") or action_tags.has("melee"):
 				claim_kind = "melee"
 			else:
 				claim_kind = "damage"
-	elif action.get_action_kind() == "defense":
+	elif action.has_method("get_action_kind") and str(action.call("get_action_kind")) == "defense":
 		claim_kind = "attention"
 	TargetAllocator.release_owner(
 		_get_owner_id(),
@@ -420,8 +428,9 @@ func apply_attack_to_player(payload: DamagePayload) -> void:
 	if message != "":
 		show_message(message)
 	if not _is_valid_target(player):
+		var defeated_target_id: int = player.get_instance_id() if is_instance_valid(player) else 0
 		TargetAllocator.release_target(
-			player.get_instance_id() if is_instance_valid(player) else 0,
+			defeated_target_id,
 			get_tactical_squad_id(),
 			"target defeated"
 		)

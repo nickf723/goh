@@ -44,10 +44,16 @@ func on_action_completed(action) -> void:
 func _finalize_tactical_decision(option) -> void:
 	super._finalize_tactical_decision(option)
 	var results_value: Variant = last_coordination_result.get("results", [])
-	if not results_value is Array:
+	if not results_value is Array or actor == null:
 		return
-	var results: Array = results_value as Array
-	if results.is_empty() or actor == null:
+	var successful_results: Array[Dictionary] = []
+	for result_value: Variant in results_value as Array:
+		if not result_value is Dictionary:
+			continue
+		var result: Dictionary = result_value as Dictionary
+		if bool(result.get("granted", false)) or result.get("broadcast", null) is Dictionary:
+			successful_results.append(result.duplicate(true))
+	if successful_results.is_empty():
 		return
 	var action_name: String = "none"
 	if option != null and option.has_method("get_display_name"):
@@ -57,7 +63,7 @@ func _finalize_tactical_decision(option) -> void:
 		"report_squad_coordination",
 		[
 			actor,
-			results,
+			successful_results,
 			{
 				"squad_id": get_tactical_squad_id(),
 				"role_id": get_tactical_squad_role_id(),

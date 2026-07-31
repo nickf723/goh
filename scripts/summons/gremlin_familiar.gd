@@ -1,5 +1,4 @@
 extends "res://scripts/summons/spectral_familiar.gd"
-class_name GremlinFamiliar
 
 const AbilityCatalog = preload(
 	"res://scripts/summons/creature_ability_catalog.gd"
@@ -120,15 +119,23 @@ func cycle_command() -> String:
 
 
 func _physics_process(delta: float) -> void:
-	target_decision_timer = maxf(target_decision_timer - maxf(delta, 0.0), 0.0)
-	_update_action_cooldowns(delta)
+	var step: float = maxf(delta, 0.0)
+	target_decision_timer = maxf(target_decision_timer - step, 0.0)
+	_update_action_cooldowns(step)
 	if pounce_remaining > 0.0:
-		_process_pounce(delta)
+		_advance_custom_action_timers(step)
+		_process_pounce(step)
 		return
 	if backstep_remaining > 0.0:
-		_process_backstep(delta)
+		_advance_custom_action_timers(step)
+		_process_backstep(step)
 		return
-	super._physics_process(delta)
+	super._physics_process(step)
+
+
+func _advance_custom_action_timers(delta: float) -> void:
+	elapsed += delta
+	attack_timer = maxf(attack_timer - delta, 0.0)
 
 
 func _refresh_target() -> void:
@@ -137,12 +144,18 @@ func _refresh_target() -> void:
 		return
 	var locked: Node3D = _get_summoner_locked_target()
 	if command == COMMAND_FOCUS:
-		_set_allocated_target(locked if _valid_enemy(locked) else null, "Grace focus target")
+		var focus_target: Node3D = null
+		if _valid_enemy(locked):
+			focus_target = locked
+		_set_allocated_target(focus_target, "Grace focus target")
 		return
 	if command == COMMAND_FOLLOW:
-		_set_allocated_target(locked if _valid_enemy(locked) else null, "Rally escort")
+		var escort_target: Node3D = null
+		if _valid_enemy(locked):
+			escort_target = locked
+		_set_allocated_target(escort_target, "Rally escort")
 		return
-	if locked != null and _valid_enemy(locked):
+	if _valid_enemy(locked):
 		_set_allocated_target(locked, "Grace focus preference")
 		return
 	if target_decision_timer > 0.0 and _valid_enemy(current_target):
@@ -176,12 +189,15 @@ func _refresh_target() -> void:
 		}
 	)
 	target_evaluation_count += 1
-	var selected_value: Variant = last_target_plan.get("selected", {})
 	var next_target: Node3D = null
+	var selected_value: Variant = last_target_plan.get("selected", {})
 	if selected_value is Dictionary:
-		var target_value: Variant = (selected_value as Dictionary).get("target_ref")
-		if target_value is Node3D and _valid_enemy(target_value as Node3D):
-			next_target = target_value as Node3D
+		var selected: Dictionary = selected_value as Dictionary
+		var target_value: Variant = selected.get("target_ref")
+		if target_value is Node3D:
+			var candidate_target: Node3D = target_value as Node3D
+			if _valid_enemy(candidate_target):
+				next_target = candidate_target
 	_set_allocated_target(next_target, str(last_target_plan.get("reason", "Target selected")))
 	target_decision_timer = target_decision_interval + float(get_instance_id() % 5) * 0.015
 
@@ -203,8 +219,12 @@ func _collect_enemy_candidates() -> Array[Dictionary]:
 
 
 func _set_allocated_target(next_target: Node3D, reason: String) -> void:
-	var previous_id: int = current_target.get_instance_id() if _valid_enemy(current_target) else 0
-	var next_id: int = next_target.get_instance_id() if _valid_enemy(next_target) else 0
+	var previous_id: int = 0
+	if _valid_enemy(current_target):
+		previous_id = current_target.get_instance_id()
+	var next_id: int = 0
+	if _valid_enemy(next_target):
+		next_id = next_target.get_instance_id()
 	if previous_id != next_id:
 		target_switch_count += 1
 	TargetAllocator.release_owner(
@@ -266,11 +286,17 @@ func _choose_technique(distance: float) -> String:
 		var option: Resource = AbilityCatalog.get_option(SPECIES_ID, technique_id)
 		if option == null:
 			continue
-		var minimum: float = float(option.call("get_minimum_start_distance")) if option.has_method("get_minimum_start_distance") else 0.0
-		var maximum: float = float(option.call("get_maximum_start_distance")) if option.has_method("get_maximum_start_distance") else attack_range
+		var minimum: float = 0.0
+		if option.has_method("get_minimum_start_distance"):
+			minimum = float(option.call("get_minimum_start_distance"))
+		var maximum: float = attack_range
+		if option.has_method("get_maximum_start_distance"):
+			maximum = float(option.call("get_maximum_start_distance"))
 		if distance < minimum or distance > maximum:
 			continue
-		var score: float = float(option.call("get_selection_weight")) if option.has_method("get_selection_weight") else 1.0
+		var score: float = 1.0
+		if option.has_method("get_selection_weight"):
+			score = float(option.call("get_selection_weight"))
 		match technique_id:
 			"mire_spit":
 				if familiar_role == "primer":
@@ -349,10 +375,7 @@ func _process_pounce(delta: float) -> void:
 		attack_performed.emit(pounce_target, result)
 		_spawn_attack_flash(pounce_target.global_position)
 		pounce_hit_registered = true
-	if not is_on_floor():
-		velocity.y -= gravity * delta
-	elif velocity.y < 0.0:
-		velocity.y = -0.1
+	_apply_custom_motion_gravity(delta)
 	move_and_slide()
 	_update_visual()
 	if pounce_remaining <= 0.0 or pounce_hit_registered:
@@ -385,15 +408,19 @@ func _process_backstep(delta: float) -> void:
 	backstep_remaining = maxf(backstep_remaining - delta, 0.0)
 	velocity.x = backstep_direction.x * backstep_speed
 	velocity.z = backstep_direction.z * backstep_speed
-	if not is_on_floor():
-		velocity.y -= gravity * delta
-	elif velocity.y < 0.0:
-		velocity.y = -0.1
+	_apply_custom_motion_gravity(delta)
 	move_and_slide()
 	_update_visual()
 	if backstep_remaining <= 0.0:
 		velocity.x = 0.0
 		velocity.z = 0.0
+
+
+func _apply_custom_motion_gravity(delta: float) -> void:
+	if not is_on_floor():
+		velocity.y -= gravity * delta
+	elif velocity.y < 0.0:
+		velocity.y = -0.1
 
 
 func _perform_mire_spit() -> void:
@@ -467,13 +494,16 @@ func _send_payload(target: Node, payload: DamagePayload) -> Dictionary:
 		return {}
 	if target.has_method("receive_damage_payload"):
 		var value: Variant = target.call("receive_damage_payload", payload)
-		return value as Dictionary if value is Dictionary else {}
+		if value is Dictionary:
+			return value as Dictionary
+		return {}
 	var receiver: Node = target.get_node_or_null("PayloadReceiver")
 	if receiver == null:
 		receiver = target.get_node_or_null("HitReceiver")
 	if receiver != null and receiver.has_method("receive_payload"):
 		var receiver_value: Variant = receiver.call("receive_payload", payload)
-		return receiver_value as Dictionary if receiver_value is Dictionary else {}
+		if receiver_value is Dictionary:
+			return receiver_value as Dictionary
 	return {}
 
 

@@ -100,6 +100,9 @@ func run_tests() -> void:
 		"Spark Pounce remains a contact payoff"
 	)
 	_test_guard_support(enemy_root)
+	_test_cover_request_broadcast(enemy_root)
+	_test_tactical_decision_cadence(enemy_root)
+	_test_freed_lock_on_target(encounter)
 
 	if encounter.has_method("reset_lab"):
 		encounter.call("reset_lab")
@@ -170,6 +173,10 @@ func _test_member(
 		str(brain.get("personality_id")) == expected_personality,
 		member_name + " keeps its personality"
 	)
+	_expect(
+		float(brain.get("tactical_decision_interval")) >= 0.1,
+		member_name + " uses throttled tactical reconsideration"
+	)
 	var action_names: Array[String] = []
 	var options_value: Variant = brain.get("action_options")
 	if options_value is Array:
@@ -214,6 +221,123 @@ func _test_guard_support(enemy_root: Node) -> void:
 	var restored: bool = bool(brain.call("_restore_ally_stance", mire))
 	_expect(restored, "Guard Screech restores allied stance")
 	_expect(int(hit_receiver.get("current_stance")) > 1, "Guard support changes stance state")
+
+
+func _test_cover_request_broadcast(enemy_root: Node) -> void:
+	if enemy_root == null:
+		return
+	var runner: Node = enemy_root.get_node_or_null("RunnerGremlin")
+	if runner == null:
+		return
+	var brain: Node = runner.get_node_or_null("EnemyBrain")
+	var hookstep: Resource = _find_option_by_name(brain, "Hookstep")
+	_expect(brain != null and hookstep != null, "Hookstep broadcast test components exist")
+	if brain == null or hookstep == null:
+		return
+	brain.call("_reserve_selected_option", hookstep)
+	var coordination_value: Variant = brain.call("get_coordination_debug_data")
+	var coordination: Dictionary = (
+		(coordination_value as Dictionary)
+		if coordination_value is Dictionary
+		else {}
+	)
+	var blackboard_value: Variant = coordination.get("blackboard", {})
+	var blackboard: Dictionary = (
+		(blackboard_value as Dictionary)
+		if blackboard_value is Dictionary
+		else {}
+	)
+	var intent_tags: Array[String] = _string_array(
+		blackboard.get("squad_intent_tags", [])
+	)
+	_expect(
+		intent_tags.has("cover_requested"),
+		"Hookstep broadcasts its typed cover request through callv"
+	)
+	brain.call("_release_coordination", "cover smoke cleanup", false)
+
+
+func _test_tactical_decision_cadence(enemy_root: Node) -> void:
+	if enemy_root == null:
+		return
+	var mire: Node = enemy_root.get_node_or_null("MireGremlin")
+	if mire == null:
+		return
+	var brain: Node = mire.get_node_or_null("EnemyBrain")
+	_expect(brain != null, "Cadence test finds Mire tactical brain")
+	if brain == null:
+		return
+	brain.call("invalidate_tactical_decision_cache")
+	var evaluations_before: int = int(brain.get("tactical_evaluation_count"))
+	var cache_hits_before: int = int(brain.get("tactical_cache_hit_count"))
+	brain.call("select_action", 8.0, false)
+	var evaluations_after_first: int = int(brain.get("tactical_evaluation_count"))
+	brain.call("select_action", 8.0, false)
+	var evaluations_after_second: int = int(brain.get("tactical_evaluation_count"))
+	var cache_hits_after: int = int(brain.get("tactical_cache_hit_count"))
+	_expect(
+		evaluations_after_first == evaluations_before + 1,
+		"First tactical request performs one evaluation"
+	)
+	_expect(
+		evaluations_after_second == evaluations_after_first,
+		"Immediate repeated request reuses the tactical decision"
+	)
+	_expect(
+		cache_hits_after == cache_hits_before + 1,
+		"Tactical cadence records one cache hit"
+	)
+	brain.call("_release_coordination", "cadence smoke cleanup", false)
+	brain.call("invalidate_tactical_decision_cache")
+
+
+func _test_freed_lock_on_target(encounter: Node) -> void:
+	var player: Node = encounter.get_node_or_null("Player")
+	if player == null:
+		return
+	var driver: Node = player.get_node_or_null("PlayerControlDriver")
+	_expect(driver != null, "Player avatar control driver exists")
+	if driver == null:
+		return
+	var stale_target := Node3D.new()
+	stale_target.name = "FreedLockTarget"
+	add_child(stale_target)
+	player.set("lock_on_target", stale_target)
+	stale_target.free()
+	var resolved_target: Variant = driver.call("_get_valid_lock_on_target")
+	_expect(
+		resolved_target == null,
+		"Player avatar intent ignores a previously freed lock-on target"
+	)
+	driver.call("sample_intent", 0.0)
+	player.set("lock_on_target", null)
+
+
+func _find_option_by_name(brain: Node, option_name: String) -> Resource:
+	if brain == null:
+		return null
+	var options_value: Variant = brain.get("action_options")
+	if not options_value is Array:
+		return null
+	for option_value: Variant in options_value as Array:
+		if not option_value is Resource:
+			continue
+		var option: Resource = option_value as Resource
+		if option.has_method("get_display_name") and (
+			str(option.call("get_display_name")) == option_name
+		):
+			return option
+	return null
+
+
+func _string_array(value: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if value is Array:
+		for raw: Variant in value as Array:
+			var text: String = str(raw)
+			if text != "" and not result.has(text):
+				result.append(text)
+	return result
 
 
 func _expect(condition: bool, label: String) -> void:

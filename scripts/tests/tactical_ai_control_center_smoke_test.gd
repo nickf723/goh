@@ -62,6 +62,7 @@ func run_tests() -> void:
 					_expect(familiar_tests.has("res://scenes/tests/species_knowledge_smoke_test.tscn"), "Familiar Yard validates species knowledge")
 					_expect(familiar_tests.has("res://scenes/tests/creature_mastery_familiar_smoke_test.tscn"), "Familiar Yard validates the vertical slice")
 					_expect(familiar_tests.has("res://scenes/tests/familiar_polish_smoke_test.tscn"), "Familiar Yard validates swapping, grounding, and aiming")
+					_expect(familiar_tests.has("res://scenes/tests/creature_observation_smoke_test.tscn"), "Familiar Yard validates live creature discoveries")
 	_expect(found_lab, "Tactical AI Laboratory appears in visible features")
 	_expect(found_encounter, "Storm Drain Pack appears in visible features")
 	_expect(found_familiar_yard, "Familiar Training Yard appears in visible features")

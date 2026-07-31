@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Storm Drain Pack is the first dedicated playable encounter built to exercise reaction-aware tactical AI, squad reservations, complementary squad roles, threat response, engagement lanes, cover requests, elemental surfaces, and the tactical flight recorder in one fight.
+The Storm Drain Pack is the first dedicated playable encounter built to exercise reaction-aware tactical AI, squad reservations, complementary squad roles, multi-target allocation, threat response, engagement lanes, cover requests, elemental surfaces, and the tactical flight recorder in one fight.
 
 Scene:
 
@@ -18,6 +18,7 @@ res://scenes/levels/prototypes/prototype_storm_drain_pack_encounter_v1.tscn
 - Personality: `cautious`
 - Signature action: **Mire Spit**
 - Fires a Water projectile that applies Wet and advertises Conduct setup.
+- Avoids targets whose Wet setup is already present or claimed.
 
 ### Spark Gremlin
 
@@ -25,6 +26,7 @@ res://scenes/levels/prototypes/prototype_storm_drain_pack_encounter_v1.tscn
 - Personality: `bold`
 - Signature action: **Spark Pounce**
 - Commits to a Lightning lunge and receives extra tactical value against Wet targets.
+- Follows Mire's prepared target before the Wet projectile lands.
 
 ### Shield Gremlin
 
@@ -32,6 +34,7 @@ res://scenes/levels/prototypes/prototype_storm_drain_pack_encounter_v1.tscn
 - Personality: `brute`
 - Signature action: **Guard Screech**
 - Restores stance to nearby pack members and applies a short guarded status.
+- Avoids joining heavily crowded hostile targets when another is available.
 
 ### Runner Gremlin
 
@@ -39,6 +42,7 @@ res://scenes/levels/prototypes/prototype_storm_drain_pack_encounter_v1.tscn
 - Personality: `skittish`
 - Signature action: **Hookstep**
 - Uses a fast lateral retreat that opens engagement space and broadcasts a cover request.
+- Prefers the less crowded target and an open melee lane.
 
 ## Arena
 
@@ -51,9 +55,11 @@ The arena contains:
 - Mana, Stamina, and Focus regeneration
 - a Ruvia testing ring
 - a tactical decision overlay
-- a compact pack-status panel
+- a compact pack-status panel with live target assignments
 
 Grace can cross the channel, avoid it, freeze it, cleanse statuses, interrupt Spark during windup, launch Shield away from the formation, or consume the pack's setup herself.
+
+When Ruvia is manifested, she becomes a valid enemy target without becoming a valid Grace lock-on target. Pack members may split between Grace and Ruvia according to role, distance, status setup, committed damage, and existing claims.
 
 ## Controls
 
@@ -75,39 +81,45 @@ Grace can cross the channel, avoid it, freeze it, cleanse statuses, interrupt Sp
 6. Pressure Runner in melee and watch for Hookstep and a cover request.
 7. Freeze the central channel and confirm only actors standing in it receive Frozen.
 8. Defeat one specialist and watch whether the remaining formation continues without duplicated reservations.
-9. Summon Ruvia and observe whether she respects the pack's claimed reactions and protected states.
-10. Reset and repeat with a different opening spell.
+9. Summon Ruvia in the marked ring.
+10. Watch the pack-status panel for target splitting.
+11. Confirm Mire and Spark pair on the same prepared target while Runner pressures the less crowded target.
+12. Defeat or dismiss Ruvia and confirm every enemy safely reallocates to Grace.
+13. Reset and repeat with a different opening spell.
 
 ## Expected tactical rhythm
 
 ```text
-Mire Spit applies Wet
--> Spark reserves Conduct payoff
+Mire selects an unprepared target
+-> Mire Spit claims Wet setup
+-> Spark follows that target for Conduct payoff
+-> Runner pressures the less crowded target
 -> Shield repairs or covers the formation
--> Runner vacates a crowded lane
--> another pack member answers the opening
 ```
 
-The sequence is opportunistic rather than scripted. Interrupts, hazards, distance, cooldowns, player actions, and personality may change the order.
+The sequence is opportunistic rather than scripted. Interrupts, hazards, distance, cooldowns, player actions, manifestation health, and personality may change the order.
 
-## Automated test
+## Automated tests
 
 ```powershell
 & "C:\Users\nickf\Downloads\Godot_v4.6.2-stable_win64.exe" --headless --path . res://scenes/tests/storm_drain_pack_encounter_smoke_test.tscn
+& "C:\Users\nickf\Downloads\Godot_v4.6.2-stable_win64.exe" --headless --path . res://scenes/tests/multi_target_allocation_smoke_test.tscn
 ```
 
 Expected:
 
 ```text
 STORM_DRAIN_PACK_ENCOUNTER_SMOKE_TEST: PASS
+MULTI_TARGET_ALLOCATION_SMOKE_TEST: PASS
 ```
 
-The regression verifies scene construction, four-member spawning, explicit roles and personalities, action libraries, projectile delivery, Guard Screech stance restoration, water and telemetry infrastructure, resource regeneration, and encounter reset.
+The regressions verify scene construction, four-member spawning, explicit roles and personalities, action libraries, projectile delivery, Guard Screech stance restoration, water and telemetry infrastructure, resource regeneration, encounter activation, target claims, overkill prevention, setup and payoff pairing, target spreading, Ruvia damage routing, and encounter reset.
 
 ## Known limitations
 
 - Mire Spit uses procedural projectile visuals.
 - Guard Screech restores stance but does not yet provide a complete damage-mitigation shield model.
 - Hookstep currently commits to one authored lateral direction.
+- Target visibility and navigation reachability are approximated by distance in this first target-allocation pass.
 - The tactical overlay observes one actor at a time.
 - Final sound, animation, creature silhouettes, and environment art remain replacement-ready.

@@ -34,7 +34,7 @@ static func capture(actor: Node3D, target: Node3D) -> Dictionary:
 
 
 static func sanitize(candidate: Dictionary) -> Dictionary:
-	var copy: Dictionary = candidate.duplicate(true)
+	var copy: Dictionary = candidate.duplicate(false)
 	copy.erase("target_ref")
 	var position_value: Variant = copy.get("position", Vector3.ZERO)
 	if position_value is Vector3:
@@ -44,6 +44,9 @@ static func sanitize(candidate: Dictionary) -> Dictionary:
 			"y": position.y,
 			"z": position.z,
 		}
+	var status_value: Variant = copy.get("statuses", [])
+	if status_value is Array:
+		copy["statuses"] = (status_value as Array).duplicate()
 	return copy
 
 

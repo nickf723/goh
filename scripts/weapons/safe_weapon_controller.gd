@@ -2,7 +2,12 @@ extends "res://scripts/weapons/weapon_controller.gd"
 class_name SafeWeaponController
 
 
+@export_group("Camera-Decoupled Attack Facing")
+@export_range(0.0, 1.0, 0.05) var visual_facing_blend: float = 0.78
+@export_range(0.01, 0.5, 0.01) var visual_facing_return_seconds: float = 0.14
+
 var _gesture_attack_stamina_spent: int = 0
+var _attack_facing_tween: Tween
 
 
 func _ready() -> void:
@@ -12,6 +17,7 @@ func _ready() -> void:
 
 
 func start_attack(attack: WeaponAttackDefinition) -> bool:
+	_kill_attack_facing_tween()
 	var stamina_before: int = GameState.get_stat("stamina")
 	var started: bool = super.start_attack(attack)
 	_gesture_attack_stamina_spent = (
@@ -22,9 +28,112 @@ func start_attack(attack: WeaponAttackDefinition) -> bool:
 	return started
 
 
+# Attack geometry already caches attack_forward_override before this hook runs.
+# Rotate only Grace's visible body and weapon presentation toward that heading.
+# The CharacterBody3D and its CameraPivot retain their world yaw, so close-range
+# facing assist cannot teleport the camera when Grace attacks beside a target.
+func apply_attack_facing(direction: Vector3) -> void:
+	var actor: Node3D = get_actor()
+	if actor == null or direction.length_squared() <= 0.001:
+		return
+
+	var planar_direction: Vector3 = direction
+	planar_direction.y = 0.0
+	if planar_direction.length_squared() <= 0.001:
+		return
+	planar_direction = planar_direction.normalized()
+
+	var target_world_yaw: float = atan2(-planar_direction.x, -planar_direction.z)
+	var local_yaw: float = wrapf(
+		target_world_yaw - actor.global_rotation.y,
+		-PI,
+		PI
+	)
+	var maximum_visual_turn: float = deg_to_rad(
+		maxf(facing_assist_max_turn_degrees, 0.0)
+	)
+	if maximum_visual_turn > 0.0:
+		local_yaw = clampf(
+			local_yaw,
+			-maximum_visual_turn,
+			maximum_visual_turn
+		)
+
+	var blend: float = clampf(visual_facing_blend, 0.0, 1.0)
+	rotation.y = lerp_angle(rotation.y, local_yaw, blend)
+	var grace_visual: Node3D = _get_grace_visual()
+	if grace_visual != null:
+		grace_visual.rotation.y = lerp_angle(
+			grace_visual.rotation.y,
+			local_yaw,
+			blend
+		)
+
+
+func finish_current_attack() -> void:
+	super.finish_current_attack()
+	# A buffered follow-up may already be active when the base method returns.
+	# Preserve its newly authored facing instead of pulling the model to neutral.
+	if current_attack == null:
+		reset_attack_facing_visual()
+
+
 func cancel_current_attack(reason: String = "cancelled") -> void:
 	super.cancel_current_attack(reason)
-	_gesture_attack_stamina_spent = 0
+	reset_attack_facing_visual()
+
+
+func reset_attack_facing_visual(immediate: bool = false) -> void:
+	_kill_attack_facing_tween()
+	var grace_visual: Node3D = _get_grace_visual()
+	if immediate or visual_facing_return_seconds <= 0.0 or not is_inside_tree():
+		rotation.y = 0.0
+		if grace_visual != null:
+			grace_visual.rotation.y = 0.0
+		return
+
+	_attack_facing_tween = create_tween()
+	_attack_facing_tween.set_trans(Tween.TRANS_QUAD)
+	_attack_facing_tween.set_ease(Tween.EASE_OUT)
+	_attack_facing_tween.parallel().tween_property(
+		self,
+		"rotation:y",
+		0.0,
+		visual_facing_return_seconds
+	)
+	if grace_visual != null:
+		_attack_facing_tween.parallel().tween_property(
+			grace_visual,
+			"rotation:y",
+			0.0,
+			visual_facing_return_seconds
+		)
+
+
+func get_attack_facing_debug_data() -> Dictionary:
+	var actor: Node3D = get_actor()
+	var camera: Camera3D = get_viewport().get_camera_3d() if is_inside_tree() else null
+	var grace_visual: Node3D = _get_grace_visual()
+	return {
+		"actor_yaw": actor.global_rotation.y if actor != null else 0.0,
+		"camera_yaw": camera.global_rotation.y if camera != null else 0.0,
+		"weapon_visual_yaw": rotation.y,
+		"grace_visual_yaw": grace_visual.rotation.y if grace_visual != null else 0.0,
+		"camera_decoupled": true,
+	}
+
+
+func _get_grace_visual() -> Node3D:
+	var actor: Node3D = get_actor()
+	if actor == null:
+		return null
+	return actor.get_node_or_null("GraceVisualV1") as Node3D
+
+
+func _kill_attack_facing_tween() -> void:
+	if _attack_facing_tween != null and _attack_facing_tween.is_valid():
+		_attack_facing_tween.kill()
+	_attack_facing_tween = null
 
 
 func cancel_startup_attack_for_special(
@@ -38,6 +147,7 @@ func cancel_startup_attack_for_special(
 	# Call the base implementation directly so the tracked cost survives until
 	# after the attack is fully cancelled.
 	super.cancel_current_attack(reason)
+	reset_attack_facing_visual()
 	_gesture_attack_stamina_spent = 0
 	if refund > 0:
 		GameState.restore_stamina(refund)

@@ -18,7 +18,7 @@ jobs:
   validate-menu:
     name: Import and full-menu regressions
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
 
     steps:
       - name: Check out repository
@@ -42,5 +42,14 @@ jobs:
       - name: Run refined Magic workspace regression
         run: godot --headless --path . res://scenes/tests/full_menu_magic_v2_smoke_test.tscn
 
-      - name: Run projectile convergence regression
+      - name: Run divine Magic relationships regression
+        run: godot --headless --path . res://scenes/tests/full_menu_magic_divine_smoke_test.tscn
+
+      - name: Run projectile direction math regression
         run: godot --headless --path . res://scenes/tests/free_aim_projectile_convergence_smoke_test.tscn
+
+      - name: Run projectile self-collision regression
+        run: godot --headless --path . res://scenes/tests/ability_caster_self_exclusion_smoke_test.tscn
+
+      - name: Run attack camera decoupling regression
+        run: godot --headless --path . res://scenes/tests/attack_camera_decoupling_smoke_test.tscn

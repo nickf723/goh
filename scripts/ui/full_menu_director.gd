@@ -1,7 +1,7 @@
 extends "res://scripts/ui/full_menu_director_core.gd"
 
 const FullMenuLoadoutShellScript = preload(
-	"res://scripts/ui/full_menu_shell_loadout_v2.gd"
+	"res://scripts/ui/full_menu_shell_magic_v1.gd"
 )
 const SpellcastingMasteryServiceScript = preload(
 	"res://scripts/progression/spellcasting_mastery_service.gd"
@@ -174,7 +174,9 @@ func make_spell_row(
 	)
 	if ability == null:
 		row["compatible_traditions"] = []
+		row["spell_id"] = ""
 		return row
+	row["spell_id"] = ability.get_spell_id()
 	row["compatible_traditions"] = SpellcastingTraditionResolverScript.resolve(ability)
 	return row
 

@@ -5,8 +5,9 @@ extends "res://scripts/systems/game_state_core.gd"
 # and semantic aliases that travel with the same save slot.
 signal quick_spell_slot_changed(loadout_id: String, slot_index: int, spell_id: String)
 signal quick_spell_selection_changed(loadout_id: String, slot_index: int)
+signal elemental_augmentation_changed(source_element: String, target_element: String)
 
-const PLAYER_RECORDS_SAVE_VERSION: int = 14
+const PLAYER_RECORDS_SAVE_VERSION: int = 15
 const QUICK_SPELL_SLOT_COUNT: int = 10
 const AchievementCatalogScript = preload(
 	"res://scripts/progression/achievement_catalog.gd"
@@ -20,6 +21,9 @@ const SpellcastingMasteryServiceScript = preload(
 const ExtendedEquipmentCatalogScript = preload(
 	"res://scripts/equipment/equipment_catalog.gd"
 )
+const ElementalAugmentationCatalogScript = preload(
+	"res://scripts/abilities/elemental_augmentation_catalog.gd"
+)
 
 const STARTER_COMPONENT_EQUIPMENT: Dictionary = {
 	"headwear": "journey_headwrap",
@@ -30,6 +34,7 @@ const STARTER_COMPONENT_EQUIPMENT: Dictionary = {
 
 var quick_spell_loadouts: Dictionary = {}
 var quick_spell_selected_slots: Dictionary = {}
+var elemental_augmentations: Dictionary = {}
 
 
 func _ready() -> void:
@@ -60,6 +65,7 @@ func reset_run() -> void:
 	_ensure_component_equipment_slots()
 	quick_spell_loadouts.clear()
 	quick_spell_selected_slots.clear()
+	elemental_augmentations.clear()
 	var species_knowledge: Node = _get_species_knowledge()
 	if species_knowledge != null and species_knowledge.has_method("reset_all"):
 		species_knowledge.call("reset_all")
@@ -165,6 +171,42 @@ func get_quick_spell_selected_slots_snapshot() -> Dictionary:
 	return quick_spell_selected_slots.duplicate(true)
 
 
+func set_elemental_augmentation(
+	source_element: String,
+	target_element: String,
+	force_debug: bool = false
+) -> bool:
+	if not ElementalAugmentationCatalogScript.is_valid_pair(
+		source_element,
+		target_element
+	):
+		return false
+	if (
+		target_element != ""
+		and not has_unlock(ElementalAugmentationCatalogScript.UNLOCK_ID)
+		and not force_debug
+	):
+		return false
+	if target_element == "":
+		elemental_augmentations.erase(source_element)
+	else:
+		elemental_augmentations[source_element] = target_element
+	elemental_augmentation_changed.emit(source_element, target_element)
+	return true
+
+
+func get_elemental_augmentation(source_element: String) -> String:
+	return str(elemental_augmentations.get(source_element, ""))
+
+
+func get_elemental_augmentations_snapshot() -> Dictionary:
+	return elemental_augmentations.duplicate(true)
+
+
+func is_elemental_augmentation_unlocked() -> bool:
+	return has_unlock(ElementalAugmentationCatalogScript.UNLOCK_ID)
+
+
 func write_save_data(save_data: Dictionary) -> Dictionary:
 	_append_player_records_to_save(save_data)
 	return super.write_save_data(save_data)
@@ -191,6 +233,7 @@ func _append_player_records_to_save(save_data: Dictionary) -> void:
 	save_data["quick_spell_selected_slots"] = (
 		get_quick_spell_selected_slots_snapshot()
 	)
+	save_data["elemental_augmentations"] = get_elemental_augmentations_snapshot()
 	var species_knowledge: Node = _get_species_knowledge()
 	if species_knowledge == null or not species_knowledge.has_method("get_snapshot"):
 		return
@@ -201,6 +244,7 @@ func _append_player_records_to_save(save_data: Dictionary) -> void:
 
 func _apply_player_records_from_save(save_data: Dictionary) -> void:
 	_apply_quick_spell_records(save_data)
+	_apply_elemental_augmentation_records(save_data)
 	var species_knowledge: Node = _get_species_knowledge()
 	if species_knowledge == null:
 		return
@@ -232,6 +276,27 @@ func _apply_quick_spell_records(save_data: Dictionary) -> void:
 			set_selected_quick_spell_slot(
 				str(loadout_value),
 				int((selected_value as Dictionary)[loadout_value])
+			)
+
+
+func _apply_elemental_augmentation_records(save_data: Dictionary) -> void:
+	elemental_augmentations.clear()
+	var records_value: Variant = save_data.get("elemental_augmentations", {})
+	if not records_value is Dictionary:
+		return
+	for source_value: Variant in (records_value as Dictionary).keys():
+		var source_element: String = str(source_value)
+		var target_element: String = str(
+			(records_value as Dictionary)[source_value]
+		)
+		if ElementalAugmentationCatalogScript.is_valid_pair(
+			source_element,
+			target_element
+		):
+			elemental_augmentations[source_element] = target_element
+			elemental_augmentation_changed.emit(
+				source_element,
+				target_element
 			)
 
 

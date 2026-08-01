@@ -115,9 +115,9 @@ func _hide_focus_library_ui() -> void:
 
 
 # Hard lock influences only spells that explicitly declare target-lock or
-# homing behavior. Free-fire spells still follow the camera, but converge from
-# Grace's lower cast origin onto the camera's center-ray hit instead of flying
-# parallel beneath the crosshair at close range.
+# homing behavior. Free-fire spells converge from Grace's cast origin onto the
+# camera-center ray. The player controller owns the canonical ray when present;
+# the local fallback mirrors its full self-collision exclusion contract.
 func get_cast_direction(player: Node3D, cast_origin: Vector3) -> Vector3:
 	var ability: AbilityDefinition = get_current_ability()
 	if _ability_uses_lock_on_direction(ability):
@@ -129,13 +129,29 @@ func _get_camera_converged_cast_direction(
 	player: Node3D,
 	cast_origin: Vector3
 ) -> Vector3:
+	if player == null:
+		return Vector3.FORWARD
+
+	# PlayerControllerFreeAimStatus already owns the authoritative camera-center
+	# ray and recursively excludes every CollisionObject3D beneath Grace. Reuse it
+	# instead of maintaining a subtly different second implementation.
+	if player.has_method("get_camera_center_cast_direction"):
+		var canonical_value: Variant = player.call(
+			"get_camera_center_cast_direction",
+			cast_origin
+		)
+		if canonical_value is Vector3:
+			var canonical_direction: Vector3 = canonical_value as Vector3
+			if canonical_direction.length_squared() > 0.0001:
+				return canonical_direction.normalized()
+
 	var fallback: Vector3 = -player.global_transform.basis.z
 	var camera: Camera3D = get_viewport().get_camera_3d()
 	if camera == null:
 		return fallback.normalized() if fallback.length() > 0.01 else Vector3.FORWARD
 
-	var viewport_size: Vector2 = camera.get_viewport().get_visible_rect().size
-	var screen_center: Vector2 = viewport_size * 0.5
+	var viewport_rect: Rect2 = camera.get_viewport().get_visible_rect()
+	var screen_center: Vector2 = viewport_rect.position + viewport_rect.size * 0.5
 	var ray_origin: Vector3 = camera.project_ray_origin(screen_center)
 	var ray_direction: Vector3 = camera.project_ray_normal(screen_center)
 	if ray_direction.length() <= 0.01:
@@ -157,10 +173,7 @@ func _get_camera_converged_cast_direction(
 		query.collision_mask = camera_aim_collision_mask
 		query.collide_with_areas = true
 		query.collide_with_bodies = true
-		if player is CollisionObject3D:
-			var exclusions: Array[RID] = []
-			exclusions.append((player as CollisionObject3D).get_rid())
-			query.exclude = exclusions
+		query.exclude = _get_player_collision_exclusions(player)
 		var hit: Dictionary = world.direct_space_state.intersect_ray(query)
 		var hit_position: Variant = hit.get("position")
 		if hit_position is Vector3:
@@ -170,6 +183,24 @@ func _get_camera_converged_cast_direction(
 	if direction.length() <= 0.01:
 		direction = ray_direction
 	return direction.normalized() if direction.length() > 0.01 else Vector3.FORWARD
+
+
+func _get_player_collision_exclusions(player: Node) -> Array[RID]:
+	var exclusions: Array[RID] = []
+	_collect_collision_rids(player, exclusions)
+	return exclusions
+
+
+func _collect_collision_rids(node: Node, exclusions: Array[RID]) -> void:
+	if node == null:
+		return
+	if node is CollisionObject3D:
+		var collision_object: CollisionObject3D = node as CollisionObject3D
+		var rid: RID = collision_object.get_rid()
+		if rid.is_valid() and not exclusions.has(rid):
+			exclusions.append(rid)
+	for child: Node in node.get_children():
+		_collect_collision_rids(child, exclusions)
 
 
 func _ability_uses_lock_on_direction(ability: AbilityDefinition) -> bool:

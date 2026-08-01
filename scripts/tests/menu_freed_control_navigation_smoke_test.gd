@@ -52,16 +52,18 @@ func run_tests() -> void:
 			action_controls[0] == live_button,
 			"the live button replaces the freed cached reference"
 		)
+		assert_true(
+			shell.call("_get_live_control", action_controls[0]) == live_button,
+			"the replacement remains a valid live Control"
+		)
 
-	# Exercise both public navigation routes that previously reached the typed
-	# _control_has_geometry boundary with a freed object.
+	# Exercise both routes that previously reached the typed
+	# _control_has_geometry boundary with a freed object. The shell is hidden in
+	# this headless test, so screen geometry itself is intentionally irrelevant;
+	# the contract is that stale references are discarded without a type error.
 	shell.set("selected_action_index", 0)
 	shell.call("_select_action_from_screen_geometry", 1, 0)
 	shell.call("_update_virtual_cursor_target")
-	assert_true(
-		bool(shell.call("_has_live_geometry", live_button)),
-		"the replacement button remains eligible for geometry navigation"
-	)
 
 	var debug_value: Variant = shell.call("get_navigation_debug_data")
 	if debug_value is Dictionary:

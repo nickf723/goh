@@ -17,11 +17,42 @@ const MENU_HIDDEN_CANVAS_LAYER_GROUPS: Array[String] = [
 	"player_hud_v2",
 	"divine_special_hud",
 ]
+const MENU_HIDDEN_CANVAS_ITEM_GROUPS: Array[String] = [
+	"menu_suppressed_hud",
+]
 
 var menu_hidden_canvas_items: Array[CanvasItem] = []
 var menu_hidden_canvas_item_visibility: Array[bool] = []
 var menu_hidden_canvas_layers: Array[CanvasLayer] = []
 var menu_hidden_canvas_layer_visibility: Array[bool] = []
+
+
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventJoypadButton or event is InputEventJoypadMotion):
+		return
+	if event.is_action_pressed("full_menu"):
+		toggle_full_menu()
+		get_viewport().set_input_as_handled()
+		return
+	if not is_full_menu_open():
+		return
+	ensure_full_menu_shell()
+	if full_menu_shell == null:
+		return
+	var consumed: bool = false
+	if full_menu_shell.has_method("handle_menu_input"):
+		consumed = bool(full_menu_shell.call("handle_menu_input", event))
+	var cancel_requested: bool = false
+	if full_menu_shell.has_method("is_menu_cancel_event"):
+		cancel_requested = bool(full_menu_shell.call("is_menu_cancel_event", event))
+	else:
+		cancel_requested = event.is_action_pressed("ui_cancel")
+	if cancel_requested and not consumed:
+		close_full_menu()
+		get_viewport().set_input_as_handled()
+		return
+	if consumed:
+		get_viewport().set_input_as_handled()
 
 
 func ensure_full_menu_shell() -> void:
@@ -45,7 +76,6 @@ func open_full_menu() -> void:
 	if full_menu_shell == null:
 		print("FullMenuDirector: no shell available.")
 		return
-
 	was_paused_before_menu = get_tree().paused
 	_hide_gameplay_hud()
 	get_tree().paused = true
@@ -74,7 +104,10 @@ func _hide_gameplay_hud() -> void:
 			if child == full_menu_shell or not child is CanvasItem:
 				continue
 			_capture_canvas_item(child as CanvasItem)
-
+	for group_name: String in MENU_HIDDEN_CANVAS_ITEM_GROUPS:
+		for node: Node in get_tree().get_nodes_in_group(group_name):
+			if node is CanvasItem:
+				_capture_canvas_item(node as CanvasItem)
 	for group_name: String in MENU_HIDDEN_CANVAS_LAYER_GROUPS:
 		for node: Node in get_tree().get_nodes_in_group(group_name):
 			if node is CanvasLayer:
@@ -108,7 +141,6 @@ func _restore_gameplay_hud() -> void:
 			canvas_item.visible = menu_hidden_canvas_item_visibility[index]
 	menu_hidden_canvas_items.clear()
 	menu_hidden_canvas_item_visibility.clear()
-
 	var layer_restore_count: int = mini(
 		menu_hidden_canvas_layers.size(),
 		menu_hidden_canvas_layer_visibility.size()
@@ -152,7 +184,6 @@ func get_spellcasting_mastery_data() -> Dictionary:
 	var compatible_spell_names: Dictionary = {}
 	for tradition_id: String in SpellcastingTraditionCatalogScript.TRADITION_IDS:
 		compatible_spell_names[tradition_id] = []
-
 	var ability_caster: Node = get_ability_caster()
 	var loadout: AbilityLoadout = get_ability_loadout(ability_caster)
 	if loadout != null:
@@ -167,7 +198,6 @@ func get_spellcasting_mastery_data() -> Dictionary:
 				if not names.has(ability.display_name):
 					names.append(ability.display_name)
 				compatible_spell_names[tradition_id] = names
-
 	var rows: Array[Dictionary] = SpellcastingMasteryServiceScript.get_progress_rows()
 	for row: Dictionary in rows:
 		var tradition_id: String = str(row.get("id", ""))
@@ -176,7 +206,6 @@ func get_spellcasting_mastery_data() -> Dictionary:
 		)
 		row["compatible_spell_names"] = names
 		row["compatible_spell_count"] = names.size()
-
 	return {
 		"rows": rows,
 		"summary": SpellcastingMasteryServiceScript.get_summary(),

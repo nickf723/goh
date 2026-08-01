@@ -30,7 +30,7 @@ const REWARD_IDS: Array[String] = [
 var failures: Array[String] = []
 var old_unlocks: Dictionary = {}
 var old_species_snapshot: Dictionary = {}
-var cauldron: Node
+var cauldron: AlchemyCauldron
 
 
 func _ready() -> void:
@@ -80,62 +80,91 @@ func run_tests() -> void:
 		_ability_has_modifier(IceLanceAbility, "piercing_ice_lance"),
 		"Piercing Ice Lance activates through its challenge unlock"
 	)
-	var ice_payload: Resource = (
+
+	var ice_payload: DamagePayload = (
 		SpellModifierRegistryScript.build_modified_payload_for_ability(
 			IceLanceAbility
-		)
+		) as DamagePayload
 	)
 	assert_true(
-		ice_payload is DamagePayload
-		and (ice_payload as DamagePayload).tags.has("piercing"),
+		ice_payload != null and ice_payload.tags.has("piercing"),
 		"Piercing Ice Lance modifies the real payload"
 	)
-	var lightning_payload: Resource = (
+	var lightning_payload: DamagePayload = (
 		SpellModifierRegistryScript.build_modified_payload_for_ability(
 			LightningSparkAbility
-		)
+		) as DamagePayload
 	)
 	assert_true(
-		lightning_payload is DamagePayload
-		and (lightning_payload as DamagePayload).tags.has("chain_lightning"),
+		lightning_payload != null
+		and lightning_payload.tags.has("chain_lightning"),
 		"Chain Lightning modifies the real payload"
 	)
 
-	cauldron = AlchemyCauldronScript.new()
+	cauldron = AlchemyCauldronScript.new() as AlchemyCauldron
 	add_child(cauldron)
 	await get_tree().process_frame
-	cauldron.set("selected_ingredients", ["life_bloom", "springwater"])
-	cauldron.set("catalyst", "none")
-	var locked_insight: Dictionary = cauldron.call("get_recipe_insight") as Dictionary
+	var valid_mix: Array[String] = ["life_bloom", "springwater"]
+	cauldron.selected_ingredients = valid_mix
+	cauldron.catalyst = "none"
+	var locked_insight: Dictionary = cauldron.get_recipe_insight()
 	assert_equal(
 		locked_insight.get("state"),
 		"locked",
 		"Cauldron insight remains locked before Kitchen Chemistry"
 	)
+
 	_grant_reward("alchemy_recipe_insight")
-	cauldron.call("refresh_menu")
-	var promising: Dictionary = cauldron.call("get_recipe_insight") as Dictionary
-	assert_equal(promising.get("state"), "promising", "Known chemistry detects a promising pair")
+	cauldron.refresh_menu()
+	var promising: Dictionary = cauldron.get_recipe_insight()
+	assert_equal(
+		promising.get("state"),
+		"promising",
+		"Known chemistry detects a promising pair"
+	)
 	assert_equal(
 		promising.get("required_catalyst"),
 		"fire",
 		"Recipe insight identifies the required treatment"
 	)
-	cauldron.set("catalyst", "fire")
-	var stable: Dictionary = cauldron.call("get_recipe_insight") as Dictionary
-	assert_equal(stable.get("state"), "stable", "Correct treatment marks the formula brew-ready")
-	assert_equal(stable.get("recipe_id"), "healing_potion", "Insight resolves the matching formula")
-	cauldron.set("selected_ingredients", ["life_bloom", "spark_ore"])
-	var unstable: Dictionary = cauldron.call("get_recipe_insight") as Dictionary
-	assert_equal(unstable.get("state"), "unstable", "Invalid ingredient pairs are identified before consumption")
-	var alchemy_debug: Dictionary = cauldron.call("get_debug_data") as Dictionary
+	cauldron.catalyst = "fire"
+	var stable: Dictionary = cauldron.get_recipe_insight()
+	assert_equal(
+		stable.get("state"),
+		"stable",
+		"Correct treatment marks the formula brew-ready"
+	)
+	assert_equal(
+		stable.get("recipe_id"),
+		"healing_potion",
+		"Insight resolves the matching formula"
+	)
+	var invalid_mix: Array[String] = ["life_bloom", "spark_ore"]
+	cauldron.selected_ingredients = invalid_mix
+	var unstable: Dictionary = cauldron.get_recipe_insight()
+	assert_equal(
+		unstable.get("state"),
+		"unstable",
+		"Invalid ingredient pairs are identified before consumption"
+	)
+	var alchemy_debug: Dictionary = cauldron.get_debug_data()
 	assert_true(
 		bool(alchemy_debug.get("recipe_insight_label_present", false)),
 		"Alchemy menu renders the insight readout"
 	)
 
-	SpeciesKnowledge.add_discovery("gremlin", "reward_test_sighting", "Reward Test Sighting", 1)
-	SpeciesKnowledge.add_discovery("gremlin", "reward_test_behavior", "Reward Test Behavior", 1)
+	SpeciesKnowledge.add_discovery(
+		"gremlin",
+		"reward_test_sighting",
+		"Reward Test Sighting",
+		1
+	)
+	SpeciesKnowledge.add_discovery(
+		"gremlin",
+		"reward_test_behavior",
+		"Reward Test Behavior",
+		1
+	)
 	assert_true(
 		SpeciesKnowledge.is_familiar_unlocked("gremlin"),
 		"Gremlin familiar is available for the technique test"
@@ -146,21 +175,39 @@ func run_tests() -> void:
 		SpeciesKnowledge.has_unlock("gremlin", "gremlin_pounce"),
 		"Pack Scholar synchronizes Pounce into SpeciesKnowledge"
 	)
-	var equip_result: Dictionary = SpeciesKnowledge.set_equipped_familiar_species("gremlin")
-	assert_true(bool(equip_result.get("ok", false)), "Gremlin familiar can be equipped")
+	var equip_result: Dictionary = (
+		SpeciesKnowledge.set_equipped_familiar_species("gremlin")
+	)
+	assert_true(
+		bool(equip_result.get("ok", false)),
+		"Gremlin familiar can be equipped"
+	)
 	var pounce_result: Dictionary = SpeciesKnowledge.toggle_familiar_technique(
 		"gremlin",
 		"pounce"
 	)
-	assert_true(bool(pounce_result.get("ok", false)), "Pounce can be equipped after its challenge reward")
 	assert_true(
-		(pounce_result.get("loadout", {}) as Dictionary).get("technique_ids", []).has("pounce"),
+		bool(pounce_result.get("ok", false)),
+		"Pounce can be equipped after its challenge reward"
+	)
+	var pounce_loadout: Dictionary = pounce_result.get("loadout", {}) as Dictionary
+	var technique_ids: Array = pounce_loadout.get("technique_ids", []) as Array
+	assert_true(
+		technique_ids.has("pounce"),
 		"Pounce enters the live familiar loadout"
 	)
 
 	var runtime_rows: Array = tracker.call("get_reward_runtime_rows") as Array
-	assert_equal(runtime_rows.size(), 5, "Reward runtime catalog covers all five starter challenges")
-	assert_equal(_active_count(runtime_rows), 5, "Every unlocked starter reward reaches its runtime consumer")
+	assert_equal(
+		runtime_rows.size(),
+		5,
+		"Reward runtime catalog covers all five starter challenges"
+	)
+	assert_equal(
+		_active_count(runtime_rows),
+		5,
+		"Every unlocked starter reward reaches its runtime consumer"
+	)
 	var challenge_rows: Array = tracker.call("get_challenge_rows") as Array
 	for reward_id: String in REWARD_IDS:
 		assert_true(
@@ -174,8 +221,10 @@ func run_tests() -> void:
 
 
 func _ability_has_modifier(ability: Resource, modifier_id: String) -> bool:
-	for definition: Dictionary in SpellModifierRegistryScript.get_active_modifier_definitions_for_ability(
-		ability
+	for definition: Dictionary in (
+		SpellModifierRegistryScript.get_active_modifier_definitions_for_ability(
+			ability
+		)
 	):
 		if str(definition.get("id", "")) == modifier_id:
 			return true

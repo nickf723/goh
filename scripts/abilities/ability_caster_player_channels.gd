@@ -8,6 +8,10 @@ extends "res://scripts/abilities/ability_caster_menu_select.gd"
 @export_range(10.0, 200.0, 1.0) var camera_aim_distance: float = 90.0
 @export_flags_3d_physics var camera_aim_collision_mask: int = 1
 
+@export_group("Precision Projectile Origin")
+@export var prefer_casting_hand_anchor: bool = true
+@export_range(0.0, 1.5, 0.01) var projectile_spawn_distance: float = 0.28
+
 
 func cast_from_player(
 	player: Node3D,
@@ -19,6 +23,109 @@ func cast_from_player(
 	if bool(channel_result.get("handled", false)):
 		return bool(channel_result.get("success", false))
 	return super.cast_from_player(player, cast_lock_duration, allow_charge)
+
+
+# The base caster historically launches from player origin + a fixed height.
+# Grace's CharacterBody origin sits near her torso, so that approximation was
+# above short targets and forced aimed shots down toward them. Player-owned
+# spells instead launch from the animated right-hand anchor when one exists.
+func execute_ability_from_player(
+	player: Node3D,
+	ability: AbilityDefinition,
+	cast_lock_duration: float = 0.18,
+	action_payload_override: Resource = null,
+	power_ratio: float = 0.0,
+	extra_mana_cost: int = 0
+) -> bool:
+	if action_state != null and not action_state.can_cast():
+		return false
+	if player == null:
+		print("No player for ability cast.")
+		return false
+	if ability == null:
+		print("No current ability.")
+		return false
+	if ability.ability_scene == null:
+		print("Ability has no scene: ", ability.display_name)
+		return false
+	if not pay_ability_cost(ability, extra_mana_cost):
+		show_feedback("Not enough resources for " + ability.display_name + ".")
+		return false
+
+	if action_state != null:
+		action_state.begin_cast(cast_lock_duration)
+
+	var ability_instance: Node = ability.ability_scene.instantiate()
+	var action_payload: Resource = action_payload_override
+	if action_payload == null:
+		if ability.has_method("get_action_payload"):
+			action_payload = ability.get_action_payload()
+		elif ability.payload != null:
+			action_payload = ability.payload
+
+	if action_payload != null and ability_instance.has_method("set_payload"):
+		ability_instance.set_payload(action_payload)
+	if ability_instance.has_method("set_source_actor"):
+		ability_instance.set_source_actor(player)
+
+	var cast_origin: Vector3 = get_player_cast_origin(player)
+	var cast_direction: Vector3 = get_cast_direction(player, cast_origin)
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		print("AbilityCaster: No current scene to cast into.")
+		return false
+
+	scene_root.add_child(ability_instance)
+	configure_charged_projectile_visuals(ability_instance, power_ratio)
+
+	if ability_instance.has_method("execute"):
+		ability_instance.execute(player, cast_direction)
+		return true
+
+	if ability_instance is Node3D:
+		var node_3d: Node3D = ability_instance as Node3D
+		var resolved_spawn_distance: float = cast_spawn_distance
+		if ability.get_delivery_type().strip_edges().to_lower() == "projectile":
+			resolved_spawn_distance = minf(
+				maxf(projectile_spawn_distance, 0.0),
+				maxf(cast_spawn_distance, 0.0)
+			)
+		node_3d.global_position = (
+			cast_origin + cast_direction * resolved_spawn_distance
+		)
+
+	if ability_instance.has_method("launch"):
+		ability_instance.launch(cast_direction)
+	return true
+
+
+func get_player_cast_origin(player: Node3D) -> Vector3:
+	if player == null:
+		return Vector3.ZERO
+	if prefer_casting_hand_anchor:
+		var anchor: Node3D = _find_casting_hand_anchor(player)
+		if anchor != null:
+			return anchor.global_position
+	return player.global_position + Vector3.UP * cast_spawn_height
+
+
+func _find_casting_hand_anchor(player: Node) -> Node3D:
+	if player == null:
+		return null
+	for anchor_path: String in [
+		"GraceVisualV1/RightHandAnchor",
+		"RightHandAnchor",
+		"CastingHandAnchor",
+	]:
+		var direct_anchor: Node3D = player.get_node_or_null(anchor_path) as Node3D
+		if direct_anchor != null:
+			return direct_anchor
+	var recursive_anchor: Node = player.find_child(
+		"RightHandAnchor",
+		true,
+		false
+	)
+	return recursive_anchor as Node3D
 
 
 func try_player_ability_channel(
@@ -114,10 +221,9 @@ func _hide_focus_library_ui() -> void:
 		ui.call("hide_spell_menu")
 
 
-# Hard lock influences only spells that explicitly declare target-lock or
-# homing behavior. Free-fire spells converge from Grace's cast origin onto the
-# camera-center ray. The player controller owns the canonical ray when present;
-# the local fallback mirrors its full self-collision exclusion contract.
+# Aimed spells participate in Grace's hard/soft targeting assist. Untargeted
+# aimed casts still fall through to the player's camera-center ray, so this is
+# one continuous rule rather than separate lock-on and free-fire behaviors.
 func get_cast_direction(player: Node3D, cast_origin: Vector3) -> Vector3:
 	var ability: AbilityDefinition = get_current_ability()
 	if _ability_uses_lock_on_direction(ability):
@@ -210,6 +316,8 @@ func _ability_uses_lock_on_direction(ability: AbilityDefinition) -> bool:
 	var delivery_type: String = ability.get_delivery_type().strip_edges().to_lower()
 	return (
 		targeting_style in [
+			"aimed",
+			"soft_aim",
 			"target",
 			"single_target",
 			"target_lock",

@@ -1,0 +1,40 @@
+name: Full menu validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: full-menu-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-menu:
+    name: Import and full-menu regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        run: godot --headless --path . --editor --quit
+
+      - name: Run Grace menu regression
+        run: godot --headless --path . res://scenes/tests/full_menu_loadout_v1_smoke_test.tscn
+
+      - name: Run Magic atlas regression
+        run: godot --headless --path . res://scenes/tests/full_menu_magic_v1_smoke_test.tscn

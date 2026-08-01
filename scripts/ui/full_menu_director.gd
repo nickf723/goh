@@ -1,7 +1,10 @@
 extends "res://scripts/ui/full_menu_director_core.gd"
 
 const FullMenuLoadoutShellScript = preload(
-	"res://scripts/ui/full_menu_shell_codex_v1.gd"
+	"res://scripts/ui/full_menu_shell_progression_v1.gd"
+)
+const ProgressionTrackerScript = preload(
+	"res://scripts/progression/progression_tracker.gd"
 )
 const SpellcastingMasteryServiceScript = preload(
 	"res://scripts/progression/spellcasting_mastery_service.gd"
@@ -25,6 +28,22 @@ var menu_hidden_canvas_items: Array[CanvasItem] = []
 var menu_hidden_canvas_item_visibility: Array[bool] = []
 var menu_hidden_canvas_layers: Array[CanvasLayer] = []
 var menu_hidden_canvas_layer_visibility: Array[bool] = []
+
+
+func _ready() -> void:
+	super._ready()
+	_ensure_progression_tracker()
+
+
+func _ensure_progression_tracker() -> Node:
+	var tracker: Node = get_node_or_null("ProgressionTracker")
+	if tracker != null:
+		return tracker
+	tracker = ProgressionTrackerScript.new()
+	tracker.name = "ProgressionTracker"
+	tracker.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(tracker)
+	return tracker
 
 
 func _input(event: InputEvent) -> void:
@@ -72,6 +91,7 @@ func ensure_full_menu_shell() -> void:
 
 
 func open_full_menu() -> void:
+	_ensure_progression_tracker()
 	ensure_full_menu_shell()
 	if full_menu_shell == null:
 		print("FullMenuDirector: no shell available.")

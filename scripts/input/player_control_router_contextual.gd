@@ -67,6 +67,11 @@ func handle_focus_action(pressed: bool) -> bool:
 
 
 func _input(event: InputEvent) -> void:
+	# Paused full-screen menus own every controller button, including the magic
+	# shoulder. Returning before Focus handling prevents L from eating the menu's
+	# tab-left command.
+	if get_tree().paused:
+		return
 	_resolve_bindings()
 	if event is InputEventJoypadButton and is_ground_targeting_active():
 		var target_button: InputEventJoypadButton = event as InputEventJoypadButton

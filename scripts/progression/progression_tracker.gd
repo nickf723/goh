@@ -12,8 +12,10 @@ const ChallengeCatalogScript = preload(
 )
 const UnlockCatalogScript = preload("res://scripts/systems/unlock_catalog.gd")
 
-const COUNTER_PREFIX: String = "challenge::"
-const UNIQUE_PREFIX: String = "challenge_unique::"
+const STORAGE_PREFIX: String = "__progression__::"
+const COUNTER_PREFIX: String = STORAGE_PREFIX + "counter::"
+const RECORD_PREFIX: String = STORAGE_PREFIX + "record::"
+const TRACKED_QUEST_KEY: String = STORAGE_PREFIX + "tracked_quest"
 
 
 func _ready() -> void:
@@ -31,29 +33,25 @@ func record_event(
 	var resolved_key: String = event_key.strip_edges().to_lower()
 	if resolved_type == "" or resolved_key == "":
 		return
-	var stored_evidence: Dictionary = evidence.duplicate(true)
-	stored_evidence["event_type"] = resolved_type
-	stored_evidence["event_key"] = resolved_key
-	stored_evidence["recorded_at"] = Time.get_datetime_string_from_system(false, true)
-
+	var stored: Dictionary = evidence.duplicate(true)
+	stored["event_type"] = resolved_type
+	stored["event_key"] = resolved_key
+	stored["recorded_at"] = Time.get_datetime_string_from_system(false, true)
 	if resolved_type == "reaction_triggered":
-		record_discovery("reaction", resolved_key, stored_evidence)
+		record_discovery("reaction", resolved_key, stored)
 	elif resolved_type == "recipe_discovered":
-		record_discovery("recipe", resolved_key, stored_evidence)
+		record_discovery("recipe", resolved_key, stored)
 	elif resolved_type == "quest_completed":
-		record_discovery("quest", resolved_key, stored_evidence)
-
+		record_discovery("quest", resolved_key, stored)
 	for definition: Dictionary in ChallengeCatalogScript.get_matching(
 		resolved_type,
 		resolved_key
 	):
-		_apply_event_to_challenge(definition, resolved_key, stored_evidence)
-	event_recorded.emit(resolved_type, resolved_key, stored_evidence)
+		_apply_event_to_challenge(definition, resolved_key, stored)
+	event_recorded.emit(resolved_type, resolved_key, stored)
 
 
 func record_reaction_result(result: Dictionary) -> void:
-	if result.is_empty():
-		return
 	var reaction_id: String = str(
 		result.get("reaction", result.get("reaction_id", ""))
 	).strip_edges().to_lower()
@@ -69,19 +67,31 @@ func record_discovery(
 	record_id: String,
 	evidence: Dictionary = {}
 ) -> bool:
-	var was_new: bool = GameState.record_progression_record(
-		category,
-		record_id,
-		evidence
-	)
-	if was_new:
-		knowledge_discovered.emit(category, record_id, evidence.duplicate(true))
-		if category == "reaction" and GameState.has_method("show_system_message"):
-			GameState.call(
-				"show_system_message",
-				"Journal discovery: " + record_id.replace("_", " ").capitalize()
-			)
-	return was_new
+	var key: String = _record_key(category, record_id)
+	if bool(GameState.story_flags.get(key, false)):
+		return false
+	GameState.story_flags[key] = true
+	knowledge_discovered.emit(category, record_id, evidence.duplicate(true))
+	if category == "reaction" and GameState.has_method("show_system_message"):
+		GameState.call(
+			"show_system_message",
+			"Journal discovery: " + record_id.replace("_", " ").capitalize()
+		)
+	return true
+
+
+func has_discovery(category: String, record_id: String) -> bool:
+	return bool(GameState.story_flags.get(_record_key(category, record_id), false))
+
+
+func get_discovery_count(category: String) -> int:
+	var prefix: String = RECORD_PREFIX + category + "::"
+	var count: int = 0
+	for raw_key: Variant in GameState.story_flags.keys():
+		var key: String = str(raw_key)
+		if key.begins_with(prefix) and bool(GameState.story_flags.get(key, false)):
+			count += 1
+	return count
 
 
 func get_challenge_progress(challenge_id: String) -> Dictionary:
@@ -91,13 +101,9 @@ func get_challenge_progress(challenge_id: String) -> Dictionary:
 	var target: int = maxi(int(definition.get("target", 1)), 1)
 	var reward_id: String = str(definition.get("reward_id", ""))
 	var complete: bool = reward_id != "" and GameState.has_unlock(reward_id)
-	var current: int = GameState.get_progression_counter(
-		_counter_id(challenge_id)
-	)
+	var current: int = _get_counter(challenge_id)
 	if str(definition.get("mode", "")) == "unique":
-		current = GameState.get_progression_record_count(
-			UNIQUE_PREFIX + challenge_id
-		)
+		current = get_discovery_count("challenge_unique::" + challenge_id)
 	if complete:
 		current = target
 	current = clampi(current, 0, target)
@@ -116,25 +122,26 @@ func get_challenge_rows() -> Array[Dictionary]:
 	for definition: Dictionary in ChallengeCatalogScript.get_definitions():
 		var challenge_id: String = str(definition.get("id", ""))
 		var progress: Dictionary = get_challenge_progress(challenge_id)
+		var complete: bool = bool(progress.get("complete", false))
 		rows.append({
 			"id": "progression." + challenge_id,
 			"challenge_id": challenge_id,
 			"name": str(definition.get("display_name", challenge_id.capitalize())),
 			"icon": str(definition.get("icon", "◆")),
 			"summary": str(definition.get("description", "Progression challenge.")),
-			"status": "UNLOCKED" if bool(progress.get("complete", false)) else "IN PROGRESS",
+			"status": "UNLOCKED" if complete else "IN PROGRESS",
 			"progress_current": int(progress.get("current", 0)),
 			"progress_target": int(progress.get("target", 1)),
 			"progress_fraction": float(progress.get("fraction", 0.0)),
 			"requirement": str(definition.get("requirement", "Complete the challenge.")),
-			"reward": "Unlocks: " + str(definition.get("reward_name", definition.get("reward_id", "Reward"))),
+			"reward": "Unlocks: " + str(definition.get("reward_name", "Reward")),
 			"details": [
 				"Event: " + str(definition.get("event_type", "event")).replace("_", " ").capitalize(),
 				"Progress persists with the save slot.",
 			],
-			"complete": bool(progress.get("complete", false)),
-			"active": not bool(progress.get("complete", false)),
-			"state": "completed" if bool(progress.get("complete", false)) else "active",
+			"complete": complete,
+			"active": not complete,
+			"state": "completed" if complete else "active",
 			"kind": "challenge",
 		})
 	return rows
@@ -144,7 +151,7 @@ func track_quest(quest_id: String) -> bool:
 	var quest: Dictionary = GameState.get_quest(quest_id)
 	if quest.is_empty() or str(quest.get("state", "")) != "active":
 		return false
-	GameState.set_tracked_quest_id(quest_id)
+	GameState.story_flags[TRACKED_QUEST_KEY] = quest_id
 	var objective: String = str(quest.get("objective", ""))
 	if objective != "":
 		GameState.set_objective(objective)
@@ -158,7 +165,7 @@ func track_quest(quest_id: String) -> bool:
 
 
 func get_tracked_quest_id() -> String:
-	return GameState.get_tracked_quest_id()
+	return str(GameState.story_flags.get(TRACKED_QUEST_KEY, ""))
 
 
 func _apply_event_to_challenge(
@@ -167,33 +174,25 @@ func _apply_event_to_challenge(
 	evidence: Dictionary
 ) -> void:
 	var challenge_id: String = str(definition.get("id", ""))
-	if challenge_id == "":
-		return
 	var mode: String = str(definition.get("mode", "count"))
 	var target: int = maxi(int(definition.get("target", 1)), 1)
 	var current: int = 0
 	match mode:
 		"unique":
-			GameState.record_progression_record(
-				UNIQUE_PREFIX + challenge_id,
-				event_key,
-				evidence
-			)
-			current = GameState.get_progression_record_count(
-				UNIQUE_PREFIX + challenge_id
-			)
+			record_discovery("challenge_unique::" + challenge_id, event_key, evidence)
+			current = get_discovery_count("challenge_unique::" + challenge_id)
 		"absolute":
-			var value: int = int(evidence.get("value", evidence.get("rank", 0)))
 			current = maxi(
-				GameState.get_progression_counter(_counter_id(challenge_id)),
-				value
+				_get_counter(challenge_id),
+				int(evidence.get("value", evidence.get("rank", 0)))
 			)
-			GameState.set_progression_counter(_counter_id(challenge_id), current)
+			_set_counter(challenge_id, current)
 		_:
-			current = GameState.add_progression_counter(
-				_counter_id(challenge_id),
-				maxi(int(evidence.get("amount", 1)), 1)
+			current = _get_counter(challenge_id) + maxi(
+				int(evidence.get("amount", 1)),
+				1
 			)
+			_set_counter(challenge_id, current)
 	current = mini(current, target)
 	challenge_progressed.emit(challenge_id, current, target)
 	if current >= target:
@@ -208,15 +207,13 @@ func _complete_challenge(
 	var reward_id: String = str(definition.get("reward_id", ""))
 	if reward_id == "" or GameState.has_unlock(reward_id):
 		return
-	var reward_definition: Dictionary = {}
+	var reward: Dictionary = {}
 	if definition.get("reward_definition", null) is Dictionary:
-		reward_definition = (
-			definition.get("reward_definition", {}) as Dictionary
-		).duplicate(true)
+		reward = (definition.get("reward_definition", {}) as Dictionary).duplicate(true)
 	elif UnlockCatalogScript.has_definition(reward_id):
-		reward_definition = UnlockCatalogScript.get_definition(reward_id)
+		reward = UnlockCatalogScript.get_definition(reward_id)
 	else:
-		reward_definition = {
+		reward = {
 			"id": reward_id,
 			"display_name": str(definition.get("reward_name", reward_id.capitalize())),
 			"type": "passive",
@@ -225,13 +222,10 @@ func _complete_challenge(
 			"source": str(definition.get("display_name", challenge_id.capitalize())),
 			"tags": ["challenge", challenge_id],
 		}
-	reward_definition["challenge_id"] = challenge_id
-	reward_definition["challenge_evidence"] = evidence.duplicate(true)
-	GameState.grant_unlock(reward_id, reward_definition)
-	GameState.set_progression_counter(
-		_counter_id(challenge_id),
-		maxi(int(definition.get("target", 1)), 1)
-	)
+	reward["challenge_id"] = challenge_id
+	reward["challenge_evidence"] = evidence.duplicate(true)
+	GameState.grant_unlock(reward_id, reward)
+	_set_counter(challenge_id, maxi(int(definition.get("target", 1)), 1))
 	challenge_completed.emit(challenge_id, reward_id)
 	if GameState.has_method("show_system_message"):
 		GameState.call(
@@ -253,40 +247,27 @@ func _bootstrap_existing_progress() -> void:
 		if species.has_signal("knowledge_changed") and not species.knowledge_changed.is_connected(_on_species_knowledge_changed):
 			species.knowledge_changed.connect(_on_species_knowledge_changed)
 		if species.has_method("get_all_species_rows"):
-			var rows_value: Variant = species.call("get_all_species_rows", true)
-			if rows_value is Array:
-				for value: Variant in rows_value as Array:
-					if value is Dictionary:
-						var row: Dictionary = value as Dictionary
-						record_event(
-							"species_rank",
-							str(row.get("id", "")),
-							{"value": int(row.get("rank", 0)), "bootstrap": true}
-						)
-	for flag_value: Variant in GameState.get_story_flags_snapshot().keys():
-		var flag_name: String = str(flag_value)
+			var value: Variant = species.call("get_all_species_rows", true)
+			if value is Array:
+				for raw: Variant in value as Array:
+					if raw is Dictionary:
+						var row: Dictionary = raw as Dictionary
+						record_event("species_rank", str(row.get("id", "")), {"value": int(row.get("rank", 0)), "bootstrap": true})
+	for raw_flag: Variant in GameState.get_story_flags_snapshot().keys():
+		var flag_name: String = str(raw_flag)
 		if flag_name.begins_with("recipe_discovered_") and GameState.get_flag(flag_name):
-			record_event(
-				"recipe_discovered",
-				flag_name.trim_prefix("recipe_discovered_"),
-				{"bootstrap": true}
-			)
+			record_event("recipe_discovered", flag_name.trim_prefix("recipe_discovered_"), {"bootstrap": true})
 
 
 func _on_flag_changed(flag_name: String, value: bool) -> void:
-	if not value or not flag_name.begins_with("recipe_discovered_"):
-		return
-	record_event(
-		"recipe_discovered",
-		flag_name.trim_prefix("recipe_discovered_"),
-		{"source": "game_state_flag"}
-	)
+	if value and flag_name.begins_with("recipe_discovered_"):
+		record_event("recipe_discovered", flag_name.trim_prefix("recipe_discovered_"), {"source": "game_state_flag"})
 
 
 func _on_quest_changed(quest_id: String, quest_data: Dictionary) -> void:
 	if str(quest_data.get("state", "")) == "completed":
 		record_event("quest_completed", quest_id, quest_data)
-	if quest_id == GameState.get_tracked_quest_id():
+	if quest_id == get_tracked_quest_id():
 		var objective: String = str(quest_data.get("objective", ""))
 		if objective != "":
 			GameState.set_objective(objective)
@@ -300,5 +281,17 @@ func _on_species_knowledge_changed(
 	record_event("species_rank", species_id, {"value": rank, "rank": rank})
 
 
-func _counter_id(challenge_id: String) -> String:
+func _counter_key(challenge_id: String) -> String:
 	return COUNTER_PREFIX + challenge_id
+
+
+func _get_counter(challenge_id: String) -> int:
+	return maxi(int(GameState.story_flags.get(_counter_key(challenge_id), 0)), 0)
+
+
+func _set_counter(challenge_id: String, value: int) -> void:
+	GameState.story_flags[_counter_key(challenge_id)] = maxi(value, 0)
+
+
+func _record_key(category: String, record_id: String) -> String:
+	return RECORD_PREFIX + category.strip_edges().to_lower() + "::" + record_id.strip_edges().to_lower()

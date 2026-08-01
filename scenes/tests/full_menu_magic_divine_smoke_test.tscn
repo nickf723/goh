@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/tests/full_menu_magic_divine_smoke_test.gd" id="1_test"]
+
+[node name="FullMenuMagicDivineSmokeTest" type="Node"]
+script = ExtResource("1_test")

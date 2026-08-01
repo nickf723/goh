@@ -1,7 +1,7 @@
 extends "res://scripts/ui/full_menu_director_core.gd"
 
-const FullMenuSettingsShellScript = preload(
-	"res://scripts/ui/full_menu_shell_settings.gd"
+const FullMenuLoadoutShellScript = preload(
+	"res://scripts/ui/full_menu_shell_loadout_v1.gd"
 )
 const SpellcastingMasteryServiceScript = preload(
 	"res://scripts/progression/spellcasting_mastery_service.gd"
@@ -12,6 +12,9 @@ const SpellcastingTraditionCatalogScript = preload(
 const SpellcastingTraditionResolverScript = preload(
 	"res://scripts/abilities/spellcasting_tradition_resolver.gd"
 )
+
+var menu_hidden_canvas_items: Array[CanvasItem] = []
+var menu_hidden_visibility: Array[bool] = []
 
 
 func ensure_full_menu_shell() -> void:
@@ -24,10 +27,63 @@ func ensure_full_menu_shell() -> void:
 	if existing_shell is Control and existing_shell.has_method("show_menu"):
 		full_menu_shell = existing_shell as Control
 		return
-	full_menu_shell = FullMenuSettingsShellScript.new()
+	full_menu_shell = FullMenuLoadoutShellScript.new()
 	full_menu_shell.name = "FullMenuShell"
 	full_menu_shell.process_mode = Node.PROCESS_MODE_ALWAYS
 	game_ui.add_child(full_menu_shell)
+
+
+func open_full_menu() -> void:
+	ensure_full_menu_shell()
+	if full_menu_shell == null:
+		print("FullMenuDirector: no shell available.")
+		return
+
+	was_paused_before_menu = get_tree().paused
+	_hide_gameplay_hud()
+	get_tree().paused = true
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	if full_menu_shell.has_method("show_menu"):
+		full_menu_shell.call("show_menu", build_menu_data())
+
+
+func close_full_menu() -> void:
+	if full_menu_shell != null and full_menu_shell.has_method("hide_menu"):
+		full_menu_shell.call("hide_menu")
+	_restore_gameplay_hud()
+	get_tree().paused = was_paused_before_menu
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+
+func _exit_tree() -> void:
+	_restore_gameplay_hud()
+
+
+func _hide_gameplay_hud() -> void:
+	_restore_gameplay_hud()
+	var game_ui: Node = get_tree().get_first_node_in_group("game_ui")
+	if game_ui == null:
+		return
+	for child: Node in game_ui.get_children():
+		if child == full_menu_shell or not child is CanvasItem:
+			continue
+		var canvas_item: CanvasItem = child as CanvasItem
+		menu_hidden_canvas_items.append(canvas_item)
+		menu_hidden_visibility.append(canvas_item.visible)
+		canvas_item.visible = false
+
+
+func _restore_gameplay_hud() -> void:
+	var restore_count: int = mini(
+		menu_hidden_canvas_items.size(),
+		menu_hidden_visibility.size()
+	)
+	for index: int in range(restore_count):
+		var canvas_item: CanvasItem = menu_hidden_canvas_items[index]
+		if canvas_item != null and is_instance_valid(canvas_item):
+			canvas_item.visible = menu_hidden_visibility[index]
+	menu_hidden_canvas_items.clear()
+	menu_hidden_visibility.clear()
 
 
 func build_menu_data() -> Dictionary:

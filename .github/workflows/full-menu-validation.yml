@@ -57,6 +57,9 @@ jobs:
       - name: Run progression backbone regression
         run: godot --headless --path . res://scenes/tests/progression_backbone_v1_smoke_test.tscn
 
+      - name: Run progression rewards regression
+        run: godot --headless --path . res://scenes/tests/progression_rewards_v1_smoke_test.tscn
+
       - name: Run freed-control navigation regression
         run: godot --headless --path . res://scenes/tests/menu_freed_control_navigation_smoke_test.tscn
 

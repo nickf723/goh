@@ -2,6 +2,12 @@ extends "res://scripts/divine_specials/player_divine_special_input_router.gd"
 
 
 func _input(event: InputEvent) -> void:
+	if _is_full_menu_open():
+		if event is InputEventJoypadButton:
+			var blocked_button: InputEventJoypadButton = event as InputEventJoypadButton
+			if is_gesture_active(blocked_button.device):
+				cancel_active_gesture(blocked_button.device, "full_menu")
+		return
 	if not (event is InputEventJoypadButton):
 		return
 	var button_event: InputEventJoypadButton = event as InputEventJoypadButton
@@ -127,6 +133,15 @@ func _is_focus_spell_menu_open() -> bool:
 		ability_caster != null
 		and ability_caster.has_method("is_focus_spell_menu_open")
 		and bool(ability_caster.call("is_focus_spell_menu_open"))
+	)
+
+
+func _is_full_menu_open() -> bool:
+	var director: Node = get_node_or_null("/root/FullMenuDirector")
+	return (
+		director != null
+		and director.has_method("is_full_menu_open")
+		and bool(director.call("is_full_menu_open"))
 	)
 
 

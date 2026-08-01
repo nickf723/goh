@@ -58,7 +58,7 @@ focus_per_second = 8.0
 [node name="FamiliarStatusCanvas" type="CanvasLayer" parent="."]
 layer = 8
 
-[node name="FamiliarStatusPanel" type="PanelContainer" parent="FamiliarStatusCanvas"]
+[node name="FamiliarStatusPanel" type="PanelContainer" parent="FamiliarStatusCanvas" groups=["menu_suppressed_hud"]]
 offset_left = 18.0
 offset_top = 18.0
 offset_right = 720.0

@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_ability")
-display_name = "Call Familiar"
-description = "Summon Lumen. Recast to recall. Command it to follow, stay, or assist."
+display_name = "Summon Familiar"
+description = "Summon the equipped creature blueprint. Recast to recall it; configure its role, temperament, command, and techniques through this spell."
 element = "soul"
 category = 2
 mana_cost = 3
@@ -18,4 +18,4 @@ delivery_type = "summon"
 combo_tags = Array[String](["soul_actor", "friendly_actor", "persistent"])
 ui_tags = Array[String](["summon", "familiar"])
 scaling_stats = Array[String](["intelligence", "soul"])
-design_notes = "First reusable summon spell. Recast recalls the familiar instead of spawning duplicates."
+design_notes = "Reusable summon spell. Recast recalls the familiar instead of spawning duplicates. Familiar blueprint configuration lives inside this spell's Magic menu detail."

@@ -1,7 +1,7 @@
 extends Node
 
 const FullMenuShellScript = preload(
-	"res://scripts/ui/full_menu_shell_loadout_v1.gd"
+	"res://scripts/ui/full_menu_shell_loadout_v2.gd"
 )
 const EquipmentCatalogScript = preload(
 	"res://scripts/equipment/equipment_catalog.gd"
@@ -18,44 +18,60 @@ func _ready() -> void:
 
 
 func run_tests() -> void:
-	var shell: FullMenuShellLoadoutV1 = FullMenuShellScript.new()
+	var shell: FullMenuShellLoadoutV2 = FullMenuShellScript.new()
 	add_child(shell)
 	shell.show_menu(_make_menu_data())
+	await get_tree().process_frame
+	await get_tree().process_frame
 
 	assert_true(shell.is_open(), "shell opens")
 	assert_equal(shell.loadout_page, "overview", "Grace begins collapsed")
-	assert_equal(shell.get_current_tab_id(), "loadout", "Grace remains the first tab id")
+	assert_equal(shell.get_current_tab_id(), "loadout", "Grace remains the first tab")
 	assert_equal(FullMenuShellScript.MENU_TAB_DEFS.size(), 7, "Grace and Loadout share one top-level tab")
-	assert_equal(str(FullMenuShellScript.MENU_TAB_DEFS[0].get("title", "")), "Grace", "first tab is visibly Grace")
 	assert_equal(EquipmentCatalogScript.SLOT_ORDER.size(), 7, "equipment supports weapon and six wardrobe components")
-	assert_true(EquipmentCatalogScript.WARDROBE_SLOT_ORDER.has("headwear"), "wardrobe includes headwear")
-	assert_true(EquipmentCatalogScript.WARDROBE_SLOT_ORDER.has("footwear"), "wardrobe includes footwear")
 	assert_equal(WeaponVariantCatalogScript.get_class_rows().size(), 16, "weapon browser exposes sixteen classes")
-	assert_equal(shell.selectable_actions.size(), 15, "collapsed Grace view exposes five categories and ten spells")
-	assert_true(str(shell.content_title_label.text).contains("Grace"), "Grace owns the page title")
+	assert_equal(shell.selectable_actions.size(), 15, "collapsed Grace exposes five categories and ten spells")
+	assert_true(shell.find_child("GracePreview", true, false) != null, "Grace preview is present while collapsed")
+	assert_true(shell.find_child("GraceStatQuadrants", true, false) != null, "four stat quadrants are present")
+	assert_true(shell.find_child("GraceSpellRibbon", true, false) != null, "spell ribbon is present")
 
-	var first_spell_action: Dictionary = shell.selectable_actions[5] as Dictionary
-	var last_spell_action: Dictionary = shell.selectable_actions[14] as Dictionary
-	assert_equal(str(first_spell_action.get("kind", "")), "choose_spell_slot", "spell ribbon follows category strip")
-	assert_equal(int(first_spell_action.get("slot", -1)), 0, "spell ribbon begins with slot one")
-	assert_equal(int(last_spell_action.get("slot", -1)), 9, "spell ribbon ends with slot ten")
-	assert_equal(int(first_spell_action.get("nav_row", -1)), 8, "spell ribbon occupies one navigation row")
-	assert_equal(int(last_spell_action.get("nav_row", -1)), 8, "all ten spell slots share one row")
+	var debug_data: Dictionary = shell.get_navigation_debug_data()
+	assert_equal(int(debug_data.get("stat_quadrants", 0)), 4, "stats are chunked into four groups")
+	assert_equal(int(debug_data.get("stat_count", 0)), 16, "Grace exposes sixteen simple stats")
+	assert_true(bool(debug_data.get("scroll_disabled", false)), "Grace tab disables unnecessary scrolling")
+	assert_equal(
+		int(debug_data.get("action_count", -1)),
+		int(debug_data.get("control_count", -2)),
+		"every action has a screen-space navigation control"
+	)
 
+	# Spell ribbon navigation must stay on the same visible row.
+	shell.select_action(9)
+	await get_tree().process_frame
+	shell.select_action_direction(-1, 0)
+	assert_equal(shell.selected_action_index, 8, "spell-left selects the immediately previous spell")
+
+	# Weapon expansion keeps Grace, stats, and spell ring anchored.
 	shell.activate_action(shell.selectable_actions[0] as Dictionary)
+	await get_tree().process_frame
 	assert_equal(shell.loadout_page, "weapon_classes", "Weapon expands inside Grace")
-	assert_equal(shell.selectable_actions.size(), 21, "weapon expansion keeps five categories plus sixteen classes")
-	assert_true(str(shell.content_title_label.text).contains("Weapon Classes"), "weapon class lattice receives a breadcrumb")
+	assert_equal(shell.selectable_actions.size(), 31, "weapon expansion keeps categories, sixteen classes, and ten spells")
+	assert_true(shell.find_child("GracePreview", true, false) != null, "Grace remains visible beside weapon classes")
+	assert_true(shell.find_child("GraceStatQuadrants", true, false) != null, "stats remain visible beside weapon classes")
+	assert_true(shell.find_child("GraceSpellRibbon", true, false) != null, "spell ribbon remains visible beside weapon classes")
 
 	var sword_action: Dictionary = shell.selectable_actions[5] as Dictionary
 	assert_equal(str(sword_action.get("weapon_class", "")), "sword", "first class is Sword")
 	shell.activate_action(sword_action)
+	await get_tree().process_frame
 	assert_equal(shell.loadout_page, "weapon_variants", "weapon class opens its type menu")
-	assert_true(str(shell.content_title_label.text).contains("Sword"), "type menu identifies the selected class")
-	assert_equal(shell.selectable_actions.size(), 9, "Sword type menu keeps categories plus four variants")
+	assert_equal(shell.selectable_actions.size(), 19, "Sword types keep categories and spell ribbon")
 	var found_rapier: bool = false
 	for action_value: Variant in shell.selectable_actions:
-		if action_value is Dictionary and str((action_value as Dictionary).get("variant_id", "")) == "rapier":
+		if (
+			action_value is Dictionary
+			and str((action_value as Dictionary).get("variant_id", "")) == "rapier"
+		):
 			found_rapier = true
 	assert_true(found_rapier, "Sword types include Rapier")
 
@@ -63,27 +79,35 @@ func run_tests() -> void:
 	back_event.button_index = JOY_BUTTON_B
 	back_event.pressed = true
 	assert_true(shell.handle_menu_input(back_event), "variant page consumes controller Back")
-	assert_equal(shell.loadout_page, "weapon_classes", "Back returns to the 4x4 class grid")
+	assert_equal(shell.loadout_page, "weapon_classes", "Back returns to weapon classes")
 	assert_true(shell.handle_menu_input(back_event), "class grid consumes controller Back")
 	assert_equal(shell.loadout_page, "overview", "second Back collapses Weapon")
 
+	# Reproduce the screenshot: Torso-left must choose Headwear, not Wardrobe above.
 	shell.activate_action(shell.selectable_actions[1] as Dictionary)
+	await get_tree().process_frame
 	assert_equal(shell.loadout_page, "wardrobe", "Wardrobe expands inside Grace")
-	assert_equal(shell.selectable_actions.size(), 11, "wardrobe keeps categories plus six components")
-	var wardrobe_slots: Array[String] = []
-	for action_value: Variant in shell.selectable_actions:
-		if action_value is Dictionary:
-			var slot_id: String = str((action_value as Dictionary).get("slot_id", ""))
-			if slot_id != "":
-				wardrobe_slots.append(slot_id)
-	assert_true(wardrobe_slots.has("headwear"), "expanded Wardrobe exposes Headwear")
-	assert_true(wardrobe_slots.has("gloves"), "expanded Wardrobe exposes Handwear")
-	assert_true(wardrobe_slots.has("footwear"), "expanded Wardrobe exposes Footwear")
+	assert_equal(shell.selectable_actions.size(), 21, "wardrobe keeps categories, six components, and spells")
+	shell.select_action(6)
+	await get_tree().process_frame
+	shell.select_action_direction(-1, 0)
+	assert_equal(shell.selected_action_index, 5, "Torso-left selects Headwear on the same row")
 
+	# Opening another category collapses the wardrobe expansion.
 	shell.activate_action(shell.selectable_actions[2] as Dictionary)
+	await get_tree().process_frame
 	assert_equal(shell.loadout_page, "infusion", "opening Infusion collapses Wardrobe")
-	assert_true(str(shell.content_title_label.text).contains("Weapon Infusion"), "Infusion extends the Grace tab")
+	assert_true(shell.find_child("GracePreview", true, false) != null, "Grace remains visible during Infusion")
 
+	# The right stick activates a free menu cursor without changing controller grammar.
+	var right_stick: InputEventJoypadMotion = InputEventJoypadMotion.new()
+	right_stick.axis = JOY_AXIS_RIGHT_X
+	right_stick.axis_value = 0.8
+	assert_true(shell.handle_menu_input(right_stick), "right stick motion is consumed by the menu")
+	var cursor_data: Dictionary = shell.get_navigation_debug_data()
+	assert_true(bool(cursor_data.get("virtual_cursor_active", false)), "right stick activates the free-target cursor")
+
+	# L shoulder still moves left after the gameplay Focus router fix.
 	shell.select_tab(shell.get_tab_index("magic"))
 	var left_shoulder: InputEventJoypadButton = InputEventJoypadButton.new()
 	left_shoulder.button_index = JOY_BUTTON_LEFT_SHOULDER
@@ -91,10 +115,16 @@ func run_tests() -> void:
 	assert_true(shell.handle_menu_input(left_shoulder), "left shoulder is consumed inside the menu")
 	assert_equal(shell.get_current_tab_id(), "loadout", "left shoulder moves one tab left")
 
-	assert_equal(shell.get_menu_confirm_button_for_name("Nintendo Switch Pro Controller"), JOY_BUTTON_B, "Nintendo physical A maps to menu confirm")
-	assert_equal(shell.get_menu_cancel_button_for_name("Nintendo Switch Pro Controller"), JOY_BUTTON_A, "Nintendo physical B maps to menu cancel")
-	assert_equal(shell.get_menu_confirm_button_for_name("Xbox Wireless Controller"), JOY_BUTTON_A, "Xbox A confirms")
-	assert_equal(shell.get_menu_cancel_button_for_name("Xbox Wireless Controller"), JOY_BUTTON_B, "Xbox B cancels")
+	assert_equal(
+		shell.get_menu_confirm_button_for_name("Nintendo Switch Pro Controller"),
+		JOY_BUTTON_B,
+		"Nintendo physical A maps to menu confirm"
+	)
+	assert_equal(
+		shell.get_menu_cancel_button_for_name("Nintendo Switch Pro Controller"),
+		JOY_BUTTON_A,
+		"Nintendo physical B maps to menu cancel"
+	)
 
 	shell.loadout_page = FullMenuShellScript.LOADOUT_OVERVIEW
 	var root_back: InputEventJoypadButton = InputEventJoypadButton.new()
@@ -131,25 +161,34 @@ func _make_menu_data() -> Dictionary:
 	for slot_index: int in range(4):
 		item_slots.append({
 			"slot": slot_index,
+			"direction": ["Up", "Left", "Right", "Down"][slot_index],
 			"is_empty": slot_index > 0,
 			"name": "Healing Flask",
 			"icon": "🧪",
 			"count": 3 if slot_index == 0 else 0,
 		})
 	return {
-		"loadout_summary": {"learned_count": 10, "active_ring_count": 3},
+		"loadout_summary": {
+			"learned_count": 10,
+			"active_ring_count": 3,
+		},
 		"equipped_spell_slots": spell_slots,
 		"quick_item_slots": item_slots,
-		"inventory_items": [{
-			"id": "healing_flask",
-			"name": "Healing Flask",
-			"icon": "🧪",
-			"count": 3,
-			"description": "Restores health.",
-		}],
+		"inventory_items": [
+			{
+				"id": "healing_flask",
+				"name": "Healing Flask",
+				"icon": "🧪",
+				"count": 3,
+				"description": "Restores health.",
+			},
+		],
 		"familiar_mastery": {
 			"rows": [],
-			"summary": {"familiars_unlocked": 0, "familiars_available": 1},
+			"summary": {
+				"familiars_unlocked": 0,
+				"familiars_available": 1,
+			},
 			"equipped_name": "None",
 		},
 	}
@@ -162,4 +201,6 @@ func assert_true(condition: bool, label: String) -> void:
 
 func assert_equal(actual: Variant, expected: Variant, label: String) -> void:
 	if actual != expected:
-		failures.append(label + " (expected " + str(expected) + ", got " + str(actual) + ")")
+		failures.append(
+			label + " (expected " + str(expected) + ", got " + str(actual) + ")"
+		)

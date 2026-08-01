@@ -1,40 +1,80 @@
-# Full Menu Shell and Loadout v1
+# Grace Menu and Loadout v1
 
 ## Purpose
 
-This slice turns Loadout into a compact dashboard instead of one continuous catalog. It keeps the existing equipment, spell, item, familiar, mastery, and settings systems intact while giving Loadout focused nested pages.
+This slice combines the old Grace and Loadout tabs into one player-centered screen. Grace is visible as an equipment-aware procedural preview, the active field configuration sits beside her, and the ten favorite spells form one compact ribbon beneath her.
 
-## Menu structure
+The screen answers one question:
 
-The Loadout overview contains six categories:
+> What will Grace bring into the world when the menu closes?
 
-- Equipment
-- Weapon Infusion
-- Spell Ring
-- Quick Belt
-- Divine Special
-- Familiar Blueprint
+## Top-level menu
 
-Selecting a category opens one focused page. `B` or `Esc` returns to the Loadout overview before closing the full menu.
+The full menu now has seven tabs:
 
-The top-level tab contract remains:
+- Grace
+- Magic
+- Items
+- Relics
+- Journal
+- Codex
+- System
 
-- `LB` / `RB` or `Q` / `E`: change tabs
-- D-pad, left stick, or WASD: navigate
-- `A` or Enter: open, equip, assign, or select
-- `B` or Esc: back one level, then close
-- Tab, M, or Menu: close directly
+Familiar configuration is intentionally absent from Grace. Creature mastery and Familiar Blueprints remain under Magic, where they can grow into the broader spell-customization workspace.
+
+## Grace layout
+
+The Grace tab contains:
+
+- a procedural Grace preview;
+- weapon, outfit, charm, and relic slots;
+- weapon infusion;
+- the quick-item cycle;
+- the selected Divine Special;
+- one horizontal ten-slot favorite spell ring.
+
+The preview responds to equipped weapon and outfit IDs. Weapon infusion changes its weapon glow, while equipped charm and relic slots add visible accessories. Final character art and mesh-based wardrobe presentation can replace this preview without changing the menu contract.
+
+## Controller contract
+
+- `LB` / `RB`: change tabs
+- D-pad or left stick: navigate
+- `A` / right face: confirm
+- `B` / bottom face: back or close
+- Tab, M, or controller Menu: close directly
+
+Nintendo controllers receive physical-face translation so the right face button confirms and the bottom face button cancels despite SDL logical-button normalization.
+
+Controller input is routed in `_input` while the menu is open, before focused GUI Controls can consume shoulder or face-button events.
+
+## Favorite spells and quick items
+
+D-pad ownership outside Focus is:
+
+```text
+Up tap          Cycle quick items
+Up hold         Use selected quick item
+Left / Right    Cycle favorite spells
+Down tap        Activate selected Divine Special
+Down hold       Browse Divine Specials
+```
+
+The quick-item menu therefore presents four ordered cycle slots rather than pretending each item owns a separate D-pad direction.
+
+The favorite spell ring is displayed as one `1 × 10` ribbon on the Grace page. Selecting any ribbon slot opens the existing learned-spell assignment flow and returns to the same slot afterward.
 
 ## HUD and input isolation
 
 Opening the full menu:
 
 - pauses the scene tree;
-- hides the legacy GameUI children;
-- hides Player HUD v2;
-- hides the separate Divine Special HUD;
-- leaves only the full menu visible;
-- blocks D-pad Down from entering the Divine Special tap/hold grammar.
+- hides legacy GameUI children;
+- hides Player HUD v2 and the command dock;
+- hides the Divine Special HUD;
+- hides scene-specific HUD panels marked `menu_suppressed_hud`;
+- blocks D-pad Down from entering Divine Special gameplay input.
+
+The Familiar Training Yard mastery panel now uses the suppression group and no longer appears over the menu.
 
 Closing the menu restores each HUD element to its previous visibility state.
 
@@ -42,19 +82,20 @@ Closing the menu restores each HUD element to its previous visibility state.
 
 1. Pull `agent/menu-shell-loadout-v1`.
 2. Open `res://scenes/levels/prototypes/prototype_familiar_training_yard_v1.tscn`.
-3. Run the scene and open the full menu with Tab, M, or the controller Menu button.
-4. Confirm the gameplay HUD, command dock, and Divine Special HUD disappear.
-5. Confirm the Loadout overview shows six category tiles without a long initial scroll.
-6. Navigate the six tiles with the D-pad or left stick.
-7. Open Equipment, then press B. Confirm B returns to the Loadout overview instead of closing the entire menu.
-8. Open Weapon Infusion and change the active edge.
-9. Open Spell Ring, select a slot, assign a learned spell, and confirm the menu returns to Spell Ring.
-10. Open Quick Belt, select a direction, assign an item, and confirm the menu returns to Quick Belt.
-11. Open Divine Special and select a different unlocked Ruvia Special. Confirm selection does not spend charge or activate it.
-12. Open Familiar Blueprint and change role, temperament, command, or techniques.
-13. While the menu is open, tap and hold D-pad Down. No Divine Special radial or activation should occur.
-14. Close the menu. Confirm every HUD element returns and the configured choices work immediately in gameplay.
-15. Reopen the menu and confirm top-level tab focus remains stable.
+3. Open the full menu with Tab, M, or the controller Menu button.
+4. Confirm the creature-mastery panel and all ordinary gameplay HUD layers disappear.
+5. Confirm there is one Grace tab and no separate Loadout or Grace duplicate.
+6. Confirm Grace appears on the left and her preview reflects weapon, outfit, charm, relic, and infusion changes.
+7. Navigate with the D-pad. Confirm controller `A` selects and `B` backs out.
+8. Move to Magic with `RB`, then return to Grace with `LB`.
+9. Equip each equipment category and confirm the preview refreshes.
+10. Change Weapon Infusion and confirm the preview weapon glow changes.
+11. Open Quick Items and confirm the four entries are cycle slots, not D-pad directions.
+12. Select each of the ten spell-ribbon slots and confirm assignment returns to that slot.
+13. Confirm Familiar Blueprints remain available under Magic and are absent from Grace.
+14. Select a Divine Special without activating it or spending charge.
+15. Tap and hold D-pad Down while the full menu is open. No gameplay Special input should occur.
+16. Close the menu and confirm all HUD layers return.
 
 ## Focused smoke test
 
@@ -68,9 +109,11 @@ Expected marker:
 FULL_MENU_LOADOUT_V1_SMOKE_TEST: PASS
 ```
 
+The regression covers the seven-tab structure, removal of the duplicate Grace tab, the seventeen Grace actions, the single-row ten-spell ribbon, nested Back behavior, left-shoulder navigation, and Nintendo/Xbox confirm-cancel mappings.
+
 ## Deliberate boundaries
 
-- This pass completes the shared shell behavior and the Loadout information architecture.
-- The other seven tabs retain their current content and will be rebuilt one at a time.
-- A persistent side-by-side detail inspector is deferred until the shared browser pattern is applied to Magic and Items.
-- Final glyph assets, audio cues, transitions, and accessibility narration remain later polish.
+- The procedural Grace figure is a replacement-ready menu preview, not final character art.
+- Familiar and spell customization will receive a dedicated Magic-tab rebuild next.
+- The underlying quick-item inventory still stores four slots; this pass changes their presentation to ordered cycle positions.
+- Final glyph assets, audio cues, transitions, comparison panels, and accessibility narration remain later polish.

@@ -88,6 +88,14 @@ func _activate_virtual_cursor_if_needed() -> void:
 	_position_virtual_cursor_label()
 
 
+func _dismiss_virtual_cursor_for_directional_input() -> void:
+	virtual_cursor_active = false
+	virtual_cursor_tab_target = -1
+	right_stick_vector = Vector2.ZERO
+	if virtual_cursor_layer != null and is_instance_valid(virtual_cursor_layer):
+		virtual_cursor_layer.visible = false
+
+
 func _update_virtual_cursor_target() -> void:
 	_sync_live_tab_controls()
 	_sync_live_action_controls()

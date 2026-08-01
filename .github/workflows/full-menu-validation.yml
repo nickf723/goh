@@ -48,6 +48,9 @@ jobs:
       - name: Run structured Items workspace regression
         run: godot --headless --path . res://scenes/tests/full_menu_items_v1_smoke_test.tscn
 
+      - name: Run learned Journal workspace regression
+        run: godot --headless --path . res://scenes/tests/full_menu_journal_v1_smoke_test.tscn
+
       - name: Run freed-control navigation regression
         run: godot --headless --path . res://scenes/tests/menu_freed_control_navigation_smoke_test.tscn
 

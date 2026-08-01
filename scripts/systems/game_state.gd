@@ -6,7 +6,7 @@ extends "res://scripts/systems/game_state_core.gd"
 signal quick_spell_slot_changed(loadout_id: String, slot_index: int, spell_id: String)
 signal quick_spell_selection_changed(loadout_id: String, slot_index: int)
 
-const PLAYER_RECORDS_SAVE_VERSION: int = 13
+const PLAYER_RECORDS_SAVE_VERSION: int = 14
 const QUICK_SPELL_SLOT_COUNT: int = 10
 const AchievementCatalogScript = preload(
 	"res://scripts/progression/achievement_catalog.gd"
@@ -17,12 +17,23 @@ const AchievementServiceScript = preload(
 const SpellcastingMasteryServiceScript = preload(
 	"res://scripts/progression/spellcasting_mastery_service.gd"
 )
+const ExtendedEquipmentCatalogScript = preload(
+	"res://scripts/equipment/equipment_catalog.gd"
+)
+
+const STARTER_COMPONENT_EQUIPMENT: Dictionary = {
+	"headwear": "journey_headwrap",
+	"outfit": "journey_tunic",
+	"gloves": "journey_wraps",
+	"footwear": "trail_boots",
+}
 
 var quick_spell_loadouts: Dictionary = {}
 var quick_spell_selected_slots: Dictionary = {}
 
 
 func _ready() -> void:
+	_ensure_component_equipment_slots()
 	SpellcastingMasteryServiceScript.ensure_story_baseline()
 
 
@@ -34,8 +45,19 @@ func has_unlock(unlock_id: String) -> bool:
 	return false
 
 
+func equip_item(item_id: String) -> bool:
+	_ensure_component_equipment_slots()
+	return super.equip_item(item_id)
+
+
+func unequip_slot(slot_id: String) -> bool:
+	_ensure_component_equipment_slots()
+	return super.unequip_slot(slot_id)
+
+
 func reset_run() -> void:
 	super.reset_run()
+	_ensure_component_equipment_slots()
 	quick_spell_loadouts.clear()
 	quick_spell_selected_slots.clear()
 	var species_knowledge: Node = _get_species_knowledge()
@@ -154,11 +176,13 @@ func apply_save_data(save_data: Dictionary) -> bool:
 	_apply_player_records_from_save(save_data)
 	var applied: bool = super.apply_save_data(save_data)
 	if applied:
+		_ensure_component_equipment_slots()
 		SpellcastingMasteryServiceScript.ensure_story_baseline()
 	return applied
 
 
 func _append_player_records_to_save(save_data: Dictionary) -> void:
+	_ensure_component_equipment_slots()
 	save_data["version"] = maxi(
 		int(save_data.get("version", 0)),
 		PLAYER_RECORDS_SAVE_VERSION
@@ -209,6 +233,23 @@ func _apply_quick_spell_records(save_data: Dictionary) -> void:
 				str(loadout_value),
 				int((selected_value as Dictionary)[loadout_value])
 			)
+
+
+func _ensure_component_equipment_slots() -> void:
+	for slot_id: String in ExtendedEquipmentCatalogScript.SLOT_ORDER:
+		if not equipped_items.has(slot_id):
+			equipped_items[slot_id] = ""
+	for slot_value: Variant in STARTER_COMPONENT_EQUIPMENT.keys():
+		var slot_id: String = str(slot_value)
+		var item_id: String = str(STARTER_COMPONENT_EQUIPMENT[slot_value])
+		if not ExtendedEquipmentCatalogScript.has_item(item_id):
+			continue
+		if not bool(owned_equipment.get(item_id, false)):
+			owned_equipment[item_id] = true
+			equipment_owned_changed.emit(item_id, true)
+		if str(equipped_items.get(slot_id, "")) == "":
+			equipped_items[slot_id] = item_id
+			equipment_changed.emit(slot_id, item_id)
 
 
 func _normalize_loadout_id(loadout_id: String) -> String:

@@ -13,8 +13,15 @@ const SpellcastingTraditionResolverScript = preload(
 	"res://scripts/abilities/spellcasting_tradition_resolver.gd"
 )
 
+const MENU_HIDDEN_CANVAS_LAYER_GROUPS: Array[String] = [
+	"player_hud_v2",
+	"divine_special_hud",
+]
+
 var menu_hidden_canvas_items: Array[CanvasItem] = []
-var menu_hidden_visibility: Array[bool] = []
+var menu_hidden_canvas_item_visibility: Array[bool] = []
+var menu_hidden_canvas_layers: Array[CanvasLayer] = []
+var menu_hidden_canvas_layer_visibility: Array[bool] = []
 
 
 func ensure_full_menu_shell() -> void:
@@ -62,28 +69,56 @@ func _exit_tree() -> void:
 func _hide_gameplay_hud() -> void:
 	_restore_gameplay_hud()
 	var game_ui: Node = get_tree().get_first_node_in_group("game_ui")
-	if game_ui == null:
+	if game_ui != null:
+		for child: Node in game_ui.get_children():
+			if child == full_menu_shell or not child is CanvasItem:
+				continue
+			_capture_canvas_item(child as CanvasItem)
+
+	for group_name: String in MENU_HIDDEN_CANVAS_LAYER_GROUPS:
+		for node: Node in get_tree().get_nodes_in_group(group_name):
+			if node is CanvasLayer:
+				_capture_canvas_layer(node as CanvasLayer)
+
+
+func _capture_canvas_item(canvas_item: CanvasItem) -> void:
+	if canvas_item == null or menu_hidden_canvas_items.has(canvas_item):
 		return
-	for child: Node in game_ui.get_children():
-		if child == full_menu_shell or not child is CanvasItem:
-			continue
-		var canvas_item: CanvasItem = child as CanvasItem
-		menu_hidden_canvas_items.append(canvas_item)
-		menu_hidden_visibility.append(canvas_item.visible)
-		canvas_item.visible = false
+	menu_hidden_canvas_items.append(canvas_item)
+	menu_hidden_canvas_item_visibility.append(canvas_item.visible)
+	canvas_item.visible = false
+
+
+func _capture_canvas_layer(canvas_layer: CanvasLayer) -> void:
+	if canvas_layer == null or menu_hidden_canvas_layers.has(canvas_layer):
+		return
+	menu_hidden_canvas_layers.append(canvas_layer)
+	menu_hidden_canvas_layer_visibility.append(canvas_layer.visible)
+	canvas_layer.visible = false
 
 
 func _restore_gameplay_hud() -> void:
-	var restore_count: int = mini(
+	var item_restore_count: int = mini(
 		menu_hidden_canvas_items.size(),
-		menu_hidden_visibility.size()
+		menu_hidden_canvas_item_visibility.size()
 	)
-	for index: int in range(restore_count):
+	for index: int in range(item_restore_count):
 		var canvas_item: CanvasItem = menu_hidden_canvas_items[index]
 		if canvas_item != null and is_instance_valid(canvas_item):
-			canvas_item.visible = menu_hidden_visibility[index]
+			canvas_item.visible = menu_hidden_canvas_item_visibility[index]
 	menu_hidden_canvas_items.clear()
-	menu_hidden_visibility.clear()
+	menu_hidden_canvas_item_visibility.clear()
+
+	var layer_restore_count: int = mini(
+		menu_hidden_canvas_layers.size(),
+		menu_hidden_canvas_layer_visibility.size()
+	)
+	for index: int in range(layer_restore_count):
+		var canvas_layer: CanvasLayer = menu_hidden_canvas_layers[index]
+		if canvas_layer != null and is_instance_valid(canvas_layer):
+			canvas_layer.visible = menu_hidden_canvas_layer_visibility[index]
+	menu_hidden_canvas_layers.clear()
+	menu_hidden_canvas_layer_visibility.clear()
 
 
 func build_menu_data() -> Dictionary:

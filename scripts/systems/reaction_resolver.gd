@@ -17,7 +17,9 @@ static func resolve_payload_transaction(
 	target: Node,
 	payload: DamagePayload
 ) -> Dictionary:
-	return ReactionEngine.resolve_payload_transaction(target, payload)
+	var batch: Dictionary = ReactionEngine.resolve_payload_transaction(target, payload)
+	_record_progression(batch)
+	return batch
 
 
 static func resolve_payload_reactions(
@@ -39,11 +41,13 @@ static func resolve_hazard_transaction(
 	payload: DamagePayload,
 	source_position: Vector3 = Vector3.ZERO
 ) -> Dictionary:
-	return ReactionEngine.resolve_hazard_transaction(
+	var batch: Dictionary = ReactionEngine.resolve_hazard_transaction(
 		hazard,
 		payload,
 		source_position
 	)
+	_record_progression(batch)
+	return batch
 
 
 static func resolve_hazard_reactions(
@@ -78,3 +82,21 @@ static func get_debug_matrix_rows() -> Array[Dictionary]:
 
 static func validate_rules() -> Array[String]:
 	return RuleCatalog.validate_catalog()
+
+
+static func _record_progression(batch: Dictionary) -> void:
+	var main_loop: MainLoop = Engine.get_main_loop()
+	if not main_loop is SceneTree:
+		return
+	var tree: SceneTree = main_loop as SceneTree
+	var tracker: Node = tree.root.get_node_or_null(
+		"FullMenuDirector/ProgressionTracker"
+	)
+	if tracker == null or not tracker.has_method("record_reaction_result"):
+		return
+	var raw: Variant = batch.get("reactions", [])
+	if not raw is Array:
+		return
+	for reaction_value: Variant in raw as Array:
+		if reaction_value is Dictionary:
+			tracker.call("record_reaction_result", reaction_value)

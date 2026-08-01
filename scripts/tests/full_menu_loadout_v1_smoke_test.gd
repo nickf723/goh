@@ -19,9 +19,13 @@ func run_tests() -> void:
 	assert_true(shell.is_open(), "shell opens")
 	assert_equal(shell.loadout_page, "overview", "Grace begins at the combined loadout overview")
 	assert_equal(shell.get_current_tab_id(), "loadout", "Grace remains the first tab id")
-	assert_equal(shell.MENU_TAB_DEFS.size(), 7, "Grace and Loadout share one top-level tab")
-	assert_equal(str(shell.MENU_TAB_DEFS[0].get("title", "")), "Grace", "first tab is visibly Grace")
-	assert_equal(shell.get_tab_index("grace"), 0, "removed Grace id falls back safely")
+	assert_equal(FullMenuShellScript.MENU_TAB_DEFS.size(), 7, "Grace and Loadout share one top-level tab")
+	assert_equal(str(FullMenuShellScript.MENU_TAB_DEFS[0].get("title", "")), "Grace", "first tab is visibly Grace")
+	var has_separate_grace_tab: bool = false
+	for tab: Dictionary in FullMenuShellScript.MENU_TAB_DEFS:
+		if str(tab.get("id", "")) == "grace":
+			has_separate_grace_tab = true
+	assert_true(not has_separate_grace_tab, "separate Grace tab is removed")
 	assert_equal(shell.selectable_actions.size(), 17, "Grace page exposes four equipment slots, three field settings, and ten spells")
 	assert_true(str(shell.content_title_label.text).contains("Grace"), "Grace owns the page title")
 

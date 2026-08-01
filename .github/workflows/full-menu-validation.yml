@@ -38,3 +38,9 @@ jobs:
 
       - name: Run Magic atlas regression
         run: godot --headless --path . res://scenes/tests/full_menu_magic_v1_smoke_test.tscn
+
+      - name: Run refined Magic workspace regression
+        run: godot --headless --path . res://scenes/tests/full_menu_magic_v2_smoke_test.tscn
+
+      - name: Run projectile convergence regression
+        run: godot --headless --path . res://scenes/tests/free_aim_projectile_convergence_smoke_test.tscn

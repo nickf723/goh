@@ -112,6 +112,12 @@ jobs:
       - name: Run ten-slot quick spell belt test
         run: godot --headless --path . res://scenes/tests/quick_spell_belt_smoke_test.tscn
 
+      - name: Run Grace menu geometry and right-stick test
+        run: godot --headless --path . res://scenes/tests/full_menu_loadout_v1_smoke_test.tscn
+
+      - name: Run scroll-free Magic atlas test
+        run: godot --headless --path . res://scenes/tests/full_menu_magic_v1_smoke_test.tscn
+
       - name: Run AoE targeting and Focus UI performance test
         run: godot --headless --path . res://scenes/tests/ground_target_focus_ui_smoke_test.tscn
 

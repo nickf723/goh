@@ -3,6 +3,9 @@ extends Node
 const AlchemyCauldronScript = preload(
 	"res://scripts/alchemy/alchemy_cauldron.gd"
 )
+const ChallengeCatalogScript = preload(
+	"res://scripts/progression/progression_challenge_catalog.gd"
+)
 const SpellModifierRegistryScript = preload(
 	"res://scripts/abilities/spell_modifier_registry.gd"
 )
@@ -208,9 +211,8 @@ func _challenge_reward_is_runtime_active(
 			continue
 		var row: Dictionary = raw as Dictionary
 		var challenge_id: String = str(row.get("challenge_id", ""))
-		var definition: Dictionary = (
-			load("res://scripts/progression/progression_challenge_catalog.gd")
-			.call("get_definition", challenge_id)
+		var definition: Dictionary = ChallengeCatalogScript.get_definition(
+			challenge_id
 		)
 		if str(definition.get("reward_id", "")) != reward_id:
 			continue

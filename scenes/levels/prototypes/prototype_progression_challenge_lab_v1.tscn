@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_progression_challenge_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" path="res://scenes/levels/prototypes/prototype_elemental_reaction_lab_v1.tscn" id="2_reactions"]
+
+[node name="PrototypeProgressionChallengeLab" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="ReactionWing" parent="." instance=ExtResource("2_reactions")]

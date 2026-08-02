@@ -87,6 +87,9 @@ jobs:
       - name: Run placement input isolation regression
         run: godot --headless --path . res://scenes/tests/placement_input_isolation_smoke_test.tscn
 
+      - name: Run death and mixed-save recovery regression
+        run: godot --headless --path . res://scenes/tests/death_save_recovery_smoke_test.tscn
+
       - name: Run freed-control navigation regression
         run: godot --headless --path . res://scenes/tests/menu_freed_control_navigation_smoke_test.tscn
 

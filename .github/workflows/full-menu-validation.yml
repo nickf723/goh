@@ -84,6 +84,9 @@ jobs:
       - name: Run engineering builds regression
         run: godot --headless --path . res://scenes/tests/engineering_builds_v1_smoke_test.tscn
 
+      - name: Run placement input isolation regression
+        run: godot --headless --path . res://scenes/tests/placement_input_isolation_smoke_test.tscn
+
       - name: Run freed-control navigation regression
         run: godot --headless --path . res://scenes/tests/menu_freed_control_navigation_smoke_test.tscn
 

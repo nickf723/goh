@@ -63,6 +63,9 @@ jobs:
       - name: Run progression challenge lab regression
         run: godot --headless --path . res://scenes/tests/progression_challenge_lab_smoke_test.tscn
 
+      - name: Run progression feedback and tracking regression
+        run: godot --headless --path . res://scenes/tests/progression_feedback_tracking_v1_smoke_test.tscn
+
       - name: Run freed-control navigation regression
         run: godot --headless --path . res://scenes/tests/menu_freed_control_navigation_smoke_test.tscn
 

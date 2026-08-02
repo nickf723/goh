@@ -25,14 +25,21 @@ func interact() -> Dictionary:
 	var target: RecordedObjectInstance = _find_nearest_recorded_object()
 	if target == null:
 		return {
-			"message": console_label + " console: place a recorded object on the interaction pad first.",
+			"message": (
+				console_label
+				+ " console: place a recorded object on the interaction pad first."
+			),
 			"objective": "Reproduce an object inside the marked test ring.",
 		}
 	var payload := DamagePayload.new()
 	payload.amount = payload_amount
 	payload.stance_damage = payload_amount
 	payload.element = element
-	payload.source_name = "Recorded Object " + console_label.title_case() + " Console"
+	payload.source_name = (
+		"Recorded Object "
+		+ console_label.to_lower().capitalize()
+		+ " Console"
+	)
 	payload.hit_type = "environment"
 	payload.status_strength = payload_strength
 	payload.knockback_strength = knockback_strength
@@ -45,7 +52,10 @@ func interact() -> Dictionary:
 		"message": (
 			console_label
 			+ " applied to "
-			+ str(target.definition.get("display_name", target.blueprint_id.capitalize()))
+			+ str(target.definition.get(
+				"display_name",
+				target.blueprint_id.capitalize()
+			))
 			+ "."
 		),
 		"objective": "Combine elemental state with the object's physical role.",
@@ -59,7 +69,9 @@ func _find_nearest_recorded_object() -> RecordedObjectInstance:
 		var object := node as RecordedObjectInstance
 		if object == null or not is_instance_valid(object):
 			continue
-		var distance: float = global_position.distance_to(object.global_position)
+		var distance: float = global_position.distance_to(
+			object.global_position
+		)
 		if distance <= nearest_distance:
 			nearest = object
 			nearest_distance = distance

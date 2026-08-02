@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/development_control_center_familiar.gd" id="1_control"]
+[ext_resource type="Script" path="res://scripts/ui/development_control_center_recorded_objects.gd" id="1_control"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_header"]
 bg_color = Color(0.055, 0.04, 0.095, 0.96)

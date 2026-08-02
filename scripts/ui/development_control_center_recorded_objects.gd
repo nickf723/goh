@@ -49,25 +49,83 @@ const RECORDED_OBJECTS_FEATURE: Dictionary = {
 	"timeout_seconds": 30,
 }
 
+const RECORDED_OBJECT_INTEROPERABILITY_FEATURE: Dictionary = {
+	"id": "recorded_object_interoperability_v1",
+	"order": 20,
+	"display_name": "Recorded Object Interoperability Wing",
+	"category": "Progression and World Tools",
+	"version": "v1",
+	"status": "development_tool",
+	"description": "Stress-test recorded tools against Fire, Water, Ice, Lightning, Force, conductive contact, buoyancy, dampened fuses, overcharged launches, frozen shatter, chain explosions, and progression discoveries.",
+	"scene": "res://scenes/levels/prototypes/prototype_recorded_object_interoperability_lab_v1.tscn",
+	"validation_scenes": [
+		"res://scenes/levels/prototypes/prototype_recorded_object_interoperability_lab_v1.tscn",
+	],
+	"automated_tests": [
+		"res://scenes/tests/recorded_object_interoperability_smoke_test.tscn",
+		"res://scenes/tests/recorded_objects_v1_smoke_test.tscn",
+		"res://scenes/tests/recorded_objects_production_integration_smoke_test.tscn",
+	],
+	"dependencies": [
+		"recorded_objects_v1",
+		"progression_challenge_lab",
+	],
+	"controls": [
+		"MOVE",
+		"INTERACT CONSOLES",
+		"F1-F4 SELECT OBJECT",
+		"F5 PLACE ON ELEMENT PAD",
+		"F6 DROP CRATE IN BASIN",
+		"V / Y FREE PLACEMENT",
+		"F8 CLEAR OBJECTS",
+		"F9 RECORD ALL",
+	],
+	"manual_test": "docs/RECORDED_OBJECT_INTEROPERABILITY_V1.md",
+	"temporary_state": "persistent_discoveries_scene_scoped_elemental_object_state",
+	"story_integrated": false,
+	"limitations": [
+		"The elemental state machine is production-capable, but the dedicated console wing remains a development fixture.",
+		"Conductive contact currently delivers a compact generic Lightning payload rather than participating in the full authored circuit graph.",
+		"Buoyancy uses the shared FluidForceVolume API with a lightweight per-object force model.",
+		"Prototype state changes recolor procedural materials; authored burn, frost, spark, and fracture VFX remain a later presentation pass.",
+	],
+	"launchable": true,
+	"visible_in_launcher": true,
+	"ci_validate": true,
+	"timeout_seconds": 32,
+}
+
 
 func _append_supplemental_features() -> void:
 	super._append_supplemental_features()
-	for feature: Dictionary in visible_features:
-		if str(feature.get("id", "")) == "recorded_objects_v1":
-			return
-	visible_features.append(RECORDED_OBJECTS_FEATURE.duplicate(true))
+	var supplemental: Array[Dictionary] = [
+		RECORDED_OBJECTS_FEATURE,
+		RECORDED_OBJECT_INTEROPERABILITY_FEATURE,
+	]
+	for definition: Dictionary in supplemental:
+		var feature_id: String = str(definition.get("id", ""))
+		var already_present: bool = false
+		for feature: Dictionary in visible_features:
+			if str(feature.get("id", "")) == feature_id:
+				already_present = true
+				break
+		if not already_present:
+			visible_features.append(definition.duplicate(true))
 	visible_features.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return int(a.get("order", 0)) < int(b.get("order", 0))
 	)
 
 
 func _get_supplemental_feature_count() -> int:
-	return super._get_supplemental_feature_count() + 1
+	return super._get_supplemental_feature_count() + 2
 
 
 func _get_supplemental_feature(feature_id: String) -> Dictionary:
-	if feature_id == "recorded_objects_v1":
-		return RECORDED_OBJECTS_FEATURE
+	match feature_id:
+		"recorded_objects_v1":
+			return RECORDED_OBJECTS_FEATURE
+		"recorded_object_interoperability_v1":
+			return RECORDED_OBJECT_INTEROPERABILITY_FEATURE
 	return super._get_supplemental_feature(feature_id)
 
 
@@ -77,4 +135,7 @@ func get_debug_data() -> Dictionary:
 		_get_feature_errors("recorded_objects_v1").is_empty()
 	)
 	data["recorded_objects_production_integrated"] = true
+	data["recorded_object_interoperability_available"] = (
+		_get_feature_errors("recorded_object_interoperability_v1").is_empty()
+	)
 	return data

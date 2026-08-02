@@ -202,7 +202,11 @@ static func _record_journal_discovery(
 	blueprint_id: String,
 	definition: Dictionary
 ) -> void:
-	var tracker: Node = Engine.get_main_loop().root.get_node_or_null(
+	var main_loop: MainLoop = Engine.get_main_loop()
+	if not main_loop is SceneTree:
+		return
+	var tree := main_loop as SceneTree
+	var tracker: Node = tree.root.get_node_or_null(
 		"FullMenuDirector/ProgressionTracker"
 	)
 	if tracker != null and tracker.has_method("record_discovery"):

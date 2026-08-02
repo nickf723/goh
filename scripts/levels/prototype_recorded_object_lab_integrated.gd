@@ -1,14 +1,28 @@
 extends "res://scripts/levels/prototype_recorded_object_lab.gd"
 class_name PrototypeRecordedObjectLabIntegrated
 
+const SpellManagerScript = preload(
+	"res://scripts/objects/recorded_object_manager_spell.gd"
+)
+
 
 func _build_manager() -> void:
-	manager = player.get_node_or_null(
-		"RecordedObjectManager"
-	) as RecordedObjectManager
-	if manager == null:
-		super._build_manager()
-		return
+	var existing: Node = player.get_node_or_null("RecordedObjectManager")
+	if existing is RecordedObjectManagerSpell:
+		manager = existing as RecordedObjectManagerSpell
+	else:
+		if existing is RecordedObjectManager:
+			var legacy := existing as RecordedObjectManager
+			legacy.cancel_placement()
+			legacy.controller_controls_enabled = false
+			legacy.keyboard_controls_enabled = false
+			legacy.remove_from_group("recorded_object_manager")
+			legacy.name = "RecordedObjectManagerLegacy"
+			legacy.queue_free()
+		manager = SpellManagerScript.new() as RecordedObjectManagerSpell
+		manager.name = "RecordedObjectManager"
+		player.add_child(manager)
+
 	manager.maximum_total_active = 7
 	manager.print_debug = OS.has_feature("editor")
 	manager.bind_actor(player)
@@ -30,4 +44,5 @@ func get_debug_data() -> Dictionary:
 		and manager.get_parent() == player
 		and manager.name == "RecordedObjectManager"
 	)
+	data["uses_spell_manager"] = manager is RecordedObjectManagerSpell
 	return data

@@ -223,6 +223,29 @@ func apply_save_data(save_data: Dictionary) -> bool:
 	return applied
 
 
+# The original flag loader assumed every story flag was Boolean. Progression now
+# stores JSON-safe counters and selected record IDs in the same persistent map.
+# Preserve their types so an existing save can reopen without losing progress.
+func apply_saved_flags(save_data: Dictionary) -> void:
+	if not save_data.has("story_flags"):
+		return
+	var saved_value: Variant = save_data["story_flags"]
+	if not saved_value is Dictionary:
+		return
+	var saved_flags: Dictionary = saved_value as Dictionary
+	for raw_flag_name: Variant in saved_flags.keys():
+		var flag_name: String = str(raw_flag_name)
+		var value: Variant = saved_flags[raw_flag_name]
+		if value is Dictionary:
+			story_flags[flag_name] = (value as Dictionary).duplicate(true)
+		elif value is Array:
+			story_flags[flag_name] = (value as Array).duplicate(true)
+		else:
+			story_flags[flag_name] = value
+		if value is bool:
+			flag_changed.emit(flag_name, value as bool)
+
+
 func _append_player_records_to_save(save_data: Dictionary) -> void:
 	_ensure_component_equipment_slots()
 	save_data["version"] = maxi(

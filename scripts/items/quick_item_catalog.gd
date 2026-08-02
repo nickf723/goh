@@ -12,6 +12,18 @@ const ConductiveElixir: QuickItemDefinition = preload("res://data/items/conducti
 const SwiftTonic: QuickItemDefinition = preload("res://data/items/swift_tonic.tres")
 const ArcaneDraught: QuickItemDefinition = preload("res://data/items/arcane_draught.tres")
 const IronbarkBrew: QuickItemDefinition = preload("res://data/items/ironbark_brew.tres")
+const RecordedCrateBlueprint: QuickItemDefinition = preload(
+	"res://data/items/recorded_crate_blueprint.tres"
+)
+const RecordedPlatformBlueprint: QuickItemDefinition = preload(
+	"res://data/items/recorded_platform_blueprint.tres"
+)
+const RecordedSpringBlueprint: QuickItemDefinition = preload(
+	"res://data/items/recorded_spring_blueprint.tres"
+)
+const RecordedBlastBarrelBlueprint: QuickItemDefinition = preload(
+	"res://data/items/recorded_blast_barrel_blueprint.tres"
+)
 
 const ITEM_IDS: Array[String] = [
 	"healing_flask",
@@ -25,6 +37,10 @@ const ITEM_IDS: Array[String] = [
 	"swift_tonic",
 	"arcane_draught",
 	"ironbark_brew",
+	"recorded_crate_blueprint",
+	"recorded_platform_blueprint",
+	"recorded_spring_blueprint",
+	"recorded_blast_barrel_blueprint",
 ]
 
 
@@ -52,12 +68,36 @@ static func get_item(item_id: String) -> QuickItemDefinition:
 			return ArcaneDraught
 		"ironbark_brew":
 			return IronbarkBrew
+		"recorded_crate_blueprint":
+			return RecordedCrateBlueprint
+		"recorded_platform_blueprint":
+			return RecordedPlatformBlueprint
+		"recorded_spring_blueprint":
+			return RecordedSpringBlueprint
+		"recorded_blast_barrel_blueprint":
+			return RecordedBlastBarrelBlueprint
 		_:
 			return null
 
 
 static func get_all_items() -> Array[QuickItemDefinition]:
-	return [HealingFlask, OilFlask, NoiseMaker, HealingPotion, ResonanceTonic, FrostVigorDraught, Antidote, ConductiveElixir, SwiftTonic, ArcaneDraught, IronbarkBrew]
+	return [
+		HealingFlask,
+		OilFlask,
+		NoiseMaker,
+		HealingPotion,
+		ResonanceTonic,
+		FrostVigorDraught,
+		Antidote,
+		ConductiveElixir,
+		SwiftTonic,
+		ArcaneDraught,
+		IronbarkBrew,
+		RecordedCrateBlueprint,
+		RecordedPlatformBlueprint,
+		RecordedSpringBlueprint,
+		RecordedBlastBarrelBlueprint,
+	]
 
 
 static func get_inventory_rows(inventory: Dictionary) -> Array[Dictionary]:

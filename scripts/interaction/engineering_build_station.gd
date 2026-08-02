@@ -28,15 +28,29 @@ func interact() -> Dictionary:
 			"message": "The construction station cannot find Grace's build manager.",
 			"objective": "",
 		}
+	var was_saved: bool = Catalog.is_saved(build_id)
 	var result: Dictionary = manager.save_build(build_id)
 	_refresh_label()
 	if bool(result.get("ok", false)):
+		var definition: Dictionary = Catalog.get_definition(build_id)
+		if was_saved:
+			manager.select_build(build_id)
+			manager.begin_placement()
+			return {
+				"message": (
+					"Placing "
+					+ str(definition.get("display_name", build_id.capitalize()))
+					+ ". A confirms, B cancels, and L/R cycle while placement is active."
+				),
+				"objective": "Aim the construction preview at a valid surface.",
+			}
 		return {
 			"message": (
-				("Construction saved: " if bool(result.get("newly_saved", false)) else "Construction selected: ")
-				+ str(Catalog.get_definition(build_id).get("display_name", build_id.capitalize()))
+				"Construction saved: "
+				+ str(definition.get("display_name", build_id.capitalize()))
+				+ ". Interact with this station again to begin placement."
 			),
-			"objective": str(Catalog.get_definition(build_id).get("test_prompt", "Test the construction.")),
+			"objective": str(definition.get("test_prompt", "Test the construction.")),
 		}
 	var missing: Array = result.get("missing", []) as Array
 	return {
@@ -95,7 +109,7 @@ func _refresh_label() -> void:
 	if label == null:
 		return
 	var definition: Dictionary = Catalog.get_definition(build_id)
-	var state: String = "SAVED" if Catalog.is_saved(build_id) else "UNSAVED"
+	var state: String = "SAVED • INTERACT TO PLACE" if Catalog.is_saved(build_id) else "UNSAVED"
 	var missing: Array[String] = Catalog.get_missing_requirements(build_id)
 	if not missing.is_empty():
 		state = "NEEDS " + ", ".join(missing)

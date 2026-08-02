@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn" id="1_base"]
-[ext_resource type="Script" path="res://scripts/levels/prototype_ruined_village_field_progression.gd" id="2_field"]
+[ext_resource type="Script" path="res://scripts/levels/prototype_ruined_village_field_progression_objects.gd" id="2_field"]
 
 [node name="PrototypeRuinedVillageFieldProgression" instance=ExtResource("1_base")]
 script = ExtResource("2_field")

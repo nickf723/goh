@@ -80,6 +80,7 @@ func _resolve_deferred_blast(
 
 	var damaged_nodes: Dictionary = {}
 	var pushed_nodes: Dictionary = {}
+	var chained_objects: Dictionary = {}
 	for hit: Dictionary in hits:
 		var collider: Object = hit.get("collider")
 		if collider == null or not collider is Node:
@@ -88,32 +89,33 @@ func _resolve_deferred_blast(
 		if node == self or not is_instance_valid(node):
 			continue
 
-		var receiver: Node = _find_payload_receiver(node)
+		# Recorded objects are their own payload receivers, but physics overlap may
+		# report either their root body or one of their children. Resolve the root
+		# explicitly so a nearby barrel always gets one safe deferred detonation.
+		var recorded_root: RecordedObjectInstance = _find_recorded_object_root(node)
 		if (
-			receiver != null
-			and is_instance_valid(receiver)
-			and not receiver.is_queued_for_deletion()
-			and not damaged_nodes.has(receiver.get_instance_id())
+			recorded_root != null
+			and recorded_root != self
+			and not chained_objects.has(recorded_root.get_instance_id())
 		):
-			damaged_nodes[receiver.get_instance_id()] = true
-			var payload := DamagePayload.new()
-			payload.amount = damage
-			payload.stance_damage = damage
-			payload.element = "fire"
-			payload.source_name = str(
-				definition.get("display_name", "Recorded Blast Barrel")
-			)
-			payload.hit_type = "reaction_burst"
-			payload.tags = [
-				"recorded_object",
-				"explosive",
-				"explosion",
-				"combustion",
-			]
-			payload.knockback_strength = force
-			payload.knockback_up_strength = force * 0.45
-			payload.suppress_reactions = true
-			receiver.call("receive_damage_payload", payload)
+			chained_objects[recorded_root.get_instance_id()] = true
+			if (
+				recorded_root.blueprint_id == "blast_barrel"
+				and recorded_root.wet_remaining <= 0.0
+			):
+				recorded_root.call_deferred("detonate")
+			else:
+				_deliver_blast_payload(recorded_root, damage, force)
+		else:
+			var receiver: Node = _find_payload_receiver(node)
+			if (
+				receiver != null
+				and is_instance_valid(receiver)
+				and not receiver.is_queued_for_deletion()
+				and not damaged_nodes.has(receiver.get_instance_id())
+			):
+				damaged_nodes[receiver.get_instance_id()] = true
+				_deliver_blast_payload(receiver, damage, force)
 
 		var body: Node3D = _find_pushable_body(node)
 		if body == null or pushed_nodes.has(body.get_instance_id()):
@@ -133,6 +135,49 @@ func _resolve_deferred_blast(
 			character.velocity += direction.normalized() * force
 
 	queue_free()
+
+
+func _deliver_blast_payload(
+	receiver: Node,
+	damage: int,
+	force: float
+) -> void:
+	if (
+		receiver == null
+		or not is_instance_valid(receiver)
+		or receiver.is_queued_for_deletion()
+		or not receiver.has_method("receive_damage_payload")
+	):
+		return
+	var payload := DamagePayload.new()
+	payload.amount = damage
+	payload.stance_damage = damage
+	payload.element = "fire"
+	payload.source_name = str(
+		definition.get("display_name", "Recorded Blast Barrel")
+	)
+	payload.hit_type = "reaction_burst"
+	payload.tags = [
+		"recorded_object",
+		"explosive",
+		"explosion",
+		"combustion",
+	]
+	payload.knockback_strength = force
+	payload.knockback_up_strength = force * 0.45
+	payload.suppress_reactions = true
+	receiver.call("receive_damage_payload", payload)
+
+
+func _find_recorded_object_root(start: Node) -> RecordedObjectInstance:
+	var current: Node = start
+	for _index: int in range(8):
+		if current == null:
+			break
+		if current is RecordedObjectInstance:
+			return current as RecordedObjectInstance
+		current = current.get_parent()
+	return null
 
 
 func _find_pushable_body(start: Node) -> Node3D:

@@ -15,6 +15,7 @@ class_name DamagePayload
 
 @export var knockback_strength: float = 0.0
 @export var knockback_up_strength: float = 0.0
+@export var knockback_direction: Vector3 = Vector3.ZERO
 
 # Weapon attacks copy their equipped weapon's critical identity into the payload.
 # Receivers decide whether a valid stance-break window may consume it.

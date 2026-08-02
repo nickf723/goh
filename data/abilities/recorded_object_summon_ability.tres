@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+display_name = "Reproduce Object"
+description = "Open the prepared recorded-object pattern as a placement spell. Choose the pattern beforehand in Magic, Items, or the Blueprint record; casting enters manipulation placement immediately."
+element = "soul"
+category = 2
+mana_cost = 0
+spell_id = "recorded_object_summon"
+short_label = "Object"
+icon_text = "▣"
+roles = Array[String](["summon", "object", "puzzle", "utility", "combat"])
+targeting_style = "ground"
+delivery_type = "summon"
+combo_tags = Array[String](["recorded_object", "reproduction", "placement"])
+ui_tags = Array[String](["summon", "recorded_object", "prepared_blueprint"])
+scaling_stats = Array[String](["intelligence", "soul"])
+design_notes = "The spell itself has no upfront mana cost. The prepared object's authored reproduction cost is paid only when placement is confirmed."

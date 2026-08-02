@@ -259,10 +259,11 @@ func _spawn_blast_visual(radius: float) -> void:
 	scene_root.add_child(pulse)
 	pulse.global_position = global_position
 	pulse.scale = Vector3.ONE * 0.2
+	pulse.transparency = 0.0
 	var tween := pulse.create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(pulse, "scale", Vector3.ONE * radius * 2.0, 0.32)
-	tween.tween_property(pulse, "modulate:a", 0.0, 0.32)
+	tween.tween_property(pulse, "transparency", 1.0, 0.32)
 	tween.chain().tween_callback(pulse.queue_free)
 
 

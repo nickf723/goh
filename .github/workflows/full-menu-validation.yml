@@ -72,6 +72,9 @@ jobs:
       - name: Run Ruined Village field progression regression
         run: godot --headless --path . res://scenes/tests/ruined_village_field_progression_smoke_test.tscn
 
+      - name: Run recorded objects regression
+        run: godot --headless --path . res://scenes/tests/recorded_objects_v1_smoke_test.tscn
+
       - name: Run freed-control navigation regression
         run: godot --headless --path . res://scenes/tests/menu_freed_control_navigation_smoke_test.tscn
 

@@ -1,5 +1,4 @@
 extends Area3D
-class_name AlchemyCauldron
 
 signal brew_completed(recipe_id: String, output_item_id: String)
 signal brew_failed(ingredient_key: String, catalyst: String)

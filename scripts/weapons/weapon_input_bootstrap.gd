@@ -48,6 +48,9 @@ const DIVINE_SPECIAL_ACTION: StringName = &"divine_special"
 @export var focus_action_name: StringName = &"spell_menu"
 @export var cast_action_name: StringName = &"cast_spell"
 
+@export_group("Placement Input Isolation")
+@export var isolate_placement_controller_input: bool = true
+
 
 func _ready() -> void:
 	ensure_action(light_action_name)
@@ -65,7 +68,36 @@ func _ready() -> void:
 	call_deferred("install_player_presentation_polish")
 	call_deferred("install_quick_spell_belt")
 	call_deferred("install_showcase_telemetry_gate")
+	call_deferred("_sync_placement_input_ownership")
 	add_to_group("debuggable")
+
+
+func _process(_delta: float) -> void:
+	_sync_placement_input_ownership()
+
+
+func _sync_placement_input_ownership() -> void:
+	if not isolate_placement_controller_input:
+		return
+	var weapon_controller: Node = get_parent()
+	var player: Node = (
+		weapon_controller.get_parent()
+		if weapon_controller != null
+		else null
+	)
+	if player == null:
+		return
+	for child: Node in player.get_children():
+		if child is RecordedObjectManager:
+			var object_manager := child as RecordedObjectManager
+			object_manager.controller_controls_enabled = (
+				object_manager.placement_active
+			)
+		elif child is EngineeringBuildManager:
+			var build_manager := child as EngineeringBuildManager
+			build_manager.controller_controls_enabled = (
+				build_manager.placement_active
+			)
 
 
 func _input(event: InputEvent) -> void:
@@ -308,4 +340,5 @@ func get_debug_data() -> Dictionary:
 		"authoritative_controller_bindings": true,
 		"ten_slot_quick_spell_belt": true,
 		"showcase_telemetry_gate": true,
+		"placement_input_isolated": isolate_placement_controller_input,
 	}

@@ -1,4 +1,5 @@
 extends "res://scripts/alchemy/alchemy_cauldron_legacy.gd"
+class_name AlchemyCauldron
 
 # Challenge-backed alchemy insight. The preserved cauldron core still owns
 # brewing and inventory mutation; this layer adds a non-destructive preview

@@ -1,4 +1,4 @@
-extends "res://scripts/ui/development_control_center_progression.gd"
+extends "res://scripts/ui/development_control_center_field_progression.gd"
 
 const FAMILIAR_TRAINING_YARD_FEATURE: Dictionary = {
 	"id": "familiar_training_yard",

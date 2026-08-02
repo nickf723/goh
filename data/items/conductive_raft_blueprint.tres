@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="QuickItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/quick_item_definition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "conductive_raft_blueprint"
+display_name = "Conductive Raft"
+short_label = "RAFT"
+description = "A saved engineering construction combining buoyant reproduced supports with an energized platform deck."
+icon_symbol = "≈"
+use_visual_color = Color(0.2, 0.76, 0.92, 1)
+max_stack = 1
+max_charges = 0
+refill_on_rest = false
+use_duration = 0.1
+movement_multiplier = 1.0
+requires_grounded = false
+can_use_at_maximum = false
+restore_amount = 0
+element = "water"
+tags = Array[String](["engineering_blueprint", "build", "contraption", "raft", "conductive", "vehicle_blueprint"])

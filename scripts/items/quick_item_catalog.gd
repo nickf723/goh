@@ -24,6 +24,18 @@ const RecordedSpringBlueprint: QuickItemDefinition = preload(
 const RecordedBlastBarrelBlueprint: QuickItemDefinition = preload(
 	"res://data/items/recorded_blast_barrel_blueprint.tres"
 )
+const BridgeFrameBlueprint: QuickItemDefinition = preload(
+	"res://data/items/bridge_frame_blueprint.tres"
+)
+const LaunchTowerBlueprint: QuickItemDefinition = preload(
+	"res://data/items/launch_tower_blueprint.tres"
+)
+const BlastCartBlueprint: QuickItemDefinition = preload(
+	"res://data/items/blast_cart_blueprint.tres"
+)
+const ConductiveRaftBlueprint: QuickItemDefinition = preload(
+	"res://data/items/conductive_raft_blueprint.tres"
+)
 
 const ITEM_IDS: Array[String] = [
 	"healing_flask",
@@ -41,6 +53,10 @@ const ITEM_IDS: Array[String] = [
 	"recorded_platform_blueprint",
 	"recorded_spring_blueprint",
 	"recorded_blast_barrel_blueprint",
+	"bridge_frame_blueprint",
+	"launch_tower_blueprint",
+	"blast_cart_blueprint",
+	"conductive_raft_blueprint",
 ]
 
 
@@ -76,6 +92,14 @@ static func get_item(item_id: String) -> QuickItemDefinition:
 			return RecordedSpringBlueprint
 		"recorded_blast_barrel_blueprint":
 			return RecordedBlastBarrelBlueprint
+		"bridge_frame_blueprint":
+			return BridgeFrameBlueprint
+		"launch_tower_blueprint":
+			return LaunchTowerBlueprint
+		"blast_cart_blueprint":
+			return BlastCartBlueprint
+		"conductive_raft_blueprint":
+			return ConductiveRaftBlueprint
 		_:
 			return null
 
@@ -97,6 +121,10 @@ static func get_all_items() -> Array[QuickItemDefinition]:
 		RecordedPlatformBlueprint,
 		RecordedSpringBlueprint,
 		RecordedBlastBarrelBlueprint,
+		BridgeFrameBlueprint,
+		LaunchTowerBlueprint,
+		BlastCartBlueprint,
+		ConductiveRaftBlueprint,
 	]
 
 

@@ -64,6 +64,22 @@ func _resolve_deferred_blast(
 		queue_free()
 		return
 
+	var damaged_nodes: Dictionary = {}
+	var pushed_nodes: Dictionary = {}
+	var recorded_objects: Dictionary = {}
+
+	# Newly reproduced bodies can exist in the SceneTree one frame before the
+	# physics server includes them in shape queries. Scan the authoritative
+	# recorded-object group first so a same-frame chain is still deterministic.
+	_resolve_recorded_object_neighbors(
+		blast_origin,
+		radius,
+		damage,
+		force,
+		recorded_objects,
+		damaged_nodes
+	)
+
 	var sphere := SphereShape3D.new()
 	sphere.radius = radius
 	var query := PhysicsShapeQueryParameters3D.new()
@@ -78,9 +94,6 @@ func _resolve_deferred_blast(
 		64
 	)
 
-	var damaged_nodes: Dictionary = {}
-	var pushed_nodes: Dictionary = {}
-	var chained_objects: Dictionary = {}
 	for hit: Dictionary in hits:
 		var collider: Object = hit.get("collider")
 		if collider == null or not collider is Node:
@@ -89,23 +102,17 @@ func _resolve_deferred_blast(
 		if node == self or not is_instance_valid(node):
 			continue
 
-		# Recorded objects are their own payload receivers, but physics overlap may
-		# report either their root body or one of their children. Resolve the root
-		# explicitly so a nearby barrel always gets one safe deferred detonation.
 		var recorded_root: RecordedObjectInstance = _find_recorded_object_root(node)
-		if (
-			recorded_root != null
-			and recorded_root != self
-			and not chained_objects.has(recorded_root.get_instance_id())
-		):
-			chained_objects[recorded_root.get_instance_id()] = true
-			if (
-				recorded_root.blueprint_id == "blast_barrel"
-				and recorded_root.wet_remaining <= 0.0
-			):
-				recorded_root.call_deferred("detonate")
-			else:
-				_deliver_blast_payload(recorded_root, damage, force)
+		if recorded_root != null and recorded_root != self:
+			var recorded_id: int = recorded_root.get_instance_id()
+			if not recorded_objects.has(recorded_id):
+				recorded_objects[recorded_id] = true
+				_resolve_recorded_object_target(
+					recorded_root,
+					damage,
+					force,
+					damaged_nodes
+				)
 		else:
 			var receiver: Node = _find_payload_receiver(node)
 			if (
@@ -135,6 +142,61 @@ func _resolve_deferred_blast(
 			character.velocity += direction.normalized() * force
 
 	queue_free()
+
+
+func _resolve_recorded_object_neighbors(
+	blast_origin: Vector3,
+	radius: float,
+	damage: int,
+	force: float,
+	recorded_objects: Dictionary,
+	damaged_nodes: Dictionary
+) -> void:
+	for candidate_node: Node in get_tree().get_nodes_in_group("recorded_object"):
+		if not candidate_node is RecordedObjectInstance:
+			continue
+		var candidate := candidate_node as RecordedObjectInstance
+		if (
+			candidate == self
+			or not is_instance_valid(candidate)
+			or candidate.is_queued_for_deletion()
+			or candidate.global_position.distance_to(blast_origin) > radius
+		):
+			continue
+		var candidate_id: int = candidate.get_instance_id()
+		if recorded_objects.has(candidate_id):
+			continue
+		recorded_objects[candidate_id] = true
+		_resolve_recorded_object_target(
+			candidate,
+			damage,
+			force,
+			damaged_nodes
+		)
+
+
+func _resolve_recorded_object_target(
+	target: RecordedObjectInstance,
+	damage: int,
+	force: float,
+	damaged_nodes: Dictionary
+) -> void:
+	if (
+		target == null
+		or not is_instance_valid(target)
+		or target.is_queued_for_deletion()
+	):
+		return
+	var target_id: int = target.get_instance_id()
+	if target.blueprint_id == "blast_barrel":
+		# The target's own safe detonation entry handles wet fuses and duplicate
+		# requests. Deferring again guarantees one barrel per idle turn.
+		target.call_deferred("detonate")
+		return
+	if damaged_nodes.has(target_id):
+		return
+	damaged_nodes[target_id] = true
+	_deliver_blast_payload(target, damage, force)
 
 
 func _deliver_blast_payload(

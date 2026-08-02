@@ -140,7 +140,7 @@ func run_tests() -> void:
 		await get_tree().physics_frame
 		await get_tree().physics_frame
 		assert_true(
-			barrel.is_queued_for_deletion() or not is_instance_valid(barrel),
+			not is_instance_valid(barrel) or barrel.is_queued_for_deletion(),
 			"blast barrel removes itself after detonation"
 		)
 	var moved_target: bool = false

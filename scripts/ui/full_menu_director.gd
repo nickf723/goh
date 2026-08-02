@@ -1,7 +1,7 @@
 extends "res://scripts/ui/full_menu_director_core.gd"
 
 const FullMenuLoadoutShellScript = preload(
-	"res://scripts/ui/full_menu_shell_progression_v1.gd"
+	"res://scripts/ui/full_menu_shell_feedback_v1.gd"
 )
 const ProgressionTrackerScript = preload(
 	"res://scripts/progression/progression_tracker_feedback.gd"

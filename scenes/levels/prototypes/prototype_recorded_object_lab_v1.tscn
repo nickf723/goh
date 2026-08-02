@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/levels/prototype_recorded_object_lab.gd" id="1_lab"]
+[ext_resource type="Script" path="res://scripts/levels/prototype_recorded_object_lab_integrated.gd" id="1_lab"]
 
 [node name="PrototypeRecordedObjectLab" type="Node3D"]
 script = ExtResource("1_lab")

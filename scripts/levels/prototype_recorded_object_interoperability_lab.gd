@@ -4,7 +4,6 @@ class_name PrototypeRecordedObjectInteroperabilityLab
 const PayloadConsoleScript = preload(
 	"res://scripts/interaction/recorded_object_payload_console.gd"
 )
-const Catalog = preload("res://scripts/objects/recorded_object_catalog.gd")
 
 var interoperability_root: Node3D
 var interaction_pad_position: Vector3 = Vector3(0.0, 0.0, 10.0)
@@ -70,7 +69,9 @@ func _build_interoperability_wing() -> void:
 	pad_mesh.radial_segments = 32
 	pad.mesh = pad_mesh
 	pad.position = interaction_pad_position + Vector3.UP * 0.24
-	pad.material_override = _make_wing_material(Color(0.18, 0.34, 0.52, 1.0))
+	pad.material_override = _make_wing_material(
+		Color(0.18, 0.34, 0.52, 1.0)
+	)
 	interoperability_root.add_child(pad)
 
 	_create_payload_console(
@@ -141,10 +142,22 @@ func _build_water_basin() -> void:
 		interoperability_root
 	)
 	for wall_data: Dictionary in [
-		{"position": Vector3(-12.4, -0.75, -11.0), "size": Vector3(0.35, 2.5, 7.0)},
-		{"position": Vector3(-5.6, -0.75, -11.0), "size": Vector3(0.35, 2.5, 7.0)},
-		{"position": Vector3(-9.0, -0.75, -14.4), "size": Vector3(7.0, 2.5, 0.35)},
-		{"position": Vector3(-9.0, -0.75, -7.6), "size": Vector3(7.0, 2.5, 0.35)},
+		{
+			"position": Vector3(-12.4, -0.75, -11.0),
+			"size": Vector3(0.35, 2.5, 7.0),
+		},
+		{
+			"position": Vector3(-5.6, -0.75, -11.0),
+			"size": Vector3(0.35, 2.5, 7.0),
+		},
+		{
+			"position": Vector3(-9.0, -0.75, -14.4),
+			"size": Vector3(7.0, 2.5, 0.35),
+		},
+		{
+			"position": Vector3(-9.0, -0.75, -7.6),
+			"size": Vector3(7.0, 2.5, 0.35),
+		},
 	]:
 		_create_static_box(
 			"WaterBasinWall",
@@ -213,7 +226,10 @@ func place_selected_on_interaction_pad() -> RecordedObjectInstance:
 	)
 	if object != null:
 		_show_message(
-			str(object.definition.get("display_name", object.blueprint_id.capitalize()))
+			str(object.definition.get(
+				"display_name",
+				object.blueprint_id.capitalize()
+			))
 			+ " placed on the interoperability pad."
 		)
 	return object

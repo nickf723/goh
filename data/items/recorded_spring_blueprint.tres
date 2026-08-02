@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="QuickItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/quick_item_definition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "recorded_spring_blueprint"
+display_name = "Recorded Spring"
+short_label = "SPRING"
+description = "A reproducible launch mechanism that throws Grace, creatures, and loose objects upward."
+icon_symbol = "↟"
+use_visual_color = Color(0.36, 0.94, 0.5, 1)
+max_stack = 1
+max_charges = 0
+refill_on_rest = false
+use_duration = 0.1
+movement_multiplier = 1.0
+requires_grounded = false
+can_use_at_maximum = false
+restore_amount = 0
+element = "air"
+tags = Array[String](["recorded_blueprint", "object_blueprint", "summonable_object", "spring", "launch", "traversal"])

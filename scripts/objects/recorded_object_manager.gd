@@ -292,6 +292,17 @@ func validate_placement(
 	flat_offset.y = 0.0
 	if flat_offset.length() > range_limit + 0.1:
 		return {"valid": false, "reason": "The target is outside reproduction range."}
+	var overlapping_object: RecordedObjectInstance = _find_active_overlap(
+		size,
+		ground_position,
+		yaw_degrees
+	)
+	if overlapping_object != null:
+		return {
+			"valid": false,
+			"reason": "Another reproduced object occupies that space.",
+			"active_overlap": overlapping_object.blueprint_id,
+		}
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(
 		maxf(size.x * 0.88, 0.1),
@@ -470,6 +481,46 @@ func _destroy_preview() -> void:
 		preview_root.queue_free()
 	preview_root = null
 	preview_mesh = null
+
+
+func _find_active_overlap(
+	candidate_size: Vector3,
+	ground_position: Vector3,
+	yaw_degrees: float
+) -> RecordedObjectInstance:
+	_prune_active_objects()
+	var candidate_center: Vector3 = (
+		ground_position + Vector3.UP * (candidate_size.y * 0.5 + 0.025)
+	)
+	var candidate_half: Vector3 = _rotated_half_extents(
+		candidate_size,
+		deg_to_rad(yaw_degrees)
+	)
+	for object: RecordedObjectInstance in active_objects:
+		if object == null or not is_instance_valid(object):
+			continue
+		var object_half: Vector3 = _rotated_half_extents(
+			object.body_size,
+			object.global_rotation.y
+		)
+		var delta: Vector3 = object.global_position - candidate_center
+		if (
+			absf(delta.x) < (candidate_half.x + object_half.x) * 0.92
+			and absf(delta.y) < (candidate_half.y + object_half.y) * 0.92
+			and absf(delta.z) < (candidate_half.z + object_half.z) * 0.92
+		):
+			return object
+	return null
+
+
+func _rotated_half_extents(size: Vector3, yaw_radians: float) -> Vector3:
+	var cosine: float = absf(cos(yaw_radians))
+	var sine: float = absf(sin(yaw_radians))
+	return Vector3(
+		(size.x * cosine + size.z * sine) * 0.5,
+		size.y * 0.5,
+		(size.x * sine + size.z * cosine) * 0.5
+	)
 
 
 func _enforce_active_limits(blueprint_id: String, maximum_for_blueprint: int) -> void:

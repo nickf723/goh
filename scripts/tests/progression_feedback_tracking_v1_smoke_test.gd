@@ -72,7 +72,20 @@ func run_tests() -> void:
 		{"amount": 1, "source": "feedback_test"}
 	)
 	var first_progress_debug: Dictionary = feedback.call("get_debug_data") as Dictionary
-	assert_equal(first_progress_debug.get("toast_count"), 1, "first progress event creates one toast")
+	var first_keys: Array = first_progress_debug.get("toast_keys", []) as Array
+	assert_equal(
+		first_progress_debug.get("toast_count"),
+		2,
+		"one systemic action can report discovery and challenge progress"
+	)
+	assert_true(
+		first_keys.has("discovery:reaction:wet_conduction"),
+		"first Wet Conduction reports its Journal discovery"
+	)
+	assert_true(
+		first_keys.has("challenge_progress:live_wire"),
+		"first Wet Conduction reports Live Wire progress"
+	)
 	tracker.call(
 		"record_event",
 		"reaction_triggered",
@@ -80,7 +93,22 @@ func run_tests() -> void:
 		{"amount": 1, "source": "feedback_test"}
 	)
 	var bundled_debug: Dictionary = feedback.call("get_debug_data") as Dictionary
-	assert_equal(bundled_debug.get("toast_count"), 1, "repeated challenge progress bundles into one toast")
+	var bundled_keys: Array = bundled_debug.get("toast_keys", []) as Array
+	assert_equal(
+		bundled_debug.get("toast_count"),
+		2,
+		"repeated progress updates the challenge toast without multiplying it"
+	)
+	assert_equal(
+		bundled_keys.count("challenge_progress:live_wire"),
+		1,
+		"Live Wire keeps one evolving challenge-progress toast"
+	)
+	assert_equal(
+		bundled_keys.count("discovery:reaction:wet_conduction"),
+		1,
+		"the reaction discovery remains a single distinct notification"
+	)
 	tracker.call(
 		"record_event",
 		"reaction_triggered",

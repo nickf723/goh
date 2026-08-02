@@ -1,4 +1,4 @@
-extends "res://scripts/ui/development_control_center_familiar.gd"
+extends "res://scripts/ui/development_control_center.gd"
 
 const PROGRESSION_CHALLENGE_LAB_FEATURE: Dictionary = {
 	"id": "progression_challenge_lab",

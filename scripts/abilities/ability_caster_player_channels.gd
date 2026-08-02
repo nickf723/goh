@@ -339,3 +339,70 @@ func get_input_mode_debug_data() -> Dictionary:
 		if controller.has_method("get_debug_data"):
 			data["targeting"] = controller.call("get_debug_data")
 	return data
+
+
+# Scene transitions may occur in the same frame that a ground spell is
+# confirmed. Attach the visual before using global transforms and abandon the
+# effect cleanly when the old scene is already leaving the tree.
+func show_earth_spike_erupt_visual(
+	target_position: Vector3,
+	target_radius: float
+) -> void:
+	if not is_inside_tree() or get_tree() == null:
+		return
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null or not scene_root.is_inside_tree():
+		return
+
+	var root := Node3D.new()
+	root.name = "EarthSpikeEruption"
+	scene_root.add_child(root)
+	if not root.is_inside_tree():
+		root.queue_free()
+		return
+	root.global_position = target_position
+
+	var disc := MeshInstance3D.new()
+	disc.name = "EarthBurstDisc"
+	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var disc_mesh := CylinderMesh.new()
+	disc_mesh.top_radius = target_radius
+	disc_mesh.bottom_radius = target_radius
+	disc_mesh.height = 0.045
+	disc.mesh = disc_mesh
+	disc.material_override = make_earth_spike_marker_material(0.42)
+	root.add_child(disc)
+
+	for index: int in range(5):
+		var spike := MeshInstance3D.new()
+		spike.name = "StoneSpike" + str(index + 1)
+		var spike_mesh := BoxMesh.new()
+		var height: float = 1.05 + float(index % 3) * 0.28
+		spike_mesh.size = Vector3(0.32, height, 0.32)
+		spike.mesh = spike_mesh
+		spike.material_override = make_earth_spike_spike_material()
+		var angle: float = TAU * float(index) / 5.0
+		var radius: float = 0.25 + float(index % 2) * 0.48
+		spike.position = Vector3(
+			cos(angle) * radius,
+			height * 0.5,
+			sin(angle) * radius
+		)
+		spike.rotation = Vector3(
+			deg_to_rad(10.0 + float(index) * 3.0),
+			angle,
+			deg_to_rad(-8.0 + float(index) * 2.0)
+		)
+		spike.scale = Vector3(0.2, 0.05, 0.2)
+		root.add_child(spike)
+		var tween: Tween = root.create_tween()
+		tween.tween_property(
+			spike,
+			"scale",
+			Vector3.ONE,
+			0.08
+		).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+	var cleanup_tween: Tween = root.create_tween()
+	cleanup_tween.tween_interval(0.5)
+	cleanup_tween.tween_callback(root.queue_free)

@@ -20,8 +20,21 @@ func hide_menu() -> void:
 	super.hide_menu()
 
 
+func render_magic() -> void:
+	super.render_magic()
+	if is_assigning_spell():
+		return
+	_render_recorded_object_spell_blueprints()
+
+
 func activate_action(action: Dictionary) -> void:
 	var kind: String = str(action.get("kind", ""))
+	if kind == "equip_recorded_object_spell_blueprint":
+		_equip_recorded_object_blueprint(
+			str(action.get("blueprint_id", ""))
+		)
+		return
+
 	if (
 		kind == "select_inventory_record"
 		and get_current_tab_id() == "items"
@@ -41,9 +54,113 @@ func activate_action(action: Dictionary) -> void:
 			RecordedObjectCatalogScript.select_blueprint(blueprint_id)
 			recorded_object_prepare_requested.emit(blueprint_id)
 			return
+
+	# The Journal's Blueprint shelf is the learned-record side of the Codex.
+	# Inspect once, then confirm again to reproduce the recorded object directly.
+	if (
+		kind == "select_journal_record"
+		and get_current_tab_id() == "journal"
+		and selected_journal_category == "blueprints"
+	):
+		var record_id: String = str(action.get("record_id", ""))
+		if record_id != "" and record_id == selected_journal_record_id:
+			var journal_blueprint_id: String = (
+				RecordedObjectCatalogScript.get_blueprint_id_for_item(record_id)
+			)
+			if (
+				journal_blueprint_id != ""
+				and RecordedObjectCatalogScript.is_recorded(
+					journal_blueprint_id
+				)
+			):
+				RecordedObjectCatalogScript.select_blueprint(
+					journal_blueprint_id
+				)
+				recorded_object_prepare_requested.emit(
+					journal_blueprint_id
+				)
+				return
+
 	if kind == "select_inventory_record":
 		armed_recorded_object_item_id = ""
 	super.activate_action(action)
+
+
+func _render_recorded_object_spell_blueprints() -> void:
+	add_section_header("REPRODUCE OBJECT • PREPARED BLUEPRINT")
+	var selected_id: String = (
+		RecordedObjectCatalogScript.get_selected_blueprint_id()
+	)
+	var selected_definition: Dictionary = (
+		RecordedObjectCatalogScript.get_definition(selected_id)
+	)
+	add_summary_card([
+		"Prepared " + (
+			str(selected_definition.get("display_name", "None"))
+			if selected_id != ""
+			else "None"
+		),
+		"Cast Reproduce Object to enter placement",
+		"Object mana is paid when placement is confirmed",
+		"Selection persists with the save slot",
+	])
+
+	var grid: GridContainer = make_visual_grid(4)
+	content_box.add_child(grid)
+	for blueprint_id: String in RecordedObjectCatalogScript.BLUEPRINT_ORDER:
+		var definition: Dictionary = (
+			RecordedObjectCatalogScript.get_definition(blueprint_id)
+		)
+		var recorded: bool = (
+			RecordedObjectCatalogScript.is_recorded(blueprint_id)
+		)
+		var selected: bool = blueprint_id == selected_id
+		if recorded:
+			add_visual_action_tile(
+				grid,
+				str(definition.get("icon", "▣")),
+				str(definition.get(
+					"display_name",
+					blueprint_id.capitalize()
+				)),
+				"PREPARED" if selected else (
+					str(definition.get("mana_cost", 0))
+					+ " MANA"
+				),
+				{
+					"kind": "equip_recorded_object_spell_blueprint",
+					"blueprint_id": blueprint_id,
+				},
+				str(definition.get("description", "Recorded object."))
+			)
+		else:
+			add_visual_info_card(
+				"🔒",
+				str(definition.get(
+					"display_name",
+					blueprint_id.capitalize()
+				)),
+				str(definition.get("description", "Recorded object.")),
+				"Study this object in the world"
+			)
+
+
+func _equip_recorded_object_blueprint(blueprint_id: String) -> void:
+	if not RecordedObjectCatalogScript.select_blueprint(blueprint_id):
+		_show_recorded_object_message(
+			"That object pattern has not been recorded yet."
+		)
+		return
+	var definition: Dictionary = (
+		RecordedObjectCatalogScript.get_definition(blueprint_id)
+	)
+	_show_recorded_object_message(
+		"Prepared "
+		+ str(definition.get("display_name", blueprint_id.capitalize()))
+		+ " for Reproduce Object."
+	)
+	refresh_menu_data()
+	rebuild_menu()
 
 
 func _toggle_item_category(category_id: String) -> void:
@@ -128,7 +245,18 @@ func get_footer_text() -> String:
 		and not is_assignment_active()
 	):
 		return "D-pad: choose blueprint  •  A: prepare / press again to place  •  B: collapse  •  ZL/ZR: main tabs  •  L/R: subtabs"
+	if (
+		get_current_tab_id() == "journal"
+		and selected_journal_category == "blueprints"
+		and not is_assignment_active()
+	):
+		return "D-pad: choose record  •  A: inspect / press again to reproduce object  •  B: collapse  •  ZL/ZR: main tabs"
 	return super.get_footer_text()
+
+
+func _show_recorded_object_message(text: String) -> void:
+	if GameState.has_method("show_system_message"):
+		GameState.call("show_system_message", text)
 
 
 func get_recorded_object_menu_debug_data() -> Dictionary:
@@ -137,4 +265,6 @@ func get_recorded_object_menu_debug_data() -> Dictionary:
 		"selected_blueprint_id": RecordedObjectCatalogScript.get_selected_blueprint_id(),
 		"recorded_count": RecordedObjectCatalogScript.get_recorded_blueprint_ids().size(),
 		"prepare_signal": has_signal("recorded_object_prepare_requested"),
+		"magic_blueprint_preparation": true,
+		"journal_direct_reproduction": true,
 	}

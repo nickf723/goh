@@ -178,9 +178,12 @@ func _test_barrel_dampening_and_detonation() -> void:
 	barrel.receive_damage_payload(
 		_make_payload("fire", 4, ["heat", "ignite"])
 	)
-	assert_true(barrel.detonation_started, "dry barrel detonates from Fire")
-	assert_true(barrel.is_queued_for_deletion(), "detonated barrel removes itself")
-	await get_tree().process_frame
+	assert_true(barrel.detonation_started, "dry barrel begins deferred Fire detonation")
+	await _wait_for_object_exit(barrel, 8)
+	assert_true(
+		_is_object_gone(barrel),
+		"deferred dry barrel blast resolves and removes itself"
+	)
 
 
 func _test_barrel_chain_reaction() -> void:
@@ -202,12 +205,21 @@ func _test_barrel_chain_reaction() -> void:
 	assert_true(first != null and second != null, "two barrels can be staged for a chain reaction")
 	if first == null or second == null:
 		return
+
 	await get_tree().physics_frame
 	first.detonate()
-	await get_tree().physics_frame
-	assert_true(second.detonation_started, "one blast barrel detonates a nearby barrel")
-	assert_true(second.is_queued_for_deletion(), "chain-reacted barrel removes itself")
-	await get_tree().process_frame
+	var frames_advanced: int = 0
+	for _index: int in range(12):
+		await get_tree().process_frame
+		frames_advanced += 1
+		await get_tree().physics_frame
+		if _is_object_gone(first) and _is_object_gone(second):
+			break
+
+	assert_true(frames_advanced > 0, "engine frames continue during the chain reaction")
+	assert_true(_is_object_gone(first), "initiating barrel resolves safely")
+	assert_true(_is_object_gone(second), "nearby barrel resolves through deferred chain reaction")
+	assert_true(is_equal_approx(Engine.time_scale, 1.0), "barrel chain leaves global time running")
 
 
 func _test_crate_buoyancy() -> void:
@@ -227,6 +239,25 @@ func _test_crate_buoyancy() -> void:
 	assert_true(_has_discovery(crate, "crate_floats"), "crate buoyancy becomes an object reaction discovery")
 
 
+func _wait_for_object_exit(
+	object: RecordedObjectInstance,
+	maximum_frames: int
+) -> void:
+	for _index: int in range(maxi(maximum_frames, 1)):
+		if _is_object_gone(object):
+			return
+		await get_tree().process_frame
+		await get_tree().physics_frame
+
+
+func _is_object_gone(object: RecordedObjectInstance) -> bool:
+	return (
+		object == null
+		or not is_instance_valid(object)
+		or object.is_queued_for_deletion()
+	)
+
+
 func _make_payload(
 	element: String,
 	amount: int,
@@ -244,6 +275,8 @@ func _make_payload(
 
 
 func _interaction_state(object: RecordedObjectInstance) -> Dictionary:
+	if object == null or not is_instance_valid(object):
+		return {}
 	var debug: Dictionary = object.get_debug_data()
 	var value: Variant = debug.get("interoperability", {})
 	return value as Dictionary if value is Dictionary else {}
@@ -272,6 +305,7 @@ func _clear_blueprint_state() -> void:
 
 
 func _restore_state() -> void:
+	Engine.time_scale = 1.0
 	if manager != null and is_instance_valid(manager):
 		manager.clear_spawned_objects()
 	if lab != null and is_instance_valid(lab):

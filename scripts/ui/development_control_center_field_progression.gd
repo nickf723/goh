@@ -1,4 +1,4 @@
-extends "res://scripts/ui/development_control_center_familiar.gd"
+extends "res://scripts/ui/development_control_center_progression.gd"
 
 const FIELD_PROGRESSION_FEATURE: Dictionary = {
 	"id": "ruined_village_field_progression",

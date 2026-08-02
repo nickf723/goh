@@ -19,9 +19,9 @@ var detonation_started: bool = false
 var activation_count: int = 0
 var body_size: Vector3 = Vector3.ONE
 var spring_trigger: Area3D
+var contact_area: Area3D
 var primary_mesh: MeshInstance3D
 
-# Shared recorded-object interoperability state.
 var base_visual_color: Color = Color(0.55, 0.72, 0.9, 1.0)
 var wet_remaining: float = 0.0
 var wet_strength: float = 0.0
@@ -37,7 +37,6 @@ var buoyancy_ratio: float = 0.0
 var buoyancy_state: String = "air"
 var buoyancy_submerged_fraction: float = 0.0
 var active_fluid_volume: FluidForceVolume
-var contact_area: Area3D
 var contact_cooldowns: Dictionary = {}
 var discovered_interactions: Dictionary = {}
 var last_interaction_id: String = "none"
@@ -57,8 +56,9 @@ func configure(
 	name = "Recorded" + blueprint_id.to_pascal_case()
 	add_to_group("recorded_object")
 	add_to_group("recorded_object_" + blueprint_id)
-	add_to_group("debuggable")
 	add_to_group("elemental_receiver")
+	add_to_group("freezable_receiver")
+	add_to_group("debuggable")
 	body_size = definition.get("size", Vector3.ONE) as Vector3
 	mass = maxf(float(definition.get("mass", 1.0)), 0.1)
 	collision_layer = 1
@@ -97,9 +97,7 @@ func step_interoperability(delta: float) -> void:
 	if burning_remaining > 0.0:
 		if wet_remaining > 0.0:
 			burning_remaining = 0.0
-			_record_interaction("water_extinguish", {
-				"wet_strength": wet_strength,
-			})
+			_record_interaction("water_extinguish", {"wet_strength": wet_strength})
 		else:
 			burning_remaining = maxf(burning_remaining - safe_delta, 0.0)
 			if burning_remaining <= 0.0 and blueprint_id == "crate":
@@ -110,7 +108,7 @@ func step_interoperability(delta: float) -> void:
 	elif frozen_progress > 0.0:
 		frozen_progress = move_toward(frozen_progress, 0.0, safe_delta * 0.018)
 	_update_contact_cooldowns(safe_delta)
-	_apply_simple_buoyancy(safe_delta)
+	_apply_simple_buoyancy()
 	_refresh_interaction_visual()
 
 
@@ -125,12 +123,10 @@ func _configure_interoperability_profile() -> void:
 		"platform":
 			maximum_durability = 9.0
 			conductivity = 0.82
-			buoyancy_ratio = 0.0
 			add_to_group("conductive_receiver")
 		"spring":
 			maximum_durability = 7.0
 			conductivity = 0.94
-			buoyancy_ratio = 0.0
 			add_to_group("conductive_receiver")
 		"blast_barrel":
 			maximum_durability = 3.0
@@ -141,10 +137,7 @@ func _configure_interoperability_profile() -> void:
 			add_to_group("buoyant_recorded_object")
 		_:
 			maximum_durability = 4.0
-			conductivity = 0.0
-			buoyancy_ratio = 0.0
 	durability = maximum_durability
-	add_to_group("freezable_receiver")
 
 
 func _build_collision() -> void:
@@ -181,13 +174,22 @@ func _build_visual() -> void:
 		var plate := MeshInstance3D.new()
 		plate.name = "SpringPlate"
 		var plate_mesh := BoxMesh.new()
-		plate_mesh.size = Vector3(body_size.x * 0.82, 0.12, body_size.z * 0.82)
+		plate_mesh.size = Vector3(
+			body_size.x * 0.82,
+			0.12,
+			body_size.z * 0.82
+		)
 		plate.mesh = plate_mesh
 		plate.position.y = body_size.y * 0.62
-		plate.material_override = _make_material(Color(0.66, 1.0, 0.72, 1.0))
+		plate.material_override = _make_material(
+			Color(0.66, 1.0, 0.72, 1.0)
+		)
 		add_child(plate)
 	elif behavior == "blast_barrel":
-		for y_offset: float in [-body_size.y * 0.28, body_size.y * 0.28]:
+		for y_offset: float in [
+			-body_size.y * 0.28,
+			body_size.y * 0.28,
+		]:
 			var band := MeshInstance3D.new()
 			var band_mesh := TorusMesh.new()
 			band_mesh.inner_radius = body_size.x * 0.47
@@ -197,7 +199,9 @@ func _build_visual() -> void:
 			band.mesh = band_mesh
 			band.position.y = y_offset
 			band.rotation_degrees.x = 90.0
-			band.material_override = _make_material(Color(0.18, 0.12, 0.08, 1.0))
+			band.material_override = _make_material(
+				Color(0.18, 0.12, 0.08, 1.0)
+			)
 			add_child(band)
 
 
@@ -235,14 +239,16 @@ func _build_contact_area() -> void:
 
 
 func _on_spring_body_entered(body: Node3D) -> void:
-	if body == self or body == null:
+	if body == null or body == self:
 		return
-	var base_launch_speed: float = maxf(
+	var launch_speed: float = maxf(
 		float(definition.get("launch_speed", 10.0)),
 		1.0
 	)
-	var launch_speed: float = base_launch_speed
-	var used_overcharge: bool = overcharge_charges > 0 and overcharge_remaining > 0.0
+	var used_overcharge: bool = (
+		overcharge_charges > 0
+		and overcharge_remaining > 0.0
+	)
 	if used_overcharge:
 		launch_speed *= 1.65
 	if body is CharacterBody3D:
@@ -277,13 +283,17 @@ func _on_conductive_body_entered(body: Node3D) -> void:
 	payload.amount = 1
 	payload.stance_damage = 1
 	payload.element = "lightning"
-	payload.source_name = str(definition.get("display_name", "Energized object"))
+	payload.source_name = str(
+		definition.get("display_name", "Energized object")
+	)
 	payload.hit_type = "environment"
-	payload.tags = ["recorded_object", "electrical", "conductive_contact"]
+	payload.tags = [
+		"recorded_object",
+		"electrical",
+		"conductive_contact",
+	]
 	receiver.call("receive_damage_payload", payload)
-	_record_interaction("electrified_contact", {
-		"target": body.name,
-	})
+	_record_interaction("electrified_contact", {"target": body.name})
 
 
 func receive_damage_payload(payload: DamagePayload) -> void:
@@ -294,31 +304,36 @@ func receive_damage_payload(payload: DamagePayload) -> void:
 	for raw_tag: String in payload.tags:
 		tags.append(raw_tag.to_lower().strip_edges())
 	var intensity: float = maxf(
-		absf(float(payload.amount)),
-		absf(payload.status_strength),
+		maxf(
+			absf(float(payload.amount)),
+			absf(payload.status_strength)
+		),
 		1.0
 	)
 	var force_like: bool = (
 		payload.knockback_strength > 0.0
-		or "heavy" in tags
-		or "force" in tags
-		or "impact" in tags
-		or "explosive" in tags
-		or "explosion" in tags
+		or tags.has("heavy")
+		or tags.has("force")
+		or tags.has("impact")
+		or tags.has("explosive")
+		or tags.has("explosion")
 	)
 
-	if element == "water" or "water" in tags or "douse" in tags:
+	if element == "water" or tags.has("water") or tags.has("douse"):
 		_apply_water_payload(intensity, payload.source_name)
 		if force_like and not freeze:
-			super.receive_damage_payload(payload)
+			_apply_legacy_payload_behavior(payload)
 		return
 
-	if element == "ice" or "ice" in tags or "freeze" in tags or "cold" in tags:
+	if element == "ice" or tags.has("ice") or tags.has("freeze") or tags.has("cold"):
 		_apply_ice_payload(intensity, payload.source_name)
 		return
 
-	if element == "lightning" or "lightning" in tags or "electrical" in tags:
-		var conducted: bool = _apply_lightning_payload(intensity, payload.source_name)
+	if element == "lightning" or tags.has("lightning") or tags.has("electrical"):
+		var conducted: bool = _apply_lightning_payload(
+			intensity,
+			payload.source_name
+		)
 		if blueprint_id == "blast_barrel" and conducted:
 			if wet_remaining > 0.0:
 				_record_interaction("dampened_fuse", {
@@ -332,10 +347,13 @@ func receive_damage_payload(payload: DamagePayload) -> void:
 				detonate()
 		return
 
-	if element == "fire" or "fire" in tags or "heat" in tags or "ignite" in tags:
+	if element == "fire" or tags.has("fire") or tags.has("heat") or tags.has("ignite"):
 		if frozen_progress > 0.0:
 			var previous_frozen: float = frozen_progress
-			frozen_progress = maxf(frozen_progress - intensity * 0.32, 0.0)
+			frozen_progress = maxf(
+				frozen_progress - intensity * 0.32,
+				0.0
+			)
 			if previous_frozen >= 0.65 and frozen_progress < 0.65:
 				_record_interaction("thermal_thaw", {
 					"source": payload.source_name,
@@ -350,10 +368,13 @@ func receive_damage_payload(payload: DamagePayload) -> void:
 			_record_interaction("fire_detonation", {
 				"source": payload.source_name,
 			})
-			super.receive_damage_payload(payload)
+			_apply_legacy_payload_behavior(payload)
 			return
 		if blueprint_id == "crate":
-			burning_remaining = maxf(burning_remaining, 7.5 + intensity * 0.5)
+			burning_remaining = maxf(
+				burning_remaining,
+				7.5 + intensity * 0.5
+			)
 			_record_interaction("crate_ignited", {
 				"source": payload.source_name,
 				"burn_seconds": burning_remaining,
@@ -368,30 +389,64 @@ func receive_damage_payload(payload: DamagePayload) -> void:
 			)
 			durability = maxf(durability - fracture_damage, 0.0)
 			if durability <= 0.0 or (
-				frozen_progress >= 0.95 and fracture_damage >= 1.2
+				frozen_progress >= 0.95
+				and fracture_damage >= 1.2
 			):
 				_shatter(payload.source_name)
 				return
-		super.receive_damage_payload(payload)
+		_apply_legacy_payload_behavior(payload)
 		return
 
-	super.receive_damage_payload(payload)
+	_apply_legacy_payload_behavior(payload)
+
+
+func _apply_legacy_payload_behavior(payload: DamagePayload) -> void:
+	if payload == null or detonation_started:
+		return
+	if str(definition.get("behavior", "")) == "blast_barrel":
+		var should_detonate: bool = payload.element == "fire"
+		for tag: String in payload.tags:
+			if tag in [
+				"heavy",
+				"force",
+				"explosive",
+				"explosion",
+				"combustion",
+			]:
+				should_detonate = true
+		if should_detonate:
+			detonate()
+			return
+	if freeze or payload.knockback_strength <= 0.0:
+		return
+	var origin: Vector3 = (
+		source_actor.global_position
+		if source_actor != null and is_instance_valid(source_actor)
+		else global_position - Vector3.FORWARD
+	)
+	var direction: Vector3 = global_position - origin
+	direction.y = 0.2
+	if direction.length_squared() <= 0.01:
+		direction = Vector3.FORWARD
+	apply_central_impulse(
+		direction.normalized() * payload.knockback_strength * mass
+	)
 
 
 func _apply_water_payload(intensity: float, source_name: String) -> void:
 	var was_burning: bool = burning_remaining > 0.0
 	var was_wet: bool = wet_remaining > 0.0
-	wet_strength = clampf(maxf(wet_strength, intensity * 0.22), 0.0, 1.0)
+	wet_strength = clampf(
+		maxf(wet_strength, intensity * 0.22),
+		0.0,
+		1.0
+	)
 	wet_remaining = maxf(wet_remaining, 7.0 + intensity * 0.7)
 	burning_remaining = 0.0
 	if was_burning:
-		_record_interaction("water_extinguish", {
-			"source": source_name,
-		})
+		_record_interaction("water_extinguish", {"source": source_name})
 	elif not was_wet:
-		_record_interaction("object_doused", {
-			"source": source_name,
-		})
+		_record_interaction("object_doused", {"source": source_name})
 	if blueprint_id == "blast_barrel":
 		_record_interaction("barrel_dampened", {
 			"source": source_name,
@@ -417,7 +472,10 @@ func _apply_ice_payload(intensity: float, source_name: String) -> void:
 		angular_velocity *= 0.25
 
 
-func _apply_lightning_payload(intensity: float, source_name: String) -> bool:
+func _apply_lightning_payload(
+	intensity: float,
+	source_name: String
+) -> bool:
 	var effective_conductivity: float = conductivity
 	if wet_remaining > 0.0:
 		effective_conductivity = maxf(effective_conductivity, 0.72)
@@ -445,8 +503,6 @@ func _apply_lightning_payload(intensity: float, source_name: String) -> bool:
 				_record_interaction("wet_crate_conduction", {
 					"source": source_name,
 				})
-		"blast_barrel":
-			pass
 	return true
 
 
@@ -461,9 +517,18 @@ func detonate() -> void:
 		return
 	detonation_started = true
 	activation_count += 1
-	var blast_radius: float = maxf(float(definition.get("blast_radius", 4.5)), 0.5)
-	var blast_damage: int = maxi(int(definition.get("blast_damage", 3)), 0)
-	var blast_force: float = maxf(float(definition.get("blast_force", 8.0)), 0.0)
+	var blast_radius: float = maxf(
+		float(definition.get("blast_radius", 4.5)),
+		0.5
+	)
+	var blast_damage: int = maxi(
+		int(definition.get("blast_damage", 3)),
+		0
+	)
+	var blast_force: float = maxf(
+		float(definition.get("blast_force", 8.0)),
+		0.0
+	)
 	_record_interaction("barrel_detonated", {
 		"radius": blast_radius,
 		"force": blast_force,
@@ -503,7 +568,7 @@ func interact() -> Dictionary:
 
 
 func _apply_blast(radius: float, damage: int, force: float) -> void:
-	var world := get_world_3d()
+	var world: World3D = get_world_3d()
 	if world == null:
 		return
 	var sphere := SphereShape3D.new()
@@ -515,7 +580,10 @@ func _apply_blast(radius: float, damage: int, force: float) -> void:
 	query.collide_with_bodies = true
 	query.collision_mask = 0xFFFFFFFF
 	query.exclude = [get_rid()]
-	var hits: Array[Dictionary] = world.direct_space_state.intersect_shape(query, 64)
+	var hits: Array[Dictionary] = world.direct_space_state.intersect_shape(
+		query,
+		64
+	)
 	var damaged_nodes: Dictionary = {}
 	for hit: Dictionary in hits:
 		var collider: Object = hit.get("collider")
@@ -523,26 +591,39 @@ func _apply_blast(radius: float, damage: int, force: float) -> void:
 			continue
 		var node := collider as Node
 		var receiver: Node = _find_payload_receiver(node)
-		if receiver != null and not damaged_nodes.has(receiver.get_instance_id()):
+		if receiver != null and not damaged_nodes.has(
+			receiver.get_instance_id()
+		):
 			damaged_nodes[receiver.get_instance_id()] = true
 			var payload := DamagePayload.new()
 			payload.amount = damage
 			payload.stance_damage = damage
 			payload.element = "fire"
-			payload.source_name = str(definition.get("display_name", "Recorded Blast Barrel"))
+			payload.source_name = str(
+				definition.get("display_name", "Recorded Blast Barrel")
+			)
 			payload.hit_type = "reaction_burst"
-			payload.tags = ["recorded_object", "explosive", "explosion", "combustion"]
+			payload.tags = [
+				"recorded_object",
+				"explosive",
+				"explosion",
+				"combustion",
+			]
 			payload.knockback_strength = force
 			payload.knockback_up_strength = force * 0.45
 			receiver.call("receive_damage_payload", payload)
 		if node is Node3D:
-			var direction: Vector3 = (node as Node3D).global_position - global_position
+			var direction: Vector3 = (
+				(node as Node3D).global_position - global_position
+			)
 			direction.y = maxf(direction.y, 0.32)
 			if direction.length_squared() <= 0.01:
 				direction = Vector3.UP
 			if node is RigidBody3D:
 				var rigid := node as RigidBody3D
-				rigid.apply_central_impulse(direction.normalized() * force * rigid.mass)
+				rigid.apply_central_impulse(
+					direction.normalized() * force * rigid.mass
+				)
 			elif node is CharacterBody3D:
 				var character := node as CharacterBody3D
 				character.velocity += direction.normalized() * force
@@ -559,13 +640,15 @@ func _find_payload_receiver(start: Node) -> Node:
 		if direct != null and direct.has_method("receive_damage_payload"):
 			return direct
 		var hit_receiver: Node = current.get_node_or_null("HitReceiver")
-		if hit_receiver != null and hit_receiver.has_method("receive_damage_payload"):
+		if hit_receiver != null and hit_receiver.has_method(
+			"receive_damage_payload"
+		):
 			return hit_receiver
 		current = current.get_parent()
 	return null
 
 
-func _apply_simple_buoyancy(_delta: float) -> void:
+func _apply_simple_buoyancy() -> void:
 	previous_submerged_fraction = buoyancy_submerged_fraction
 	buoyancy_submerged_fraction = 0.0
 	active_fluid_volume = null
@@ -586,7 +669,8 @@ func _apply_simple_buoyancy(_delta: float) -> void:
 		if fraction <= 0.0:
 			continue
 		if volume.priority > best_priority or (
-			volume.priority == best_priority and fraction > best_fraction
+			volume.priority == best_priority
+			and fraction > best_fraction
 		):
 			active_fluid_volume = volume
 			best_fraction = fraction
@@ -596,22 +680,31 @@ func _apply_simple_buoyancy(_delta: float) -> void:
 		buoyancy_state = "air"
 		return
 	wet_remaining = maxf(wet_remaining, 1.2)
-	wet_strength = maxf(wet_strength, clampf(best_fraction, 0.0, 1.0))
+	wet_strength = maxf(
+		wet_strength,
+		clampf(best_fraction, 0.0, 1.0)
+	)
 	var gravity_value: float = maxf(
-		ProjectSettings.get_setting("physics/3d/default_gravity", 9.8) as float,
+		float(ProjectSettings.get_setting(
+			"physics/3d/default_gravity",
+			9.8
+		)),
 		0.1
 	)
-	var lift_force: float = mass * gravity_value * buoyancy_ratio * best_fraction
-	apply_central_force(Vector3.UP * lift_force)
-	var flow: Vector3 = active_fluid_volume.get_flow_velocity_at(global_position)
-	var relative_velocity: Vector3 = linear_velocity - flow
-	var drag_force: Vector3 = (
-		-relative_velocity
-		* mass
+	var lift_force: float = (
+		mass
+		* gravity_value
+		* buoyancy_ratio
 		* best_fraction
-		* 1.35
 	)
-	apply_central_force(drag_force)
+	apply_central_force(Vector3.UP * lift_force)
+	var flow: Vector3 = active_fluid_volume.get_flow_velocity_at(
+		global_position
+	)
+	var relative_velocity: Vector3 = linear_velocity - flow
+	apply_central_force(
+		-relative_velocity * mass * best_fraction * 1.35
+	)
 	angular_velocity *= maxf(1.0 - best_fraction * 0.035, 0.82)
 	if linear_velocity.y > 0.25:
 		buoyancy_state = "rising"
@@ -620,7 +713,10 @@ func _apply_simple_buoyancy(_delta: float) -> void:
 	else:
 		buoyancy_state = "submerged"
 	if previous_submerged_fraction <= 0.02 and best_fraction > 0.08:
-		active_fluid_volume.spawn_ripple(global_position, 1.0 + mass * 0.08)
+		active_fluid_volume.spawn_ripple(
+			global_position,
+			1.0 + mass * 0.08
+		)
 		if blueprint_id == "crate":
 			_record_interaction("crate_floats", {
 				"submerged_fraction": best_fraction,
@@ -658,14 +754,21 @@ func _spawn_blast_visual(radius: float) -> void:
 	sphere.radius = 0.5
 	sphere.height = 1.0
 	pulse.mesh = sphere
-	pulse.material_override = _make_transparent_material(Color(1.0, 0.38, 0.08, 0.72))
+	pulse.material_override = _make_transparent_material(
+		Color(1.0, 0.38, 0.08, 0.72)
+	)
 	scene_root.add_child(pulse)
 	pulse.global_position = global_position
 	pulse.scale = Vector3.ONE * 0.2
 	pulse.transparency = 0.0
 	var tween := pulse.create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(pulse, "scale", Vector3.ONE * radius * 2.0, 0.32)
+	tween.tween_property(
+		pulse,
+		"scale",
+		Vector3.ONE * radius * 2.0,
+		0.32
+	)
 	tween.tween_property(pulse, "transparency", 1.0, 0.32)
 	tween.chain().tween_callback(pulse.queue_free)
 
@@ -714,7 +817,10 @@ func _refresh_interaction_visual() -> void:
 		return
 	var color: Color = base_visual_color
 	if wet_remaining > 0.0:
-		color = color.lerp(Color(0.16, 0.42, 0.72, 1.0), 0.32 * wet_strength)
+		color = color.lerp(
+			Color(0.16, 0.42, 0.72, 1.0),
+			0.32 * wet_strength
+		)
 	if frozen_progress > 0.0:
 		color = color.lerp(
 			Color(0.56, 0.92, 1.0, 1.0),
@@ -727,7 +833,9 @@ func _refresh_interaction_visual() -> void:
 	material.albedo_color = color
 	material.emission_enabled = true
 	material.emission = color.darkened(
-		0.18 if burning_remaining > 0.0 or electrified_remaining > 0.0 else 0.58
+		0.18
+		if burning_remaining > 0.0 or electrified_remaining > 0.0
+		else 0.58
 	)
 	material.emission_energy_multiplier = (
 		1.15
@@ -758,7 +866,11 @@ func _record_interaction(
 	var payload: Dictionary = data.duplicate(true)
 	payload["blueprint_id"] = blueprint_id
 	payload["interaction_id"] = interaction_id
-	object_interaction_triggered.emit(blueprint_id, interaction_id, payload)
+	object_interaction_triggered.emit(
+		blueprint_id,
+		interaction_id,
+		payload
+	)
 	if discovered_interactions.has(interaction_id):
 		return
 	discovered_interactions[interaction_id] = true
@@ -775,7 +887,10 @@ func _record_interaction(
 				"blueprint_id": blueprint_id,
 				"interaction_id": interaction_id,
 				"display_name": (
-					str(definition.get("display_name", blueprint_id.capitalize()))
+					str(definition.get(
+						"display_name",
+						blueprint_id.capitalize()
+					))
 					+ " • "
 					+ interaction_id.replace("_", " ").capitalize()
 				),
@@ -795,9 +910,7 @@ func _get_interaction_state_summary() -> String:
 		states.append("energized")
 	if overcharge_charges > 0:
 		states.append("overcharged")
-	if states.is_empty():
-		return "stable"
-	return ", ".join(states)
+	return "stable" if states.is_empty() else ", ".join(states)
 
 
 func get_debug_data() -> Dictionary:
@@ -810,13 +923,18 @@ func get_debug_data() -> Dictionary:
 		"mass": mass,
 		"activation_count": activation_count,
 		"detonation_started": detonation_started,
-		"age_seconds": float(Time.get_ticks_msec() - spawned_at_msec) / 1000.0,
+		"age_seconds": (
+			float(Time.get_ticks_msec() - spawned_at_msec) / 1000.0
+		),
 		"has_spring_trigger": spring_trigger != null,
 		"interoperability": {
 			"wet_remaining": snapped(wet_remaining, 0.01),
 			"wet_strength": snapped(wet_strength, 0.01),
 			"frozen_progress": snapped(frozen_progress, 0.01),
-			"electrified_remaining": snapped(electrified_remaining, 0.01),
+			"electrified_remaining": snapped(
+				electrified_remaining,
+				0.01
+			),
 			"overcharge_remaining": snapped(overcharge_remaining, 0.01),
 			"overcharge_charges": overcharge_charges,
 			"burning_remaining": snapped(burning_remaining, 0.01),
@@ -825,10 +943,14 @@ func get_debug_data() -> Dictionary:
 			"conductivity": conductivity,
 			"buoyancy_ratio": buoyancy_ratio,
 			"buoyancy_state": buoyancy_state,
-			"submerged_fraction": snapped(buoyancy_submerged_fraction, 0.01),
+			"submerged_fraction": snapped(
+				buoyancy_submerged_fraction,
+				0.01
+			),
 			"active_fluid": (
 				active_fluid_volume.name
-				if active_fluid_volume != null and is_instance_valid(active_fluid_volume)
+				if active_fluid_volume != null
+				and is_instance_valid(active_fluid_volume)
 				else "none"
 			),
 			"last_interaction": last_interaction_id,

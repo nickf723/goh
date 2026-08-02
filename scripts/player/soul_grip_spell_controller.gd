@@ -67,26 +67,39 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not channel_requested or held_target == null:
 		return
-	if not event is InputEventMouseButton:
+
+	if event is InputEventMouseButton:
+		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
+		if not mouse_event.pressed:
+			return
+		if mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			hold_distance = clampf(
+				hold_distance + mouse_distance_step,
+				minimum_hold_distance,
+				maximum_hold_distance
+			)
+			get_viewport().set_input_as_handled()
+		elif mouse_event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			hold_distance = clampf(
+				hold_distance - mouse_distance_step,
+				minimum_hold_distance,
+				maximum_hold_distance
+			)
+			get_viewport().set_input_as_handled()
 		return
 
-	var mouse_event: InputEventMouseButton = event as InputEventMouseButton
-	if not mouse_event.pressed:
-		return
-	if mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP:
-		hold_distance = clampf(
-			hold_distance - mouse_distance_step,
-			minimum_hold_distance,
-			maximum_hold_distance
-		)
-		get_viewport().set_input_as_handled()
-	elif mouse_event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-		hold_distance = clampf(
-			hold_distance + mouse_distance_step,
-			minimum_hold_distance,
-			maximum_hold_distance
-		)
-		get_viewport().set_input_as_handled()
+	if event is InputEventJoypadButton:
+		var button_event := event as InputEventJoypadButton
+		if (
+			button_event.pressed
+			and button_event.button_index in [
+				JOY_BUTTON_LEFT_SHOULDER,
+				JOY_BUTTON_RIGHT_SHOULDER,
+				JOY_BUTTON_DPAD_UP,
+				JOY_BUTTON_DPAD_DOWN,
+			]
+		):
+			get_viewport().set_input_as_handled()
 
 
 func _exit_tree() -> void:
@@ -106,6 +119,10 @@ func begin_ability_channel(source_player: Node3D, ability: AbilityDefinition) ->
 	acquisition_retry_timer = maxf(acquisition_retry_interval, 0.02)
 	update_target_preview()
 	try_begin_grip(true)
+	if held_target != null:
+		show_message(
+			"Soul Grasp: right stick aims, D-pad up/down changes depth, and L/R rotates."
+		)
 	return true
 
 
@@ -136,11 +153,16 @@ func ensure_spell_input_map() -> void:
 	ensure_key(rotate_right_action, KEY_X)
 	ensure_joy_button(push_action, JOY_BUTTON_DPAD_UP)
 	ensure_joy_button(pull_action, JOY_BUTTON_DPAD_DOWN)
-	ensure_joy_button(rotate_left_action, JOY_BUTTON_DPAD_LEFT)
-	ensure_joy_button(rotate_right_action, JOY_BUTTON_DPAD_RIGHT)
+	ensure_joy_button(rotate_left_action, JOY_BUTTON_LEFT_SHOULDER)
+	ensure_joy_button(rotate_right_action, JOY_BUTTON_RIGHT_SHOULDER)
+
+	# The spell owns these controls only while its cast channel is active. Remove
+	# the older D-pad rotation map so depth and rotation match object reproduction.
+	remove_joy_button(rotate_left_action, JOY_BUTTON_DPAD_LEFT)
+	remove_joy_button(rotate_right_action, JOY_BUTTON_DPAD_RIGHT)
 
 	# Remove bindings written by the legacy dedicated-button controller. Soul
-	# Grip is now selected in Focus and held through the normal Cast action.
+	# Grip is selected in Focus and held through the normal Cast action.
 	remove_joy_button("soul_grip", JOY_BUTTON_LEFT_SHOULDER)
 	remove_key_binding("soul_grip", KEY_F)
 	remove_key_binding(push_action, KEY_T)
@@ -163,4 +185,5 @@ func get_debug_data() -> Dictionary:
 	data["equipped"] = is_soul_grip_equipped()
 	data["channel_requested"] = channel_requested
 	data["channel_action"] = channel_action
+	data["shared_context_controls"] = true
 	return data

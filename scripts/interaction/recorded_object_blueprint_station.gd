@@ -28,16 +28,27 @@ func interact() -> Dictionary:
 		manager = get_tree().get_first_node_in_group("recorded_object_manager") as RecordedObjectManager
 	if manager == null:
 		return {"message": "The recording lattice is not connected.", "objective": ""}
+	var was_recorded: bool = RecordedObjectCatalog.is_recorded(blueprint_id)
 	var result: Dictionary = manager.record_blueprint(blueprint_id)
 	if auto_select_after_recording:
 		manager.select_blueprint(blueprint_id)
 	_refresh_visual()
 	var definition: Dictionary = RecordedObjectCatalog.get_definition(blueprint_id)
+	if was_recorded and bool(result.get("ok", false)):
+		manager.begin_placement()
+		return {
+			"message": (
+				"Placing "
+				+ str(definition.get("display_name", blueprint_id.capitalize()))
+				+ ". A confirms, B cancels, and L/R cycle while placement is active."
+			),
+			"objective": "Aim the placement preview at a valid surface.",
+		}
 	return {
 		"message": (
-			("Recorded " if bool(result.get("newly_recorded", false)) else "Selected ")
+			"Recorded "
 			+ str(definition.get("display_name", blueprint_id.capitalize()))
-			+ ". Press V or controller Y to begin placement."
+			+ ". Interact with this station again to begin placement."
 		),
 		"objective": "Test the recorded object in the proving ground.",
 	}
@@ -110,7 +121,7 @@ func _refresh_visual() -> void:
 		+ "  "
 		+ str(definition.get("short_name", blueprint_id.capitalize())).to_upper()
 		+ "\n"
-		+ ("SELECTED" if selected else ("RECORDED" if recorded else "RECORD BLUEPRINT"))
+		+ ("SELECTED • INTERACT TO PLACE" if selected else ("RECORDED • INTERACT TO PLACE" if recorded else "RECORD BLUEPRINT"))
 	)
 
 

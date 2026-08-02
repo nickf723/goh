@@ -14,7 +14,7 @@ var refresh_remaining: float = 0.0
 func _ready() -> void:
 	layer = 24
 	add_to_group("recorded_object_status_hud")
-	process_mode = Node.PROCESS_MODE_ALWAYS
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 	_build_ui()
 	call_deferred("_bind_manager")
 

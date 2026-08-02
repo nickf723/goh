@@ -81,6 +81,9 @@ jobs:
       - name: Run recorded object interoperability regression
         run: godot --headless --path . res://scenes/tests/recorded_object_interoperability_smoke_test.tscn
 
+      - name: Run engineering builds regression
+        run: godot --headless --path . res://scenes/tests/engineering_builds_v1_smoke_test.tscn
+
       - name: Run freed-control navigation regression
         run: godot --headless --path . res://scenes/tests/menu_freed_control_navigation_smoke_test.tscn
 

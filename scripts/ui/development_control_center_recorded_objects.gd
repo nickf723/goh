@@ -41,7 +41,7 @@ const RECORDED_OBJECTS_FEATURE: Dictionary = {
 		"The Ruined Village currently teaches Crate and Platform; Spring and Blast Barrel remain proving-ground discoveries.",
 		"The first four actors and natural source props use procedural prototype visuals.",
 		"Reproduced objects are scene-scoped and are dismissed on scene changes rather than serialized into saves.",
-		"Engineering Builds remain a separate future system for multi-part contraptions.",
+		"Engineering Builds remain a separate multi-part construction system.",
 	],
 	"launchable": true,
 	"visible_in_launcher": true,
@@ -95,12 +95,63 @@ const RECORDED_OBJECT_INTEROPERABILITY_FEATURE: Dictionary = {
 	"timeout_seconds": 32,
 }
 
+const ENGINEERING_BUILDS_FEATURE: Dictionary = {
+	"id": "engineering_builds_v1",
+	"order": 21,
+	"display_name": "Engineering Build Yard",
+	"category": "Progression and World Tools",
+	"version": "v1",
+	"status": "vertical_slice",
+	"description": "Save and reproduce multi-part constructions assembled from recorded object patterns: Bridge Frame, Launch Tower, Blast Cart, and Conductive Raft.",
+	"scene": "res://scenes/levels/prototypes/prototype_engineering_build_yard_v1.tscn",
+	"validation_scenes": [
+		"res://scenes/levels/prototypes/prototype_engineering_build_yard_v1.tscn",
+	],
+	"automated_tests": [
+		"res://scenes/tests/engineering_builds_v1_smoke_test.tscn",
+		"res://scenes/tests/recorded_objects_v1_smoke_test.tscn",
+		"res://scenes/tests/full_menu_items_v1_smoke_test.tscn",
+		"res://scenes/tests/full_menu_journal_v1_smoke_test.tscn",
+	],
+	"dependencies": [
+		"recorded_objects_v1",
+		"recorded_object_interoperability_v1",
+	],
+	"controls": [
+		"MOVE",
+		"INTERACT BUILD STATIONS",
+		"F1-F4 SELECT BUILD",
+		"V / Y PLACEMENT",
+		"Q/E OR L/R CYCLE",
+		"R ROTATE",
+		"CLICK / A PLACE",
+		"F5 QUICK-PLACE",
+		"F6 RAFT BASIN",
+		"F8 CLEAR",
+		"F9 SAVE ALL",
+	],
+	"manual_test": "docs/ENGINEERING_BUILDS_V1.md",
+	"temporary_state": "persistent_build_blueprints_scene_scoped_constructions",
+	"story_integrated": false,
+	"limitations": [
+		"Engineering Builds currently use a dedicated manager in the construction yard; production menu-to-field handoff is the next integration layer.",
+		"Build blueprints require recorded component patterns but do not consume those patterns or physical objects.",
+		"The first four builds use procedural prototype geometry rather than authored modular assets.",
+		"Construction state is scene-scoped; saved blueprints persist in Items and Journal.",
+	],
+	"launchable": true,
+	"visible_in_launcher": true,
+	"ci_validate": true,
+	"timeout_seconds": 36,
+}
+
 
 func _append_supplemental_features() -> void:
 	super._append_supplemental_features()
 	var supplemental: Array[Dictionary] = [
 		RECORDED_OBJECTS_FEATURE,
 		RECORDED_OBJECT_INTEROPERABILITY_FEATURE,
+		ENGINEERING_BUILDS_FEATURE,
 	]
 	for definition: Dictionary in supplemental:
 		var feature_id: String = str(definition.get("id", ""))
@@ -117,7 +168,7 @@ func _append_supplemental_features() -> void:
 
 
 func _get_supplemental_feature_count() -> int:
-	return super._get_supplemental_feature_count() + 2
+	return super._get_supplemental_feature_count() + 3
 
 
 func _get_supplemental_feature(feature_id: String) -> Dictionary:
@@ -126,6 +177,8 @@ func _get_supplemental_feature(feature_id: String) -> Dictionary:
 			return RECORDED_OBJECTS_FEATURE
 		"recorded_object_interoperability_v1":
 			return RECORDED_OBJECT_INTEROPERABILITY_FEATURE
+		"engineering_builds_v1":
+			return ENGINEERING_BUILDS_FEATURE
 	return super._get_supplemental_feature(feature_id)
 
 
@@ -137,5 +190,8 @@ func get_debug_data() -> Dictionary:
 	data["recorded_objects_production_integrated"] = true
 	data["recorded_object_interoperability_available"] = (
 		_get_feature_errors("recorded_object_interoperability_v1").is_empty()
+	)
+	data["engineering_builds_available"] = (
+		_get_feature_errors("engineering_builds_v1").is_empty()
 	)
 	return data

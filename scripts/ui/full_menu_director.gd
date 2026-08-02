@@ -4,7 +4,10 @@ const FullMenuLoadoutShellScript = preload(
 	"res://scripts/ui/full_menu_shell_progression_v1.gd"
 )
 const ProgressionTrackerScript = preload(
-	"res://scripts/progression/progression_tracker.gd"
+	"res://scripts/progression/progression_tracker_feedback.gd"
+)
+const ProgressionFeedbackHUDScript = preload(
+	"res://scripts/progression/progression_feedback_hud.gd"
 )
 const SpellcastingMasteryServiceScript = preload(
 	"res://scripts/progression/spellcasting_mastery_service.gd"
@@ -19,6 +22,7 @@ const SpellcastingTraditionResolverScript = preload(
 const MENU_HIDDEN_CANVAS_LAYER_GROUPS: Array[String] = [
 	"player_hud_v2",
 	"divine_special_hud",
+	"progression_feedback_hud",
 ]
 const MENU_HIDDEN_CANVAS_ITEM_GROUPS: Array[String] = [
 	"menu_suppressed_hud",
@@ -32,7 +36,8 @@ var menu_hidden_canvas_layer_visibility: Array[bool] = []
 
 func _ready() -> void:
 	super._ready()
-	_ensure_progression_tracker()
+	var tracker: Node = _ensure_progression_tracker()
+	_ensure_progression_feedback_hud(tracker)
 
 
 func _ensure_progression_tracker() -> Node:
@@ -44,6 +49,20 @@ func _ensure_progression_tracker() -> Node:
 	tracker.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(tracker)
 	return tracker
+
+
+func _ensure_progression_feedback_hud(tracker: Node = null) -> CanvasLayer:
+	var feedback: CanvasLayer = get_node_or_null("ProgressionFeedbackHUD") as CanvasLayer
+	if feedback == null:
+		feedback = ProgressionFeedbackHUDScript.new() as CanvasLayer
+		feedback.name = "ProgressionFeedbackHUD"
+		feedback.process_mode = Node.PROCESS_MODE_ALWAYS
+		add_child(feedback)
+	if tracker == null:
+		tracker = _ensure_progression_tracker()
+	if feedback.has_method("bind_tracker"):
+		feedback.call("bind_tracker", tracker)
+	return feedback
 
 
 func _input(event: InputEvent) -> void:
@@ -91,7 +110,8 @@ func ensure_full_menu_shell() -> void:
 
 
 func open_full_menu() -> void:
-	_ensure_progression_tracker()
+	var tracker: Node = _ensure_progression_tracker()
+	_ensure_progression_feedback_hud(tracker)
 	ensure_full_menu_shell()
 	if full_menu_shell == null:
 		print("FullMenuDirector: no shell available.")

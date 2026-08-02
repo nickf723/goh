@@ -1,7 +1,7 @@
 extends "res://scripts/ui/full_menu_director_core.gd"
 
 const FullMenuLoadoutShellScript = preload(
-	"res://scripts/ui/full_menu_shell_feedback_v1.gd"
+	"res://scripts/ui/full_menu_shell_recorded_objects_v1.gd"
 )
 const ProgressionTrackerScript = preload(
 	"res://scripts/progression/progression_tracker_feedback.gd"
@@ -17,6 +17,15 @@ const SpellcastingTraditionCatalogScript = preload(
 )
 const SpellcastingTraditionResolverScript = preload(
 	"res://scripts/abilities/spellcasting_tradition_resolver.gd"
+)
+const RecordedObjectManagerScript = preload(
+	"res://scripts/objects/recorded_object_manager.gd"
+)
+const RecordedObjectStatusHUDScript = preload(
+	"res://scripts/ui/recorded_object_status_hud.gd"
+)
+const RecordedObjectCatalogScript = preload(
+	"res://scripts/objects/recorded_object_catalog.gd"
 )
 
 const MENU_HIDDEN_CANVAS_LAYER_GROUPS: Array[String] = [
@@ -38,6 +47,9 @@ func _ready() -> void:
 	super._ready()
 	var tracker: Node = _ensure_progression_tracker()
 	_ensure_progression_feedback_hud(tracker)
+	if not get_tree().node_added.is_connected(_on_tree_node_added):
+		get_tree().node_added.connect(_on_tree_node_added)
+	call_deferred("_ensure_recorded_object_runtime")
 
 
 func _ensure_progression_tracker() -> Node:
@@ -95,6 +107,7 @@ func _input(event: InputEvent) -> void:
 
 func ensure_full_menu_shell() -> void:
 	if full_menu_shell != null and is_instance_valid(full_menu_shell):
+		_connect_recorded_object_shell()
 		return
 	var game_ui: Node = get_tree().get_first_node_in_group("game_ui")
 	if game_ui == null:
@@ -102,16 +115,33 @@ func ensure_full_menu_shell() -> void:
 	var existing_shell: Node = game_ui.get_node_or_null("FullMenuShell")
 	if existing_shell is Control and existing_shell.has_method("show_menu"):
 		full_menu_shell = existing_shell as Control
+		_connect_recorded_object_shell()
 		return
 	full_menu_shell = FullMenuLoadoutShellScript.new()
 	full_menu_shell.name = "FullMenuShell"
 	full_menu_shell.process_mode = Node.PROCESS_MODE_ALWAYS
 	game_ui.add_child(full_menu_shell)
+	_connect_recorded_object_shell()
+
+
+func _connect_recorded_object_shell() -> void:
+	if full_menu_shell == null or not is_instance_valid(full_menu_shell):
+		return
+	var callback := Callable(self, "_on_recorded_object_prepare_requested")
+	if (
+		full_menu_shell.has_signal("recorded_object_prepare_requested")
+		and not full_menu_shell.is_connected(
+			"recorded_object_prepare_requested",
+			callback
+		)
+	):
+		full_menu_shell.connect("recorded_object_prepare_requested", callback)
 
 
 func open_full_menu() -> void:
 	var tracker: Node = _ensure_progression_tracker()
 	_ensure_progression_feedback_hud(tracker)
+	_ensure_recorded_object_runtime()
 	ensure_full_menu_shell()
 	if full_menu_shell == null:
 		print("FullMenuDirector: no shell available.")
@@ -132,8 +162,95 @@ func close_full_menu() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 
+func _on_recorded_object_prepare_requested(blueprint_id: String) -> void:
+	var manager: RecordedObjectManager = _get_recorded_object_manager()
+	if manager == null:
+		print("FullMenuDirector: no recorded object manager is available.")
+		return
+	if not manager.select_blueprint(blueprint_id):
+		return
+	close_full_menu()
+	call_deferred("_begin_recorded_object_placement", blueprint_id)
+
+
+func _begin_recorded_object_placement(blueprint_id: String) -> void:
+	var manager: RecordedObjectManager = _get_recorded_object_manager()
+	if manager == null:
+		return
+	manager.select_blueprint(blueprint_id)
+	manager.begin_placement()
+
+
+func _on_tree_node_added(node: Node) -> void:
+	if node is CharacterBody3D and str(node.name) == "Player":
+		call_deferred("_ensure_recorded_object_runtime_for_player", node)
+
+
+func _ensure_recorded_object_runtime() -> RecordedObjectManager:
+	var existing: RecordedObjectManager = _get_recorded_object_manager()
+	if existing != null:
+		_ensure_recorded_object_hud(existing.get_parent() as Node3D)
+		return existing
+	var player: Node3D = _find_current_player()
+	if player == null:
+		return null
+	return _ensure_recorded_object_runtime_for_player(player)
+
+
+func _ensure_recorded_object_runtime_for_player(
+	player: Node3D
+) -> RecordedObjectManager:
+	if player == null or not is_instance_valid(player):
+		return null
+	var manager: RecordedObjectManager = player.get_node_or_null(
+		"RecordedObjectManager"
+	) as RecordedObjectManager
+	if manager == null:
+		manager = RecordedObjectManagerScript.new() as RecordedObjectManager
+		manager.name = "RecordedObjectManager"
+		player.add_child(manager)
+		manager.bind_actor(player)
+	_ensure_recorded_object_hud(player)
+	return manager
+
+
+func _ensure_recorded_object_hud(player: Node3D) -> CanvasLayer:
+	if player == null or not is_instance_valid(player):
+		return null
+	var hud: CanvasLayer = player.get_node_or_null(
+		"RecordedObjectStatusHUD"
+	) as CanvasLayer
+	if hud == null:
+		hud = RecordedObjectStatusHUDScript.new() as CanvasLayer
+		hud.name = "RecordedObjectStatusHUD"
+		player.add_child(hud)
+	return hud
+
+
+func _get_recorded_object_manager() -> RecordedObjectManager:
+	return get_tree().get_first_node_in_group(
+		"recorded_object_manager"
+	) as RecordedObjectManager
+
+
+func _find_current_player() -> Node3D:
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return null
+	var direct: Node3D = scene.get_node_or_null("Player") as Node3D
+	if direct != null:
+		return direct
+	var candidates: Array[Node] = scene.find_children("Player", "CharacterBody3D", true, false)
+	for candidate: Node in candidates:
+		if candidate is Node3D:
+			return candidate as Node3D
+	return null
+
+
 func _exit_tree() -> void:
 	_restore_gameplay_hud()
+	if get_tree() != null and get_tree().node_added.is_connected(_on_tree_node_added):
+		get_tree().node_added.disconnect(_on_tree_node_added)
 
 
 func _hide_gameplay_hud() -> void:
@@ -197,6 +314,11 @@ func build_menu_data() -> Dictionary:
 	var data: Dictionary = super.build_menu_data()
 	data["spellcasting_mastery"] = get_spellcasting_mastery_data()
 	data["familiar_mastery"] = get_familiar_mastery_data()
+	data["recorded_objects"] = {
+		"selected_blueprint_id": RecordedObjectCatalogScript.get_selected_blueprint_id(),
+		"rows": RecordedObjectCatalogScript.get_recorded_rows(),
+		"manager_available": _get_recorded_object_manager() != null,
+	}
 	return data
 
 

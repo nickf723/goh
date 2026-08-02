@@ -1,0 +1,1 @@
+Final validation-only marker for Recorded Objects Production Integration v1. Production implementation and documentation are already on main.

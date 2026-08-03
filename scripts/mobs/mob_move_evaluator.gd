@@ -7,23 +7,31 @@ static func evaluate_species(
 	context_value: Variant,
 	personality_overrides: Dictionary = {}
 ) -> Array[Dictionary]:
-	var species: MobSpeciesDefinition = MobSpeciesCatalog.get_definition(species_id)
+	var species: MobSpeciesDefinition = MobSpeciesCatalog.get_definition(
+		species_id
+	)
 	if species == null:
 		return []
-	var context: MobDecisionContext = (
-		context_value
-		if context_value is MobDecisionContext
-		else MobDecisionContext.from_dictionary(
-			context_value as Dictionary if context_value is Dictionary else {}
-		)
+	var context: MobDecisionContext = _context_from_variant(context_value)
+	var personality: Dictionary = species.get_personality(
+		personality_overrides
 	)
-	var personality: Dictionary = species.get_personality(personality_overrides)
 	var rows: Array[Dictionary] = []
 	for policy: MobMovePolicy in species.move_policies:
 		if policy == null:
 			continue
-		var move: MobMoveDefinition = MobMoveCatalog.get_definition(policy.move_id)
-		rows.append(_evaluate_policy(species, move, policy, context, personality))
+		var move: MobMoveDefinition = MobMoveCatalog.get_definition(
+			policy.move_id
+		)
+		rows.append(
+			_evaluate_policy(
+				species,
+				move,
+				policy,
+				context,
+				personality
+			)
+		)
 	rows.sort_custom(_sort_rows)
 	for index: int in range(rows.size()):
 		rows[index]["rank"] = index + 1
@@ -35,7 +43,12 @@ static func choose_move(
 	context_value: Variant,
 	personality_overrides: Dictionary = {}
 ) -> Dictionary:
-	for row: Dictionary in evaluate_species(species_id, context_value, personality_overrides):
+	var rows: Array[Dictionary] = evaluate_species(
+		species_id,
+		context_value,
+		personality_overrides
+	)
+	for row: Dictionary in rows:
 		if bool(row.get("eligible", false)):
 			return row
 	return {
@@ -45,6 +58,14 @@ static func choose_move(
 		"score": 0.0,
 		"reasons": ["no eligible move"],
 	}
+
+
+static func _context_from_variant(value: Variant) -> MobDecisionContext:
+	if value is MobDecisionContext:
+		return value as MobDecisionContext
+	if value is Dictionary:
+		return MobDecisionContext.from_dictionary(value as Dictionary)
+	return MobDecisionContext.from_dictionary({})
 
 
 static func _evaluate_policy(
@@ -58,7 +79,16 @@ static func _evaluate_policy(
 	var score_reasons: Array[String] = []
 	if move == null:
 		reasons.append("move definition missing")
-		return _row(species, null, policy, false, 0.0, reasons, score_reasons)
+		return _row(
+			species,
+			null,
+			policy,
+			false,
+			0.0,
+			reasons,
+			score_reasons
+		)
+
 	if not context.is_move_allowed(move.move_id):
 		reasons.append("move is not equipped or allowed")
 	if context.level < policy.minimum_level:
@@ -66,66 +96,155 @@ static func _evaluate_policy(
 	if context.get_cooldown(move.move_id) > 0.0:
 		reasons.append("cooldown active")
 	if not move.supports_body(species.body_tags):
-		reasons.append("body plan lacks " + ", ".join(move.required_body_tags))
+		reasons.append(
+			"body plan lacks " + ", ".join(move.required_body_tags)
+		)
 	if context.self_health_ratio < policy.minimum_health_ratio:
 		reasons.append("health below policy minimum")
 	if context.self_health_ratio > policy.maximum_health_ratio:
 		reasons.append("health above policy maximum")
-	if context.ally_count < policy.minimum_allies or context.ally_count > policy.maximum_allies:
+	if (
+		context.ally_count < policy.minimum_allies
+		or context.ally_count > policy.maximum_allies
+	):
 		reasons.append("ally count outside policy bounds")
-	if context.enemy_count < policy.minimum_enemies or context.enemy_count > policy.maximum_enemies:
+	if (
+		context.enemy_count < policy.minimum_enemies
+		or context.enemy_count > policy.maximum_enemies
+	):
 		reasons.append("enemy count outside policy bounds")
+
 	var minimum_distance: float = policy.get_minimum_distance(move)
 	var maximum_distance: float = policy.get_maximum_distance(move)
-	if context.target_distance < minimum_distance or context.target_distance > maximum_distance:
+	if (
+		context.target_distance < minimum_distance
+		or context.target_distance > maximum_distance
+	):
 		reasons.append(
-			"target distance " + str(snappedf(context.target_distance, 0.1))
-			+ " outside " + str(snappedf(minimum_distance, 0.1))
-			+ "-" + str(snappedf(maximum_distance, 0.1))
+			"target distance "
+			+ str(snappedf(context.target_distance, 0.1))
+			+ " outside "
+			+ str(snappedf(minimum_distance, 0.1))
+			+ "-"
+			+ str(snappedf(maximum_distance, 0.1))
 		)
-	_check_required_tags(policy.required_context_tags, context.context_tags, "context", reasons)
-	_check_any_tags(policy.any_context_tags, context.context_tags, "context", reasons)
-	_check_forbidden_tags(policy.forbidden_context_tags, context.context_tags, "context", reasons)
-	_check_required_tags(policy.required_self_tags, context.self_tags, "self", reasons)
-	_check_forbidden_tags(policy.forbidden_self_tags, context.self_tags, "self", reasons)
-	_check_required_tags(policy.required_target_tags, context.target_tags, "target", reasons)
-	_check_forbidden_tags(policy.forbidden_target_tags, context.target_tags, "target", reasons)
+
+	_check_required_tags(
+		policy.required_context_tags,
+		context.context_tags,
+		"context",
+		reasons
+	)
+	_check_any_tags(
+		policy.any_context_tags,
+		context.context_tags,
+		"context",
+		reasons
+	)
+	_check_forbidden_tags(
+		policy.forbidden_context_tags,
+		context.context_tags,
+		"context",
+		reasons
+	)
+	_check_required_tags(
+		policy.required_self_tags,
+		context.self_tags,
+		"self",
+		reasons
+	)
+	_check_forbidden_tags(
+		policy.forbidden_self_tags,
+		context.self_tags,
+		"self",
+		reasons
+	)
+	_check_required_tags(
+		policy.required_target_tags,
+		context.target_tags,
+		"target",
+		reasons
+	)
+	_check_forbidden_tags(
+		policy.forbidden_target_tags,
+		context.target_tags,
+		"target",
+		reasons
+	)
 
 	var eligible: bool = reasons.is_empty()
 	var score: float = 0.0
 	if eligible:
 		score = move.base_utility * policy.base_weight
 		score_reasons.append(
-			"base " + str(snappedf(move.base_utility, 0.01))
-			+ " x policy " + str(snappedf(policy.base_weight, 0.01))
+			"base "
+			+ str(snappedf(move.base_utility, 0.01))
+			+ " x policy "
+			+ str(snappedf(policy.base_weight, 0.01))
 		)
+
 		for raw_trait: Variant in policy.personality_weights.keys():
-			var trait: String = str(raw_trait)
-			var trait_value: float = clampf(float(personality.get(trait, 0.5)), 0.0, 1.0)
-			var coefficient: float = float(policy.personality_weights[raw_trait])
-			var delta: float = (trait_value - 0.5) * coefficient
-			score += delta
-			if not is_zero_approx(delta):
-				score_reasons.append(trait + " " + _signed(delta))
-		for raw_tag: Variant in policy.context_score_modifiers.keys():
-			var tag: String = str(raw_tag)
-			if context.has_context_tag(tag):
-				var delta: float = float(policy.context_score_modifiers[raw_tag])
-				score += delta
-				score_reasons.append(tag + " " + _signed(delta))
+			var trait_id: String = str(raw_trait)
+			var trait_value: float = clampf(
+				float(personality.get(trait_id, 0.5)),
+				0.0,
+				1.0
+			)
+			var trait_coefficient: float = float(
+				policy.personality_weights[raw_trait]
+			)
+			var trait_delta: float = (
+				trait_value - 0.5
+			) * trait_coefficient
+			score += trait_delta
+			if not is_zero_approx(trait_delta):
+				score_reasons.append(
+					trait_id + " " + _signed(trait_delta)
+				)
+
+		for raw_context_tag: Variant in (
+			policy.context_score_modifiers.keys()
+		):
+			var context_tag: String = str(raw_context_tag)
+			if context.has_context_tag(context_tag):
+				var context_delta: float = float(
+					policy.context_score_modifiers[raw_context_tag]
+				)
+				score += context_delta
+				score_reasons.append(
+					context_tag + " " + _signed(context_delta)
+				)
+
 		if context.recent_move_ids.has(move.move_id):
 			score *= 0.68
 			score_reasons.append("recent repetition x0.68")
-		var urgency: float = context.get_scalar("urgency", 0.0)
-		if urgency > 0.0 and (
-			move.has_tag("survival")
-			or move.has_tag("defense")
-			or move.has_tag("attack")
-		):
-			score += urgency * 0.25
-			score_reasons.append("urgency " + _signed(urgency * 0.25))
+
+		var urgency_value: float = context.get_scalar("urgency", 0.0)
+		if urgency_value > 0.0 and _move_responds_to_urgency(move):
+			var urgency_delta: float = urgency_value * 0.25
+			score += urgency_delta
+			score_reasons.append(
+				"urgency " + _signed(urgency_delta)
+			)
 		score = maxf(score, 0.0)
-	return _row(species, move, policy, eligible, score, reasons, score_reasons)
+
+	return _row(
+		species,
+		move,
+		policy,
+		eligible,
+		score,
+		reasons,
+		score_reasons
+	)
+
+
+static func _move_responds_to_urgency(move: MobMoveDefinition) -> bool:
+	return (
+		move.has_tag("survival")
+		or move.has_tag("defense")
+		or move.has_tag("attack")
+	)
 
 
 static func _row(
@@ -137,18 +256,32 @@ static func _row(
 	reasons: Array[String],
 	score_reasons: Array[String]
 ) -> Dictionary:
+	var species_id: String = ""
+	if species != null:
+		species_id = species.species_id
+	var move_id: String = policy.move_id
+	var display_name: String = policy.move_id.capitalize()
+	var action_kind: String = "none"
+	var move_tags: Array[String] = []
+	var move_data: Dictionary = {}
+	if move != null:
+		move_id = move.move_id
+		display_name = move.display_name
+		action_kind = move.action_kind
+		move_tags = move.tags.duplicate()
+		move_data = move.to_dictionary()
 	return {
-		"species_id": species.species_id if species != null else "",
-		"move_id": move.move_id if move != null else policy.move_id,
-		"display_name": move.display_name if move != null else policy.move_id.capitalize(),
-		"action_kind": move.action_kind if move != null else "none",
-		"move_tags": move.tags.duplicate() if move != null else [],
+		"species_id": species_id,
+		"move_id": move_id,
+		"display_name": display_name,
+		"action_kind": action_kind,
+		"move_tags": move_tags,
 		"policy_tags": policy.policy_tags.duplicate(),
 		"eligible": eligible,
 		"score": snappedf(score, 0.001),
 		"reasons": reasons.duplicate(),
 		"score_reasons": score_reasons.duplicate(),
-		"move": move.to_dictionary() if move != null else {},
+		"move": move_data,
 		"policy": policy.to_dictionary(),
 	}
 
@@ -159,9 +292,11 @@ static func _check_required_tags(
 	label: String,
 	reasons: Array[String]
 ) -> void:
-	for tag: String in required:
-		if not available.has(tag):
-			reasons.append(label + " missing required tag " + tag)
+	for required_tag: String in required:
+		if not available.has(required_tag):
+			reasons.append(
+				label + " missing required tag " + required_tag
+			)
 
 
 static func _check_any_tags(
@@ -172,10 +307,12 @@ static func _check_any_tags(
 ) -> void:
 	if accepted.is_empty():
 		return
-	for tag: String in accepted:
-		if available.has(tag):
+	for accepted_tag: String in accepted:
+		if available.has(accepted_tag):
 			return
-	reasons.append(label + " needs one of " + ", ".join(accepted))
+	reasons.append(
+		label + " needs one of " + ", ".join(accepted)
+	)
 
 
 static func _check_forbidden_tags(
@@ -184,9 +321,11 @@ static func _check_forbidden_tags(
 	label: String,
 	reasons: Array[String]
 ) -> void:
-	for tag: String in forbidden:
-		if available.has(tag):
-			reasons.append(label + " contains forbidden tag " + tag)
+	for forbidden_tag: String in forbidden:
+		if available.has(forbidden_tag):
+			reasons.append(
+				label + " contains forbidden tag " + forbidden_tag
+			)
 
 
 static func _sort_rows(a: Dictionary, b: Dictionary) -> bool:
@@ -202,5 +341,6 @@ static func _sort_rows(a: Dictionary, b: Dictionary) -> bool:
 
 
 static func _signed(value: float) -> String:
-	var snapped: float = snappedf(value, 0.01)
-	return ("+" if snapped >= 0.0 else "") + str(snapped)
+	var rounded_value: float = snappedf(value, 0.01)
+	var prefix: String = "+" if rounded_value >= 0.0 else ""
+	return prefix + str(rounded_value)

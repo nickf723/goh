@@ -66,6 +66,9 @@ jobs:
       - name: Run progression feedback and tracking regression
         run: godot --headless --path . res://scenes/tests/progression_feedback_tracking_v1_smoke_test.tscn
 
+      - name: Run Mob Engine Foundation regression
+        run: godot --headless --path . res://scenes/tests/mob_engine_foundation_smoke_test.tscn
+
       - name: Run base Ruined Village regression
         run: godot --headless --path . res://scenes/tests/ruined_village_approach_smoke_test.tscn
 

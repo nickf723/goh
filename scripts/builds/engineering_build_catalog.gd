@@ -8,6 +8,7 @@ const PartCatalog = preload(
 const SELECTED_BUILD_FLAG: String = "__engineering_builds__::selected_build"
 const SELECTED_CUSTOM_SLOT_FLAG: String = "__artificer__::selected_blueprint_slot"
 const CUSTOM_BLUEPRINTS_FLAG: String = "__artificer__::custom_blueprints"
+const CUSTOM_BLUEPRINT_PREFIX: String = "__artificer__::custom_blueprint::"
 
 const BUILD_ORDER: Array[String] = [
 	"bridge_frame",
@@ -249,24 +250,23 @@ static func save_custom_blueprint(
 ) -> Dictionary:
 	if not CUSTOM_SLOT_ORDER.has(slot_id):
 		return {"ok": false, "error": "invalid blueprint slot"}
-	var normalized: Array[Dictionary] = normalize_part_layout(parts)
-	if normalized.size() < 2:
+	var encoded: Array[Dictionary] = encode_part_layout(parts)
+	if encoded.size() < 2:
 		return {"ok": false, "error": "a contraption needs at least two parts"}
-	if normalized.size() > 12:
+	if encoded.size() > 12:
 		return {"ok": false, "error": "a contraption may use at most twelve parts"}
-	var blueprints: Dictionary = get_custom_blueprints()
-	var newly_saved: bool = not blueprints.has(slot_id)
-	blueprints[slot_id] = {
+	var newly_saved: bool = not is_custom_build(slot_id)
+	var stored: Dictionary = {
 		"slot_id": slot_id,
 		"display_name": (
 			custom_name
 			if custom_name.strip_edges() != ""
 			else get_custom_slot_display_name(slot_id)
 		),
-		"parts": normalized,
+		"parts": encoded,
 		"saved_at_msec": Time.get_ticks_msec(),
 	}
-	GameState.story_flags[CUSTOM_BLUEPRINTS_FLAG] = blueprints
+	store_custom_blueprint_record(slot_id, stored)
 	select_build(slot_id)
 	select_custom_slot(slot_id)
 	var definition: Dictionary = get_definition(slot_id)
@@ -279,22 +279,98 @@ static func save_custom_blueprint(
 	}
 
 
-static func delete_custom_blueprint(slot_id: String) -> bool:
-	var blueprints: Dictionary = get_custom_blueprints()
-	if not blueprints.has(slot_id):
+static func store_custom_blueprint_record(
+	slot_id: String,
+	stored: Dictionary
+) -> bool:
+	if not CUSTOM_SLOT_ORDER.has(slot_id) or stored.is_empty():
 		return false
-	blueprints.erase(slot_id)
-	GameState.story_flags[CUSTOM_BLUEPRINTS_FLAG] = blueprints
-	if str(GameState.story_flags.get(SELECTED_BUILD_FLAG, "")) == slot_id:
-		GameState.story_flags.erase(SELECTED_BUILD_FLAG)
+	var record: Dictionary = stored.duplicate(true)
+	record["slot_id"] = slot_id
+	GameState.story_flags[get_custom_slot_flag(slot_id)] = record
+
+	# Keep the original aggregate key as a migration mirror for older builds, but
+	# each slot key above is authoritative. One subsystem can no longer replace
+	# Contraption A while updating Contraption B.
+	var aggregate: Dictionary = {}
+	var aggregate_value: Variant = GameState.story_flags.get(
+		CUSTOM_BLUEPRINTS_FLAG,
+		{}
+	)
+	if aggregate_value is Dictionary:
+		aggregate = (aggregate_value as Dictionary).duplicate(true)
+	aggregate[slot_id] = record.duplicate(true)
+	GameState.story_flags[CUSTOM_BLUEPRINTS_FLAG] = aggregate
 	return true
 
 
+static func delete_custom_blueprint(slot_id: String) -> bool:
+	if not CUSTOM_SLOT_ORDER.has(slot_id):
+		return false
+	var existed: bool = is_custom_build(slot_id)
+	GameState.story_flags.erase(get_custom_slot_flag(slot_id))
+	var aggregate_value: Variant = GameState.story_flags.get(
+		CUSTOM_BLUEPRINTS_FLAG,
+		{}
+	)
+	if aggregate_value is Dictionary:
+		var aggregate: Dictionary = (aggregate_value as Dictionary).duplicate(true)
+		aggregate.erase(slot_id)
+		GameState.story_flags[CUSTOM_BLUEPRINTS_FLAG] = aggregate
+	if str(GameState.story_flags.get(SELECTED_BUILD_FLAG, "")) == slot_id:
+		GameState.story_flags.erase(SELECTED_BUILD_FLAG)
+	return existed
+
+
 static func get_custom_blueprints() -> Dictionary:
-	var value: Variant = GameState.story_flags.get(CUSTOM_BLUEPRINTS_FLAG, {})
-	if not value is Dictionary:
-		return {}
-	return (value as Dictionary).duplicate(true)
+	var blueprints: Dictionary = {}
+	var aggregate: Dictionary = {}
+	var aggregate_value: Variant = GameState.story_flags.get(
+		CUSTOM_BLUEPRINTS_FLAG,
+		{}
+	)
+	if aggregate_value is Dictionary:
+		aggregate = aggregate_value as Dictionary
+
+	for slot_id: String in CUSTOM_SLOT_ORDER:
+		var slot_value: Variant = GameState.story_flags.get(
+			get_custom_slot_flag(slot_id),
+			null
+		)
+		if slot_value is Dictionary:
+			var slot_record: Dictionary = (slot_value as Dictionary).duplicate(true)
+			if _is_valid_custom_record(slot_id, slot_record):
+				blueprints[slot_id] = slot_record
+				continue
+
+		# Migrate one slot at a time from the aggregate shape used by the first
+		# Artificer prototype.
+		var legacy_value: Variant = aggregate.get(slot_id)
+		if legacy_value is Dictionary:
+			var legacy_record: Dictionary = (legacy_value as Dictionary).duplicate(true)
+			if _is_valid_custom_record(slot_id, legacy_record):
+				blueprints[slot_id] = legacy_record
+				GameState.story_flags[get_custom_slot_flag(slot_id)] = (
+					legacy_record.duplicate(true)
+				)
+	return blueprints
+
+
+static func get_custom_slot_flag(slot_id: String) -> String:
+	return CUSTOM_BLUEPRINT_PREFIX + slot_id
+
+
+static func _is_valid_custom_record(
+	slot_id: String,
+	record: Dictionary
+) -> bool:
+	if not CUSTOM_SLOT_ORDER.has(slot_id):
+		return false
+	var parts_value: Variant = record.get("parts")
+	if not parts_value is Array:
+		return false
+	var parts: Array = parts_value as Array
+	return parts.size() >= 2 and parts.size() <= 12
 
 
 static func select_custom_slot(slot_id: String) -> bool:

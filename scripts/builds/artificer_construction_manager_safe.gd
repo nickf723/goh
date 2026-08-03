@@ -25,25 +25,50 @@ func finalize_draft(
 		_show_message("One or more engineering parts could not be encoded.")
 		return {"ok": false, "error": "part encoding failed"}
 
-	# Write one JSON-safe source of truth. The finished definition is derived only
-	# after that exact stored recipe exists, so draft cleanup cannot truncate the
-	# personal blueprint.
-	var blueprints: Dictionary = BuildCatalog.get_custom_blueprints()
-	var newly_saved: bool = not blueprints.has(slot_id)
-	blueprints[slot_id] = {
+	var newly_saved: bool = not BuildCatalog.is_custom_build(slot_id)
+	var stored: Dictionary = {
 		"slot_id": slot_id,
 		"display_name": BuildCatalog.get_custom_slot_display_name(slot_id),
 		"parts": encoded_parts,
 		"saved_at_msec": Time.get_ticks_msec(),
 	}
-	GameState.story_flags[BuildCatalog.CUSTOM_BLUEPRINTS_FLAG] = blueprints
+	if not BuildCatalog.store_custom_blueprint_record(slot_id, stored):
+		_show_message("The contraption slot could not be written.")
+		return {"ok": false, "error": "blueprint write failed"}
 	BuildCatalog.select_custom_slot(slot_id)
 	BuildCatalog.select_build(slot_id)
 
+	var raw_slot_value: Variant = GameState.story_flags.get(
+		BuildCatalog.get_custom_slot_flag(slot_id),
+		null
+	)
+	if not raw_slot_value is Dictionary:
+		_show_message("The contraption slot disappeared after writing.")
+		return {"ok": false, "error": "blueprint verification failed"}
+	var raw_slot: Dictionary = raw_slot_value as Dictionary
+	var raw_parts: Array = raw_slot.get("parts", []) as Array
+	if raw_parts.size() != encoded_parts.size():
+		_show_message("The contraption slot did not preserve every part.")
+		return {
+			"ok": false,
+			"error": "blueprint part count mismatch",
+			"expected_parts": encoded_parts.size(),
+			"stored_parts": raw_parts.size(),
+		}
+
 	var definition: Dictionary = BuildCatalog.get_definition(slot_id)
-	if definition.is_empty() or (definition.get("parts", []) as Array).size() != encoded_parts.size():
+	if (
+		definition.is_empty()
+		or (definition.get("parts", []) as Array).size()
+		!= encoded_parts.size()
+	):
 		_show_message("The saved contraption recipe could not be reconstructed.")
-		return {"ok": false, "error": "blueprint reconstruction failed"}
+		return {
+			"ok": false,
+			"error": "blueprint reconstruction failed",
+			"expected_parts": encoded_parts.size(),
+			"definition_parts": (definition.get("parts", []) as Array).size(),
+		}
 
 	var manifestation: ArtificerContraptionInstance
 	if manifest_immediately:
@@ -72,6 +97,7 @@ func finalize_draft(
 		"build_id": slot_id,
 		"definition": definition,
 		"manifestation": manifestation,
+		"stored_part_count": raw_parts.size(),
 	}
 
 

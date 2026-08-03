@@ -20,13 +20,6 @@ func hide_menu() -> void:
 	super.hide_menu()
 
 
-func render_magic() -> void:
-	super.render_magic()
-	if is_assigning_spell():
-		return
-	_render_recorded_object_spell_blueprints()
-
-
 func activate_action(action: Dictionary) -> void:
 	var kind: String = str(action.get("kind", ""))
 	if kind == "equip_recorded_object_spell_blueprint":
@@ -86,27 +79,65 @@ func activate_action(action: Dictionary) -> void:
 	super.activate_action(action)
 
 
-func _render_recorded_object_spell_blueprints() -> void:
-	add_section_header("REPRODUCE OBJECT • PREPARED BLUEPRINT")
+# Specialized spell configuration belongs inside the spell record, matching
+# Summon Familiar. Dynamic dispatch reaches this hook from the standard spell
+# detail renderer, replacing the generic school-augmentation card only for
+# Reproduce Object.
+func _render_spell_augmentation_summary(
+	parent: VBoxContainer,
+	spell: Dictionary
+) -> void:
+	var spell_id: String = SpellProgressionCatalogScript.get_spell_id(spell)
+	if spell_id == "recorded_object_summon":
+		_render_recorded_object_spell_blueprints(parent)
+		return
+	super._render_spell_augmentation_summary(parent, spell)
+
+
+func _render_recorded_object_spell_blueprints(parent: VBoxContainer) -> void:
+	parent.add_child(_make_magic_heading("REPRODUCE OBJECT • BLUEPRINT"))
 	var selected_id: String = (
 		RecordedObjectCatalogScript.get_selected_blueprint_id()
 	)
 	var selected_definition: Dictionary = (
 		RecordedObjectCatalogScript.get_definition(selected_id)
 	)
-	add_summary_card([
-		"Prepared " + (
-			str(selected_definition.get("display_name", "None"))
+	var summary: GridContainer = make_visual_grid(3)
+	summary.add_theme_constant_override("h_separation", 7)
+	parent.add_child(summary)
+	_add_magic_info_panel(
+		summary,
+		(
+			str(selected_definition.get("display_name", "None")).to_upper()
 			if selected_id != ""
-			else "None"
+			else "NONE PREPARED"
 		),
-		"Cast Reproduce Object to enter placement",
-		"Object mana is paid when placement is confirmed",
-		"Selection persists with the save slot",
-	])
+		"Blueprint used when this spell is cast"
+	)
+	_add_magic_info_panel(
+		summary,
+		(
+			str(selected_definition.get("mana_cost", 0)) + " MANA"
+			if selected_id != ""
+			else "NO COST"
+		),
+		"Paid only when placement is confirmed"
+	)
+	_add_magic_info_panel(
+		summary,
+		(
+			str(selected_definition.get("maximum_active", 0)) + " ACTIVE MAX"
+			if selected_id != ""
+			else "NO BLUEPRINT"
+		),
+		"Selection persists with the save slot"
+	)
 
 	var grid: GridContainer = make_visual_grid(4)
-	content_box.add_child(grid)
+	grid.name = "RecordedObjectSpellBlueprintGrid"
+	grid.add_theme_constant_override("h_separation", 7)
+	grid.add_theme_constant_override("v_separation", 7)
+	parent.add_child(grid)
 	for blueprint_id: String in RecordedObjectCatalogScript.BLUEPRINT_ORDER:
 		var definition: Dictionary = (
 			RecordedObjectCatalogScript.get_definition(blueprint_id)
@@ -116,32 +147,34 @@ func _render_recorded_object_spell_blueprints() -> void:
 		)
 		var selected: bool = blueprint_id == selected_id
 		if recorded:
-			add_visual_action_tile(
+			_add_compact_action_tile(
 				grid,
 				str(definition.get("icon", "▣")),
 				str(definition.get(
 					"display_name",
 					blueprint_id.capitalize()
 				)),
-				"PREPARED" if selected else (
-					str(definition.get("mana_cost", 0))
-					+ " MANA"
+				(
+					"PREPARED"
+					if selected
+					else str(definition.get("mana_cost", 0)) + " MANA"
 				),
 				{
 					"kind": "equip_recorded_object_spell_blueprint",
 					"blueprint_id": blueprint_id,
 				},
-				str(definition.get("description", "Recorded object."))
+				str(definition.get("description", "Recorded object.")),
+				68.0,
+				9
 			)
 		else:
-			add_visual_info_card(
-				"🔒",
-				str(definition.get(
+			_add_magic_info_panel(
+				grid,
+				"🔒 " + str(definition.get(
 					"display_name",
 					blueprint_id.capitalize()
-				)),
-				str(definition.get("description", "Recorded object.")),
-				"Study this object in the world"
+				)).to_upper(),
+				"Study this object in the world to record its pattern."
 			)
 
 
@@ -265,6 +298,7 @@ func get_recorded_object_menu_debug_data() -> Dictionary:
 		"selected_blueprint_id": RecordedObjectCatalogScript.get_selected_blueprint_id(),
 		"recorded_count": RecordedObjectCatalogScript.get_recorded_blueprint_ids().size(),
 		"prepare_signal": has_signal("recorded_object_prepare_requested"),
-		"magic_blueprint_preparation": true,
+		"magic_blueprint_preparation": false,
+		"spell_detail_blueprint_configuration": true,
 		"journal_direct_reproduction": true,
 	}

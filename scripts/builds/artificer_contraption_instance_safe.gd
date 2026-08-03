@@ -5,27 +5,28 @@ class_name ArtificerContraptionInstanceSafe
 func _refresh_visual_state() -> void:
 	if visual_root == null:
 		return
-	var tint := Color(1.0, 1.0, 1.0, 1.0)
+	var tint := Color(0.0, 0.0, 0.0, 1.0)
+	var energy: float = 0.0
 	if frozen_progress >= 0.65:
-		tint = Color(0.62, 0.92, 1.0, 1.0)
+		tint = Color(0.3, 0.8, 1.0, 1.0)
+		energy = 0.8
 	elif energized_remaining > 0.0:
-		tint = Color(0.82, 0.86, 1.0, 1.0)
+		tint = Color(0.55, 0.62, 1.0, 1.0)
+		energy = 1.35
 	elif wet_remaining > 0.0:
-		tint = Color(0.72, 0.84, 1.0, 1.0)
+		tint = Color(0.22, 0.48, 0.9, 1.0)
+		energy = 0.25
 	for node: Node in visual_root.find_children("PartVisual", "MeshInstance3D", true, false):
 		if not node is MeshInstance3D:
 			continue
-		var mesh := node as MeshInstance3D
-		var material: StandardMaterial3D = mesh.material_override as StandardMaterial3D
+		var material: StandardMaterial3D = (
+			(node as MeshInstance3D).material_override as StandardMaterial3D
+		)
 		if material == null:
 			continue
-		var definition_color: Color = material.albedo_color
-		material.albedo_color = Color(
-			clampf(definition_color.r * tint.r, 0.0, 1.0),
-			clampf(definition_color.g * tint.g, 0.0, 1.0),
-			clampf(definition_color.b * tint.b, 0.0, 1.0),
-			definition_color.a
-		)
+		material.emission_enabled = energy > 0.0
+		material.emission = tint
+		material.emission_energy_multiplier = energy
 
 
 func _apply_buoyancy() -> void:

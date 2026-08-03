@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+display_name = "Deploy Contraption"
+description = "Manifest the prepared starter schematic or player-authored Artificer blueprint as one functioning machine. Choose the blueprint beforehand inside this spell."
+element = "metal"
+category = 2
+mana_cost = 0
+spell_id = "deploy_contraption"
+short_label = "Deploy"
+icon_text = "⌬"
+roles = Array[String](["summon", "engineering", "object", "puzzle", "utility", "combat"])
+targeting_style = "ground"
+delivery_type = "summon"
+combo_tags = Array[String](["artificer", "contraption", "deployment", "blueprint"])
+ui_tags = Array[String](["artificer", "contraption", "prepared_blueprint"])
+scaling_stats = Array[String](["intelligence", "metal"])
+design_notes = "The spell itself has no upfront cost. The selected contraption's derived mana cost is paid only when deployment is confirmed."

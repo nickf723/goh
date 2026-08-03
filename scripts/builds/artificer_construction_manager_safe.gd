@@ -6,6 +6,34 @@ const SafeContraptionScript = preload(
 )
 
 
+func cancel_mode() -> void:
+	var previous_mode: String = mode
+	super.cancel_mode()
+	if previous_mode == MODE_DEPLOY:
+		selected_deploy_build_id = ""
+
+
+func deploy_selected_at(
+	ground_position: Vector3,
+	yaw_degrees: float = 0.0,
+	ignore_cost: bool = false,
+	ignore_validation: bool = false,
+	excluded_support_rid: RID = RID()
+) -> ArtificerContraptionInstance:
+	# During a live deployment preview, keep the blueprint frozen to the one that
+	# opened the mode. Outside that mode, direct deployment should honor whatever
+	# the player most recently prepared in the spell menu or Items.
+	if mode != MODE_DEPLOY:
+		selected_deploy_build_id = BuildCatalog.get_selected_build_id()
+	return super.deploy_selected_at(
+		ground_position,
+		yaw_degrees,
+		ignore_cost,
+		ignore_validation,
+		excluded_support_rid
+	)
+
+
 func finalize_draft(
 	ignore_cost: bool = false,
 	manifest_immediately: bool = true

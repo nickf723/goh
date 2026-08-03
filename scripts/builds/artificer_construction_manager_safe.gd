@@ -6,6 +6,32 @@ const SafeContraptionScript = preload(
 )
 
 
+func finalize_draft(
+	ignore_cost: bool = false,
+	manifest_immediately: bool = true
+) -> Dictionary:
+	# Keep Vector3 values while the draft is live, but rewrite the saved slot with
+	# plain arrays after finalization so GameState can serialize it to JSON.
+	var slot_id: String = BuildCatalog.get_selected_custom_slot()
+	var encoded_parts: Array[Dictionary] = BuildCatalog.encode_part_layout(
+		draft_parts
+	)
+	var result: Dictionary = super.finalize_draft(
+		ignore_cost,
+		manifest_immediately
+	)
+	if not bool(result.get("ok", false)):
+		return result
+	var blueprints: Dictionary = BuildCatalog.get_custom_blueprints()
+	var stored: Dictionary = blueprints.get(slot_id, {}) as Dictionary
+	if not stored.is_empty():
+		stored["parts"] = encoded_parts
+		blueprints[slot_id] = stored
+		GameState.story_flags[BuildCatalog.CUSTOM_BLUEPRINTS_FLAG] = blueprints
+		result["definition"] = BuildCatalog.get_definition(slot_id)
+	return result
+
+
 func _manifest_definition_at(
 	definition: Dictionary,
 	ground_position: Vector3,

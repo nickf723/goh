@@ -215,6 +215,31 @@ static func _evaluate_policy(
 					context_tag + " " + _signed(context_delta)
 				)
 
+		var direct_modifier: float = context.get_move_score_modifier(move.move_id)
+		if not is_zero_approx(direct_modifier):
+			score += direct_modifier
+			score_reasons.append(
+				"move modifier " + _signed(direct_modifier)
+			)
+		for move_tag: String in move.tags:
+			var tag_modifier: float = context.get_tag_score_modifier(move_tag)
+			if is_zero_approx(tag_modifier):
+				continue
+			score += tag_modifier
+			score_reasons.append(
+				"tag " + move_tag + " " + _signed(tag_modifier)
+			)
+		for policy_tag: String in policy.policy_tags:
+			var policy_modifier: float = context.get_policy_tag_score_modifier(
+				policy_tag
+			)
+			if is_zero_approx(policy_modifier):
+				continue
+			score += policy_modifier
+			score_reasons.append(
+				"policy " + policy_tag + " " + _signed(policy_modifier)
+			)
+
 		if context.recent_move_ids.has(move.move_id):
 			score *= 0.68
 			score_reasons.append("recent repetition x0.68")

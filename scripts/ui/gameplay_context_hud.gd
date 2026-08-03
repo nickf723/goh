@@ -7,6 +7,15 @@ const RecordedObjectCatalogScript = preload(
 const RecordedObjectSpellControllerScript = preload(
 	"res://scripts/player/player_recorded_object_spell_controller.gd"
 )
+const ArtificerSpellControllerScript = preload(
+	"res://scripts/player/player_artificer_spell_controller.gd"
+)
+const EngineeringPartCatalogScript = preload(
+	"res://scripts/builds/engineering_part_catalog.gd"
+)
+const EngineeringBuildCatalogScript = preload(
+	"res://scripts/builds/engineering_build_catalog.gd"
+)
 
 var player: Node3D
 var panel: PanelContainer
@@ -26,7 +35,7 @@ func _ready() -> void:
 	add_to_group("debuggable")
 	player = get_parent() as Node3D
 	_build_ui()
-	_ensure_recorded_object_spell_runtime()
+	_ensure_specialized_spell_runtimes()
 	call_deferred("_bind_optional_sources")
 
 
@@ -61,16 +70,23 @@ func clear_context(source_id: String = "") -> void:
 	_refresh()
 
 
-func _ensure_recorded_object_spell_runtime() -> void:
+func _ensure_specialized_spell_runtimes() -> void:
 	if player == null or not is_instance_valid(player):
 		return
-	var controller: Node = player.get_node_or_null(
+	var recorded_controller: Node = player.get_node_or_null(
 		"RecordedObjectSpellController"
 	)
-	if controller == null:
-		controller = RecordedObjectSpellControllerScript.new()
-		controller.name = "RecordedObjectSpellController"
-		player.add_child(controller)
+	if recorded_controller == null:
+		recorded_controller = RecordedObjectSpellControllerScript.new()
+		recorded_controller.name = "RecordedObjectSpellController"
+		player.add_child(recorded_controller)
+	var artificer_controller: Node = player.get_node_or_null(
+		"ArtificerSpellController"
+	)
+	if artificer_controller == null:
+		artificer_controller = ArtificerSpellControllerScript.new()
+		artificer_controller.name = "ArtificerSpellController"
+		player.add_child(artificer_controller)
 
 
 func _bind_optional_sources() -> void:
@@ -115,9 +131,9 @@ func _build_ui() -> void:
 	panel.anchor_top = 1.0
 	panel.anchor_right = 0.5
 	panel.anchor_bottom = 1.0
-	panel.offset_left = -320.0
-	panel.offset_top = -270.0
-	panel.offset_right = 320.0
+	panel.offset_left = -350.0
+	panel.offset_top = -282.0
+	panel.offset_right = 350.0
 	panel.offset_bottom = -168.0
 	panel.add_to_group("menu_suppressed_hud")
 	var style := StyleBoxFlat.new()
@@ -177,6 +193,10 @@ func _build_ui() -> void:
 func _refresh() -> void:
 	if panel == null:
 		return
+	var artificer_context: Dictionary = _get_artificer_context()
+	if not artificer_context.is_empty():
+		_apply_context(artificer_context)
+		return
 	var object_context: Dictionary = _get_recorded_object_context()
 	if not object_context.is_empty():
 		_apply_context(object_context)
@@ -194,6 +214,58 @@ func _refresh() -> void:
 	transient_context.clear()
 	transient_expires_msec = 0
 	panel.visible = false
+
+
+func _get_artificer_context() -> Dictionary:
+	var manager: Node = get_tree().get_first_node_in_group(
+		"artificer_construction_manager"
+	)
+	if manager == null or not manager.has_method("get_debug_data"):
+		return {}
+	var debug_value: Variant = manager.call("get_debug_data")
+	if not debug_value is Dictionary:
+		return {}
+	var debug: Dictionary = debug_value as Dictionary
+	var mode_id: String = str(debug.get("mode", ""))
+	if mode_id == "":
+		return {}
+	var valid: bool = bool(debug.get("placement_valid", false))
+	var state: String = (
+		"VALID POSITION"
+		if valid
+		else str(debug.get("invalid_reason", "That construction cannot fit there."))
+	)
+	if mode_id == "assembly":
+		var part_id: String = str(debug.get("selected_part", ""))
+		var definition: Dictionary = EngineeringPartCatalogScript.get_definition(part_id)
+		return {
+			"eyebrow": "ARTIFICER ASSEMBLY  •  "
+				+ EngineeringBuildCatalogScript.get_custom_slot_display_name(
+					str(debug.get("selected_custom_slot", "custom_1"))
+				).to_upper(),
+			"title": str(definition.get("icon", "⚙")) + "  "
+				+ str(definition.get("display_name", part_id.capitalize())),
+			"state": state
+				+ "  •  " + str(debug.get("draft_part_count", 0)) + "/12 PARTS"
+				+ "  •  DEPTH " + str(snappedf(float(debug.get("depth_offset", 0.0)), 0.25))
+				+ "  •  ROTATION " + str(snappedf(float(debug.get("yaw_degrees", 0.0)), 0.5)) + "°",
+			"controls": "D-pad ↑/↓ depth  •  D-pad ←/→ part  •  L/R rotate  •  A attach  •  X undo  •  Y finalize  •  B exit",
+			"valid": valid,
+		}
+	var build_id: String = str(debug.get("selected_build", ""))
+	var build: Dictionary = EngineeringBuildCatalogScript.get_definition(build_id)
+	return {
+		"eyebrow": "DEPLOY CONTRAPTION",
+		"title": str(build.get("icon", "⌬")) + "  "
+			+ str(build.get("display_name", build_id.capitalize())),
+		"state": state
+			+ "  •  " + str((build.get("parts", []) as Array).size()) + " PARTS"
+			+ "  •  " + str(build.get("mana_cost", 0)) + " MANA"
+			+ "  •  DEPTH " + str(snappedf(float(debug.get("depth_offset", 0.0)), 0.25))
+			+ "  •  ROTATION " + str(snappedf(float(debug.get("yaw_degrees", 0.0)), 0.5)) + "°",
+		"controls": "D-pad ↑/↓ move depth  •  L/R rotate  •  A deploy  •  B cancel",
+		"valid": valid,
+	}
 
 
 func _get_recorded_object_context() -> Dictionary:
@@ -327,6 +399,7 @@ func get_debug_data() -> Dictionary:
 	return {
 		"visible": panel != null and panel.visible,
 		"player_ready": player != null and is_instance_valid(player),
+		"artificer_context": not _get_artificer_context().is_empty(),
 		"object_context": not _get_recorded_object_context().is_empty(),
 		"soul_context": not _get_soul_grip_context().is_empty(),
 		"transient_context": transient_context.duplicate(true),

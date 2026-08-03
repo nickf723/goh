@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+display_name = "Artificer Assembly"
+description = "Enter a field workshop and assemble dedicated engineering parts into a reusable contraption blueprint. Parts are chosen beforehand inside this spell and can be cycled while the workshop is active."
+element = "metal"
+category = 2
+mana_cost = 0
+spell_id = "artificer_assembly"
+short_label = "Build"
+icon_text = "⚙"
+roles = Array[String](["construct", "engineering", "puzzle", "utility", "combat"])
+targeting_style = "placement"
+delivery_type = "construction"
+combo_tags = Array[String](["artificer", "engineering_part", "assembly", "blueprint"])
+ui_tags = Array[String](["artificer", "construction", "prepared_parts"])
+scaling_stats = Array[String](["intelligence", "metal"])
+design_notes = "The assembly draft is free. Finalizing saves the blueprint and pays the derived contraption mana cost only if it is manifested immediately."

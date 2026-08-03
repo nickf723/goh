@@ -83,3 +83,37 @@ func run_tests() -> void:
 
 	_restore_state()
 	_finish()
+
+
+func _send_controller_button(button_index: JoyButton) -> void:
+	var pressed := InputEventJoypadButton.new()
+	pressed.device = 0
+	pressed.button_index = button_index
+	pressed.pressed = true
+	var press_owned: bool = false
+	if router != null and router.has_method("_handle_active_manipulation_button"):
+		press_owned = bool(router.call(
+			"_handle_active_manipulation_button",
+			pressed
+		))
+	assert_true(
+		press_owned,
+		"modal router owns controller button " + str(int(button_index))
+	)
+	await get_tree().process_frame
+
+	var released := InputEventJoypadButton.new()
+	released.device = 0
+	released.button_index = button_index
+	released.pressed = false
+	var release_owned: bool = false
+	if router != null and router.has_method("_handle_active_manipulation_button"):
+		release_owned = bool(router.call(
+			"_handle_active_manipulation_button",
+			released
+		))
+	assert_true(
+		release_owned,
+		"modal router owns controller release " + str(int(button_index))
+	)
+	await get_tree().process_frame

@@ -1,0 +1,37 @@
+name: Projectile receiver contract
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: projectile-receiver-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-projectile-receiver:
+    name: Validate void-returning receivers
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        run: godot --headless --path . --editor --quit
+
+      - name: Run projectile receiver contract regression
+        run: godot --headless --path . res://scenes/tests/projectile_receiver_contract_smoke_test.tscn

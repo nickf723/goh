@@ -1,13 +1,25 @@
 extends RefCounted
 class_name EngineeringBuildCatalog
 
+const PartCatalog = preload(
+	"res://scripts/builds/engineering_part_catalog.gd"
+)
+
 const SELECTED_BUILD_FLAG: String = "__engineering_builds__::selected_build"
+const SELECTED_CUSTOM_SLOT_FLAG: String = "__artificer__::selected_blueprint_slot"
+const CUSTOM_BLUEPRINTS_FLAG: String = "__artificer__::custom_blueprints"
 
 const BUILD_ORDER: Array[String] = [
 	"bridge_frame",
 	"launch_tower",
 	"blast_cart",
 	"conductive_raft",
+]
+const CUSTOM_SLOT_ORDER: Array[String] = [
+	"custom_1",
+	"custom_2",
+	"custom_3",
+	"custom_4",
 ]
 
 const DEFINITIONS: Dictionary = {
@@ -18,18 +30,23 @@ const DEFINITIONS: Dictionary = {
 		"display_name": "Bridge Frame",
 		"short_name": "Bridge Frame",
 		"icon": "▰",
-		"description": "Two reproduced supports lock beneath a broad platform to create stable elevated footing across a short gap.",
-		"behavior": "bridge_frame",
+		"description": "A starter artificer schematic made from frame blocks, braces, and a broad deck plate.",
+		"behavior": "part_contraption",
 		"body_mode": "anchored",
-		"size": Vector3(5.6, 1.75, 2.4),
-		"mass": 24.0,
-		"mana_cost": 4,
+		"mana_cost": 5,
 		"maximum_active": 2,
 		"placement_range": 14.0,
 		"color": Color(0.34, 0.68, 0.94, 1.0),
 		"components": [
-			{"blueprint_id": "crate", "item_id": "recorded_crate_blueprint", "label": "Recorded Crate"},
-			{"blueprint_id": "platform", "item_id": "recorded_platform_blueprint", "label": "Recorded Platform"},
+			{"part_id": "frame_block", "item_id": "recorded_crate_blueprint", "label": "Frame Block"},
+			{"part_id": "plate", "item_id": "recorded_platform_blueprint", "label": "Deck Plate"},
+		],
+		"parts": [
+			{"part_id": "frame_block", "position": Vector3(-2.05, 0.75, 0.0), "yaw_degrees": 0.0},
+			{"part_id": "frame_block", "position": Vector3(2.05, 0.75, 0.0), "yaw_degrees": 0.0},
+			{"part_id": "plate", "position": Vector3(0.0, 1.65, 0.0), "yaw_degrees": 0.0},
+			{"part_id": "beam", "position": Vector3(0.0, 1.98, -0.8), "yaw_degrees": 0.0},
+			{"part_id": "beam", "position": Vector3(0.0, 1.98, 0.8), "yaw_degrees": 0.0},
 		],
 		"test_prompt": "Bridge the construction-yard trench or create elevated footing.",
 	},
@@ -40,20 +57,25 @@ const DEFINITIONS: Dictionary = {
 		"display_name": "Launch Tower",
 		"short_name": "Launch Tower",
 		"icon": "↟",
-		"description": "A braced platform and spring assembly that provides a repeatable high launch and accepts Lightning overcharge.",
-		"behavior": "launch_tower",
+		"description": "A saved part assembly with a braced deck and an overchargeable spring unit.",
+		"behavior": "part_contraption",
 		"body_mode": "anchored",
-		"size": Vector3(3.2, 3.25, 3.2),
-		"mass": 28.0,
-		"mana_cost": 6,
+		"mana_cost": 8,
 		"maximum_active": 1,
 		"placement_range": 12.0,
-		"launch_speed": 14.0,
 		"color": Color(0.38, 0.94, 0.56, 1.0),
 		"components": [
-			{"blueprint_id": "crate", "item_id": "recorded_crate_blueprint", "label": "Recorded Crate"},
-			{"blueprint_id": "platform", "item_id": "recorded_platform_blueprint", "label": "Recorded Platform"},
-			{"blueprint_id": "spring", "item_id": "recorded_spring_blueprint", "label": "Recorded Spring"},
+			{"part_id": "frame_block", "item_id": "recorded_crate_blueprint", "label": "Frame Block"},
+			{"part_id": "plate", "item_id": "recorded_platform_blueprint", "label": "Deck Plate"},
+			{"part_id": "spring_unit", "item_id": "recorded_spring_blueprint", "label": "Spring Unit"},
+		],
+		"parts": [
+			{"part_id": "frame_block", "position": Vector3(-0.85, 0.75, -0.85), "yaw_degrees": 0.0},
+			{"part_id": "frame_block", "position": Vector3(0.85, 0.75, -0.85), "yaw_degrees": 0.0},
+			{"part_id": "frame_block", "position": Vector3(-0.85, 0.75, 0.85), "yaw_degrees": 0.0},
+			{"part_id": "frame_block", "position": Vector3(0.85, 0.75, 0.85), "yaw_degrees": 0.0},
+			{"part_id": "plate", "position": Vector3(0.0, 1.75, 0.0), "yaw_degrees": 0.0},
+			{"part_id": "spring_unit", "position": Vector3(0.0, 2.2, 0.0), "yaw_degrees": 0.0},
 		],
 		"test_prompt": "Reach the high shelf, then overcharge the launch with Lightning.",
 	},
@@ -64,21 +86,25 @@ const DEFINITIONS: Dictionary = {
 		"display_name": "Blast Cart",
 		"short_name": "Blast Cart",
 		"icon": "✹",
-		"description": "A movable reinforced crate chassis carrying a reproduced blast barrel for repositionable demolition.",
-		"behavior": "blast_cart",
+		"description": "A mobile plate-and-wheel chassis carrying a volatile artificer blast core.",
+		"behavior": "part_contraption",
 		"body_mode": "dynamic",
-		"size": Vector3(2.5, 1.8, 1.8),
-		"mass": 11.0,
-		"mana_cost": 5,
+		"mana_cost": 9,
 		"maximum_active": 2,
 		"placement_range": 12.0,
-		"blast_radius": 6.0,
-		"blast_damage": 5,
-		"blast_force": 11.0,
 		"color": Color(0.96, 0.34, 0.12, 1.0),
 		"components": [
-			{"blueprint_id": "crate", "item_id": "recorded_crate_blueprint", "label": "Recorded Crate"},
-			{"blueprint_id": "blast_barrel", "item_id": "recorded_blast_barrel_blueprint", "label": "Recorded Blast Barrel"},
+			{"part_id": "plate", "item_id": "recorded_platform_blueprint", "label": "Deck Plate"},
+			{"part_id": "wheel", "item_id": "recorded_crate_blueprint", "label": "Artificer Wheel"},
+			{"part_id": "blast_core", "item_id": "recorded_blast_barrel_blueprint", "label": "Blast Core"},
+		],
+		"parts": [
+			{"part_id": "plate", "position": Vector3(0.0, 0.75, 0.0), "yaw_degrees": 0.0},
+			{"part_id": "wheel", "position": Vector3(-1.05, 0.55, -0.78), "yaw_degrees": 90.0},
+			{"part_id": "wheel", "position": Vector3(1.05, 0.55, -0.78), "yaw_degrees": 90.0},
+			{"part_id": "wheel", "position": Vector3(-1.05, 0.55, 0.78), "yaw_degrees": 90.0},
+			{"part_id": "wheel", "position": Vector3(1.05, 0.55, 0.78), "yaw_degrees": 90.0},
+			{"part_id": "blast_core", "position": Vector3(0.0, 1.55, 0.0), "yaw_degrees": 0.0},
 		],
 		"test_prompt": "Push it into the target cluster, dampen it, or trigger a chain blast.",
 	},
@@ -89,18 +115,23 @@ const DEFINITIONS: Dictionary = {
 		"display_name": "Conductive Raft",
 		"short_name": "Conductive Raft",
 		"icon": "≈",
-		"description": "A buoyant twin-pontoon platform that follows water flow and can carry a temporary electrical contact field.",
-		"behavior": "conductive_raft",
+		"description": "A buoyant pontoon assembly whose conductor rail can energize the deck.",
+		"behavior": "part_contraption",
 		"body_mode": "dynamic",
-		"size": Vector3(4.2, 1.15, 3.0),
-		"mass": 13.0,
-		"mana_cost": 6,
+		"mana_cost": 9,
 		"maximum_active": 1,
 		"placement_range": 13.0,
 		"color": Color(0.2, 0.76, 0.92, 1.0),
 		"components": [
-			{"blueprint_id": "crate", "item_id": "recorded_crate_blueprint", "label": "Recorded Crate"},
-			{"blueprint_id": "platform", "item_id": "recorded_platform_blueprint", "label": "Recorded Platform"},
+			{"part_id": "float_pontoon", "item_id": "recorded_crate_blueprint", "label": "Float Pontoon"},
+			{"part_id": "plate", "item_id": "recorded_platform_blueprint", "label": "Deck Plate"},
+			{"part_id": "conductor_rail", "item_id": "recorded_platform_blueprint", "label": "Conductor Rail"},
+		],
+		"parts": [
+			{"part_id": "float_pontoon", "position": Vector3(-1.25, 0.5, 0.0), "yaw_degrees": 0.0},
+			{"part_id": "float_pontoon", "position": Vector3(1.25, 0.5, 0.0), "yaw_degrees": 0.0},
+			{"part_id": "plate", "position": Vector3(0.0, 1.05, 0.0), "yaw_degrees": 0.0},
+			{"part_id": "conductor_rail", "position": Vector3(0.0, 1.28, 0.0), "yaw_degrees": 0.0},
 		],
 		"test_prompt": "Launch it into water, ride the flow, and energize its deck.",
 	},
@@ -108,20 +139,42 @@ const DEFINITIONS: Dictionary = {
 
 
 static func has_build(build_id: String) -> bool:
-	return DEFINITIONS.has(build_id)
+	return DEFINITIONS.has(build_id) or get_custom_blueprints().has(build_id)
+
+
+static func is_custom_build(build_id: String) -> bool:
+	return CUSTOM_SLOT_ORDER.has(build_id) and get_custom_blueprints().has(build_id)
 
 
 static func get_definition(build_id: String) -> Dictionary:
-	if not has_build(build_id):
+	if DEFINITIONS.has(build_id):
+		var starter: Dictionary = (DEFINITIONS[build_id] as Dictionary).duplicate(true)
+		starter["parts"] = normalize_part_layout(starter.get("parts", []) as Array)
+		starter["features"] = summarize_features(starter["parts"] as Array)
+		starter["size"] = calculate_bounds(starter["parts"] as Array).get("size", Vector3.ONE)
+		return starter
+	var custom: Dictionary = get_custom_blueprints().get(build_id, {}) as Dictionary
+	if custom.is_empty():
 		return {}
-	return (DEFINITIONS[build_id] as Dictionary).duplicate(true)
+	return build_custom_definition(build_id, custom)
 
 
 static func get_definitions() -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
 	for build_id: String in BUILD_ORDER:
 		rows.append(get_definition(build_id))
+	for slot_id: String in CUSTOM_SLOT_ORDER:
+		if is_custom_build(slot_id):
+			rows.append(get_definition(slot_id))
 	return rows
+
+
+static func get_all_build_ids() -> Array[String]:
+	var ids: Array[String] = BUILD_ORDER.duplicate()
+	for slot_id: String in CUSTOM_SLOT_ORDER:
+		if is_custom_build(slot_id):
+			ids.append(slot_id)
+	return ids
 
 
 static func get_item_id(build_id: String) -> String:
@@ -136,6 +189,8 @@ static func get_build_id_for_item(item_id: String) -> String:
 
 
 static func is_saved(build_id: String) -> bool:
+	if is_custom_build(build_id):
+		return true
 	var item_id: String = get_item_id(build_id)
 	return item_id != "" and GameState.get_inventory_count(item_id) > 0
 
@@ -151,22 +206,26 @@ static func get_missing_requirements(build_id: String) -> Array[String]:
 		if not raw_component is Dictionary:
 			continue
 		var component: Dictionary = raw_component as Dictionary
-		var item_id: String = str(component.get("item_id", ""))
-		if item_id == "" or GameState.get_inventory_count(item_id) <= 0:
-			missing.append(str(component.get("label", item_id.replace("_", " ").capitalize())))
+		var part_id: String = str(component.get("part_id", ""))
+		var legacy_item_id: String = str(component.get("item_id", ""))
+		var learned: bool = PartCatalog.is_unlocked(part_id)
+		if not learned and legacy_item_id != "":
+			learned = GameState.get_inventory_count(legacy_item_id) > 0
+		if not learned:
+			missing.append(str(component.get("label", part_id.replace("_", " ").capitalize())))
 	return missing
 
 
 static func save_build(build_id: String) -> Dictionary:
 	var definition: Dictionary = get_definition(build_id)
-	if definition.is_empty():
-		return {"ok": false, "newly_saved": false, "error": "unknown build"}
+	if definition.is_empty() or is_custom_build(build_id):
+		return {"ok": false, "newly_saved": false, "error": "unknown starter build"}
 	var missing: Array[String] = get_missing_requirements(build_id)
 	if not missing.is_empty():
 		return {
 			"ok": false,
 			"newly_saved": false,
-			"error": "missing recorded components",
+			"error": "missing engineering parts",
 			"missing": missing,
 		}
 	var newly_saved: bool = not is_saved(build_id)
@@ -183,6 +242,80 @@ static func save_build(build_id: String) -> Dictionary:
 	}
 
 
+static func save_custom_blueprint(
+	slot_id: String,
+	parts: Array,
+	custom_name: String = ""
+) -> Dictionary:
+	if not CUSTOM_SLOT_ORDER.has(slot_id):
+		return {"ok": false, "error": "invalid blueprint slot"}
+	var normalized: Array[Dictionary] = normalize_part_layout(parts)
+	if normalized.size() < 2:
+		return {"ok": false, "error": "a contraption needs at least two parts"}
+	if normalized.size() > 12:
+		return {"ok": false, "error": "a contraption may use at most twelve parts"}
+	var blueprints: Dictionary = get_custom_blueprints()
+	var newly_saved: bool = not blueprints.has(slot_id)
+	blueprints[slot_id] = {
+		"slot_id": slot_id,
+		"display_name": (
+			custom_name
+			if custom_name.strip_edges() != ""
+			else get_custom_slot_display_name(slot_id)
+		),
+		"parts": normalized,
+		"saved_at_msec": Time.get_ticks_msec(),
+	}
+	GameState.story_flags[CUSTOM_BLUEPRINTS_FLAG] = blueprints
+	select_build(slot_id)
+	select_custom_slot(slot_id)
+	var definition: Dictionary = get_definition(slot_id)
+	_record_build_discovery(slot_id, definition)
+	return {
+		"ok": true,
+		"newly_saved": newly_saved,
+		"build_id": slot_id,
+		"definition": definition,
+	}
+
+
+static func delete_custom_blueprint(slot_id: String) -> bool:
+	var blueprints: Dictionary = get_custom_blueprints()
+	if not blueprints.has(slot_id):
+		return false
+	blueprints.erase(slot_id)
+	GameState.story_flags[CUSTOM_BLUEPRINTS_FLAG] = blueprints
+	if str(GameState.story_flags.get(SELECTED_BUILD_FLAG, "")) == slot_id:
+		GameState.story_flags.erase(SELECTED_BUILD_FLAG)
+	return true
+
+
+static func get_custom_blueprints() -> Dictionary:
+	var value: Variant = GameState.story_flags.get(CUSTOM_BLUEPRINTS_FLAG, {})
+	if not value is Dictionary:
+		return {}
+	return (value as Dictionary).duplicate(true)
+
+
+static func select_custom_slot(slot_id: String) -> bool:
+	if not CUSTOM_SLOT_ORDER.has(slot_id):
+		return false
+	GameState.story_flags[SELECTED_CUSTOM_SLOT_FLAG] = slot_id
+	return true
+
+
+static func get_selected_custom_slot() -> String:
+	var selected: String = str(GameState.story_flags.get(SELECTED_CUSTOM_SLOT_FLAG, ""))
+	if CUSTOM_SLOT_ORDER.has(selected):
+		return selected
+	return CUSTOM_SLOT_ORDER[0]
+
+
+static func get_custom_slot_display_name(slot_id: String) -> String:
+	var index: int = CUSTOM_SLOT_ORDER.find(slot_id)
+	return "Contraption " + String.chr(65 + maxi(index, 0))
+
+
 static func select_build(build_id: String) -> bool:
 	if not has_build(build_id) or not is_saved(build_id):
 		return false
@@ -194,9 +327,8 @@ static func get_selected_build_id() -> String:
 	var selected: String = str(GameState.story_flags.get(SELECTED_BUILD_FLAG, ""))
 	if selected != "" and is_saved(selected):
 		return selected
-	for build_id: String in BUILD_ORDER:
-		if is_saved(build_id):
-			return build_id
+	for build_id: String in get_saved_build_ids():
+		return build_id
 	return ""
 
 
@@ -205,19 +337,193 @@ static func get_saved_build_ids() -> Array[String]:
 	for build_id: String in BUILD_ORDER:
 		if is_saved(build_id):
 			ids.append(build_id)
+	for slot_id: String in CUSTOM_SLOT_ORDER:
+		if is_custom_build(slot_id):
+			ids.append(slot_id)
 	return ids
 
 
+static func get_part_layout(build_id: String) -> Array[Dictionary]:
+	return normalize_part_layout(get_definition(build_id).get("parts", []) as Array)
+
+
 static func get_component_summary(build_id: String) -> String:
+	var counts: Dictionary = {}
+	for part: Dictionary in get_part_layout(build_id):
+		var part_id: String = str(part.get("part_id", ""))
+		counts[part_id] = int(counts.get(part_id, 0)) + 1
 	var labels: Array[String] = []
-	for raw_component: Variant in get_definition(build_id).get("components", []):
-		if raw_component is Dictionary:
-			labels.append(str((raw_component as Dictionary).get("label", "Component")))
+	for part_id: String in PartCatalog.PART_ORDER:
+		var count: int = int(counts.get(part_id, 0))
+		if count <= 0:
+			continue
+		labels.append(
+			str(count)
+			+ "× "
+			+ str(PartCatalog.get_definition(part_id).get("display_name", part_id.capitalize()))
+		)
 	return " + ".join(labels)
 
 
+static func normalize_part_layout(raw_parts: Array) -> Array[Dictionary]:
+	var parts: Array[Dictionary] = []
+	for value: Variant in raw_parts:
+		if not value is Dictionary:
+			continue
+		var raw: Dictionary = value as Dictionary
+		var part_id: String = str(raw.get("part_id", ""))
+		if not PartCatalog.has_part(part_id):
+			continue
+		parts.append({
+			"part_id": part_id,
+			"position": _decode_vector3(raw.get("position", Vector3.ZERO)),
+			"yaw_degrees": snappedf(float(raw.get("yaw_degrees", 0.0)), 22.5),
+		})
+	if parts.is_empty():
+		return parts
+	var bounds: Dictionary = calculate_bounds(parts)
+	var minimum: Vector3 = bounds.get("minimum", Vector3.ZERO) as Vector3
+	var maximum: Vector3 = bounds.get("maximum", Vector3.ZERO) as Vector3
+	var center_xz := Vector3(
+		(minimum.x + maximum.x) * 0.5,
+		0.0,
+		(minimum.z + maximum.z) * 0.5
+	)
+	for part: Dictionary in parts:
+		var position: Vector3 = part.get("position", Vector3.ZERO) as Vector3
+		position -= center_xz
+		position.y -= minimum.y
+		part["position"] = position
+	return parts
+
+
+static func calculate_bounds(parts: Array) -> Dictionary:
+	if parts.is_empty():
+		return {
+			"minimum": Vector3.ZERO,
+			"maximum": Vector3.ONE,
+			"size": Vector3.ONE,
+		}
+	var minimum := Vector3(INF, INF, INF)
+	var maximum := Vector3(-INF, -INF, -INF)
+	for value: Variant in parts:
+		if not value is Dictionary:
+			continue
+		var part: Dictionary = value as Dictionary
+		var part_id: String = str(part.get("part_id", ""))
+		var size: Vector3 = PartCatalog.get_part_size(part_id)
+		var yaw: float = deg_to_rad(float(part.get("yaw_degrees", 0.0)))
+		var cosine: float = absf(cos(yaw))
+		var sine: float = absf(sin(yaw))
+		var half := Vector3(
+			(size.x * cosine + size.z * sine) * 0.5,
+			size.y * 0.5,
+			(size.x * sine + size.z * cosine) * 0.5
+		)
+		var position: Vector3 = _decode_vector3(part.get("position", Vector3.ZERO))
+		minimum.x = minf(minimum.x, position.x - half.x)
+		minimum.y = minf(minimum.y, position.y - half.y)
+		minimum.z = minf(minimum.z, position.z - half.z)
+		maximum.x = maxf(maximum.x, position.x + half.x)
+		maximum.y = maxf(maximum.y, position.y + half.y)
+		maximum.z = maxf(maximum.z, position.z + half.z)
+	return {
+		"minimum": minimum,
+		"maximum": maximum,
+		"size": Vector3(
+			maxf(maximum.x - minimum.x, 0.25),
+			maxf(maximum.y - minimum.y, 0.25),
+			maxf(maximum.z - minimum.z, 0.25)
+		),
+	}
+
+
+static func summarize_features(parts: Array) -> Dictionary:
+	var features: Dictionary = {
+		"structural": 0,
+		"wheels": 0,
+		"springs": 0,
+		"blast_cores": 0,
+		"floats": 0,
+		"conductors": 0,
+	}
+	for value: Variant in parts:
+		if not value is Dictionary:
+			continue
+		var part_id: String = str((value as Dictionary).get("part_id", ""))
+		for tag: String in PartCatalog.get_part_tags(part_id):
+			match tag:
+				"structural", "anchor", "brace", "deck":
+					features["structural"] = int(features["structural"]) + 1
+				"wheel":
+					features["wheels"] = int(features["wheels"]) + 1
+				"spring":
+					features["springs"] = int(features["springs"]) + 1
+				"blast":
+					features["blast_cores"] = int(features["blast_cores"]) + 1
+				"float":
+					features["floats"] = int(features["floats"]) + 1
+				"conductive":
+					features["conductors"] = int(features["conductors"]) + 1
+	return features
+
+
+static func build_custom_definition(
+	slot_id: String,
+	stored: Dictionary
+) -> Dictionary:
+	var parts: Array[Dictionary] = normalize_part_layout(stored.get("parts", []) as Array)
+	var features: Dictionary = summarize_features(parts)
+	var bounds: Dictionary = calculate_bounds(parts)
+	var mana_cost: int = 1
+	var total_mass: float = 0.0
+	for part: Dictionary in parts:
+		var part_id: String = str(part.get("part_id", ""))
+		mana_cost += PartCatalog.get_part_cost(part_id)
+		total_mass += PartCatalog.get_part_mass(part_id)
+	var dynamic: bool = (
+		int(features.get("wheels", 0)) >= 2
+		or int(features.get("floats", 0)) > 0
+		or int(features.get("blast_cores", 0)) > 0
+	)
+	return {
+		"id": slot_id,
+		"item_id": "",
+		"family": "build",
+		"custom": true,
+		"display_name": str(stored.get("display_name", get_custom_slot_display_name(slot_id))),
+		"short_name": str(stored.get("display_name", get_custom_slot_display_name(slot_id))),
+		"icon": "⚙",
+		"description": "A player-authored artificer contraption assembled from dedicated engineering parts.",
+		"behavior": "part_contraption",
+		"body_mode": "dynamic" if dynamic else "anchored",
+		"size": bounds.get("size", Vector3.ONE),
+		"mass": maxf(total_mass, 1.0),
+		"mana_cost": maxi(mana_cost, 1),
+		"maximum_active": 2,
+		"placement_range": 14.0,
+		"color": Color(0.46, 0.8, 1.0, 1.0),
+		"parts": parts,
+		"features": features,
+		"components": [],
+		"test_prompt": "Deploy the saved machine and test how its parts combine.",
+	}
+
+
+static func encode_part_layout(parts: Array) -> Array[Dictionary]:
+	var encoded: Array[Dictionary] = []
+	for part: Dictionary in normalize_part_layout(parts):
+		var position: Vector3 = part.get("position", Vector3.ZERO) as Vector3
+		encoded.append({
+			"part_id": str(part.get("part_id", "")),
+			"position": [position.x, position.y, position.z],
+			"yaw_degrees": float(part.get("yaw_degrees", 0.0)),
+		})
+	return encoded
+
+
 static func validate_catalog() -> Array[String]:
-	var failures: Array[String] = []
+	var failures: Array[String] = PartCatalog.validate_catalog()
 	var seen_items: Dictionary = {}
 	for build_id: String in BUILD_ORDER:
 		var definition: Dictionary = get_definition(build_id)
@@ -230,16 +536,28 @@ static func validate_catalog() -> Array[String]:
 		elif seen_items.has(item_id):
 			failures.append("duplicate engineering build item: " + item_id)
 		seen_items[item_id] = true
-		if str(definition.get("family", "")) != "build":
-			failures.append(build_id + " is not classified as a build")
-		var size_value: Variant = definition.get("size", Vector3.ZERO)
-		if not size_value is Vector3 or (size_value as Vector3).length() <= 0.1:
-			failures.append(build_id + " has invalid dimensions")
-		if (definition.get("components", []) as Array).is_empty():
-			failures.append(build_id + " has no component requirements")
+		if (definition.get("parts", []) as Array).is_empty():
+			failures.append(build_id + " has no engineering part layout")
 		if int(definition.get("maximum_active", 0)) <= 0:
 			failures.append(build_id + " needs an active limit")
 	return failures
+
+
+static func _decode_vector3(value: Variant) -> Vector3:
+	if value is Vector3:
+		return value as Vector3
+	if value is Array:
+		var values: Array = value as Array
+		if values.size() >= 3:
+			return Vector3(float(values[0]), float(values[1]), float(values[2]))
+	if value is Dictionary:
+		var row: Dictionary = value as Dictionary
+		return Vector3(
+			float(row.get("x", 0.0)),
+			float(row.get("y", 0.0)),
+			float(row.get("z", 0.0))
+		)
+	return Vector3.ZERO
 
 
 static func _record_build_discovery(
@@ -259,7 +577,7 @@ static func _record_build_discovery(
 			"blueprint",
 			build_id,
 			{
-				"source": "engineering_build",
+				"source": "artificer_construction",
 				"display_name": str(definition.get("display_name", build_id.capitalize())),
 				"components": get_component_summary(build_id),
 			}

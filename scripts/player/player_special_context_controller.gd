@@ -34,6 +34,9 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _is_modal_manipulation_active():
+		_reset_context_input_for_manipulation()
+		return
 	if held and not wheel_open:
 		hold_time += delta
 		if hold_time >= hold_seconds:
@@ -41,6 +44,13 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	# D-pad Down is normally the special-context action, but object reproduction
+	# and Soul Grasp own it while manipulating. Do not begin a hold, perform a
+	# release action, or open the wheel underneath the manipulation router.
+	if _is_modal_manipulation_active():
+		_reset_context_input_for_manipulation()
+		return
+
 	if event.is_action_pressed(context_action):
 		if wheel_open:
 			suppress_context_release = true
@@ -86,6 +96,33 @@ func _input(event: InputEvent) -> void:
 		else:
 			return
 		get_viewport().set_input_as_handled()
+
+
+func _is_modal_manipulation_active() -> bool:
+	if actor == null or not is_instance_valid(actor):
+		return false
+	var manager: Node = actor.get_node_or_null("RecordedObjectManager")
+	if manager != null and bool(manager.get("placement_active")):
+		return true
+	var soul_controller: Node = actor.get_node_or_null("SoulGripController")
+	if soul_controller == null:
+		soul_controller = get_tree().get_first_node_in_group(
+			"soul_grip_controllers"
+		)
+	if soul_controller == null or not is_instance_valid(soul_controller):
+		return false
+	return (
+		bool(soul_controller.get("channel_requested"))
+		and soul_controller.get("held_target") != null
+	)
+
+
+func _reset_context_input_for_manipulation() -> void:
+	held = false
+	hold_time = 0.0
+	suppress_context_release = true
+	if wheel_open:
+		_close_context()
 
 
 func _perform_primary_action() -> void:
@@ -267,4 +304,10 @@ func _show_message(message: String) -> void:
 
 
 func get_debug_data() -> Dictionary:
-	return {"held": held, "wheel_open": wheel_open, "context": context_name, "hold_time": snappedf(hold_time, 0.01)}
+	return {
+		"held": held,
+		"wheel_open": wheel_open,
+		"context": context_name,
+		"hold_time": snappedf(hold_time, 0.01),
+		"manipulation_suspended": _is_modal_manipulation_active(),
+	}

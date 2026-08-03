@@ -11,7 +11,7 @@ signal active_objects_changed(count: int)
 
 const Catalog = preload("res://scripts/objects/recorded_object_catalog.gd")
 const RecordedObjectScript = preload(
-	"res://scripts/objects/recorded_object_instance.gd"
+	"res://scripts/objects/recorded_object_instance_safe.gd"
 )
 
 @export var actor_path: NodePath
@@ -368,6 +368,7 @@ func get_debug_data() -> Dictionary:
 		"active_count": get_active_count(),
 		"maximum_total_active": maximum_total_active,
 		"preview_visible": preview_root != null and is_instance_valid(preview_root),
+		"safe_recorded_object_actor": true,
 	}
 
 

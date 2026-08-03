@@ -2,7 +2,7 @@ extends Node
 class_name PlayerArtificerSpellController
 
 const ManagerScript = preload(
-	"res://scripts/builds/artificer_construction_manager.gd"
+	"res://scripts/builds/artificer_construction_manager_safe.gd"
 )
 const PartCatalog = preload(
 	"res://scripts/builds/engineering_part_catalog.gd"
@@ -88,7 +88,7 @@ func _ensure_manager() -> ArtificerConstructionManager:
 		var resolved := existing as ArtificerConstructionManager
 		resolved.bind_actor(actor)
 		return resolved
-	var created := ManagerScript.new() as ArtificerConstructionManager
+	var created := ManagerScript.new() as ArtificerConstructionManagerSafe
 	created.name = "ArtificerConstructionManager"
 	actor.add_child(created)
 	created.bind_actor(actor)

@@ -10,26 +10,90 @@ func finalize_draft(
 	ignore_cost: bool = false,
 	manifest_immediately: bool = true
 ) -> Dictionary:
-	# Keep Vector3 values while the draft is live, but rewrite the saved slot with
-	# plain arrays after finalization so GameState can serialize it to JSON.
+	if draft_parts.size() < 2:
+		_show_message("Attach at least two engineering parts before saving a contraption.")
+		return {"ok": false, "error": "not enough parts"}
+	if draft_parts.size() > maximum_draft_parts:
+		_show_message("This draft exceeds the twelve-part prototype limit.")
+		return {"ok": false, "error": "too many parts"}
+
 	var slot_id: String = BuildCatalog.get_selected_custom_slot()
 	var encoded_parts: Array[Dictionary] = BuildCatalog.encode_part_layout(
 		draft_parts
 	)
-	var result: Dictionary = super.finalize_draft(
-		ignore_cost,
-		manifest_immediately
-	)
-	if not bool(result.get("ok", false)):
-		return result
+	if encoded_parts.size() != draft_parts.size():
+		_show_message("One or more engineering parts could not be encoded.")
+		return {"ok": false, "error": "part encoding failed"}
+
+	# Write one JSON-safe source of truth. The finished definition is derived only
+	# after that exact stored recipe exists, so draft cleanup cannot truncate the
+	# personal blueprint.
 	var blueprints: Dictionary = BuildCatalog.get_custom_blueprints()
-	var stored: Dictionary = blueprints.get(slot_id, {}) as Dictionary
-	if not stored.is_empty():
-		stored["parts"] = encoded_parts
-		blueprints[slot_id] = stored
-		GameState.story_flags[BuildCatalog.CUSTOM_BLUEPRINTS_FLAG] = blueprints
-		result["definition"] = BuildCatalog.get_definition(slot_id)
-	return result
+	var newly_saved: bool = not blueprints.has(slot_id)
+	blueprints[slot_id] = {
+		"slot_id": slot_id,
+		"display_name": BuildCatalog.get_custom_slot_display_name(slot_id),
+		"parts": encoded_parts,
+		"saved_at_msec": Time.get_ticks_msec(),
+	}
+	GameState.story_flags[BuildCatalog.CUSTOM_BLUEPRINTS_FLAG] = blueprints
+	BuildCatalog.select_custom_slot(slot_id)
+	BuildCatalog.select_build(slot_id)
+
+	var definition: Dictionary = BuildCatalog.get_definition(slot_id)
+	if definition.is_empty() or (definition.get("parts", []) as Array).size() != encoded_parts.size():
+		_show_message("The saved contraption recipe could not be reconstructed.")
+		return {"ok": false, "error": "blueprint reconstruction failed"}
+
+	var manifestation: ArtificerContraptionInstance
+	if manifest_immediately:
+		var cost: int = maxi(int(definition.get("mana_cost", 0)), 0)
+		if ignore_cost or cost <= 0 or GameState.spend_mana(cost):
+			var origin: Vector3 = (
+				draft_root.global_position
+				if draft_root != null and is_instance_valid(draft_root)
+				else actor.global_position
+			)
+			manifestation = _manifest_definition_at(definition, origin, 0.0)
+		else:
+			_show_message("Blueprint saved, but Grace lacks the mana to manifest it now.")
+
+	blueprint_finalized.emit(slot_id, definition)
+	_record_artificer_discovery(slot_id, definition)
+	clear_draft()
+	cancel_mode()
+	_show_message(
+		str(definition.get("display_name", slot_id.capitalize()))
+		+ " saved as an Artificer blueprint."
+	)
+	return {
+		"ok": true,
+		"newly_saved": newly_saved,
+		"build_id": slot_id,
+		"definition": definition,
+		"manifestation": manifestation,
+	}
+
+
+func _record_artificer_discovery(
+	build_id: String,
+	definition: Dictionary
+) -> void:
+	var tracker: Node = get_tree().root.get_node_or_null(
+		"FullMenuDirector/ProgressionTracker"
+	)
+	if tracker == null or not tracker.has_method("record_discovery"):
+		return
+	tracker.call(
+		"record_discovery",
+		"blueprint",
+		build_id,
+		{
+			"source": "artificer_construction",
+			"display_name": str(definition.get("display_name", build_id.capitalize())),
+			"components": BuildCatalog.get_component_summary(build_id),
+		}
+	)
 
 
 func _manifest_definition_at(

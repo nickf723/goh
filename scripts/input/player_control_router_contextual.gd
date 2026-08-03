@@ -69,17 +69,13 @@ func handle_focus_action(pressed: bool) -> bool:
 
 
 func _input(event: InputEvent) -> void:
-	# Paused full-screen menus own every controller button, including the magic
-	# shoulder. Returning before Focus handling prevents L from eating the menu's
-	# tab-left command.
 	if get_tree().paused:
 		return
 	_resolve_bindings()
 
-	# Manipulation is a modal input owner. Handle these buttons before Focus,
-	# quick items, quick-spell cycling, Divine Special, or weapon _unhandled_input
-	# can observe them. Releases are swallowed too, preventing L-release from
-	# toggling Focus after L-press rotated an object.
+	# Manipulation and construction are modal owners. Handle their events before
+	# Focus, quick items, quick-spell cycling, Divine Special, or weapon input can
+	# observe them. Releases are swallowed as well.
 	if (
 		event is InputEventJoypadButton
 		and _handle_active_manipulation_button(
@@ -112,6 +108,10 @@ func _input(event: InputEvent) -> void:
 func _handle_active_manipulation_button(
 	event: InputEventJoypadButton
 ) -> bool:
+	var artificer: Node = _get_active_artificer_manager()
+	if artificer != null:
+		return _handle_artificer_button(artificer, event)
+
 	var manager: Node = _get_active_recorded_object_manager()
 	if manager != null:
 		return _handle_recorded_object_button(manager, event)
@@ -120,6 +120,74 @@ func _handle_active_manipulation_button(
 	if soul_controller != null:
 		return _handle_soul_grip_button(soul_controller, event)
 	return false
+
+
+func _get_active_artificer_manager() -> Node:
+	var manager: Node = null
+	if actor != null and is_instance_valid(actor):
+		manager = actor.get_node_or_null("ArtificerConstructionManager")
+	if manager == null:
+		manager = get_tree().get_first_node_in_group(
+			"artificer_construction_manager"
+		)
+	if manager == null or not is_instance_valid(manager):
+		return null
+	if str(manager.get("mode")) == "":
+		return null
+	return manager
+
+
+func _handle_artificer_button(
+	manager: Node,
+	event: InputEventJoypadButton
+) -> bool:
+	var mode_id: String = str(manager.get("mode"))
+	var reserved: Array[int] = [
+		JOY_BUTTON_DPAD_UP,
+		JOY_BUTTON_DPAD_DOWN,
+		JOY_BUTTON_LEFT_SHOULDER,
+		JOY_BUTTON_RIGHT_SHOULDER,
+		JOY_BUTTON_A,
+		JOY_BUTTON_B,
+	]
+	if mode_id == "assembly":
+		reserved.append_array([
+			JOY_BUTTON_DPAD_LEFT,
+			JOY_BUTTON_DPAD_RIGHT,
+			JOY_BUTTON_X,
+			JOY_BUTTON_Y,
+		])
+	if event.button_index not in reserved:
+		return false
+	if not event.pressed:
+		return true
+
+	match event.button_index:
+		JOY_BUTTON_DPAD_UP:
+			manager.call("adjust_depth", 1)
+		JOY_BUTTON_DPAD_DOWN:
+			manager.call("adjust_depth", -1)
+		JOY_BUTTON_DPAD_LEFT:
+			if mode_id == "assembly":
+				manager.call("cycle_part", -1)
+		JOY_BUTTON_DPAD_RIGHT:
+			if mode_id == "assembly":
+				manager.call("cycle_part", 1)
+		JOY_BUTTON_LEFT_SHOULDER:
+			manager.call("rotate_preview", -1)
+		JOY_BUTTON_RIGHT_SHOULDER:
+			manager.call("rotate_preview", 1)
+		JOY_BUTTON_A:
+			manager.call("confirm_placement")
+		JOY_BUTTON_B:
+			manager.call("cancel_mode")
+		JOY_BUTTON_X:
+			if mode_id == "assembly":
+				manager.call("undo_last_part")
+		JOY_BUTTON_Y:
+			if mode_id == "assembly":
+				manager.call("finalize_draft")
+	return true
 
 
 func _get_active_recorded_object_manager() -> Node:
@@ -287,6 +355,7 @@ func get_input_mode_debug_data() -> Dictionary:
 	return {
 		"ground_targeting": is_ground_targeting_active(),
 		"focus_library": is_focus_open(),
+		"artificer_construction": _get_active_artificer_manager() != null,
 		"recorded_object_manipulation": (
 			_get_active_recorded_object_manager() != null
 		),

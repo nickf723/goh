@@ -14,6 +14,9 @@ var allowed_move_ids: Array[String] = []
 var recent_move_ids: Array[String] = []
 var cooldowns: Dictionary = {}
 var scalar_values: Dictionary = {}
+var move_score_modifiers: Dictionary = {}
+var tag_score_modifiers: Dictionary = {}
+var policy_tag_score_modifiers: Dictionary = {}
 
 
 static func from_dictionary(data: Dictionary) -> MobDecisionContext:
@@ -31,6 +34,9 @@ static func from_dictionary(data: Dictionary) -> MobDecisionContext:
 	context.recent_move_ids = _string_array(data.get("recent_move_ids", []))
 	context.cooldowns = _number_dictionary(data.get("cooldowns", {}))
 	context.scalar_values = _number_dictionary(data.get("scalar_values", {}))
+	context.move_score_modifiers = _number_dictionary(data.get("move_score_modifiers", {}))
+	context.tag_score_modifiers = _number_dictionary(data.get("tag_score_modifiers", {}))
+	context.policy_tag_score_modifiers = _number_dictionary(data.get("policy_tag_score_modifiers", {}))
 	return context
 
 
@@ -58,6 +64,18 @@ func get_scalar(key: String, fallback: float = 0.0) -> float:
 	return float(scalar_values.get(key.to_lower().strip_edges(), fallback))
 
 
+func get_move_score_modifier(move_id: String) -> float:
+	return float(move_score_modifiers.get(move_id.to_lower().strip_edges(), 0.0))
+
+
+func get_tag_score_modifier(tag: String) -> float:
+	return float(tag_score_modifiers.get(tag.to_lower().strip_edges(), 0.0))
+
+
+func get_policy_tag_score_modifier(tag: String) -> float:
+	return float(policy_tag_score_modifiers.get(tag.to_lower().strip_edges(), 0.0))
+
+
 func to_dictionary() -> Dictionary:
 	return {
 		"target_distance": target_distance,
@@ -73,6 +91,9 @@ func to_dictionary() -> Dictionary:
 		"recent_move_ids": recent_move_ids.duplicate(),
 		"cooldowns": cooldowns.duplicate(true),
 		"scalar_values": scalar_values.duplicate(true),
+		"move_score_modifiers": move_score_modifiers.duplicate(true),
+		"tag_score_modifiers": tag_score_modifiers.duplicate(true),
+		"policy_tag_score_modifiers": policy_tag_score_modifiers.duplicate(true),
 	}
 
 

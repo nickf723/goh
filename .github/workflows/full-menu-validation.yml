@@ -87,6 +87,9 @@ jobs:
       - name: Run engineering builds regression
         run: godot --headless --path . res://scenes/tests/engineering_builds_v1_smoke_test.tscn
 
+      - name: Run Artificer Construction regression
+        run: godot --headless --path . res://scenes/tests/artificer_construction_v1_smoke_test.tscn
+
       - name: Run placement input isolation regression
         run: godot --headless --path . res://scenes/tests/placement_input_isolation_smoke_test.tscn
 

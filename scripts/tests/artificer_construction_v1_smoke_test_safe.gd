@@ -16,9 +16,9 @@ func run_tests() -> void:
 		await get_tree().process_frame
 	await get_tree().physics_frame
 
-	# The inherited laboratory may wrap Grace below another generated root. The
-	# Artificer controller is authoritative about which actor it belongs to, so
-	# resolve the player from that runtime relationship instead of a brittle path.
+	# The controller is authoritative about which Grace it belongs to. Resolve
+	# every modal dependency from that same player instead of taking the first
+	# globally registered router or HUD from a busy headless SceneTree.
 	controller = get_tree().get_first_node_in_group(
 		"player_artificer_spell_controllers"
 	) as PlayerArtificerSpellController
@@ -29,14 +29,19 @@ func run_tests() -> void:
 	if player == null:
 		player = lab.find_child("Player", true, false) as Node3D
 
-	router = get_tree().get_first_node_in_group("player_control_router")
-	context_hud = get_tree().get_first_node_in_group(
-		"gameplay_context_hud"
-	) as GameplayContextHUD
+	if player != null:
+		router = player.get_node_or_null("PlayerControlRouter")
+		context_hud = player.get_node_or_null(
+			"ArtificerConstructionRegressionHUD"
+		) as GameplayContextHUD
+		if context_hud == null:
+			for child: Node in player.get_children():
+				if child is GameplayContextHUD:
+					context_hud = child as GameplayContextHUD
+					break
 
 	# Headless prototype shells do not always install FullMenuDirector's
-	# presentation surface. Add the same production HUD to Grace so this test can
-	# validate Artificer context without depending on a particular launcher.
+	# presentation surface. Add the same production HUD to this Grace only.
 	if context_hud == null and player != null:
 		context_hud = GameplayContextHUD.new()
 		context_hud.name = "ArtificerConstructionRegressionHUD"
@@ -44,14 +49,16 @@ func run_tests() -> void:
 		await get_tree().process_frame
 		await get_tree().process_frame
 		if controller == null:
-			controller = get_tree().get_first_node_in_group(
-				"player_artificer_spell_controllers"
+			controller = player.get_node_or_null(
+				"ArtificerSpellController"
 			) as PlayerArtificerSpellController
+		if router == null:
+			router = player.get_node_or_null("PlayerControlRouter")
 
 	assert_true(player != null, "player exists")
 	assert_true(controller != null, "Artificer spell controller exists")
-	assert_true(router != null, "authoritative input router exists")
-	assert_true(context_hud != null, "global context HUD exists")
+	assert_true(router != null, "Grace-owned input router exists")
+	assert_true(context_hud != null, "Grace-owned global context HUD exists")
 	if player == null or controller == null:
 		_restore_state()
 		_finish()
@@ -59,6 +66,10 @@ func run_tests() -> void:
 
 	manager = controller.get_manager() as ArtificerConstructionManagerSafe
 	assert_true(manager != null, "safe Artificer construction manager exists")
+	assert_true(
+		manager != null and manager.get_parent() == player,
+		"Grace owns the tested Artificer manager"
+	)
 	assert_true(
 		controller.can_handle_ability(AssemblyAbility),
 		"Artificer Assembly is an ability channel"
@@ -85,6 +96,14 @@ func run_tests() -> void:
 	_finish()
 
 
+func _clear_artificer_state() -> void:
+	super._clear_artificer_state()
+	for slot_id: String in BuildCatalog.CUSTOM_SLOT_ORDER:
+		GameState.story_flags.erase(
+			BuildCatalog.get_custom_slot_flag(slot_id)
+		)
+
+
 func _send_controller_button(button_index: JoyButton) -> void:
 	var pressed := InputEventJoypadButton.new()
 	pressed.device = 0
@@ -98,7 +117,7 @@ func _send_controller_button(button_index: JoyButton) -> void:
 		))
 	assert_true(
 		press_owned,
-		"modal router owns controller button " + str(int(button_index))
+		"Grace's modal router owns controller button " + str(int(button_index))
 	)
 	await get_tree().process_frame
 
@@ -114,6 +133,6 @@ func _send_controller_button(button_index: JoyButton) -> void:
 		))
 	assert_true(
 		release_owned,
-		"modal router owns controller release " + str(int(button_index))
+		"Grace's modal router owns controller release " + str(int(button_index))
 	)
 	await get_tree().process_frame

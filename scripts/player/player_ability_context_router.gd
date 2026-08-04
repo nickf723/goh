@@ -7,6 +7,12 @@ signal context_open_failed(ability: AbilityDefinition, reason: String)
 const AbilityContextMenuScript = preload(
 	"res://scripts/ui/persistent_ability_context_menu.gd"
 )
+const RecordedObjectSpellControllerScript = preload(
+	"res://scripts/player/player_recorded_object_spell_controller.gd"
+)
+const ArtificerSpellControllerScript = preload(
+	"res://scripts/player/player_artificer_spell_controller.gd"
+)
 const CONTEXT_DPAD_ACTIONS: Dictionary = {
 	&"ui_up": JOY_BUTTON_DPAD_UP,
 	&"ui_down": JOY_BUTTON_DPAD_DOWN,
@@ -30,6 +36,7 @@ func _ready() -> void:
 	if actor != null:
 		ability_caster = actor.get_node_or_null("AbilityCaster")
 		action_state = actor.get_node_or_null("PlayerActionState") as PlayerActionState
+	_ensure_context_providers()
 	_ensure_dpad_navigation_actions()
 	add_to_group("ability_context_routers")
 	add_to_group("debuggable")
@@ -142,6 +149,25 @@ func _get_selected_ability() -> AbilityDefinition:
 	return value as AbilityDefinition if value is AbilityDefinition else null
 
 
+func _ensure_context_providers() -> void:
+	if actor == null or not is_instance_valid(actor):
+		return
+	var recorded_provider: Node = actor.get_node_or_null(
+		"RecordedObjectSpellController"
+	)
+	if recorded_provider == null:
+		recorded_provider = RecordedObjectSpellControllerScript.new()
+		recorded_provider.name = "RecordedObjectSpellController"
+		actor.add_child(recorded_provider)
+	var artificer_provider: Node = actor.get_node_or_null(
+		"ArtificerSpellController"
+	)
+	if artificer_provider == null:
+		artificer_provider = ArtificerSpellControllerScript.new()
+		artificer_provider.name = "ArtificerSpellController"
+		actor.add_child(artificer_provider)
+
+
 func _install_context_menu() -> void:
 	if actor == null or not is_instance_valid(actor):
 		actor = get_parent() as Node3D
@@ -214,5 +240,7 @@ func get_debug_data() -> Dictionary:
 		"context_active": is_context_active(),
 		"menu_installed": context_menu != null and is_instance_valid(context_menu),
 		"dpad_navigation": _has_dpad_navigation(),
+		"recorded_provider": actor.get_node_or_null("RecordedObjectSpellController") != null if actor != null else false,
+		"artificer_provider": actor.get_node_or_null("ArtificerSpellController") != null if actor != null else false,
 		"selected_ability": _get_selected_ability().get_spell_id() if _get_selected_ability() != null else "none",
 	}

@@ -96,6 +96,9 @@ jobs:
       - name: Run active ability ribbon and spell icon regression
         run: godot --headless --path . res://scenes/tests/active_ability_ribbon_spell_icons_smoke_test.tscn
 
+      - name: Run unified HUD shell regression
+        run: godot --headless --path . res://scenes/tests/unified_hud_shell_smoke_test.tscn
+
       - name: Run base Ruined Village regression
         run: godot --headless --path . res://scenes/tests/ruined_village_approach_smoke_test.tscn
 

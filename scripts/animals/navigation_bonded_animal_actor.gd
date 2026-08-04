@@ -4,6 +4,14 @@ class_name NavigationBondedAnimalActor
 signal navigation_state_changed(debug_data: Dictionary)
 signal rescue_state_changed(rescued: bool, injured: bool)
 signal navigation_recovered(recovery_count: int, position: Vector3)
+signal companion_command_changed(command_data: Dictionary)
+signal companion_command_completed(command_id: String, completion_count: int)
+
+const COMMAND_NONE: String = "none"
+const COMMAND_FOLLOW: String = "follow"
+const COMMAND_STAY: String = "stay"
+const COMMAND_COME_HERE: String = "come_here"
+const COMMAND_MOVE_TO: String = "move_to"
 
 @export_group("Navigation")
 @export var navigation_enabled: bool = true
@@ -13,6 +21,11 @@ signal navigation_recovered(recovery_count: int, position: Vector3)
 @export_range(3.0, 40.0, 0.5) var separation_recovery_distance: float = 19.0
 @export_range(0.5, 10.0, 0.1) var stuck_repath_seconds: float = 1.2
 @export_range(1.0, 15.0, 0.1) var stuck_recovery_seconds: float = 4.0
+
+@export_group("Command Authority")
+@export_range(0.35, 3.0, 0.05) var stay_anchor_radius: float = 0.85
+@export_range(0.35, 3.0, 0.05) var destination_completion_radius: float = 0.9
+@export_range(0.1, 1.0, 0.05) var command_fear_suspend_threshold: float = 0.68
 
 @export_group("Encounter State")
 @export var movement_locked: bool = false
@@ -38,6 +51,18 @@ var last_target_reachable: bool = false
 var last_navigation_finished: bool = true
 var last_damage_amount: int = 0
 
+var command_id: String = COMMAND_NONE
+var previous_command_id: String = COMMAND_NONE
+var command_anchor: Vector3 = Vector3.ZERO
+var has_command_anchor: bool = false
+var command_destination: Vector3 = Vector3.ZERO
+var has_command_destination: bool = false
+var command_suspended: bool = false
+var command_suspend_reason: String = ""
+var last_completed_command_id: String = ""
+var command_completion_count: int = 0
+var command_sequence: int = 0
+
 
 func _ready() -> void:
 	super._ready()
@@ -45,6 +70,7 @@ func _ready() -> void:
 	last_progress_position = global_position
 	if movement_locked:
 		velocity = Vector3.ZERO
+	_apply_command_authority(true)
 
 
 func _build_navigation_agent() -> void:
@@ -64,16 +90,14 @@ func set_navigation_ready(value: bool) -> void:
 	path_refresh_remaining = 0.0
 	if navigation_agent != null:
 		navigation_agent.target_position = global_position
+	_apply_command_authority(true)
 	_emit_navigation_state()
 
 
 func set_movement_locked(value: bool) -> void:
 	movement_locked = value
 	if movement_locked:
-		velocity.x = 0.0
-		velocity.z = 0.0
-		current_action_id = "trapped" if not rescued else "stay"
-		current_move_id = "idle"
+		_halt_horizontal_motion("trapped" if not rescued else "command_stay")
 	if brain != null:
 		brain.clear_memory()
 		decision_time_remaining = 0.0
@@ -144,6 +168,190 @@ func receive_weapon_impact(_payload: Variant, direction: Vector3, _attack: Varia
 		velocity += planar.normalized() * 1.1
 
 
+func attempt_bond() -> Dictionary:
+	var result: Dictionary = super.attempt_bond()
+	if bool(result.get("ok", false)):
+		issue_follow_command(false)
+		persist_named_state(true)
+	return result
+
+
+func toggle_follow() -> Dictionary:
+	if not bonded:
+		return {"ok": false, "error": "animal is not bonded"}
+	if command_id == COMMAND_FOLLOW:
+		return issue_stay_command(global_position)
+	return issue_follow_command()
+
+
+func issue_follow_command(save_now: bool = true) -> Dictionary:
+	var error: String = _command_availability_error()
+	if error != "":
+		return {"ok": false, "error": error}
+	previous_command_id = COMMAND_FOLLOW
+	command_id = COMMAND_FOLLOW
+	follow_enabled = true
+	has_command_anchor = false
+	has_command_destination = false
+	command_suspended = false
+	command_suspend_reason = ""
+	last_completed_command_id = ""
+	command_sequence += 1
+	_halt_horizontal_motion("command_follow")
+	var grace: Node3D = _get_grace_target()
+	if grace != null:
+		request_navigation_target(grace.global_position, true)
+	_finish_command_issue(save_now)
+	return _command_result(true)
+
+
+func issue_stay_command(anchor: Vector3 = Vector3.INF, save_now: bool = true) -> Dictionary:
+	var error: String = _command_availability_error()
+	if error != "":
+		return {"ok": false, "error": error}
+	previous_command_id = COMMAND_STAY
+	command_id = COMMAND_STAY
+	follow_enabled = false
+	command_anchor = global_position if anchor == Vector3.INF else anchor
+	has_command_anchor = true
+	has_command_destination = false
+	command_suspended = false
+	command_suspend_reason = ""
+	last_completed_command_id = ""
+	command_sequence += 1
+	_halt_horizontal_motion("command_stay")
+	request_navigation_target(command_anchor, true)
+	_finish_command_issue(save_now)
+	return _command_result(true)
+
+
+func issue_come_here_command(save_now: bool = true) -> Dictionary:
+	var error: String = _command_availability_error()
+	if error != "":
+		return {"ok": false, "error": error}
+	var grace: Node3D = _get_grace_target()
+	if grace == null:
+		return {"ok": false, "error": "Grace unavailable"}
+	previous_command_id = COMMAND_FOLLOW if command_id == COMMAND_FOLLOW else COMMAND_STAY
+	command_id = COMMAND_COME_HERE
+	command_destination = grace.global_position
+	has_command_destination = true
+	command_suspended = false
+	command_suspend_reason = ""
+	last_completed_command_id = ""
+	command_sequence += 1
+	_halt_horizontal_motion("command_come_here")
+	request_navigation_target(command_destination, true)
+	_finish_command_issue(save_now)
+	return _command_result(true)
+
+
+func issue_move_to_command(destination: Vector3, save_now: bool = true) -> Dictionary:
+	var error: String = _command_availability_error()
+	if error != "":
+		return {"ok": false, "error": error}
+	previous_command_id = COMMAND_STAY
+	command_id = COMMAND_MOVE_TO
+	follow_enabled = false
+	command_destination = destination
+	has_command_destination = true
+	command_suspended = false
+	command_suspend_reason = ""
+	last_completed_command_id = ""
+	command_sequence += 1
+	_halt_horizontal_motion("command_move_to")
+	request_navigation_target(command_destination, true)
+	_finish_command_issue(save_now)
+	return _command_result(true)
+
+
+func refresh_command_authority() -> void:
+	_update_command_suspension(true)
+	_apply_command_authority(true)
+
+
+func get_companion_command_data() -> Dictionary:
+	return {
+		"command_id": command_id,
+		"previous_command_id": previous_command_id,
+		"has_anchor": has_command_anchor,
+		"anchor": command_anchor,
+		"has_destination": has_command_destination,
+		"destination": command_destination,
+		"suspended": command_suspended,
+		"suspend_reason": command_suspend_reason,
+		"last_completed_command_id": last_completed_command_id,
+		"completion_count": command_completion_count,
+		"sequence": command_sequence,
+	}
+
+
+func get_bond_data() -> Dictionary:
+	var data: Dictionary = super.get_bond_data()
+	data["command"] = get_companion_command_data()
+	return data
+
+
+func persist_named_state(save_now: bool = false) -> Dictionary:
+	if relationship == null or persistent_animal_id == "" or not is_inside_tree():
+		return {}
+	if bond_store == null:
+		bond_store = AnimalBondStore.get_or_create(get_tree())
+	if bond_store == null:
+		return {}
+	return bond_store.set_record(
+		persistent_animal_id,
+		{
+			"animal_name": animal_name,
+			"species_id": species_id,
+			"personality_profile_id": personality_profile_id,
+			"relationship": relationship.to_dictionary(),
+			"bonded": bonded,
+			"follow_enabled": follow_enabled,
+			"help_events": help_events,
+			"harm_events": harm_events,
+			"companion_command": _get_command_persistence_data(),
+		},
+		save_now
+	)
+
+
+func reload_persistent_state() -> bool:
+	var loaded: bool = super.reload_persistent_state()
+	if bond_store == null and is_inside_tree():
+		bond_store = AnimalBondStore.get_or_create(get_tree())
+	var record: Dictionary = (
+		bond_store.get_record(persistent_animal_id)
+		if bond_store != null and persistent_animal_id != ""
+		else {}
+	)
+	if loaded:
+		_restore_command_record(record.get("companion_command", {}) as Dictionary)
+	elif bonded:
+		command_id = COMMAND_FOLLOW if follow_enabled else COMMAND_STAY
+		if command_id == COMMAND_STAY:
+			command_anchor = global_position
+			has_command_anchor = true
+	else:
+		_reset_command_state()
+	_apply_command_authority(true)
+	return loaded
+
+
+func clear_persistent_bond() -> bool:
+	var removed: bool = super.clear_persistent_bond()
+	_reset_command_state()
+	_emit_command_state()
+	return removed
+
+
+func reset_actor() -> void:
+	super.reset_actor()
+	if not bonded:
+		_reset_command_state()
+	_apply_command_authority(true)
+
+
 func get_mob_decision_context() -> Dictionary:
 	var context: Dictionary = super.get_mob_decision_context()
 	if movement_locked:
@@ -153,27 +361,37 @@ func get_mob_decision_context() -> Dictionary:
 		locked_tags.append("trapped")
 		context["context_tags"] = locked_tags
 		return context
-	var grace: Node3D = _get_grace_target()
-	if bonded and follow_enabled and grace != null:
-		var grace_distance: float = global_position.distance_to(grace.global_position)
-		if not _grace_is_current_threat(grace_distance):
-			var score_modifiers: Dictionary = context.get("move_score_modifiers", {}).duplicate(true)
-			score_modifiers["idle"] = float(score_modifiers.get("idle", 0.0)) + 6.0
-			context["move_score_modifiers"] = score_modifiers
-			var tags: Array = context.get("context_tags", [])
-			if not tags.has("navigation_follow"):
-				tags.append("navigation_follow")
-			context["context_tags"] = tags
+	_update_command_suspension(false)
+	if _has_authoritative_command() and not command_suspended:
+		var score_modifiers: Dictionary = context.get("move_score_modifiers", {}).duplicate(true)
+		score_modifiers["idle"] = float(score_modifiers.get("idle", 0.0)) + 40.0
+		context["move_score_modifiers"] = score_modifiers
+		var tags: Array = context.get("context_tags", [])
+		tags.append("companion_command")
+		tags.append("command_" + command_id)
+		context["context_tags"] = tags
+	elif command_suspended:
+		var suspended_tags: Array = context.get("context_tags", [])
+		suspended_tags.append("command_suspended")
+		suspended_tags.append("command_suspended_" + command_suspend_reason)
+		context["context_tags"] = suspended_tags
 	return context
 
 
 func _resolve_execution_action(move_id: String) -> String:
 	if movement_locked:
 		return "trapped"
-	if move_id == "idle" and bonded and follow_enabled:
-		var grace: Node3D = _get_grace_target()
-		if grace != null and not _grace_is_current_threat(global_position.distance_to(grace.global_position)):
-			return "follow_grace"
+	_update_command_suspension(false)
+	if _has_authoritative_command() and not command_suspended:
+		match command_id:
+			COMMAND_FOLLOW:
+				return "command_follow"
+			COMMAND_STAY:
+				return "command_stay"
+			COMMAND_COME_HERE:
+				return "command_come_here"
+			COMMAND_MOVE_TO:
+				return "command_move_to"
 	return super._resolve_execution_action(move_id)
 
 
@@ -181,55 +399,92 @@ func _execute_current_action(delta: float) -> void:
 	if movement_locked:
 		velocity.x = move_toward(velocity.x, 0.0, move_speed * 6.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, move_speed * 6.0 * delta)
-		current_action_id = "trapped" if not rescued else "stay"
+		current_action_id = "trapped" if not rescued else "command_stay"
 		current_move_id = "idle"
-		_update_stuck_tracking(delta, false, null)
+		_update_stuck_tracking(delta, false, Vector3.ZERO, false)
 		return
-	if not ["follow_grace", "approach_grace", "watch_grace"].has(current_action_id):
-		super._execute_current_action(delta)
-		_update_stuck_tracking(delta, false, null)
+	_update_command_suspension(false)
+	if _has_authoritative_command() and not command_suspended:
+		_execute_companion_command(delta)
 		return
-	var grace: Node3D = _get_grace_target()
-	if grace == null:
-		current_action_id = "idle"
-		current_move_id = "idle"
-		_update_stuck_tracking(delta, false, null)
-		return
-	var distance: float = global_position.distance_to(grace.global_position)
+	super._execute_current_action(delta)
+	_update_stuck_tracking(delta, false, Vector3.ZERO, false)
+
+
+func _execute_companion_command(delta: float) -> void:
 	var direction: Vector3 = Vector3.ZERO
-	var wants_forward_path: bool = false
-	var speed_multiplier: float = 0.78
-	match current_action_id:
-		"follow_grace":
-			speed_multiplier = 1.0
-			if distance > companion_stop_distance + 0.65:
+	var facing_target: Vector3 = global_position
+	var wants_path: bool = false
+	var recovery_target: Vector3 = Vector3.ZERO
+	var allow_grace_recovery: bool = false
+	var speed_multiplier: float = 1.0
+	match command_id:
+		COMMAND_FOLLOW:
+			current_action_id = "command_follow"
+			var grace: Node3D = _get_grace_target()
+			if grace == null:
+				_halt_horizontal_motion("command_follow")
+				return
+			facing_target = grace.global_position
+			var grace_distance: float = global_position.distance_to(grace.global_position)
+			if grace_distance > companion_stop_distance + 0.65:
 				direction = _navigation_direction(grace.global_position, delta)
-				wants_forward_path = true
-			elif distance < 1.45:
+				wants_path = true
+				recovery_target = grace.global_position
+				allow_grace_recovery = true
+			elif grace_distance < 1.45:
 				direction = _flat_direction(global_position - grace.global_position)
-		"approach_grace":
-			var preferred: float = maxf(relationship.get_personal_space() + 0.55, 2.1)
-			if distance > preferred:
-				direction = _navigation_direction(grace.global_position, delta)
-				wants_forward_path = true
-			elif distance < relationship.get_personal_space():
-				direction = _flat_direction(global_position - grace.global_position)
-		"watch_grace":
-			var comfort: float = relationship.get_comfort_distance()
-			if distance < comfort:
-				direction = _flat_direction(global_position - grace.global_position)
+		COMMAND_STAY:
+			current_action_id = "command_stay"
+			if not has_command_anchor:
+				command_anchor = global_position
+				has_command_anchor = true
+			facing_target = _get_grace_target().global_position if _get_grace_target() != null else command_anchor
+			var anchor_distance: float = global_position.distance_to(command_anchor)
+			if anchor_distance > stay_anchor_radius:
+				current_action_id = "command_return_to_stay"
+				direction = _navigation_direction(command_anchor, delta)
+				wants_path = true
+		COMMAND_COME_HERE:
+			current_action_id = "command_come_here"
+			var grace_target: Node3D = _get_grace_target()
+			if grace_target == null:
+				_halt_horizontal_motion("command_come_here")
+				return
+			command_destination = grace_target.global_position
+			has_command_destination = true
+			facing_target = command_destination
+			var come_distance: float = global_position.distance_to(command_destination)
+			if come_distance > companion_stop_distance:
+				direction = _navigation_direction(command_destination, delta)
+				wants_path = true
+				recovery_target = command_destination
+				allow_grace_recovery = true
+			else:
+				_complete_transient_command(COMMAND_COME_HERE)
+				return
+		COMMAND_MOVE_TO:
+			current_action_id = "command_move_to"
+			if not has_command_destination:
+				_complete_transient_command(COMMAND_MOVE_TO)
+				return
+			facing_target = command_destination
+			var destination_distance: float = global_position.distance_to(command_destination)
+			if destination_distance > destination_completion_radius:
+				direction = _navigation_direction(command_destination, delta)
+				wants_path = true
+			else:
+				_complete_transient_command(COMMAND_MOVE_TO)
+				return
 	var injury_multiplier: float = lerpf(1.0, 0.62, injury_ratio if injured else 0.0)
 	var target_velocity: Vector3 = direction * move_speed * speed_multiplier * injury_multiplier
-	velocity.x = move_toward(velocity.x, target_velocity.x, move_speed * 4.5 * delta)
-	velocity.z = move_toward(velocity.z, target_velocity.z, move_speed * 4.5 * delta)
-	var facing: Vector3 = direction if direction.length_squared() > 0.001 else _flat_direction(grace.global_position - global_position)
+	velocity.x = move_toward(velocity.x, target_velocity.x, move_speed * 5.5 * delta)
+	velocity.z = move_toward(velocity.z, target_velocity.z, move_speed * 5.5 * delta)
+	var facing: Vector3 = direction if direction.length_squared() > 0.001 else _flat_direction(facing_target - global_position)
 	if facing.length_squared() > 0.001:
 		var target_yaw: float = atan2(-facing.x, -facing.z)
 		rotation.y = lerp_angle(rotation.y, target_yaw, clampf(delta * turn_speed, 0.0, 1.0))
-	_update_stuck_tracking(delta, wants_forward_path, grace)
-	if action_time_remaining <= 0.0:
-		current_action_id = "idle"
-		current_move_id = "idle"
+	_update_stuck_tracking(delta, wants_path, recovery_target, allow_grace_recovery)
 
 
 func _navigation_direction(target_position: Vector3, delta: float) -> Vector3:
@@ -270,12 +525,14 @@ func request_navigation_target(target_position: Vector3, force: bool = false) ->
 func force_navigation_repath() -> void:
 	last_requested_target = Vector3.INF
 	path_refresh_remaining = 0.0
-	var grace: Node3D = _get_grace_target()
-	if grace != null:
-		request_navigation_target(grace.global_position, true)
+	var target_data: Dictionary = _get_active_command_target()
+	if bool(target_data.get("valid", false)):
+		request_navigation_target(target_data.get("position", global_position) as Vector3, true)
 
 
 func force_separation_recovery() -> bool:
+	if command_id not in [COMMAND_FOLLOW, COMMAND_COME_HERE]:
+		return false
 	var grace: Node3D = _get_grace_target()
 	if grace == null:
 		return false
@@ -283,7 +540,12 @@ func force_separation_recovery() -> bool:
 	return true
 
 
-func _update_stuck_tracking(delta: float, wants_move: bool, grace: Node3D) -> void:
+func _update_stuck_tracking(
+	delta: float,
+	wants_move: bool,
+	recovery_target: Vector3,
+	allow_grace_recovery: bool
+) -> void:
 	progress_sample_remaining -= delta
 	if progress_sample_remaining > 0.0:
 		return
@@ -299,10 +561,12 @@ func _update_stuck_tracking(delta: float, wants_move: bool, grace: Node3D) -> vo
 	if wants_move and stuck_seconds >= stuck_repath_seconds and not repath_issued_for_stuck:
 		repath_issued_for_stuck = true
 		force_navigation_repath()
-	if grace != null:
-		var separation: float = global_position.distance_to(grace.global_position)
+	if allow_grace_recovery and wants_move:
+		var separation: float = global_position.distance_to(recovery_target)
 		if separation >= separation_recovery_distance or stuck_seconds >= stuck_recovery_seconds:
-			_recover_near_grace(grace)
+			var grace: Node3D = _get_grace_target()
+			if grace != null:
+				_recover_near_grace(grace)
 	_emit_navigation_state()
 
 
@@ -330,7 +594,7 @@ func _recover_near_grace(grace: Node3D) -> void:
 
 
 func get_navigation_debug_data() -> Dictionary:
-	return {
+	var data: Dictionary = {
 		"navigation_ready": navigation_ready,
 		"navigation_enabled": navigation_enabled,
 		"movement_locked": movement_locked,
@@ -348,12 +612,219 @@ func get_navigation_debug_data() -> Dictionary:
 		"stuck_seconds": stuck_seconds,
 		"last_damage_amount": last_damage_amount,
 	}
+	data.merge(get_companion_command_data(), true)
+	return data
 
 
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["navigation"] = get_navigation_debug_data()
+	data["companion_command"] = get_companion_command_data()
 	return data
+
+
+func _command_availability_error() -> String:
+	if not bonded:
+		return "animal is not bonded"
+	if movement_locked or not rescued:
+		return "animal cannot move yet"
+	return ""
+
+
+func _has_authoritative_command() -> bool:
+	return bonded and command_id in [
+		COMMAND_FOLLOW,
+		COMMAND_STAY,
+		COMMAND_COME_HERE,
+		COMMAND_MOVE_TO,
+	]
+
+
+func _update_command_suspension(force_emit: bool) -> void:
+	var next_reason: String = ""
+	if _has_authoritative_command():
+		if _is_grace_threatening():
+			next_reason = "grace_threatening"
+		elif get_drive("fear") >= command_fear_suspend_threshold or relationship_label in ["afraid", "hostile"]:
+			next_reason = "fear"
+	var next_suspended: bool = next_reason != ""
+	if next_suspended == command_suspended and next_reason == command_suspend_reason and not force_emit:
+		return
+	command_suspended = next_suspended
+	command_suspend_reason = next_reason
+	if command_suspended:
+		current_action_id = "idle"
+		current_move_id = "idle"
+		if brain != null:
+			brain.clear_memory()
+			force_decision(false)
+	else:
+		_apply_command_authority(true)
+	_emit_command_state()
+
+
+func _apply_command_authority(force_repath: bool) -> void:
+	if not _has_authoritative_command() or command_suspended or movement_locked:
+		return
+	match command_id:
+		COMMAND_FOLLOW:
+			current_action_id = "command_follow"
+			var grace: Node3D = _get_grace_target()
+			if force_repath and grace != null:
+				request_navigation_target(grace.global_position, true)
+		COMMAND_STAY:
+			if not has_command_anchor:
+				command_anchor = global_position
+				has_command_anchor = true
+			_halt_horizontal_motion("command_stay")
+			if force_repath:
+				request_navigation_target(command_anchor, true)
+		COMMAND_COME_HERE:
+			current_action_id = "command_come_here"
+			var come_target: Node3D = _get_grace_target()
+			if force_repath and come_target != null:
+				request_navigation_target(come_target.global_position, true)
+		COMMAND_MOVE_TO:
+			current_action_id = "command_move_to"
+			if force_repath and has_command_destination:
+				request_navigation_target(command_destination, true)
+	current_move_id = "idle"
+	if brain != null:
+		brain.clear_memory()
+		decision_time_remaining = 0.0
+
+
+func _halt_horizontal_motion(action_id: String) -> void:
+	velocity.x = 0.0
+	velocity.z = 0.0
+	current_action_id = action_id
+	current_move_id = "idle"
+	action_time_remaining = 0.0
+	last_requested_target = Vector3.INF
+	path_refresh_remaining = 0.0
+	if navigation_agent != null:
+		navigation_agent.set_velocity_forced(Vector3.ZERO)
+		navigation_agent.target_position = global_position
+
+
+func _complete_transient_command(completed_id: String) -> void:
+	last_completed_command_id = completed_id
+	command_completion_count += 1
+	companion_command_completed.emit(completed_id, command_completion_count)
+	if completed_id == COMMAND_COME_HERE and previous_command_id == COMMAND_FOLLOW:
+		issue_follow_command(false)
+		last_completed_command_id = completed_id
+	else:
+		issue_stay_command(global_position, false)
+		last_completed_command_id = completed_id
+	persist_named_state(true)
+	_emit_command_state()
+
+
+func _finish_command_issue(save_now: bool) -> void:
+	if brain != null:
+		brain.clear_memory()
+		decision_time_remaining = 0.0
+	persist_named_state(save_now)
+	bond_changed.emit(bonded, follow_enabled)
+	_emit_command_state()
+
+
+func _command_result(ok: bool) -> Dictionary:
+	var result: Dictionary = get_companion_command_data()
+	result["ok"] = ok
+	result["bonded"] = bonded
+	result["follow_enabled"] = follow_enabled
+	return result
+
+
+func _get_active_command_target() -> Dictionary:
+	match command_id:
+		COMMAND_FOLLOW, COMMAND_COME_HERE:
+			var grace: Node3D = _get_grace_target()
+			if grace != null:
+				return {"valid": true, "position": grace.global_position}
+		COMMAND_STAY:
+			if has_command_anchor:
+				return {"valid": true, "position": command_anchor}
+		COMMAND_MOVE_TO:
+			if has_command_destination:
+				return {"valid": true, "position": command_destination}
+	return {"valid": false, "position": global_position}
+
+
+func _get_command_persistence_data() -> Dictionary:
+	return {
+		"command_id": command_id,
+		"previous_command_id": previous_command_id,
+		"has_anchor": has_command_anchor,
+		"anchor": _vector_to_dictionary(command_anchor),
+		"has_destination": has_command_destination,
+		"destination": _vector_to_dictionary(command_destination),
+		"last_completed_command_id": last_completed_command_id,
+		"completion_count": command_completion_count,
+		"sequence": command_sequence,
+	}
+
+
+func _restore_command_record(command: Dictionary) -> void:
+	if not bonded:
+		_reset_command_state()
+		return
+	if command.is_empty():
+		command_id = COMMAND_FOLLOW if follow_enabled else COMMAND_STAY
+		previous_command_id = command_id
+		if command_id == COMMAND_STAY:
+			command_anchor = global_position
+			has_command_anchor = true
+		return
+	command_id = str(command.get("command_id", COMMAND_FOLLOW if follow_enabled else COMMAND_STAY))
+	if command_id not in [COMMAND_FOLLOW, COMMAND_STAY, COMMAND_COME_HERE, COMMAND_MOVE_TO]:
+		command_id = COMMAND_FOLLOW if follow_enabled else COMMAND_STAY
+	previous_command_id = str(command.get("previous_command_id", command_id))
+	has_command_anchor = bool(command.get("has_anchor", false))
+	command_anchor = _dictionary_to_vector(command.get("anchor", {}) as Dictionary)
+	has_command_destination = bool(command.get("has_destination", false))
+	command_destination = _dictionary_to_vector(command.get("destination", {}) as Dictionary)
+	last_completed_command_id = str(command.get("last_completed_command_id", ""))
+	command_completion_count = maxi(int(command.get("completion_count", 0)), 0)
+	command_sequence = maxi(int(command.get("sequence", 0)), 0)
+	follow_enabled = command_id == COMMAND_FOLLOW or (
+		command_id == COMMAND_COME_HERE and previous_command_id == COMMAND_FOLLOW
+	)
+	command_suspended = false
+	command_suspend_reason = ""
+
+
+func _reset_command_state() -> void:
+	command_id = COMMAND_NONE
+	previous_command_id = COMMAND_NONE
+	command_anchor = Vector3.ZERO
+	has_command_anchor = false
+	command_destination = Vector3.ZERO
+	has_command_destination = false
+	command_suspended = false
+	command_suspend_reason = ""
+	last_completed_command_id = ""
+	command_completion_count = 0
+	command_sequence = 0
+
+
+func _vector_to_dictionary(value: Vector3) -> Dictionary:
+	return {"x": value.x, "y": value.y, "z": value.z}
+
+
+func _dictionary_to_vector(value: Dictionary) -> Vector3:
+	return Vector3(
+		float(value.get("x", 0.0)),
+		float(value.get("y", 0.0)),
+		float(value.get("z", 0.0))
+	)
+
+
+func _emit_command_state() -> void:
+	companion_command_changed.emit(get_companion_command_data())
+	_emit_navigation_state()
 
 
 func _emit_navigation_state() -> void:

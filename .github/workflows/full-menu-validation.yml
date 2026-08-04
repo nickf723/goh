@@ -84,6 +84,9 @@ jobs:
       - name: Run wildlife navigation and rescue regression
         run: godot --headless --path . res://scenes/tests/wildlife_navigation_rescue_lab_smoke_test.tscn
 
+      - name: Run companion command authority regression
+        run: godot --headless --path . res://scenes/tests/companion_command_authority_smoke_test.tscn
+
       - name: Run base Ruined Village regression
         run: godot --headless --path . res://scenes/tests/ruined_village_approach_smoke_test.tscn
 

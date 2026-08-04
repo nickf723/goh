@@ -47,9 +47,9 @@ func _apply_unified_layout() -> void:
 	dock_panel.anchor_top = 1.0
 	dock_panel.anchor_right = 0.5
 	dock_panel.anchor_bottom = 1.0
-	dock_panel.offset_left = -530.0
+	dock_panel.offset_left = -510.0
 	dock_panel.offset_top = -124.0
-	dock_panel.offset_right = 530.0
+	dock_panel.offset_right = 510.0
 	dock_panel.offset_bottom = -16.0
 	dock_panel.add_theme_stylebox_override(
 		"panel",
@@ -61,33 +61,33 @@ func _apply_unified_layout() -> void:
 		)
 	)
 	if item_tile != null:
-		item_tile.custom_minimum_size = Vector2(154.0, 78.0)
+		item_tile.custom_minimum_size = Vector2(142.0, 78.0)
 	if special_tile != null:
-		special_tile.custom_minimum_size = Vector2(154.0, 78.0)
+		special_tile.custom_minimum_size = Vector2(142.0, 78.0)
 	var spell_section: Control = dock_panel.find_child(
 		"TenSpellSection",
 		true,
 		false
 	) as Control
 	if spell_section != null:
-		spell_section.custom_minimum_size = Vector2(704.0, 78.0)
+		spell_section.custom_minimum_size = Vector2(680.0, 78.0)
 	for panel: PanelContainer in slot_panels:
-		panel.custom_minimum_size = Vector2(64.0, 53.0)
+		panel.custom_minimum_size = Vector2(62.0, 53.0)
 	for label: Label in slot_labels:
 		label.add_theme_font_size_override("font_size", 8)
 	if belt_hint_label != null:
 		belt_hint_label.add_theme_font_size_override("font_size", 8)
 	if item_menu_panel != null:
 		_reparent_overlay_to_hud(item_menu_panel)
-		item_menu_panel.offset_left = -530.0
+		item_menu_panel.offset_left = -510.0
 		item_menu_panel.offset_top = -342.0
-		item_menu_panel.offset_right = -354.0
+		item_menu_panel.offset_right = -344.0
 		item_menu_panel.offset_bottom = -134.0
 	if special_menu_panel != null:
 		_reparent_overlay_to_hud(special_menu_panel)
-		special_menu_panel.offset_left = 354.0
+		special_menu_panel.offset_left = 344.0
 		special_menu_panel.offset_top = -342.0
-		special_menu_panel.offset_right = 530.0
+		special_menu_panel.offset_right = 510.0
 		special_menu_panel.offset_bottom = -134.0
 	unified_layout_applied = true
 	_align_focus_panel()
@@ -125,7 +125,7 @@ func _align_focus_panel() -> void:
 	if not panel_value is Control:
 		return
 	var panel: Control = panel_value as Control
-	var half_width: float = 430.0 * dock_scale
+	var half_width: float = 420.0 * dock_scale
 	panel.anchor_left = 0.5
 	panel.anchor_top = 1.0
 	panel.anchor_right = 0.5

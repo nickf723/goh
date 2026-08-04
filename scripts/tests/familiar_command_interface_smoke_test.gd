@@ -33,6 +33,11 @@ func run_tests() -> void:
 	var router: Node = player.get_node_or_null("AbilityContextRouter")
 	var menu: Node = player.get_node_or_null("AbilityContextMenu")
 	var caster: Node = player.get_node_or_null("AbilityCaster")
+	var hud: Node = player.get_node_or_null("PlayerHUDV2")
+	var unified_hud: bool = (
+		hud != null
+		and hud.has_method("get_unified_hud_debug_data")
+	)
 	var action_state: PlayerActionState = player.get_node_or_null(
 		"PlayerActionState"
 	) as PlayerActionState
@@ -47,6 +52,14 @@ func run_tests() -> void:
 		return
 
 	_expect(not bool(menu.call("is_interface_visible")), "context status is hidden before a persistent ability exists")
+	if unified_hud:
+		var initial_hud_data: Dictionary = hud.call(
+			"get_unified_hud_debug_data"
+		) as Dictionary
+		_expect(
+			int(initial_hud_data.get("active_ability_count", 0)) == 0,
+			"unified support cluster begins without a familiar entry"
+		)
 	_expect(not InputMap.has_action(&"familiar_command_menu"), "global context does not create a dedicated L3 action")
 	_expect(InputMap.has_action(&"cast_spell"), "global context reuses the authoritative cast action")
 
@@ -77,7 +90,25 @@ func run_tests() -> void:
 	await get_tree().physics_frame
 	var familiar: Node3D = manager.get_active_summon()
 	_expect(familiar is SummonedBondedAnimalFamiliar, "spell cast produces a bonded animal familiar")
-	_expect(bool(menu.call("is_interface_visible")), "persistent context status appears after summoning")
+	if unified_hud:
+		var summoned_hud_data: Dictionary = hud.call(
+			"get_unified_hud_debug_data"
+		) as Dictionary
+		_expect(
+			int(summoned_hud_data.get("active_ability_count", 0)) >= 1,
+			"unified support cluster appears after summoning"
+		)
+		_expect(
+			not bool(menu.call("is_interface_visible")),
+			"retired compact status card stays hidden under the unified shell"
+		)
+		var compact_panel: Control = menu.get("compact_panel") as Control
+		_expect(
+			compact_panel != null and not compact_panel.visible,
+			"unified familiar state does not leave a duplicate compact panel"
+		)
+	else:
+		_expect(bool(menu.call("is_interface_visible")), "persistent context status appears after summoning")
 	_expect(not bool(menu.call("is_context_open")), "summoning does not immediately force the context menu open")
 
 	if fireball_index >= 0:
@@ -139,8 +170,17 @@ func run_tests() -> void:
 	_open_with_cast_input(router)
 	_expect(bool(menu.call("select_action_by_id", "dismiss")), "Dismiss Familiar is selectable")
 	_expect(bool(menu.call("commit_selected_action")), "Dismiss Familiar executes through the global layout")
-	await get_tree().process_frame
+	for _frame: int in range(2):
+		await get_tree().process_frame
 	_expect(manager.get_active_summon() == null, "Dismiss Familiar removes the active summon")
+	if unified_hud:
+		var dismissed_hud_data: Dictionary = hud.call(
+			"get_unified_hud_debug_data"
+		) as Dictionary
+		_expect(
+			int(dismissed_hud_data.get("active_ability_count", 0)) == 0,
+			"unified support cluster removes the dismissed familiar entry"
+		)
 	_expect(not bool(menu.call("is_interface_visible")), "context status disappears after dismissal")
 	_expect(not bool(menu.call("is_context_open")), "dismissal cannot leave an orphaned context menu")
 	_expect(not bool(menu.call("is_targeting")), "dismissal cannot leave orphaned world targeting")

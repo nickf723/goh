@@ -136,11 +136,14 @@ func update(
 		awareness_target = clampf(0.45 + social_alert_severity * 0.45, 0.0, 1.0)
 	elif remembers_target:
 		awareness_target = clampf(memory_remaining / maxf(memory_duration, 0.01), 0.0, 0.7)
-	awareness = move_toward(
-		awareness,
-		awareness_target,
-		delta * (2.6 if awareness_target > awareness else 0.42)
-	)
+	if delta <= 0.0 and awareness_target > awareness:
+		awareness = awareness_target
+	else:
+		awareness = move_toward(
+			awareness,
+			awareness_target,
+			delta * (2.6 if awareness_target > awareness else 0.42)
+		)
 	return to_dictionary()
 
 

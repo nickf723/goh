@@ -11,6 +11,9 @@ var last_layout_width: float = -1.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Run after player-owned HUD presenters so this bridge is the final authority
+	# on cross-surface geometry for the current frame.
+	process_priority = 1000
 	add_to_group("unified_hud_source_bridge")
 	add_to_group("debuggable")
 
@@ -28,35 +31,70 @@ func _resolve_unified_hud() -> void:
 	if unified_hud != null and is_instance_valid(unified_hud):
 		return
 	unified_hud = get_tree().get_first_node_in_group("unified_hud_shell")
+	# A newly resolved HUD needs one guaranteed geometry pass even when the
+	# viewport width matches the previous scene.
+	last_layout_width = -1.0
 
 
 func _apply_responsive_layout() -> void:
 	if get_viewport() == null:
 		return
 	var width: float = get_viewport().get_visible_rect().size.x
-	if is_equal_approx(width, last_layout_width):
-		return
-	last_layout_width = width
 	var narrow: bool = width < 1500.0
+	var width_changed: bool = not is_equal_approx(width, last_layout_width)
+	last_layout_width = width
+
+	var stats_value: Variant = unified_hud.get("stats_panel")
+	if stats_value is Control:
+		var stats_panel: Control = stats_value as Control
+		stats_panel.scale = Vector2.ONE
+		stats_panel.pivot_offset = Vector2.ZERO
+		stats_panel.offset_left = 18.0
+		stats_panel.offset_right = 340.0 if narrow else 374.0
+
 	var mode_value: Variant = unified_hud.get("mode_panel")
 	if mode_value is Control:
 		var mode_panel: Control = mode_value as Control
-		var half_width: float = 190.0 if narrow else 250.0
+		mode_panel.scale = Vector2.ONE
+		mode_panel.pivot_offset = Vector2.ZERO
+		var half_width: float = 150.0 if narrow else 250.0
 		mode_panel.offset_left = -half_width
 		mode_panel.offset_right = half_width
+
 	var activity_value: Variant = unified_hud.get("activity_rail")
 	if activity_value is Control:
 		var activity_rail: Control = activity_value as Control
+		activity_rail.scale = Vector2.ONE
+		activity_rail.pivot_offset = Vector2.ZERO
+		activity_rail.offset_left = -340.0 if narrow else -382.0
+		activity_rail.offset_right = -20.0
 		activity_rail.offset_bottom = 300.0 if narrow else 610.0
+
+	var context_value: Variant = unified_hud.get("context_panel")
+	if context_value is Control:
+		var context_panel: Control = context_value as Control
+		context_panel.scale = Vector2.ONE
+		context_panel.pivot_offset = Vector2.ZERO
+		var context_half_width: float = minf(500.0, maxf(width * 0.5 - 128.0, 300.0))
+		context_panel.offset_left = -context_half_width
+		context_panel.offset_right = context_half_width
+
 	var support_value: Variant = unified_hud.get("support_panel")
 	if support_value is Control:
 		var support_panel: Control = support_value as Control
+		support_panel.scale = Vector2.ONE
+		support_panel.pivot_offset = Vector2.ZERO
+		support_panel.offset_left = -282.0 if narrow else -300.0
+		support_panel.offset_right = -18.0
 		if narrow:
 			support_panel.offset_top = -338.0
 			support_panel.offset_bottom = -218.0
 		else:
 			support_panel.offset_top = -218.0
 			support_panel.offset_bottom = -18.0
+
+	if width_changed and unified_hud.has_method("_refresh_mode_banner"):
+		unified_hud.call("_refresh_mode_banner")
 
 
 func _suppress_duplicate_special_surface() -> void:
@@ -156,7 +194,22 @@ func _sync_progression_toasts() -> void:
 		mirrored_sources.remove_at(index)
 
 
+func _rect_snapshot(control: Control) -> Dictionary:
+	if control == null:
+		return {}
+	var rect: Rect2 = control.get_global_rect()
+	return {
+		"position": rect.position,
+		"size": rect.size,
+		"end": rect.end,
+	}
+
+
 func get_debug_data() -> Dictionary:
+	var stats: Control = unified_hud.get("stats_panel") as Control if unified_hud != null else null
+	var mode: Control = unified_hud.get("mode_panel") as Control if unified_hud != null else null
+	var activity: Control = unified_hud.get("activity_rail") as Control if unified_hud != null else null
+	var support: Control = unified_hud.get("support_panel") as Control if unified_hud != null else null
 	return {
 		"unified_hud": unified_hud != null and is_instance_valid(unified_hud),
 		"progression_hud": progression_hud != null and is_instance_valid(progression_hud),
@@ -164,4 +217,10 @@ func get_debug_data() -> Dictionary:
 		"sync_count": sync_count,
 		"layout_width": last_layout_width,
 		"narrow_layout": last_layout_width > 0.0 and last_layout_width < 1500.0,
+		"rects": {
+			"status": _rect_snapshot(stats),
+			"mode": _rect_snapshot(mode),
+			"activity": _rect_snapshot(activity),
+			"support": _rect_snapshot(support),
+		},
 	}

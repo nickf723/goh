@@ -9,18 +9,42 @@ signal summon_cooldown_changed(remaining: float)
 const FamiliarCatalog = preload(
 	"res://scripts/summons/familiar_definition_catalog.gd"
 )
+const AbilityContextRouterScript = preload(
+	"res://scripts/player/player_ability_context_router.gd"
+)
 const FamiliarCommandInterfaceScript = preload(
 	"res://scripts/ui/familiar_command_interface.gd"
 )
 
+const CONTEXT_LABELS: Dictionary = {
+	"follow": "Follow",
+	"stay": "Stay Here",
+	"come_here": "Come Here",
+	"move_to": "Go There",
+	"assist": "Assist",
+	"focus": "Focus Target",
+	"dismiss": "Dismiss Familiar",
+}
+const CONTEXT_DESCRIPTIONS: Dictionary = {
+	"follow": "Travel beside Grace.",
+	"stay": "Hold the current position.",
+	"come_here": "Return directly to Grace.",
+	"move_to": "Move to an aimed world position.",
+	"assist": "Choose and pressure nearby threats.",
+	"focus": "Prioritize Grace's locked target.",
+	"dismiss": "Return this familiar without starting a defeat cooldown.",
+}
+
 @export var handled_spell_id: String = "spectral_familiar"
 @export var summon_definition: SummonDefinition
-@export var install_command_interface: bool = true
+@export var install_context_router: bool = true
+@export var install_command_interface: bool = false
 
 var actor: Node3D
 var action_state: PlayerActionState
 var active_summon: Node3D
 var active_definition: SummonDefinition
+var context_router: Node
 var command_interface: Node
 var cooldown_remaining: float = 0.0
 var total_summons: int = 0
@@ -34,8 +58,11 @@ func _ready() -> void:
 	if actor != null:
 		action_state = actor.get_node_or_null("PlayerActionState") as PlayerActionState
 	add_to_group("player_ability_channels")
+	add_to_group("ability_context_providers")
 	add_to_group("summon_managers")
 	add_to_group("debuggable")
+	if install_context_router:
+		call_deferred("_install_context_router")
 	if install_command_interface:
 		call_deferred("_install_command_interface")
 
@@ -58,13 +85,7 @@ func begin_ability_channel(source_player: Node3D, ability: AbilityDefinition) ->
 	if source_player != actor or not can_handle_ability(ability):
 		return false
 	if active_summon != null and is_instance_valid(active_summon):
-		var dismissed_name: String = get_active_familiar_display_name()
-		if not dismiss_summon(false):
-			return false
-		total_recalls += 1
-		_show_message(dismissed_name + " dismissed. Cast again to summon the prepared familiar.")
-		_begin_cast_feedback()
-		return true
+		return open_familiar_context(ability)
 	if cooldown_remaining > 0.0:
 		_show_message("Familiar recovering: " + str(snappedf(cooldown_remaining, 0.1)) + "s")
 		return false
@@ -119,7 +140,10 @@ func summon_familiar(definition_override: SummonDefinition = null) -> bool:
 	total_summons += 1
 	summon_created.emit(active_summon)
 	_begin_cast_feedback()
-	_show_message(definition.display_name + " answered Grace. Familiar commands are now available.")
+	_show_message(
+		definition.display_name
+		+ " answered Grace. Select Summon Familiar and press Cast to manage it."
+	)
 	return true
 
 
@@ -256,6 +280,100 @@ func get_familiar_command_state() -> Dictionary:
 	return data
 
 
+func can_handle_ability_context(ability: AbilityDefinition) -> bool:
+	return can_handle_ability(ability)
+
+
+func is_ability_context_available(ability: AbilityDefinition) -> bool:
+	return can_handle_ability(ability) and get_active_summon() != null
+
+
+func has_active_ability_context() -> bool:
+	return get_active_summon() != null
+
+
+func get_ability_context_spec(ability: AbilityDefinition) -> Dictionary:
+	if not is_ability_context_available(ability):
+		return {}
+	var context_actions: Array[Dictionary] = []
+	for command_id: String in get_available_familiar_commands():
+		context_actions.append({
+			"id": command_id,
+			"label": str(CONTEXT_LABELS.get(command_id, command_id.capitalize())),
+			"description": str(CONTEXT_DESCRIPTIONS.get(command_id, "Issue familiar command.")),
+			"target_mode": "world" if command_id == "move_to" else "",
+		})
+	context_actions.append({
+		"id": "dismiss",
+		"label": CONTEXT_LABELS["dismiss"],
+		"description": CONTEXT_DESCRIPTIONS["dismiss"],
+		"target_mode": "",
+	})
+	return {
+		"context_id": "familiar_commands",
+		"title": get_active_familiar_display_name(),
+		"subtitle": "Familiar Commands",
+		"selected_id": str(get_familiar_command_state().get("command_id", "follow")),
+		"actions": context_actions,
+	}
+
+
+func execute_ability_context_action(
+	action_id: String,
+	payload: Variant = Vector3.INF
+) -> Dictionary:
+	var normalized: String = _normalize_command(action_id)
+	if normalized == "dismiss":
+		var familiar_name: String = get_active_familiar_display_name()
+		if not dismiss_summon(false):
+			return {"ok": false, "error": "No familiar is summoned."}
+		total_recalls += 1
+		last_command_id = "dismiss"
+		return {
+			"ok": true,
+			"action_id": "dismiss",
+			"message": familiar_name + " dismissed.",
+		}
+	var destination: Vector3 = Vector3.INF
+	if normalized == "move_to" and payload is Vector3:
+		destination = payload as Vector3
+	var result: Dictionary = issue_familiar_command(normalized, destination)
+	if bool(result.get("ok", false)):
+		result["action_id"] = normalized
+		result["message"] = (
+			get_active_familiar_display_name()
+			+ " command: "
+			+ str(CONTEXT_LABELS.get(normalized, normalized.capitalize()))
+		)
+	return result
+
+
+func get_ability_context_status() -> Dictionary:
+	if get_active_summon() == null:
+		return {"active": false}
+	var state: Dictionary = get_familiar_command_state()
+	var command_id: String = str(state.get("command_id", "follow"))
+	var state_text: String = str(CONTEXT_LABELS.get(command_id, command_id.capitalize()))
+	if bool(state.get("suspended", false)):
+		state_text += " • SUSPENDED: " + str(state.get("suspend_reason", "unsafe")).replace("_", " ").to_upper()
+	return {
+		"active": true,
+		"title": get_active_familiar_display_name(),
+		"state": state_text,
+		"hint": "Select Summon Familiar • Cast to manage",
+	}
+
+
+func open_familiar_context(ability: AbilityDefinition) -> bool:
+	_install_context_router()
+	if context_router == null or not is_instance_valid(context_router):
+		_show_message("Familiar context menu is unavailable.")
+		return false
+	if not context_router.has_method("open_provider_context"):
+		return false
+	return bool(context_router.call("open_provider_context", self, ability))
+
+
 func command_follow() -> Dictionary:
 	return issue_familiar_command("follow")
 
@@ -323,8 +441,22 @@ func get_debug_data() -> Dictionary:
 		"total_recalls": total_recalls,
 		"total_commands": total_commands,
 		"last_command": last_command_id,
-		"command_interface_installed": command_interface != null and is_instance_valid(command_interface),
+		"context_router_installed": context_router != null and is_instance_valid(context_router),
+		"legacy_command_interface_installed": command_interface != null and is_instance_valid(command_interface),
+		"context_available": has_active_ability_context(),
 	}
+
+
+func _install_context_router() -> void:
+	if actor == null:
+		return
+	var existing: Node = actor.get_node_or_null("AbilityContextRouter")
+	if existing != null:
+		context_router = existing
+		return
+	context_router = AbilityContextRouterScript.new()
+	context_router.name = "AbilityContextRouter"
+	actor.add_child(context_router)
 
 
 func _install_command_interface() -> void:

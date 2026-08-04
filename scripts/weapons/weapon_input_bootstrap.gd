@@ -87,16 +87,25 @@ func _sync_placement_input_ownership() -> void:
 	)
 	if player == null:
 		return
+	var shared_active: bool = false
+	var shared_controller: Node = player.get_node_or_null(
+		"SharedPlacementController"
+	)
+	if (
+		shared_controller != null
+		and shared_controller.has_method("is_placement_active")
+	):
+		shared_active = bool(shared_controller.call("is_placement_active"))
 	for child: Node in player.get_children():
 		if child is RecordedObjectManager:
 			var object_manager := child as RecordedObjectManager
 			object_manager.controller_controls_enabled = (
-				object_manager.placement_active
+				object_manager.placement_active and not shared_active
 			)
 		elif child is EngineeringBuildManager:
 			var build_manager := child as EngineeringBuildManager
 			build_manager.controller_controls_enabled = (
-				build_manager.placement_active
+				build_manager.placement_active and not shared_active
 			)
 
 
@@ -341,4 +350,5 @@ func get_debug_data() -> Dictionary:
 		"ten_slot_quick_spell_belt": true,
 		"showcase_telemetry_gate": true,
 		"placement_input_isolated": isolate_placement_controller_input,
+		"shared_placement_aware": true,
 	}

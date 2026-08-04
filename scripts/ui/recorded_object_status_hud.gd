@@ -11,6 +11,18 @@ func _ready() -> void:
 	call_deferred("_bind_recorded_object_discovery")
 
 
+func _process(delta: float) -> void:
+	if (
+		player != null
+		and is_instance_valid(player)
+		and bool(player.get_meta("shared_placement_active", false))
+	):
+		if panel != null:
+			panel.visible = false
+		return
+	super._process(delta)
+
+
 func _bind_recorded_object_discovery() -> void:
 	var manager: Node = get_tree().get_first_node_in_group(
 		"recorded_object_manager"
@@ -58,5 +70,10 @@ func get_debug_data() -> Dictionary:
 	data["manager_ready"] = (
 		get_tree().get_first_node_in_group("recorded_object_manager")
 		!= null
+	)
+	data["shared_placement_suppressed"] = (
+		player != null
+		and is_instance_valid(player)
+		and bool(player.get_meta("shared_placement_active", false))
 	)
 	return data

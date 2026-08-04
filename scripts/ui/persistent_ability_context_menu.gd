@@ -2,8 +2,8 @@ extends "res://scripts/ui/ability_context_menu.gd"
 class_name PersistentAbilityContextMenu
 
 # Persistent ability providers often need small state-changing actions such as
-# cycling a blueprint or undoing one draft part. Those actions should refresh
-# the same modal instead of closing it and forcing another Cast press.
+# cycling a blueprint or undoing one draft part. Those actions refresh the same
+# modal. Placement actions hand off to one player-level placement session.
 
 
 func _execute_action(action_id: String, payload: Variant) -> bool:
@@ -22,6 +22,34 @@ func _execute_action(action_id: String, payload: Variant) -> bool:
 	if not bool(result.get("ok", false)):
 		_show_message(str(result.get("error", "That context action is unavailable.")))
 		return false
+
+	if result.has("begin_shared_placement"):
+		var placement_id: String = str(result.get("begin_shared_placement", ""))
+		var placement_provider: Node = provider
+		var placement_ability: AbilityDefinition = context_ability
+		_finish_modal(true)
+		var placement_controller: Node = (
+			actor.get_node_or_null("SharedPlacementController")
+			if actor != null
+			else null
+		)
+		if (
+			placement_controller == null
+			or not placement_controller.has_method("begin_session")
+		):
+			_show_message("The shared placement controller is unavailable.")
+			return false
+		var started: bool = bool(placement_controller.call(
+			"begin_session",
+			placement_provider,
+			placement_id,
+			placement_ability
+		))
+		if not started:
+			return false
+		commit_count += 1
+		context_action_committed.emit(action_id, result)
+		return true
 
 	commit_count += 1
 	context_action_committed.emit(action_id, result)

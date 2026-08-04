@@ -96,6 +96,8 @@ func handle_lock_on_target_switch_input() -> void:
 
 
 func _get_requested_ground_velocity() -> Vector3:
+	if bool(get_meta("shared_placement_active", false)):
+		return Vector3.ZERO
 	var requested: Vector3 = super._get_requested_ground_velocity()
 	if player_status_receiver == null:
 		return requested
@@ -104,6 +106,12 @@ func _get_requested_ground_velocity() -> Vector3:
 		0.0,
 		1.0
 	)
+
+
+func _item_allows_jump() -> bool:
+	if bool(get_meta("shared_placement_active", false)):
+		return false
+	return super._item_allows_jump()
 
 
 func _try_step_up(horizontal_velocity: Vector3, delta: float) -> bool:
@@ -128,9 +136,6 @@ func _try_step_up(horizontal_velocity: Vector3, delta: float) -> bool:
 	if not stepped:
 		return false
 
-	# PlayerStepUpController already traversed the intended planar frame and settled
-	# onto the next tread. Zero the duplicate move_and_slide motion, then restore the
-	# authored velocity in _finish_step_up before the ground motor records its handoff.
 	preserved_step_velocity = actual_planar_velocity
 	velocity.x = 0.0
 	velocity.z = 0.0

@@ -32,6 +32,9 @@ var player: CharacterBody3D
 var floor: StaticBody3D
 var router: Node
 var menu: Node
+var placement: PlayerSharedPlacementController
+var control_router: Node
+var action_state: PlayerActionState
 var recorded_controller: PlayerRecordedObjectSpellController
 var artificer_controller: PlayerArtificerSpellController
 var recorded_manager: RecordedObjectManagerSpell
@@ -51,12 +54,17 @@ func run_tests() -> void:
 	player.name = "PersistentAbilityContextProviderTestPlayer"
 	player.position = Vector3(0.0, 0.96, 0.0)
 	add_child(player)
-	for _frame: int in range(10):
+	for _frame: int in range(12):
 		await get_tree().process_frame
 	await get_tree().physics_frame
 
 	router = player.get_node_or_null("AbilityContextRouter")
 	menu = player.get_node_or_null("AbilityContextMenu")
+	placement = player.get_node_or_null(
+		"SharedPlacementController"
+	) as PlayerSharedPlacementController
+	control_router = player.get_node_or_null("PlayerControlRouter")
+	action_state = player.get_node_or_null("PlayerActionState") as PlayerActionState
 	recorded_controller = player.get_node_or_null(
 		"RecordedObjectSpellController"
 	) as PlayerRecordedObjectSpellController
@@ -70,10 +78,9 @@ func run_tests() -> void:
 
 	_expect(router != null, "player installs the global ability context router")
 	_expect(menu != null, "player installs one shared ability context menu")
-	_expect(
-		menu != null and menu.has_method("refresh_context"),
-		"shared context menu supports in-place provider refresh"
-	)
+	_expect(placement != null, "player installs one shared placement controller")
+	_expect(control_router != null, "player retains the contextual control router")
+	_expect(action_state != null, "player retains shared action state")
 	_expect(recorded_controller != null, "recorded-object context provider exists")
 	_expect(artificer_controller != null, "Artificer context provider exists")
 	_expect(recorded_manager != null, "recorded-object manager exists")
@@ -81,6 +88,8 @@ func run_tests() -> void:
 	if (
 		router == null
 		or menu == null
+		or placement == null
+		or action_state == null
 		or recorded_controller == null
 		or artificer_controller == null
 		or recorded_manager == null
@@ -105,33 +114,46 @@ func _test_recorded_object_context() -> void:
 	_expect(bool(opened.get("handled", false)), "Recorded Object is claimed by the global context router")
 	_expect(bool(opened.get("success", false)), "Recorded Object opens the shared context")
 	var actions: Array[String] = _string_array(menu.call("get_available_action_ids"))
-	_expect(actions.has("reproduce_selected"), "recorded context exposes direct world placement")
+	_expect(actions.has("reproduce_selected"), "recorded context exposes placement")
 	_expect(actions.has("next_blueprint"), "recorded context exposes blueprint cycling")
-	_expect(actions.has("advanced_placement"), "recorded context preserves advanced placement")
+	_expect(not actions.has("advanced_placement"), "recorded context no longer exposes a private placement mode")
 
 	var before_blueprint: String = RecordedCatalog.get_selected_blueprint_id()
-	_expect(bool(menu.call("select_action_by_id", "next_blueprint")), "recorded context selects Next Object")
+	menu.call("select_action_by_id", "next_blueprint")
 	_expect(bool(menu.call("commit_selected_action")), "Next Object commits through the shared menu")
 	_expect(bool(menu.call("is_context_open")), "blueprint cycling refreshes without closing the context")
-	var after_blueprint: String = RecordedCatalog.get_selected_blueprint_id()
-	_expect(after_blueprint != before_blueprint, "blueprint cycling changes the prepared object")
+	_expect(RecordedCatalog.get_selected_blueprint_id() != before_blueprint, "blueprint cycling changes the prepared object")
 
-	_expect(bool(menu.call("select_action_by_id", "reproduce_selected")), "prepared object can be selected for placement")
-	_expect(bool(menu.call("commit_selected_action")), "prepared object enters shared world targeting")
-	_expect(bool(menu.call("is_targeting")), "recorded object uses the shared world-target surface")
-	var placed: bool = bool(menu.call(
-		"confirm_world_target",
-		Vector3(5.0, 0.0, 0.0)
-	))
-	_expect(placed, "shared world targeting reproduces the selected object")
+	menu.call("select_action_by_id", "reproduce_selected")
+	_expect(bool(menu.call("commit_selected_action")), "recorded object hands off to shared placement")
+	_expect(placement.is_placement_active(), "shared placement becomes active")
+	_expect(placement.get_placement_id() == "recorded_object", "recorded placement has the correct shared id")
+	_expect(recorded_manager.placement_active, "recorded manager supplies the live preview")
+	_expect(not recorded_manager.controller_controls_enabled, "legacy recorded controller input stays disabled")
+	_expect(not recorded_manager.keyboard_controls_enabled, "legacy recorded keyboard input stays disabled")
+	_expect(action_state.is_manipulating, "shared placement locks ordinary actions")
+	_expect(bool(player.get_meta("shared_placement_active", false)), "shared placement publishes movement lock state")
+
+	var placement_blueprint: String = RecordedCatalog.get_selected_blueprint_id()
+	_expect(placement.cycle_variant(1), "D-pad variant action cycles recorded objects")
+	_expect(RecordedCatalog.get_selected_blueprint_id() != placement_blueprint, "recorded placement variant changes")
+	var depth_before: float = recorded_manager.placement_depth_offset
+	_expect(placement.adjust_depth(1), "shared depth adjustment reaches the recorded provider")
+	_expect(recorded_manager.placement_depth_offset > depth_before, "recorded preview moves farther")
+	var rotation_before: float = recorded_manager.placement_yaw_degrees
+	_expect(placement.rotate_preview(1), "shared rotation reaches the recorded provider")
+	_expect(recorded_manager.placement_yaw_degrees != rotation_before, "recorded preview rotates")
+	_expect(placement.confirm_at(Vector3(5.0, 0.0, 0.0)), "shared placement reproduces the selected object")
 	_expect(recorded_manager.get_active_count() == 1, "recorded object becomes active")
+	_expect(not placement.is_placement_active(), "recorded placement exits after confirmation")
+	_expect(not action_state.is_manipulating, "ordinary actions return after recorded placement")
+	_expect(not bool(player.get_meta("shared_placement_active", false)), "movement lock clears after recorded placement")
 	await get_tree().process_frame
 
 	opened = router.call("try_open_context", player, RecordedAbility) as Dictionary
 	_expect(bool(opened.get("success", false)), "Recorded Object reopens for active-object management")
 	actions = _string_array(menu.call("get_available_action_ids"))
 	_expect(actions.has("recall_last"), "active recorded context exposes Recall Last")
-	_expect(actions.has("dismiss_all"), "active recorded context exposes Dismiss All")
 	menu.call("select_action_by_id", "recall_last")
 	_expect(bool(menu.call("commit_selected_action")), "Recall Last commits")
 	_expect(recorded_manager.get_active_count() == 0, "Recall Last removes the active recorded object")
@@ -149,38 +171,38 @@ func _test_artificer_assembly_context() -> void:
 	var actions: Array[String] = _string_array(menu.call("get_available_action_ids"))
 	_expect(actions.has("place_part"), "assembly context exposes part placement")
 	_expect(actions.has("next_part"), "assembly context exposes part cycling")
-	_expect(actions.has("advanced_assembly"), "assembly context preserves advanced mode")
+	_expect(not actions.has("advanced_assembly"), "assembly no longer exposes a private placement mode")
+
+	menu.call("select_action_by_id", "place_part")
+	_expect(bool(menu.call("commit_selected_action")), "prepared part enters shared placement")
+	_expect(placement.get_placement_id() == "artificer_part", "assembly uses the shared part placement id")
+	_expect(artificer_manager.mode == ArtificerConstructionManager.MODE_ASSEMBLY, "Artificer manager supplies the assembly preview")
+	_expect(not artificer_manager.keyboard_controls_enabled, "legacy Artificer keyboard input stays disabled")
+
+	var first_part_id: String = PartCatalog.get_selected_part_id()
+	var first_size: Vector3 = PartCatalog.get_part_size(first_part_id)
+	_expect(
+		placement.confirm_at(Vector3(-4.0, first_size.y * 0.5, 3.0)),
+		"first part attaches through shared placement"
+	)
+	_expect(placement.is_placement_active(), "assembly placement remains active after attaching a part")
+	_expect(artificer_manager.draft_parts.size() == 1, "first part creates an Artificer draft")
 
 	var before_part: String = PartCatalog.get_selected_part_id()
-	menu.call("select_action_by_id", "next_part")
-	_expect(bool(menu.call("commit_selected_action")), "Next Part commits through the shared menu")
-	_expect(bool(menu.call("is_context_open")), "part cycling refreshes without closing the context")
-	var first_part_id: String = PartCatalog.get_selected_part_id()
-	_expect(first_part_id != before_part, "part cycling changes the prepared engineering part")
-
-	var first_size: Vector3 = PartCatalog.get_part_size(first_part_id)
-	menu.call("select_action_by_id", "place_part")
-	_expect(bool(menu.call("commit_selected_action")), "prepared part enters shared world targeting")
-	_expect(bool(menu.call("confirm_world_target", Vector3(-4.0, first_size.y * 0.5, 3.0))), "first part attaches through shared targeting")
-	_expect(artificer_manager.draft_parts.size() == 1, "first part creates an Artificer draft")
-	await get_tree().process_frame
-
-	opened = router.call("try_open_context", player, AssemblyAbility) as Dictionary
-	_expect(bool(opened.get("success", false)), "Assembly reopens while a draft exists")
-	menu.call("select_action_by_id", "next_part")
-	_expect(bool(menu.call("commit_selected_action")), "second part selection refreshes in place")
+	_expect(placement.cycle_variant(1), "D-pad variant action cycles engineering parts")
 	var second_part_id: String = PartCatalog.get_selected_part_id()
+	_expect(second_part_id != before_part, "assembly variant changes the prepared part")
 	var second_size: Vector3 = PartCatalog.get_part_size(second_part_id)
-	menu.call("select_action_by_id", "place_part")
-	_expect(bool(menu.call("commit_selected_action")), "second part enters shared world targeting")
 	_expect(
-		bool(menu.call(
-			"confirm_world_target",
+		placement.confirm_at(
 			Vector3(-4.0, maxf(second_size.y * 0.5, 0.5), 4.5)
-		)),
-		"second connected part attaches through shared targeting"
+		),
+		"second connected part attaches through shared placement"
 	)
 	_expect(artificer_manager.draft_parts.size() == 2, "draft contains two connected parts")
+	_expect(placement.cancel_placement(), "B-style cancellation exits continuous assembly")
+	_expect(not placement.is_placement_active(), "assembly placement closes on cancel")
+	_expect(artificer_manager.mode == ArtificerConstructionManager.MODE_NONE, "Artificer preview mode cleans up on cancel")
 	await get_tree().process_frame
 
 	opened = router.call("try_open_context", player, AssemblyAbility) as Dictionary
@@ -206,32 +228,45 @@ func _test_deploy_context() -> void:
 	) as Dictionary
 	_expect(bool(opened.get("success", false)), "Deploy Contraption opens the shared context")
 	var actions: Array[String] = _string_array(menu.call("get_available_action_ids"))
-	_expect(actions.has("deploy_selected"), "deploy context exposes direct world deployment")
+	_expect(actions.has("deploy_selected"), "deploy context exposes placement")
 	_expect(actions.has("next_build"), "deploy context exposes blueprint cycling")
-	_expect(actions.has("advanced_deploy"), "deploy context preserves advanced deployment")
-
-	var before_build: String = BuildCatalog.get_selected_build_id()
-	menu.call("select_action_by_id", "next_build")
-	_expect(bool(menu.call("commit_selected_action")), "Next Blueprint commits through the shared menu")
-	_expect(bool(menu.call("is_context_open")), "build cycling refreshes without closing the context")
-	_expect(BuildCatalog.get_selected_build_id() != before_build, "build cycling changes the prepared contraption")
+	_expect(not actions.has("advanced_deploy"), "deploy no longer exposes a private placement mode")
 
 	menu.call("select_action_by_id", "deploy_selected")
-	_expect(bool(menu.call("commit_selected_action")), "prepared contraption enters shared world targeting")
-	_expect(bool(menu.call("is_targeting")), "contraption deployment uses shared world targeting")
-	_expect(bool(menu.call("confirm_world_target", Vector3(6.0, 0.0, 6.0))), "shared targeting deploys the contraption")
+	_expect(bool(menu.call("commit_selected_action")), "prepared contraption enters shared placement")
+	_expect(placement.get_placement_id() == "artificer_deploy", "deploy uses the shared contraption placement id")
+	_expect(artificer_manager.mode == ArtificerConstructionManager.MODE_DEPLOY, "Artificer manager supplies the deployment preview")
+
+	var before_build: String = BuildCatalog.get_selected_build_id()
+	_expect(placement.cycle_variant(1), "D-pad variant action cycles saved contraptions")
+	_expect(BuildCatalog.get_selected_build_id() != before_build, "deployment variant changes the prepared blueprint")
+	var depth_before: float = artificer_manager.placement_depth_offset
+	_expect(placement.adjust_depth(1), "shared depth adjustment reaches deployment")
+	_expect(artificer_manager.placement_depth_offset > depth_before, "deployment preview moves farther")
+	_expect(placement.rotate_preview(1), "shared rotation reaches deployment")
+	_expect(
+		placement.confirm_at(Vector3(6.0, 0.0, 6.0)),
+		"shared placement deploys the contraption"
+	)
 	_expect(artificer_manager.get_active_count() == 1, "deployed contraption becomes active")
+	_expect(not placement.is_placement_active(), "deployment exits after confirmation")
 	await get_tree().process_frame
 
 	opened = router.call("try_open_context", player, DeployAbility) as Dictionary
 	_expect(bool(opened.get("success", false)), "Deploy reopens for active-contraption management")
 	actions = _string_array(menu.call("get_available_action_ids"))
 	_expect(actions.has("recall_contraption"), "active deploy context exposes Recall Last")
-	_expect(actions.has("dismiss_contraptions"), "active deploy context exposes Dismiss All")
 	menu.call("select_action_by_id", "recall_contraption")
 	_expect(bool(menu.call("commit_selected_action")), "contraption Recall Last commits")
 	_expect(artificer_manager.get_active_count() == 0, "Recall Last removes the active contraption")
 	await get_tree().process_frame
+
+	var placement_debug: Dictionary = placement.get_debug_data()
+	_expect(int(placement_debug.get("begin_count", 0)) == 3, "all three placement families used one controller")
+	_expect(int(placement_debug.get("variant_cycle_count", 0)) >= 3, "one variant control served every provider")
+	if control_router != null and control_router.has_method("get_input_mode_debug_data"):
+		var input_debug: Dictionary = control_router.call("get_input_mode_debug_data")
+		_expect(not bool(input_debug.get("shared_placement", true)), "control router releases shared placement ownership")
 
 
 func _prepare_test_state() -> void:
@@ -270,6 +305,8 @@ func _capture_state() -> void:
 
 
 func _cleanup_and_finish() -> void:
+	if placement != null and is_instance_valid(placement):
+		placement.cancel_placement()
 	if menu != null and is_instance_valid(menu) and menu.has_method("cancel_context"):
 		menu.call("cancel_context")
 	if recorded_manager != null and is_instance_valid(recorded_manager):

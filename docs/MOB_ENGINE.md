@@ -31,6 +31,12 @@ The first executor supports:
 - Procedural sheep, capybara, and wolf silhouettes
 - Overhead intention, move, and drive readouts
 
+### Perception, memory, and relationships
+
+[`ANIMAL_PERCEPTION_RELATIONSHIPS_V1.md`](ANIMAL_PERCEPTION_RELATIONSHIPS_V1.md)
+
+Adds species-shaped sight cones, hearing, physics line of sight, timed last-known-position memory, same-species alert sharing, persistent trust and fear associations toward Grace, peaceful habituation, and Feed, Soothe, and Startle interactions.
+
 ## Playable test scene
 
 Run:
@@ -39,19 +45,21 @@ Run:
 
 The lab contains Grace, a sheep, a capybara, and a two-wolf pack.
 
-Controls:
+The on-screen panel provides mouse-clickable and controller-focusable controls for:
 
-- `1`-`4` or `Tab`: select an animal
-- `P`: toggle whether the animals perceive Grace as a threat
-- `H`: maximize hunger
-- `F`: maximize fear
-- `J`: maximize social need
-- `K`: maximize curiosity
-- `T`: maximize territorial pressure
-- `C`: clear the selected animal's drive pressure
-- The configured restart input resets the lab
+- Previous and next animal selection
+- Peaceful or threatening Grace posture
+- Feed
+- Soothe
+- Startle
+- Make Noise
+- Hunger, fear, social, curiosity, and territory debug pressure
+- Clear Drives
+- Reset Lab
 
-The selected animal is marked with a gold disc. Every animal displays its current intention, selected move, hunger, fear, and social need overhead.
+The normal restart input also resets the lab. Raw number and letter shortcuts are no longer required.
+
+The selected animal is marked with a gold disc. Every animal displays its relationship, current stimulus, intention, move, trust, hunger, fear, and social need overhead.
 
 See [`ANIMAL_BEHAVIOR_LAB_TEST.md`](ANIMAL_BEHAVIOR_LAB_TEST.md) for a guided manual test pass.
 
@@ -60,9 +68,10 @@ See [`ANIMAL_BEHAVIOR_LAB_TEST.md`](ANIMAL_BEHAVIOR_LAB_TEST.md) for a guided ma
 - `res://scenes/tests/mob_engine_foundation_smoke_test.tscn`
 - `res://scenes/tests/mob_drives_and_intentions_smoke_test.tscn`
 - `res://scenes/tests/animal_behavior_lab_smoke_test.tscn`
+- `res://scenes/tests/animal_perception_relationship_smoke_test.tscn`
 
-The live regression verifies that a hungry safe sheep selects Graze, a frightened sheep selects Flee, and the Flee executor physically increases its distance from a live threat.
+The live regressions verify physical Graze and Flee execution, on-screen lab controls, visual and auditory perception, timed memory, trust-building interactions, startle fear, and wolf pack alert sharing.
 
 ## Next runtime milestone
 
-Improve execution fidelity with navigation-aware destinations, action completion callbacks, interrupted actions, attack hit confirmation, and small herd or pack coordination behaviors.
+Connect relationships to persistent named animals and gameplay events, then improve execution fidelity with navigation-aware destinations, action completion callbacks, interrupted actions, attack hit confirmation, and richer herd or pack coordination.

@@ -52,7 +52,6 @@ func _physics_process(delta: float) -> void:
 	decision_time_remaining -= delta
 	wander_time_remaining -= delta
 	if decision_time_remaining <= 0.0:
-		decision_time_remaining = decision_interval
 		force_decision()
 	_execute_current_action(delta)
 	_apply_gravity(delta)
@@ -64,14 +63,11 @@ func _physics_process(delta: float) -> void:
 func force_decision() -> Dictionary:
 	if brain == null:
 		return {}
-	var decision: Dictionary = brain.request_decision(get_mob_decision_context())
-	if str(decision.get("move_id", "")) != "":
-		_on_move_selected(str(decision.get("move_id", "")), decision)
-	return decision
+	decision_time_remaining = decision_interval
+	return brain.request_decision(get_mob_decision_context())
 
 
 func get_mob_decision_context() -> Dictionary:
-	var lab: Node = get_parent()
 	var threat: Node3D = _get_lab_node("get_animal_threat_target")
 	var threat_mode: bool = _get_lab_bool("is_animal_threat_mode_enabled")
 	var threat_distance: float = INF
@@ -192,8 +188,8 @@ func _build_brain() -> void:
 	brain.intention_commitment_seconds = 1.6
 	brain.intention_score_tolerance = 0.35
 	brain.context_provider_path = NodePath("..")
-	add_child(brain)
 	brain.move_selected.connect(_on_move_selected)
+	add_child(brain)
 
 
 func _on_move_selected(move_id: String, decision: Dictionary) -> void:

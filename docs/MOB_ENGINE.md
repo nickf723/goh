@@ -43,13 +43,19 @@ Adds species-shaped sight cones, hearing, physics line of sight, timed last-know
 
 Adds stable named-animal identities, durable disk records, inventory-backed Field Treat feeding, bond requirements, Follow / Stay behavior, voluntary curious approach, wary watching, and gameplay event hooks for helping, healing, rescue, attacks, chasing, and threats.
 
-## Playable test scene
+### Navigation, rescue, and field consequences
+
+[`WILDLIFE_NAVIGATION_RESCUE_LAB_V1.md`](WILDLIFE_NAVIGATION_RESCUE_LAB_V1.md)
+
+Adds navigation-aware bonded movement, runtime collision-based navigation baking, dynamic rebaking after debris removal, stuck detection, conservative separation recovery, an injured rescue state, a physical Field Treat pickup, chase detection, and the real weapon damage-payload bridge.
+
+## Relationship laboratory
 
 Run:
 
 `res://scenes/levels/prototypes/animal_behavior_lab_v1.tscn`
 
-The lab contains Grace, a sheep, a capybara, and a two-wolf pack.
+The relationship lab contains Grace, a sheep, a capybara, and a two-wolf pack.
 
 The left on-screen panel provides mouse-clickable and controller-focusable controls for:
 
@@ -80,6 +86,24 @@ The selected animal is marked with a gold disc. Every animal displays its relati
 
 See [`ANIMAL_BEHAVIOR_LAB_TEST.md`](ANIMAL_BEHAVIOR_LAB_TEST.md) for a guided manual test pass.
 
+## Wildlife navigation and rescue laboratory
+
+Run:
+
+`res://scenes/levels/prototypes/wildlife_navigation_rescue_lab_v1.tscn`
+
+The dedicated field lab contains:
+
+- Juniper, an injured named sheep trapped behind debris
+- A physical Field Treat basket
+- A dynamically baked navigation course
+- An S-shaped wall route
+- A sloped lookout
+- Rescue, healing, feeding, bonding, Follow / Stay, damage, repath, and separation controls
+- Real weapon-payload reception through Juniper's body collision
+
+Clear the debris, heal and feed Juniper, bond her, then lead her through the course. The panel displays navigation queries, path points, repaths, stuck time, recoveries, trust, fear, injury, and bond state.
+
 ## Validation scenes
 
 - `res://scenes/tests/mob_engine_foundation_smoke_test.tscn`
@@ -87,9 +111,10 @@ See [`ANIMAL_BEHAVIOR_LAB_TEST.md`](ANIMAL_BEHAVIOR_LAB_TEST.md) for a guided ma
 - `res://scenes/tests/animal_behavior_lab_smoke_test.tscn`
 - `res://scenes/tests/animal_perception_relationship_smoke_test.tscn`
 - `res://scenes/tests/animal_bonding_persistence_smoke_test.tscn`
+- `res://scenes/tests/wildlife_navigation_rescue_lab_smoke_test.tscn`
 
-The live regressions verify physical Graze and Flee execution, on-screen lab controls, visual and auditory perception, timed memory, trust-building interactions, wolf pack alert sharing, inventory-backed feeding, bonding, physical follow behavior, disk persistence, stable identity restoration, and harm consequences.
+The live regressions verify physical Graze and Flee execution, visual and auditory perception, timed memory, trust-building interactions, wolf pack alert sharing, inventory-backed feeding, bonding, disk persistence, navigation-aware following, dynamic navmesh rebaking, rescue and healing consequences, real damage payloads, obstacle routing, and separation recovery.
 
 ## Next runtime milestone
 
-Connect the gameplay event bridge to real damage, healing, rescue, and item-use systems in an exploration scene, then improve execution fidelity with navigation-aware destinations, action completion callbacks, interrupted actions, attack hit confirmation, and richer herd or pack coordination.
+Connect the dedicated lab's rescue, healing, damage, chase, pickup, and navigation contracts to a production exploration scene, then add authored traversal links, moving-obstacle avoidance, and action completion or interruption callbacks.

@@ -1,15 +1,21 @@
 extends "res://scripts/ui/game_ui_spell_icons_resolved.gd"
 class_name GameUIUnified
 
+const UnifiedHUDSourceBridgeScript = preload(
+	"res://scripts/ui/unified_hud_source_bridge.gd"
+)
+
 var unified_objective_text: String = ""
 var unified_prompt_text: String = ""
 var hud_sync_remaining: float = 0.0
+var source_bridge: Node
 
 
 func _ready() -> void:
 	super._ready()
 	if objective_label != null:
 		objective_label.visible = false
+	_install_source_bridge()
 	call_deferred("_sync_unified_objective")
 
 
@@ -76,6 +82,16 @@ func hide_message() -> void:
 	message_panel.modulate.a = 1.0
 
 
+func _install_source_bridge() -> void:
+	if source_bridge != null and is_instance_valid(source_bridge):
+		return
+	source_bridge = get_node_or_null("UnifiedHUDSourceBridge")
+	if source_bridge == null:
+		source_bridge = UnifiedHUDSourceBridgeScript.new()
+		source_bridge.name = "UnifiedHUDSourceBridge"
+		add_child(source_bridge)
+
+
 func _sync_unified_objective() -> void:
 	var shell: Node = _get_unified_hud()
 	if shell == null or not shell.has_method("set_objective_summary"):
@@ -126,5 +142,6 @@ func get_unified_game_ui_debug_data() -> Dictionary:
 		"objective": unified_objective_text,
 		"prompt": unified_prompt_text,
 		"hud_connected": _get_unified_hud() != null,
+		"source_bridge": source_bridge != null and is_instance_valid(source_bridge),
 		"legacy_objective_hidden": objective_label != null and not objective_label.visible,
 	}

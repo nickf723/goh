@@ -68,12 +68,19 @@ func _apply_responsive_layout() -> void:
 		var half_width: float = (
 			minf(180.0, maxf(width * 0.5 - 24.0, 120.0))
 			if compact
-			else (150.0 if narrow else 250.0)
+			else (190.0 if narrow else 250.0)
 		)
 		mode_panel.offset_left = -half_width
 		mode_panel.offset_right = half_width
-		mode_panel.offset_top = 178.0 if compact else 18.0
-		mode_panel.offset_bottom = 251.0 if compact else 91.0
+		if compact:
+			mode_panel.offset_top = 226.0
+			mode_panel.offset_bottom = 299.0
+		elif narrow:
+			mode_panel.offset_top = 194.0
+			mode_panel.offset_bottom = 267.0
+		else:
+			mode_panel.offset_top = 18.0
+			mode_panel.offset_bottom = 91.0
 
 	var activity_value: Variant = unified_hud.get("activity_rail")
 	if activity_value is Control:

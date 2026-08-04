@@ -87,6 +87,9 @@ jobs:
       - name: Run companion command authority regression
         run: godot --headless --path . res://scenes/tests/companion_command_authority_smoke_test.tscn
 
+      - name: Run summon-driven familiar command interface regression
+        run: godot --headless --path . res://scenes/tests/familiar_command_interface_smoke_test.tscn
+
       - name: Run base Ruined Village regression
         run: godot --headless --path . res://scenes/tests/ruined_village_approach_smoke_test.tscn
 

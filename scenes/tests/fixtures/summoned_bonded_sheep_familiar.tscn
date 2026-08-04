@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/summons/summoned_bonded_animal_familiar.gd" id="1_familiar"]
+
+[node name="SummonedBondedSheepFamiliar" type="CharacterBody3D"]
+script = ExtResource("1_familiar")
+animal_name = "Juniper"
+display_name = "Juniper Familiar"
+species_id = "sheep"
+personality_profile_id = "cautious"
+persistent_animal_id = "smoke_test:summoned_juniper"
+move_speed = 3.4
+floor_snap_length = 0.4
+floor_constant_speed = true

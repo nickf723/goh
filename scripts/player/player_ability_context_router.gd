@@ -10,17 +10,38 @@ const AbilityContextMenuScript = preload(
 
 var actor: Node3D
 var context_menu: Node
+var ability_caster: Node
+var action_state: PlayerActionState
 var open_requests: int = 0
 var successful_opens: int = 0
+var intercepted_casts: int = 0
 var last_provider_name: String = "none"
 var last_ability_id: String = "none"
 
 
 func _ready() -> void:
 	actor = get_parent() as Node3D
+	if actor != null:
+		ability_caster = actor.get_node_or_null("AbilityCaster")
+		action_state = actor.get_node_or_null("PlayerActionState") as PlayerActionState
 	add_to_group("ability_context_routers")
 	add_to_group("debuggable")
 	call_deferred("_install_context_menu")
+
+
+func _input(event: InputEvent) -> void:
+	if is_context_active():
+		return
+	if not event.is_action_pressed("cast_spell"):
+		return
+	if action_state != null and action_state.is_focus_menu_open:
+		return
+	var ability: AbilityDefinition = _get_selected_ability()
+	var result: Dictionary = try_open_context(actor, ability)
+	if not bool(result.get("handled", false)):
+		return
+	intercepted_casts += 1
+	get_viewport().set_input_as_handled()
 
 
 func try_open_context(
@@ -105,6 +126,15 @@ func cancel_context() -> bool:
 	return bool(context_menu.call("cancel_context"))
 
 
+func _get_selected_ability() -> AbilityDefinition:
+	if ability_caster == null or not is_instance_valid(ability_caster):
+		ability_caster = actor.get_node_or_null("AbilityCaster") if actor != null else null
+	if ability_caster == null or not ability_caster.has_method("get_current_ability"):
+		return null
+	var value: Variant = ability_caster.call("get_current_ability")
+	return value as AbilityDefinition if value is AbilityDefinition else null
+
+
 func _install_context_menu() -> void:
 	if actor == null or not is_instance_valid(actor):
 		actor = get_parent() as Node3D
@@ -127,8 +157,10 @@ func get_debug_data() -> Dictionary:
 	return {
 		"open_requests": open_requests,
 		"successful_opens": successful_opens,
+		"intercepted_casts": intercepted_casts,
 		"last_provider": last_provider_name,
 		"last_ability": last_ability_id,
 		"context_active": is_context_active(),
 		"menu_installed": context_menu != null and is_instance_valid(context_menu),
+		"selected_ability": _get_selected_ability().get_spell_id() if _get_selected_ability() != null else "none",
 	}

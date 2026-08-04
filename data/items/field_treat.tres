@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="QuickItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/quick_item_definition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "field_treat"
+display_name = "Field Treat"
+short_label = "TREAT"
+description = "A small bundle of grain, roots, and dried fruit used to befriend animals. It is consumed through animal interactions rather than the quick-item belt."
+icon_symbol = "✿"
+use_visual_color = Color(0.72, 0.88, 0.3, 1)
+max_stack = 20
+max_charges = 0
+refill_on_rest = false
+use_duration = 0.35
+movement_multiplier = 1.0
+requires_grounded = false
+can_use_at_maximum = false
+effect_type = "restore_resource"
+restore_amount = 0
+element = "life"
+tags = Array[String](["consumable", "animal_food", "food", "bonding", "life"])

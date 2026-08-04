@@ -53,6 +53,8 @@ Controls:
 
 The selected animal is marked with a gold disc. Every animal displays its current intention, selected move, hunger, fear, and social need overhead.
 
+See [`ANIMAL_BEHAVIOR_LAB_TEST.md`](ANIMAL_BEHAVIOR_LAB_TEST.md) for a guided manual test pass.
+
 ## Validation scenes
 
 - `res://scenes/tests/mob_engine_foundation_smoke_test.tscn`

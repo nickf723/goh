@@ -7,6 +7,9 @@ signal context_open_failed(ability: AbilityDefinition, reason: String)
 const AbilityContextMenuScript = preload(
 	"res://scripts/ui/persistent_ability_context_menu.gd"
 )
+const SharedPlacementControllerScript = preload(
+	"res://scripts/player/player_shared_placement_controller.gd"
+)
 const RecordedObjectSpellControllerScript = preload(
 	"res://scripts/player/player_recorded_object_spell_controller.gd"
 )
@@ -22,6 +25,7 @@ const CONTEXT_DPAD_ACTIONS: Dictionary = {
 
 var actor: Node3D
 var context_menu: Node
+var shared_placement_controller: Node
 var ability_caster: Node
 var action_state: PlayerActionState
 var open_requests: int = 0
@@ -40,11 +44,11 @@ func _ready() -> void:
 	_ensure_dpad_navigation_actions()
 	add_to_group("ability_context_routers")
 	add_to_group("debuggable")
-	call_deferred("_install_context_menu")
+	call_deferred("_install_context_surfaces")
 
 
 func _input(event: InputEvent) -> void:
-	if is_context_active():
+	if is_context_active() or is_placement_active():
 		return
 	if not event.is_action_pressed("cast_spell"):
 		return
@@ -65,6 +69,8 @@ func try_open_context(
 	open_requests += 1
 	if player == null or ability == null or player != actor:
 		return {"handled": false, "success": false}
+	if is_placement_active():
+		return {"handled": true, "success": false}
 	var resolved_provider: Node = get_provider_for_ability(ability)
 	if resolved_provider == null:
 		return {"handled": false, "success": false}
@@ -85,7 +91,7 @@ func open_provider_context(
 ) -> bool:
 	if provider == null or ability == null:
 		return false
-	_install_context_menu()
+	_install_context_surfaces()
 	if context_menu == null or not is_instance_valid(context_menu):
 		context_open_failed.emit(ability, "context menu unavailable")
 		return false
@@ -119,8 +125,13 @@ func get_provider_for_ability(ability: AbilityDefinition) -> Node:
 
 
 func get_context_menu() -> Node:
-	_install_context_menu()
+	_install_context_surfaces()
 	return context_menu
+
+
+func get_shared_placement_controller() -> Node:
+	_install_context_surfaces()
+	return shared_placement_controller
 
 
 func is_context_active() -> bool:
@@ -132,7 +143,18 @@ func is_context_active() -> bool:
 	)
 
 
+func is_placement_active() -> bool:
+	return (
+		shared_placement_controller != null
+		and is_instance_valid(shared_placement_controller)
+		and shared_placement_controller.has_method("is_placement_active")
+		and bool(shared_placement_controller.call("is_placement_active"))
+	)
+
+
 func cancel_context() -> bool:
+	if is_placement_active():
+		return bool(shared_placement_controller.call("cancel_placement"))
 	if context_menu == null or not is_instance_valid(context_menu):
 		return false
 	if not context_menu.has_method("cancel_context"):
@@ -168,11 +190,27 @@ func _ensure_context_providers() -> void:
 		actor.add_child(artificer_provider)
 
 
-func _install_context_menu() -> void:
+func _install_context_surfaces() -> void:
 	if actor == null or not is_instance_valid(actor):
 		actor = get_parent() as Node3D
 	if actor == null:
 		return
+	if (
+		shared_placement_controller == null
+		or not is_instance_valid(shared_placement_controller)
+	):
+		var existing_placement: Node = actor.get_node_or_null(
+			"SharedPlacementController"
+		)
+		if existing_placement != null:
+			shared_placement_controller = existing_placement
+		else:
+			shared_placement_controller = SharedPlacementControllerScript.new()
+			shared_placement_controller.name = "SharedPlacementController"
+			actor.add_child(shared_placement_controller)
+	if shared_placement_controller.has_method("bind_actor"):
+		shared_placement_controller.call("bind_actor", actor)
+
 	if context_menu == null or not is_instance_valid(context_menu):
 		var existing: Node = actor.get_node_or_null("AbilityContextMenu")
 		if existing != null:
@@ -238,7 +276,9 @@ func get_debug_data() -> Dictionary:
 		"last_provider": last_provider_name,
 		"last_ability": last_ability_id,
 		"context_active": is_context_active(),
+		"placement_active": is_placement_active(),
 		"menu_installed": context_menu != null and is_instance_valid(context_menu),
+		"placement_installed": shared_placement_controller != null and is_instance_valid(shared_placement_controller),
 		"dpad_navigation": _has_dpad_navigation(),
 		"recorded_provider": actor.get_node_or_null("RecordedObjectSpellController") != null if actor != null else false,
 		"artificer_provider": actor.get_node_or_null("ArtificerSpellController") != null if actor != null else false,

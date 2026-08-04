@@ -172,12 +172,37 @@ func _test_shell_installation() -> void:
 			str(dock_data.get("dock_parent_zone", "")) == "ActionBarZone",
 			"command dock is parented to the action bar zone"
 		)
+	var hud_root: Control = hud.get("root") as Control
+	_expect(
+		_count_visible_named_controls(
+			hud_root,
+			"PermanentDPadCommandDock"
+		) == 1,
+		"exactly one rendered command dock survives runtime replacement"
+	)
 	if context_menu != null:
 		var compact_panel: Control = context_menu.get("compact_panel") as Control
 		_expect(
 			compact_panel != null and not compact_panel.visible,
 			"duplicate compact ability card is retired"
 		)
+	var legacy_quick_item: CanvasLayer = player.get_node_or_null(
+		"QuickItemBeltUI"
+	) as CanvasLayer
+	_expect(legacy_quick_item != null, "legacy quick-item node remains available for compatibility")
+	if legacy_quick_item != null:
+		_expect(
+			not legacy_quick_item.visible,
+			"legacy quick-item card is hidden under the unified HUD"
+		)
+		if legacy_quick_item.has_method("get_debug_data"):
+			var legacy_data: Dictionary = legacy_quick_item.call(
+				"get_debug_data"
+			) as Dictionary
+			_expect(
+				bool(legacy_data.get("unified_hud_suppressed", false)),
+				"legacy quick-item card reports unified suppression"
+			)
 	var source_bridge: Node = game_ui.get_node_or_null("UnifiedHUDSourceBridge")
 	_expect(source_bridge != null, "global HUD source bridge is installed")
 	for special_hud: Node in get_tree().get_nodes_in_group("divine_special_hud"):
@@ -218,6 +243,24 @@ func _test_layout_geometry() -> void:
 		_not_overlapping(context_panel, dock_panel),
 		"context strip remains above the action bar"
 	)
+	if support_panel != null:
+		var viewport_rect: Rect2 = get_viewport().get_visible_rect()
+		var support_rect: Rect2 = support_panel.get_global_rect()
+		_expect(
+			support_rect.position.x >= viewport_rect.position.x - 0.5,
+			"support cluster starts inside the viewport"
+		)
+		_expect(
+			support_rect.end.x <= viewport_rect.end.x + 0.5,
+			"support cluster ends inside the viewport"
+		)
+	var grace_portrait: Control = hud.get("portrait") as Control
+	if grace_portrait != null:
+		_expect(
+			grace_portrait.custom_minimum_size.x <= 100.0
+			and grace_portrait.custom_minimum_size.y <= 100.0,
+			"support portrait preserves its compact requested size"
+		)
 
 
 func _test_objective_prompt_and_activity() -> void:
@@ -314,6 +357,19 @@ func _test_focus_mode() -> void:
 	caster.call("close_focus_spell_menu")
 	await _wait_frames(3)
 	_expect(str(hud.call("get_hud_mode")) == "exploration", "closing focus restores exploration mode")
+
+
+func _count_visible_named_controls(parent: Node, node_name: String) -> int:
+	if parent == null:
+		return 0
+	var count: int = 0
+	for candidate: Node in parent.find_children(node_name, "", true, false):
+		if not candidate is Control:
+			continue
+		var control: Control = candidate as Control
+		if control.visible and control.modulate.a > 0.01:
+			count += 1
+	return count
 
 
 func _not_overlapping(first: Control, second: Control) -> bool:

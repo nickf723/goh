@@ -2,6 +2,7 @@ extends "res://scripts/ui/quick_spell_belt_performance.gd"
 class_name QuickSpellBeltUnified
 
 var unified_layout_applied: bool = false
+var retired_duplicate_surface_count: int = 0
 
 
 func _finish_setup() -> void:
@@ -15,6 +16,10 @@ func _process(delta: float) -> void:
 	super._process(delta)
 	if not unified_layout_applied:
 		_apply_unified_layout()
+	# WeaponInputBootstrap and the contextual router finish their deferred
+	# presenter swaps on neighboring frames. Keep sweeping the named generated
+	# surfaces so a late legacy panel cannot survive as an orphan under the HUD.
+	_retire_duplicate_generated_surfaces()
 	_apply_mode_presentation()
 
 
@@ -36,6 +41,7 @@ func _build_special_menu() -> void:
 func _apply_unified_layout() -> void:
 	if hud == null or dock_panel == null:
 		return
+	_retire_duplicate_generated_surfaces()
 	var target_parent: Control = hud.root
 	if hud.has_method("get_hud_zone"):
 		var zone_value: Variant = hud.call("get_hud_zone", "action_bar")
@@ -93,6 +99,51 @@ func _apply_unified_layout() -> void:
 	_align_focus_panel()
 
 
+func _retire_duplicate_generated_surfaces() -> void:
+	if hud == null or hud.root == null:
+		return
+	_retire_duplicate_surface("PermanentDPadCommandDock", dock_panel)
+	_retire_duplicate_surface("DPadUpItemMenu", item_menu_panel)
+	_retire_duplicate_surface("DPadDownSpecialMenu", special_menu_panel)
+
+
+func _retire_duplicate_surface(surface_name: String, current_surface: Control) -> void:
+	if hud == null or hud.root == null:
+		return
+	for candidate: Node in hud.root.find_children(surface_name, "", true, false):
+		if candidate == current_surface:
+			continue
+		var parent: Node = candidate.get_parent()
+		if parent != null:
+			parent.remove_child(candidate)
+		candidate.queue_free()
+		retired_duplicate_surface_count += 1
+
+
+func _generated_dock_debug_rows() -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	if hud == null or hud.root == null:
+		return rows
+	for candidate: Node in hud.root.find_children(
+		"PermanentDPadCommandDock",
+		"",
+		true,
+		false
+	):
+		var row: Dictionary = {
+			"path": str(candidate.get_path()),
+			"current": candidate == dock_panel,
+			"class": candidate.get_class(),
+		}
+		if candidate is Control:
+			var control: Control = candidate as Control
+			row["visible"] = control.visible
+			row["alpha"] = control.modulate.a
+			row["rect"] = control.get_global_rect()
+		rows.append(row)
+	return rows
+
+
 func _reparent_overlay_to_hud(panel: PanelContainer) -> void:
 	if hud == null or hud.root == null or panel == null:
 		return
@@ -138,10 +189,18 @@ func _align_focus_panel() -> void:
 
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
+	var dock_rows: Array[Dictionary] = _generated_dock_debug_rows()
+	var visible_docks: int = 0
+	for row: Dictionary in dock_rows:
+		if bool(row.get("visible", false)) and float(row.get("alpha", 0.0)) > 0.01:
+			visible_docks += 1
 	data["unified_layout"] = unified_layout_applied
 	data["dock_parent_zone"] = (
 		str(dock_panel.get_parent().name)
 		if dock_panel != null and dock_panel.get_parent() != null
 		else "none"
 	)
+	data["retired_duplicate_surfaces"] = retired_duplicate_surface_count
+	data["generated_dock_rows"] = dock_rows
+	data["visible_generated_docks"] = visible_docks
 	return data

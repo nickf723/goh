@@ -10,7 +10,7 @@ const PlayerPresentationScript = preload(
 	"res://scripts/ui/player_hud_combat_presentation.gd"
 )
 const QuickSpellBeltScript = preload(
-	"res://scripts/ui/quick_spell_belt_presentation.gd"
+	"res://scripts/ui/quick_spell_belt_unified.gd"
 )
 const ShowcaseTelemetryGateScript = preload(
 	"res://scripts/ui/showcase_telemetry_gate.gd"

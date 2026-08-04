@@ -5,6 +5,7 @@ class_name CompanionCommandLabMenuSafe
 func _ready() -> void:
 	super._ready()
 	_register_lab_overlay_panels()
+	call_deferred("_register_lab_overlay_panels")
 
 
 func _register_lab_overlay_panels() -> void:
@@ -23,7 +24,7 @@ func get_menu_suppressed_overlay_count() -> int:
 	for candidate: Node in find_children("*", "PanelContainer", true, false):
 		if (
 			candidate is PanelContainer
-			and candidate.get_parent() is CanvasLayer
+			and bool(candidate.get_meta("full_menu_suppressed_lab_overlay", false))
 			and candidate.is_in_group("menu_suppressed_hud")
 		):
 			count += 1

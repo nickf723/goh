@@ -7,6 +7,12 @@ signal context_open_failed(ability: AbilityDefinition, reason: String)
 const AbilityContextMenuScript = preload(
 	"res://scripts/ui/ability_context_menu.gd"
 )
+const CONTEXT_DPAD_ACTIONS: Dictionary = {
+	&"ui_up": JOY_BUTTON_DPAD_UP,
+	&"ui_down": JOY_BUTTON_DPAD_DOWN,
+	&"ui_left": JOY_BUTTON_DPAD_LEFT,
+	&"ui_right": JOY_BUTTON_DPAD_RIGHT,
+}
 
 var actor: Node3D
 var context_menu: Node
@@ -24,6 +30,7 @@ func _ready() -> void:
 	if actor != null:
 		ability_caster = actor.get_node_or_null("AbilityCaster")
 		action_state = actor.get_node_or_null("PlayerActionState") as PlayerActionState
+	_ensure_dpad_navigation_actions()
 	add_to_group("ability_context_routers")
 	add_to_group("debuggable")
 	call_deferred("_install_context_menu")
@@ -163,6 +170,40 @@ func _on_context_closed(_committed: bool) -> void:
 		context_menu.call("_refresh_compact_status")
 
 
+func _ensure_dpad_navigation_actions() -> void:
+	for raw_action: Variant in CONTEXT_DPAD_ACTIONS.keys():
+		var action: StringName = raw_action as StringName
+		var button: int = int(CONTEXT_DPAD_ACTIONS[action])
+		if not InputMap.has_action(action):
+			InputMap.add_action(action, 0.2)
+		var found: bool = false
+		for event: InputEvent in InputMap.action_get_events(action):
+			if event is InputEventJoypadButton:
+				if (event as InputEventJoypadButton).button_index == button:
+					found = true
+					break
+		if found:
+			continue
+		var input := InputEventJoypadButton.new()
+		input.button_index = button
+		InputMap.action_add_event(action, input)
+
+
+func _has_dpad_navigation() -> bool:
+	for raw_action: Variant in CONTEXT_DPAD_ACTIONS.keys():
+		var action: StringName = raw_action as StringName
+		var button: int = int(CONTEXT_DPAD_ACTIONS[action])
+		var found: bool = false
+		for event: InputEvent in InputMap.action_get_events(action):
+			if event is InputEventJoypadButton:
+				if (event as InputEventJoypadButton).button_index == button:
+					found = true
+					break
+		if not found:
+			return false
+	return true
+
+
 func get_debug_data() -> Dictionary:
 	return {
 		"open_requests": open_requests,
@@ -172,5 +213,6 @@ func get_debug_data() -> Dictionary:
 		"last_ability": last_ability_id,
 		"context_active": is_context_active(),
 		"menu_installed": context_menu != null and is_instance_valid(context_menu),
+		"dpad_navigation": _has_dpad_navigation(),
 		"selected_ability": _get_selected_ability().get_spell_id() if _get_selected_ability() != null else "none",
 	}

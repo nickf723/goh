@@ -105,9 +105,10 @@ func _apply_responsive_layout() -> void:
 		context_panel.offset_left = -context_half_width
 		context_panel.offset_right = context_half_width
 
+	var support_panel: Control
 	var support_value: Variant = unified_hud.get("support_panel")
 	if support_value is Control:
-		var support_panel: Control = support_value as Control
+		support_panel = support_value as Control
 		support_panel.scale = Vector2.ONE
 		support_panel.pivot_offset = Vector2.ZERO
 		support_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -143,6 +144,22 @@ func _apply_responsive_layout() -> void:
 			if compact
 			else Vector2(92.0, 92.0)
 		)
+
+	if compact and support_panel != null:
+		# Containers can enforce a width larger than the assigned offsets. Measure
+		# that real minimum and scale inward around the bottom-right corner so the
+		# card remains fully on-screen without changing wide-layout proportions.
+		var available_support_width: float = maxf(width - 24.0, 1.0)
+		var measured_support_width: float = maxf(
+			support_panel.size.x,
+			support_panel.get_combined_minimum_size().x
+		)
+		var support_scale: float = minf(
+			1.0,
+			available_support_width / maxf(measured_support_width, 1.0)
+		)
+		support_panel.pivot_offset = support_panel.size
+		support_panel.scale = Vector2(support_scale, support_scale)
 
 	if width_changed and unified_hud.has_method("_refresh_mode_banner"):
 		unified_hud.call("_refresh_mode_banner")

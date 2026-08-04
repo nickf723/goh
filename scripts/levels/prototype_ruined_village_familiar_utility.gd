@@ -232,7 +232,12 @@ func get_familiar_utility_receiver(task_name: String) -> FamiliarTaskReceiver:
 
 
 func reset_familiar_utility_route() -> void:
-	for receiver: FamiliarTaskReceiver in [waykeeper_plate, ram_receiver, forage_receiver]:
+	var receivers: Array[FamiliarTaskReceiver] = [
+		waykeeper_plate,
+		ram_receiver,
+		forage_receiver,
+	]
+	for receiver: FamiliarTaskReceiver in receivers:
 		if receiver != null and is_instance_valid(receiver):
 			receiver.reset_task(true)
 	_set_utility_node_enabled(waykeeper_gate, true)

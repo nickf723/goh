@@ -1,5 +1,9 @@
 extends "res://scripts/ui/full_menu_shell_mastery.gd"
 
+const BondedFamiliarRosterScript: Script = preload(
+	"res://scripts/summons/bonded_familiar_roster.gd"
+)
+
 
 func render_magic() -> void:
 	super.render_magic()
@@ -10,6 +14,10 @@ func render_magic() -> void:
 
 func activate_action(action: Dictionary) -> void:
 	match str(action.get("kind", "")):
+		"equip_bonded_familiar":
+			_equip_bonded_familiar(str(action.get("animal_id", "")))
+		"clear_bonded_familiar":
+			_clear_bonded_familiar()
 		"equip_familiar":
 			_equip_familiar(str(action.get("species_id", "")))
 		"cycle_familiar_role":
@@ -40,12 +48,54 @@ func _render_familiar_mastery() -> void:
 	if rows_value is Array:
 		rows = rows_value as Array
 	var summary: Dictionary = _familiar_dictionary(familiar_data.get("summary", {}))
-	add_section_header("FAMILIAR BLUEPRINTS")
+	var bonded_roster: BondedFamiliarRoster = _get_bonded_roster()
+	var bonded_rows: Array[Dictionary] = (
+		bonded_roster.get_roster_rows()
+		if bonded_roster != null
+		else []
+	)
+	var bonded_summary: Dictionary = (
+		bonded_roster.get_summary()
+		if bonded_roster != null
+		else {}
+	)
+	var bonded_equipped_name: String = str(
+		bonded_summary.get("equipped_name", "None")
+	)
+	var blueprint_equipped_name: String = str(
+		familiar_data.get("equipped_name", "None")
+	)
+	var summon_slot_name: String = (
+		bonded_equipped_name
+		if bonded_equipped_name != "None"
+		else blueprint_equipped_name
+	)
+
+	add_section_header("BONDED FAMILIARS")
+	add_summary_card([
+		"Eligible named animals " + str(bonded_rows.size()),
+		"Summon slot " + summon_slot_name,
+		"One active familiar",
+		"Bond and rescue animals in the world",
+	])
+	if bonded_rows.is_empty():
+		add_text_card(
+			"No Bonded Animals Yet",
+			"Rescue an animal, earn its trust, and form a bond. Named companions will appear here automatically.",
+			"✦",
+			"World relationships"
+		)
+	else:
+		for bonded_value: Variant in bonded_rows:
+			if bonded_value is Dictionary:
+				_render_bonded_familiar_row(bonded_value as Dictionary)
+
+	add_section_header("SPECIES FAMILIAR BLUEPRINTS")
 	add_summary_card([
 		"Unlocked " + str(summary.get("familiars_unlocked", 0)) + "/" + str(summary.get("familiars_available", rows.size())),
-		"Equipped " + str(familiar_data.get("equipped_name", "None")),
+		"Prepared blueprint " + blueprint_equipped_name,
 		"Presence capacity 1",
-		"Prepared outside combat",
+		"Named familiars override the prepared blueprint",
 	])
 	if rows.is_empty():
 		add_text_card(
@@ -58,6 +108,50 @@ func _render_familiar_mastery() -> void:
 	for row_value: Variant in rows:
 		if row_value is Dictionary:
 			_render_familiar_row(row_value as Dictionary)
+
+
+func _render_bonded_familiar_row(row: Dictionary) -> void:
+	var animal_id: String = str(row.get("animal_id", ""))
+	var animal_name: String = str(row.get("animal_name", animal_id.capitalize()))
+	var species_name: String = str(row.get("species_name", "Animal"))
+	var equipped: bool = bool(row.get("equipped", false))
+	var manifested: bool = bool(row.get("manifested", false))
+	var trust_percent: int = roundi(clampf(float(row.get("trust", 0.0)), 0.0, 1.0) * 100.0)
+	var familiarity_percent: int = roundi(
+		clampf(float(row.get("familiarity", 0.0)), 0.0, 1.0) * 100.0
+	)
+	var subtitle: String = "EQUIPPED" if equipped else "BONDED"
+	if manifested:
+		subtitle = "MANIFESTED"
+	add_text_card(
+		animal_name,
+		species_name
+		+ "  •  " + str(row.get("trust_tier", "Bonded"))
+		+ "\nTrust " + str(trust_percent) + "%"
+		+ "  •  Familiarity " + str(familiarity_percent) + "%"
+		+ "  •  Commands: Follow, Stay, Come Here, Go There",
+		str(row.get("icon", "✦")),
+		subtitle
+	)
+	var control_grid: GridContainer = make_visual_grid(4)
+	content_box.add_child(control_grid)
+	add_visual_action_tile(
+		control_grid,
+		"◆" if equipped else "✦",
+		"Equip " + animal_name,
+		"ACTIVE FAMILIAR" if equipped else "SELECT NAMED FAMILIAR",
+		{"kind": "equip_bonded_familiar", "animal_id": animal_id},
+		"Summon Familiar will manifest this individual and preserve its name, species, trust, and bond."
+	)
+	if equipped:
+		add_visual_action_tile(
+			control_grid,
+			"◇",
+			"Use Blueprint Instead",
+			"CLEAR NAMED SLOT",
+			{"kind": "clear_bonded_familiar"},
+			"Restores the previously prepared species familiar blueprint."
+		)
 
 
 func _render_familiar_row(row: Dictionary) -> void:
@@ -87,7 +181,7 @@ func _render_familiar_row(row: Dictionary) -> void:
 		add_visual_info_card(
 			"🔒",
 			"Familiar Locked",
-			"Record enough unique Gremlin behavior to form a stable summon blueprint.",
+			"Record enough unique behavior to form a stable summon blueprint.",
 			"Study progression"
 		)
 		_render_locked_techniques(row)
@@ -103,7 +197,7 @@ func _render_familiar_row(row: Dictionary) -> void:
 		"Equip " + display_name,
 		equip_badge,
 		{"kind": "equip_familiar", "species_id": species_id},
-		"The summon spell will create this prepared familiar."
+		"The summon spell will create this prepared species familiar and clear any named familiar slot."
 	)
 	add_visual_action_tile(
 		control_grid,
@@ -186,7 +280,36 @@ func _render_locked_techniques(row: Dictionary) -> void:
 		)
 
 
+func _equip_bonded_familiar(animal_id: String) -> void:
+	var roster: BondedFamiliarRoster = _get_bonded_roster()
+	if roster == null:
+		return
+	var result: Dictionary = roster.equip_animal(animal_id, true)
+	var message: String = "Bonded familiar equip failed: " + str(result.get("error", "unknown error"))
+	if bool(result.get("ok", false)):
+		var record: Dictionary = _familiar_dictionary(result.get("record", {}))
+		message = "Equipped " + str(record.get("animal_name", animal_id.capitalize())) + " as Grace's familiar."
+	_show_familiar_message(message)
+	_refresh_familiar_menu()
+
+
+func _clear_bonded_familiar() -> void:
+	var roster: BondedFamiliarRoster = _get_bonded_roster()
+	if roster == null:
+		return
+	var result: Dictionary = roster.clear_equipped(true, true)
+	var restored: String = str(result.get("restored_species_id", ""))
+	var message: String = "Named familiar slot cleared."
+	if restored != "":
+		message += " Restored " + restored.replace("_", " ").capitalize() + " blueprint."
+	_show_familiar_message(message)
+	_refresh_familiar_menu()
+
+
 func _equip_familiar(species_id: String) -> void:
+	var roster: BondedFamiliarRoster = _get_bonded_roster()
+	if roster != null:
+		roster.clear_equipped(false, true)
 	var service: Node = get_node_or_null("/root/SpeciesKnowledge")
 	if service == null or not service.has_method("set_equipped_familiar_species"):
 		return
@@ -195,7 +318,7 @@ func _equip_familiar(species_id: String) -> void:
 	)
 	var message: String = "Familiar equip failed: " + str(result.get("error", "unknown error"))
 	if bool(result.get("ok", false)):
-		message = "Equipped " + species_id.capitalize() + " familiar."
+		message = "Equipped " + species_id.capitalize() + " familiar blueprint."
 	_show_familiar_message(message)
 	_refresh_familiar_menu()
 
@@ -236,6 +359,14 @@ func _toggle_familiar_technique(species_id: String, technique_id: String) -> voi
 	_refresh_familiar_menu()
 
 
+func _get_bonded_roster() -> BondedFamiliarRoster:
+	if get_tree() == null:
+		return null
+	return BondedFamiliarRosterScript.get_or_create(
+		get_tree()
+	) as BondedFamiliarRoster
+
+
 func _refresh_familiar_menu() -> void:
 	refresh_menu_data()
 	rebuild_menu()
@@ -253,7 +384,7 @@ func _familiar_dictionary(value: Variant) -> Dictionary:
 func _familiar_string_array(value: Variant) -> Array[String]:
 	var result: Array[String] = []
 	if value is Array:
-		for raw: Variant in value as Array:
+		for raw: Variant in value:
 			var text: String = str(raw)
 			if text != "":
 				result.append(text)

@@ -13,6 +13,8 @@ func _register_lab_overlay_panels() -> void:
 		if not layer_candidate is CanvasLayer:
 			continue
 		var layer := layer_candidate as CanvasLayer
+		if layer.name == "GameUI":
+			continue
 		for panel_candidate: Node in layer.get_children():
 			if not panel_candidate is PanelContainer:
 				continue
@@ -25,6 +27,8 @@ func get_menu_suppressed_overlay_count() -> int:
 	var count: int = 0
 	for layer_candidate: Node in get_children():
 		if not layer_candidate is CanvasLayer:
+			continue
+		if layer_candidate.name == "GameUI":
 			continue
 		for panel_candidate: Node in layer_candidate.get_children():
 			if (

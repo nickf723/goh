@@ -15,7 +15,7 @@ Outside a context:
 - D-pad and the quick spell belt continue selecting abilities normally.
 - Cast activates an ordinary ability.
 - Cast activates a persistent ability when it has not been created yet.
-- Cast opens the persistent ability's context when that selected ability already owns an active context.
+- Cast opens the selected persistent ability's context when that provider has commands or prepared content.
 
 Inside the context:
 
@@ -34,9 +34,9 @@ No subsystem receives a private controller button.
 
 The player-level router observes the authoritative `cast_spell` action before the normal unhandled cast path.
 
-It asks the selected ability's provider whether an active context is available. When no provider claims the ability, the input continues to the ordinary caster unchanged.
+It asks the selected ability's provider whether a context is available. When no provider claims the ability, the input continues to the ordinary caster unchanged.
 
-### AbilityContextMenu
+### PersistentAbilityContextMenu
 
 One CanvasLayer renders:
 
@@ -46,6 +46,18 @@ One CanvasLayer renders:
 - shared time slowdown
 - world targeting and placement marker
 - controller, keyboard, and mouse confirmation/cancellation
+
+It extends the original AbilityContextMenu with refreshable actions. A provider can return:
+
+```gdscript
+{
+    "ok": true,
+    "keep_open": true,
+    "selected_id": "place_part",
+}
+```
+
+The menu then asks the provider for a fresh context specification without releasing the modal. Blueprint cycling, part cycling, undo, and clear operations therefore update in place instead of requiring another Cast press.
 
 ### Provider contract
 
@@ -74,9 +86,9 @@ The context specification returns action dictionaries with these common fields:
 
 `target_mode = "world"` routes through the shared world-targeting phase. Other action types can be added without changing the player controller.
 
-## Familiar implementation
+## Familiar provider
 
-Summon Familiar now follows this lifecycle:
+Summon Familiar follows this lifecycle:
 
 1. Select Summon Familiar.
 2. Press Cast with no familiar active to summon the prepared familiar.
@@ -88,15 +100,64 @@ Dismiss is an explicit menu action and does not start the familiar defeat cooldo
 
 The previous L3-specific familiar interface remains available only as an opt-in legacy development surface. It is not installed for normal players.
 
+## Recorded Object provider
+
+Selecting Reproduce Object and pressing Cast opens the global context whenever Grace has at least one recorded blueprint.
+
+Actions include:
+
+- place the prepared recorded object through shared world targeting
+- previous and next recorded blueprint with in-place menu refresh
+- Advanced Placement for the existing depth and rotation workflow
+- Recall Last for the most recently reproduced object
+- Dismiss All for every active reproduced object
+
+The manager's original placement mode remains intact for precision work and development testing. The global context is the ordinary gameplay front door.
+
+## Artificer Assembly provider
+
+Selecting Artificer Assembly and pressing Cast opens a draft-management context.
+
+Actions include:
+
+- attach the prepared part through shared world targeting
+- previous and next unlocked engineering part
+- undo the latest part
+- clear the current draft
+- save a draft with at least two connected parts into the prepared custom slot
+- Advanced Assembly for the original continuous depth and rotation workflow
+
+Saving through the context creates the blueprint without automatically manifesting it. Deploy Contraption remains the explicit deployment spell.
+
+## Deploy Contraption provider
+
+Selecting Deploy Contraption and pressing Cast opens a blueprint and active-contraption context whenever at least one build is saved.
+
+Actions include:
+
+- deploy the prepared blueprint through shared world targeting
+- previous and next saved blueprint, including custom slots
+- Advanced Deployment for the original continuous placement workflow
+- Recall Last for the most recently deployed contraption
+- Dismiss All for every active contraption
+
+## Regression
+
+`res://scenes/tests/persistent_ability_context_providers_smoke_test.tscn` verifies:
+
+- one shared context menu serves all three providers
+- provider selection actions refresh without closing
+- recorded objects place and recall through the shared layout
+- Artificer parts assemble into a saved custom blueprint
+- the saved blueprint deploys and recalls through the same layout
+- advanced placement actions remain available
+
 ## Intended next providers
 
-The same layout should next be adopted by:
+The next systems that should adopt this contract are:
 
-- Recorded Object Summon
-- Artificer Assembly
-- Deploy Contraption
 - persistent terrain or bridge summons
 - vehicle and mount deployment
 - controllable gadgets and turrets
-
-Each provider should supply its own actions while retaining the same player grammar.
+- weather or field spells with persistent controls
+- any future ability that creates an owned world object with follow-up actions

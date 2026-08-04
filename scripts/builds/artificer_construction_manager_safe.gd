@@ -25,12 +25,15 @@ func deploy_selected_at(
 	# the player most recently prepared in the spell menu or Items.
 	if mode != MODE_DEPLOY:
 		selected_deploy_build_id = BuildCatalog.get_selected_build_id()
+	var resolved_support_rid: RID = excluded_support_rid
+	if not resolved_support_rid.is_valid():
+		resolved_support_rid = _find_support_rid(ground_position)
 	return super.deploy_selected_at(
 		ground_position,
 		yaw_degrees,
 		ignore_cost,
 		ignore_validation,
-		excluded_support_rid
+		resolved_support_rid
 	)
 
 
@@ -174,3 +177,21 @@ func _manifest_definition_at(
 		+ " mana"
 	)
 	return instance
+
+
+func _find_support_rid(ground_position: Vector3) -> RID:
+	var world: World3D = get_world_3d()
+	if world == null:
+		return RID()
+	var query := PhysicsRayQueryParameters3D.create(
+		ground_position + Vector3.UP * 2.0,
+		ground_position + Vector3.DOWN * 3.0
+	)
+	query.collision_mask = 0xFFFFFFFF
+	if actor is CollisionObject3D:
+		query.exclude = [(actor as CollisionObject3D).get_rid()]
+	var hit: Dictionary = world.direct_space_state.intersect_ray(query)
+	var collider: Object = hit.get("collider")
+	if collider is CollisionObject3D:
+		return (collider as CollisionObject3D).get_rid()
+	return RID()

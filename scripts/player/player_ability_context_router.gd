@@ -140,17 +140,27 @@ func _install_context_menu() -> void:
 		actor = get_parent() as Node3D
 	if actor == null:
 		return
-	if context_menu != null and is_instance_valid(context_menu):
-		return
-	var existing: Node = actor.get_node_or_null("AbilityContextMenu")
-	if existing != null:
-		context_menu = existing
-	else:
-		context_menu = AbilityContextMenuScript.new()
-		context_menu.name = "AbilityContextMenu"
-		actor.add_child(context_menu)
+	if context_menu == null or not is_instance_valid(context_menu):
+		var existing: Node = actor.get_node_or_null("AbilityContextMenu")
+		if existing != null:
+			context_menu = existing
+		else:
+			context_menu = AbilityContextMenuScript.new()
+			context_menu.name = "AbilityContextMenu"
+			actor.add_child(context_menu)
 	if context_menu.has_method("bind_actor"):
 		context_menu.call("bind_actor", actor)
+	if context_menu.has_signal("context_closed"):
+		var callback := Callable(self, "_on_context_closed")
+		if not context_menu.is_connected("context_closed", callback):
+			context_menu.connect("context_closed", callback)
+
+
+func _on_context_closed(_committed: bool) -> void:
+	if context_menu == null or not is_instance_valid(context_menu):
+		return
+	if context_menu.has_method("_refresh_compact_status"):
+		context_menu.call("_refresh_compact_status")
 
 
 func get_debug_data() -> Dictionary:

@@ -39,7 +39,9 @@ func _resolve_unified_hud() -> void:
 func _apply_responsive_layout() -> void:
 	if get_viewport() == null:
 		return
-	var width: float = get_viewport().get_visible_rect().size.x
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	var width: float = viewport_size.x
+	var compact: bool = width < 900.0
 	var narrow: bool = width < 1500.0
 	var width_changed: bool = not is_equal_approx(width, last_layout_width)
 	last_layout_width = width
@@ -49,33 +51,50 @@ func _apply_responsive_layout() -> void:
 		var stats_panel: Control = stats_value as Control
 		stats_panel.scale = Vector2.ONE
 		stats_panel.pivot_offset = Vector2.ZERO
-		stats_panel.offset_left = 18.0
-		stats_panel.offset_right = 340.0 if narrow else 374.0
+		stats_panel.offset_left = 12.0 if compact else 18.0
+		stats_panel.offset_top = 12.0 if compact else 18.0
+		stats_panel.offset_right = (
+			minf(272.0, width * 0.43)
+			if compact
+			else (340.0 if narrow else 374.0)
+		)
+		stats_panel.offset_bottom = 166.0 if compact else 174.0
 
 	var mode_value: Variant = unified_hud.get("mode_panel")
 	if mode_value is Control:
 		var mode_panel: Control = mode_value as Control
 		mode_panel.scale = Vector2.ONE
 		mode_panel.pivot_offset = Vector2.ZERO
-		var half_width: float = 150.0 if narrow else 250.0
+		var half_width: float = (
+			minf(180.0, maxf(width * 0.5 - 24.0, 120.0))
+			if compact
+			else (150.0 if narrow else 250.0)
+		)
 		mode_panel.offset_left = -half_width
 		mode_panel.offset_right = half_width
+		mode_panel.offset_top = 178.0 if compact else 18.0
+		mode_panel.offset_bottom = 251.0 if compact else 91.0
 
 	var activity_value: Variant = unified_hud.get("activity_rail")
 	if activity_value is Control:
 		var activity_rail: Control = activity_value as Control
 		activity_rail.scale = Vector2.ONE
 		activity_rail.pivot_offset = Vector2.ZERO
-		activity_rail.offset_left = -340.0 if narrow else -382.0
-		activity_rail.offset_right = -20.0
-		activity_rail.offset_bottom = 300.0 if narrow else 610.0
+		activity_rail.offset_left = (
+			-maxf(minf(252.0, width * 0.39), 180.0)
+			if compact
+			else (-340.0 if narrow else -382.0)
+		)
+		activity_rail.offset_right = -12.0 if compact else -20.0
+		activity_rail.offset_top = 12.0 if compact else 20.0
+		activity_rail.offset_bottom = 166.0 if compact else (300.0 if narrow else 610.0)
 
 	var context_value: Variant = unified_hud.get("context_panel")
 	if context_value is Control:
 		var context_panel: Control = context_value as Control
 		context_panel.scale = Vector2.ONE
 		context_panel.pivot_offset = Vector2.ZERO
-		var context_half_width: float = minf(500.0, maxf(width * 0.5 - 128.0, 300.0))
+		var context_half_width: float = minf(500.0, maxf(width * 0.5 - 24.0, 280.0))
 		context_panel.offset_left = -context_half_width
 		context_panel.offset_right = context_half_width
 
@@ -84,9 +103,16 @@ func _apply_responsive_layout() -> void:
 		var support_panel: Control = support_value as Control
 		support_panel.scale = Vector2.ONE
 		support_panel.pivot_offset = Vector2.ZERO
-		support_panel.offset_left = -282.0 if narrow else -300.0
-		support_panel.offset_right = -18.0
-		if narrow:
+		support_panel.offset_left = (
+			-maxf(minf(272.0, width * 0.43), 210.0)
+			if compact
+			else (-282.0 if narrow else -300.0)
+		)
+		support_panel.offset_right = -12.0 if compact else -18.0
+		if compact:
+			support_panel.offset_top = -330.0
+			support_panel.offset_bottom = -210.0
+		elif narrow:
 			support_panel.offset_top = -338.0
 			support_panel.offset_bottom = -218.0
 		else:
@@ -216,6 +242,7 @@ func get_debug_data() -> Dictionary:
 		"mirrored_sources": mirrored_sources.duplicate(),
 		"sync_count": sync_count,
 		"layout_width": last_layout_width,
+		"compact_layout": last_layout_width > 0.0 and last_layout_width < 900.0,
 		"narrow_layout": last_layout_width > 0.0 and last_layout_width < 1500.0,
 		"rects": {
 			"status": _rect_snapshot(stats),

@@ -1,0 +1,57 @@
+name: Adventure chunk validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: adventure-chunk-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-adventure-chunks:
+    name: Import and adventure chunk regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee adventure-chunk-import.log
+
+      - name: Run adventure chunk graph regression
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/adventure_chunk_runtime_smoke_test.tscn 2>&1 | tee adventure-chunk-runtime.log
+
+      - name: Run chunked mini-dungeon regression
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/adventure_chunk_mini_dungeon_smoke_test.tscn 2>&1 | tee adventure-chunk-mini-dungeon.log
+
+      - name: Upload adventure chunk logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adventure-chunk-validation-logs
+          path: |
+            adventure-chunk-import.log
+            adventure-chunk-runtime.log
+            adventure-chunk-mini-dungeon.log
+          if-no-files-found: ignore

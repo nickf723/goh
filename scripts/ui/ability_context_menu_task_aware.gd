@@ -74,6 +74,7 @@ func _update_targeting_position() -> void:
 			target_marker.global_position = target_position + Vector3.UP * 0.06
 	var label: String = str(target_preview.get("label", "GO THERE"))
 	var description: String = str(target_preview.get("description", ""))
+	_update_world_target_label(label, target_valid)
 	if not raw_valid:
 		target_label.text = "Aim at reachable ground or a familiar task"
 	elif not target_valid:
@@ -116,6 +117,21 @@ func _get_provider_target_preview(
 		"position": world_position,
 		"payload": world_position,
 	}
+
+
+func _update_world_target_label(label_text: String, valid: bool) -> void:
+	if target_marker == null or not is_instance_valid(target_marker):
+		return
+	for child: Node in target_marker.get_children():
+		if not child is Label3D:
+			continue
+		var marker_label := child as Label3D
+		marker_label.text = label_text.to_upper()
+		marker_label.modulate = (
+			Color(0.4, 0.96, 1.0)
+			if valid
+			else Color(1.0, 0.42, 0.32)
+		)
 
 
 func get_target_preview() -> Dictionary:

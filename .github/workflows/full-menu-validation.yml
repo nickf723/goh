@@ -93,6 +93,9 @@ jobs:
       - name: Run persistent ability context provider regression
         run: godot --headless --path . res://scenes/tests/persistent_ability_context_providers_smoke_test.tscn
 
+      - name: Run active ability ribbon and spell icon regression
+        run: godot --headless --path . res://scenes/tests/active_ability_ribbon_spell_icons_smoke_test.tscn
+
       - name: Run base Ruined Village regression
         run: godot --headless --path . res://scenes/tests/ruined_village_approach_smoke_test.tscn
 

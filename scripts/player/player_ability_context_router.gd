@@ -102,7 +102,9 @@ func open_provider_context(
 	if not context_menu.has_method("open_context"):
 		context_open_failed.emit(ability, "context menu contract missing")
 		return false
-	var opened: bool = bool(context_menu.call("open_context", provider, ability))
+	var opened: bool = bool(
+		context_menu.call("open_context", provider, ability)
+	)
 	if opened:
 		successful_opens += 1
 		last_provider_name = str(provider.name)
@@ -181,12 +183,16 @@ func _get_selected_ability() -> AbilityDefinition:
 func _ensure_context_providers() -> void:
 	if actor == null or not is_instance_valid(actor):
 		return
-	var recorded_provider: Node = actor.get_node_or_null("RecordedObjectSpellController")
+	var recorded_provider: Node = actor.get_node_or_null(
+		"RecordedObjectSpellController"
+	)
 	if recorded_provider == null:
 		recorded_provider = RecordedObjectSpellControllerScript.new()
 		recorded_provider.name = "RecordedObjectSpellController"
 		actor.add_child(recorded_provider)
-	var artificer_provider: Node = actor.get_node_or_null("ArtificerSpellController")
+	var artificer_provider: Node = actor.get_node_or_null(
+		"ArtificerSpellController"
+	)
 	if artificer_provider == null:
 		artificer_provider = ArtificerSpellControllerScript.new()
 		artificer_provider.name = "ArtificerSpellController"
@@ -198,8 +204,13 @@ func _install_context_surfaces() -> void:
 		actor = get_parent() as Node3D
 	if actor == null:
 		return
-	if shared_placement_controller == null or not is_instance_valid(shared_placement_controller):
-		var existing_placement: Node = actor.get_node_or_null("SharedPlacementController")
+	if (
+		shared_placement_controller == null
+		or not is_instance_valid(shared_placement_controller)
+	):
+		var existing_placement: Node = actor.get_node_or_null(
+			"SharedPlacementController"
+		)
 		if existing_placement != null:
 			shared_placement_controller = existing_placement
 		else:

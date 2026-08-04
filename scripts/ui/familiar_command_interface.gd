@@ -291,6 +291,10 @@ func get_selected_command_id() -> String:
 
 
 func get_available_commands() -> Array[String]:
+	if active_familiar != null and is_instance_valid(active_familiar):
+		available_commands = _resolve_available_commands()
+	else:
+		available_commands.clear()
 	return available_commands.duplicate()
 
 
@@ -330,11 +334,15 @@ func _disconnect_manager() -> void:
 
 func _on_summon_created(summon: Node3D) -> void:
 	active_familiar = summon
+	available_commands = _resolve_available_commands()
+	selected_index = 0
 	_refresh_visibility()
 
 
 func _on_summon_dismissed() -> void:
 	active_familiar = null
+	available_commands.clear()
+	selected_index = 0
 	_close_all_surfaces(false)
 	_refresh_visibility()
 
@@ -345,6 +353,13 @@ func _on_command_changed(_command: String) -> void:
 
 func _refresh_visibility() -> void:
 	var should_show: bool = active_familiar != null and is_instance_valid(active_familiar)
+	if should_show:
+		available_commands = _resolve_available_commands()
+		if selected_index >= available_commands.size():
+			selected_index = 0
+	else:
+		available_commands.clear()
+		selected_index = 0
 	if compact_panel != null:
 		compact_panel.visible = should_show
 	if not should_show:
@@ -771,7 +786,7 @@ func get_debug_data() -> Dictionary:
 		"targeting": targeting_active,
 		"target_valid": target_valid,
 		"target_position": target_position,
-		"available_commands": available_commands.duplicate(),
+		"available_commands": get_available_commands(),
 		"selected_command": get_selected_command_id(),
 		"active_familiar": _get_familiar_name() if active_familiar != null else "none",
 		"menu_action": str(MENU_ACTION),

@@ -5,7 +5,7 @@ signal context_provider_resolved(provider: Node, ability: AbilityDefinition)
 signal context_open_failed(ability: AbilityDefinition, reason: String)
 
 const AbilityContextMenuScript = preload(
-	"res://scripts/ui/ability_context_menu.gd"
+	"res://scripts/ui/persistent_ability_context_menu.gd"
 )
 const CONTEXT_DPAD_ACTIONS: Dictionary = {
 	&"ui_up": JOY_BUTTON_DPAD_UP,

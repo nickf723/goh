@@ -5,13 +5,13 @@ signal context_provider_resolved(provider: Node, ability: AbilityDefinition)
 signal context_open_failed(ability: AbilityDefinition, reason: String)
 
 const AbilityContextMenuScript = preload(
-	"res://scripts/ui/persistent_ability_context_menu.gd"
+	"res://scripts/ui/persistent_ability_context_menu_unified.gd"
 )
 const SharedPlacementControllerScript = preload(
-	"res://scripts/player/player_shared_placement_controller.gd"
+	"res://scripts/player/player_shared_placement_controller_unified.gd"
 )
 const ActiveAbilityRibbonScript = preload(
-	"res://scripts/ui/player_active_ability_ribbon.gd"
+	"res://scripts/ui/player_active_ability_ribbon_unified.gd"
 )
 const RecordedObjectSpellControllerScript = preload(
 	"res://scripts/player/player_recorded_object_spell_controller.gd"
@@ -302,6 +302,7 @@ func get_debug_data() -> Dictionary:
 		"menu_installed": context_menu != null and is_instance_valid(context_menu),
 		"placement_installed": shared_placement_controller != null and is_instance_valid(shared_placement_controller),
 		"ribbon_installed": active_ability_ribbon != null and is_instance_valid(active_ability_ribbon),
+		"unified_surfaces": true,
 		"dpad_navigation": _has_dpad_navigation(),
 		"recorded_provider": actor.get_node_or_null("RecordedObjectSpellController") != null if actor != null else false,
 		"artificer_provider": actor.get_node_or_null("ArtificerSpellController") != null if actor != null else false,

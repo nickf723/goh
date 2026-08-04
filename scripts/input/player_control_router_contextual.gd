@@ -2,7 +2,7 @@ extends "res://scripts/input/player_control_router.gd"
 
 
 const PerformanceDockScript = preload(
-	"res://scripts/ui/quick_spell_belt_performance.gd"
+	"res://scripts/ui/quick_spell_belt_unified.gd"
 )
 
 const MANIPULATION_ROTATION_STEP_DEGREES: float = 22.5
@@ -29,7 +29,7 @@ func _ensure_performance_command_dock() -> void:
 		if (
 			existing_script != null
 			and existing_script.resource_path
-			== "res://scripts/ui/quick_spell_belt_performance.gd"
+			== "res://scripts/ui/quick_spell_belt_unified.gd"
 		):
 			performance_dock_installed = true
 			return
@@ -394,4 +394,5 @@ func get_input_mode_debug_data() -> Dictionary:
 			)
 		),
 		"optimized_dock_installed": performance_dock_installed,
+		"unified_dock": performance_dock_installed,
 	}

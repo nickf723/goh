@@ -32,6 +32,7 @@ var old_quick_selected: Dictionary = {}
 var player: CharacterBody3D
 var floor: StaticBody3D
 var game_ui: Node
+var hud: Node
 var caster: Node
 var control_router: Node
 var context_router: Node
@@ -59,6 +60,7 @@ func run_tests() -> void:
 		await get_tree().process_frame
 	await get_tree().physics_frame
 
+	hud = player.get_node_or_null("PlayerHUDV2")
 	caster = player.get_node_or_null("AbilityCaster")
 	control_router = player.get_node_or_null("PlayerControlRouter")
 	context_router = player.get_node_or_null("AbilityContextRouter")
@@ -71,7 +73,7 @@ func run_tests() -> void:
 	_expect(caster != null, "player retains the authoritative ability caster")
 	_expect(control_router != null, "player retains the ten-slot quick-spell router")
 	_expect(context_router != null, "player retains the ability context router")
-	_expect(ribbon != null, "context router installs one active ability ribbon")
+	_expect(ribbon != null, "context router installs one active ability ribbon collector")
 	_expect(quick_dock != null, "player installs the optimized command dock")
 	_expect(
 		game_ui != null
@@ -229,34 +231,79 @@ func _test_active_ability_ribbon() -> void:
 	caster.call("close_focus_spell_menu")
 	if ribbon.has_method("force_refresh"):
 		ribbon.call("force_refresh")
-	await get_tree().process_frame
+	for _frame: int in range(2):
+		await get_tree().process_frame
 	var ribbon_data: Dictionary = ribbon.call("get_debug_data") as Dictionary
-	_expect(int(ribbon_data.get("entry_count", 0)) == 1, "ribbon gathers active persistent providers")
-	_expect(bool(ribbon_data.get("visible", false)), "ribbon appears when a persistent ability is active")
+	_expect(int(ribbon_data.get("entry_count", 0)) == 1, "ribbon collector gathers active persistent providers")
+	var unified_support: bool = (
+		hud != null
+		and hud.has_method("get_unified_hud_debug_data")
+	)
+	if unified_support:
+		var support_data: Dictionary = hud.call(
+			"get_unified_hud_debug_data"
+		) as Dictionary
+		_expect(
+			int(support_data.get("active_ability_count", 0)) == 1,
+			"unified support cluster displays the active persistent ability"
+		)
+		_expect(
+			bool(ribbon_data.get("legacy_ribbon_hidden", false)),
+			"standalone ribbon stays retired under the unified shell"
+		)
+	else:
+		_expect(bool(ribbon_data.get("visible", false)), "legacy ribbon appears when a persistent ability is active")
 	_expect(
 		str(ribbon_data.get("highlighted_entry_id", "")) == "fixture_familiar",
-		"ribbon highlights the entry matching the equipped familiar spell"
+		"provider collector highlights the entry matching the equipped familiar spell"
 	)
 
 	var fire_index: int = _find_ability_index("firebolt")
 	caster.call("select_ability", fire_index, false)
 	if ribbon.has_method("force_refresh"):
 		ribbon.call("force_refresh")
-	await get_tree().process_frame
+	for _frame: int in range(2):
+		await get_tree().process_frame
 	ribbon_data = ribbon.call("get_debug_data") as Dictionary
 	_expect(
 		str(ribbon_data.get("highlighted_entry_id", "")) == "",
-		"switching to an ordinary spell clears the ribbon highlight without dismissing it"
+		"switching to an ordinary spell clears the persistent highlight without dismissing it"
 	)
-	_expect(int(ribbon_data.get("entry_count", 0)) == 1, "persistent ribbon entry survives ordinary spell selection")
+	_expect(int(ribbon_data.get("entry_count", 0)) == 1, "persistent provider entry survives ordinary spell selection")
+	if unified_support:
+		var ordinary_support_data: Dictionary = hud.call(
+			"get_unified_hud_debug_data"
+		) as Dictionary
+		_expect(
+			int(ordinary_support_data.get("active_ability_count", 0)) == 1,
+			"support entry survives ordinary spell selection"
+		)
+		_expect(
+			str(ordinary_support_data.get("highlighted_ability", "")) == "",
+			"support cluster clears its highlight while Firebolt is equipped"
+		)
 
 	fixture.entry["active"] = false
 	if ribbon.has_method("force_refresh"):
 		ribbon.call("force_refresh")
-	await get_tree().process_frame
+	for _frame: int in range(2):
+		await get_tree().process_frame
 	ribbon_data = ribbon.call("get_debug_data") as Dictionary
-	_expect(int(ribbon_data.get("entry_count", 0)) == 0, "ribbon removes dismissed persistent entries")
-	_expect(not bool(ribbon_data.get("visible", true)), "ribbon hides when nothing persistent remains")
+	_expect(int(ribbon_data.get("entry_count", 0)) == 0, "provider collector removes dismissed persistent entries")
+	if unified_support:
+		var cleared_support_data: Dictionary = hud.call(
+			"get_unified_hud_debug_data"
+		) as Dictionary
+		_expect(
+			int(cleared_support_data.get("active_ability_count", 0)) == 0,
+			"support cluster removes dismissed persistent entries"
+		)
+		_expect(
+			bool(ribbon_data.get("legacy_ribbon_hidden", false)),
+			"standalone ribbon remains hidden when the support cluster empties"
+		)
+	else:
+		_expect(not bool(ribbon_data.get("visible", true)), "legacy ribbon hides when nothing persistent remains")
 
 
 func _get_loadout() -> AbilityLoadout:

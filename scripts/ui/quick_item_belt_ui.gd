@@ -1,6 +1,10 @@
 extends CanvasLayer
 class_name QuickItemBeltUI
 
+const BondedFamiliarRosterScript: Script = preload(
+	"res://scripts/summons/bonded_familiar_roster.gd"
+)
+
 @export_range(0.02, 0.5, 0.01) var refresh_interval: float = 0.08
 
 @onready var title_label: Label = get_node_or_null("Panel/Margin/VBox/Title") as Label
@@ -13,11 +17,13 @@ class_name QuickItemBeltUI
 
 var controller: PlayerQuickItemController
 var router: Node
+var bonded_familiar_roster: BondedFamiliarRoster
 var refresh_timer: float = 0.0
 var unified_hud_suppressed: bool = false
 
 
 func _ready() -> void:
+	_ensure_bonded_familiar_roster()
 	_resolve_bindings()
 	if _suppress_for_unified_hud():
 		return
@@ -25,6 +31,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	_ensure_bonded_familiar_roster()
 	if _suppress_for_unified_hud():
 		return
 	refresh_timer -= delta
@@ -33,6 +40,16 @@ func _process(delta: float) -> void:
 	refresh_timer = maxf(refresh_interval, 0.02)
 	_resolve_bindings()
 	refresh_display()
+
+
+func _ensure_bonded_familiar_roster() -> void:
+	if bonded_familiar_roster != null and is_instance_valid(bonded_familiar_roster):
+		return
+	if get_tree() == null:
+		return
+	bonded_familiar_roster = BondedFamiliarRosterScript.get_or_create(
+		get_tree()
+	) as BondedFamiliarRoster
 
 
 func _resolve_bindings() -> void:
@@ -140,4 +157,8 @@ func get_debug_data() -> Dictionary:
 	return {
 		"unified_hud_suppressed": unified_hud_suppressed,
 		"visible": visible,
+		"bonded_familiar_roster": (
+			bonded_familiar_roster != null
+			and is_instance_valid(bonded_familiar_roster)
+		),
 	}

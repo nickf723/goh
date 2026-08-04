@@ -72,6 +72,9 @@ jobs:
       - name: Run Mob drives and intentions regression
         run: godot --headless --path . res://scenes/tests/mob_drives_and_intentions_smoke_test.tscn
 
+      - name: Run live Animal Behavior Lab regression
+        run: godot --headless --path . res://scenes/tests/animal_behavior_lab_smoke_test.tscn
+
       - name: Run base Ruined Village regression
         run: godot --headless --path . res://scenes/tests/ruined_village_approach_smoke_test.tscn
 

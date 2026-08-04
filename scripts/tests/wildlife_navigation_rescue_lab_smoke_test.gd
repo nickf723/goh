@@ -27,7 +27,7 @@ func run_tests() -> void:
 	_expect(animal != null, "dedicated lab spawns the navigation-aware named animal")
 	_expect(player != null, "dedicated lab includes the normal playable Grace actor")
 	if animal == null or player == null:
-		_finish(treats_before, lab, animal)
+		await _finish(treats_before, lab, animal)
 		return
 
 	animal.persistent_animal_id = TEST_ANIMAL_ID
@@ -117,7 +117,7 @@ func run_tests() -> void:
 
 	var save_result: Dictionary = lab.call("save_bond") as Dictionary
 	_expect(bool(save_result.get("ok", false)), "dedicated lab can save the named bond record")
-	_finish(treats_before, lab, animal)
+	await _finish(treats_before, lab, animal)
 
 
 func _wait_for_navigation(lab: Node, maximum_frames: int) -> void:

@@ -14,6 +14,7 @@ signal requirement_status_changed(requirement_id: String, complete: bool, detail
 @export var source_signal: StringName
 @export var source_property: StringName
 @export var expected_boolean_value: bool = true
+@export var source_reset_method: StringName
 
 var chunk: Node
 var scope_root: Node
@@ -76,6 +77,14 @@ func set_requirement_complete(value: bool, detail: Dictionary = {}) -> void:
 
 
 func reset_requirement() -> void:
+	if source_node == null or not is_instance_valid(source_node):
+		_resolve_source()
+	if (
+		source_node != null
+		and source_reset_method != StringName()
+		and source_node.has_method(source_reset_method)
+	):
+		source_node.call(source_reset_method)
 	complete = false
 	last_detail.clear()
 	if chunk != null and is_instance_valid(chunk) and chunk.has_method("report_requirement"):
@@ -137,6 +146,7 @@ func get_debug_data() -> Dictionary:
 		"source_path": str(source_path),
 		"source_signal": str(source_signal),
 		"source_property": str(source_property),
+		"source_reset_method": str(source_reset_method),
 		"source_found": source_node != null and is_instance_valid(source_node),
 		"detail": last_detail.duplicate(true),
 	}

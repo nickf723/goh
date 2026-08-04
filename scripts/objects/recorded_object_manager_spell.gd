@@ -193,11 +193,14 @@ func place_selected_at(
 	var definition: Dictionary = Catalog.get_definition(blueprint_id)
 	if definition.is_empty() or not Catalog.is_recorded(blueprint_id):
 		return null
+	var resolved_support_rid: RID = excluded_support_rid
+	if not resolved_support_rid.is_valid():
+		resolved_support_rid = _find_support_rid(ground_position)
 	var validation: Dictionary = validate_placement(
 		definition,
 		ground_position,
 		yaw_degrees,
-		excluded_support_rid
+		resolved_support_rid
 	)
 	if not ignore_validation and not bool(validation.get("valid", false)):
 		invalid_reason = str(
@@ -253,6 +256,24 @@ func place_selected_at(
 		+ " mana"
 	)
 	return instance
+
+
+func _find_support_rid(ground_position: Vector3) -> RID:
+	var world: World3D = get_world_3d()
+	if world == null:
+		return RID()
+	var query := PhysicsRayQueryParameters3D.create(
+		ground_position + Vector3.UP * 2.0,
+		ground_position + Vector3.DOWN * 3.0
+	)
+	query.collision_mask = 0xFFFFFFFF
+	if actor is CollisionObject3D:
+		query.exclude = [(actor as CollisionObject3D).get_rid()]
+	var hit: Dictionary = world.direct_space_state.intersect_ray(query)
+	var collider: Object = hit.get("collider")
+	if collider is CollisionObject3D:
+		return (collider as CollisionObject3D).get_rid()
+	return RID()
 
 
 func get_debug_data() -> Dictionary:

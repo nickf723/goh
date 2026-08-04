@@ -154,7 +154,7 @@ func rebuild_spell_rows(
 			Color(0.54, 0.74, 1.0, 0.94)
 		)
 		equipped_label.visible = equipped
-		equipped_label.text = "EQUIPPED"
+		equipped_label.text = "★ EQUIPPED"
 
 
 func _get_focus_spell_entries(element: String) -> Array[Dictionary]:
@@ -230,22 +230,12 @@ func _make_icon_spell_row(entry: Dictionary) -> Dictionary:
 	content.add_child(quick_label)
 
 	var equipped_label := Label.new()
-	equipped_label.text = "EQUIPPED"
+	equipped_label.text = "★ EQUIPPED"
 	equipped_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	equipped_label.add_theme_font_size_override("font_size", 8)
 	equipped_label.add_theme_color_override(
 		"font_color",
-		Color(0.12, 0.07, 0.015, 1.0)
-	)
-	equipped_label.add_theme_stylebox_override(
-		"normal",
-		_get_focus_style(
-			"equipped_pill",
-			Color(1.0, 0.68, 0.18, 0.98),
-			Color(1.0, 0.84, 0.38, 1.0),
-			1,
-			7
-		)
+		Color(1.0, 0.72, 0.22, 1.0)
 	)
 	equipped_label.visible = false
 	content.add_child(equipped_label)

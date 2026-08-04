@@ -78,6 +78,9 @@ jobs:
       - name: Run animal perception and relationship regression
         run: godot --headless --path . res://scenes/tests/animal_perception_relationship_smoke_test.tscn
 
+      - name: Run animal bonding and persistence regression
+        run: godot --headless --path . res://scenes/tests/animal_bonding_persistence_smoke_test.tscn
+
       - name: Run base Ruined Village regression
         run: godot --headless --path . res://scenes/tests/ruined_village_approach_smoke_test.tscn
 

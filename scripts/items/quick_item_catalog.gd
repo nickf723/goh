@@ -12,6 +12,7 @@ const ConductiveElixir: QuickItemDefinition = preload("res://data/items/conducti
 const SwiftTonic: QuickItemDefinition = preload("res://data/items/swift_tonic.tres")
 const ArcaneDraught: QuickItemDefinition = preload("res://data/items/arcane_draught.tres")
 const IronbarkBrew: QuickItemDefinition = preload("res://data/items/ironbark_brew.tres")
+const FieldTreat: QuickItemDefinition = preload("res://data/items/field_treat.tres")
 const RecordedCrateBlueprint: QuickItemDefinition = preload(
 	"res://data/items/recorded_crate_blueprint.tres"
 )
@@ -49,6 +50,7 @@ const ITEM_IDS: Array[String] = [
 	"swift_tonic",
 	"arcane_draught",
 	"ironbark_brew",
+	"field_treat",
 	"recorded_crate_blueprint",
 	"recorded_platform_blueprint",
 	"recorded_spring_blueprint",
@@ -84,6 +86,8 @@ static func get_item(item_id: String) -> QuickItemDefinition:
 			return ArcaneDraught
 		"ironbark_brew":
 			return IronbarkBrew
+		"field_treat":
+			return FieldTreat
 		"recorded_crate_blueprint":
 			return RecordedCrateBlueprint
 		"recorded_platform_blueprint":
@@ -117,6 +121,7 @@ static func get_all_items() -> Array[QuickItemDefinition]:
 		SwiftTonic,
 		ArcaneDraught,
 		IronbarkBrew,
+		FieldTreat,
 		RecordedCrateBlueprint,
 		RecordedPlatformBlueprint,
 		RecordedSpringBlueprint,

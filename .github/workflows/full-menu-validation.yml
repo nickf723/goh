@@ -81,6 +81,9 @@ jobs:
       - name: Run animal bonding and persistence regression
         run: godot --headless --path . res://scenes/tests/animal_bonding_persistence_smoke_test.tscn
 
+      - name: Run wildlife navigation and rescue regression
+        run: godot --headless --path . res://scenes/tests/wildlife_navigation_rescue_lab_smoke_test.tscn
+
       - name: Run base Ruined Village regression
         run: godot --headless --path . res://scenes/tests/ruined_village_approach_smoke_test.tscn
 

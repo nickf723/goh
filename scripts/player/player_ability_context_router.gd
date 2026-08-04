@@ -10,6 +10,9 @@ const AbilityContextMenuScript = preload(
 const SharedPlacementControllerScript = preload(
 	"res://scripts/player/player_shared_placement_controller.gd"
 )
+const ActiveAbilityRibbonScript = preload(
+	"res://scripts/ui/player_active_ability_ribbon.gd"
+)
 const RecordedObjectSpellControllerScript = preload(
 	"res://scripts/player/player_recorded_object_spell_controller.gd"
 )
@@ -26,6 +29,7 @@ const CONTEXT_DPAD_ACTIONS: Dictionary = {
 var actor: Node3D
 var context_menu: Node
 var shared_placement_controller: Node
+var active_ability_ribbon: Node
 var ability_caster: Node
 var action_state: PlayerActionState
 var open_requests: int = 0
@@ -134,6 +138,11 @@ func get_shared_placement_controller() -> Node:
 	return shared_placement_controller
 
 
+func get_active_ability_ribbon() -> Node:
+	_install_context_surfaces()
+	return active_ability_ribbon
+
+
 func is_context_active() -> bool:
 	return (
 		context_menu != null
@@ -226,12 +235,25 @@ func _install_context_surfaces() -> void:
 		if not context_menu.is_connected("context_closed", callback):
 			context_menu.connect("context_closed", callback)
 
+	if active_ability_ribbon == null or not is_instance_valid(active_ability_ribbon):
+		var existing_ribbon: Node = actor.get_node_or_null("ActiveAbilityRibbon")
+		if existing_ribbon != null:
+			active_ability_ribbon = existing_ribbon
+		else:
+			active_ability_ribbon = ActiveAbilityRibbonScript.new()
+			active_ability_ribbon.name = "ActiveAbilityRibbon"
+			actor.add_child(active_ability_ribbon)
+	if active_ability_ribbon.has_method("bind_actor"):
+		active_ability_ribbon.call("bind_actor", actor)
+
 
 func _on_context_closed(_committed: bool) -> void:
-	if context_menu == null or not is_instance_valid(context_menu):
-		return
-	if context_menu.has_method("_refresh_compact_status"):
-		context_menu.call("_refresh_compact_status")
+	if context_menu != null and is_instance_valid(context_menu):
+		if context_menu.has_method("_refresh_compact_status"):
+			context_menu.call("_refresh_compact_status")
+	if active_ability_ribbon != null and is_instance_valid(active_ability_ribbon):
+		if active_ability_ribbon.has_method("force_refresh"):
+			active_ability_ribbon.call("force_refresh")
 
 
 func _ensure_dpad_navigation_actions() -> void:
@@ -279,6 +301,7 @@ func get_debug_data() -> Dictionary:
 		"placement_active": is_placement_active(),
 		"menu_installed": context_menu != null and is_instance_valid(context_menu),
 		"placement_installed": shared_placement_controller != null and is_instance_valid(shared_placement_controller),
+		"ribbon_installed": active_ability_ribbon != null and is_instance_valid(active_ability_ribbon),
 		"dpad_navigation": _has_dpad_navigation(),
 		"recorded_provider": actor.get_node_or_null("RecordedObjectSpellController") != null if actor != null else false,
 		"artificer_provider": actor.get_node_or_null("ArtificerSpellController") != null if actor != null else false,

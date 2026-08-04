@@ -120,6 +120,30 @@ func _retire_duplicate_surface(surface_name: String, current_surface: Control) -
 		retired_duplicate_surface_count += 1
 
 
+func _generated_dock_debug_rows() -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	if hud == null or hud.root == null:
+		return rows
+	for candidate: Node in hud.root.find_children(
+		"PermanentDPadCommandDock",
+		"",
+		true,
+		false
+	):
+		var row: Dictionary = {
+			"path": str(candidate.get_path()),
+			"current": candidate == dock_panel,
+			"class": candidate.get_class(),
+		}
+		if candidate is Control:
+			var control: Control = candidate as Control
+			row["visible"] = control.visible
+			row["alpha"] = control.modulate.a
+			row["rect"] = control.get_global_rect()
+		rows.append(row)
+	return rows
+
+
 func _reparent_overlay_to_hud(panel: PanelContainer) -> void:
 	if hud == null or hud.root == null or panel == null:
 		return
@@ -165,6 +189,18 @@ func _align_focus_panel() -> void:
 
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
+	var dock_rows: Array[Dictionary] = _generated_dock_debug_rows()
+	var visible_docks: int = 0
+	for row: Dictionary in dock_rows:
+		if bool(row.get("visible", false)) and float(row.get("alpha", 0.0)) > 0.01:
+			visible_docks += 1
+	if visible_docks != 1:
+		print(
+			"UNIFIED_DOCK_HIERARCHY_DEBUG current=",
+			str(dock_panel.get_path()) if dock_panel != null else "none",
+			" rows=",
+			dock_rows
+		)
 	data["unified_layout"] = unified_layout_applied
 	data["dock_parent_zone"] = (
 		str(dock_panel.get_parent().name)
@@ -172,4 +208,6 @@ func get_debug_data() -> Dictionary:
 		else "none"
 	)
 	data["retired_duplicate_surfaces"] = retired_duplicate_surface_count
+	data["generated_dock_rows"] = dock_rows
+	data["visible_generated_docks"] = visible_docks
 	return data

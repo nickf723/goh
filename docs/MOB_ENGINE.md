@@ -37,6 +37,12 @@ The first executor supports:
 
 Adds species-shaped sight cones, hearing, physics line of sight, timed last-known-position memory, same-species alert sharing, persistent trust and fear associations toward Grace, peaceful habituation, and Feed, Soothe, and Startle interactions.
 
+### Bonding, consequences, and persistence
+
+[`ANIMAL_BONDING_PERSISTENCE_V1.md`](ANIMAL_BONDING_PERSISTENCE_V1.md)
+
+Adds stable named-animal identities, durable disk records, inventory-backed Field Treat feeding, bond requirements, Follow / Stay behavior, voluntary curious approach, wary watching, and gameplay event hooks for helping, healing, rescue, attacks, chasing, and threats.
+
 ## Playable test scene
 
 Run:
@@ -45,7 +51,7 @@ Run:
 
 The lab contains Grace, a sheep, a capybara, and a two-wolf pack.
 
-The on-screen panel provides mouse-clickable and controller-focusable controls for:
+The left on-screen panel provides mouse-clickable and controller-focusable controls for:
 
 - Previous and next animal selection
 - Peaceful or threatening Grace posture
@@ -57,7 +63,18 @@ The on-screen panel provides mouse-clickable and controller-focusable controls f
 - Clear Drives
 - Reset Lab
 
-The normal restart input also resets the lab. Raw number and letter shortcuts are no longer required.
+The right bonding panel provides:
+
+- Bond Selected
+- Follow / Stay
+- Help / Heal
+- Report Attack
+- Add 6 Treats
+- Clear This Bond
+- Save Bonds
+- Reload Bonds
+
+The normal restart input also resets the lab. Raw number and letter shortcuts are not required.
 
 The selected animal is marked with a gold disc. Every animal displays its relationship, current stimulus, intention, move, trust, hunger, fear, and social need overhead.
 
@@ -69,9 +86,10 @@ See [`ANIMAL_BEHAVIOR_LAB_TEST.md`](ANIMAL_BEHAVIOR_LAB_TEST.md) for a guided ma
 - `res://scenes/tests/mob_drives_and_intentions_smoke_test.tscn`
 - `res://scenes/tests/animal_behavior_lab_smoke_test.tscn`
 - `res://scenes/tests/animal_perception_relationship_smoke_test.tscn`
+- `res://scenes/tests/animal_bonding_persistence_smoke_test.tscn`
 
-The live regressions verify physical Graze and Flee execution, on-screen lab controls, visual and auditory perception, timed memory, trust-building interactions, startle fear, and wolf pack alert sharing.
+The live regressions verify physical Graze and Flee execution, on-screen lab controls, visual and auditory perception, timed memory, trust-building interactions, wolf pack alert sharing, inventory-backed feeding, bonding, physical follow behavior, disk persistence, stable identity restoration, and harm consequences.
 
 ## Next runtime milestone
 
-Connect relationships to persistent named animals and gameplay events, then improve execution fidelity with navigation-aware destinations, action completion callbacks, interrupted actions, attack hit confirmation, and richer herd or pack coordination.
+Connect the gameplay event bridge to real damage, healing, rescue, and item-use systems in an exploration scene, then improve execution fidelity with navigation-aware destinations, action completion callbacks, interrupted actions, attack hit confirmation, and richer herd or pack coordination.

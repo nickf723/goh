@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/levels/prototypes/prototype_mini_dungeon_chain_v1.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/levels/prototype_mini_dungeon_chunked.gd" id="2_chunked"]
+
+[node name="PrototypeMiniDungeonChunked" instance=ExtResource("1_base")]
+script = ExtResource("2_chunked")
+opening_objective = "Adventure chunks: prepare, clear combat, solve the lock, and exit."
+opening_message = "This mini-dungeon is driven by a reusable dependency graph."

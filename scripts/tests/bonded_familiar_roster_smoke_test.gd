@@ -3,6 +3,9 @@ extends Node
 const PlayerScene: PackedScene = preload(
 	"res://scenes/actors/player/player.tscn"
 )
+const FamiliarDetailShellScript: Script = preload(
+	"res://scripts/ui/full_menu_shell_familiar_detail.gd"
+)
 const ROSTER_PATH: String = "user://bonded_familiar_roster_smoke_test.json"
 const BOND_PATH: String = "user://bonded_familiar_roster_bonds_smoke_test.json"
 const JUNIPER_ID: String = "smoke_test:juniper"
@@ -69,6 +72,7 @@ func run_tests() -> void:
 		_expect(str(rows[0].get("animal_name", "")) == "Juniper", "roster preserves the animal name")
 		_expect(str(rows[0].get("species_id", "")) == "sheep", "roster preserves the animal species")
 		_expect(str(rows[0].get("trust_tier", "")) == "Devoted", "roster derives Juniper's trust tier")
+	await _test_compact_spell_detail()
 	var equip_result: Dictionary = roster.equip_animal(JUNIPER_ID, true)
 	_expect(bool(equip_result.get("ok", false)), "Juniper equips into the named familiar slot")
 	_expect(roster.get_equipped_animal_id() == JUNIPER_ID, "equipped animal id persists in the roster")
@@ -169,6 +173,38 @@ func run_tests() -> void:
 	)
 
 	await _finish()
+
+
+func _test_compact_spell_detail() -> void:
+	var shell: Control = FamiliarDetailShellScript.new() as Control
+	shell.name = "FamiliarDetailShellFixture"
+	add_child(shell)
+	var surface := VBoxContainer.new()
+	surface.name = "FamiliarDetailSurfaceFixture"
+	add_child(surface)
+	await get_tree().process_frame
+	shell.call("_render_compact_bonded_familiar_selection", surface)
+	await get_tree().process_frame
+	var grid: GridContainer = surface.get_node_or_null(
+		"BondedFamiliarSpellDetailGrid"
+	) as GridContainer
+	_expect(grid != null, "Summon Familiar detail exposes the named familiar grid")
+	var juniper_action_found: bool = false
+	if grid != null:
+		for tile: Node in grid.get_children():
+			if (
+				str(tile.get_meta("action_kind", "")) == "equip_bonded_familiar"
+				and str(tile.get_meta("animal_id", "")) == JUNIPER_ID
+			):
+				juniper_action_found = true
+				break
+	_expect(
+		juniper_action_found,
+		"Summon Familiar detail shows an Equip Juniper action before species blueprints"
+	)
+	surface.queue_free()
+	shell.queue_free()
+	await get_tree().process_frame
 
 
 func _wait_frames(count: int) -> void:

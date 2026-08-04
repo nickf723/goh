@@ -5,7 +5,6 @@ const PerformanceDockScript = preload(
 	"res://scripts/ui/quick_spell_belt_unified.gd"
 )
 
-const PERFORMANCE_DOCK_PATH: String = "res://scripts/ui/quick_spell_belt_unified.gd"
 const MANIPULATION_ROTATION_STEP_DEGREES: float = 22.5
 
 var dock_replacement_pending: bool = false
@@ -27,7 +26,11 @@ func _ensure_performance_command_dock() -> void:
 	var existing: Node = actor.get_node_or_null("QuickSpellBeltPresentation")
 	if existing != null:
 		var existing_script: Script = existing.get_script() as Script
-		if existing_script != null and existing_script.resource_path == PERFORMANCE_DOCK_PATH:
+		if (
+			existing_script != null
+			and existing_script.resource_path
+			== "res://scripts/ui/quick_spell_belt_unified.gd"
+		):
 			performance_dock_installed = true
 			return
 		actor.remove_child(existing)
@@ -49,7 +52,10 @@ func is_ground_targeting_active() -> bool:
 func is_focus_open() -> bool:
 	if is_ground_targeting_active():
 		return false
-	if ability_caster != null and ability_caster.has_method("is_focus_library_open"):
+	if (
+		ability_caster != null
+		and ability_caster.has_method("is_focus_library_open")
+	):
 		return bool(ability_caster.call("is_focus_library_open"))
 	return super.is_focus_open()
 
@@ -66,9 +72,18 @@ func _input(event: InputEvent) -> void:
 	if get_tree().paused:
 		return
 	_resolve_bindings()
-	if event is InputEventJoypadButton and _handle_active_manipulation_button(event as InputEventJoypadButton):
+
+	# Shared placement owns the complete controller grammar. Legacy manager
+	# routing remains below as a compatibility fallback for older labs.
+	if (
+		event is InputEventJoypadButton
+		and _handle_active_manipulation_button(
+			event as InputEventJoypadButton
+		)
+	):
 		get_viewport().set_input_as_handled()
 		return
+
 	if event is InputEventJoypadButton and is_ground_targeting_active():
 		var target_button: InputEventJoypadButton = event as InputEventJoypadButton
 		if target_button.button_index in [
@@ -79,22 +94,31 @@ func _input(event: InputEvent) -> void:
 		]:
 			get_viewport().set_input_as_handled()
 			return
-	if event is InputEventJoypadButton and is_focus_open() and _handle_focus_dpad(event as InputEventJoypadButton):
+	if (
+		event is InputEventJoypadButton
+		and is_focus_open()
+		and _handle_focus_dpad(event as InputEventJoypadButton)
+	):
 		get_viewport().set_input_as_handled()
 		return
 	super._input(event)
 
 
-func _handle_active_manipulation_button(event: InputEventJoypadButton) -> bool:
+func _handle_active_manipulation_button(
+	event: InputEventJoypadButton
+) -> bool:
 	var shared_placement: Node = _get_active_shared_placement_controller()
 	if shared_placement != null:
 		return bool(shared_placement.call("handle_controller_button", event))
+
 	var artificer: Node = _get_active_artificer_manager()
 	if artificer != null:
 		return _handle_artificer_button(artificer, event)
+
 	var manager: Node = _get_active_recorded_object_manager()
 	if manager != null:
 		return _handle_recorded_object_button(manager, event)
+
 	var soul_controller: Node = _get_active_soul_grip_controller()
 	if soul_controller != null:
 		return _handle_soul_grip_button(soul_controller, event)
@@ -106,7 +130,9 @@ func _get_active_shared_placement_controller() -> Node:
 	if actor != null and is_instance_valid(actor):
 		controller = actor.get_node_or_null("SharedPlacementController")
 	if controller == null:
-		controller = get_tree().get_first_node_in_group("shared_placement_controller")
+		controller = get_tree().get_first_node_in_group(
+			"shared_placement_controller"
+		)
 	if controller == null or not is_instance_valid(controller):
 		return null
 	if not controller.has_method("is_placement_active"):
@@ -121,7 +147,9 @@ func _get_active_artificer_manager() -> Node:
 	if actor != null and is_instance_valid(actor):
 		manager = actor.get_node_or_null("ArtificerConstructionManager")
 	if manager == null:
-		manager = get_tree().get_first_node_in_group("artificer_construction_manager")
+		manager = get_tree().get_first_node_in_group(
+			"artificer_construction_manager"
+		)
 	if manager == null or not is_instance_valid(manager):
 		return null
 	if str(manager.get("mode")) == "":
@@ -129,7 +157,10 @@ func _get_active_artificer_manager() -> Node:
 	return manager
 
 
-func _handle_artificer_button(manager: Node, event: InputEventJoypadButton) -> bool:
+func _handle_artificer_button(
+	manager: Node,
+	event: InputEventJoypadButton
+) -> bool:
 	var mode_id: String = str(manager.get("mode"))
 	var reserved: Array[int] = [
 		JOY_BUTTON_DPAD_UP,
@@ -150,6 +181,7 @@ func _handle_artificer_button(manager: Node, event: InputEventJoypadButton) -> b
 		return false
 	if not event.pressed:
 		return true
+
 	match event.button_index:
 		JOY_BUTTON_DPAD_UP:
 			manager.call("adjust_depth", 1)
@@ -183,8 +215,14 @@ func _get_active_recorded_object_manager() -> Node:
 	if actor != null and is_instance_valid(actor):
 		manager = actor.get_node_or_null("RecordedObjectManager")
 	if manager == null:
-		manager = get_tree().get_first_node_in_group("recorded_object_manager")
-	if manager == null or not is_instance_valid(manager) or not bool(manager.get("placement_active")):
+		manager = get_tree().get_first_node_in_group(
+			"recorded_object_manager"
+		)
+	if (
+		manager == null
+		or not is_instance_valid(manager)
+		or not bool(manager.get("placement_active"))
+	):
 		return null
 	return manager
 
@@ -194,7 +232,9 @@ func _get_active_soul_grip_controller() -> Node:
 	if actor != null and is_instance_valid(actor):
 		controller = actor.get_node_or_null("SoulGripController")
 	if controller == null:
-		controller = get_tree().get_first_node_in_group("soul_grip_controllers")
+		controller = get_tree().get_first_node_in_group(
+			"soul_grip_controllers"
+		)
 	if controller == null or not is_instance_valid(controller):
 		return null
 	var held_target: Variant = controller.get("held_target")
@@ -203,7 +243,10 @@ func _get_active_soul_grip_controller() -> Node:
 	return controller
 
 
-func _handle_recorded_object_button(manager: Node, event: InputEventJoypadButton) -> bool:
+func _handle_recorded_object_button(
+	manager: Node,
+	event: InputEventJoypadButton
+) -> bool:
 	var reserved: bool = event.button_index in [
 		JOY_BUTTON_DPAD_UP,
 		JOY_BUTTON_DPAD_DOWN,
@@ -216,6 +259,7 @@ func _handle_recorded_object_button(manager: Node, event: InputEventJoypadButton
 		return false
 	if not event.pressed:
 		return true
+
 	match event.button_index:
 		JOY_BUTTON_DPAD_UP:
 			if manager.has_method("adjust_depth"):
@@ -238,7 +282,10 @@ func _handle_recorded_object_button(manager: Node, event: InputEventJoypadButton
 	return true
 
 
-func _handle_soul_grip_button(controller: Node, event: InputEventJoypadButton) -> bool:
+func _handle_soul_grip_button(
+	controller: Node,
+	event: InputEventJoypadButton
+) -> bool:
 	var reserved: bool = event.button_index in [
 		JOY_BUTTON_DPAD_UP,
 		JOY_BUTTON_DPAD_DOWN,
@@ -249,6 +296,7 @@ func _handle_soul_grip_button(controller: Node, event: InputEventJoypadButton) -
 		return false
 	if not event.pressed:
 		return true
+
 	match event.button_index:
 		JOY_BUTTON_DPAD_UP:
 			_adjust_soul_grip_distance(controller, 1)
@@ -269,14 +317,22 @@ func _adjust_soul_grip_distance(controller: Node, direction: int) -> void:
 	var minimum: float = float(controller.get("minimum_hold_distance"))
 	var maximum: float = float(controller.get("maximum_hold_distance"))
 	var current: float = float(controller.get("hold_distance"))
-	controller.set("hold_distance", clampf(current + step * signi(direction), minimum, maximum))
+	controller.set(
+		"hold_distance",
+		clampf(current + step * signi(direction), minimum, maximum)
+	)
 	_refresh_soul_grip_pose(controller)
 
 
 func _rotate_soul_grip_target(controller: Node, direction: int) -> void:
 	var current_basis: Basis = controller.get("desired_basis") as Basis
-	var angle: float = deg_to_rad(MANIPULATION_ROTATION_STEP_DEGREES * signi(direction))
-	controller.set("desired_basis", Basis(Vector3.UP, angle) * current_basis)
+	var angle: float = deg_to_rad(
+		MANIPULATION_ROTATION_STEP_DEGREES * signi(direction)
+	)
+	controller.set(
+		"desired_basis",
+		Basis(Vector3.UP, angle) * current_basis
+	)
 	_refresh_soul_grip_pose(controller)
 
 
@@ -322,8 +378,12 @@ func get_input_mode_debug_data() -> Dictionary:
 		"focus_library": is_focus_open(),
 		"shared_placement": shared_placement,
 		"artificer_construction": _get_active_artificer_manager() != null,
-		"recorded_object_manipulation": _get_active_recorded_object_manager() != null,
-		"soul_grip_manipulation": _get_active_soul_grip_controller() != null,
+		"recorded_object_manipulation": (
+			_get_active_recorded_object_manager() != null
+		),
+		"soul_grip_manipulation": (
+			_get_active_soul_grip_controller() != null
+		),
 		"right_stick_owner": (
 			"shared_placement_camera"
 			if shared_placement

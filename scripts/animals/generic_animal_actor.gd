@@ -3,6 +3,8 @@ class_name GenericAnimalActor
 
 signal action_changed(move_id: String, intention_id: String)
 signal selected_changed(selected: bool)
+signal relationship_changed(label: String, trust: float)
+signal perception_changed(stimulus_kind: String, awareness: float)
 
 @export var species_id: String = "sheep"
 @export var animal_name: String = "Animal"
@@ -14,8 +16,13 @@ signal selected_changed(selected: bool)
 @export var decision_interval: float = 0.65
 
 var brain: MobBrainComponent
+var perception: AnimalPerceptionMemory
+var relationship: AnimalRelationshipState
+var perception_snapshot: Dictionary = {}
+var relationship_label: String = "neutral"
 var home_position: Vector3
 var current_action_id: String = "idle"
+var current_move_id: String = "idle"
 var current_intention_id: String = "observe"
 var action_time_remaining: float = 0.0
 var decision_time_remaining: float = 0.0
@@ -31,6 +38,9 @@ var selection_marker: MeshInstance3D
 var body_material: StandardMaterial3D
 var accent_material: StandardMaterial3D
 var flash_time_remaining: float = 0.0
+var alert_broadcast_cooldown: float = 0.0
+var previous_relationship_label: String = ""
+var previous_stimulus_kind: String = ""
 
 
 func _ready() -> void:
@@ -42,6 +52,7 @@ func _ready() -> void:
 	_build_collision()
 	_build_visual()
 	_build_brain()
+	_build_social_state()
 	decision_time_remaining = randf_range(0.1, decision_interval)
 
 
@@ -51,8 +62,10 @@ func _physics_process(delta: float) -> void:
 	action_time_remaining = maxf(action_time_remaining - delta, 0.0)
 	decision_time_remaining -= delta
 	wander_time_remaining -= delta
+	alert_broadcast_cooldown = maxf(alert_broadcast_cooldown - delta, 0.0)
+	_update_perception_and_relationship(delta)
 	if decision_time_remaining <= 0.0:
-		force_decision()
+		force_decision(false)
 	_execute_current_action(delta)
 	_apply_gravity(delta)
 	move_and_slide()
@@ -60,34 +73,55 @@ func _physics_process(delta: float) -> void:
 	_update_visual(delta)
 
 
-func force_decision() -> Dictionary:
+func force_decision(refresh_perception: bool = true) -> Dictionary:
 	if brain == null:
 		return {}
+	if refresh_perception:
+		_update_perception_and_relationship(0.0)
 	decision_time_remaining = decision_interval
 	return brain.request_decision(get_mob_decision_context())
 
 
 func get_mob_decision_context() -> Dictionary:
-	var threat: Node3D = _get_lab_node("get_animal_threat_target")
-	var threat_mode: bool = _get_lab_bool("is_animal_threat_mode_enabled")
-	var threat_distance: float = INF
-	if threat != null:
-		threat_distance = global_position.distance_to(threat.global_position)
-	var threat_active: bool = threat_mode and threat != null and threat_distance <= 12.0
+	var grace: Node3D = _get_grace_target()
+	var target_position: Vector3 = (
+		perception.get_target_position(grace.global_position if grace != null else home_position)
+		if perception != null
+		else (grace.global_position if grace != null else home_position)
+	)
+	var target_distance: float = global_position.distance_to(target_position)
 	var forage_position: Vector3 = _get_lab_position("get_animal_forage_position", home_position)
 	var water_position: Vector3 = _get_lab_position("get_animal_water_position", home_position)
 	var forage_distance: float = global_position.distance_to(forage_position)
 	var water_distance: float = global_position.distance_to(water_position)
 	var context_tags: Array[String] = []
-	var target_distance: float = 0.0
 	var enemy_count: int = 0
-	if threat_active:
-		target_distance = threat_distance
+	var aware_of_grace: bool = perception != null and (
+		perception.can_see_target
+		or perception.can_hear_target
+		or perception.remembers_target
+	)
+	var grace_threat: bool = _grace_is_current_threat(target_distance)
+
+	if perception != null:
+		if perception.can_see_target:
+			context_tags.append("line_of_sight")
+			context_tags.append("grace_visible")
+		if perception.can_hear_target:
+			context_tags.append("heard_disturbance")
+		if perception.remembers_target and not perception.can_see_target:
+			context_tags.append("remembers_grace")
+		if perception.social_alert_remaining > 0.0:
+			context_tags.append("social_alert")
+		if perception.awareness >= 0.6:
+			context_tags.append("alert")
+
+	context_tags.append("relationship_" + relationship_label)
+	if aware_of_grace and grace_threat:
 		enemy_count = 1
-		context_tags.append("line_of_sight")
-		if threat_distance <= 3.0:
+		if target_distance <= 3.0:
 			context_tags.append("target_close")
-		if species_id == "wolf":
+		if species_id == "wolf" or relationship_label == "hostile":
 			context_tags.append("hostile")
 			context_tags.append("hunting")
 			if _same_species_ally_count() > 0:
@@ -95,10 +129,16 @@ func get_mob_decision_context() -> Dictionary:
 		else:
 			context_tags.append("threatened")
 			context_tags.append("predator_near")
-			if threat_distance <= 1.7:
+			if target_distance <= 1.7:
 				context_tags.append("cornered")
 	else:
 		context_tags.append("safe")
+		if aware_of_grace and ["curious", "trusting"].has(relationship_label):
+			context_tags.append("curious_about_grace")
+		if perception != null and perception.can_hear_target and not perception.can_see_target:
+			context_tags.append("investigating_noise")
+
+	if not grace_threat:
 		if species_id == "sheep":
 			target_distance = forage_distance
 			if forage_distance <= 2.4:
@@ -110,8 +150,9 @@ func get_mob_decision_context() -> Dictionary:
 				context_tags.append("water_near")
 			if forage_distance <= 2.4:
 				context_tags.append("lush_forage")
-		else:
+		elif not aware_of_grace:
 			target_distance = 0.0
+
 	return {
 		"target_distance": target_distance,
 		"self_health_ratio": 1.0,
@@ -122,7 +163,10 @@ func get_mob_decision_context() -> Dictionary:
 		"scalar_values": {
 			"forage_distance": forage_distance,
 			"water_distance": water_distance,
-			"threat_distance": threat_distance if threat_distance < INF else 999.0,
+			"grace_distance": global_position.distance_to(grace.global_position) if grace != null else 999.0,
+			"awareness": perception.awareness if perception != null else 0.0,
+			"trust": relationship.trust if relationship != null else 0.0,
+			"familiarity": relationship.familiarity if relationship != null else 0.0,
 		},
 	}
 
@@ -151,20 +195,92 @@ func get_drive(drive_id: String) -> float:
 	return brain.get_drive(drive_id) if brain != null else 0.0
 
 
+func get_relationship_label() -> String:
+	return relationship_label
+
+
+func get_relationship_data() -> Dictionary:
+	var data: Dictionary = relationship.to_dictionary() if relationship != null else {}
+	data["relationship_label"] = relationship_label
+	return data
+
+
+func get_perception_data() -> Dictionary:
+	return perception_snapshot.duplicate(true)
+
+
+func interact_with_grace(interaction_id: String) -> Dictionary:
+	if relationship == null:
+		return {"ok": false, "error": "relationship unavailable"}
+	var grace: Node3D = _get_grace_target()
+	if grace == null:
+		return {"ok": false, "error": "Grace unavailable"}
+	var distance: float = global_position.distance_to(grace.global_position)
+	var normalized_id: String = interaction_id.to_lower().strip_edges()
+	var maximum_distance: float = 4.4
+	if normalized_id == "startle":
+		maximum_distance = 8.0
+	if distance > maximum_distance:
+		return {
+			"ok": false,
+			"error": "too far",
+			"distance": distance,
+			"maximum_distance": maximum_distance,
+		}
+	var result: Dictionary = relationship.apply_interaction(normalized_id)
+	if not bool(result.get("ok", false)):
+		return result
+	match normalized_id:
+		"feed":
+			set_drive("hunger", 0.0)
+			add_drive("fear", -0.2)
+		"soothe":
+			add_drive("fear", -0.48)
+			add_drive("social_need", -0.18)
+		"startle":
+			set_drive("fear", 1.0)
+			if perception != null:
+				perception.receive_social_alert(grace.global_position, 1.0, 4.5)
+			_broadcast_alert(grace.global_position, 1.0)
+		"attack":
+			set_drive("fear", 1.0)
+			set_drive("territorial_pressure", 1.0)
+			_broadcast_alert(grace.global_position, 1.0)
+	relationship_label = relationship.get_relationship_label(get_drive("fear"))
+	brain.clear_memory()
+	force_decision(true)
+	result["relationship_label"] = relationship_label
+	return result
+
+
+func receive_social_alert(position: Vector3, severity: float = 0.65) -> void:
+	if perception == null:
+		return
+	perception.receive_social_alert(position, severity, 3.5)
+	if species_id == "wolf":
+		add_drive("territorial_pressure", severity * 0.22)
+	else:
+		add_drive("fear", severity * 0.28)
+	decision_time_remaining = 0.0
+
+
 func reset_actor() -> void:
 	global_position = initial_position
 	velocity = Vector3.ZERO
 	home_position = initial_position
 	wander_target = home_position
 	current_action_id = "idle"
+	current_move_id = "idle"
 	current_intention_id = "observe"
 	action_time_remaining = 0.0
 	decision_time_remaining = 0.1
 	flash_time_remaining = 0.0
+	alert_broadcast_cooldown = 0.0
 	if brain != null:
 		brain.clear_cooldowns()
 		brain.clear_memory()
 		brain.reset_drives()
+	_build_social_state()
 
 
 func get_debug_data() -> Dictionary:
@@ -172,9 +288,13 @@ func get_debug_data() -> Dictionary:
 		"species_id": species_id,
 		"animal_name": animal_name,
 		"action": current_action_id,
+		"move": current_move_id,
 		"intention": current_intention_id,
 		"selected": selected,
 		"position": global_position,
+		"relationship_label": relationship_label,
+		"relationship": get_relationship_data(),
+		"perception": get_perception_data(),
 		"brain": brain.get_debug_data() if brain != null else {},
 	}
 
@@ -192,20 +312,158 @@ func _build_brain() -> void:
 	add_child(brain)
 
 
+func _build_social_state() -> void:
+	var traits: Dictionary = MobPersonalityAdapter.apply_profile_to_species(
+		species_id,
+		personality_profile_id
+	)
+	perception = AnimalPerceptionMemory.create_for_species(species_id, traits)
+	relationship = AnimalRelationshipState.create_for_species(species_id, traits)
+	perception_snapshot = perception.to_dictionary()
+	relationship_label = relationship.get_relationship_label(get_drive("fear"))
+	previous_relationship_label = relationship_label
+	previous_stimulus_kind = "none"
+
+
+func _update_perception_and_relationship(delta: float) -> void:
+	if perception == null or relationship == null:
+		return
+	var grace: Node3D = _get_grace_target()
+	var grace_speed: float = 0.0
+	if grace is CharacterBody3D:
+		var grace_velocity: Vector3 = (grace as CharacterBody3D).velocity
+		grace_speed = Vector2(grace_velocity.x, grace_velocity.z).length()
+	var noise_position: Vector3 = _get_lab_position(
+		"get_animal_noise_position",
+		grace.global_position if grace != null else global_position
+	)
+	var noise_strength: float = _get_lab_float("get_animal_noise_strength", 0.0)
+	perception_snapshot = perception.update(
+		self,
+		grace,
+		delta,
+		noise_position,
+		noise_strength,
+		grace_speed
+	)
+	var grace_distance: float = (
+		global_position.distance_to(grace.global_position)
+		if grace != null
+		else 999.0
+	)
+	relationship.tick(
+		delta,
+		perception_snapshot,
+		grace_distance,
+		_is_grace_threatening(),
+		grace_speed,
+		get_drive("fear")
+	)
+	relationship_label = relationship.get_relationship_label(get_drive("fear"))
+	_apply_perception_to_drives(delta, grace_distance)
+	_maybe_share_alert()
+	if relationship_label != previous_relationship_label:
+		previous_relationship_label = relationship_label
+		relationship_changed.emit(relationship_label, relationship.trust)
+	var stimulus: String = str(perception_snapshot.get("stimulus_kind", "none"))
+	if stimulus != previous_stimulus_kind:
+		previous_stimulus_kind = stimulus
+		perception_changed.emit(stimulus, perception.awareness)
+
+
+func _apply_perception_to_drives(delta: float, grace_distance: float) -> void:
+	if brain == null or perception == null or relationship == null or delta <= 0.0:
+		return
+	var aware: bool = perception.can_see_target or perception.can_hear_target or perception.remembers_target
+	var grace_threat: bool = _grace_is_current_threat(grace_distance)
+	if aware and grace_threat:
+		if species_id == "wolf" or relationship_label == "hostile":
+			brain.add_drive("territorial_pressure", delta * 0.12 * perception.awareness)
+			brain.add_drive("fear", delta * 0.015)
+		else:
+			brain.add_drive("fear", delta * 0.18 * perception.awareness)
+	elif perception.can_see_target and ["curious", "trusting"].has(relationship_label):
+		brain.add_drive("curiosity", delta * 0.055)
+		brain.add_drive("fear", -delta * 0.065)
+	elif not aware:
+		brain.add_drive("fear", -delta * 0.025)
+
+
+func _grace_is_current_threat(grace_distance: float) -> bool:
+	if perception == null or relationship == null:
+		return false
+	var aware: bool = perception.can_see_target or perception.can_hear_target or perception.remembers_target
+	if not aware:
+		return false
+	if _is_grace_threatening():
+		return true
+	if relationship_label == "hostile" or relationship_label == "afraid":
+		return true
+	if relationship_label == "wary" and grace_distance < relationship.get_comfort_distance():
+		return true
+	return (
+		species_id != "wolf"
+		and grace_distance < relationship.get_personal_space()
+		and relationship.trust < 0.45
+	)
+
+
+func _maybe_share_alert() -> void:
+	if perception == null or alert_broadcast_cooldown > 0.0:
+		return
+	var grace_distance: float = global_position.distance_to(perception.last_known_position)
+	if not _grace_is_current_threat(grace_distance):
+		return
+	if perception.awareness < 0.62:
+		return
+	var severity: float = clampf(
+		0.45 + perception.awareness * 0.35 + get_drive("fear") * 0.2,
+		0.0,
+		1.0
+	)
+	_broadcast_alert(perception.last_known_position, severity)
+	alert_broadcast_cooldown = 2.6
+
+
+func _broadcast_alert(position: Vector3, severity: float) -> void:
+	var lab: Node = get_parent()
+	if lab != null and lab.has_method("broadcast_animal_alert"):
+		lab.call("broadcast_animal_alert", self, position, severity)
+
+
 func _on_move_selected(move_id: String, decision: Dictionary) -> void:
 	if move_id == "":
 		return
-	current_action_id = move_id
+	current_move_id = move_id
+	current_action_id = _resolve_execution_action(move_id)
 	current_intention_id = str(
 		decision.get("intention_id", MobIntentionResolver.get_intention_id(decision))
 	)
+	if current_action_id == "investigate":
+		current_intention_id = "investigate"
 	var move_data: Dictionary = decision.get("move", {}) as Dictionary
 	var effect: Dictionary = move_data.get("effect", {}) as Dictionary
-	action_time_remaining = _action_duration(move_id, effect)
+	action_time_remaining = _action_duration(current_action_id, effect)
 	brain.commit_move(move_id)
-	if ["bite", "headbutt", "pounce", "tail_sweep"].has(move_id):
+	if ["bite", "headbutt", "pounce", "tail_sweep"].has(current_action_id):
 		flash_time_remaining = 0.22
 	action_changed.emit(current_action_id, current_intention_id)
+
+
+func _resolve_execution_action(move_id: String) -> String:
+	if move_id != "idle" or perception == null:
+		return move_id
+	if (
+		perception.can_hear_target
+		or perception.social_alert_remaining > 0.0
+		or (
+			perception.can_see_target
+			and ["curious", "trusting", "wary"].has(relationship_label)
+			and not _grace_is_current_threat(global_position.distance_to(perception.last_known_position))
+		)
+	):
+		return "investigate"
+	return "idle"
 
 
 func _execute_current_action(delta: float) -> void:
@@ -215,14 +473,12 @@ func _execute_current_action(delta: float) -> void:
 			direction = _direction_to(_get_lab_position("get_animal_forage_position", home_position))
 		"wade":
 			direction = _direction_to(_get_lab_position("get_animal_water_position", home_position))
+		"investigate":
+			direction = _investigate_direction()
 		"flee", "backstep":
-			var threat: Node3D = _get_lab_node("get_animal_threat_target")
-			if threat != null:
-				direction = _flat_direction(global_position - threat.global_position)
+			direction = _flat_direction(global_position - _remembered_grace_position())
 		"bite", "headbutt", "pounce", "tail_sweep", "stone_gaze", "mire_spit":
-			var target: Node3D = _get_lab_node("get_animal_threat_target")
-			if target != null:
-				direction = _direction_to(target.global_position)
+			direction = _direction_to(_remembered_grace_position())
 		"howl":
 			direction = Vector3.ZERO
 		_:
@@ -232,6 +488,8 @@ func _execute_current_action(delta: float) -> void:
 		speed_multiplier = 1.55
 	elif current_action_id == "pounce":
 		speed_multiplier = 1.7
+	elif current_action_id == "investigate":
+		speed_multiplier = 0.82
 	elif current_action_id in ["graze", "wade", "idle"]:
 		speed_multiplier = 0.72
 	var target_velocity: Vector3 = direction * move_speed * speed_multiplier
@@ -242,6 +500,27 @@ func _execute_current_action(delta: float) -> void:
 		rotation.y = lerp_angle(rotation.y, target_yaw, clampf(delta * turn_speed, 0.0, 1.0))
 	if action_time_remaining <= 0.0:
 		current_action_id = "idle"
+		current_move_id = "idle"
+
+
+func _investigate_direction() -> Vector3:
+	if perception == null:
+		return Vector3.ZERO
+	var target_position: Vector3 = perception.get_target_position(home_position)
+	var distance: float = global_position.distance_to(target_position)
+	var preferred_distance: float = relationship.get_comfort_distance() if relationship != null else 3.0
+	if relationship_label == "trusting":
+		preferred_distance = maxf(preferred_distance * 0.55, 1.2)
+	if distance <= preferred_distance:
+		return Vector3.ZERO
+	return _direction_to(target_position)
+
+
+func _remembered_grace_position() -> Vector3:
+	var grace: Node3D = _get_grace_target()
+	if perception != null and perception.remembers_target:
+		return perception.last_known_position
+	return grace.global_position if grace != null else home_position
 
 
 func _wander_direction() -> Vector3:
@@ -276,11 +555,12 @@ func _keep_inside_lab() -> void:
 
 
 func _action_duration(move_id: String, effect: Dictionary) -> float:
-	if effect.has("duration"):
+	if effect.has("duration") and move_id != "investigate":
 		return clampf(float(effect.get("duration", 1.0)), 0.4, 3.0)
 	match move_id:
 		"graze": return 1.8
 		"wade": return 2.2
+		"investigate": return 1.35
 		"howl": return 1.4
 		"bite", "headbutt", "pounce", "tail_sweep": return 0.8
 		_: return 1.0
@@ -294,6 +574,20 @@ func _same_species_ally_count() -> int:
 		if (node as GenericAnimalActor).species_id == species_id:
 			count += 1
 	return count
+
+
+func _get_grace_target() -> Node3D:
+	var target: Node3D = _get_lab_node("get_animal_grace_target")
+	if target == null:
+		target = _get_lab_node("get_animal_threat_target")
+	return target
+
+
+func _is_grace_threatening() -> bool:
+	var lab: Node = get_parent()
+	if lab != null and lab.has_method("is_grace_threatening"):
+		return bool(lab.call("is_grace_threatening", self))
+	return _get_lab_bool("is_animal_threat_mode_enabled")
 
 
 func _get_lab_node(method_name: String) -> Node3D:
@@ -317,6 +611,11 @@ func _get_lab_position(method_name: String, fallback: Vector3) -> Vector3:
 func _get_lab_bool(method_name: String) -> bool:
 	var lab: Node = get_parent()
 	return bool(lab.call(method_name, self)) if lab != null and lab.has_method(method_name) else false
+
+
+func _get_lab_float(method_name: String, fallback: float) -> float:
+	var lab: Node = get_parent()
+	return float(lab.call(method_name, self)) if lab != null and lab.has_method(method_name) else fallback
 
 
 func _build_collision() -> void:
@@ -462,18 +761,34 @@ func _update_visual(delta: float) -> void:
 		body_material.emission = Color(1.0, 0.18, 0.08)
 		body_material.emission_energy_multiplier = 2.4
 	if state_label != null:
+		var stimulus: String = str(perception_snapshot.get("stimulus_kind", "none"))
 		state_label.text = (
-			animal_name
-			+ "\n"
-			+ current_intention_id.capitalize()
-			+ " • "
-			+ current_action_id.replace("_", " ").capitalize()
+			animal_name + " • " + relationship_label.capitalize()
+			+ "\n" + current_intention_id.capitalize()
+			+ " • " + current_action_id.replace("_", " ").capitalize()
+			+ "\n" + stimulus.replace("_", " ").capitalize()
+			+ "  Trust " + _signed_percent(relationship.trust if relationship != null else 0.0)
 			+ "\nH " + _percent(get_drive("hunger"))
 			+ "  F " + _percent(get_drive("fear"))
 			+ "  S " + _percent(get_drive("social_need"))
 		)
-		state_label.modulate = Color(1.0, 0.82, 0.28) if selected else Color(0.96, 0.96, 0.9)
+		state_label.modulate = Color(1.0, 0.82, 0.28) if selected else _relationship_color()
+
+
+func _relationship_color() -> Color:
+	match relationship_label:
+		"hostile": return Color(1.0, 0.28, 0.18)
+		"afraid": return Color(1.0, 0.66, 0.22)
+		"wary": return Color(1.0, 0.88, 0.4)
+		"curious": return Color(0.46, 0.88, 1.0)
+		"trusting": return Color(0.42, 1.0, 0.62)
+		_: return Color(0.96, 0.96, 0.9)
 
 
 func _percent(value: float) -> String:
 	return str(int(round(clampf(value, 0.0, 1.0) * 100.0)))
+
+
+func _signed_percent(value: float) -> String:
+	var amount: int = int(round(clampf(value, -1.0, 1.0) * 100.0))
+	return ("+" if amount >= 0 else "") + str(amount)

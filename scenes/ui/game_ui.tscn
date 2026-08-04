@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://j44g36yeu58k"]
 
-[ext_resource type="Script" path="res://scripts/ui/game_ui_controller_prompts.gd" id="1_dcmab"]
+[ext_resource type="Script" path="res://scripts/ui/game_ui_spell_icons.gd" id="1_dcmab"]
 
 [sub_resource type="StyleBoxFlat" id="MessageStyle"]
 bg_color = Color(0.02, 0.025, 0.04, 0.86)

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AdventureChunkDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/adventure/adventure_chunk_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+chunk_id = "mini_dungeon_combat"
+display_name = "Clear the Combat Chamber"
+category = 2
+summary = "Defeat the chamber enemies and use the elemental surfaces to control the fight."
+required_chunk_ids = Array[String](["mini_dungeon_prepare"])
+optional = false
+auto_activate_when_available = true
+completion_policy = 1
+completion_flag = "adventure_chunk_mini_dungeon_combat"
+reward_mana = 0
+objective_on_activate = "Defeat every enemy in the combat chamber."
+objective_on_complete = "Proceed to the element-lock chamber."
+activation_message = "The combat chamber wakes."
+completion_message = "The chamber falls silent. The next seal opens."
+hide_content_when_locked = true
+disable_content_when_locked = true
+keep_content_after_complete = true

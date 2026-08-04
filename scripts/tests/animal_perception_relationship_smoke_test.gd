@@ -55,12 +55,13 @@ func run_tests() -> void:
 	_expect(sheep.get_drive("fear") > 0.9, "startling spikes the animal's persistent fear drive")
 	_expect(sheep.get_relationship_label() == "afraid", "startling creates an Afraid relationship state")
 
-	grace.position = Vector3(8.0, 0.5, 8.0)
+	grace.position = Vector3(30.0, 0.5, 30.0)
 	sheep.perception.reset()
-	noise_position = Vector3(1.0, 0.5, 0.0)
+	noise_position = sheep.global_position + Vector3(1.0, 0.0, 0.0)
 	noise_strength = 1.2
 	sheep.force_decision()
 	var hearing: Dictionary = sheep.get_perception_data()
+	_expect(not bool(hearing.get("can_see_target", true)), "distant Grace is outside the sheep's sight range during the hearing test")
 	_expect(bool(hearing.get("can_hear_target", false)), "animals can hear a nearby disturbance without seeing Grace")
 	_expect(str(hearing.get("stimulus_kind", "")) == "hearing", "hearing records the correct stimulus kind")
 	noise_strength = 0.0
@@ -77,12 +78,16 @@ func run_tests() -> void:
 		"balanced",
 		Vector3(1.2, 0.5, 0.0)
 	)
+	wolf_one.rotation.y = 0.0
 	wolf_two.rotation.y = PI
 	grace.position = Vector3(-1.2, 0.5, -3.0)
 	threatening = true
 	await get_tree().process_frame
+	wolf_one.perception.reset()
+	wolf_two.perception.reset()
 	wolf_one.force_decision()
 	_expect(wolf_one.perception.can_see_target, "front-facing wolf visually detects threatening Grace")
+	_expect(wolf_one.perception.awareness >= 0.9, "forced visual refresh immediately raises wolf awareness")
 	_expect(wolf_two.perception.social_alert_remaining > 0.0, "wolf shares its alert with a nearby packmate")
 	_expect(wolf_two.get_drive("territorial_pressure") > 0.0, "pack alert creates territorial pressure in the listening wolf")
 

@@ -15,6 +15,22 @@ func run_tests() -> void:
 	var lab: Node = LabScene.instantiate()
 	add_child(lab)
 	await get_tree().process_frame
+	await get_tree().process_frame
+	var owned_overlay_count: int = 0
+	var suppressed_overlay_count: int = 0
+	for candidate: Node in lab.find_children("*", "PanelContainer", true, false):
+		if not candidate is PanelContainer:
+			continue
+		if not bool(candidate.get_meta("full_menu_suppressed_lab_overlay", false)):
+			continue
+		owned_overlay_count += 1
+		if candidate.is_in_group("menu_suppressed_hud"):
+			suppressed_overlay_count += 1
+	_expect(owned_overlay_count == 2, "command lab owns exactly two debug overlay panels")
+	_expect(
+		suppressed_overlay_count == owned_overlay_count,
+		"both command lab overlays register for full-menu suppression"
+	)
 	await get_tree().physics_frame
 	await _wait_for_navigation(lab, 180)
 	var animal: WildlifeAnimalScript = lab.call("get_test_animal") as WildlifeAnimalScript

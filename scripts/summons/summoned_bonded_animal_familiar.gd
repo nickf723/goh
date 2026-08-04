@@ -119,7 +119,10 @@ func issue_familiar_task(receiver: Node) -> Dictionary:
 	active_task_receiver = receiver
 	active_task_id = _normalize_task_id(str(preview.get("task_id", "task")))
 	active_task_phase = "moving"
-	active_task_anchor = preview.get("position", receiver.global_position) as Vector3
+	var fallback_anchor: Vector3 = global_position
+	if receiver is Node3D:
+		fallback_anchor = (receiver as Node3D).global_position
+	active_task_anchor = preview.get("position", fallback_anchor) as Vector3
 	last_task_result = {
 		"ok": true,
 		"task_id": active_task_id,

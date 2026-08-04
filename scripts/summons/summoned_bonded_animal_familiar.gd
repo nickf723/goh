@@ -26,6 +26,7 @@ var active_task_receiver: Node
 var active_task_id: String = ""
 var active_task_phase: String = "none"
 var active_task_anchor: Vector3 = Vector3.ZERO
+var task_arrival_pending: bool = false
 var completed_task_count: int = 0
 var last_task_result: Dictionary = {}
 
@@ -119,6 +120,7 @@ func issue_familiar_task(receiver: Node) -> Dictionary:
 	active_task_receiver = receiver
 	active_task_id = _normalize_task_id(str(preview.get("task_id", "task")))
 	active_task_phase = "moving"
+	task_arrival_pending = false
 	var fallback_anchor: Vector3 = global_position
 	if receiver is Node3D:
 		fallback_anchor = (receiver as Node3D).global_position
@@ -165,6 +167,8 @@ func issue_follow_command(save_now: bool = true) -> Dictionary:
 
 
 func issue_stay_command(anchor: Vector3 = Vector3.INF, save_now: bool = true) -> Dictionary:
+	if task_arrival_pending:
+		return super.issue_stay_command(anchor, save_now)
 	_cancel_active_task("stay command")
 	return super.issue_stay_command(anchor, save_now)
 
@@ -210,6 +214,17 @@ func _on_companion_command_completed(command_name: String, _completion_count: in
 	if active_task_receiver == null or not is_instance_valid(active_task_receiver):
 		_cancel_active_task("target unavailable")
 		return
+	task_arrival_pending = true
+	call_deferred("_begin_task_after_arrival")
+
+
+func _begin_task_after_arrival() -> void:
+	if not task_arrival_pending or active_task_phase != "moving":
+		return
+	task_arrival_pending = false
+	if active_task_receiver == null or not is_instance_valid(active_task_receiver):
+		_cancel_active_task("target unavailable")
+		return
 	var result_value: Variant = active_task_receiver.call("begin_familiar_task", self)
 	var result: Dictionary = (
 		(result_value as Dictionary).duplicate(true)
@@ -235,6 +250,7 @@ func _on_companion_command_completed(command_name: String, _completion_count: in
 
 
 func _cancel_active_task(reason: String) -> void:
+	task_arrival_pending = false
 	if active_task_receiver != null and is_instance_valid(active_task_receiver):
 		if active_task_receiver.has_method("end_familiar_task"):
 			active_task_receiver.call("end_familiar_task", self)

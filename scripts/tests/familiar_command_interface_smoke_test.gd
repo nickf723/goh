@@ -20,29 +20,35 @@ func run_tests() -> void:
 	var floor := _make_floor()
 	add_child(floor)
 	var player: CharacterBody3D = PlayerScene.instantiate() as CharacterBody3D
-	player.name = "FamiliarCommandInterfaceTestPlayer"
+	player.name = "AbilityContextFamiliarTestPlayer"
 	player.position = Vector3(0.0, 0.96, 0.0)
 	add_child(player)
-	for _frame: int in range(5):
+	for _frame: int in range(7):
 		await get_tree().process_frame
 	await get_tree().physics_frame
 
 	var manager: PlayerSummonManager = player.get_node_or_null(
 		"SummonManager"
 	) as PlayerSummonManager
-	var interface: Node = player.get_node_or_null("FamiliarCommandInterface")
+	var router: Node = player.get_node_or_null("AbilityContextRouter")
+	var menu: Node = player.get_node_or_null("AbilityContextMenu")
+	var caster: Node = player.get_node_or_null("AbilityCaster")
 	var action_state: PlayerActionState = player.get_node_or_null(
 		"PlayerActionState"
 	) as PlayerActionState
 	_expect(manager != null, "player retains summon manager")
-	_expect(interface != null, "summon manager installs the familiar command interface")
-	_expect(action_state != null, "command interface can use the shared action lock")
-	if manager == null or interface == null or action_state == null:
+	_expect(router != null, "summon provider installs the global ability context router")
+	_expect(menu != null, "global ability context router installs one shared context menu")
+	_expect(caster != null, "player retains the shared ability caster")
+	_expect(action_state != null, "global context can use the shared action lock")
+	_expect(player.get_node_or_null("FamiliarCommandInterface") == null, "legacy L3 familiar interface is not installed")
+	if manager == null or router == null or menu == null or caster == null or action_state == null:
 		await _finish(player, floor, manager)
 		return
 
-	_expect(not bool(interface.call("is_interface_visible")), "familiar UI is hidden before a summon exists")
-	_validate_controller_bindings()
+	_expect(not bool(menu.call("is_interface_visible")), "context status is hidden before a persistent ability exists")
+	_expect(not InputMap.has_action(&"familiar_command_menu"), "global context does not create a dedicated L3 action")
+	_expect(InputMap.has_action(&"cast_spell"), "global context reuses the authoritative cast action")
 
 	var definition := SummonDefinition.new()
 	definition.summon_id = "smoke_test_bonded_sheep"
@@ -52,82 +58,113 @@ func run_tests() -> void:
 	definition.summon_offset = Vector3(1.8, 0.2, -1.3)
 	definition.mana_cost = 0
 	definition.unlock_id = ""
-	var summoned: bool = manager.summon_familiar(definition)
-	_expect(summoned, "Summon Familiar accepts the bonded-animal summon adapter")
+	manager.summon_definition = definition
+	GameState.set_stat("mana", 99)
+
+	var familiar_index: int = _find_ability_index(caster, "spectral_familiar")
+	var fireball_index: int = _find_ability_index(caster, "firebolt")
+	_expect(familiar_index >= 0, "Summon Familiar remains selectable on the spell belt")
+	_expect(fireball_index >= 0, "Fireball remains selectable beside persistent abilities")
+	if familiar_index < 0:
+		await _finish(player, floor, manager)
+		return
+
+	caster.call("select_ability", familiar_index, false)
+	var first_cast: bool = bool(caster.call("cast_from_player", player))
+	_expect(first_cast, "first Cast on Summon Familiar creates the familiar")
 	for _frame: int in range(4):
 		await get_tree().process_frame
 	await get_tree().physics_frame
 	var familiar: Node3D = manager.get_active_summon()
-	_expect(familiar is SummonedBondedAnimalFamiliar, "spell summon produces a bonded animal familiar")
-	_expect(bool(interface.call("is_interface_visible")), "familiar UI appears only after the spell creates a familiar")
-	var commands: Array[String] = _string_array(interface.call("get_available_commands"))
-	_expect(commands.has("follow"), "animal command wheel exposes Follow")
-	_expect(commands.has("stay"), "animal command wheel exposes Stay Here")
-	_expect(commands.has("come_here"), "animal command wheel exposes Come Here")
-	_expect(commands.has("move_to"), "animal command wheel exposes Go There")
-	_expect(not commands.has("assist"), "animal command wheel omits unsupported combat commands")
+	_expect(familiar is SummonedBondedAnimalFamiliar, "spell cast produces a bonded animal familiar")
+	_expect(bool(menu.call("is_interface_visible")), "persistent context status appears after summoning")
+	_expect(not bool(menu.call("is_context_open")), "summoning does not immediately force the context menu open")
 
-	var opened: bool = bool(interface.call("handle_menu_button", true, 0))
-	_expect(opened and bool(interface.call("is_menu_open")), "L3-style press opens the familiar command wheel")
-	_expect(action_state.is_focus_menu_open, "open familiar wheel applies the shared menu action lock")
-	_expect(Engine.time_scale <= 0.3501, "open familiar wheel slows the battlefield")
-	_expect(bool(interface.call("select_command_by_id", "stay")), "right-stick selection can resolve Stay")
+	if fireball_index >= 0:
+		caster.call("select_ability", fireball_index, false)
+		var fireball_ability: AbilityDefinition = caster.call("get_current_ability") as AbilityDefinition
+		var fireball_context: Dictionary = router.call(
+			"try_open_context",
+			player,
+			fireball_ability
+		) as Dictionary
+		_expect(not bool(fireball_context.get("handled", false)), "ordinary Fireball ignores the context router")
+		_expect(not bool(menu.call("is_context_open")), "switching to Fireball does not open familiar controls")
+
+	caster.call("select_ability", familiar_index, false)
+	_open_with_cast_input(router)
+	_expect(bool(menu.call("is_context_open")), "Cast opens the context when Summon Familiar is selected again")
+	_expect(action_state.is_focus_menu_open, "open global context applies the shared action lock")
+	_expect(Engine.time_scale <= 0.3501, "open global context slows the battlefield")
+	var actions: Array[String] = _string_array(menu.call("get_available_action_ids"))
+	_expect(actions.has("follow"), "familiar context exposes Follow")
+	_expect(actions.has("stay"), "familiar context exposes Stay Here")
+	_expect(actions.has("come_here"), "familiar context exposes Come Here")
+	_expect(actions.has("move_to"), "familiar context exposes Go There")
+	_expect(actions.has("dismiss"), "familiar context exposes Dismiss Familiar")
+	_expect(not actions.has("assist"), "animal context omits unsupported combat actions")
+
+	_expect(bool(menu.call("select_action_by_id", "stay")), "global selection resolves Stay")
 	var commands_before: int = manager.total_commands
-	var released: bool = bool(interface.call("handle_menu_button", false, 0))
-	_expect(released, "releasing the command button commits the selected command")
-	_expect(not bool(interface.call("is_menu_open")), "command wheel closes after release")
-	_expect(not action_state.is_focus_menu_open, "command release restores ordinary player actions")
-	_expect(is_equal_approx(Engine.time_scale, original_time_scale), "command release restores world time")
-	_expect(manager.total_commands == commands_before + 1, "one controller release issues exactly one command")
+	var stay_committed: bool = bool(menu.call("commit_selected_action"))
+	_expect(stay_committed, "Cast-style confirmation commits Stay")
+	_expect(not bool(menu.call("is_context_open")), "context closes after a normal action")
+	_expect(not action_state.is_focus_menu_open, "normal action restores ordinary player actions")
+	_expect(is_equal_approx(Engine.time_scale, original_time_scale), "normal action restores world time")
+	_expect(manager.total_commands == commands_before + 1, "one context confirmation issues exactly one command")
 	var stay_state: Dictionary = manager.get_familiar_command_state()
 	_expect(str(stay_state.get("command_id", "")) == "stay", "Stay reaches the authoritative animal command layer")
 	if familiar is CharacterBody3D:
 		var body := familiar as CharacterBody3D
 		_expect(Vector2(body.velocity.x, body.velocity.z).length() < 0.05, "Stay immediately clears animal follow velocity")
 
-	interface.call("handle_menu_button", true, 0)
-	interface.call("select_command_by_id", "move_to")
-	interface.call("handle_menu_button", false, 0)
-	_expect(bool(interface.call("is_targeting")), "Go There enters aimed world targeting after radial release")
+	_open_with_cast_input(router)
+	menu.call("select_action_by_id", "move_to")
+	menu.call("commit_selected_action")
+	_expect(bool(menu.call("is_targeting")), "Go There enters shared world targeting")
 	var move_target := Vector3(5.0, 0.0, 4.0)
-	_expect(bool(interface.call("confirm_move_to_target", move_target)), "A-style confirmation commits the aimed destination")
-	_expect(not bool(interface.call("is_targeting")), "Go There targeting closes after confirmation")
+	_expect(bool(menu.call("confirm_world_target", move_target)), "Cast-style confirmation commits the aimed destination")
+	_expect(not bool(menu.call("is_targeting")), "world targeting closes after confirmation")
 	var move_state: Dictionary = manager.get_familiar_command_state()
 	_expect(str(move_state.get("command_id", "")) == "move_to", "Go There reaches the authoritative destination command")
 	var saved_destination: Vector3 = move_state.get("destination", Vector3.ZERO) as Vector3
 	_expect(saved_destination.distance_to(move_target) < 0.05, "Go There preserves the confirmed world position")
 
-	interface.call("handle_menu_button", true, 0)
+	_open_with_cast_input(router)
 	var command_before_cancel: String = str(manager.get_familiar_command_state().get("command_id", ""))
-	_expect(bool(interface.call("cancel_interface", "controller_b_cancel")), "B-style cancellation closes the familiar wheel")
-	_expect(not bool(interface.call("is_menu_open")), "cancelled familiar wheel is hidden")
+	_expect(bool(menu.call("cancel_context")), "B-style cancellation closes the global context")
+	_expect(not bool(menu.call("is_context_open")), "cancelled global context is hidden")
 	_expect(str(manager.get_familiar_command_state().get("command_id", "")) == command_before_cancel, "cancel does not mutate the active familiar command")
 
-	if familiar is SummonedBondedAnimalFamiliar:
-		(familiar as SummonedBondedAnimalFamiliar).clear_persistent_bond()
-	manager.dismiss_summon(false)
+	_open_with_cast_input(router)
+	_expect(bool(menu.call("select_action_by_id", "dismiss")), "Dismiss Familiar is selectable")
+	_expect(bool(menu.call("commit_selected_action")), "Dismiss Familiar executes through the global layout")
 	await get_tree().process_frame
-	_expect(not bool(interface.call("is_interface_visible")), "familiar UI disappears when the summon is dismissed")
-	_expect(not bool(interface.call("is_menu_open")), "dismissal cannot leave an orphaned command wheel")
-	_expect(not bool(interface.call("is_targeting")), "dismissal cannot leave orphaned Go There targeting")
+	_expect(manager.get_active_summon() == null, "Dismiss Familiar removes the active summon")
+	_expect(not bool(menu.call("is_interface_visible")), "context status disappears after dismissal")
+	_expect(not bool(menu.call("is_context_open")), "dismissal cannot leave an orphaned context menu")
+	_expect(not bool(menu.call("is_targeting")), "dismissal cannot leave orphaned world targeting")
 
 	await _finish(player, floor, manager)
 
 
-func _validate_controller_bindings() -> void:
-	_expect(_action_has_button(&"familiar_command_menu", JOY_BUTTON_LEFT_STICK), "L3 opens familiar commands")
-	_expect(_action_has_button(&"familiar_command_confirm", JOY_BUTTON_A), "A confirms Go There targeting")
-	_expect(_action_has_button(&"familiar_command_cancel", JOY_BUTTON_B), "B cancels familiar command surfaces")
-	_expect(InputMap.has_action(&"camera_left") and InputMap.has_action(&"camera_right"), "right-stick camera actions remain available for radial selection")
+func _open_with_cast_input(router: Node) -> void:
+	var event := InputEventAction.new()
+	event.action = &"cast_spell"
+	event.pressed = true
+	router.call("_input", event)
 
 
-func _action_has_button(action_name: StringName, button_index: int) -> bool:
-	if not InputMap.has_action(action_name):
-		return false
-	for event: InputEvent in InputMap.action_get_events(action_name):
-		if event is InputEventJoypadButton and (event as InputEventJoypadButton).button_index == button_index:
-			return true
-	return false
+func _find_ability_index(caster: Node, spell_id: String) -> int:
+	var loadout_value: Variant = caster.get("loadout")
+	if not (loadout_value is AbilityLoadout):
+		return -1
+	var loadout: AbilityLoadout = loadout_value as AbilityLoadout
+	for index: int in range(loadout.get_equipped_ability_count()):
+		var ability: AbilityDefinition = loadout.get_equipped_ability(index)
+		if ability != null and ability.get_spell_id() == spell_id:
+			return index
+	return -1
 
 
 func _string_array(value: Variant) -> Array[String]:

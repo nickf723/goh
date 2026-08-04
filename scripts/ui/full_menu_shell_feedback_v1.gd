@@ -1,4 +1,4 @@
-extends "res://scripts/ui/full_menu_shell_progression_v1.gd"
+extends "res://scripts/ui/full_menu_shell_familiar_detail.gd"
 class_name FullMenuShellFeedbackV1
 
 

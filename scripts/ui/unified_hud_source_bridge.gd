@@ -110,12 +110,21 @@ func _apply_responsive_layout() -> void:
 		var support_panel: Control = support_value as Control
 		support_panel.scale = Vector2.ONE
 		support_panel.pivot_offset = Vector2.ZERO
-		support_panel.offset_left = (
-			-maxf(minf(272.0, width * 0.43), 210.0)
-			if compact
-			else (-282.0 if narrow else -300.0)
-		)
-		support_panel.offset_right = -12.0 if compact else -18.0
+		support_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		support_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+		support_panel.clip_contents = true
+		if compact:
+			# Use the available screen width before allowing container minimums to
+			# push the right-anchored card beyond either edge.
+			var compact_support_width: float = minf(
+				272.0,
+				maxf(width - 24.0, 180.0)
+			)
+			support_panel.offset_left = -compact_support_width
+			support_panel.offset_right = -12.0
+		else:
+			support_panel.offset_left = -282.0 if narrow else -300.0
+			support_panel.offset_right = -18.0
 		if compact:
 			support_panel.offset_top = -330.0
 			support_panel.offset_bottom = -210.0
@@ -125,6 +134,15 @@ func _apply_responsive_layout() -> void:
 		else:
 			support_panel.offset_top = -218.0
 			support_panel.offset_bottom = -18.0
+
+	var portrait_value: Variant = unified_hud.get("portrait")
+	if portrait_value is Control:
+		var portrait: Control = portrait_value as Control
+		portrait.custom_minimum_size = (
+			Vector2(72.0, 72.0)
+			if compact
+			else Vector2(92.0, 92.0)
+		)
 
 	if width_changed and unified_hud.has_method("_refresh_mode_banner"):
 		unified_hud.call("_refresh_mode_banner")

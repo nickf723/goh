@@ -67,6 +67,18 @@ func _ready() -> void:
 		call_deferred("_install_command_interface")
 
 
+func _exit_tree() -> void:
+	var roster: Node = get_node_or_null("/root/BondedFamiliarRoster")
+	if roster == null or not is_instance_valid(roster):
+		return
+	var definitions_value: Variant = roster.get("manager_original_definitions")
+	if not definitions_value is Dictionary:
+		return
+	var definitions: Dictionary = (definitions_value as Dictionary).duplicate(true)
+	definitions.erase(get_instance_id())
+	roster.set("manager_original_definitions", definitions)
+
+
 func _process(delta: float) -> void:
 	if cooldown_remaining > 0.0:
 		cooldown_remaining = maxf(cooldown_remaining - delta, 0.0)

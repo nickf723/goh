@@ -14,14 +14,19 @@ class_name QuickItemBeltUI
 var controller: PlayerQuickItemController
 var router: Node
 var refresh_timer: float = 0.0
+var unified_hud_suppressed: bool = false
 
 
 func _ready() -> void:
 	_resolve_bindings()
+	if _suppress_for_unified_hud():
+		return
 	refresh_display()
 
 
 func _process(delta: float) -> void:
+	if _suppress_for_unified_hud():
+		return
 	refresh_timer -= delta
 	if refresh_timer > 0.0:
 		return
@@ -42,7 +47,24 @@ func _resolve_bindings() -> void:
 		router = player.get_node_or_null("PlayerControlRouter")
 
 
+func _suppress_for_unified_hud() -> bool:
+	var player: Node = get_parent()
+	if player == null:
+		unified_hud_suppressed = false
+		return false
+	var player_hud: Node = player.get_node_or_null("PlayerHUDV2")
+	unified_hud_suppressed = (
+		player_hud != null
+		and player_hud.has_method("get_hud_zone")
+	)
+	if unified_hud_suppressed:
+		visible = false
+	return unified_hud_suppressed
+
+
 func refresh_display() -> void:
+	if _suppress_for_unified_hud():
+		return
 	if controller == null or not is_instance_valid(controller):
 		visible = false
 		return
@@ -112,3 +134,10 @@ func set_selected_item_label(slot_index: int) -> void:
 		up_label.modulate = Color(0.48, 0.32, 0.35, 1.0)
 	else:
 		up_label.modulate = Color(0.9, 0.95, 1.0, 1.0)
+
+
+func get_debug_data() -> Dictionary:
+	return {
+		"unified_hud_suppressed": unified_hud_suppressed,
+		"visible": visible,
+	}

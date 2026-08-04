@@ -6,6 +6,7 @@ var progression_hud: Node
 var mirrored_activity_signatures: Dictionary = {}
 var mirrored_sources: Array[String] = []
 var sync_count: int = 0
+var last_layout_width: float = -1.0
 
 
 func _ready() -> void:
@@ -18,6 +19,7 @@ func _process(_delta: float) -> void:
 	_resolve_unified_hud()
 	if unified_hud == null:
 		return
+	_apply_responsive_layout()
 	_suppress_duplicate_special_surface()
 	_sync_progression_feedback()
 
@@ -26,6 +28,35 @@ func _resolve_unified_hud() -> void:
 	if unified_hud != null and is_instance_valid(unified_hud):
 		return
 	unified_hud = get_tree().get_first_node_in_group("unified_hud_shell")
+
+
+func _apply_responsive_layout() -> void:
+	if get_viewport() == null:
+		return
+	var width: float = get_viewport().get_visible_rect().size.x
+	if is_equal_approx(width, last_layout_width):
+		return
+	last_layout_width = width
+	var narrow: bool = width < 1500.0
+	var mode_value: Variant = unified_hud.get("mode_panel")
+	if mode_value is Control:
+		var mode_panel: Control = mode_value as Control
+		var half_width: float = 190.0 if narrow else 250.0
+		mode_panel.offset_left = -half_width
+		mode_panel.offset_right = half_width
+	var activity_value: Variant = unified_hud.get("activity_rail")
+	if activity_value is Control:
+		var activity_rail: Control = activity_value as Control
+		activity_rail.offset_bottom = 300.0 if narrow else 610.0
+	var support_value: Variant = unified_hud.get("support_panel")
+	if support_value is Control:
+		var support_panel: Control = support_value as Control
+		if narrow:
+			support_panel.offset_top = -338.0
+			support_panel.offset_bottom = -218.0
+		else:
+			support_panel.offset_top = -218.0
+			support_panel.offset_bottom = -18.0
 
 
 func _suppress_duplicate_special_surface() -> void:
@@ -131,4 +162,6 @@ func get_debug_data() -> Dictionary:
 		"progression_hud": progression_hud != null and is_instance_valid(progression_hud),
 		"mirrored_sources": mirrored_sources.duplicate(),
 		"sync_count": sync_count,
+		"layout_width": last_layout_width,
+		"narrow_layout": last_layout_width > 0.0 and last_layout_width < 1500.0,
 	}

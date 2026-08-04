@@ -7,7 +7,7 @@ signal records_saved(record_count: int)
 
 const STORE_NODE_NAME: String = "AnimalBondStore"
 const DEFAULT_SAVE_PATH: String = "user://goh_named_animal_bonds.json"
-const STORE_VERSION: int = 1
+const STORE_VERSION: int = 2
 
 var save_path: String = DEFAULT_SAVE_PATH
 var records: Dictionary = {}
@@ -152,6 +152,7 @@ func flush_if_dirty() -> Dictionary:
 
 func _normalize_record(animal_id: String, record: Dictionary) -> Dictionary:
 	var relationship: Dictionary = record.get("relationship", {}) as Dictionary
+	var command: Dictionary = record.get("companion_command", {}) as Dictionary
 	return {
 		"animal_id": animal_id,
 		"animal_name": str(record.get("animal_name", animal_id.get_file().capitalize())),
@@ -169,7 +170,36 @@ func _normalize_record(animal_id: String, record: Dictionary) -> Dictionary:
 		"follow_enabled": bool(record.get("follow_enabled", false)),
 		"help_events": maxi(int(record.get("help_events", 0)), 0),
 		"harm_events": maxi(int(record.get("harm_events", 0)), 0),
+		"companion_command": _normalize_companion_command(command),
 		"updated_at": Time.get_datetime_string_from_system(false, true),
+	}
+
+
+func _normalize_companion_command(command: Dictionary) -> Dictionary:
+	var command_id: String = str(command.get("command_id", "none")).to_lower().strip_edges()
+	if command_id not in ["none", "follow", "stay", "come_here", "move_to"]:
+		command_id = "none"
+	var previous_id: String = str(command.get("previous_command_id", "none")).to_lower().strip_edges()
+	if previous_id not in ["none", "follow", "stay"]:
+		previous_id = "none"
+	return {
+		"command_id": command_id,
+		"previous_command_id": previous_id,
+		"has_anchor": bool(command.get("has_anchor", false)),
+		"anchor": _normalize_vector_dictionary(command.get("anchor", {}) as Dictionary),
+		"has_destination": bool(command.get("has_destination", false)),
+		"destination": _normalize_vector_dictionary(command.get("destination", {}) as Dictionary),
+		"last_completed_command_id": str(command.get("last_completed_command_id", "")),
+		"completion_count": maxi(int(command.get("completion_count", 0)), 0),
+		"sequence": maxi(int(command.get("sequence", 0)), 0),
+	}
+
+
+func _normalize_vector_dictionary(value: Dictionary) -> Dictionary:
+	return {
+		"x": float(value.get("x", 0.0)),
+		"y": float(value.get("y", 0.0)),
+		"z": float(value.get("z", 0.0)),
 	}
 
 

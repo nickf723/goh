@@ -1,9 +1,8 @@
-extends "res://scripts/ui/gameplay_context_hud.gd"
+extends "res://scripts/ui/gameplay_context_hud_unified.gd"
 class_name RecordedObjectStatusHUD
 
 # Compatibility entry point retained for FullMenuDirector. The former
-# Recorded-Object-only panel now installs the shared gameplay context surface,
-# which owns object reproduction, Soul Grasp, and transient familiar feedback.
+# Recorded-Object-only panel now publishes into the unified gameplay HUD.
 
 
 func _ready() -> void:
@@ -19,14 +18,14 @@ func _process(delta: float) -> void:
 	):
 		if panel != null:
 			panel.visible = false
+		if unified_hud != null and unified_hud.has_method("clear_context"):
+			unified_hud.call("clear_context", unified_context_source)
 		return
 	super._process(delta)
 
 
 func _bind_recorded_object_discovery() -> void:
-	var manager: Node = get_tree().get_first_node_in_group(
-		"recorded_object_manager"
-	)
+	var manager: Node = get_tree().get_first_node_in_group("recorded_object_manager")
 	if manager == null or not manager.has_signal("blueprint_recorded"):
 		return
 	var callback := Callable(self, "_on_blueprint_recorded")
@@ -38,39 +37,42 @@ func _on_blueprint_recorded(
 	blueprint_id: String,
 	newly_recorded: bool
 ) -> void:
-	var definition: Dictionary = RecordedObjectCatalogScript.get_definition(
-		blueprint_id
+	var definition: Dictionary = RecordedObjectCatalogScript.get_definition(blueprint_id)
+	var title: String = (
+		str(definition.get("icon", "▣"))
+		+ "  "
+		+ str(definition.get("display_name", blueprint_id.capitalize()))
 	)
 	publish_context(
 		"recorded_blueprint",
 		{
-			"eyebrow": (
-				"BLUEPRINT RECORDED"
-				if newly_recorded
-				else "BLUEPRINT PREPARED"
-			),
-			"title": (
-				str(definition.get("icon", "▣"))
-				+ "  "
-				+ str(definition.get(
-					"display_name",
-					blueprint_id.capitalize()
-				))
-			),
+			"eyebrow": "BLUEPRINT RECORDED" if newly_recorded else "BLUEPRINT PREPARED",
+			"title": title,
 			"state": "Available to the Reproduce Object spell",
 			"controls": "Prepare it in Magic, Items, or the Journal Blueprint record.",
 			"valid": true,
 		},
 		3.0
 	)
+	_resolve_unified_hud()
+	if unified_hud != null and unified_hud.has_method("publish_activity"):
+		unified_hud.call(
+			"publish_activity",
+			"discovery",
+			title,
+			"Recorded object blueprint available.",
+			3.2,
+			"recorded_blueprint:" + blueprint_id,
+			70,
+			newly_recorded,
+			-1,
+			-1
+		)
 
 
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
-	data["manager_ready"] = (
-		get_tree().get_first_node_in_group("recorded_object_manager")
-		!= null
-	)
+	data["manager_ready"] = get_tree().get_first_node_in_group("recorded_object_manager") != null
 	data["shared_placement_suppressed"] = (
 		player != null
 		and is_instance_valid(player)

@@ -16,6 +16,10 @@ func _process(delta: float) -> void:
 	super._process(delta)
 	if not unified_layout_applied:
 		_apply_unified_layout()
+	# WeaponInputBootstrap and the contextual router finish their deferred
+	# presenter swaps on neighboring frames. Keep sweeping the named generated
+	# surfaces so a late legacy panel cannot survive as an orphan under the HUD.
+	_retire_duplicate_generated_surfaces()
 	_apply_mode_presentation()
 
 

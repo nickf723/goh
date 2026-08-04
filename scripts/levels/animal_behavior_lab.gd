@@ -6,25 +6,32 @@ const AnimalScript = preload("res://scripts/animals/generic_animal_actor.gd")
 var player: Node3D
 var animals: Array[GenericAnimalActor] = []
 var selected_index: int = 0
-var threat_mode: bool = false
+var grace_threatening: bool = false
 var overlay_label: Label
 var mode_label: Label
+var posture_toggle: CheckButton
 var forage_positions: Dictionary = {}
 var water_position: Vector3 = Vector3(6.0, 0.15, -6.5)
 var animal_start_positions: Dictionary = {}
+var noise_position: Vector3 = Vector3.ZERO
+var noise_strength: float = 0.0
+var noise_time_remaining: float = 0.0
 
 
 func _ready() -> void:
 	player = get_node_or_null("Player") as Node3D
 	_build_environment()
 	_build_lab()
-	_build_overlay()
 	_spawn_animals()
+	_build_overlay()
 	_select_animal(0)
 	_update_objective()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	noise_time_remaining = maxf(noise_time_remaining - delta, 0.0)
+	if noise_time_remaining <= 0.0:
+		noise_strength = 0.0
 	_update_overlay()
 
 
@@ -32,50 +39,30 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("restart_scene"):
 		_reset_lab()
 		get_viewport().set_input_as_handled()
-		return
-	if not event is InputEventKey:
-		return
-	var key_event := event as InputEventKey
-	if not key_event.pressed or key_event.echo:
-		return
-	match key_event.physical_keycode:
-		KEY_1:
-			_select_animal(0)
-		KEY_2:
-			_select_animal(1)
-		KEY_3:
-			_select_animal(2)
-		KEY_4:
-			_select_animal(3)
-		KEY_TAB:
-			_select_animal((selected_index + 1) % animals.size())
-		KEY_P:
-			threat_mode = not threat_mode
-			_show_message("Player threat mode: " + ("ON" if threat_mode else "OFF"))
-			_force_all_decisions()
-		KEY_H:
-			_set_selected_drive("hunger", 1.0, "Hunger spiked")
-		KEY_F:
-			_set_selected_drive("fear", 1.0, "Fear spiked")
-		KEY_J:
-			_set_selected_drive("social_need", 1.0, "Social need spiked")
-		KEY_K:
-			_set_selected_drive("curiosity", 1.0, "Curiosity spiked")
-		KEY_T:
-			_set_selected_drive("territorial_pressure", 1.0, "Territorial pressure spiked")
-		KEY_C:
-			_clear_selected_drives()
-		_:
-			return
-	get_viewport().set_input_as_handled()
+
+
+func get_animal_grace_target(_animal: GenericAnimalActor) -> Node3D:
+	return player
 
 
 func get_animal_threat_target(_animal: GenericAnimalActor) -> Node3D:
 	return player
 
 
+func is_grace_threatening(_animal: GenericAnimalActor) -> bool:
+	return grace_threatening
+
+
 func is_animal_threat_mode_enabled(_animal: GenericAnimalActor) -> bool:
-	return threat_mode
+	return grace_threatening
+
+
+func get_animal_noise_position(_animal: GenericAnimalActor) -> Vector3:
+	return noise_position
+
+
+func get_animal_noise_strength(_animal: GenericAnimalActor) -> float:
+	return noise_strength if noise_time_remaining > 0.0 else 0.0
 
 
 func get_animal_forage_position(animal: GenericAnimalActor) -> Vector3:
@@ -84,6 +71,19 @@ func get_animal_forage_position(animal: GenericAnimalActor) -> Vector3:
 
 func get_animal_water_position(_animal: GenericAnimalActor) -> Vector3:
 	return water_position
+
+
+func broadcast_animal_alert(
+	source: GenericAnimalActor,
+	position_value: Vector3,
+	severity: float
+) -> void:
+	for animal: GenericAnimalActor in animals:
+		if animal == source or animal.species_id != source.species_id:
+			continue
+		if animal.global_position.distance_to(source.global_position) > 15.0:
+			continue
+		animal.receive_social_alert(position_value, severity)
 
 
 func clamp_animal_position(value: Vector3) -> Vector3:
@@ -169,12 +169,12 @@ func _build_overlay() -> void:
 	canvas.layer = 30
 	add_child(canvas)
 	var panel := PanelContainer.new()
-	panel.position = Vector2(18.0, 84.0)
-	panel.custom_minimum_size = Vector2(470.0, 0.0)
+	panel.position = Vector2(18.0, 78.0)
+	panel.custom_minimum_size = Vector2(510.0, 0.0)
 	canvas.add_child(panel)
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.02, 0.035, 0.06, 0.9)
-	style.border_color = Color(0.28, 0.58, 0.86, 0.7)
+	style.bg_color = Color(0.02, 0.035, 0.06, 0.93)
+	style.border_color = Color(0.28, 0.58, 0.86, 0.75)
 	style.set_border_width_all(2)
 	style.corner_radius_top_left = 10
 	style.corner_radius_top_right = 10
@@ -186,42 +186,100 @@ func _build_overlay() -> void:
 	style.content_margin_bottom = 12.0
 	panel.add_theme_stylebox_override("panel", style)
 	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 7)
 	panel.add_child(box)
 	var title := Label.new()
-	title.text = "ANIMAL PERSONALITY LAB"
-	title.add_theme_font_size_override("font_size", 22)
+	title.text = "ANIMAL PERCEPTION + RELATIONSHIP LAB"
+	title.add_theme_font_size_override("font_size", 21)
 	title.add_theme_color_override("font_color", Color(0.5, 0.84, 1.0))
 	box.add_child(title)
 	mode_label = Label.new()
-	mode_label.add_theme_font_size_override("font_size", 17)
+	mode_label.add_theme_font_size_override("font_size", 16)
 	box.add_child(mode_label)
 	overlay_label = Label.new()
-	overlay_label.add_theme_font_size_override("font_size", 15)
+	overlay_label.add_theme_font_size_override("font_size", 14)
 	overlay_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(overlay_label)
-	var controls := Label.new()
-	controls.text = "1-4 / Tab: select   P: threat mode\nH: hunger   F: fear   J: social   K: curiosity   T: territory\nC: clear selected drives   Restart input: reset lab"
-	controls.add_theme_font_size_override("font_size", 14)
-	controls.add_theme_color_override("font_color", Color(0.74, 0.78, 0.84))
-	box.add_child(controls)
+
+	var selection_row := HBoxContainer.new()
+	box.add_child(selection_row)
+	_add_button(selection_row, "◀ Previous", Callable(self, "_select_relative").bind(-1))
+	_add_button(selection_row, "Next ▶", Callable(self, "_select_relative").bind(1))
+	posture_toggle = CheckButton.new()
+	posture_toggle.text = "Grace threatening posture"
+	posture_toggle.focus_mode = Control.FOCUS_ALL
+	posture_toggle.toggled.connect(_on_posture_toggled)
+	box.add_child(posture_toggle)
+
+	var social_label := Label.new()
+	social_label.text = "Grace interactions"
+	social_label.add_theme_color_override("font_color", Color(0.76, 0.88, 1.0))
+	box.add_child(social_label)
+	var interaction_grid := GridContainer.new()
+	interaction_grid.columns = 4
+	box.add_child(interaction_grid)
+	_add_button(interaction_grid, "Feed", Callable(self, "_interact_selected").bind("feed"))
+	_add_button(interaction_grid, "Soothe", Callable(self, "_interact_selected").bind("soothe"))
+	_add_button(interaction_grid, "Startle", Callable(self, "_interact_selected").bind("startle"))
+	_add_button(interaction_grid, "Make Noise", Callable(self, "_emit_noise"))
+
+	var drive_label := Label.new()
+	drive_label.text = "Debug pressure"
+	drive_label.add_theme_color_override("font_color", Color(0.76, 0.88, 1.0))
+	box.add_child(drive_label)
+	var drive_grid := GridContainer.new()
+	drive_grid.columns = 4
+	box.add_child(drive_grid)
+	_add_button(drive_grid, "Hungry", Callable(self, "_set_selected_drive").bind("hunger", 1.0, "Hunger spiked"))
+	_add_button(drive_grid, "Afraid", Callable(self, "_set_selected_drive").bind("fear", 1.0, "Fear spiked"))
+	_add_button(drive_grid, "Lonely", Callable(self, "_set_selected_drive").bind("social_need", 1.0, "Social need spiked"))
+	_add_button(drive_grid, "Curious", Callable(self, "_set_selected_drive").bind("curiosity", 1.0, "Curiosity spiked"))
+	_add_button(drive_grid, "Territorial", Callable(self, "_set_selected_drive").bind("territorial_pressure", 1.0, "Territorial pressure spiked"))
+	_add_button(drive_grid, "Clear Drives", Callable(self, "_clear_selected_drives"))
+	_add_button(drive_grid, "Reset Lab", Callable(self, "_reset_lab"))
+
+	var hint := Label.new()
+	hint.text = "Buttons are mouse-clickable and controller-focusable. Release the mouse with your normal cursor/menu control when needed."
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.add_theme_font_size_override("font_size", 12)
+	hint.add_theme_color_override("font_color", Color(0.66, 0.72, 0.8))
+	box.add_child(hint)
+
+
+func _add_button(parent: Control, text_value: String, callback: Callable) -> Button:
+	var button := Button.new()
+	button.text = text_value
+	button.focus_mode = Control.FOCUS_ALL
+	button.custom_minimum_size = Vector2(112.0, 34.0)
+	button.pressed.connect(callback)
+	parent.add_child(button)
+	return button
 
 
 func _update_overlay() -> void:
 	if mode_label == null or overlay_label == null:
 		return
-	mode_label.text = "PLAYER THREAT: " + ("ON" if threat_mode else "OFF")
+	mode_label.text = "GRACE POSTURE: " + ("THREATENING" if grace_threatening else "PEACEFUL")
 	mode_label.add_theme_color_override(
 		"font_color",
-		Color(1.0, 0.34, 0.22) if threat_mode else Color(0.42, 1.0, 0.6)
+		Color(1.0, 0.34, 0.22) if grace_threatening else Color(0.42, 1.0, 0.6)
 	)
 	var animal: GenericAnimalActor = _selected_animal()
 	if animal == null:
 		overlay_label.text = "No animal selected."
 		return
+	var perception_data: Dictionary = animal.get_perception_data()
+	var relationship_data: Dictionary = animal.get_relationship_data()
 	overlay_label.text = (
 		"Selected: " + animal.animal_name + " the " + animal.species_id.capitalize()
+		+ "\nRelationship: " + animal.get_relationship_label().capitalize()
+		+ "   Trust " + _signed_percent(float(relationship_data.get("trust", 0.0)))
+		+ "   Familiarity " + _percent(float(relationship_data.get("familiarity", 0.0)))
+		+ "\nSense: " + str(perception_data.get("stimulus_kind", "none")).replace("_", " ").capitalize()
+		+ "   Awareness " + _percent(float(perception_data.get("awareness", 0.0)))
+		+ "   Memory " + str(snappedf(float(perception_data.get("memory_remaining", 0.0)), 0.1)) + "s"
 		+ "\nIntention: " + animal.current_intention_id.capitalize()
-		+ "   Move: " + animal.current_action_id.replace("_", " ").capitalize()
+		+ "   Action: " + animal.current_action_id.replace("_", " ").capitalize()
 		+ "\nHunger " + _percent(animal.get_drive("hunger"))
 		+ "   Fatigue " + _percent(animal.get_drive("fatigue"))
 		+ "   Fear " + _percent(animal.get_drive("fear"))
@@ -229,6 +287,12 @@ func _update_overlay() -> void:
 		+ "   Curiosity " + _percent(animal.get_drive("curiosity"))
 		+ "   Territory " + _percent(animal.get_drive("territorial_pressure"))
 	)
+
+
+func _select_relative(offset: int) -> void:
+	if animals.is_empty():
+		return
+	_select_animal(posmod(selected_index + offset, animals.size()))
 
 
 func _select_animal(index: int) -> void:
@@ -248,11 +312,43 @@ func _selected_animal() -> GenericAnimalActor:
 	return animals[selected_index]
 
 
+func _on_posture_toggled(value: bool) -> void:
+	grace_threatening = value
+	_show_message("Grace posture: " + ("threatening" if value else "peaceful"))
+	_force_all_decisions()
+
+
+func _interact_selected(interaction_id: String) -> void:
+	var animal: GenericAnimalActor = _selected_animal()
+	if animal == null:
+		return
+	var result: Dictionary = animal.interact_with_grace(interaction_id)
+	if bool(result.get("ok", false)):
+		_show_message(
+			interaction_id.capitalize() + " changed " + animal.animal_name
+			+ " to " + animal.get_relationship_label().capitalize()
+		)
+	else:
+		_show_message(
+			"Move closer to " + animal.animal_name + " before using "
+			+ interaction_id.capitalize() + "."
+		)
+
+
+func _emit_noise() -> void:
+	noise_position = player.global_position if player != null else Vector3.ZERO
+	noise_strength = 1.45
+	noise_time_remaining = 0.8
+	_show_message("Grace made a loud disturbance")
+	_force_all_decisions()
+
+
 func _set_selected_drive(drive_id: String, value: float, message: String) -> void:
 	var animal: GenericAnimalActor = _selected_animal()
 	if animal == null:
 		return
 	animal.set_drive(drive_id, value)
+	animal.force_decision()
 	_show_message(message + " for " + animal.animal_name)
 
 
@@ -281,7 +377,11 @@ func _force_all_decisions() -> void:
 
 
 func _reset_lab() -> void:
-	threat_mode = false
+	grace_threatening = false
+	noise_strength = 0.0
+	noise_time_remaining = 0.0
+	if posture_toggle != null:
+		posture_toggle.set_pressed_no_signal(false)
 	for animal: GenericAnimalActor in animals:
 		animal.reset_actor()
 	if player != null:
@@ -289,11 +389,11 @@ func _reset_lab() -> void:
 		if player is CharacterBody3D:
 			(player as CharacterBody3D).velocity = Vector3.ZERO
 	_select_animal(0)
-	_show_message("Animal Behavior Lab reset")
+	_show_message("Animal Perception and Relationship Lab reset")
 
 
 func _update_objective() -> void:
-	var objective: String = "Observe the animals, select one with 1-4, then alter its drives. Press P to make Grace a perceived threat."
+	var objective: String = "Approach the animals peacefully, make noise, or use the lab panel to feed, soothe, startle, and inspect their memory and trust."
 	GameState.set_objective(objective)
 	var game_ui: Node = get_tree().get_first_node_in_group("game_ui")
 	if game_ui != null and game_ui.has_method("set_objective"):
@@ -375,3 +475,8 @@ func _show_message(message: String) -> void:
 
 func _percent(value: float) -> String:
 	return str(int(round(clampf(value, 0.0, 1.0) * 100.0))) + "%"
+
+
+func _signed_percent(value: float) -> String:
+	var amount: int = int(round(clampf(value, -1.0, 1.0) * 100.0))
+	return ("+" if amount >= 0 else "") + str(amount) + "%"

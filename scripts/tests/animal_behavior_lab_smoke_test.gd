@@ -8,6 +8,8 @@ var threat_mode: bool = false
 var threat: Node3D
 var forage_position: Vector3 = Vector3.ZERO
 var water_position: Vector3 = Vector3(5.0, 0.0, 0.0)
+var noise_position: Vector3 = Vector3.ZERO
+var noise_strength: float = 0.0
 
 
 func _ready() -> void:
@@ -17,7 +19,7 @@ func _ready() -> void:
 func run_tests() -> void:
 	_build_floor()
 	threat = Node3D.new()
-	threat.position = Vector3(0.0, 0.5, 1.2)
+	threat.position = Vector3(0.0, 0.5, 8.0)
 	add_child(threat)
 	var animal := AnimalScript.new() as GenericAnimalActor
 	animal.species_id = "sheep"
@@ -29,6 +31,8 @@ func run_tests() -> void:
 	await get_tree().process_frame
 	await get_tree().physics_frame
 	_expect(animal.brain != null, "generic animal creates a MobBrainComponent")
+	_expect(animal.perception != null, "generic animal creates perception memory")
+	_expect(animal.relationship != null, "generic animal creates a Grace relationship")
 	_expect(animal.state_label != null, "generic animal builds visible debug presentation")
 	animal.set_drive("hunger", 1.0)
 	var graze_decision: Dictionary = animal.force_decision()
@@ -37,13 +41,16 @@ func run_tests() -> void:
 	_expect(animal.current_intention_id == "forage", "live actor exposes the Forage intention")
 	_expect(animal.get_drive("hunger") < 1.0, "committing Graze satisfies some hunger")
 
+	threat.position = Vector3(0.0, 0.5, -1.2)
 	threat_mode = true
+	animal.perception.reset()
 	animal.brain.clear_cooldowns()
 	animal.brain.clear_memory()
 	animal.set_drive("fear", 1.0)
 	var distance_before: float = animal.global_position.distance_to(threat.global_position)
 	var flee_decision: Dictionary = animal.force_decision()
-	_expect(str(flee_decision.get("move_id", "")) == "flee", "frightened sheep selects Flee from a live threat")
+	_expect(bool(animal.get_perception_data().get("can_see_target", false)), "sheep sees a close threat in front")
+	_expect(str(flee_decision.get("move_id", "")) == "flee", "frightened sheep selects Flee from a perceived threat")
 	_expect(animal.current_action_id == "flee", "selected Flee becomes a live movement action")
 	for _frame: int in range(24):
 		await get_tree().physics_frame
@@ -53,18 +60,38 @@ func run_tests() -> void:
 	var lab_instance: Node = LabScene.instantiate()
 	_expect(lab_instance != null, "playable Animal Behavior Lab scene instantiates")
 	if lab_instance != null:
+		add_child(lab_instance)
+		await get_tree().process_frame
+		var buttons: Array[Node] = lab_instance.find_children("*", "Button", true, false)
+		_expect(buttons.size() >= 10, "playable lab builds on-screen mouse and controller controls")
 		lab_instance.queue_free()
 	animal.queue_free()
 	await get_tree().process_frame
 	_finish()
 
 
+func get_animal_grace_target(_animal: GenericAnimalActor) -> Node3D:
+	return threat
+
+
 func get_animal_threat_target(_animal: GenericAnimalActor) -> Node3D:
 	return threat
 
 
+func is_grace_threatening(_animal: GenericAnimalActor) -> bool:
+	return threat_mode
+
+
 func is_animal_threat_mode_enabled(_animal: GenericAnimalActor) -> bool:
 	return threat_mode
+
+
+func get_animal_noise_position(_animal: GenericAnimalActor) -> Vector3:
+	return noise_position
+
+
+func get_animal_noise_strength(_animal: GenericAnimalActor) -> float:
+	return noise_strength
 
 
 func get_animal_forage_position(_animal: GenericAnimalActor) -> Vector3:
@@ -73,6 +100,14 @@ func get_animal_forage_position(_animal: GenericAnimalActor) -> Vector3:
 
 func get_animal_water_position(_animal: GenericAnimalActor) -> Vector3:
 	return water_position
+
+
+func broadcast_animal_alert(
+	_source: GenericAnimalActor,
+	_position: Vector3,
+	_severity: float
+) -> void:
+	pass
 
 
 func clamp_animal_position(value: Vector3) -> Vector3:

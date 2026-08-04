@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/summons/summoned_bonded_animal_familiar.gd" id="1_familiar"]
+
+[node name="BondedAnimalFamiliar" type="CharacterBody3D"]
+script = ExtResource("1_familiar")
+animal_name = "Bonded Familiar"
+display_name = "Bonded Familiar"
+species_id = "sheep"
+personality_profile_id = "balanced"
+move_speed = 3.4
+rescued = true
+injured = false
+injury_ratio = 0.0
+floor_snap_length = 0.4
+floor_constant_speed = true

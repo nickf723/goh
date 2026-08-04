@@ -33,11 +33,11 @@ func run_tests() -> void:
 	_expect(bool(sight.get("remembers_target", false)), "seeing Grace creates a target memory")
 	_expect(not first_decision.is_empty(), "perceived Grace still produces a valid decision")
 
-	grace.position = Vector3(0.0, 0.5, 9.0)
-	await get_tree().physics_frame
+	sheep.rotation.y = 0.0
+	grace.global_position = sheep.global_position + Vector3(0.0, 0.0, 4.0)
 	sheep.force_decision()
 	var memory: Dictionary = sheep.get_perception_data()
-	_expect(not bool(memory.get("can_see_target", true)), "sheep loses sight when Grace moves behind it")
+	_expect(not bool(memory.get("can_see_target", true)), "sheep loses sight when Grace enters its rear blind spot")
 	_expect(bool(memory.get("remembers_target", false)), "sheep retains Grace's last known position")
 	_expect(float(memory.get("memory_remaining", 0.0)) > 0.0, "target memory has a visible remaining duration")
 

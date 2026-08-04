@@ -61,7 +61,7 @@ func is_focus_open() -> bool:
 
 
 func handle_focus_action(pressed: bool) -> bool:
-	if is_ground_targeting_active():
+	if is_ground_targeting_active() or _get_active_shared_placement_controller() != null:
 		focus_axis_x_latched = false
 		focus_axis_y_latched = false
 		return true
@@ -73,9 +73,8 @@ func _input(event: InputEvent) -> void:
 		return
 	_resolve_bindings()
 
-	# Manipulation and construction are modal owners. Handle their events before
-	# Focus, quick items, quick-spell cycling, Divine Special, or weapon input can
-	# observe them. Releases are swallowed as well.
+	# Shared placement owns the complete controller grammar. Legacy manager
+	# routing remains below as a compatibility fallback for older labs.
 	if (
 		event is InputEventJoypadButton
 		and _handle_active_manipulation_button(
@@ -108,6 +107,10 @@ func _input(event: InputEvent) -> void:
 func _handle_active_manipulation_button(
 	event: InputEventJoypadButton
 ) -> bool:
+	var shared_placement: Node = _get_active_shared_placement_controller()
+	if shared_placement != null:
+		return bool(shared_placement.call("handle_controller_button", event))
+
 	var artificer: Node = _get_active_artificer_manager()
 	if artificer != null:
 		return _handle_artificer_button(artificer, event)
@@ -120,6 +123,23 @@ func _handle_active_manipulation_button(
 	if soul_controller != null:
 		return _handle_soul_grip_button(soul_controller, event)
 	return false
+
+
+func _get_active_shared_placement_controller() -> Node:
+	var controller: Node = null
+	if actor != null and is_instance_valid(actor):
+		controller = actor.get_node_or_null("SharedPlacementController")
+	if controller == null:
+		controller = get_tree().get_first_node_in_group(
+			"shared_placement_controller"
+		)
+	if controller == null or not is_instance_valid(controller):
+		return null
+	if not controller.has_method("is_placement_active"):
+		return null
+	if not bool(controller.call("is_placement_active")):
+		return null
+	return controller
 
 
 func _get_active_artificer_manager() -> Node:
@@ -352,9 +372,11 @@ func _handle_focus_dpad(event: InputEventJoypadButton) -> bool:
 
 
 func get_input_mode_debug_data() -> Dictionary:
+	var shared_placement: bool = _get_active_shared_placement_controller() != null
 	return {
 		"ground_targeting": is_ground_targeting_active(),
 		"focus_library": is_focus_open(),
+		"shared_placement": shared_placement,
 		"artificer_construction": _get_active_artificer_manager() != null,
 		"recorded_object_manipulation": (
 			_get_active_recorded_object_manager() != null
@@ -363,9 +385,13 @@ func get_input_mode_debug_data() -> Dictionary:
 			_get_active_soul_grip_controller() != null
 		),
 		"right_stick_owner": (
-			"ground_target"
-			if is_ground_targeting_active()
-			else ("focus_library" if is_focus_open() else "camera")
+			"shared_placement_camera"
+			if shared_placement
+			else (
+				"ground_target"
+				if is_ground_targeting_active()
+				else ("focus_library" if is_focus_open() else "camera")
+			)
 		),
 		"optimized_dock_installed": performance_dock_installed,
 	}

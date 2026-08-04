@@ -202,9 +202,11 @@ func _validate_initial_graph() -> void:
 	_expect(director.get_chunk_state("combat") == "LOCKED", "dependent combat chunk starts locked")
 	_expect(director.get_chunk_state("exit") == "LOCKED", "deep dependent chunk starts locked")
 	_expect(director.get_chunk_state("optional_cache") == "LOCKED", "optional dependency remains locked before prerequisite")
-	_expect(scope.get_node("PrepareContent").visible, "active content remains visible")
-	_expect(not scope.get_node("CombatContent").visible, "locked content is hidden")
-	_expect((scope.get_node("CombatContent") as CollisionObject3D).collision_layer == 0, "locked content collision is disabled")
+	var prepare_content := scope.get_node("PrepareContent") as Node3D
+	var combat_content := scope.get_node("CombatContent") as Node3D
+	_expect(prepare_content.visible, "active content remains visible")
+	_expect(not combat_content.visible, "locked content is hidden")
+	_expect((combat_content as CollisionObject3D).collision_layer == 0, "locked content collision is disabled")
 	_expect(gate.is_locked(), "dependency gate starts locked")
 
 
@@ -212,8 +214,9 @@ func _validate_after_prepare() -> void:
 	_expect(director.get_chunk_state("prepare") == "COMPLETED", "signal completes the preparation chunk")
 	_expect(director.get_chunk_state("combat") == "ACTIVE", "combat chunk activates after its dependency")
 	_expect(director.get_chunk_state("optional_cache") == "AVAILABLE", "optional branch becomes available after its dependency")
-	_expect(scope.get_node("CombatContent").visible, "combat content becomes visible on activation")
-	_expect((scope.get_node("CombatContent") as CollisionObject3D).collision_layer != 0, "combat collision restores on activation")
+	var combat_content := scope.get_node("CombatContent") as Node3D
+	_expect(combat_content.visible, "combat content becomes visible on activation")
+	_expect((combat_content as CollisionObject3D).collision_layer != 0, "combat collision restores on activation")
 	_expect(not gate.is_locked(), "dependency gate unlocks when its chunk completes")
 
 

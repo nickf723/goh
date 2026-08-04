@@ -12,7 +12,11 @@ class_name PortraitMedallion
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	custom_minimum_size = Vector2(168.0, 168.0)
+	# A parent surface may deliberately request a compact portrait before the
+	# node enters the tree. Only apply the medallion default when no size was
+	# supplied, otherwise the portrait can force its entire HUD lane off-screen.
+	if custom_minimum_size == Vector2.ZERO:
+		custom_minimum_size = Vector2(168.0, 168.0)
 	queue_redraw()
 
 

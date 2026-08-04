@@ -1,0 +1,58 @@
+name: Familiar utility validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: familiar-utility-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-familiar-utility:
+    name: Import and familiar utility regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project and preserve diagnostics
+        id: import
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          godot --headless --path . --editor --quit > familiar-utility-import.log 2>&1
+          code=$?
+          cat familiar-utility-import.log
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload import diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: familiar-utility-import-log
+          path: familiar-utility-import.log
+          if-no-files-found: error
+
+      - name: Fail when import fails
+        if: steps.import.outputs.exit_code != '0'
+        run: exit 1
+
+      - name: Run familiar utility actions regression
+        run: godot --headless --path . res://scenes/tests/familiar_utility_actions_smoke_test.tscn

@@ -5,13 +5,13 @@ signal context_provider_resolved(provider: Node, ability: AbilityDefinition)
 signal context_open_failed(ability: AbilityDefinition, reason: String)
 
 const AbilityContextMenuScript = preload(
-	"res://scripts/ui/persistent_ability_context_menu.gd"
+	"res://scripts/ui/persistent_ability_context_menu_unified.gd"
 )
 const SharedPlacementControllerScript = preload(
-	"res://scripts/player/player_shared_placement_controller.gd"
+	"res://scripts/player/player_shared_placement_controller_unified.gd"
 )
 const ActiveAbilityRibbonScript = preload(
-	"res://scripts/ui/player_active_ability_ribbon.gd"
+	"res://scripts/ui/player_active_ability_ribbon_unified.gd"
 )
 const RecordedObjectSpellControllerScript = preload(
 	"res://scripts/player/player_recorded_object_spell_controller.gd"
@@ -102,9 +102,7 @@ func open_provider_context(
 	if not context_menu.has_method("open_context"):
 		context_open_failed.emit(ability, "context menu contract missing")
 		return false
-	var opened: bool = bool(
-		context_menu.call("open_context", provider, ability)
-	)
+	var opened: bool = bool(context_menu.call("open_context", provider, ability))
 	if opened:
 		successful_opens += 1
 		last_provider_name = str(provider.name)
@@ -183,16 +181,12 @@ func _get_selected_ability() -> AbilityDefinition:
 func _ensure_context_providers() -> void:
 	if actor == null or not is_instance_valid(actor):
 		return
-	var recorded_provider: Node = actor.get_node_or_null(
-		"RecordedObjectSpellController"
-	)
+	var recorded_provider: Node = actor.get_node_or_null("RecordedObjectSpellController")
 	if recorded_provider == null:
 		recorded_provider = RecordedObjectSpellControllerScript.new()
 		recorded_provider.name = "RecordedObjectSpellController"
 		actor.add_child(recorded_provider)
-	var artificer_provider: Node = actor.get_node_or_null(
-		"ArtificerSpellController"
-	)
+	var artificer_provider: Node = actor.get_node_or_null("ArtificerSpellController")
 	if artificer_provider == null:
 		artificer_provider = ArtificerSpellControllerScript.new()
 		artificer_provider.name = "ArtificerSpellController"
@@ -204,13 +198,8 @@ func _install_context_surfaces() -> void:
 		actor = get_parent() as Node3D
 	if actor == null:
 		return
-	if (
-		shared_placement_controller == null
-		or not is_instance_valid(shared_placement_controller)
-	):
-		var existing_placement: Node = actor.get_node_or_null(
-			"SharedPlacementController"
-		)
+	if shared_placement_controller == null or not is_instance_valid(shared_placement_controller):
+		var existing_placement: Node = actor.get_node_or_null("SharedPlacementController")
 		if existing_placement != null:
 			shared_placement_controller = existing_placement
 		else:
@@ -302,6 +291,7 @@ func get_debug_data() -> Dictionary:
 		"menu_installed": context_menu != null and is_instance_valid(context_menu),
 		"placement_installed": shared_placement_controller != null and is_instance_valid(shared_placement_controller),
 		"ribbon_installed": active_ability_ribbon != null and is_instance_valid(active_ability_ribbon),
+		"unified_surfaces": true,
 		"dpad_navigation": _has_dpad_navigation(),
 		"recorded_provider": actor.get_node_or_null("RecordedObjectSpellController") != null if actor != null else false,
 		"artificer_provider": actor.get_node_or_null("ArtificerSpellController") != null if actor != null else false,

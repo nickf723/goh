@@ -1,7 +1,7 @@
 extends AnimalBehaviorLab
 class_name AnimalBondingLab
 
-const BondedAnimalScript = preload("res://scripts/animals/bonded_animal_actor.gd")
+const BondedAnimalType = preload("res://scripts/animals/bonded_animal_actor.gd")
 
 var bond_store: AnimalBondStore
 var bond_overlay_label: Label
@@ -26,7 +26,7 @@ func _spawn_animal(
 	profile: String,
 	speed: float
 ) -> void:
-	var animal := BondedAnimalScript.new() as BondedAnimalActor
+	var animal := BondedAnimalType.new() as BondedAnimalType
 	animal.animal_name = name_value
 	animal.species_id = species
 	animal.personality_profile_id = profile
@@ -38,7 +38,7 @@ func _spawn_animal(
 
 
 func _interact_selected(interaction_id: String) -> void:
-	var animal: BondedAnimalActor = _selected_bonded_animal()
+	var animal: BondedAnimalType = _selected_bonded_animal()
 	if animal == null:
 		return
 	var result: Dictionary = animal.interact_with_grace(interaction_id)
@@ -141,7 +141,7 @@ func _build_bond_overlay() -> void:
 func _update_bond_overlay() -> void:
 	if bond_overlay_label == null:
 		return
-	var animal: BondedAnimalActor = _selected_bonded_animal()
+	var animal: BondedAnimalType = _selected_bonded_animal()
 	if animal == null:
 		bond_overlay_label.text = "No bonded animal actor selected."
 		return
@@ -162,7 +162,7 @@ func _update_bond_overlay() -> void:
 
 
 func _bond_selected() -> void:
-	var animal: BondedAnimalActor = _selected_bonded_animal()
+	var animal: BondedAnimalType = _selected_bonded_animal()
 	if animal == null:
 		return
 	var result: Dictionary = animal.attempt_bond()
@@ -179,7 +179,7 @@ func _bond_selected() -> void:
 
 
 func _toggle_selected_follow() -> void:
-	var animal: BondedAnimalActor = _selected_bonded_animal()
+	var animal: BondedAnimalType = _selected_bonded_animal()
 	if animal == null:
 		return
 	var result: Dictionary = animal.toggle_follow()
@@ -192,7 +192,7 @@ func _toggle_selected_follow() -> void:
 
 
 func _report_selected_event(event_id: String) -> void:
-	var animal: BondedAnimalActor = _selected_bonded_animal()
+	var animal: BondedAnimalType = _selected_bonded_animal()
 	if animal == null:
 		return
 	var result: Dictionary = animal.report_grace_event(event_id)
@@ -206,8 +206,8 @@ func _save_all_bonds() -> void:
 	if bond_store == null:
 		bond_store = AnimalBondStore.get_or_create(get_tree())
 	for animal: GenericAnimalActor in animals:
-		if animal is BondedAnimalActor:
-			(animal as BondedAnimalActor).persist_named_state(false)
+		if animal is BondedAnimalType:
+			(animal as BondedAnimalType).persist_named_state(false)
 	var result: Dictionary = bond_store.save_to_disk() if bond_store != null else {"ok": false}
 	_show_message(
 		"Saved " + str(result.get("record_count", 0)) + " named animal records."
@@ -221,13 +221,13 @@ func _reload_all_bonds() -> void:
 		bond_store = AnimalBondStore.get_or_create(get_tree())
 	var loaded: bool = bond_store != null and bond_store.load_from_disk()
 	for animal: GenericAnimalActor in animals:
-		if animal is BondedAnimalActor:
-			(animal as BondedAnimalActor).reload_persistent_state()
+		if animal is BondedAnimalType:
+			(animal as BondedAnimalType).reload_persistent_state()
 	_show_message("Reloaded named animal relationships." if loaded else "No saved animal relationships were found.")
 
 
 func _clear_selected_bond() -> void:
-	var animal: BondedAnimalActor = _selected_bonded_animal()
+	var animal: BondedAnimalType = _selected_bonded_animal()
 	if animal == null:
 		return
 	animal.clear_persistent_bond()
@@ -245,6 +245,6 @@ func _ensure_lab_treats(minimum_count: int) -> void:
 		GameState.add_inventory_item("field_treat", missing)
 
 
-func _selected_bonded_animal() -> BondedAnimalActor:
+func _selected_bonded_animal() -> BondedAnimalType:
 	var animal: GenericAnimalActor = _selected_animal()
-	return animal as BondedAnimalActor if animal is BondedAnimalActor else null
+	return animal as BondedAnimalType if animal is BondedAnimalType else null

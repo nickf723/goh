@@ -172,7 +172,7 @@ func _on_context_closed(_committed: bool) -> void:
 
 func _ensure_dpad_navigation_actions() -> void:
 	for raw_action: Variant in CONTEXT_DPAD_ACTIONS.keys():
-		var action: StringName = raw_action as StringName
+		var action := StringName(str(raw_action))
 		var button: int = int(CONTEXT_DPAD_ACTIONS[action])
 		if not InputMap.has_action(action):
 			InputMap.add_action(action, 0.2)
@@ -191,7 +191,7 @@ func _ensure_dpad_navigation_actions() -> void:
 
 func _has_dpad_navigation() -> bool:
 	for raw_action: Variant in CONTEXT_DPAD_ACTIONS.keys():
-		var action: StringName = raw_action as StringName
+		var action := StringName(str(raw_action))
 		var button: int = int(CONTEXT_DPAD_ACTIONS[action])
 		var found: bool = false
 		for event: InputEvent in InputMap.action_get_events(action):

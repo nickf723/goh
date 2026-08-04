@@ -9,6 +9,8 @@ const SpellIcons = preload("res://scripts/ui/spell_icon_factory.gd")
 var equipped_ability_caster: Node
 var equipped_slot_indices: Array[int] = []
 var cursor_slot_indices: Array[int] = []
+var equipped_spell_name: String = "None"
+var equipped_spell_glyph: String = "·"
 var static_refresh_remaining: float = 0.0
 var fallback_poll_remaining: float = 0.0
 var slots_dirty: bool = false
@@ -124,6 +126,11 @@ func _refresh_all_slots() -> void:
 	var rows: Array = rows_value as Array
 	var current_ability_index: int = -1
 	var loadout: AbilityLoadout = null
+	var equipped_entry: Dictionary = {
+		"name": "None",
+		"spell_id": "",
+		"element": "neutral",
+	}
 	if equipped_ability_caster != null and is_instance_valid(equipped_ability_caster):
 		current_ability_index = int(
 			equipped_ability_caster.get("current_ability_index")
@@ -131,6 +138,29 @@ func _refresh_all_slots() -> void:
 		var loadout_value: Variant = equipped_ability_caster.get("loadout")
 		if loadout_value is AbilityLoadout:
 			loadout = loadout_value as AbilityLoadout
+			var current_ability: AbilityDefinition = loadout.get_equipped_ability(
+				current_ability_index
+			)
+			if current_ability != null:
+				equipped_entry = SpellIcons.entry_from_ability(
+					current_ability,
+					current_ability_index,
+					true
+				)
+	equipped_spell_name = str(equipped_entry.get("name", "None"))
+	equipped_spell_glyph = SpellIcons.get_glyph(equipped_entry)
+	if belt_hint_label != null:
+		belt_hint_label.text = (
+			"EQUIPPED  "
+			+ equipped_spell_glyph
+			+ " "
+			+ _compact_name(equipped_spell_name, 24)
+			+ "   •   D← / D→ QUICK SPELLS   •   1–0 SELECT"
+		)
+		belt_hint_label.add_theme_color_override(
+			"font_color",
+			Color(1.0, 0.72, 0.24, 0.98)
+		)
 	equipped_slot_indices.clear()
 	cursor_slot_indices.clear()
 	for slot_index: int in range(slot_labels.size()):
@@ -384,6 +414,8 @@ func get_debug_data() -> Dictionary:
 	data["static_refresh_interval"] = static_refresh_interval
 	data["equipped_slot_indices"] = equipped_slot_indices.duplicate()
 	data["cursor_slot_indices"] = cursor_slot_indices.duplicate()
+	data["equipped_spell_name"] = equipped_spell_name
+	data["equipped_spell_glyph"] = equipped_spell_glyph
 	data["equipped_ability_index"] = (
 		int(equipped_ability_caster.get("current_ability_index"))
 		if equipped_ability_caster != null

@@ -114,9 +114,11 @@ func run_tests() -> void:
 	_expect(str(loaded_data.get("command_id", "")) == "follow", "most recently saved command is restored")
 	animal.issue_stay_command(saved_anchor, true)
 	animal.issue_follow_command(false)
+	if animal.bond_store != null:
+		animal.bond_store.load_from_disk()
 	animal.reload_persistent_state()
 	loaded_data = animal.get_companion_command_data()
-	_expect(str(loaded_data.get("command_id", "")) == "stay", "persistent Stay survives an unsaved temporary command change")
+	_expect(str(loaded_data.get("command_id", "")) == "stay", "persistent Stay survives an unflushed temporary command change")
 	var restored_anchor: Vector3 = loaded_data.get("anchor", Vector3.ZERO) as Vector3
 	_expect(restored_anchor.distance_to(saved_anchor) < 0.05, "persistent Stay anchor round-trips through the bond store")
 

@@ -2,6 +2,7 @@ extends "res://scripts/ui/quick_spell_belt_performance.gd"
 class_name QuickSpellBeltUnified
 
 var unified_layout_applied: bool = false
+var retired_duplicate_surface_count: int = 0
 
 
 func _finish_setup() -> void:
@@ -36,6 +37,7 @@ func _build_special_menu() -> void:
 func _apply_unified_layout() -> void:
 	if hud == null or dock_panel == null:
 		return
+	_retire_duplicate_generated_surfaces()
 	var target_parent: Control = hud.root
 	if hud.has_method("get_hud_zone"):
 		var zone_value: Variant = hud.call("get_hud_zone", "action_bar")
@@ -93,6 +95,27 @@ func _apply_unified_layout() -> void:
 	_align_focus_panel()
 
 
+func _retire_duplicate_generated_surfaces() -> void:
+	if hud == null or hud.root == null:
+		return
+	_retire_duplicate_surface("PermanentDPadCommandDock", dock_panel)
+	_retire_duplicate_surface("DPadUpItemMenu", item_menu_panel)
+	_retire_duplicate_surface("DPadDownSpecialMenu", special_menu_panel)
+
+
+func _retire_duplicate_surface(surface_name: String, current_surface: Control) -> void:
+	if hud == null or hud.root == null:
+		return
+	for candidate: Node in hud.root.find_children(surface_name, "", true, false):
+		if candidate == current_surface:
+			continue
+		var parent: Node = candidate.get_parent()
+		if parent != null:
+			parent.remove_child(candidate)
+		candidate.queue_free()
+		retired_duplicate_surface_count += 1
+
+
 func _reparent_overlay_to_hud(panel: PanelContainer) -> void:
 	if hud == null or hud.root == null or panel == null:
 		return
@@ -144,4 +167,5 @@ func get_debug_data() -> Dictionary:
 		if dock_panel != null and dock_panel.get_parent() != null
 		else "none"
 	)
+	data["retired_duplicate_surfaces"] = retired_duplicate_surface_count
 	return data

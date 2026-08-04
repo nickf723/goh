@@ -194,13 +194,6 @@ func get_debug_data() -> Dictionary:
 	for row: Dictionary in dock_rows:
 		if bool(row.get("visible", false)) and float(row.get("alpha", 0.0)) > 0.01:
 			visible_docks += 1
-	if visible_docks != 1:
-		print(
-			"UNIFIED_DOCK_HIERARCHY_DEBUG current=",
-			str(dock_panel.get_path()) if dock_panel != null else "none",
-			" rows=",
-			dock_rows
-		)
 	data["unified_layout"] = unified_layout_applied
 	data["dock_parent_zone"] = (
 		str(dock_panel.get_parent().name)

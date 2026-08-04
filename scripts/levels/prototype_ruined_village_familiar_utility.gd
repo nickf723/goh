@@ -34,7 +34,7 @@ func _build_familiar_utility_route() -> void:
 
 	var route_label := Label3D.new()
 	route_label.name = "FamiliarUtilityRouteLabel"
-	route_label.position = Vector3(-3.5, 7.1, 9.0)
+	route_label.position = Vector3(-7.0, 7.1, 14.0)
 	route_label.text = "FAMILIAR UTILITY ROUTE\nAim Go There at marked objects"
 	route_label.font_size = 25
 	route_label.pixel_size = 0.0062
@@ -47,20 +47,20 @@ func _build_familiar_utility_route() -> void:
 func _build_waykeeper_plate() -> void:
 	waykeeper_gate = _create_utility_box(
 		"WaykeeperGate",
-		Vector3(-3.5, 4.45, 4.0),
+		Vector3(-7.0, 4.45, 7.0),
 		Vector3(5.8, 2.8, 0.55),
 		Color(0.28, 0.22, 0.14)
 	)
 	_create_utility_box(
 		"WaykeeperPlateVisual",
-		Vector3(-3.5, 3.18, 9.0),
+		Vector3(-7.0, 3.18, 14.0),
 		Vector3(2.1, 0.16, 2.1),
 		Color(0.28, 0.82, 0.62),
 		false
 	)
 	waykeeper_plate = FamiliarTaskReceiverScript.new() as FamiliarTaskReceiver
 	waykeeper_plate.name = "WaykeeperPlate"
-	waykeeper_plate.position = Vector3(-3.5, 3.25, 9.0)
+	waykeeper_plate.position = Vector3(-7.0, 3.25, 14.0)
 	waykeeper_plate.task_id = "hold"
 	waykeeper_plate.task_key = UTILITY_TASK_PREFIX + "waykeeper_plate"
 	waykeeper_plate.display_name = "Waykeeper Plate"
@@ -77,7 +77,7 @@ func _build_waykeeper_plate() -> void:
 func _build_ram_barricade() -> void:
 	ram_barricade = _create_utility_box(
 		"RamBarricade",
-		Vector3(8.6, 7.35, -39.2),
+		Vector3(17.0, 7.25, -43.0),
 		Vector3(5.6, 2.5, 0.9),
 		Color(0.42, 0.2, 0.08)
 	)
@@ -97,7 +97,7 @@ func _build_ram_barricade() -> void:
 
 	ram_receiver = FamiliarTaskReceiverScript.new() as FamiliarTaskReceiver
 	ram_receiver.name = "RamBarricadeTask"
-	ram_receiver.position = Vector3(8.6, 6.35, -37.9)
+	ram_receiver.position = Vector3(17.0, 6.25, -41.5)
 	ram_receiver.task_id = "ram"
 	ram_receiver.task_key = UTILITY_TASK_PREFIX + "ram_barricade"
 	ram_receiver.display_name = "Collapsed Timber"

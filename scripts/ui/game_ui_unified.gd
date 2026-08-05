@@ -2,7 +2,7 @@ extends "res://scripts/ui/game_ui_spell_icons_resolved.gd"
 class_name GameUIUnified
 
 const UnifiedHUDSourceBridgeScript = preload(
-	"res://scripts/ui/unified_hud_source_bridge.gd"
+	"res://scripts/ui/unified_hud_source_bridge_budgeted.gd"
 )
 
 var unified_objective_text: String = ""
@@ -16,6 +16,7 @@ func _ready() -> void:
 	if objective_label != null:
 		objective_label.visible = false
 	_install_source_bridge()
+	set_process(true)
 	call_deferred("_sync_unified_objective")
 
 
@@ -24,9 +25,15 @@ func _process(delta: float) -> void:
 	if hud_sync_remaining > 0.0:
 		return
 	hud_sync_remaining = 0.25
+	var shell: Node = _get_unified_hud()
+	if shell == null:
+		return
 	_sync_unified_objective()
 	if unified_prompt_text != "":
 		_sync_unified_prompt()
+	# Objective and prompt changes already push directly. Polling is needed only
+	# while the player-owned HUD is still being installed during scene startup.
+	set_process(false)
 
 
 func set_objective(text: String) -> void:
@@ -35,6 +42,9 @@ func set_objective(text: String) -> void:
 	if objective_label != null:
 		objective_label.visible = false
 	_sync_unified_objective()
+	if _get_unified_hud() == null:
+		set_process(true)
+		hud_sync_remaining = 0.0
 
 
 func show_prompt(text: String) -> void:
@@ -42,6 +52,8 @@ func show_prompt(text: String) -> void:
 	unified_prompt_text = text.strip_edges()
 	var shell: Node = _get_unified_hud()
 	if shell == null:
+		set_process(true)
+		hud_sync_remaining = 0.0
 		return
 	prompt_label.visible = false
 	_sync_unified_prompt()
@@ -144,4 +156,5 @@ func get_unified_game_ui_debug_data() -> Dictionary:
 		"hud_connected": _get_unified_hud() != null,
 		"source_bridge": source_bridge != null and is_instance_valid(source_bridge),
 		"legacy_objective_hidden": objective_label != null and not objective_label.visible,
+		"startup_polling": is_processing(),
 	}

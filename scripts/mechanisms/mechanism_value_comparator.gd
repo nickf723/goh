@@ -37,10 +37,6 @@ func _ready() -> void:
 	super._ready()
 
 
-func _on_sources_ready() -> void:
-	_evaluate_source_states()
-
-
 func _on_source_state_changed(
 	_source_id: String,
 	_previous_active: bool,
@@ -212,7 +208,6 @@ func reset_target() -> void:
 	evaluation_count = 0
 	last_comparison_summary = "reset"
 	super.reset_target()
-	_evaluate_source_states()
 
 
 func get_debug_data() -> Dictionary:

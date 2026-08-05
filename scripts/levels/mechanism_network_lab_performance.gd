@@ -82,6 +82,16 @@ func _refresh_logic_presentation(logic: MechanismLogicNode) -> void:
 			detail = str(logic.counter_value) + "/" + str(logic.counter_target)
 		MechanismLogicNode.Operation.TIMER:
 			detail = str(snappedf(logic.timer_remaining, 0.1)) + "s"
+		MechanismLogicNode.Operation.TOGGLE:
+			detail = "stored " + ("1" if logic.memory_active else "0")
+		MechanismLogicNode.Operation.SET_RESET:
+			detail = "stored " + ("1" if logic.memory_active else "0")
+		MechanismLogicNode.Operation.SEQUENCE:
+			var sequence_length: int = logic.get_normalized_sequence_source_ids().size()
+			detail = str(logic.sequence_index) + "/" + str(sequence_length)
+			var expected_source_id: String = logic.get_expected_sequence_source_id()
+			if expected_source_id != "":
+				detail += " • next " + expected_source_id.to_upper()
 		_:
 			detail = str(logic.get_active_source_count()) + "/" + str(logic.get_bound_source_count())
 	var next_text: String = (
@@ -120,7 +130,7 @@ func _refresh_network_readout() -> void:
 		+ "Inputs " + str(input_nodes.size() - 1)
 		+ "   Logic " + str(active_logic) + "/" + str(logic_nodes.size())
 		+ "   Outputs " + str(output_nodes.size())
-		+ "\nFire sensors accept Fire and reset with Water • F8 resets lab"
+		+ "\nBoolean • timing • memory • ordered sequences • F8 resets lab"
 	)
 	if readout_text_cache == next_text:
 		presentation_skip_count += 1

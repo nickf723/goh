@@ -16,6 +16,7 @@
 [ext_resource type="Material" path="res://art/materials/prototype/exit_gold_glow.tres" id="14_gold"]
 [ext_resource type="Material" path="res://art/materials/prototype/mana_cyan_glow.tres" id="15_mana"]
 [ext_resource type="PackedScene" path="res://scenes/environment/church/church_boss_chamber_dressing_v1.tscn" id="16_dressing"]
+[ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator.gd" id="17_regen"]
 
 [sub_resource type="BoxShape3D" id="Shape_floor"]
 size = Vector3(20, 1, 58)
@@ -47,16 +48,24 @@ size = Vector3(3.2, 0.16, 3.2)
 [sub_resource type="BoxMesh" id="Mesh_exit_pad"]
 size = Vector3(4.8, 0.18, 4.8)
 
-[node name="PrototypeChurchTrialBossFinale" type="Node3D"]
+[node name="PrototypeChurchTrialBossFinale" type="Node3D" groups=["lab_resource_regeneration"]]
 script = ExtResource("1_director")
-opening_objective = "Rest at the Armor Trial Bed, defeat the Animated Armor, claim the sigil, then leave the trial."
-opening_message = "Perception found the path. Resolve must now survive the judge waiting ahead."
+opening_objective = "Break the armor's stance, punish the exposed core, and adapt to each judgment color."
+opening_message = "Prismatic Judgment test chamber: mana refills on entry and regenerates continuously."
 add_reward_altar = true
 reward_altar_position = Vector3(0, 0.15, 35)
 enable_dev_save_reset = false
+add_chamber_of_accord = false
 add_sound_transition = false
 
 [node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="LabResourceRegenerator" type="Node" parent="."]
+script = ExtResource("17_regen")
+mana_per_second = 18.0
+stamina_per_second = 0.0
+focus_per_second = 0.0
+refill_on_ready = true
 
 [node name="FocusTime" type="Node" parent="."]
 script = ExtResource("4_focus")

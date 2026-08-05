@@ -17,7 +17,13 @@ var application_count: int = 0
 func _ready() -> void:
 	evaluate_sources_as_or = true
 	super._ready()
-	call_deferred("resolve_target")
+	call_deferred("_resolve_and_apply_target")
+
+
+func _resolve_and_apply_target() -> void:
+	resolve_target()
+	if apply_on_ready:
+		apply_target_state()
 
 
 func resolve_target() -> Node:
@@ -27,8 +33,6 @@ func resolve_target() -> Node:
 		target_node = get_node_or_null(target_path)
 		if target_node == null and get_parent() != null:
 			target_node = get_parent().get_node_or_null(target_path)
-	if apply_on_ready and target_node != null:
-		apply_target_state()
 	return target_node
 
 

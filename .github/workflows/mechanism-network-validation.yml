@@ -8,6 +8,7 @@ on:
       - "scripts/mechanisms/**"
       - "scenes/mechanisms/**"
       - "scripts/levels/mechanism_network_lab.gd"
+      - "scripts/levels/mechanism_network_lab_complete.gd"
       - "scenes/levels/prototypes/prototype_mechanism_network_lab_v1.tscn"
       - "scripts/tests/mechanism_network_smoke_test.gd"
       - "scenes/tests/mechanism_network_smoke_test.tscn"

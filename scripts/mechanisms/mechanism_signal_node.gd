@@ -75,6 +75,9 @@ func bind_source(source: Node) -> bool:
 	source_nodes[source_id] = source
 	source_states[source_id] = _read_source_active(source)
 	source_packets[source_id] = _read_source_packet(source)
+	if initialized:
+		_evaluate_source_states()
+		mechanism_sources_bound.emit(source_nodes.size())
 	return true
 
 
@@ -89,15 +92,21 @@ func unbind_source(source: Node) -> void:
 	source_nodes.erase(source_id)
 	source_states.erase(source_id)
 	source_packets.erase(source_id)
+	if initialized:
+		_evaluate_source_states()
+		mechanism_sources_bound.emit(source_nodes.size())
 
 
 func _disconnect_all_sources() -> void:
+	var was_initialized: bool = initialized
+	initialized = false
 	for source_value: Variant in source_nodes.values().duplicate():
 		if source_value is Node:
 			unbind_source(source_value as Node)
 	source_nodes.clear()
 	source_states.clear()
 	source_packets.clear()
+	initialized = was_initialized
 
 
 func set_mechanism_active(
@@ -186,7 +195,7 @@ func _on_source_state_changed(
 
 
 func _evaluate_source_states() -> void:
-	if not evaluate_sources_as_or or source_states.is_empty():
+	if not evaluate_sources_as_or:
 		return
 	set_mechanism_active(get_active_source_count() > 0, {
 		"reason": "source_evaluation",

@@ -13,6 +13,7 @@ on:
       - "scripts/levels/mechanism_network_lab_performance.gd"
       - "scripts/levels/mechanism_network_lab_soul_weights.gd"
       - "scripts/levels/mechanism_network_lab_routing.gd"
+      - "scripts/levels/mechanism_network_lab_priority_decoder.gd"
       - "scripts/mechanisms/mechanism_signal_node.gd"
       - "scripts/mechanisms/mechanism_output_adapter.gd"
       - "scripts/mechanisms/pressure_plate_switch.gd"
@@ -22,6 +23,8 @@ on:
       - "scripts/mechanisms/mechanism_selector_source.gd"
       - "scripts/mechanisms/mechanism_router_node.gd"
       - "scripts/mechanisms/mechanism_multiplexer_node.gd"
+      - "scripts/mechanisms/mechanism_priority_selector.gd"
+      - "scripts/mechanisms/mechanism_decoder_node.gd"
       - "scripts/mechanisms/mechanism_sliding_gate.gd"
       - "scripts/mechanisms/mechanism_indicator.gd"
       - "scripts/mechanisms/mechanism_element_sensor.gd"
@@ -37,6 +40,8 @@ on:
       - "scenes/tests/mechanism_soul_weight_smoke_test.tscn"
       - "scripts/tests/mechanism_routing_smoke_test.gd"
       - "scenes/tests/mechanism_routing_smoke_test.tscn"
+      - "scripts/tests/mechanism_priority_decoder_smoke_test.gd"
+      - "scenes/tests/mechanism_priority_decoder_smoke_test.tscn"
       - ".github/workflows/runtime-performance-validation.yml"
   workflow_dispatch:
 
@@ -99,6 +104,12 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/mechanism_routing_smoke_test.tscn 2>&1 | tee mechanism-routing-test.log
 
+      - name: Run priority and decoder regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/mechanism_priority_decoder_smoke_test.tscn 2>&1 | tee mechanism-priority-decoder-test.log
+
       - name: Run unified HUD regression
         shell: bash
         run: |
@@ -123,6 +134,7 @@ jobs:
             mechanism-value-test.log
             mechanism-soul-weight-test.log
             mechanism-routing-test.log
+            mechanism-priority-decoder-test.log
             hud-test.log
             lab-resource-test.log
           if-no-files-found: ignore

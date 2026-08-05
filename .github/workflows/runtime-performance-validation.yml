@@ -8,14 +8,23 @@ on:
       - "scripts/performance/**"
       - "scripts/ui/game_ui_unified.gd"
       - "scripts/ui/unified_hud_source_bridge_budgeted.gd"
+      - "scripts/levels/mechanism_network_lab_value.gd"
       - "scripts/levels/mechanism_network_lab_performance.gd"
+      - "scripts/mechanisms/mechanism_signal_node.gd"
+      - "scripts/mechanisms/mechanism_output_adapter.gd"
+      - "scripts/mechanisms/pressure_plate_switch.gd"
+      - "scripts/mechanisms/mechanism_value_comparator.gd"
+      - "scripts/mechanisms/mechanism_value_elevator.gd"
       - "scripts/mechanisms/mechanism_sliding_gate.gd"
       - "scripts/mechanisms/mechanism_indicator.gd"
       - "scripts/mechanisms/mechanism_element_sensor.gd"
+      - "scenes/mechanisms/mechanism_value_elevator.tscn"
       - "scenes/ui/game_ui.tscn"
       - "scenes/levels/prototypes/prototype_mechanism_network_lab_v1.tscn"
       - "scripts/tests/runtime_performance_foundation_smoke_test.gd"
       - "scenes/tests/runtime_performance_foundation_smoke_test.tscn"
+      - "scripts/tests/mechanism_value_signal_smoke_test.gd"
+      - "scenes/tests/mechanism_value_signal_smoke_test.tscn"
       - ".github/workflows/runtime-performance-validation.yml"
   workflow_dispatch:
 
@@ -60,6 +69,12 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/mechanism_network_smoke_test.tscn 2>&1 | tee mechanism-test.log
 
+      - name: Run mechanism value regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/mechanism_value_signal_smoke_test.tscn 2>&1 | tee mechanism-value-test.log
+
       - name: Run unified HUD regression
         shell: bash
         run: |
@@ -81,6 +96,7 @@ jobs:
             performance-import.log
             performance-test.log
             mechanism-test.log
+            mechanism-value-test.log
             hud-test.log
             lab-resource-test.log
           if-no-files-found: ignore

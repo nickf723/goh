@@ -22,6 +22,7 @@ on:
       - "scripts/tests/lab_resource_regenerator_smoke_test.gd"
       - "scenes/tests/lab_resource_regenerator_smoke_test.tscn"
       - "docs/animated_armor_prismatic_judgment_v1_test.md"
+      - "docs/church_trial_vertical_slice_test.md"
       - ".github/workflows/animated-armor-prismatic-validation.yml"
   workflow_dispatch:
 
@@ -58,7 +59,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . --quit-after 5 res://scenes/levels/prototypes/prototype_church_trial_boss_finale_v1.tscn 2>&1 | tee prismatic-finale-startup.log
+          godot --headless --path . res://scenes/levels/prototypes/prototype_church_trial_boss_finale_v1.tscn --quit-after 5 2>&1 | tee prismatic-finale-startup.log
 
       - name: Run Prismatic Judgment regression
         shell: bash

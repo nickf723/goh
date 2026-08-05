@@ -1,6 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://j44g36yeu58k"]
+[gd_scene load_steps=5 format=3 uid="uid://j44g36yeu58k"]
 
 [ext_resource type="Script" path="res://scripts/ui/game_ui_unified.gd" id="1_dcmab"]
+[ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator_installer.gd" id="2_lab"]
 
 [sub_resource type="StyleBoxFlat" id="MessageStyle"]
 bg_color = Color(0.02, 0.025, 0.04, 0.86)
@@ -36,6 +37,9 @@ content_margin_bottom = 20.0
 
 [node name="GameUI" type="CanvasLayer" unique_id=1997845998]
 script = ExtResource("1_dcmab")
+
+[node name="LabResourceRegeneratorInstaller" type="Node" parent="."]
+script = ExtResource("2_lab")
 
 [node name="ObjectiveLabel" type="Label" parent="." unique_id=787688870]
 anchors_preset = 1

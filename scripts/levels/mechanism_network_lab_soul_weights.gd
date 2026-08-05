@@ -22,7 +22,7 @@ func _ready() -> void:
 func _upgrade_generated_weight_blocks() -> void:
 	var candidates: Array[Node] = get_tree().get_nodes_in_group(
 		"mechanism_weights"
-	).duplicate()
+	)
 	for candidate: Node in candidates:
 		if not candidate is RigidBody3D or not is_ancestor_of(candidate):
 			continue
@@ -36,7 +36,7 @@ func _upgrade_rigid_weight(legacy_body: RigidBody3D) -> void:
 	if parent == null:
 		return
 
-	var original_name: String = legacy_body.name
+	var original_name: String = str(legacy_body.name)
 	var original_transform: Transform3D = legacy_body.transform
 	var original_layer: int = legacy_body.collision_layer
 	var original_mask: int = legacy_body.collision_mask

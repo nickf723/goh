@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://j44g36yeu58k"]
+[gd_scene load_steps=6 format=3 uid="uid://j44g36yeu58k"]
 
 [ext_resource type="Script" path="res://scripts/ui/game_ui_unified.gd" id="1_dcmab"]
 [ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator_installer.gd" id="2_lab"]
+[ext_resource type="Script" path="res://scripts/performance/runtime_performance_monitor.gd" id="3_perf"]
 
 [sub_resource type="StyleBoxFlat" id="MessageStyle"]
 bg_color = Color(0.02, 0.025, 0.04, 0.86)
@@ -40,6 +41,16 @@ script = ExtResource("1_dcmab")
 
 [node name="LabResourceRegeneratorInstaller" type="Node" parent="."]
 script = ExtResource("2_lab")
+
+[node name="RuntimePerformanceMonitor" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_perf")
 
 [node name="ObjectiveLabel" type="Label" parent="." unique_id=787688870]
 anchors_preset = 1

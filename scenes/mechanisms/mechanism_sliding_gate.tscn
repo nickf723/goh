@@ -1,0 +1,72 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/mechanisms/mechanism_sliding_gate.gd" id="1_gate"]
+
+[sub_resource type="StandardMaterial3D" id="Material_frame"]
+albedo_color = Color(0.12, 0.14, 0.18, 1)
+metallic = 0.78
+roughness = 0.36
+
+[sub_resource type="StandardMaterial3D" id="Material_gate"]
+albedo_color = Color(0.24, 0.36, 0.48, 1)
+metallic = 0.62
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.02, 0.12, 0.24, 1)
+emission_energy_multiplier = 0.8
+
+[sub_resource type="BoxShape3D" id="Shape_gate"]
+size = Vector3(4.2, 3.2, 0.5)
+
+[sub_resource type="BoxMesh" id="Mesh_gate"]
+size = Vector3(4.2, 3.2, 0.36)
+
+[sub_resource type="BoxMesh" id="Mesh_pillar"]
+size = Vector3(0.55, 4.2, 0.75)
+
+[sub_resource type="BoxMesh" id="Mesh_top"]
+size = Vector3(5.4, 0.55, 0.75)
+
+[sub_resource type="BoxMesh" id="Mesh_base"]
+size = Vector3(5.6, 0.3, 0.9)
+
+[node name="MechanismSlidingGate" type="StaticBody3D"]
+script = ExtResource("1_gate")
+display_name = "Signal Gate"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 1.75, 0)
+shape = SubResource("Shape_gate")
+
+[node name="GateVisual" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.75, 0)
+material_override = SubResource("Material_gate")
+mesh = SubResource("Mesh_gate")
+
+[node name="LeftFrame" type="MeshInstance3D" parent="."]
+position = Vector3(-2.55, 2.05, 0)
+material_override = SubResource("Material_frame")
+mesh = SubResource("Mesh_pillar")
+
+[node name="RightFrame" type="MeshInstance3D" parent="."]
+position = Vector3(2.55, 2.05, 0)
+material_override = SubResource("Material_frame")
+mesh = SubResource("Mesh_pillar")
+
+[node name="TopFrame" type="MeshInstance3D" parent="."]
+position = Vector3(0, 4.05, 0)
+material_override = SubResource("Material_frame")
+mesh = SubResource("Mesh_top")
+
+[node name="BaseFrame" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.15, 0)
+material_override = SubResource("Material_frame")
+mesh = SubResource("Mesh_base")
+
+[node name="StateLabel" type="Label3D" parent="."]
+position = Vector3(0, 4.75, 0)
+text = "SIGNAL GATE\nCLOSED"
+font_size = 21
+pixel_size = 0.006
+billboard = 1
+outline_size = 6

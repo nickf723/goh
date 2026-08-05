@@ -1,0 +1,37 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/mechanisms/mechanism_indicator.gd" id="1_indicator"]
+
+[sub_resource type="StandardMaterial3D" id="Material_frame"]
+albedo_color = Color(0.09, 0.11, 0.16, 1)
+metallic = 0.75
+roughness = 0.34
+
+[sub_resource type="BoxMesh" id="Mesh_frame"]
+size = Vector3(1.15, 1.15, 0.28)
+
+[sub_resource type="SphereMesh" id="Mesh_glow"]
+radius = 0.36
+height = 0.72
+radial_segments = 20
+rings = 10
+
+[node name="MechanismIndicator" type="Node3D"]
+script = ExtResource("1_indicator")
+
+[node name="Frame" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.75, 0)
+material_override = SubResource("Material_frame")
+mesh = SubResource("Mesh_frame")
+
+[node name="Glow" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.75, -0.2)
+mesh = SubResource("Mesh_glow")
+
+[node name="StateLabel" type="Label3D" parent="."]
+position = Vector3(0, 1.7, 0)
+text = "SIGNAL INDICATOR\nINACTIVE"
+font_size = 19
+pixel_size = 0.006
+billboard = 1
+outline_size = 6

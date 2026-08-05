@@ -48,6 +48,7 @@ var initial_hazard_states: Dictionary = {}
 func _ready() -> void:
 	protect_grace()
 	capture_initial_state()
+	configure_hazards()
 	configure_lanes()
 
 	# Enemy brains create their HUDs during child _ready() calls. Refresh all
@@ -109,6 +110,26 @@ func capture_initial_state() -> void:
 			}
 
 
+func configure_hazards() -> void:
+	for lane_config: Dictionary in LANE_CONFIGS:
+		var hazard_path: String = str(lane_config.get("hazard_path", ""))
+		var hazard: Node3D = get_node_or_null(hazard_path) as Node3D
+		if hazard == null:
+			push_warning("Personality lab hazard not found: " + hazard_path)
+			continue
+
+		# Preserve the production Poison Bloom visual and hazard tags for enemy
+		# steering, but disable its lifetime and status-tick processing. This room
+		# is a movement ruler, not a damage-over-time encounter.
+		hazard.process_mode = Node.PROCESS_MODE_DISABLED
+		hazard.set_meta("personality_lab_navigation_only", true)
+
+		var hit_area: Area3D = hazard.get_node_or_null("HitArea") as Area3D
+		if hit_area != null:
+			hit_area.monitoring = false
+			hit_area.monitorable = false
+
+
 func configure_lanes() -> void:
 	for lane_config: Dictionary in LANE_CONFIGS:
 		configure_enemy_lane(lane_config)
@@ -162,7 +183,7 @@ func configure_enemy_lane(lane_config: Dictionary) -> void:
 	var hit_receiver: Node = enemy.get_node_or_null("HitReceiver")
 	if hit_receiver != null:
 		hit_receiver.set("disappears_when_defeated", false)
-		hit_receiver.set("restores_mana_when_defeated", false)
+		hit_receiver.set("restores_mana_when_defeated", 0)
 
 
 func reset_lab(show_feedback: bool = true) -> void:
@@ -179,6 +200,7 @@ func reset_lab(show_feedback: bool = true) -> void:
 		if hazard != null and stored_hazard_state is Dictionary:
 			reset_hazard_runtime(hazard, stored_hazard_state as Dictionary)
 
+	configure_hazards()
 	configure_lanes()
 	refresh_lab_huds()
 	lab_reset.emit()
@@ -198,8 +220,12 @@ func reset_enemy_runtime(enemy: CharacterBody3D, initial_state: Dictionary) -> v
 
 	var hit_receiver: Node = enemy.get_node_or_null("HitReceiver")
 	if hit_receiver != null:
+		if hit_receiver.has_method("close_critical_window"):
+			hit_receiver.call("close_critical_window", false)
 		hit_receiver.set("current_health", int(hit_receiver.get("max_health")))
 		hit_receiver.set("current_stance", int(hit_receiver.get("max_stance")))
+		hit_receiver.set("stance_regeneration_delay_timer", 0.0)
+		hit_receiver.set("stance_regeneration_carry", 0.0)
 
 	var status_receiver: Node = enemy.get_node_or_null("StatusReceiver")
 	if status_receiver != null and status_receiver.has_method("clear_all_statuses"):
@@ -207,7 +233,10 @@ func reset_enemy_runtime(enemy: CharacterBody3D, initial_state: Dictionary) -> v
 
 	var force_receiver: Node = enemy.get_node_or_null("ForceReceiver")
 	if force_receiver != null:
-		force_receiver.set("external_velocity", Vector3.ZERO)
+		if force_receiver.has_method("reset_forces"):
+			force_receiver.call("reset_forces")
+		else:
+			force_receiver.set("external_velocity", Vector3.ZERO)
 
 	var telegraph: Node = enemy.get_node_or_null("EnemyTelegraph")
 	if telegraph != null and telegraph.has_method("reset"):

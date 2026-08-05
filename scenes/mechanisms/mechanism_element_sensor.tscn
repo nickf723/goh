@@ -1,0 +1,49 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/mechanisms/mechanism_element_sensor.gd" id="1_sensor"]
+
+[sub_resource type="StandardMaterial3D" id="Material_frame"]
+albedo_color = Color(0.13, 0.15, 0.2, 1)
+metallic = 0.82
+roughness = 0.3
+
+[sub_resource type="BoxMesh" id="Mesh_frame"]
+size = Vector3(1.7, 1.8, 0.55)
+
+[sub_resource type="CylinderMesh" id="Mesh_core"]
+top_radius = 0.52
+bottom_radius = 0.52
+height = 0.24
+radial_segments = 24
+
+[sub_resource type="BoxShape3D" id="Shape_body"]
+size = Vector3(1.7, 1.8, 0.62)
+
+[node name="MechanismElementSensor" type="StaticBody3D"]
+script = ExtResource("1_sensor")
+mechanism_id = "fire_sensor"
+display_name = "Fire Sensor"
+accepted_elements = Array[String](["fire"])
+reset_elements = Array[String](["water"])
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.9, 0)
+shape = SubResource("Shape_body")
+
+[node name="Frame" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.9, 0)
+material_override = SubResource("Material_frame")
+mesh = SubResource("Mesh_frame")
+
+[node name="SensorVisual" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.9, -0.32)
+rotation_degrees = Vector3(90, 0, 0)
+mesh = SubResource("Mesh_core")
+
+[node name="StateLabel" type="Label3D" parent="."]
+position = Vector3(0, 2.25, 0)
+text = "FIRE SENSOR\nFIRE • DORMANT"
+font_size = 22
+pixel_size = 0.006
+billboard = 1
+outline_size = 6

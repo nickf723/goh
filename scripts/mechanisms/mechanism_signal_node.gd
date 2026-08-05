@@ -19,7 +19,17 @@ signal mechanism_sources_bound(source_count: int)
 @export var emit_initial_state: bool = true
 @export var print_debug: bool = false
 
+@export_group("Value")
+@export var mirror_active_to_value: bool = true
+@export var initial_value: float = 0.0
+@export var minimum_value: float = 0.0
+@export var maximum_value: float = 1.0
+@export var value_unit: String = ""
+@export var clamp_value_to_range: bool = false
+@export_range(0.000001, 1.0, 0.000001) var value_change_epsilon: float = 0.0001
+
 var active: bool = false
+var value: float = 0.0
 var last_packet: Dictionary = {}
 var source_states: Dictionary = {}
 var source_packets: Dictionary = {}
@@ -32,6 +42,12 @@ func _ready() -> void:
 	add_to_group("lab_resettable")
 	add_to_group("debuggable")
 	active = _restore_initial_active_state()
+	value = _sanitize_value(
+		(1.0 if active else 0.0)
+		if mirror_active_to_value
+		else initial_value
+	)
+	last_packet = _decorate_packet({"reason": "startup"})
 	call_deferred("_initialize_mechanism_signal")
 
 
@@ -114,21 +130,85 @@ func set_mechanism_active(
 	packet: Dictionary = {},
 	force_emit: bool = false
 ) -> bool:
-	var changed: bool = active != next_active
+	var previous_active: bool = active
+	var next_value: float = value
+	if mirror_active_to_value:
+		next_value = 1.0 if next_active else 0.0
+	_apply_mechanism_state(next_active, next_value, packet, force_emit)
+	return previous_active != active
+
+
+func set_mechanism_value(
+	next_value: float,
+	packet: Dictionary = {},
+	force_emit: bool = false
+) -> bool:
+	var previous_value: float = value
+	_apply_mechanism_state(active, next_value, packet, force_emit)
+	return absf(previous_value - value) > value_change_epsilon
+
+
+func set_mechanism_state(
+	next_active: bool,
+	next_value: float,
+	packet: Dictionary = {},
+	force_emit: bool = false
+) -> bool:
+	var previous_active: bool = active
+	var previous_value: float = value
+	_apply_mechanism_state(next_active, next_value, packet, force_emit)
+	return (
+		previous_active != active
+		or absf(previous_value - value) > value_change_epsilon
+	)
+
+
+func _apply_mechanism_state(
+	next_active: bool,
+	next_value: float,
+	packet: Dictionary,
+	force_emit: bool
+) -> void:
+	var state_changed: bool = active != next_active
+	var sanitized_value: float = _sanitize_value(next_value)
+	var value_changed: bool = absf(value - sanitized_value) > value_change_epsilon
 	active = next_active
-	last_packet = packet.duplicate(true)
-	last_packet["mechanism_id"] = get_mechanism_id()
-	last_packet["active"] = active
+	value = sanitized_value
+	last_packet = _decorate_packet(packet)
 	if persist_active_state:
 		_persist_active_state()
-	_on_signal_state_applied(changed)
-	if changed or force_emit:
+	_on_signal_state_applied(state_changed)
+	_on_signal_value_applied(value_changed)
+	if state_changed or value_changed or force_emit:
 		_emit_signal(force_emit)
-	return changed
 
 
 func is_mechanism_active() -> bool:
 	return active
+
+
+func get_mechanism_value() -> float:
+	return value
+
+
+func get_mechanism_min_value() -> float:
+	return minf(minimum_value, maximum_value)
+
+
+func get_mechanism_max_value() -> float:
+	return maxf(minimum_value, maximum_value)
+
+
+func get_mechanism_normalized_value() -> float:
+	var minimum: float = get_mechanism_min_value()
+	var maximum: float = get_mechanism_max_value()
+	if is_equal_approx(minimum, maximum):
+		return 0.0
+	return clampf(inverse_lerp(minimum, maximum, value), 0.0, 1.0)
+
+
+func get_mechanism_value_unit() -> String:
+	return value_unit
 
 
 func get_mechanism_id() -> String:
@@ -137,17 +217,100 @@ func get_mechanism_id() -> String:
 
 
 func get_mechanism_packet() -> Dictionary:
-	return last_packet.duplicate(true)
+	return _decorate_packet(last_packet)
 
 
 func get_source_state(source_id: String) -> bool:
 	return bool(source_states.get(_normalize_id(source_id), false))
 
 
+func get_source_value(source_id: String) -> float:
+	var normalized_id: String = _normalize_id(source_id)
+	var source: Node = source_nodes.get(normalized_id) as Node
+	if source != null and is_instance_valid(source):
+		if source.has_method("get_mechanism_value"):
+			return float(source.call("get_mechanism_value"))
+	var packet: Dictionary = get_source_packet(normalized_id)
+	if packet.has("value"):
+		return float(packet.get("value", 0.0))
+	return 1.0 if get_source_state(normalized_id) else 0.0
+
+
+func get_source_min_value(source_id: String) -> float:
+	var normalized_id: String = _normalize_id(source_id)
+	var source: Node = source_nodes.get(normalized_id) as Node
+	if source != null and is_instance_valid(source):
+		if source.has_method("get_mechanism_min_value"):
+			return float(source.call("get_mechanism_min_value"))
+	return float(get_source_packet(normalized_id).get("minimum_value", 0.0))
+
+
+func get_source_max_value(source_id: String) -> float:
+	var normalized_id: String = _normalize_id(source_id)
+	var source: Node = source_nodes.get(normalized_id) as Node
+	if source != null and is_instance_valid(source):
+		if source.has_method("get_mechanism_max_value"):
+			return float(source.call("get_mechanism_max_value"))
+	return float(get_source_packet(normalized_id).get("maximum_value", 1.0))
+
+
+func get_source_normalized_value(source_id: String) -> float:
+	var normalized_id: String = _normalize_id(source_id)
+	var source: Node = source_nodes.get(normalized_id) as Node
+	if source != null and is_instance_valid(source):
+		if source.has_method("get_mechanism_normalized_value"):
+			return float(source.call("get_mechanism_normalized_value"))
+	var packet: Dictionary = get_source_packet(normalized_id)
+	if packet.has("normalized_value"):
+		return clampf(float(packet.get("normalized_value", 0.0)), 0.0, 1.0)
+	var minimum: float = get_source_min_value(normalized_id)
+	var maximum: float = get_source_max_value(normalized_id)
+	if is_equal_approx(minimum, maximum):
+		return 0.0
+	return clampf(
+		inverse_lerp(minimum, maximum, get_source_value(normalized_id)),
+		0.0,
+		1.0
+	)
+
+
+func get_source_value_unit(source_id: String) -> String:
+	var normalized_id: String = _normalize_id(source_id)
+	var source: Node = source_nodes.get(normalized_id) as Node
+	if source != null and is_instance_valid(source):
+		if source.has_method("get_mechanism_value_unit"):
+			return str(source.call("get_mechanism_value_unit"))
+	return str(get_source_packet(normalized_id).get("unit", ""))
+
+
+func get_source_packet(source_id: String) -> Dictionary:
+	var normalized_id: String = _normalize_id(source_id)
+	var packet_value: Variant = source_packets.get(normalized_id, {})
+	if packet_value is Dictionary:
+		return (packet_value as Dictionary).duplicate(true)
+	return {}
+
+
+func get_bound_source_ids() -> Array[String]:
+	var source_ids: Array[String] = []
+	for source_id_value: Variant in source_nodes.keys():
+		source_ids.append(str(source_id_value))
+	source_ids.sort()
+	return source_ids
+
+
+func get_primary_source_id(preferred_source_id: String = "") -> String:
+	var preferred: String = _normalize_id(preferred_source_id)
+	if preferred != "" and source_nodes.has(preferred):
+		return preferred
+	var source_ids: Array[String] = get_bound_source_ids()
+	return source_ids[0] if not source_ids.is_empty() else ""
+
+
 func get_active_source_count() -> int:
 	var count: int = 0
-	for value: Variant in source_states.values():
-		if bool(value):
+	for source_active_value: Variant in source_states.values():
+		if bool(source_active_value):
 			count += 1
 	return count
 
@@ -157,7 +320,12 @@ func get_bound_source_count() -> int:
 
 
 func reset_target() -> void:
-	set_mechanism_active(initial_active, {
+	var reset_value: float = (
+		(1.0 if initial_active else 0.0)
+		if mirror_active_to_value
+		else initial_value
+	)
+	set_mechanism_state(initial_active, reset_value, {
 		"reason": "reset",
 		"source_count": source_nodes.size(),
 	}, true)
@@ -181,7 +349,7 @@ func _on_bound_source_signal(
 		source_id = _normalize_id(source_id_from_signal)
 	var previous_active: bool = bool(source_states.get(source_id, false))
 	source_states[source_id] = next_active
-	source_packets[source_id] = packet.duplicate(true)
+	source_packets[source_id] = _decorate_source_packet(source, packet)
 	_on_source_state_changed(source_id, previous_active, next_active, packet)
 
 
@@ -212,14 +380,25 @@ func _on_signal_state_applied(_changed: bool) -> void:
 	pass
 
 
+func _on_signal_value_applied(_changed: bool) -> void:
+	pass
+
+
 func _emit_signal(force_emit: bool = false) -> void:
-	var packet: Dictionary = last_packet.duplicate(true)
-	packet["mechanism_id"] = get_mechanism_id()
+	var packet: Dictionary = _decorate_packet(last_packet)
 	packet["display_name"] = display_name
-	packet["active"] = active
 	packet["force_emit"] = force_emit
 	if print_debug:
-		print("MECHANISM ", get_mechanism_id(), " = ", active, " ", packet)
+		print(
+			"MECHANISM ",
+			get_mechanism_id(),
+			" = ",
+			active,
+			" value=",
+			value,
+			" ",
+			packet
+		)
 	mechanism_signal_changed.emit(get_mechanism_id(), active, packet)
 
 
@@ -250,12 +429,54 @@ func _read_source_active(source: Node) -> bool:
 
 
 func _read_source_packet(source: Node) -> Dictionary:
+	var packet: Dictionary = {}
 	if source != null and is_instance_valid(source):
 		if source.has_method("get_mechanism_packet"):
-			var value: Variant = source.call("get_mechanism_packet")
-			if value is Dictionary:
-				return (value as Dictionary).duplicate(true)
-	return {}
+			var packet_value: Variant = source.call("get_mechanism_packet")
+			if packet_value is Dictionary:
+				packet = (packet_value as Dictionary).duplicate(true)
+	return _decorate_source_packet(source, packet)
+
+
+func _decorate_source_packet(source: Node, packet: Dictionary) -> Dictionary:
+	var decorated: Dictionary = packet.duplicate(true)
+	if source == null or not is_instance_valid(source):
+		return decorated
+	if source.has_method("get_mechanism_value"):
+		decorated["value"] = float(source.call("get_mechanism_value"))
+	if source.has_method("get_mechanism_min_value"):
+		decorated["minimum_value"] = float(source.call("get_mechanism_min_value"))
+	if source.has_method("get_mechanism_max_value"):
+		decorated["maximum_value"] = float(source.call("get_mechanism_max_value"))
+	if source.has_method("get_mechanism_normalized_value"):
+		decorated["normalized_value"] = float(
+			source.call("get_mechanism_normalized_value")
+		)
+	if source.has_method("get_mechanism_value_unit"):
+		decorated["unit"] = str(source.call("get_mechanism_value_unit"))
+	return decorated
+
+
+func _decorate_packet(packet: Dictionary) -> Dictionary:
+	var decorated: Dictionary = packet.duplicate(true)
+	decorated["mechanism_id"] = get_mechanism_id()
+	decorated["active"] = active
+	decorated["value"] = value
+	decorated["minimum_value"] = get_mechanism_min_value()
+	decorated["maximum_value"] = get_mechanism_max_value()
+	decorated["normalized_value"] = get_mechanism_normalized_value()
+	decorated["unit"] = value_unit
+	return decorated
+
+
+func _sanitize_value(next_value: float) -> float:
+	if not clamp_value_to_range:
+		return next_value
+	return clampf(
+		next_value,
+		get_mechanism_min_value(),
+		get_mechanism_max_value()
+	)
 
 
 func _restore_initial_active_state() -> bool:
@@ -281,8 +502,8 @@ func _resolved_persistence_flag() -> String:
 	return "mechanism_" + get_mechanism_id()
 
 
-func _normalize_id(value: String) -> String:
-	return value.to_lower().strip_edges().replace(" ", "_")
+func _normalize_id(id_value: String) -> String:
+	return id_value.to_lower().strip_edges().replace(" ", "_")
 
 
 func get_debug_data() -> Dictionary:
@@ -290,10 +511,16 @@ func get_debug_data() -> Dictionary:
 		"mechanism_id": get_mechanism_id(),
 		"display_name": display_name,
 		"active": active,
+		"value": value,
+		"minimum_value": get_mechanism_min_value(),
+		"maximum_value": get_mechanism_max_value(),
+		"normalized_value": get_mechanism_normalized_value(),
+		"unit": value_unit,
 		"source_count": source_nodes.size(),
 		"active_sources": get_active_source_count(),
 		"source_states": source_states.duplicate(true),
-		"packet": last_packet.duplicate(true),
+		"source_packets": source_packets.duplicate(true),
+		"packet": _decorate_packet(last_packet),
 		"persistent": persist_active_state,
 		"persistence_flag": _resolved_persistence_flag() if persist_active_state else "",
 		"initialized": initialized,

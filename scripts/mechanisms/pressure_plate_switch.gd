@@ -8,6 +8,8 @@ signal mechanism_value_changed(value: float, packet: Dictionary)
 @export_group("Detection")
 @export var accept_any_physics_body: bool = true
 @export var accepted_group: String = "player"
+@export var accept_static_bodies: bool = false
+@export var accept_animatable_bodies: bool = false
 
 @export_group("Weight Value")
 @export_range(0.0, 1000.0, 0.1) var default_non_rigid_body_mass_kg: float = 70.0
@@ -31,6 +33,8 @@ var is_pressed: bool = false
 var measured_mass_kg: float = 0.0
 var plate_tween: Tween = null
 var last_mechanism_packet: Dictionary = {}
+var rejected_body_entry_count: int = 0
+var last_rejected_body_name: String = ""
 
 
 func _ready() -> void:
@@ -62,12 +66,16 @@ func connect_body_detection_signals() -> void:
 
 func _on_body_entered(body: Node3D) -> void:
 	if not accepts_body(body):
+		rejected_body_entry_count += 1
+		last_rejected_body_name = str(body.name) if body != null else "null"
 		return
 	occupying_bodies[body.get_instance_id()] = body
 	refresh_pressed_state()
 
 
 func _on_body_exited(body: Node3D) -> void:
+	if body == null:
+		return
 	occupying_bodies.erase(body.get_instance_id())
 	refresh_pressed_state()
 
@@ -75,9 +83,27 @@ func _on_body_exited(body: Node3D) -> void:
 func accepts_body(body: Node3D) -> bool:
 	if body == null:
 		return false
-	if accept_any_physics_body and body is PhysicsBody3D:
+
+	# Area3D body detection also reports the StaticBody3D floor and authored
+	# station platform beneath a plate. Those are support geometry, not load.
+	# Counting both through the 70 kg fallback produced the phantom 140 kg bug.
+	if body is StaticBody3D:
+		return accept_static_bodies
+	if body is AnimatableBody3D:
+		return accept_animatable_bodies
+
+	if accepted_group != "" and body.is_in_group(accepted_group):
 		return true
-	return accepted_group != "" and body.is_in_group(accepted_group)
+	if body.has_method("get_mechanism_mass_kg"):
+		return true
+	if body.has_meta("mechanism_mass_kg"):
+		return true
+	if not accept_any_physics_body:
+		return false
+
+	# Movable rigid bodies and CharacterBody3D actors can genuinely transfer
+	# weight onto a plate. Other PhysicsBody3D types require an explicit opt-in.
+	return body is RigidBody3D or body is CharacterBody3D
 
 
 func refresh_pressed_state() -> void:
@@ -296,6 +322,8 @@ func get_mechanism_packet() -> Dictionary:
 
 func reset_target() -> void:
 	occupying_bodies.clear()
+	rejected_body_entry_count = 0
+	last_rejected_body_name = ""
 	_set_plate_state(false, 0.0, true, true)
 	apply_circuit_state(false, 0.0, 0.0, -1)
 	notify_topology_changed()
@@ -311,4 +339,8 @@ func get_debug_data() -> Dictionary:
 	data["mass_rows"] = get_body_mass_rows()
 	data["mechanism_id"] = get_mechanism_id()
 	data["mechanism_packet"] = last_mechanism_packet.duplicate(true)
+	data["accept_static_bodies"] = accept_static_bodies
+	data["accept_animatable_bodies"] = accept_animatable_bodies
+	data["rejected_body_entries"] = rejected_body_entry_count
+	data["last_rejected_body"] = last_rejected_body_name
 	return data

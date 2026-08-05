@@ -115,9 +115,8 @@ func get_body_mass_kg(body: Node3D) -> float:
 		return maxf(float(body.get_meta("mechanism_mass_kg", 0.0)), 0.0)
 	if body is RigidBody3D:
 		return maxf((body as RigidBody3D).mass, 0.0)
-	var mass_value: Variant = body.get("mass")
-	if mass_value != null:
-		return maxf(float(mass_value), 0.0)
+	if "mass" in body:
+		return maxf(float(body.get("mass")), 0.0)
 	return maxf(default_non_rigid_body_mass_kg, 0.0)
 
 

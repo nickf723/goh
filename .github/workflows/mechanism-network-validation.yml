@@ -11,11 +11,14 @@ on:
       - "scripts/levels/mechanism_network_lab_complete.gd"
       - "scripts/levels/mechanism_network_lab_value.gd"
       - "scripts/levels/mechanism_network_lab_performance.gd"
+      - "scripts/levels/mechanism_network_lab_soul_weights.gd"
       - "scenes/levels/prototypes/prototype_mechanism_network_lab_v1.tscn"
       - "scripts/tests/mechanism_network_smoke_test.gd"
       - "scenes/tests/mechanism_network_smoke_test.tscn"
       - "scripts/tests/mechanism_value_signal_smoke_test.gd"
       - "scenes/tests/mechanism_value_signal_smoke_test.tscn"
+      - "scripts/tests/mechanism_soul_weight_smoke_test.gd"
+      - "scenes/tests/mechanism_soul_weight_smoke_test.tscn"
       - "docs/MECHANISM_NETWORK_V1.md"
       - ".github/workflows/mechanism-network-validation.yml"
   workflow_dispatch:
@@ -61,6 +64,12 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/mechanism_value_signal_smoke_test.tscn 2>&1 | tee mechanism-value-test.log
 
+      - name: Run Soul-grippable mechanism weight regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/mechanism_soul_weight_smoke_test.tscn 2>&1 | tee mechanism-soul-weight-test.log
+
       - name: Upload mechanism validation logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,4 +79,5 @@ jobs:
             mechanism-import.log
             mechanism-test.log
             mechanism-value-test.log
+            mechanism-soul-weight-test.log
           if-no-files-found: ignore

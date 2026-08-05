@@ -380,10 +380,10 @@ func _build_signal_graph() -> void:
 		MechanismLogicNode.Operation.SEQUENCE,
 		[water_when_balanced, fire_when_balanced]
 	)
-	elemental_sequence.sequence_source_ids = Array[String]([
-		water_when_balanced.get_mechanism_id(),
-		fire_when_balanced.get_mechanism_id(),
-	])
+	var rite_sequence_ids: Array[String] = []
+	rite_sequence_ids.append(water_when_balanced.get_mechanism_id())
+	rite_sequence_ids.append(fire_when_balanced.get_mechanism_id())
+	elemental_sequence.sequence_source_ids = rite_sequence_ids
 	elemental_sequence.sequence_wrong_input_behavior = (
 		MechanismLogicNode.SequenceWrongInputBehavior.RESET
 	)

@@ -1,0 +1,86 @@
+name: Runtime performance validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/performance/**"
+      - "scripts/ui/game_ui_unified.gd"
+      - "scripts/ui/unified_hud_source_bridge_budgeted.gd"
+      - "scripts/levels/mechanism_network_lab_performance.gd"
+      - "scripts/mechanisms/mechanism_sliding_gate.gd"
+      - "scripts/mechanisms/mechanism_indicator.gd"
+      - "scripts/mechanisms/mechanism_element_sensor.gd"
+      - "scenes/ui/game_ui.tscn"
+      - "scenes/levels/prototypes/prototype_mechanism_network_lab_v1.tscn"
+      - "scripts/tests/runtime_performance_foundation_smoke_test.gd"
+      - "scenes/tests/runtime_performance_foundation_smoke_test.tscn"
+      - ".github/workflows/runtime-performance-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-performance-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-performance-foundation:
+    name: Import and performance regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee performance-import.log
+
+      - name: Run performance foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance-test.log
+
+      - name: Run mechanism network regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/mechanism_network_smoke_test.tscn 2>&1 | tee mechanism-test.log
+
+      - name: Run unified HUD regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/unified_hud_shell_smoke_test.tscn 2>&1 | tee hud-test.log
+
+      - name: Run lab resource regeneration regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload performance validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-performance-validation-logs
+          path: |
+            performance-import.log
+            performance-test.log
+            mechanism-test.log
+            hud-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

@@ -55,17 +55,19 @@ func _test_reusable_weight_block() -> void:
 		_expect(soul.can_begin_manipulation(), "weight block begins in a grippable state")
 		var authored_transform: Transform3D = block.transform
 		var start_position: Vector3 = block.global_position
-		_expect(soul.begin_manipulation(self), "Soul Grip can claim the reusable weight block")
-		soul.set_target_pose(
-			start_position + Vector3(1.5, 0.6, 0.0),
-			block.global_basis
-		)
-		await _wait_physics_frames(12)
-		_expect(
-			block.global_position.distance_to(start_position) > 0.2,
-			"claimed weight block follows a Soul Grip target pose"
-		)
-		soul.end_manipulation()
+		var began: bool = soul.begin_manipulation(self)
+		_expect(began, "Soul Grip can claim the reusable weight block")
+		if began:
+			soul.set_target_pose(
+				start_position + Vector3(1.5, 0.6, 0.0),
+				block.global_basis
+			)
+			await _wait_physics_frames(12)
+			_expect(
+				block.global_position.distance_to(start_position) > 0.2,
+				"claimed weight block follows a Soul Grip target pose"
+			)
+			soul.end_manipulation()
 		block.reset_target()
 		_expect(
 			block.transform.origin.distance_to(authored_transform.origin) <= 0.001,
@@ -108,9 +110,12 @@ func _test_production_lab_weights() -> void:
 		var soul: SoulManipulable = block.get_node_or_null(
 			"SoulManipulable"
 		) as SoulManipulable
-		_expect(soul != null, block.name + " includes Soul manipulation")
+		_expect(soul != null, str(block.name) + " includes Soul manipulation")
 		if soul != null:
-			_expect(soul.can_begin_manipulation(), block.name + " is available to Soul Grip")
+			_expect(
+				soul.can_begin_manipulation(),
+				str(block.name) + " is available to Soul Grip"
+			)
 
 	var threshold_block: MechanismWeightBlock = lab.get_node_or_null(
 		"Mechanisms/ThresholdCrate7kg"
@@ -142,7 +147,9 @@ func _test_production_lab_weights() -> void:
 		) as SoulManipulable
 		var authored_transform: Transform3D = movable_block.initial_transform
 		var start_position: Vector3 = movable_block.global_position
-		if soul != null and soul.begin_manipulation(self):
+		var began: bool = soul != null and soul.begin_manipulation(self)
+		_expect(began, "production puzzle weight can be claimed by Soul Grip")
+		if began:
 			soul.set_target_pose(
 				start_position + Vector3(0.0, 1.2, 0.0),
 				movable_block.global_basis
@@ -153,13 +160,13 @@ func _test_production_lab_weights() -> void:
 				"production puzzle weight physically follows Soul Grip"
 			)
 		lab.call("reset_lab")
-		await _wait_physics_frames(3)
 		_expect(
 			movable_block.transform.origin.distance_to(
 				authored_transform.origin
-			) <= 0.01,
+			) <= 0.001,
 			"laboratory reset restores a manipulated puzzle weight"
 		)
+		await get_tree().process_frame
 
 	var debug_value: Variant = (
 		lab.call("get_debug_data")

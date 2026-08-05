@@ -1,0 +1,67 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/mechanisms/mechanism_toggle_lever.gd" id="1_lever"]
+
+[sub_resource type="StandardMaterial3D" id="Material_base"]
+albedo_color = Color(0.11, 0.13, 0.18, 1)
+metallic = 0.78
+roughness = 0.34
+
+[sub_resource type="StandardMaterial3D" id="Material_handle"]
+albedo_color = Color(0.84, 0.45, 0.12, 1)
+metallic = 0.64
+roughness = 0.27
+emission_enabled = true
+emission = Color(0.3, 0.08, 0.01, 1)
+emission_energy_multiplier = 0.55
+
+[sub_resource type="BoxMesh" id="Mesh_base"]
+size = Vector3(1.15, 0.28, 0.9)
+
+[sub_resource type="BoxMesh" id="Mesh_handle"]
+size = Vector3(0.22, 1.25, 0.22)
+
+[sub_resource type="SphereMesh" id="Mesh_knob"]
+radius = 0.23
+height = 0.46
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxShape3D" id="Shape_interaction"]
+size = Vector3(1.45, 1.8, 1.25)
+
+[node name="MechanismToggleLever" type="Area3D"]
+script = ExtResource("1_lever")
+mechanism_id = "mechanism_lever"
+display_name = "Mechanism Lever"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.75, 0)
+shape = SubResource("Shape_interaction")
+
+[node name="Base" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.14, 0)
+material_override = SubResource("Material_base")
+mesh = SubResource("Mesh_base")
+
+[node name="Handle" type="Node3D" parent="."]
+position = Vector3(0, 0.35, 0)
+rotation_degrees = Vector3(0, 0, 28)
+
+[node name="Rod" type="MeshInstance3D" parent="Handle"]
+position = Vector3(0, 0.55, 0)
+material_override = SubResource("Material_handle")
+mesh = SubResource("Mesh_handle")
+
+[node name="Knob" type="MeshInstance3D" parent="Handle"]
+position = Vector3(0, 1.18, 0)
+material_override = SubResource("Material_handle")
+mesh = SubResource("Mesh_knob")
+
+[node name="StateLabel" type="Label3D" parent="."]
+position = Vector3(0, 2.15, 0)
+text = "MECHANISM LEVER\nOFF"
+font_size = 22
+pixel_size = 0.006
+billboard = 1
+outline_size = 6

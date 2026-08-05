@@ -77,7 +77,7 @@ func _test_prismatic_boss_contract() -> void:
 	break_payload.element = "neutral"
 	break_payload.source_name = "Prismatic Test Break"
 	break_payload.hit_type = "melee"
-	break_payload.tags = Array[String](["weapon", "melee", "test"])
+	_assign_tags(break_payload, ["weapon", "melee", "test"])
 	receiver.call("receive_payload", break_payload)
 	await get_tree().process_frame
 	_expect(boss.core_exposed, "breaking stance exposes the judgment core")
@@ -88,8 +88,8 @@ func _test_prismatic_boss_contract() -> void:
 			"visual actor enters its exposed-core posture"
 		)
 	_expect(
-		(receiver.get("weak_elements") as Array).is_empty()
-		and (receiver.get("resistant_elements") as Array).is_empty(),
+		_array_is_empty(receiver.get("weak_elements"))
+		and _array_is_empty(receiver.get("resistant_elements")),
 		"exposed core temporarily clears elemental shell modifiers"
 	)
 
@@ -100,7 +100,7 @@ func _test_prismatic_boss_contract() -> void:
 	critical_payload.element = "fire"
 	critical_payload.source_name = "Prismatic Test Critical"
 	critical_payload.hit_type = "melee"
-	critical_payload.tags = Array[String](["weapon", "melee", "test"])
+	_assign_tags(critical_payload, ["weapon", "melee", "test"])
 	critical_payload.critical_multiplier = 2.0
 	receiver.call("receive_payload", critical_payload)
 	await get_tree().process_frame
@@ -175,7 +175,7 @@ func _test_prismatic_boss_contract() -> void:
 		"Indigo Judgment selects its delayed position mark"
 	)
 
-	boss._on_health_changed(10, int(receiver.get("max_health")))
+	boss.call("_on_health_changed", 10, int(receiver.get("max_health")))
 	_expect(boss.final_phase_active, "low health activates the accelerated final phase")
 	_expect(
 		boss.get_effective_attack_cooldown() < boss.attack_cooldown,
@@ -186,7 +186,7 @@ func _test_prismatic_boss_contract() -> void:
 		"final phase accelerates judgment movement"
 	)
 
-	boss._on_health_depleted()
+	boss.call("_on_health_depleted")
 	await get_tree().process_frame
 	_expect(bool(gate.get("is_unlocked")), "boss defeat still unlocks the Judgment Gate")
 
@@ -357,6 +357,16 @@ func _create_test_player() -> CharacterBody3D:
 	defense.name = "PlayerDefenseController"
 	player.add_child(defense)
 	return player
+
+
+func _assign_tags(payload: DamagePayload, values: Array) -> void:
+	payload.tags.clear()
+	for value: Variant in values:
+		payload.tags.append(str(value))
+
+
+func _array_is_empty(value: Variant) -> bool:
+	return value is Array and (value as Array).is_empty()
 
 
 func _has_all_strings(value: Variant, expected: Array) -> bool:

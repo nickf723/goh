@@ -29,7 +29,7 @@ signal mechanism_sources_bound(source_count: int)
 @export_range(0.000001, 1.0, 0.000001) var value_change_epsilon: float = 0.0001
 
 var active: bool = false
-var value: float = 0.0
+var mechanism_value: float = 0.0
 var last_packet: Dictionary = {}
 var source_states: Dictionary = {}
 var source_packets: Dictionary = {}
@@ -42,7 +42,7 @@ func _ready() -> void:
 	add_to_group("lab_resettable")
 	add_to_group("debuggable")
 	active = _restore_initial_active_state()
-	value = _sanitize_value(
+	mechanism_value = _sanitize_value(
 		(1.0 if active else 0.0)
 		if mirror_active_to_value
 		else initial_value
@@ -131,7 +131,7 @@ func set_mechanism_active(
 	force_emit: bool = false
 ) -> bool:
 	var previous_active: bool = active
-	var next_value: float = value
+	var next_value: float = mechanism_value
 	if mirror_active_to_value:
 		next_value = 1.0 if next_active else 0.0
 	_apply_mechanism_state(next_active, next_value, packet, force_emit)
@@ -143,9 +143,9 @@ func set_mechanism_value(
 	packet: Dictionary = {},
 	force_emit: bool = false
 ) -> bool:
-	var previous_value: float = value
+	var previous_value: float = mechanism_value
 	_apply_mechanism_state(active, next_value, packet, force_emit)
-	return absf(previous_value - value) > value_change_epsilon
+	return absf(previous_value - mechanism_value) > value_change_epsilon
 
 
 func set_mechanism_state(
@@ -155,11 +155,11 @@ func set_mechanism_state(
 	force_emit: bool = false
 ) -> bool:
 	var previous_active: bool = active
-	var previous_value: float = value
+	var previous_value: float = mechanism_value
 	_apply_mechanism_state(next_active, next_value, packet, force_emit)
 	return (
 		previous_active != active
-		or absf(previous_value - value) > value_change_epsilon
+		or absf(previous_value - mechanism_value) > value_change_epsilon
 	)
 
 
@@ -171,9 +171,11 @@ func _apply_mechanism_state(
 ) -> void:
 	var state_changed: bool = active != next_active
 	var sanitized_value: float = _sanitize_value(next_value)
-	var value_changed: bool = absf(value - sanitized_value) > value_change_epsilon
+	var value_changed: bool = (
+		absf(mechanism_value - sanitized_value) > value_change_epsilon
+	)
 	active = next_active
-	value = sanitized_value
+	mechanism_value = sanitized_value
 	last_packet = _decorate_packet(packet)
 	if persist_active_state:
 		_persist_active_state()
@@ -188,7 +190,7 @@ func is_mechanism_active() -> bool:
 
 
 func get_mechanism_value() -> float:
-	return value
+	return mechanism_value
 
 
 func get_mechanism_min_value() -> float:
@@ -204,7 +206,11 @@ func get_mechanism_normalized_value() -> float:
 	var maximum: float = get_mechanism_max_value()
 	if is_equal_approx(minimum, maximum):
 		return 0.0
-	return clampf(inverse_lerp(minimum, maximum, value), 0.0, 1.0)
+	return clampf(
+		inverse_lerp(minimum, maximum, mechanism_value),
+		0.0,
+		1.0
+	)
 
 
 func get_mechanism_value_unit() -> String:
@@ -395,7 +401,7 @@ func _emit_signal(force_emit: bool = false) -> void:
 			" = ",
 			active,
 			" value=",
-			value,
+			mechanism_value,
 			" ",
 			packet
 		)
@@ -461,7 +467,7 @@ func _decorate_packet(packet: Dictionary) -> Dictionary:
 	var decorated: Dictionary = packet.duplicate(true)
 	decorated["mechanism_id"] = get_mechanism_id()
 	decorated["active"] = active
-	decorated["value"] = value
+	decorated["value"] = mechanism_value
 	decorated["minimum_value"] = get_mechanism_min_value()
 	decorated["maximum_value"] = get_mechanism_max_value()
 	decorated["normalized_value"] = get_mechanism_normalized_value()
@@ -511,7 +517,7 @@ func get_debug_data() -> Dictionary:
 		"mechanism_id": get_mechanism_id(),
 		"display_name": display_name,
 		"active": active,
-		"value": value,
+		"value": mechanism_value,
 		"minimum_value": get_mechanism_min_value(),
 		"maximum_value": get_mechanism_max_value(),
 		"normalized_value": get_mechanism_normalized_value(),

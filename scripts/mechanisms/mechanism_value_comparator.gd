@@ -17,6 +17,7 @@ enum Comparison {
 @export var primary_source_id: String = ""
 @export var secondary_source_id: String = ""
 @export var use_normalized_values: bool = false
+@export var require_all_sources_active: bool = false
 @export var threshold: float = 1.0
 @export var range_minimum: float = 0.0
 @export var range_maximum: float = 1.0
@@ -93,6 +94,15 @@ func _evaluate_source_states() -> void:
 				and absf(last_difference) <= tolerance
 			)
 
+	if require_all_sources_active:
+		result = (
+			result
+			and get_source_state(primary_id)
+			and (
+				secondary_id == ""
+				or get_source_state(secondary_id)
+			)
+		)
 	if invert_result:
 		result = not result
 
@@ -114,6 +124,13 @@ func _evaluate_source_states() -> void:
 		"range_maximum": maxf(range_minimum, range_maximum),
 		"tolerance": tolerance,
 		"normalized_inputs": use_normalized_values,
+		"require_all_sources_active": require_all_sources_active,
+		"primary_active": get_source_state(primary_id),
+		"secondary_active": (
+			get_source_state(secondary_id)
+			if secondary_id != ""
+			else false
+		),
 		"inverted": invert_result,
 		"summary": last_comparison_summary,
 	})
@@ -214,6 +231,7 @@ func get_debug_data() -> Dictionary:
 	data["range_maximum"] = maxf(range_minimum, range_maximum)
 	data["tolerance"] = tolerance
 	data["normalized_inputs"] = use_normalized_values
+	data["require_all_sources_active"] = require_all_sources_active
 	data["evaluations"] = evaluation_count
 	data["summary"] = last_comparison_summary
 	return data

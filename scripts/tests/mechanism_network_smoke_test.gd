@@ -115,6 +115,7 @@ func _test_logic_grammar() -> void:
 	_expect(timer_logic.active, "timer starts on a rising edge")
 	timer_logic._process(0.3)
 	_expect(not timer_logic.active, "timer expires after its configured duration")
+	_expect(not timer_logic.is_processing(), "expired timer returns to event-driven sleep")
 
 	var latch_source := _make_source("LatchSource", "latch_source")
 	var latch_logic := _make_logic(
@@ -139,11 +140,77 @@ func _test_logic_grammar() -> void:
 	)
 	counter_logic.counter_target = 3
 	for _index: int in range(3):
-		counter_source.set_input_active(true)
-		counter_source.set_input_active(false)
+		_pulse_source(counter_source)
 	await get_tree().process_frame
 	_expect(counter_logic.active, "counter activates at its target")
 	_expect(counter_logic.counter_value == 3, "counter records three rising edges")
+
+	var toggle_source := _make_source("ToggleSource", "toggle_source")
+	var toggle_logic := _make_logic(
+		"ToggleLogic",
+		"toggle_logic",
+		MechanismLogicNode.Operation.TOGGLE,
+		[toggle_source]
+	)
+	await _wait_frames(2)
+	_pulse_source(toggle_source)
+	_expect(toggle_logic.active, "toggle memory turns on from its first pulse")
+	_pulse_source(toggle_source)
+	_expect(not toggle_logic.active, "toggle memory turns off from its second pulse")
+	_expect(toggle_logic.memory_transition_count == 2, "toggle memory records both state transitions")
+
+	var set_source := _make_source("SetSource", "set_source")
+	var reset_source := _make_source("ResetSource", "reset_source")
+	var set_reset_logic := _make_logic(
+		"SetResetLogic",
+		"set_reset_logic",
+		MechanismLogicNode.Operation.SET_RESET,
+		[set_source, reset_source]
+	)
+	set_reset_logic.set_source_ids = Array[String]([set_source.get_mechanism_id()])
+	set_reset_logic.reset_source_ids = Array[String]([reset_source.get_mechanism_id()])
+	await _wait_frames(2)
+	_pulse_source(set_source)
+	_expect(set_reset_logic.active, "SET input stores an active memory bit")
+	_pulse_source(reset_source)
+	_expect(not set_reset_logic.active, "RESET input clears the stored memory bit")
+	reset_source.set_input_active(true)
+	set_source.set_input_active(true)
+	_expect(not set_reset_logic.active, "active RESET dominates a simultaneous SET command")
+	set_source.set_input_active(false)
+	reset_source.set_input_active(false)
+
+	var sequence_a := _make_source("SequenceA", "sequence_a")
+	var sequence_b := _make_source("SequenceB", "sequence_b")
+	var sequence_c := _make_source("SequenceC", "sequence_c")
+	var sequence_logic := _make_logic(
+		"SequenceLogic",
+		"sequence_logic",
+		MechanismLogicNode.Operation.SEQUENCE,
+		[sequence_a, sequence_b, sequence_c]
+	)
+	sequence_logic.sequence_source_ids = Array[String]([
+		sequence_a.get_mechanism_id(),
+		sequence_c.get_mechanism_id(),
+		sequence_b.get_mechanism_id(),
+	])
+	sequence_logic.sequence_wrong_input_behavior = (
+		MechanismLogicNode.SequenceWrongInputBehavior.RESET
+	)
+	await _wait_frames(2)
+	_pulse_source(sequence_a)
+	_expect(sequence_logic.sequence_index == 1, "sequence memory advances after the correct first input")
+	_pulse_source(sequence_b)
+	_expect(sequence_logic.sequence_index == 0, "wrong sequence input resets progress")
+	_expect(sequence_logic.sequence_wrong_input_count == 1, "sequence memory records wrong inputs")
+	_pulse_source(sequence_a)
+	_pulse_source(sequence_c)
+	_pulse_source(sequence_b)
+	_expect(sequence_logic.active, "ordered A C B input completes sequence memory")
+	_expect(sequence_logic.sequence_index == 3, "completed sequence records full progress")
+	sequence_logic.reset_sequence()
+	_expect(not sequence_logic.active, "sequence memory clears explicitly")
+	_expect(sequence_logic.sequence_index == 0, "sequence reset clears progress")
 
 	var fake_output := FakeMechanismOutput.new()
 	fake_output.name = "FakeOutput"
@@ -245,9 +312,9 @@ func _test_production_lab() -> void:
 	var debug_value: Variant = lab.call("get_debug_data") if lab.has_method("get_debug_data") else {}
 	var debug: Dictionary = debug_value as Dictionary if debug_value is Dictionary else {}
 	_expect(bool(debug.get("mechanism_network_lab", false)), "production lab exposes a debug contract")
-	_expect(int(debug.get("inputs", 0)) >= 7, "production lab contains multiple physical and elemental inputs")
-	_expect((debug.get("logic_nodes", {}) as Dictionary).size() >= 8, "production lab contains the full logic vocabulary")
-	_expect(int(debug.get("outputs", 0)) >= 10, "production lab contains gates, indicators, and a bridge")
+	_expect(int(debug.get("inputs", 0)) >= 14, "production lab contains physical, elemental, and memory inputs")
+	_expect((debug.get("logic_nodes", {}) as Dictionary).size() >= 11, "production lab contains boolean, timing, and memory logic")
+	_expect(int(debug.get("outputs", 0)) >= 18, "production lab contains gates, indicators, and a bridge")
 	_expect(
 		lab.get_node_or_null("Mechanisms/WeightPlate") != null,
 		"production lab contains the weight station"
@@ -268,9 +335,62 @@ func _test_production_lab() -> void:
 		lab.get_node_or_null("Mechanisms/FinalGate") != null,
 		"production lab contains the counter and latch finale"
 	)
+	_expect(
+		lab.get_node_or_null("Mechanisms/ToggleMemoryGate") != null,
+		"production lab contains the toggle-memory gate"
+	)
+	_expect(
+		lab.get_node_or_null("Mechanisms/SetResetMemoryGate") != null,
+		"production lab contains the set-reset gate"
+	)
+	_expect(
+		lab.get_node_or_null("Mechanisms/SequenceMemoryGate") != null,
+		"production lab contains the ordered-sequence vault"
+	)
+
+	var toggle_lever: MechanismToggleLever = (
+		lab.get_node_or_null("Mechanisms/ToggleMemoryLever") as MechanismToggleLever
+	)
+	var toggle_logic: MechanismLogicNode = (
+		lab.get_node_or_null("SignalNetwork/ToggleMemory") as MechanismLogicNode
+	)
+	var toggle_gate: MechanismSlidingGate = (
+		lab.get_node_or_null("Mechanisms/ToggleMemoryGate") as MechanismSlidingGate
+	)
+	if toggle_lever != null and toggle_logic != null and toggle_gate != null:
+		toggle_lever.interact()
+		await _wait_frames(2)
+		_expect(toggle_logic.active and toggle_gate.active, "production toggle station remembers one pulse")
+
+	var sequence_a: MechanismToggleLever = (
+		lab.get_node_or_null("Mechanisms/SequenceInputA") as MechanismToggleLever
+	)
+	var sequence_b: MechanismToggleLever = (
+		lab.get_node_or_null("Mechanisms/SequenceInputB") as MechanismToggleLever
+	)
+	var sequence_c: MechanismToggleLever = (
+		lab.get_node_or_null("Mechanisms/SequenceInputC") as MechanismToggleLever
+	)
+	var sequence_logic: MechanismLogicNode = (
+		lab.get_node_or_null("SignalNetwork/OrderedSequenceMemory") as MechanismLogicNode
+	)
+	if sequence_a != null and sequence_b != null and sequence_c != null and sequence_logic != null:
+		sequence_a.interact()
+		sequence_c.interact()
+		sequence_b.interact()
+		await _wait_frames(2)
+		_expect(sequence_logic.active, "production sequence station accepts A C B")
+
 	lab.call("reset_lab")
 	await _wait_frames(2)
-	_expect(not bool((lab.get_node("Mechanisms/FinalGate") as MechanismSlidingGate).active), "lab reset closes the final gate")
+	_expect(not bool((lab.get_node("Mechanisms/FinalGate") as MechanismSlidingGate).active), "lab reset closes the counter-latch gate")
+	_expect(not bool((lab.get_node("Mechanisms/ToggleMemoryGate") as MechanismSlidingGate).active), "lab reset clears toggle memory")
+	_expect(not bool((lab.get_node("Mechanisms/SetResetMemoryGate") as MechanismSlidingGate).active), "lab reset clears set-reset memory")
+	_expect(not bool((lab.get_node("Mechanisms/SequenceMemoryGate") as MechanismSlidingGate).active), "lab reset clears sequence memory")
+	_expect(
+		int((lab.get_node("SignalNetwork/OrderedSequenceMemory") as MechanismLogicNode).sequence_index) == 0,
+		"lab reset clears ordered-sequence progress"
+	)
 	lab.queue_free()
 	await get_tree().process_frame
 
@@ -314,6 +434,11 @@ func _wire_fixture_output(
 	adapter.bind_source(source)
 	adapter.bind_target(target)
 	return adapter
+
+
+func _pulse_source(source: MechanismManualSource) -> void:
+	source.set_input_active(true, {"test": "pulse_on"})
+	source.set_input_active(false, {"test": "pulse_off"})
 
 
 func _wait_frames(count: int) -> void:

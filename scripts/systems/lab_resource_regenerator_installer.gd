@@ -56,15 +56,33 @@ func install_for_scene(scene: Node) -> LabResourceRegenerator:
 func is_lab_scene(scene: Node) -> bool:
 	if scene == null or not is_instance_valid(scene):
 		return false
-	if scene.is_in_group(EXPLICIT_LAB_GROUP):
-		return true
-	return matches_lab_identity(scene.scene_file_path, str(scene.name))
+	return matches_lab_identity(
+		scene.scene_file_path,
+		str(scene.name),
+		scene.get_groups()
+	)
 
 
-func matches_lab_identity(scene_path: String, root_name: String) -> bool:
+func matches_lab_identity(
+	scene_path: String,
+	root_name: String,
+	groups: Array = []
+) -> bool:
 	var normalized_path: String = scene_path.to_lower().replace("\\", "/")
 	if normalized_path.contains("/tests/"):
 		return false
+
+	for group_value: Variant in groups:
+		var group_name: String = str(group_value).to_lower().strip_edges()
+		if StringName(group_name) == EXPLICIT_LAB_GROUP:
+			return true
+		if (
+			group_name.ends_with("_lab")
+			or group_name.ends_with("_labs")
+			or group_name.begins_with("lab_")
+		):
+			return true
+
 	if not normalized_path.contains("/levels/"):
 		return false
 	var filename: String = normalized_path.get_file()
@@ -74,7 +92,7 @@ func matches_lab_identity(scene_path: String, root_name: String) -> bool:
 
 func _find_existing_regenerator(scene: Node) -> LabResourceRegenerator:
 	for candidate: Node in get_tree().get_nodes_in_group("lab_resource_regenerators"):
-		if not (candidate is LabResourceRegenerator):
+		if not is_instance_valid(candidate) or not (candidate is LabResourceRegenerator):
 			continue
 		if candidate == scene or scene.is_ancestor_of(candidate):
 			return candidate as LabResourceRegenerator

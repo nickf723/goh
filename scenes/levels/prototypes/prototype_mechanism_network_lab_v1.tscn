@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" path="res://scripts/levels/mechanism_network_lab_soul_weights.gd" id="1_lab"]
+[ext_resource type="Script" path="res://scripts/levels/mechanism_network_lab_routing.gd" id="1_lab"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 

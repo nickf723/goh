@@ -9,9 +9,11 @@ on:
       - "scenes/mechanisms/**"
       - "scripts/levels/mechanism_network_lab.gd"
       - "scripts/levels/mechanism_network_lab_complete.gd"
+      - "scripts/levels/mechanism_network_lab_performance.gd"
       - "scenes/levels/prototypes/prototype_mechanism_network_lab_v1.tscn"
       - "scripts/tests/mechanism_network_smoke_test.gd"
       - "scenes/tests/mechanism_network_smoke_test.tscn"
+      - "docs/MECHANISM_NETWORK_V1.md"
       - ".github/workflows/mechanism-network-validation.yml"
   workflow_dispatch:
 

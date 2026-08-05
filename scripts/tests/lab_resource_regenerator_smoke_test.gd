@@ -39,9 +39,18 @@ func _validate_identity_detection() -> void:
 		"playable lab scene identities are recognized"
 	)
 	_expect(
+		installer.matches_lab_identity(
+			"res://scenes/levels/prototypes/prototype_training_yard_v1.tscn",
+			"PrototypeTrainingYard",
+			["familiar_training_lab"]
+		),
+		"conventional lab groups opt unusually named testing spaces into regeneration"
+	)
+	_expect(
 		not installer.matches_lab_identity(
 			"res://scenes/tests/mechanism_network_lab_smoke_test.tscn",
-			"MechanismNetworkLabSmokeTest"
+			"MechanismNetworkLabSmokeTest",
+			["mechanism_network_labs"]
 		),
 		"test scenes do not receive background resource regeneration"
 	)

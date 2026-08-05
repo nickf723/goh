@@ -4,10 +4,11 @@ const RewardAltarScene: PackedScene = preload("res://scenes/actors/interactables
 const TransitionAreaScene: PackedScene = preload("res://scenes/actors/interactables/level_exit.tscn")
 const ChurchEntryDressingScene: PackedScene = preload("res://scenes/environment/church/church_entry_dressing_v1.tscn")
 const ChurchCombatWingDressingScene: PackedScene = preload("res://scenes/environment/church/church_combat_wing_dressing_v1.tscn")
+const ChamberOfAccordScene: PackedScene = preload("res://scenes/environment/church/church_trial_chamber_of_accord_v1.tscn")
 const GuardTestEnemyScene: PackedScene = preload("res://scenes/actors/enemies/goblin_drone.tscn")
 const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 
-@export var opening_objective: String = "Church Trial: save, clear combat, solve the lock, cross the echo path, defeat the armor, claim the sigil, then exit."
+@export var opening_objective: String = "Church Trial: save, clear combat, solve the Chamber of Accord, cross the echo path, defeat the armor, claim the sigil, then exit."
 @export var opening_message: String = "The Church Trial tests force, understanding, perception, and resolve."
 @export var apply_save_on_ready: bool = true
 @export var add_reward_altar: bool = true
@@ -21,13 +22,14 @@ const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 @export_group("Art Dressing")
 @export var add_entry_art_dressing: bool = true
 @export var add_combat_art_dressing: bool = true
+@export var add_chamber_of_accord: bool = true
 
 @export_group("Room Flow")
 @export var add_sound_transition: bool = true
 @export_file("*.tscn") var sound_scene_path: String = "res://scenes/levels/prototypes/prototype_sound_reveal_bridge_v1.tscn"
 @export var sound_transition_position: Vector3 = Vector3(0.0, 1.0, 70.0)
 @export var sound_transition_scale: Vector3 = Vector3(12.0, 1.0, 1.25)
-@export var sound_transition_message: String = "The elemental seal yields. The Church's next chamber listens for what sight cannot find."
+@export var sound_transition_message: String = "The Chamber of Accord yields. The Church's next chamber listens for what sight cannot find."
 @export var sound_transition_objective: String = "Use Sound Pulse to reveal the hidden path."
 
 @export_group("Guard Testing")
@@ -39,6 +41,7 @@ const PROTOTYPE_SAVE_PATH: String = "user://goh_save_slot_1.json"
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	install_chamber_of_accord()
 	connect_guard_test_signals()
 	spawn_entry_art_dressing()
 	spawn_combat_art_dressing()
@@ -167,6 +170,42 @@ func clear_prototype_save_and_restart() -> void:
 
 	await get_tree().create_timer(0.15).timeout
 	get_tree().reload_current_scene()
+
+
+func install_chamber_of_accord() -> void:
+	if not add_chamber_of_accord:
+		return
+
+	var puzzle_room: Node3D = get_node_or_null("Room3Puzzle") as Node3D
+	if puzzle_room == null:
+		return
+	if puzzle_room.get_node_or_null("ChamberOfAccord") != null:
+		return
+
+	# The packed room replaces the original pair of elemental cubes at runtime.
+	# Their reusable scripts remain available to other prototypes, while the
+	# Church Trial now exercises the production mechanism grammar.
+	for legacy_name: String in [
+		"PuzzleHintWater",
+		"PuzzleHintOil",
+		"WaterLockTarget",
+		"FireLockTarget",
+		"PuzzleGate",
+		"ElementLockController",
+	]:
+		var legacy_node: Node = puzzle_room.get_node_or_null(legacy_name)
+		if legacy_node != null:
+			legacy_node.free()
+
+	var chamber: ChurchTrialChamberOfAccord = (
+		ChamberOfAccordScene.instantiate() as ChurchTrialChamberOfAccord
+	)
+	if chamber == null:
+		push_warning("Church Trial could not instantiate the Chamber of Accord.")
+		return
+	chamber.name = "ChamberOfAccord"
+	puzzle_room.add_child(chamber)
+	chamber.position = Vector3.ZERO
 
 
 func spawn_entry_art_dressing() -> void:

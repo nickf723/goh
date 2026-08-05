@@ -156,6 +156,20 @@ func _test_value_comparators() -> void:
 	_expect(balance_comparator.active, "balance comparator accepts equal source values")
 	_expect(is_equal_approx(balance_comparator.last_difference, 0.0), "balance comparator reports signed difference")
 
+	balance_comparator.require_all_sources_active = true
+	balance_comparator._evaluate_source_states()
+	_expect(not balance_comparator.active, "occupied-source comparison rejects equal values from inactive sources")
+	left_source.set_mechanism_state(true, 4.0)
+	right_source.set_mechanism_state(true, 4.0)
+	_expect(balance_comparator.active, "occupied-source comparison accepts equal values from active sources")
+	balance_comparator.invert_result = true
+	balance_comparator._evaluate_source_states()
+	_expect(not balance_comparator.active, "inverted occupied comparison still respects its source gate")
+	left_source.set_mechanism_state(false, 4.0)
+	right_source.set_mechanism_state(false, 4.0)
+	balance_comparator._evaluate_source_states()
+	_expect(not balance_comparator.active, "inactive sources cannot satisfy an inverted occupied comparison")
+
 
 func _test_proportional_output() -> void:
 	var source := _make_value_source("ElevatorValueSource", "elevator_value_source", 0.0, 10.0)
@@ -187,6 +201,13 @@ func _test_proportional_output() -> void:
 	_expect(is_equal_approx(elevator.target_fraction, 1.0), "maximum input maps to full elevator travel")
 	_expect(absf(elevator.position.y - 6.0) <= 0.05, "proportional elevator physically reaches full height")
 
+	elevator.set_mechanism_active(false, {"value": 1.0})
+	await _wait_frames(3)
+	_expect(is_equal_approx(elevator.target_fraction, 0.0), "Boolean OFF maps directly to the elevator bottom")
+	elevator.set_mechanism_active(true, {"value": 1.0})
+	await _wait_frames(3)
+	_expect(is_equal_approx(elevator.target_fraction, 1.0), "Boolean ON maps directly to the elevator top")
+
 
 func _test_production_value_wing() -> void:
 	var lab: Node = LabScene.instantiate()
@@ -216,6 +237,7 @@ func _test_production_value_wing() -> void:
 	var right_plate := lab.get_node_or_null("Mechanisms/BalanceRightPlate") as PressurePlateSwitch
 	var balance_gate := lab.get_node_or_null("Mechanisms/BalanceGate") as MechanismSlidingGate
 	if left_plate != null and right_plate != null and balance_gate != null:
+		_expect(not balance_gate.active, "empty balance plates do not solve the production station")
 		left_plate.set_simulated_mass_kg(5.0)
 		right_plate.set_simulated_mass_kg(3.0)
 		await _wait_frames(2)

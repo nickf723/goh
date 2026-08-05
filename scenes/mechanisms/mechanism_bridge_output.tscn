@@ -1,0 +1,47 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/mechanisms/mechanism_bridge_output.gd" id="1_bridge"]
+
+[sub_resource type="StandardMaterial3D" id="Material_bridge"]
+albedo_color = Color(0.25, 0.38, 0.48, 1)
+metallic = 0.46
+roughness = 0.42
+emission_enabled = true
+emission = Color(0.015, 0.1, 0.18, 1)
+emission_energy_multiplier = 0.75
+
+[sub_resource type="BoxMesh" id="Mesh_bridge"]
+size = Vector3(7.0, 0.45, 2.5)
+
+[sub_resource type="BoxShape3D" id="Shape_bridge"]
+size = Vector3(7.0, 0.45, 2.5)
+
+[sub_resource type="BoxMesh" id="Mesh_anchor"]
+size = Vector3(1.0, 0.7, 3.0)
+
+[node name="MechanismBridgeOutput" type="Node3D"]
+script = ExtResource("1_bridge")
+display_name = "Timed Bridge"
+
+[node name="Anchor" type="MeshInstance3D" parent="."]
+position = Vector3(-3.8, 0.35, 0)
+material_override = SubResource("Material_bridge")
+mesh = SubResource("Mesh_anchor")
+
+[node name="BridgeRoot" type="StaticBody3D" parent="."]
+position = Vector3(0, 0.3, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BridgeRoot"]
+shape = SubResource("Shape_bridge")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BridgeRoot"]
+material_override = SubResource("Material_bridge")
+mesh = SubResource("Mesh_bridge")
+
+[node name="StateLabel" type="Label3D" parent="."]
+position = Vector3(0, 2.0, 0)
+text = "TIMED BRIDGE\nRETRACTED"
+font_size = 20
+pixel_size = 0.006
+billboard = 1
+outline_size = 6

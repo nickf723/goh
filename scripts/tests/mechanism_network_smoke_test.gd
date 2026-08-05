@@ -294,7 +294,7 @@ func _make_logic(
 	logic.name = node_name
 	logic.mechanism_id = mechanism_id
 	logic.display_name = node_name
-	logic.operation = operation as MechanismLogicNode.Operation
+	logic.operation = operation
 	fixture.add_child(logic)
 	for value: Variant in sources:
 		if value is Node:

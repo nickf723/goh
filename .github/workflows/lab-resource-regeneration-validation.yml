@@ -1,0 +1,59 @@
+name: Lab resource regeneration validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/systems/lab_resource_regenerator.gd"
+      - "scripts/systems/lab_resource_regenerator_installer.gd"
+      - "scenes/ui/game_ui.tscn"
+      - "scripts/tests/lab_resource_regenerator_smoke_test.gd"
+      - "scenes/tests/lab_resource_regenerator_smoke_test.tscn"
+      - ".github/workflows/lab-resource-regeneration-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lab-resource-regeneration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-lab-resources:
+    name: Import and lab resource regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee lab-resource-import.log
+
+      - name: Run lab resource regeneration regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lab-resource-regeneration-logs
+          path: |
+            lab-resource-import.log
+            lab-resource-test.log
+          if-no-files-found: ignore

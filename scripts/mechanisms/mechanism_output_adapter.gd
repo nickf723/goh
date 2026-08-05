@@ -60,11 +60,6 @@ func _on_signal_state_applied(_changed: bool) -> void:
 	apply_target_state()
 
 
-func _on_signal_value_applied(_changed: bool) -> void:
-	if forward_value:
-		apply_target_state()
-
-
 func apply_target_state() -> bool:
 	var target: Node = resolve_target()
 	if target == null:

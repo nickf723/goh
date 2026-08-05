@@ -195,7 +195,7 @@ func _on_source_state_changed(
 
 
 func _evaluate_source_states() -> void:
-	if not evaluate_sources_as_or or source_states.is_empty():
+	if not evaluate_sources_as_or:
 		return
 	set_mechanism_active(get_active_source_count() > 0, {
 		"reason": "source_evaluation",

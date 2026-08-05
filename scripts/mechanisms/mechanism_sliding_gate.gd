@@ -12,6 +12,8 @@ signal gate_fraction_changed(open_fraction: float)
 @export_range(0.05, 5.0, 0.05) var transition_seconds: float = 0.65
 @export var starts_open: bool = false
 @export var disable_collision_while_open: bool = true
+@export_range(0.01, 0.5, 0.01) var fraction_signal_step: float = 0.08
+@export_range(8.0, 120.0, 1.0) var label_visibility_distance: float = 36.0
 
 var active: bool = false
 var open_fraction: float = 0.0
@@ -21,6 +23,8 @@ var state_label: Label3D
 var closed_visual_position: Vector3 = Vector3.ZERO
 var gate_tween: Tween
 var last_packet: Dictionary = {}
+var last_label_state: String = ""
+var last_emitted_fraction: float = -1.0
 
 
 func _ready() -> void:
@@ -33,6 +37,9 @@ func _ready() -> void:
 	state_label = get_node_or_null(state_label_path) as Label3D
 	if moving_visual != null:
 		closed_visual_position = moving_visual.position
+	if state_label != null:
+		state_label.visibility_range_end = label_visibility_distance
+		state_label.visibility_range_end_margin = 4.0
 	set_gate_open(starts_open, true, {"reason": "startup"})
 
 
@@ -56,10 +63,16 @@ func set_gate_open(
 	if immediate or moving_visual == null:
 		_apply_fraction(target_fraction)
 	else:
+		_refresh_state_label("OPENING" if active else "CLOSING")
 		gate_tween = create_tween()
 		gate_tween.set_trans(Tween.TRANS_QUAD)
 		gate_tween.set_ease(Tween.EASE_IN_OUT)
-		gate_tween.tween_method(Callable(self, "_apply_fraction"), open_fraction, target_fraction, transition_seconds)
+		gate_tween.tween_method(
+			Callable(self, "_apply_fraction"),
+			open_fraction,
+			target_fraction,
+			transition_seconds
+		)
 	if changed:
 		output_state_changed.emit(active)
 
@@ -72,10 +85,31 @@ func _apply_fraction(value: float) -> void:
 	open_fraction = clampf(value, 0.0, 1.0)
 	if moving_visual != null:
 		moving_visual.position = closed_visual_position + open_offset * open_fraction
-	if state_label != null:
-		var state_text: String = "OPEN" if open_fraction >= 0.99 else "CLOSED" if open_fraction <= 0.01 else str(int(round(open_fraction * 100.0))) + "%"
-		state_label.text = display_name.to_upper() + "\n" + state_text
-	gate_fraction_changed.emit(open_fraction)
+	var state_text: String = (
+		"OPEN"
+		if open_fraction >= 0.99
+		else "CLOSED"
+		if open_fraction <= 0.01
+		else "OPENING"
+		if active
+		else "CLOSING"
+	)
+	_refresh_state_label(state_text)
+	var endpoint: bool = open_fraction <= 0.01 or open_fraction >= 0.99
+	if (
+		last_emitted_fraction < 0.0
+		or endpoint
+		or absf(open_fraction - last_emitted_fraction) >= fraction_signal_step
+	):
+		last_emitted_fraction = open_fraction
+		gate_fraction_changed.emit(open_fraction)
+
+
+func _refresh_state_label(state_text: String) -> void:
+	if state_label == null or last_label_state == state_text:
+		return
+	last_label_state = state_text
+	state_label.text = display_name.to_upper() + "\n" + state_text
 
 
 func _set_collision_enabled(enabled: bool) -> void:
@@ -89,6 +123,8 @@ func _set_collision_enabled(enabled: bool) -> void:
 
 
 func reset_target() -> void:
+	last_emitted_fraction = -1.0
+	last_label_state = ""
 	set_gate_open(starts_open, true, {"reason": "reset"})
 
 
@@ -99,5 +135,7 @@ func get_debug_data() -> Dictionary:
 		"open": active,
 		"open_fraction": snappedf(open_fraction, 0.01),
 		"collision_enabled": collision_layer != 0,
+		"label_state": last_label_state,
+		"fraction_signal_step": fraction_signal_step,
 		"packet": last_packet.duplicate(true),
 	}

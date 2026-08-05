@@ -1,0 +1,85 @@
+name: Animated Armor prismatic validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/enemies/animated_armor_boss.gd"
+      - "scripts/visuals/animated_armor_visual_v1.gd"
+      - "scenes/actors/enemies/animated_armor_boss.tscn"
+      - "scenes/actors/enemies/animated_armor_visual_v1.tscn"
+      - "scripts/combat/hit_receiver.gd"
+      - "scripts/player/player_defense_controller.gd"
+      - "scripts/player/player_defense_controller_elemental.gd"
+      - "scripts/systems/lab_resource_regenerator.gd"
+      - "scripts/systems/lab_resource_regenerator_installer.gd"
+      - "scripts/levels/prototype_boss_dungeon_chain.gd"
+      - "scenes/levels/prototypes/prototype_church_trial_boss_finale_v1.tscn"
+      - "scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn"
+      - "scripts/tests/animated_armor_prismatic_smoke_test.gd"
+      - "scenes/tests/animated_armor_prismatic_smoke_test.tscn"
+      - "scripts/tests/lab_resource_regenerator_smoke_test.gd"
+      - "scenes/tests/lab_resource_regenerator_smoke_test.tscn"
+      - "docs/animated_armor_prismatic_judgment_v1_test.md"
+      - ".github/workflows/animated-armor-prismatic-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: animated-armor-prismatic-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-prismatic-judgment:
+    name: Import and Prismatic Judgment regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee prismatic-import.log
+
+      - name: Start dedicated boss finale
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 5 res://scenes/levels/prototypes/prototype_church_trial_boss_finale_v1.tscn 2>&1 | tee prismatic-finale-startup.log
+
+      - name: Run Prismatic Judgment regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/animated_armor_prismatic_smoke_test.tscn 2>&1 | tee prismatic-test.log
+
+      - name: Run laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload Prismatic Judgment logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: animated-armor-prismatic-validation-logs
+          path: |
+            prismatic-import.log
+            prismatic-finale-startup.log
+            prismatic-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

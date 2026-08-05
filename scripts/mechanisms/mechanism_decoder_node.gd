@@ -156,12 +156,11 @@ func _evaluate_source_states() -> void:
 	var has_address_sources: bool = bool(address_result.get("resolved", false))
 	raw_address = int(address_result.get("address", 0))
 	last_selector_source_id = str(address_result.get("selector_source_id", ""))
+	last_bit_source_ids.clear()
 	var bits_value: Variant = address_result.get("bit_source_ids", [])
-	last_bit_source_ids = (
-		(bits_value as Array[String]).duplicate()
-		if bits_value is Array[String]
-		else []
-	)
+	if bits_value is Array:
+		for bit_value: Variant in bits_value:
+			last_bit_source_ids.append(str(bit_value))
 
 	var next_channel: int = -1
 	var next_valid: bool = false
@@ -238,13 +237,13 @@ func _resolve_raw_address() -> Dictionary:
 				"resolved": false,
 				"address": 0,
 				"selector_source_id": "",
-				"bit_source_ids": Array[String](),
+				"bit_source_ids": [],
 			}
 		return {
 			"resolved": true,
 			"address": roundi(get_source_value(selector_id)),
 			"selector_source_id": selector_id,
-			"bit_source_ids": Array[String](),
+			"bit_source_ids": [],
 		}
 
 	var bit_ids: Array[String] = _resolve_bit_source_ids()
@@ -260,11 +259,11 @@ func _resolve_raw_address() -> Dictionary:
 		for bit_id: String in bit_ids:
 			address = address << 1
 			if get_source_state(bit_id):
-				address |= 1
+				address = address | 1
 	else:
 		for bit_index: int in range(bit_ids.size()):
 			if get_source_state(bit_ids[bit_index]):
-				address |= 1 << bit_index
+				address = address | (1 << bit_index)
 	return {
 		"resolved": true,
 		"address": address,

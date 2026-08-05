@@ -14,6 +14,7 @@ on:
       - "scripts/levels/mechanism_network_lab_performance.gd"
       - "scripts/levels/mechanism_network_lab_soul_weights.gd"
       - "scripts/levels/mechanism_network_lab_routing.gd"
+      - "scripts/levels/mechanism_network_lab_priority_decoder.gd"
       - "scenes/levels/prototypes/prototype_mechanism_network_lab_v1.tscn"
       - "scripts/tests/mechanism_network_smoke_test.gd"
       - "scenes/tests/mechanism_network_smoke_test.tscn"
@@ -23,7 +24,10 @@ on:
       - "scenes/tests/mechanism_soul_weight_smoke_test.tscn"
       - "scripts/tests/mechanism_routing_smoke_test.gd"
       - "scenes/tests/mechanism_routing_smoke_test.tscn"
+      - "scripts/tests/mechanism_priority_decoder_smoke_test.gd"
+      - "scenes/tests/mechanism_priority_decoder_smoke_test.tscn"
       - "docs/MECHANISM_NETWORK_V1.md"
+      - "docs/MECHANISM_PRIORITY_DECODER_V1.md"
       - ".github/workflows/mechanism-network-validation.yml"
   workflow_dispatch:
 
@@ -80,6 +84,12 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/mechanism_routing_smoke_test.tscn 2>&1 | tee mechanism-routing-test.log
 
+      - name: Run priority and decoder regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/mechanism_priority_decoder_smoke_test.tscn 2>&1 | tee mechanism-priority-decoder-test.log
+
       - name: Upload mechanism validation logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -91,4 +101,5 @@ jobs:
             mechanism-value-test.log
             mechanism-soul-weight-test.log
             mechanism-routing-test.log
+            mechanism-priority-decoder-test.log
           if-no-files-found: ignore

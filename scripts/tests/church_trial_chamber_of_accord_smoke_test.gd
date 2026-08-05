@@ -95,7 +95,11 @@ func _test_standalone_chamber_behavior() -> void:
 		await get_tree().process_frame
 		return
 
-	_expect(not left_plate.active and not right_plate.active, "offering scales begin released")
+	_expect(
+		not left_plate.is_mechanism_active()
+		and not right_plate.is_mechanism_active(),
+		"offering scales begin released"
+	)
 	_expect(is_equal_approx(left_plate.get_mechanism_value(), 0.0), "left scale begins at zero kilograms")
 	_expect(is_equal_approx(right_plate.get_mechanism_value(), 0.0), "right scale begins at zero kilograms")
 	_expect(not gate.active, "passage gate begins sealed")

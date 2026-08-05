@@ -13,7 +13,7 @@ var routing_routers: Array[MechanismRouterNode] = []
 var routing_multiplexers: Array[MechanismMultiplexerNode] = []
 var routing_constant_sources: Array[MechanismManualSource] = []
 var routing_output_adapters: Array[MechanismOutputAdapter] = []
-var routing_presented_nodes: Array[Node] = []
+var routing_presented_nodes: Array[MechanismSignalNode] = []
 var routing_labels: Dictionary = {}
 var routing_instruction: Label3D
 
@@ -141,13 +141,18 @@ func _build_two_way_power_junction(z: float) -> void:
 	)
 	var left_channel: MechanismManualSource = router.get_channel_output(0)
 	var right_channel: MechanismManualSource = router.get_channel_output(1)
-	for adapter: MechanismOutputAdapter in [
-		_wire_output("LeftRouteIndicatorOutput", left_channel, left_indicator),
-		_wire_output("LeftRouteGateOutput", left_channel, left_gate),
-		_wire_output("RightRouteIndicatorOutput", right_channel, right_indicator),
-		_wire_output("RightRouteGateOutput", right_channel, right_gate),
-	]:
-		routing_output_adapters.append(adapter)
+	routing_output_adapters.append(
+		_wire_output("LeftRouteIndicatorOutput", left_channel, left_indicator)
+	)
+	routing_output_adapters.append(
+		_wire_output("LeftRouteGateOutput", left_channel, left_gate)
+	)
+	routing_output_adapters.append(
+		_wire_output("RightRouteIndicatorOutput", right_channel, right_indicator)
+	)
+	routing_output_adapters.append(
+		_wire_output("RightRouteGateOutput", right_channel, right_gate)
+	)
 
 	var instruction: Label3D = _create_station_label(
 		"Place the Soul weight on the plate, then change route while power remains active",
@@ -322,10 +327,9 @@ func _create_multiplexer(
 	multiplexer.selector_source_id = selector_source.get_mechanism_id()
 	var authored_input_ids: Array[String] = []
 	for source_value: Variant in input_sources:
-		if source_value is Node:
-			authored_input_ids.append(
-				str((source_value as Node).call("get_mechanism_id"))
-			)
+		if source_value is MechanismSignalNode:
+			var source_node := source_value as MechanismSignalNode
+			authored_input_ids.append(source_node.get_mechanism_id())
 	multiplexer.input_source_ids = authored_input_ids
 	network_root.add_child(multiplexer)
 	multiplexer.bind_selector(selector_source)
@@ -399,9 +403,12 @@ func _spawn_routing_elevator(
 	return elevator
 
 
-func _create_routing_label(node: Node, position_value: Vector3) -> Label3D:
+func _create_routing_label(
+	node: MechanismSignalNode,
+	position_value: Vector3
+) -> Label3D:
 	var label: Label3D = _create_station_label(
-		str(node.get("display_name")),
+		node.display_name,
 		position_value,
 		Color(0.84, 0.52, 1.0)
 	)
@@ -411,7 +418,7 @@ func _create_routing_label(node: Node, position_value: Vector3) -> Label3D:
 
 
 func _bind_routing_presentation_signals() -> void:
-	for node: Node in routing_presented_nodes:
+	for node: MechanismSignalNode in routing_presented_nodes:
 		if node == null or not is_instance_valid(node):
 			continue
 		var callback := Callable(
@@ -426,7 +433,7 @@ func _on_routing_signal_changed(
 	_mechanism_id: String,
 	_active: bool,
 	_packet: Dictionary,
-	node: Node
+	node: MechanismSignalNode
 ) -> void:
 	_refresh_routing_presentation(node)
 	_refresh_network_readout()
@@ -434,12 +441,12 @@ func _on_routing_signal_changed(
 
 func _refresh_all_presentations() -> void:
 	super._refresh_all_presentations()
-	for node: Node in routing_presented_nodes:
+	for node: MechanismSignalNode in routing_presented_nodes:
 		_refresh_routing_presentation(node)
 	_refresh_network_readout()
 
 
-func _refresh_routing_presentation(node: Node) -> void:
+func _refresh_routing_presentation(node: MechanismSignalNode) -> void:
 	if node == null or not is_instance_valid(node):
 		return
 	var label: Label3D = routing_labels.get(node.get_instance_id()) as Label3D
@@ -447,7 +454,7 @@ func _refresh_routing_presentation(node: Node) -> void:
 		return
 
 	var detail: String = ""
-	var state_active: bool = bool(node.call("is_mechanism_active"))
+	var state_active: bool = node.is_mechanism_active()
 	if node is MechanismSelectorSource:
 		var selector := node as MechanismSelectorSource
 		detail = (
@@ -475,7 +482,7 @@ func _refresh_routing_presentation(node: Node) -> void:
 		detail = "signal"
 
 	var next_text: String = (
-		str(node.get("display_name"))
+		node.display_name
 		+ "\n"
 		+ detail
 		+ " → "
@@ -506,11 +513,11 @@ func _refresh_network_readout() -> void:
 		if comparator != null and is_instance_valid(comparator) and comparator.active:
 			active_comparators += 1
 	var active_routes: int = 0
-	for node: Node in routing_presented_nodes:
+	for node: MechanismSignalNode in routing_presented_nodes:
 		if (
 			node != null
 			and is_instance_valid(node)
-			and bool(node.call("is_mechanism_active"))
+			and node.is_mechanism_active()
 		):
 			active_routes += 1
 	var next_text: String = (

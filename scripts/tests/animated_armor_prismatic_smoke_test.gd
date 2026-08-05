@@ -189,6 +189,9 @@ func _test_prismatic_boss_contract() -> void:
 	boss.call("_on_health_depleted")
 	await get_tree().process_frame
 	_expect(bool(gate.get("is_unlocked")), "boss defeat still unlocks the Judgment Gate")
+	await get_tree().create_timer(
+		boss.defeat_presentation_duration + 0.1
+	).timeout
 
 	fixture.queue_free()
 	await get_tree().process_frame
@@ -314,6 +317,10 @@ func _test_boss_finale_mana_regeneration() -> void:
 	if regenerator != null:
 		regenerator.set_process(false)
 		_expect(regenerator.mana_per_second > 0.0, "boss finale enables mana regeneration")
+		_expect(
+			not regenerator.refill_on_ready,
+			"boss finale avoids the shared all-resource entry refill"
+		)
 		_expect(
 			is_zero_approx(regenerator.stamina_per_second)
 			and is_zero_approx(regenerator.focus_per_second),

@@ -123,6 +123,10 @@ func get_effective_mass() -> float:
 	return 1.0
 
 
+func get_mechanism_mass_kg() -> float:
+	return get_effective_mass()
+
+
 func receive_damage_payload(payload: DamagePayload) -> Dictionary:
 	var payload_receiver: Node = get_node_or_null("PayloadReceiver")
 	if payload_receiver != null and payload_receiver.has_method("receive_payload"):

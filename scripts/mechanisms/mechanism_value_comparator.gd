@@ -94,6 +94,8 @@ func _evaluate_source_states() -> void:
 				and absf(last_difference) <= tolerance
 			)
 
+	if invert_result:
+		result = not result
 	if require_all_sources_active:
 		result = (
 			result
@@ -103,8 +105,6 @@ func _evaluate_source_states() -> void:
 				or get_source_state(secondary_id)
 			)
 		)
-	if invert_result:
-		result = not result
 
 	last_comparison_summary = _build_comparison_summary(
 		primary_id,

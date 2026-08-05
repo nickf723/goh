@@ -25,6 +25,7 @@ func run_tests() -> void:
 	await get_tree().physics_frame
 
 	_validate_structure()
+	_validate_familiar_utility_route()
 	_validate_quest_bootstrap()
 	_validate_garden_discovery()
 	_validate_square_and_routes()
@@ -76,6 +77,27 @@ func _validate_structure() -> void:
 	assert_true(int(debug.get("water_opportunities", 0)) >= 3, "square exposes three Water opportunities")
 	assert_true(bool(debug.get("has_travel_cauldron", false)), "debug contract sees travel alchemy")
 	assert_true(bool(debug.get("has_final_encounter", false)), "debug contract sees final encounter")
+
+
+func _validate_familiar_utility_route() -> void:
+	var route: Node = field_level.get_node_or_null("FieldProgression/FamiliarUtilityRoute")
+	assert_true(route != null, "production field slice includes the familiar utility route")
+	if route == null:
+		return
+	var plate: Node3D = route.get_node_or_null("WaykeeperPlate") as Node3D
+	var ram: Node3D = route.get_node_or_null("RamBarricadeTask") as Node3D
+	var forage: Node3D = route.get_node_or_null("ForageHerbBed") as Node3D
+	assert_true(plate != null, "production route includes the sustained hold receiver")
+	assert_true(ram != null, "production route includes the ram receiver")
+	assert_true(forage != null, "production route includes the forage receiver")
+	if plate != null:
+		assert_true(absf(plate.global_position.x) >= 15.0, "hold puzzle stays outside the central village road")
+	if ram != null:
+		assert_true(ram.global_position.x >= 15.0, "ram route stays beside the established ravine stair")
+	var debug: Dictionary = field_level.call("get_field_progression_debug_data") as Dictionary
+	assert_true(bool(debug.get("familiar_utility_route", false)), "field debug contract advertises familiar utility")
+	var tasks: Dictionary = debug.get("familiar_utility_tasks", {}) as Dictionary
+	assert_equal(tasks.size(), 3, "field debug contract exposes all three utility tasks")
 
 
 func _validate_quest_bootstrap() -> void:

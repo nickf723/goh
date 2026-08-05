@@ -29,7 +29,7 @@ const CONTEXT_DESCRIPTIONS: Dictionary = {
 	"follow": "Travel beside Grace.",
 	"stay": "Hold the current position.",
 	"come_here": "Return directly to Grace.",
-	"move_to": "Move to an aimed world position.",
+	"move_to": "Aim at ground to move, or aim at a compatible task object to use a familiar utility action.",
 	"assist": "Choose and pressure nearby threats.",
 	"focus": "Prioritize Grace's locked target.",
 	"dismiss": "Return this familiar without starting a defeat cooldown.",
@@ -65,6 +65,18 @@ func _ready() -> void:
 		call_deferred("_install_context_router")
 	if install_command_interface:
 		call_deferred("_install_command_interface")
+
+
+func _exit_tree() -> void:
+	var roster: Node = get_node_or_null("/root/BondedFamiliarRoster")
+	if roster == null or not is_instance_valid(roster):
+		return
+	var definitions_value: Variant = roster.get("manager_original_definitions")
+	if not definitions_value is Dictionary:
+		return
+	var definitions: Dictionary = (definitions_value as Dictionary).duplicate(true)
+	definitions.erase(get_instance_id())
+	roster.set("manager_original_definitions", definitions)
 
 
 func _process(delta: float) -> void:
@@ -261,6 +273,21 @@ func issue_familiar_command(
 	return result
 
 
+func issue_familiar_task(receiver: Node) -> Dictionary:
+	var familiar: Node3D = get_active_summon()
+	if familiar == null:
+		return {"ok": false, "error": "No familiar is summoned."}
+	if not familiar.has_method("issue_familiar_task"):
+		return {"ok": false, "error": get_active_familiar_display_name() + " cannot perform world tasks."}
+	var result: Dictionary = _result_dictionary(familiar.call("issue_familiar_task", receiver))
+	if bool(result.get("ok", false)):
+		var task_id: String = str(result.get("task_id", "task"))
+		last_command_id = "task_" + task_id
+		total_commands += 1
+		summon_command_changed.emit(last_command_id)
+	return result
+
+
 func get_familiar_command_state() -> Dictionary:
 	var familiar: Node3D = get_active_summon()
 	if familiar == null:
@@ -318,6 +345,42 @@ func get_ability_context_spec(ability: AbilityDefinition) -> Dictionary:
 	}
 
 
+func get_ability_context_target_preview(
+	action_id: String,
+	world_position: Vector3,
+	collider: Variant = null
+) -> Dictionary:
+	if _normalize_command(action_id) != "move_to":
+		return {
+			"valid": true,
+			"label": "Confirm Target",
+			"description": "Confirm the aimed target.",
+			"position": world_position,
+			"payload": world_position,
+		}
+	var familiar: Node3D = get_active_summon()
+	var receiver: Node = _find_task_receiver(collider)
+	if receiver != null and familiar != null and receiver.has_method("get_familiar_task_preview"):
+		var preview_value: Variant = receiver.call("get_familiar_task_preview", familiar)
+		if preview_value is Dictionary:
+			var preview: Dictionary = (preview_value as Dictionary).duplicate(true)
+			var task_position: Vector3 = preview.get("position", world_position) as Vector3
+			preview["position"] = task_position
+			preview["payload"] = {
+				"position": task_position,
+				"receiver": receiver,
+				"task_id": str(preview.get("task_id", "task")),
+			}
+			return preview
+	return {
+		"valid": true,
+		"label": "GO THERE",
+		"description": "Move " + get_active_familiar_display_name() + " to the aimed position.",
+		"position": world_position,
+		"payload": world_position,
+	}
+
+
 func execute_ability_context_action(
 	action_id: String,
 	payload: Variant = Vector3.INF
@@ -334,9 +397,20 @@ func execute_ability_context_action(
 			"action_id": "dismiss",
 			"message": familiar_name + " dismissed.",
 		}
+	if normalized == "move_to" and payload is Dictionary:
+		var task_payload: Dictionary = payload as Dictionary
+		var receiver_value: Variant = task_payload.get("receiver")
+		if receiver_value is Node and is_instance_valid(receiver_value as Node):
+			var task_result: Dictionary = issue_familiar_task(receiver_value as Node)
+			if bool(task_result.get("ok", false)):
+				task_result["action_id"] = "move_to"
+			return task_result
 	var destination: Vector3 = Vector3.INF
-	if normalized == "move_to" and payload is Vector3:
-		destination = payload as Vector3
+	if normalized == "move_to":
+		if payload is Vector3:
+			destination = payload as Vector3
+		elif payload is Dictionary:
+			destination = (payload as Dictionary).get("position", Vector3.INF) as Vector3
 	var result: Dictionary = issue_familiar_command(normalized, destination)
 	if bool(result.get("ok", false)):
 		result["action_id"] = normalized
@@ -354,6 +428,11 @@ func get_ability_context_status() -> Dictionary:
 	var state: Dictionary = get_familiar_command_state()
 	var command_id: String = str(state.get("command_id", "follow"))
 	var state_text: String = str(CONTEXT_LABELS.get(command_id, command_id.capitalize()))
+	var task_data: Dictionary = state.get("utility_task", {}) as Dictionary
+	if bool(task_data.get("active", false)):
+		var task_id: String = str(task_data.get("task_id", "task")).replace("_", " ").capitalize()
+		var phase: String = str(task_data.get("phase", "active")).replace("_", " ").to_upper()
+		state_text = task_id + " • " + phase
 	if bool(state.get("suspended", false)):
 		state_text += " • SUSPENDED: " + str(state.get("suspend_reason", "unsafe")).replace("_", " ").to_upper()
 	return {
@@ -428,12 +507,17 @@ func reset_summons() -> void:
 
 func get_debug_data() -> Dictionary:
 	var definition: SummonDefinition = get_resolved_summon_definition()
+	var familiar: Node3D = get_active_summon()
+	var task_data: Dictionary = {}
+	if familiar != null and familiar.has_method("get_familiar_task_state"):
+		task_data = _result_dictionary(familiar.call("get_familiar_task_state"))
 	return {
 		"spell_id": handled_spell_id,
-		"active": get_active_summon() != null,
-		"summon": get_active_familiar_display_name() if get_active_summon() != null else "none",
+		"active": familiar != null,
+		"summon": get_active_familiar_display_name() if familiar != null else "none",
 		"command": get_familiar_command_state().get("command_id", "none"),
 		"available_commands": get_available_familiar_commands(),
+		"utility_task": task_data,
 		"resolved_definition": definition.summon_id if definition != null else "none",
 		"resolved_species": definition.species_id if definition != null else "",
 		"cooldown": snappedf(cooldown_remaining, 0.1),
@@ -471,6 +555,17 @@ func _install_command_interface() -> void:
 		actor.add_child(command_interface)
 	if command_interface.has_method("bind"):
 		command_interface.call("bind", self, actor)
+
+
+func _find_task_receiver(collider: Variant) -> Node:
+	if not collider is Node:
+		return null
+	var candidate: Node = collider as Node
+	while candidate != null:
+		if candidate.has_method("get_familiar_task_preview") and candidate.has_method("begin_familiar_task"):
+			return candidate
+		candidate = candidate.get_parent()
+	return null
 
 
 func _call_command_method(

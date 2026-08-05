@@ -1,4 +1,4 @@
-extends "res://scripts/levels/mechanism_network_lab_complete.gd"
+extends "res://scripts/levels/mechanism_network_lab_value.gd"
 class_name MechanismNetworkLabPerformance
 
 @export_range(0.1, 1.0, 0.05) var active_timer_refresh_seconds: float = 0.25
@@ -18,6 +18,7 @@ func _ready() -> void:
 	super._ready()
 	add_to_group("performance_budgeted_labs")
 	_bind_logic_presentation_signals()
+	_bind_value_presentation_signals()
 	_configure_label_visibility_budget(self)
 	_refresh_all_presentations()
 	_refresh_timer_processing()
@@ -46,6 +47,9 @@ func _refresh_all_presentations() -> void:
 	for logic: MechanismLogicNode in logic_nodes:
 		if logic != null and is_instance_valid(logic):
 			_refresh_logic_presentation(logic)
+	for comparator: MechanismValueComparator in value_comparators:
+		if comparator != null and is_instance_valid(comparator):
+			_refresh_value_comparator_presentation_budgeted(comparator)
 	_refresh_network_readout()
 	_refresh_timer_processing()
 
@@ -59,6 +63,18 @@ func _bind_logic_presentation_signals() -> void:
 			logic.mechanism_signal_changed.connect(callback)
 
 
+func _bind_value_presentation_signals() -> void:
+	for comparator: MechanismValueComparator in value_comparators:
+		if comparator == null or not is_instance_valid(comparator):
+			continue
+		var callback := Callable(
+			self,
+			"_on_value_comparator_signal_changed"
+		).bind(comparator)
+		if not comparator.mechanism_signal_changed.is_connected(callback):
+			comparator.mechanism_signal_changed.connect(callback)
+
+
 func _on_logic_signal_changed(
 	_mechanism_id: String,
 	_active: bool,
@@ -68,6 +84,16 @@ func _on_logic_signal_changed(
 	_refresh_logic_presentation(logic)
 	_refresh_network_readout()
 	_refresh_timer_processing()
+
+
+func _on_value_comparator_signal_changed(
+	_mechanism_id: String,
+	_active: bool,
+	_packet: Dictionary,
+	comparator: MechanismValueComparator
+) -> void:
+	_refresh_value_comparator_presentation_budgeted(comparator)
+	_refresh_network_readout()
 
 
 func _refresh_logic_presentation(logic: MechanismLogicNode) -> void:
@@ -102,7 +128,38 @@ func _refresh_logic_presentation(logic: MechanismLogicNode) -> void:
 		if logic.active
 		else Color(1.0, 0.65, 0.25)
 	)
-	var key: int = logic.get_instance_id()
+	_apply_cached_label(logic.get_instance_id(), label, next_text, next_color)
+
+
+func _refresh_value_comparator_presentation_budgeted(
+	comparator: MechanismValueComparator
+) -> void:
+	if comparator == null or not is_instance_valid(comparator):
+		return
+	var label: Label3D = value_labels.get(comparator.get_instance_id()) as Label3D
+	if label == null or not is_instance_valid(label):
+		return
+	var next_text: String = (
+		comparator.display_name
+		+ "\n"
+		+ get_value_comparator_detail(comparator)
+		+ " → "
+		+ ("ON" if comparator.active else "OFF")
+	)
+	var next_color: Color = (
+		Color(0.32, 1.0, 0.62)
+		if comparator.active
+		else Color(0.28, 0.78, 1.0)
+	)
+	_apply_cached_label(comparator.get_instance_id(), label, next_text, next_color)
+
+
+func _apply_cached_label(
+	key: int,
+	label: Label3D,
+	next_text: String,
+	next_color: Color
+) -> void:
 	if str(logic_text_cache.get(key, "")) != next_text:
 		logic_text_cache[key] = next_text
 		label.text = next_text
@@ -125,12 +182,17 @@ func _refresh_network_readout() -> void:
 	for logic: MechanismLogicNode in logic_nodes:
 		if logic != null and is_instance_valid(logic) and logic.active:
 			active_logic += 1
+	var active_comparators: int = 0
+	for comparator: MechanismValueComparator in value_comparators:
+		if comparator != null and is_instance_valid(comparator) and comparator.active:
+			active_comparators += 1
 	var next_text: String = (
 		"PUZZLE SIGNAL NETWORK\n"
 		+ "Inputs " + str(input_nodes.size() - 1)
 		+ "   Logic " + str(active_logic) + "/" + str(logic_nodes.size())
+		+ "   Values " + str(active_comparators) + "/" + str(value_comparators.size())
 		+ "   Outputs " + str(output_nodes.size())
-		+ "\nBoolean • timing • memory • ordered sequences • F8 resets lab"
+		+ "\nBoolean • timing • memory • quantities • proportional motion • F8 resets lab"
 	)
 	if readout_text_cache == next_text:
 		presentation_skip_count += 1
@@ -183,4 +245,5 @@ func get_debug_data() -> Dictionary:
 	data["timer_processing"] = is_processing()
 	data["timer_process_wakes"] = timer_process_wake_count
 	data["label_visibility_distance"] = instruction_label_visibility_distance
+	data["value_presentation_count"] = value_comparators.size()
 	return data

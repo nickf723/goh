@@ -30,7 +30,7 @@ func get_mechanism_normalized_value() -> float
 func get_mechanism_value_unit() -> String
 ```
 
-Every normalized signal packet now carries:
+Every normalized signal packet carries:
 
 ```text
 active
@@ -119,6 +119,36 @@ Supported comparisons:
 
 A comparator reports its primary value, secondary value, signed difference, threshold, range, tolerance, and readable comparison summary in its signal packet and debug data.
 
+### `MechanismSelectorSource`
+
+Stores a discrete channel selection as both an integer value and a readable label.
+
+- any rising-edge source can advance the selection
+- direct assignment supports authored switches, dials, and restored state
+- selection may wrap or clamp
+- output packets include index, count, label, and controlling source
+- reset restores the authored initial channel
+
+### `MechanismRouterNode`
+
+Routes one live input to exactly one of several ordinary mechanism outputs.
+
+- selected output receives the original Boolean state and numeric value
+- unselected outputs are cleared immediately
+- changing selection while the input remains active transfers power without requiring a new input edge
+- each channel is itself a normal `MechanismManualSource`, so existing output adapters remain reusable
+- packets retain source provenance and add route/channel metadata
+
+### `MechanismMultiplexerNode`
+
+Chooses one of several inputs and exposes it as one ordinary mechanism output.
+
+- input order is explicitly authored
+- selection may control Boolean or numeric sources
+- changes from the currently selected source propagate without another selection event
+- packets identify the requested index and selected source
+- reset returns to the selector's authored initial input
+
 ### `MechanismOutputAdapter`
 
 Routes a signal into a world output.
@@ -148,11 +178,14 @@ Adapters may forward raw or normalized values, then apply an authored scale and 
 ### Inputs
 
 - `PressurePlateSwitch`
-  - any accepted physics body can press it
+  - movable rigid bodies and `CharacterBody3D` actors can press it
+  - static floors and station platforms are ignored by default
+  - `AnimatableBody3D` machinery is ignored by default
   - remains a Boolean contact source
-  - reports the summed mass of all occupying bodies in kilograms
+  - reports the summed mass of all accepted occupying bodies in kilograms
   - updates its numeric signal when mass changes even if it remains pressed
-  - supports explicit mass metadata or a body's own mass property
+  - supports explicit mass metadata or a body's own mass contract
+  - debug data records rejected body entries to expose collision-authoring mistakes
 - `MechanismToggleLever`
   - toggled or momentary interaction input
 - `MechanismElementSensor`
@@ -160,6 +193,10 @@ Adapters may forward raw or normalized values, then apply an authored scale and 
   - Fire is the default activation element
   - Water is the default reset element
   - supports latched or momentary behavior
+- `MechanismWeightBlock`
+  - reusable Soul-Grippable puzzle weight
+  - exposes authored mass directly to weighted pressure plates
+  - retains collision, mass-scaled Soul Grip movement, and reset behavior
 
 ### Outputs
 
@@ -196,11 +233,16 @@ res://scenes/levels/prototypes/prototype_mechanism_network_lab_v1.tscn
 
 ### Value Signal wing
 
-9. Three crates weighing 2 kg, 4 kg, and 7 kg feed a mass-reporting plate. A comparator opens the gate at 10 kg or more.
-10. Two plates feed a balance comparator. The gate opens when left and right loads differ by no more than 0.1 kg. The available crates support both direct matching and compound equality.
+9. Three Soul-Grippable blocks weighing 2 kg, 4 kg, and 7 kg feed a mass-reporting plate. A comparator opens the gate at 10 kg or more.
+10. Two plates feed a balance comparator. The gate opens when left and right loads differ by no more than 0.1 kg. Both plates must carry weight, so `0 kg = 0 kg` does not solve the station.
 11. A 0–10 kg plate drives a proportional elevator from 0–6 meters. Adding and removing load changes platform height continuously rather than merely switching it on or off.
 
-F8 or the entrance reset lever restores all inputs, Boolean state, memory cells, sequence progress, numeric comparisons, timers, counters, weighted crates, gates, bridges, indicators, and the proportional elevator.
+### Signal Routing wing
+
+12. A selector chooses LEFT or RIGHT. A Soul-Grippable block keeps a pressure plate active while the router transfers the same live signal between two gates and indicators.
+13. A three-channel selector chooses LOW, MIDDLE, or HIGH. A multiplexer selects one of three stored floor values and sends it to a proportional lift.
+
+F8 or the entrance reset lever restores all inputs, Boolean state, memory cells, sequence progress, numeric comparisons, selector channels, router outputs, multiplexer selections, timers, counters, weighted blocks, gates, bridges, indicators, and proportional elevators.
 
 ## Authoring patterns
 
@@ -281,6 +323,7 @@ balance.comparison = (
 balance.primary_source_id = left_plate.get_mechanism_id()
 balance.secondary_source_id = right_plate.get_mechanism_id()
 balance.tolerance = 0.1
+balance.require_all_sources_active = true
 add_child(balance)
 balance.bind_source(left_plate)
 balance.bind_source(right_plate)
@@ -298,7 +341,45 @@ output.bind_source(weight_plate)
 output.bind_target(elevator)
 ```
 
-Scene-authored networks may instead populate `source_paths` and `target_path`.
+### One input routed to several outputs
+
+```gdscript
+var selector := MechanismSelectorSource.new()
+selector.selection_count = 2
+selector.selection_labels = Array[String](["LEFT", "RIGHT"])
+add_child(selector)
+selector.bind_source(change_route_button)
+
+var router := MechanismRouterNode.new()
+router.channel_count = 2
+add_child(router)
+router.bind_input(power_source)
+router.bind_selector(selector)
+
+left_output.bind_source(router.get_channel_output(0))
+right_output.bind_source(router.get_channel_output(1))
+```
+
+### Several values selected for one output
+
+```gdscript
+var multiplexer := MechanismMultiplexerNode.new()
+multiplexer.selector_source_id = selector.get_mechanism_id()
+multiplexer.input_source_ids = Array[String]([
+    low_value.get_mechanism_id(),
+    middle_value.get_mechanism_id(),
+    high_value.get_mechanism_id(),
+])
+add_child(multiplexer)
+multiplexer.bind_selector(selector)
+multiplexer.bind_input(low_value)
+multiplexer.bind_input(middle_value)
+multiplexer.bind_input(high_value)
+
+lift_output.bind_source(multiplexer)
+```
+
+Scene-authored networks may instead populate `source_paths` and target paths.
 
 ## Persistence policy
 
@@ -317,13 +398,14 @@ Do not persist transient physical or numeric state:
 - remaining timer duration
 - an unfinished sequence attempt
 - temporary elevator position
-- a temporary bridge pulse
+- temporary bridge pulse
+- a temporary selector position unless the puzzle explicitly requires it
 
-`MechanismSignalNode.persist_active_state` writes the resolved active state to a GameState flag. Numeric values remain runtime state in v1. For SEQUENCE, active-state persistence remembers completion rather than every partial input.
+`MechanismSignalNode.persist_active_state` writes the resolved active state to a GameState flag. Numeric values and selector indices remain runtime state in v1. For SEQUENCE, active-state persistence remembers completion rather than every partial input.
 
 ## Natural extensions
 
-The value contract is ready to support:
+The shared grammar is ready to support:
 
 - water and fuel levels
 - temperature and pressure
@@ -332,9 +414,12 @@ The value contract is ready to support:
 - distance and proximity
 - rotation and alignment
 - conveyor, valve, light, and turbine intensity
-- weighted sums, arithmetic transforms, selectors, and decoders
+- weighted sums and arithmetic transforms
+- priority overrides
+- multi-bit selectors and decoders
+- reusable reset buses
 
-Likely next signal transforms include delayed activation and release, edge-only pulse shaping, arithmetic nodes, priority selectors, channel routing, and reusable reset buses.
+Likely next routing extensions include emergency overrides, four-channel decoding, delayed route changes, and authored routing diagrams.
 
 ## Regression
 
@@ -344,10 +429,22 @@ Boolean, timing, and memory grammar:
 res://scenes/tests/mechanism_network_smoke_test.tscn
 ```
 
-Numeric values, mass measurement, comparators, proportional output, and production Value Signal wing:
+Numeric values, mass measurement, comparators, proportional output, and the Value Signal wing:
 
 ```text
 res://scenes/tests/mechanism_value_signal_smoke_test.tscn
 ```
 
-Together the regressions cover the complete Boolean, temporal, memory, value, output, collision, reset, and production-laboratory contracts.
+Soul-Grippable weight behavior:
+
+```text
+res://scenes/tests/mechanism_soul_weight_smoke_test.tscn
+```
+
+Static pressure-plate filtering, selectors, routers, multiplexers, live route transfer, and the production Routing wing:
+
+```text
+res://scenes/tests/mechanism_routing_smoke_test.tscn
+```
+
+Together the regressions cover the Boolean, temporal, memory, value, physical manipulation, routing, output, collision, reset, and production-laboratory contracts.

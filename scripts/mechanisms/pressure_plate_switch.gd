@@ -2,6 +2,7 @@ extends CircuitSwitch
 class_name PressurePlateSwitch
 
 signal pressed_changed(is_pressed: bool)
+signal mechanism_signal_changed(mechanism_id: String, active: bool, packet: Dictionary)
 
 @export var accept_any_physics_body: bool = true
 @export var accepted_group: String = "player"
@@ -18,12 +19,14 @@ var plate_up_position: Vector3 = Vector3.ZERO
 var occupying_bodies: Dictionary = {}
 var is_pressed: bool = false
 var plate_tween: Tween = null
+var last_mechanism_packet: Dictionary = {}
 
 
 func _ready() -> void:
 	starts_closed = false
 	super._ready()
 	add_to_group("lab_resettable")
+	add_to_group("mechanism_inputs")
 	plate_visual = get_node_or_null(plate_visual_path) as Node3D
 	current_glow = get_node_or_null(current_glow_path) as Node3D
 	state_label = get_node_or_null(state_label_path) as Label3D
@@ -85,7 +88,18 @@ func set_pressed(next_pressed: bool, immediate: bool = false) -> void:
 	animate_plate(immediate)
 	refresh_label()
 	if changed:
+		last_mechanism_packet = {
+			"mechanism_id": get_mechanism_id(),
+			"active": is_pressed,
+			"source_type": "pressure_plate",
+			"occupants": occupying_bodies.size(),
+		}
 		pressed_changed.emit(is_pressed)
+		mechanism_signal_changed.emit(
+			get_mechanism_id(),
+			is_pressed,
+			last_mechanism_packet.duplicate(true)
+		)
 
 
 func animate_plate(immediate: bool) -> void:
@@ -130,13 +144,24 @@ func interact() -> Dictionary:
 	}
 
 
+func get_mechanism_id() -> String:
+	var normalized: String = component_id.to_lower().strip_edges().replace(" ", "_")
+	return normalized if normalized != "" else str(name).to_lower()
+
+
+func is_mechanism_active() -> bool:
+	return is_pressed
+
+
+func get_mechanism_packet() -> Dictionary:
+	return last_mechanism_packet.duplicate(true)
+
+
 func reset_target() -> void:
 	occupying_bodies.clear()
-	is_pressed = false
-	path_enabled = false
+	set_pressed(false, true)
 	apply_circuit_state(false, 0.0, 0.0, -1)
 	notify_topology_changed()
-	animate_plate(true)
 	refresh_label()
 
 
@@ -145,4 +170,6 @@ func get_debug_data() -> Dictionary:
 	data["pressure_plate"] = true
 	data["pressed"] = is_pressed
 	data["occupants"] = occupying_bodies.size()
+	data["mechanism_id"] = get_mechanism_id()
+	data["mechanism_packet"] = last_mechanism_packet.duplicate(true)
 	return data

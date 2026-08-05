@@ -53,11 +53,17 @@ mesh = SubResource("TorusMesh_pulse")
 [node name="HitReceiver" type="Node" parent="."]
 script = ExtResource("2_hit")
 target_name = "Animated Armor"
-hit_mode = 2
+hit_mode = 3
 max_health = 34
 current_health = 34
 max_stance = 8
 current_stance = 8
+regenerates_stance = true
+stance_regeneration_delay = 3.0
+stance_regeneration_per_second = 2.0
+critical_window_seconds = 3.4
+stance_recovery_ratio = 1.0
+critical_requires_weapon_melee = true
 restores_mana_when_defeated = 3
 weak_elements = Array[String](["fire", "lightning"])
 resistant_elements = Array[String](["poison", "dreams"])
@@ -67,7 +73,7 @@ script = ExtResource("3_status")
 
 [node name="TagComponent" type="Node" parent="."]
 script = ExtResource("4_tags")
-tags = Array[String](["enemy", "boss", "armor", "metal", "construct"])
+tags = Array[String](["enemy", "boss", "armor", "metal", "construct", "prismatic_judgment"])
 
 [node name="PayloadReceiver" type="Node" parent="."]
 script = ExtResource("5_payload")

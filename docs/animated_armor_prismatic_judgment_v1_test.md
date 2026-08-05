@@ -19,7 +19,7 @@ Launch:
 res://scenes/levels/prototypes/prototype_church_trial_boss_finale_v1.tscn
 ```
 
-This dedicated finale is a development laboratory. It refills Mana on entry and regenerates Mana continuously at 18 points per second. Stamina and Focus keep their ordinary rules. The integrated Church Trial does not receive this laboratory regeneration.
+This dedicated finale is a development laboratory. It regenerates Mana continuously at 18 points per second. Stamina and Focus keep their ordinary rules, including their entry values. The integrated Church Trial does not receive this laboratory regeneration.
 
 ## Core combat loop
 
@@ -134,7 +134,8 @@ In the dedicated finale scene:
 2. Confirm Mana begins returning without touching the bed or shrine.
 3. Confirm the bar does not exceed maximum Mana.
 4. Confirm no invisible regeneration credit accumulates while full.
-5. Confirm Stamina and Focus are not refilled by this laboratory node.
+5. Confirm entering the scene does not refill Stamina or Focus.
+6. Confirm Stamina and Focus remain untouched by the ongoing regeneration node.
 
 Then launch the integrated Church Trial:
 

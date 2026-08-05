@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="AdventureChunkDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/adventure/adventure_chunk_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+chunk_id = "mini_dungeon_exit"
+display_name = "Leave the Trial Chain"
+category = 4
+summary = "Reach the unlocked exit and finish the mini-dungeon sequence."
+required_chunk_ids = Array[String](["mini_dungeon_element_lock"])
+optional = false
+auto_activate_when_available = true
+completion_policy = 1
+completion_flag = "adventure_chunk_mini_dungeon_exit"
+objective_on_activate = "Step onto the gold exit pad."
+objective_on_complete = "Mini-dungeon complete."
+activation_message = "The exit is ready."
+completion_message = "Grace completes the prototype trial chain."
+hide_content_when_locked = false
+disable_content_when_locked = false
+keep_content_after_complete = true

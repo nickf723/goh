@@ -23,9 +23,10 @@ Validate that Grace can move through the Church of Angels trial from entry to ex
 7. With the scales balanced, cast Water and then Fire at the two rite altars.
 8. Confirm the completed chamber seal opens permanently.
 9. Use Sound to reveal the hidden bridge or reveal target in the next trial.
-10. Reach and defeat the Animated Armor boss.
-11. Claim the Church Trial Sigil.
-12. Use the exit and confirm the completion path resolves.
+10. Reach the Animated Armor and break its stance.
+11. Punish the exposed core and adapt through Scarlet, Azure, and Indigo Judgment.
+12. Defeat the armor and claim the Church Trial Sigil.
+13. Use the exit and confirm the completion path resolves.
 
 ## Chamber of Accord regression
 
@@ -50,10 +51,33 @@ docs/church_trial_chamber_of_accord_v1_test.md
 
 - LIGHT and HEAVY attacks resolve through the current weapon-combat framework.
 - Stamina is spent normally.
-- Spell casting spends Mana normally.
-- Dodge, Focus, lock-on, spell selection, Soul Grip, and weapon attacks do not leave permanent action locks.
+- Spell casting spends Mana normally in the integrated story dungeon.
+- Dodge, Guard, Perfect Guard, Focus, lock-on, spell selection, Soul Grip, and weapon attacks do not leave permanent action locks.
 - Goblin and Gremlin behavior, telegraphs, hit reactions, status effects, force, and death remain functional.
 - Frozen plus force can still produce Shatter where the current reaction rules apply.
+
+## Prismatic Judgment regression
+
+- The armor begins in Neutral Judgment with its hammer slam and violet pulse.
+- Shell damage depletes stance before health.
+- A stance break stops the armor and exposes its core.
+- A weapon-melee critical consumes the opening and reforms the shell.
+- Colored shells cycle `Scarlet → Azure → Indigo` after successive breaks.
+- Scarlet projects a forward Fire fissure that can be escaped laterally.
+- Azure projects a broad Water sweep with an opening behind the armor and a shared hit-reaction push.
+- Indigo locks a Lightning rune to Grace's position, allowing her to leave before impact.
+- Aura, core, eyes, hammer rune, floor telegraph, and attack pose agree on the active color.
+- Each colored shell updates its elemental weaknesses and resistances.
+- Below 35 percent health, the boss accelerates and may reuse the previous color's signature attack.
+- Defeat disables collision, preserves the collapse presentation, unlocks the Judgment Gate once, and grants the existing final Mana reward once.
+
+Focused instructions:
+
+```text
+docs/animated_armor_prismatic_judgment_v1_test.md
+```
+
+The dedicated boss-finale laboratory regenerates Mana for rapid testing. The integrated Church Trial deliberately does not.
 
 ## Progression and save regression
 
@@ -72,7 +96,7 @@ docs/church_trial_chamber_of_accord_v1_test.md
 - Chamber runes, offering marks, altar order, and floor channels are readable without laboratory debug labels.
 - Goblin and Gremlin feet remain grounded.
 - Enemy telegraph flashes preserve authored materials.
-- Animated Armor remains readable from the gameplay camera.
+- Every Animated Armor judgment and signature attack is distinguishable from the gameplay camera.
 - Objectives, reaction labels, messages, and boss feedback remain legible.
 
 ## Reset and failure checks
@@ -80,10 +104,13 @@ docs/church_trial_chamber_of_accord_v1_test.md
 - Defeat and respawn restore a playable state.
 - F8 development reset clears the prototype save and the Chamber completion flag.
 - Restarting the scene does not retain temporary scale or elemental-sequence state.
+- Boss judgment state resets with a fresh scene instance.
 - `Engine.time_scale` returns to `1.0` after leaving Focus or a test scene.
 
 ## Known limitations
 
 - Prototype and procedural assets remain replacement-ready.
-- Final audio, cinematics, authored animation, difficulty tuning, and accessibility options are not represented.
+- Boss attack collision uses deterministic geometric checks rather than authored animation hit volumes.
+- The first prismatic pass represents three colored judgments rather than all sixteen elements.
+- Final audio, cinematics, authored skeletal animation, difficulty tuning, and accessibility options are not represented.
 - This document validates the current vertical slice, not the eventual complete first dungeon.

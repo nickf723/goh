@@ -57,9 +57,6 @@ func set_mechanism_active(next_active: bool, packet: Dictionary = {}) -> void:
 	if packet.has("forwarded_value"):
 		set_elevator_value(float(packet.get("forwarded_value", 0.0)), false, packet)
 		return
-	if packet.has("value") and not packet.has("active_only"):
-		set_elevator_value(float(packet.get("value", 0.0)), false, packet)
-		return
 	set_elevator_value(
 		get_input_maximum(packet) if next_active else get_input_minimum(packet),
 		false,
@@ -84,7 +81,7 @@ func set_elevator_value(
 		next_fraction = inverse_lerp(minimum, maximum, current_value)
 	set_elevator_fraction(next_fraction, immediate)
 	value_application_count += 1
-	elevator_value_changed.emit(current_value, current_fraction)
+	elevator_value_changed.emit(current_value, target_fraction)
 
 
 func set_elevator_fraction(next_fraction: float, immediate: bool = false) -> void:

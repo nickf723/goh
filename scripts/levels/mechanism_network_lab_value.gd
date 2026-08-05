@@ -178,6 +178,7 @@ func _build_balance_scale_station(z: float) -> void:
 	comparator.primary_source_id = left_plate.get_mechanism_id()
 	comparator.secondary_source_id = right_plate.get_mechanism_id()
 	comparator.tolerance = 0.1
+	comparator.require_all_sources_active = true
 	comparator.minimum_value = -12.0
 	comparator.maximum_value = 12.0
 	comparator.value_unit = "kg"

@@ -1,0 +1,60 @@
+name: Mechanism network validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/mechanisms/**"
+      - "scenes/mechanisms/**"
+      - "scripts/levels/mechanism_network_lab.gd"
+      - "scenes/levels/prototypes/prototype_mechanism_network_lab_v1.tscn"
+      - "scripts/tests/mechanism_network_smoke_test.gd"
+      - "scenes/tests/mechanism_network_smoke_test.tscn"
+      - ".github/workflows/mechanism-network-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mechanism-network-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-mechanisms:
+    name: Import and mechanism network regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee mechanism-import.log
+
+      - name: Run mechanism network regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/mechanism_network_smoke_test.tscn 2>&1 | tee mechanism-test.log
+
+      - name: Upload mechanism validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mechanism-network-validation-logs
+          path: |
+            mechanism-import.log
+            mechanism-test.log
+          if-no-files-found: ignore

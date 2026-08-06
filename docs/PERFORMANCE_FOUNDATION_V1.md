@@ -26,10 +26,13 @@ The overlay reports:
 - process and physics time
 - draw calls and rendered objects
 - node and active-processing counts
+- active spell-effect and persistent-spell-effect counts
 - visible Label3D count
 - recent frame spikes
 
 The overlay is hidden by default. Sampling remains active while hidden, but the more expensive scene-tree count is collected only while the overlay is visible.
+
+Frame history uses a fixed-capacity circular buffer. Once full, a new sample overwrites one existing slot in constant time. It no longer calls `Array.pop_front()` every frame and shifts the complete history while the game is running.
 
 ## Unified HUD budget
 
@@ -59,6 +62,19 @@ Mechanism hardware also avoids unnecessary presentation churn:
 - sliding gates use coarse OPENING/CLOSING/OPEN/CLOSED labels
 - gate fraction signals are emitted at meaningful steps rather than every tween frame
 
+## Persistent spell budget
+
+Persistent spells should behave like one effect, not a swarm of tiny actors.
+
+- Prefer one controller over a processing node per visual fragment.
+- Use `MultiMeshInstance3D` for repeated simple geometry.
+- Separate visual update cadence from gameplay contact cadence.
+- Replace or cap repeated copies from the same caster.
+- Release processing immediately when the effect expires.
+- Report persistent effects through the F7 overlay.
+
+Asteroid Belt is the first explicit reference implementation: six visible rocks share one MultiMesh, one controller updates their orbit at 30 Hz, and one 10-Hz broadphase query resolves contacts.
+
 ## Authoring rules
 
 1. Prefer signals over polling.
@@ -69,6 +85,7 @@ Mechanism hardware also avoids unnecessary presentation churn:
 6. Throttle debug and presentation work separately from gameplay simulation.
 7. Use the F7 overlay before and after adding a substantial mechanic.
 8. Add a deterministic regression for every new scheduler, cache, or culling rule.
+9. Give every persistent spell an explicit instance and update budget.
 
 ## Regression
 
@@ -78,4 +95,4 @@ Run:
 res://scenes/tests/runtime_performance_foundation_smoke_test.tscn
 ```
 
-The regression verifies frame-budget classification, overlay installation, budgeted HUD synchronization, material and label caching, gate signal throttling, Label3D visibility ranges, and the mechanism lab's sleep/wake lifecycle.
+The regression verifies frame-budget classification, fixed-capacity history overwrite behavior, overlay installation, budgeted HUD synchronization, material and label caching, gate signal throttling, Label3D visibility ranges, and the mechanism lab's sleep/wake lifecycle.

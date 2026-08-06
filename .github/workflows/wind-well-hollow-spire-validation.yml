@@ -13,6 +13,7 @@ on:
       - "data/loadouts/grace_starting_loadout.tres"
       - "scripts/abilities/ground_spell_registry.gd"
       - "scripts/ui/spell_icon_factory.gd"
+      - "scripts/physics/field_responsive_body.gd"
       - "scripts/levels/prototype_hollow_spire_spell_trial.gd"
       - "scenes/levels/prototypes/prototype_hollow_spire_spell_trial_v1.tscn"
       - "scripts/tests/wind_well_hollow_spire_smoke_test.gd"

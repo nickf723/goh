@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 0
+stance_damage = 0
+element = "water"
+source_name = "Water Wave"
+hit_type = "wave"
+status_effect = "wet"
+status_duration = 4.0
+status_strength = 1.0
+tags = Array[String](["water", "wet", "magic", "wave", "force", "control", "displacement", "non_damage"])
+knockback_strength = 0.0
+knockback_up_strength = 0.0

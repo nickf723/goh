@@ -7,6 +7,7 @@ on:
     paths:
       - "scripts/actions/water_wave.gd"
       - "scenes/actions/water_wave.tscn"
+      - "scripts/combat/non_damaging_water_wave_payload.gd"
       - "data/damage_payloads/water_wave_payload.tres"
       - "data/abilities/wave_ability.tres"
       - "data/loadouts/grace_starting_loadout.tres"

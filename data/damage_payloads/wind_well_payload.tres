@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NonDamagingWindWellPayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/non_damaging_wind_well_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 0
+stance_damage = 0
+element = "air"
+source_name = "Wind Well"
+hit_type = "updraft_field"
+status_effect = ""
+status_duration = 0.0
+status_strength = 0.0
+tags = Array[String](["air", "magic", "ground_targeted", "field", "updraft", "lift", "traversal", "control", "non_damage", "no_damage"])
+knockback_strength = 0.0
+knockback_up_strength = 0.0

@@ -5,6 +5,9 @@ const AirflowManagerScript = preload("res://scripts/airflow/airflow_manager.gd")
 const AirflowFieldScript = preload("res://scripts/airflow/airflow_field_3d.gd")
 const GustAbility: Resource = preload("res://data/abilities/gust_ability.tres")
 const AirflowLabScene: PackedScene = preload("res://scenes/levels/prototypes/prototype_airflow_lab_v1.tscn")
+const AirflowTestBodyScene: PackedScene = preload(
+	"res://scenes/actors/props/airflow_test_body.tscn"
+)
 
 var failures: Array[String] = []
 
@@ -12,6 +15,7 @@ var failures: Array[String] = []
 func _ready() -> void:
 	test_drag_math()
 	await test_analytic_fields()
+	await test_vertical_field_body_integration()
 	test_gust_definition()
 	await test_lab_contract()
 
@@ -78,6 +82,76 @@ func test_analytic_fields() -> void:
 
 	directional.queue_free()
 	vortex.queue_free()
+	manager.queue_free()
+	await get_tree().process_frame
+
+
+func test_vertical_field_body_integration() -> void:
+	var manager: Node = AirflowManagerScript.new()
+	manager.name = "VerticalIntegrationAirflowManager"
+	add_child(manager)
+
+	var updraft: Node3D = AirflowFieldScript.new() as Node3D
+	updraft.name = "VerticalIntegrationUpdraft"
+	updraft.position = Vector3(0.0, 2.0, 0.0)
+	updraft.set("field_id", "vertical_integration_updraft")
+	updraft.set("field_kind", AirflowFieldScript.FieldKind.UPDRAFT)
+	updraft.set("volume_shape", AirflowFieldScript.VolumeShape.CYLINDER)
+	updraft.set("radius", 3.0)
+	updraft.set("cylinder_height", 6.0)
+	updraft.set("strength", 10.0)
+	updraft.set("edge_fade_fraction", 0.0)
+	updraft.set("turbulence_strength", 0.0)
+	add_child(updraft)
+
+	var light: FieldResponsiveBody = (
+		AirflowTestBodyScene.instantiate() as FieldResponsiveBody
+	)
+	light.name = "VerticalLightBody"
+	light.position = Vector3(-0.8, 2.0, 0.0)
+	light.mass_override_kg = 2.0
+	light.gravity_strength = 20.0
+	var light_response: AirflowResponse = light.get_node_or_null(
+		"AirflowResponse"
+	) as AirflowResponse
+	if light_response != null:
+		light_response.mass_override_kg = 2.0
+	add_child(light)
+
+	var heavy: FieldResponsiveBody = (
+		AirflowTestBodyScene.instantiate() as FieldResponsiveBody
+	)
+	heavy.name = "VerticalHeavyBody"
+	heavy.position = Vector3(0.8, 2.0, 0.0)
+	heavy.mass_override_kg = 18.0
+	heavy.gravity_strength = 20.0
+	var heavy_response: AirflowResponse = heavy.get_node_or_null(
+		"AirflowResponse"
+	) as AirflowResponse
+	if heavy_response != null:
+		heavy_response.mass_override_kg = 18.0
+	add_child(heavy)
+
+	await get_tree().process_frame
+	var light_start_y: float = light.global_position.y
+	var heavy_start_y: float = heavy.global_position.y
+	for _frame: int in range(45):
+		await get_tree().physics_frame
+
+	if light.global_position.y <= light_start_y + 0.25:
+		failures.append("A sustained updraft must lift a light FieldResponsiveBody against gravity")
+	if heavy.global_position.y >= heavy_start_y - 0.1:
+		failures.append("A heavy FieldResponsiveBody must continue falling when the same updraft cannot overcome gravity")
+	if light.gravity_velocity <= heavy.gravity_velocity:
+		failures.append("Vertical field integration must preserve mass-sensitive acceleration")
+	if light.last_vertical_acceleration <= 0.0:
+		failures.append("Light body must report positive net vertical acceleration inside the updraft")
+	if heavy.last_vertical_acceleration >= 0.0:
+		failures.append("Heavy body must report negative net vertical acceleration inside the same updraft")
+
+	light.queue_free()
+	heavy.queue_free()
+	updraft.queue_free()
 	manager.queue_free()
 	await get_tree().process_frame
 

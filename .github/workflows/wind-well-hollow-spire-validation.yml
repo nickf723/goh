@@ -1,0 +1,110 @@
+name: Wind Well Hollow Spire validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/wind_well.gd"
+      - "scenes/actions/wind_well.tscn"
+      - "scripts/combat/non_damaging_wind_well_payload.gd"
+      - "data/damage_payloads/wind_well_payload.tres"
+      - "data/abilities/wind_well_ability.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "scripts/abilities/ground_spell_registry.gd"
+      - "scripts/ui/spell_icon_factory.gd"
+      - "scripts/levels/prototype_hollow_spire_spell_trial.gd"
+      - "scenes/levels/prototypes/prototype_hollow_spire_spell_trial_v1.tscn"
+      - "scripts/tests/wind_well_hollow_spire_smoke_test.gd"
+      - "scenes/tests/wind_well_hollow_spire_smoke_test.tscn"
+      - "scripts/tests/architecture_contract_smoke_test.gd"
+      - "scenes/tests/architecture_contract_smoke_test.tscn"
+      - "scripts/tests/airflow_foundation_smoke_test.gd"
+      - "scenes/tests/airflow_foundation_smoke_test.tscn"
+      - "scripts/tests/ground_target_focus_ui_smoke_test.gd"
+      - "scenes/tests/ground_target_focus_ui_smoke_test.tscn"
+      - "scripts/systems/lab_resource_regenerator.gd"
+      - "scripts/systems/lab_resource_regenerator_installer.gd"
+      - "docs/wind_well_hollow_spire_v1_test.md"
+      - ".github/workflows/wind-well-hollow-spire-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wind-well-hollow-spire-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Import and persistent updraft regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee hollow-spire-import.log
+
+      - name: Boot Hollow Spire spell trial
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/levels/prototypes/prototype_hollow_spire_spell_trial_v1.tscn --quit-after 6 2>&1 | tee hollow-spire-startup.log
+
+      - name: Run Wind Well Hollow Spire regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/wind_well_hollow_spire_smoke_test.tscn 2>&1 | tee hollow-spire-test.log
+
+      - name: Run shared airflow foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/airflow_foundation_smoke_test.tscn 2>&1 | tee airflow-test.log
+
+      - name: Run ground-target Focus regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/ground_target_focus_ui_smoke_test.tscn 2>&1 | tee ground-target-test.log
+
+      - name: Run shared architecture contract
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/architecture_contract_smoke_test.tscn 2>&1 | tee architecture-test.log
+
+      - name: Run shared laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wind-well-hollow-spire-validation-logs
+          path: |
+            hollow-spire-import.log
+            hollow-spire-startup.log
+            hollow-spire-test.log
+            airflow-test.log
+            ground-target-test.log
+            architecture-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

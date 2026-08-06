@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 2
+stance_damage = 3
+element = "space"
+source_name = "Asteroid Belt"
+hit_type = "orbit_contact"
+status_effect = ""
+status_duration = 0.0
+status_strength = 0.0
+tags = Array[String](["space", "magic", "asteroid", "orbit", "force", "persistent", "positioning", "zone_control"])
+knockback_strength = 3.6
+knockback_up_strength = 0.15

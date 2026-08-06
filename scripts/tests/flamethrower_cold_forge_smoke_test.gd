@@ -151,6 +151,7 @@ func _test_sustained_channel_unlocks(
 	_select_ability(caster, ability)
 	player.global_position = Vector3(0.0, 1.0, 1.2)
 	player.rotation = Vector3(0.0, PI, 0.0)
+	_aim_player_straight_ahead(player)
 	var mana_before: int = GameState.get_stat("mana")
 	_expect(
 		controller.begin_ability_channel(player, ability),
@@ -238,6 +239,7 @@ func _test_fractional_mana_debt_prevents_free_taps(
 	_select_ability(caster, ability)
 	player.global_position = Vector3(0.0, 1.0, 1.2)
 	player.rotation = Vector3(0.0, PI, 0.0)
+	_aim_player_straight_ahead(player)
 	for _index: int in range(4):
 		controller.begin_ability_channel(player, ability)
 		controller.advance_channel(0.1, true)
@@ -250,6 +252,19 @@ func _test_fractional_mana_debt_prevents_free_taps(
 		controller.mana_fractional_cost > 0.0,
 		"sub-Mana channel debt survives between short bursts"
 	)
+
+
+func _aim_player_straight_ahead(player: CharacterBody3D) -> void:
+	var camera_pivot: Node3D = player.get_node_or_null(
+		"CameraPivot"
+	) as Node3D
+	if camera_pivot != null:
+		camera_pivot.rotation = Vector3.ZERO
+	var spring_arm: Node3D = player.get_node_or_null(
+		"CameraPivot/SpringArm3D"
+	) as Node3D
+	if spring_arm != null:
+		spring_arm.rotation = Vector3.ZERO
 
 
 func _find_flamethrower_ability(caster: Node) -> AbilityDefinition:

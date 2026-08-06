@@ -69,7 +69,7 @@ func run_tests() -> void:
 
 
 func _test_ability_contract() -> void:
-	super._test_ability_contract()
+	super()
 
 	var upgraded_payload: DamagePayload = (
 		RunnerIceLancePayload.duplicate(true) as DamagePayload

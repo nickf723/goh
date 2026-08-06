@@ -1,27 +1,31 @@
 [gd_resource type="Resource" script_class="AbilityDefinition" format=3 uid="uid://cl15qdk8no6o3"]
 
 [ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="1_fjtgo"]
-[ext_resource type="PackedScene" uid="uid://tj563cjynma8" path="res://scenes/actions/generic_projectile.tscn" id="1_suwse"]
+[ext_resource type="PackedScene" path="res://scenes/actions/ice_lance_projectile.tscn" id="1_suwse"]
 [ext_resource type="Resource" uid="uid://b5e0vkj5itdd0" path="res://data/damage_payloads/ice_lance_payload.tres" id="2_suwse"]
 [ext_resource type="Resource" path="res://data/ability_trait_profiles/control_projectile_profile.tres" id="3_profile"]
 
 [resource]
 script = ExtResource("1_fjtgo")
 display_name = "Ice Lance"
-description = "Pierce with ice. Strong stance pressure and chill control."
+description = "Conjure and hurl a full crystalline spear. It pierces aligned targets, drives them backward, and lodges in hard surfaces as temporary solid terrain."
 element = "ice"
+category = 0
+mana_cost = 2
 trait_profile = ExtResource("3_profile")
 spell_id = "ice_lance"
 short_label = "Lance"
-icon_text = "I"
-roles = Array[String](["stance", "slow", "combo_starter"])
-targeting_style = "aimed"
-delivery_type = "projectile"
-combo_tags = Array[String](["ice", "freeze", "wet_freeze", "shatter_setup"])
+icon_text = "△"
+roles = Array[String](["damage", "stance", "pierce", "force", "slow", "terrain", "traversal", "puzzle", "combo_starter"])
+targeting_style = "aimed_line"
+delivery_type = "physical_lance"
+combo_tags = Array[String](["ice", "freeze", "wet_freeze", "force", "shatter_setup", "line_pierce", "temporary_geometry"])
 status_tags = Array[String](["chill"])
-ui_tags = Array[String](["control", "slow", "stance"])
-debug_tags = Array[String](["prototype", "control_projectile"])
-design_notes = "Primary single-target control spell. Should help Grace manage fast skirmishers and set up future frozen/shatter play."
+ui_tags = Array[String](["pierce", "control", "stance", "terrain"])
+debug_tags = Array[String](["prototype", "dedicated_projectile", "physical_lance", "temporary_geometry"])
+scaling_stats = Array[String](["arcana", "ice", "power"])
+scaling_note = "Arcana and Ice govern the spell; Power is reserved for future penetration and lodged-lance durability scaling."
+design_notes = "Ice Lance is no longer a generic ice bullet. Its identity is a long physical spear: line piercing, decaying force through successive bodies, frozen-target shatter setup, and temporary solid geometry when embedded in architecture."
 ability_scene = ExtResource("1_suwse")
 action_payload = ExtResource("2_suwse")
 metadata/_custom_type_script = "uid://cyp8hkceavuj4"

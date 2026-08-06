@@ -9,6 +9,8 @@ const SpellIcons = preload("res://scripts/ui/spell_icon_factory.gd")
 var equipped_ability_caster: Node
 var equipped_slot_indices: Array[int] = []
 var cursor_slot_indices: Array[int] = []
+var slot_icon_badges: Array[PanelContainer] = []
+var slot_icon_entries: Array[Dictionary] = []
 var equipped_spell_name: String = "None"
 var equipped_spell_glyph: String = "·"
 var static_refresh_remaining: float = 0.0
@@ -41,6 +43,7 @@ func _finish_setup() -> void:
 	if not setup_complete:
 		return
 	_resolve_bindings()
+	_ensure_slot_icon_badges()
 	_connect_equipped_spell_signal()
 	_update_responsive_scale()
 	_align_focus_panel()
@@ -49,9 +52,10 @@ func _finish_setup() -> void:
 	last_viewport_width = _get_viewport_width()
 	static_refresh_remaining = static_refresh_interval
 	fallback_poll_remaining = fallback_poll_interval
-	slots_dirty = false
+	slots_dirty = true
 	items_dirty = false
 	special_dirty = false
+	_refresh_all_slots()
 
 
 func _process(delta: float) -> void:
@@ -117,7 +121,69 @@ func _process(delta: float) -> void:
 		dock_panel.modulate.a = 0.84 if focus_assignment_visible else 1.0
 
 
+func _ensure_slot_icon_badges() -> void:
+	if slot_panels.is_empty() or slot_labels.size() != slot_panels.size():
+		return
+	var complete: bool = slot_icon_badges.size() == slot_panels.size()
+	if complete:
+		for badge: PanelContainer in slot_icon_badges:
+			if badge == null or not is_instance_valid(badge):
+				complete = false
+				break
+	if complete:
+		return
+
+	slot_icon_badges.clear()
+	for slot_index: int in range(slot_panels.size()):
+		var panel: PanelContainer = slot_panels[slot_index]
+		var label: Label = slot_labels[slot_index]
+		var stack: VBoxContainer = panel.get_node_or_null(
+			"SpellSlotStack"
+		) as VBoxContainer
+		if stack == null:
+			var previous_parent: Node = label.get_parent()
+			if previous_parent != null:
+				previous_parent.remove_child(label)
+			stack = VBoxContainer.new()
+			stack.name = "SpellSlotStack"
+			stack.alignment = BoxContainer.ALIGNMENT_CENTER
+			stack.add_theme_constant_override("separation", 0)
+			stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			panel.add_child(stack)
+			stack.add_child(label)
+
+		label.custom_minimum_size = Vector2(0.0, 12.0)
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 7)
+
+		var badge: PanelContainer = stack.get_node_or_null(
+			"SpellSlotBadge"
+		) as PanelContainer
+		if badge == null:
+			badge = SpellIcons.create_badge(
+				{
+					"name": "Empty",
+					"spell_id": "",
+					"element": "neutral",
+					"icon_text": "·",
+				},
+				31.0,
+				false,
+				false
+			)
+			badge.name = "SpellSlotBadge"
+			badge.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			stack.add_child(badge)
+		slot_icon_badges.append(badge)
+
+
 func _refresh_all_slots() -> void:
+	_ensure_slot_icon_badges()
 	if router == null or not router.has_method("get_quick_spell_slot_rows"):
 		return
 	var rows_value: Variant = router.call("get_quick_spell_slot_rows")
@@ -163,8 +229,10 @@ func _refresh_all_slots() -> void:
 		)
 	equipped_slot_indices.clear()
 	cursor_slot_indices.clear()
+	slot_icon_entries.clear()
 	for slot_index: int in range(slot_labels.size()):
 		if slot_index >= rows.size() or not rows[slot_index] is Dictionary:
+			slot_icon_entries.append({})
 			continue
 		var row: Dictionary = rows[slot_index] as Dictionary
 		var key_label: String = str(
@@ -186,6 +254,7 @@ func _refresh_all_slots() -> void:
 			"name": name,
 			"spell_id": str(row.get("spell_id", "")),
 			"element": "neutral",
+			"icon_text": "·" if empty else "",
 		}
 		if loadout != null and ability_index >= 0:
 			var ability: AbilityDefinition = loadout.get_equipped_ability(
@@ -197,20 +266,24 @@ func _refresh_all_slots() -> void:
 					ability_index,
 					equipped
 				)
+		slot_icon_entries.append(icon_entry.duplicate(true))
 		var marker: String = ""
 		if equipped:
 			marker = " ★"
 		elif cursor_selected:
 			marker = " ◇"
-		var glyph: String = "·" if empty else SpellIcons.get_glyph(icon_entry)
-		slot_labels[slot_index].text = (
-			key_label
-			+ marker
-			+ "\n"
-			+ glyph
-			+ " "
-			+ _compact_name(name, 9)
-		)
+		slot_labels[slot_index].text = key_label + marker
+		if slot_index < slot_icon_badges.size():
+			var badge: PanelContainer = slot_icon_badges[slot_index]
+			SpellIcons.update_badge(
+				badge,
+				icon_entry,
+				cursor_selected,
+				equipped
+			)
+			badge.modulate.a = 0.34 if empty else 1.0
+			badge.tooltip_text = key_label + " • " + name
+		slot_panels[slot_index].tooltip_text = key_label + " • " + name
 		slot_panels[slot_index].add_theme_stylebox_override(
 			"panel",
 			_make_equipped_slot_style(
@@ -407,6 +480,9 @@ func _make_panel_style(
 
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
+	var slot_glyphs: Array[String] = []
+	for entry: Dictionary in slot_icon_entries:
+		slot_glyphs.append(SpellIcons.get_glyph(entry))
 	data["optimized"] = true
 	data["process_frames"] = process_frames
 	data["heavy_refreshes"] = heavy_refreshes
@@ -414,6 +490,10 @@ func get_debug_data() -> Dictionary:
 	data["static_refresh_interval"] = static_refresh_interval
 	data["equipped_slot_indices"] = equipped_slot_indices.duplicate()
 	data["cursor_slot_indices"] = cursor_slot_indices.duplicate()
+	data["slot_icon_badge_count"] = slot_icon_badges.size()
+	data["slot_icon_entries"] = slot_icon_entries.duplicate(true)
+	data["slot_icon_glyphs"] = slot_glyphs
+	data["focus_symbol_parity"] = true
 	data["equipped_spell_name"] = equipped_spell_name
 	data["equipped_spell_glyph"] = equipped_spell_glyph
 	data["equipped_ability_index"] = (

@@ -26,6 +26,8 @@ func _exit_tree() -> void:
 
 
 func bind_exported_thermal_state() -> bool:
+	if thermal_state_path == NodePath():
+		return thermal_state != null and is_instance_valid(thermal_state)
 	var resolved: ThermalState = get_node_or_null(
 		thermal_state_path
 	) as ThermalState
@@ -33,6 +35,8 @@ func bind_exported_thermal_state() -> bool:
 		resolved = get_parent().get_node_or_null(
 			"ThermalState"
 		) as ThermalState
+	if resolved == null:
+		return thermal_state != null and is_instance_valid(thermal_state)
 	return bind_thermal_state(resolved)
 
 

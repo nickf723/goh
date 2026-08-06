@@ -60,6 +60,7 @@ const SPELL_GLYPHS: Dictionary = {
 	"earth_spike": "▲",
 	"gust": "↝",
 	"wind_gust": "↝",
+	"wind_well": "↑",
 	"ice_lance": "△",
 	"metal_tether": "⌁",
 	"lightning_arc": "ϟ",

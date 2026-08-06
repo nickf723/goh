@@ -265,9 +265,11 @@ func _build_feather_stage() -> void:
 	)
 	anchorstone.add_to_group("hollow_spire_anchorstone")
 
+	# Keep the first lesson purely vertical: the elevated catch sits directly
+	# above the Featherstone, so Wind Well alone demonstrates the mass contrast.
 	feather_goal = _create_goal_area(
 		"FeatherstoneCatch",
-		Vector3(-1.0, 5.3, 9.2),
+		Vector3(-1.0, 5.3, 6.5),
 		Vector3(3.2, 2.4, 3.2),
 		goal_material,
 		"FEATHERSTONE CATCH"
@@ -277,13 +279,13 @@ func _build_feather_stage() -> void:
 	for post_x: float in [-2.55, 0.55]:
 		_create_static_box(
 			"CatchPost" + str(roundi(post_x * 100.0)),
-			Vector3(post_x, 3.0, 9.2),
+			Vector3(post_x, 3.0, 6.5),
 			Vector3(0.18, 6.0, 0.18),
 			stone_material
 		)
 	_create_static_box(
 		"CatchCrown",
-		Vector3(-1.0, 6.0, 9.2),
+		Vector3(-1.0, 6.0, 6.5),
 		Vector3(3.3, 0.18, 0.18),
 		stone_material
 	)

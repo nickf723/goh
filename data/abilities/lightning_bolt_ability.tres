@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/lightning_bolt_strike.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/lightning_bolt_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/damage_projectile_profile.tres" id="4_profile"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Lightning Bolt"
+description = "Mark a point on the ground, then call a high-damage lightning bolt down from the sky. Only the direct center strike deals damage in this version."
+element = "lightning"
+category = 4
+mana_cost = 4
+trait_profile = ExtResource("4_profile")
+spell_id = "lightning_bolt"
+short_label = "Bolt"
+icon_text = "ϟ"
+roles = Array[String](["damage", "burst", "precision", "ground_target", "interrupt", "combo_reactor"])
+targeting_style = "ground_aoe"
+delivery_type = "sky_strike"
+combo_tags = Array[String](["lightning", "shock", "ground_targeted", "sky_strike", "direct_strike", "wet_shock", "conductive"])
+status_tags = Array[String](["stunned"])
+ui_tags = Array[String](["ground_targeted", "high_damage", "delayed", "precision"])
+debug_tags = Array[String](["prototype", "lightning_bolt", "sky_strike"])
+scaling_stats = Array[String](["arcana", "lightning", "intelligence"])
+scaling_note = "Arcana and Lightning govern direct impact power; Intelligence is reserved for future targeting speed and peripheral effects."
+design_notes = "The outer targeting circle reserves space for a future secondary AoE upgrade. In v1, only the bright center bolt applies the payload."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")

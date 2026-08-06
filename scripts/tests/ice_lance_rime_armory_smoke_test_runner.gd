@@ -1,5 +1,9 @@
 extends "res://scripts/tests/ice_lance_rime_armory_smoke_test.gd"
 
+const RunnerTrialScene: PackedScene = preload(
+	"res://scenes/levels/prototypes/prototype_rime_armory_spell_trial_v1.tscn"
+)
+
 # The base file keeps the individual test cases readable. This runner owns the
 # coroutine order so reset cleanup finishes before the trial is freed and the
 # process exits.
@@ -13,7 +17,7 @@ func run_tests() -> void:
 	_prepare_stats()
 
 	var trial: PrototypeRimeArmorySpellTrial = (
-		TrialScene.instantiate() as PrototypeRimeArmorySpellTrial
+		RunnerTrialScene.instantiate() as PrototypeRimeArmorySpellTrial
 	)
 	_expect(trial != null, "Rime Armory spell trial instantiates")
 	if trial == null:

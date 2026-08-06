@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/actions/asteroid_belt.gd" id="1_belt"]
+
+[node name="AsteroidBelt" type="Node3D"]
+script = ExtResource("1_belt")
+asteroid_count = 6
+orbit_radius = 2.75
+orbit_height_offset = 0.1
+vertical_bob = 0.28
+orbit_speed_radians = 2.35
+asteroid_radius = 0.48
+asteroid_contact_radius = 0.72
+duration_seconds = 8.0
+fade_in_seconds = 0.22
+fade_out_seconds = 0.42
+maximum_global_belts = 4
+contact_scans_per_second = 10.0
+maximum_contact_candidates = 64
+target_contact_padding = 0.28
+target_repeat_cooldown = 0.9
+maximum_hits_per_target = 3
+boss_knockback_multiplier = 0.2
+rigid_body_impulse = 4.0
+visual_updates_per_second = 30.0
+replace_existing_belt_from_same_source = true

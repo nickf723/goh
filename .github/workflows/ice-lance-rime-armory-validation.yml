@@ -14,6 +14,7 @@ on:
       - "scripts/levels/prototype_rime_armory_spell_trial.gd"
       - "scenes/levels/prototypes/prototype_rime_armory_spell_trial_v1.tscn"
       - "scripts/tests/ice_lance_rime_armory_smoke_test.gd"
+      - "scripts/tests/ice_lance_rime_armory_smoke_test_runner.gd"
       - "scenes/tests/ice_lance_rime_armory_smoke_test.tscn"
       - "scripts/tests/architecture_contract_smoke_test.gd"
       - "scenes/tests/architecture_contract_smoke_test.tscn"

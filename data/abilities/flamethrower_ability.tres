@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+display_name = "Flamethrower"
+description = "Hold Cast to project a short cone of sustained fire. Drains Mana continuously and supplies heat every frame."
+element = "fire"
+category = 4
+mana_cost = 0
+spell_id = "flamethrower"
+short_label = "Stream"
+icon_text = "🔥"
+roles = Array[String](["damage", "burn", "heat", "control", "puzzle", "combo_starter"])
+targeting_style = "aimed"
+delivery_type = "channel"
+combo_tags = Array[String](["fire", "heat", "ignite", "burn", "sustained", "thermal", "hazard_reactor"])
+status_tags = Array[String](["burning", "heated"])
+ui_tags = Array[String](["channeled", "continuous_mana", "short_range", "sustained_heat"])
+debug_tags = Array[String](["prototype", "player_channel", "thermal_flux"])
+scaling_stats = Array[String](["arcana", "fire", "intelligence"])
+scaling_note = "Arcana and Fire govern output; Intelligence is reserved for future channel efficiency and handling."
+design_notes = "Unlike Firebolt, Flamethrower applies continuous thermal energy and rate-limited combat payloads while Cast is held. It has no fixed upfront Mana cost."

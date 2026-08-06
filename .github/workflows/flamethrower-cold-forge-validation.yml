@@ -1,0 +1,83 @@
+name: Flamethrower Cold Forge validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/player/player_flamethrower_controller.gd"
+      - "scripts/player/player_action_state.gd"
+      - "scripts/abilities/ability_caster_player_channels.gd"
+      - "scripts/mechanisms/thermal_mechanism_source.gd"
+      - "scripts/mechanisms/sustained_heat_lock.gd"
+      - "scripts/levels/prototype_cold_forge_spell_trial.gd"
+      - "scripts/physics/thermal_state.gd"
+      - "scripts/combat/payload_receiver.gd"
+      - "data/abilities/flamethrower_ability.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "scenes/actors/player/player.tscn"
+      - "scenes/levels/prototypes/prototype_cold_forge_spell_trial_v1.tscn"
+      - "scripts/tests/flamethrower_cold_forge_smoke_test.gd"
+      - "scenes/tests/flamethrower_cold_forge_smoke_test.tscn"
+      - "docs/flamethrower_cold_forge_v1_test.md"
+      - ".github/workflows/flamethrower-cold-forge-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flamethrower-cold-forge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Import and sustained-heat regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee cold-forge-import.log
+
+      - name: Boot Cold Forge spell trial
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/levels/prototypes/prototype_cold_forge_spell_trial_v1.tscn --quit-after 6 2>&1 | tee cold-forge-startup.log
+
+      - name: Run Flamethrower Cold Forge regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/flamethrower_cold_forge_smoke_test.tscn 2>&1 | tee cold-forge-test.log
+
+      - name: Run shared laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flamethrower-cold-forge-validation-logs
+          path: |
+            cold-forge-import.log
+            cold-forge-startup.log
+            cold-forge-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

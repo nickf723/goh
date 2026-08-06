@@ -352,6 +352,7 @@ func validate_ability_contracts() -> void:
 		"soul_grip": "SoulGripController",
 		"metal_tether": "MetalTetherController",
 		"spectral_familiar": "SummonManager",
+		"flamethrower": "FlamethrowerController",
 	}
 	var player: Node = PlayerScene.instantiate()
 

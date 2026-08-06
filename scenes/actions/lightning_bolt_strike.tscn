@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/actions/lightning_bolt_strike.gd" id="1_strike"]
+
+[node name="LightningBoltStrike" type="Node3D"]
+script = ExtResource("1_strike")

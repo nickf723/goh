@@ -236,10 +236,19 @@ func apply_force(target: Node, payload: DamagePayload) -> void:
 	var force_receiver: Node = get_component(target, "ForceReceiver")
 	if force_receiver == null or not force_receiver.has_method("apply_impulse"):
 		return
-	var source_position: Vector3 = get_payload_source_position(payload)
-	var target_position: Vector3 = get_target_position(target)
+
+	# Directional projectiles and physical techniques can author the exact force
+	# vector they carry. Older payloads leave it at zero and retain the previous
+	# away-from-player fallback, so this enriches the contract without changing
+	# legacy spell or weapon behavior.
+	var impulse_direction: Vector3 = payload.knockback_direction
+	if impulse_direction.length_squared() <= 0.0001:
+		var source_position: Vector3 = get_payload_source_position(payload)
+		var target_position: Vector3 = get_target_position(target)
+		impulse_direction = target_position - source_position
+
 	force_receiver.apply_impulse(
-		target_position - source_position,
+		impulse_direction,
 		payload.knockback_strength,
 		payload.knockback_up_strength,
 		payload.source_name

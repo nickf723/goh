@@ -10,6 +10,7 @@ on:
       - "data/abilities/ice_lance_ability.tres"
       - "data/damage_payloads/ice_lance_payload.tres"
       - "scripts/abilities/spell_modifier_registry.gd"
+      - "scripts/combat/payload_receiver.gd"
       - "scripts/ui/spell_icon_factory.gd"
       - "scripts/levels/prototype_rime_armory_spell_trial.gd"
       - "scenes/levels/prototypes/prototype_rime_armory_spell_trial_v1.tscn"

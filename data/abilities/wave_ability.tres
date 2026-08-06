@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/water_wave.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/water_wave_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/control_projectile_profile.tres" id="4_profile"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Wave"
+description = "Send a broad wall of water forward. Pushes enemies, mobs, and movable objects without dealing damage."
+element = "water"
+category = 4
+mana_cost = 2
+trait_profile = ExtResource("4_profile")
+spell_id = "wave"
+short_label = "Wave"
+icon_text = "≋"
+roles = Array[String](["control", "force", "displacement", "setup", "puzzle", "combo_starter"])
+targeting_style = "free_aim"
+delivery_type = "expanding_wave"
+combo_tags = Array[String](["water", "wet", "push", "force", "displacement", "conduct", "freeze_setup"])
+status_tags = Array[String](["wet"])
+ui_tags = Array[String](["control", "wide", "non_damage", "push"])
+debug_tags = Array[String](["prototype", "water_wave", "physics_control"])
+scaling_stats = Array[String](["arcana", "water", "intelligence"])
+scaling_note = "Arcana and Water govern wave force; Intelligence is reserved for future width and handling efficiency."
+design_notes = "Wave is deliberately non-damaging. Its value is broad displacement, object manipulation, mob shepherding, enemy spacing, Wet setup, and environmental control."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")

@@ -1,0 +1,101 @@
+name: Asteroid Belt Orbital Gallery validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/asteroid_belt.gd"
+      - "scenes/actions/asteroid_belt.tscn"
+      - "data/abilities/asteroid_belt_ability.tres"
+      - "data/damage_payloads/asteroid_belt_payload.tres"
+      - "data/ability_trait_profiles/orbiting_guard_profile.tres"
+      - "art/icons/spells/asteroid_belt.svg"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "scripts/performance/runtime_performance_monitor.gd"
+      - "scripts/levels/prototype_asteroid_belt_spell_trial.gd"
+      - "scenes/levels/prototypes/prototype_asteroid_belt_spell_trial_v1.tscn"
+      - "scripts/tests/asteroid_belt_orbital_gallery_smoke_test.gd"
+      - "scenes/tests/asteroid_belt_orbital_gallery_smoke_test.tscn"
+      - "scripts/tests/runtime_performance_foundation_smoke_test.gd"
+      - "scenes/tests/runtime_performance_foundation_smoke_test.tscn"
+      - "scripts/tests/architecture_contract_smoke_test.gd"
+      - "scenes/tests/architecture_contract_smoke_test.tscn"
+      - "scripts/systems/lab_resource_regenerator.gd"
+      - "scripts/systems/lab_resource_regenerator_installer.gd"
+      - "docs/asteroid_belt_orbital_gallery_v1_test.md"
+      - ".github/workflows/asteroid-belt-orbital-gallery-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: asteroid-belt-orbital-gallery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Import, orbit, and performance regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee orbital-gallery-import.log
+
+      - name: Boot Orbital Gallery spell trial
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/levels/prototypes/prototype_asteroid_belt_spell_trial_v1.tscn --quit-after 6 2>&1 | tee orbital-gallery-startup.log
+
+      - name: Run Asteroid Belt Orbital Gallery regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/asteroid_belt_orbital_gallery_smoke_test.tscn 2>&1 | tee orbital-gallery-test.log
+
+      - name: Run runtime performance foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance-test.log
+
+      - name: Run shared architecture contract
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/architecture_contract_smoke_test.tscn 2>&1 | tee architecture-test.log
+
+      - name: Run shared laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteroid-belt-orbital-gallery-validation-logs
+          path: |
+            orbital-gallery-import.log
+            orbital-gallery-startup.log
+            orbital-gallery-test.log
+            performance-test.log
+            architecture-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

@@ -1,0 +1,105 @@
+name: Lightning Bolt Storm Observatory validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/lightning_bolt_strike.gd"
+      - "scenes/actions/lightning_bolt_strike.tscn"
+      - "data/damage_payloads/lightning_bolt_payload.tres"
+      - "data/abilities/lightning_bolt_ability.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "scripts/abilities/ground_spell_registry.gd"
+      - "scripts/abilities/ground_targeting_controller.gd"
+      - "scripts/abilities/ability_caster_menu_select.gd"
+      - "scripts/ui/quick_spell_belt_presentation.gd"
+      - "scripts/ui/quick_spell_belt_performance.gd"
+      - "scripts/ui/quick_spell_belt_unified.gd"
+      - "scripts/ui/spell_icon_factory.gd"
+      - "scripts/levels/prototype_storm_observatory_spell_trial.gd"
+      - "scenes/levels/prototypes/prototype_storm_observatory_spell_trial_v1.tscn"
+      - "scripts/tests/lightning_bolt_storm_observatory_smoke_test.gd"
+      - "scenes/tests/lightning_bolt_storm_observatory_smoke_test.tscn"
+      - "scripts/tests/quick_spell_belt_smoke_test.gd"
+      - "scenes/tests/quick_spell_belt_smoke_test.tscn"
+      - "scripts/tests/architecture_contract_smoke_test.gd"
+      - "scenes/tests/architecture_contract_smoke_test.tscn"
+      - "scripts/systems/lab_resource_regenerator.gd"
+      - "scripts/systems/lab_resource_regenerator_installer.gd"
+      - "docs/lightning_bolt_storm_observatory_v1_test.md"
+      - ".github/workflows/lightning-bolt-storm-observatory-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lightning-bolt-storm-observatory-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Import, sky-strike, and symbol regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee storm-observatory-import.log
+
+      - name: Boot Storm Observatory spell trial
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/levels/prototypes/prototype_storm_observatory_spell_trial_v1.tscn --quit-after 6 2>&1 | tee storm-observatory-startup.log
+
+      - name: Run Lightning Bolt Storm Observatory regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lightning_bolt_storm_observatory_smoke_test.tscn 2>&1 | tee storm-observatory-test.log
+
+      - name: Run shared quick spell belt regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/quick_spell_belt_smoke_test.tscn 2>&1 | tee quick-spell-belt-test.log
+
+      - name: Run shared architecture contract
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/architecture_contract_smoke_test.tscn 2>&1 | tee architecture-test.log
+
+      - name: Run shared laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lightning-bolt-storm-observatory-validation-logs
+          path: |
+            storm-observatory-import.log
+            storm-observatory-startup.log
+            storm-observatory-test.log
+            quick-spell-belt-test.log
+            architecture-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

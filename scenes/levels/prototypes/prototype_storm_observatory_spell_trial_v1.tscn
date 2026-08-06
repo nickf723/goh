@@ -1,0 +1,46 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_storm_observatory_spell_trial.gd" id="1_trial"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator.gd" id="5_regen"]
+
+[node name="PrototypeStormObservatorySpellTrialV1" type="Node3D" groups=["lab_resource_regeneration", "spell_trial"]]
+script = ExtResource("1_trial")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="LabResourceRegenerator" type="Node" parent="."]
+script = ExtResource("5_regen")
+mana_per_second = 2.0
+stamina_per_second = 0.0
+focus_per_second = 0.0
+refill_on_ready = false
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-54, -28, 0)
+light_color = Color(0.54, 0.66, 0.92, 1)
+light_energy = 1.15
+shadow_enabled = true
+
+[node name="StormFillLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 5, 27)
+light_color = Color(0.12, 0.32, 1, 1)
+light_energy = 2.2
+omni_range = 35.0
+shadow_enabled = false
+
+[node name="MasteryLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 4, 55)
+light_color = Color(1, 0.72, 0.14, 1)
+light_energy = 1.6
+omni_range = 12.0
+shadow_enabled = false
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, -3.5)
+rotation_degrees = Vector3(0, 180, 0)

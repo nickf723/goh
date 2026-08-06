@@ -1,0 +1,100 @@
+name: Ice Lance Rime Armory validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/ice_lance_projectile.gd"
+      - "scenes/actions/ice_lance_projectile.tscn"
+      - "data/abilities/ice_lance_ability.tres"
+      - "data/damage_payloads/ice_lance_payload.tres"
+      - "scripts/abilities/spell_modifier_registry.gd"
+      - "scripts/ui/spell_icon_factory.gd"
+      - "scripts/levels/prototype_rime_armory_spell_trial.gd"
+      - "scenes/levels/prototypes/prototype_rime_armory_spell_trial_v1.tscn"
+      - "scripts/tests/ice_lance_rime_armory_smoke_test.gd"
+      - "scenes/tests/ice_lance_rime_armory_smoke_test.tscn"
+      - "scripts/tests/architecture_contract_smoke_test.gd"
+      - "scenes/tests/architecture_contract_smoke_test.tscn"
+      - "scripts/tests/spell_modifier_framework_smoke_test.gd"
+      - "scenes/tests/spell_modifier_framework_smoke_test.tscn"
+      - "scripts/systems/lab_resource_regenerator.gd"
+      - "scripts/systems/lab_resource_regenerator_installer.gd"
+      - "docs/ice_lance_rime_armory_v2_test.md"
+      - "docs/piercing_ice_lance_v1_test.md"
+      - ".github/workflows/ice-lance-rime-armory-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ice-lance-rime-armory-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Import and physical-lance regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee rime-armory-import.log
+
+      - name: Boot Rime Armory spell trial
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/levels/prototypes/prototype_rime_armory_spell_trial_v1.tscn --quit-after 6 2>&1 | tee rime-armory-startup.log
+
+      - name: Run Ice Lance Rime Armory regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/ice_lance_rime_armory_smoke_test.tscn 2>&1 | tee rime-armory-test.log
+
+      - name: Run shared spell modifier regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/spell_modifier_framework_smoke_test.tscn 2>&1 | tee spell-modifier-test.log
+
+      - name: Run shared architecture contract
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/architecture_contract_smoke_test.tscn 2>&1 | tee architecture-test.log
+
+      - name: Run shared laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ice-lance-rime-armory-validation-logs
+          path: |
+            rime-armory-import.log
+            rime-armory-startup.log
+            rime-armory-test.log
+            spell-modifier-test.log
+            architecture-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

@@ -1,0 +1,37 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/actions/ice_lance_projectile.gd" id="1_lance"]
+
+[node name="IceLanceProjectile" type="Node3D"]
+script = ExtResource("1_lance")
+speed = 23.0
+max_lifetime = 2.8
+destroy_on_hit = true
+hit_limit = 3
+ignore_source_for_seconds = 0.2
+rotate_to_direction = true
+show_debug_prints = false
+show_miss_feedback = false
+trail_interval = 0.026
+respond_to_airflow = true
+aerodynamic_mass_kg = 1.2
+aerodynamic_drag_coefficient = 0.58
+aerodynamic_cross_section_area = 0.08
+aerodynamic_force_scale = 1.35
+maximum_airflow_acceleration = 7.0
+lance_length = 3.8
+shaft_radius = 0.18
+base_pierce_capacity = 3
+pierce_damage_retention = 0.76
+pierce_stance_retention = 0.82
+launch_clearance = 0.28
+collision_probe_margin = 0.07
+travel_collision_mask = 1
+lodge_in_static_surfaces = true
+lodged_duration_seconds = 8.0
+embed_depth = 0.16
+lodged_collision_width = 0.65
+lodged_collision_height = 0.22
+lodged_fade_seconds = 0.55
+flight_roll_speed = 2.2
+lodged_pulse_speed = 4.8

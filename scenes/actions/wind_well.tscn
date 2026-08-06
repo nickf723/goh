@@ -1,0 +1,24 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/actions/wind_well.gd" id="1_well"]
+
+[node name="WindWell" type="Node3D"]
+script = ExtResource("1_well")
+field_id = "wind_well"
+active = false
+field_kind = 3
+volume_shape = 2
+radius = 2.8
+cylinder_height = 9.0
+edge_fade_fraction = 0.28
+falloff_exponent = 1.1
+local_axis = Vector3(0, 1, 0)
+strength = 10.5
+turbulence_strength = 0.16
+turbulence_spatial_frequency = 0.72
+turbulence_time_frequency = 1.45
+duration_seconds = 6.0
+character_target_up_speed = 7.2
+character_lift_acceleration = 42.0
+rigid_lift_force_newtons = 70.0
+reference_mass_kg = 12.0

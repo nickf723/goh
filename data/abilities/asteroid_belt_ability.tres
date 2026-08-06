@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/asteroid_belt.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/asteroid_belt_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/orbiting_guard_profile.tres" id="4_profile"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Asteroid Belt"
+description = "Summon a temporary ring of asteroids around Grace. The orbit punishes enemies at its exact radius, drives them outward, and leaves the space immediately beside her untouched."
+element = "space"
+category = 4
+mana_cost = 4
+trait_profile = ExtResource("4_profile")
+spell_id = "asteroid_belt"
+short_label = "Belt"
+icon_text = "AB"
+roles = Array[String](["damage", "stance", "defense", "force", "zone_control", "spacing", "positioning", "persistent", "setup"])
+targeting_style = "self"
+delivery_type = "orbiting_satellites"
+combo_tags = Array[String](["space", "gravity", "asteroid", "orbit", "force", "contact_field", "space_control"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["persistent", "self", "positioning", "zone_control"])
+debug_tags = Array[String](["prototype", "multimesh", "single_controller", "budgeted_collision_scan"])
+scaling_stats = Array[String](["focus", "space", "power"])
+scaling_note = "Focus and Space govern orbit duration and geometry; Power is reserved for future asteroid mass, impact, and interception upgrades."
+design_notes = "Asteroid Belt is a moving ring, not a centered damage aura. Targets inside the orbit are safe from the rocks until Grace repositions, while targets at the belt radius are struck and pushed outward. Recasting replaces Grace's previous belt to keep both gameplay and performance bounded."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")

@@ -60,6 +60,7 @@
 [ext_resource type="Resource" path="res://data/divine_specials/ruvia_hearth_of_first_flame.tres" id="58_hearth"]
 [ext_resource type="Script" path="res://scripts/ui/divine_special_hud.gd" id="59_special_hud"]
 [ext_resource type="Script" path="res://scripts/ui/player_hud_unified.gd" id="60_hud_v2"]
+[ext_resource type="Script" path="res://scripts/player/player_flamethrower_controller.gd" id="61_flamethrower"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.46
@@ -251,6 +252,9 @@ profile = ExtResource("40_dodge_profile")
 
 [node name="SoulGripController" type="Node3D" parent="."]
 script = ExtResource("12_soul_grip")
+
+[node name="FlamethrowerController" type="Node3D" parent="."]
+script = ExtResource("61_flamethrower")
 
 [node name="MetalTetherController" type="Node3D" parent="."]
 script = ExtResource("15_metal_tether")

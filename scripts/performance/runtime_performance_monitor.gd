@@ -18,6 +18,8 @@ signal performance_budget_state_changed(state: String, snapshot: Dictionary)
 var sample_remaining: float = 0.0
 var pending_frame_ms: Array[float] = []
 var frame_history_ms: Array[float] = []
+var frame_history_cursor: int = 0
+var frame_history_overwrite_count: int = 0
 var latest_snapshot: Dictionary = {}
 var latest_budget_state: String = "unknown"
 var lifetime_spike_count: int = 0
@@ -60,16 +62,35 @@ func record_frame_sample(delta_seconds: float) -> void:
 	if frame_ms <= 0.0:
 		return
 	pending_frame_ms.append(frame_ms)
-	frame_history_ms.append(frame_ms)
+	_record_history_sample(frame_ms)
 	if frame_ms >= spike_threshold_ms:
 		lifetime_spike_count += 1
-	while frame_history_ms.size() > maximum_history_samples:
-		frame_history_ms.pop_front()
+
+
+func _record_history_sample(frame_ms: float) -> void:
+	var capacity: int = maxi(maximum_history_samples, 1)
+	if frame_history_ms.size() > capacity:
+		frame_history_ms.resize(capacity)
+		frame_history_cursor = 0
+	if frame_history_ms.size() < capacity:
+		frame_history_ms.append(frame_ms)
+		if frame_history_ms.size() == capacity:
+			frame_history_cursor = 0
+		return
+
+	# The previous monitor used Array.pop_front() after the history filled. That
+	# shifted hundreds of floats every frame forever. A fixed ring overwrites one
+	# slot in O(1), so profiling the game no longer becomes part of the slowdown.
+	frame_history_ms[frame_history_cursor] = frame_ms
+	frame_history_cursor = (frame_history_cursor + 1) % capacity
+	frame_history_overwrite_count += 1
 
 
 func sample_performance() -> Dictionary:
-	var batch: Array[float] = pending_frame_ms.duplicate()
-	pending_frame_ms.clear()
+	# Move the pending buffer instead of duplicating it, then replace it with a
+	# fresh short array. The sampled batch remains valid without an extra copy.
+	var batch: Array[float] = pending_frame_ms
+	pending_frame_ms = []
 	if batch.is_empty():
 		batch = [1000.0 / maxf(target_fps, 1.0)]
 	var average_frame_ms: float = _average(batch)
@@ -99,6 +120,8 @@ func sample_performance() -> Dictionary:
 		"recent_spikes": recent_spikes,
 		"lifetime_spikes": lifetime_spike_count,
 		"sample_frames": batch.size(),
+		"history_samples": frame_history_ms.size(),
+		"history_overwrites": frame_history_overwrite_count,
 		"tree_counts": tree_counts,
 	}
 	var next_state: String = _resolve_budget_state(p95_frame_ms)
@@ -130,6 +153,8 @@ func get_performance_snapshot() -> Dictionary:
 func reset_history() -> void:
 	pending_frame_ms.clear()
 	frame_history_ms.clear()
+	frame_history_cursor = 0
+	frame_history_overwrite_count = 0
 	lifetime_spike_count = 0
 	sample_count = 0
 	latest_snapshot.clear()
@@ -198,6 +223,12 @@ func _collect_tree_counts() -> Dictionary:
 		"physics_processing_nodes": physics_processing,
 		"visible_labels_3d": visible_labels,
 		"visible_geometry": visible_geometry,
+		"spell_effects": get_tree().get_nodes_in_group("spell_effects").size(),
+		"persistent_spell_effects": get_tree().get_nodes_in_group(
+			"persistent_spell_effects"
+		).size(),
+		"spell_projectiles": get_tree().get_nodes_in_group("spell_projectiles").size(),
+		"spell_fields": get_tree().get_nodes_in_group("spell_fields").size(),
 	}
 
 
@@ -208,7 +239,7 @@ func _build_overlay() -> void:
 	overlay_panel.offset_left = -310.0
 	overlay_panel.offset_top = 18.0
 	overlay_panel.offset_right = -18.0
-	overlay_panel.offset_bottom = 238.0
+	overlay_panel.offset_bottom = 256.0
 	overlay_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.015, 0.022, 0.038, 0.92)
@@ -246,6 +277,8 @@ func _refresh_overlay() -> void:
 		+ "   RENDERED " + str(latest_snapshot.get("rendered_objects", 0)) + "\n"
 		+ "NODES " + str(latest_snapshot.get("nodes", 0))
 		+ "   PROCESSING " + str(tree_counts.get("processing_nodes", "—")) + "\n"
+		+ "SPELL FX " + str(tree_counts.get("spell_effects", "—"))
+		+ "   PERSISTENT " + str(tree_counts.get("persistent_spell_effects", "—")) + "\n"
 		+ "LABELS 3D " + str(tree_counts.get("visible_labels_3d", "—"))
 		+ "   SPIKES " + str(latest_snapshot.get("recent_spikes", 0))
 	)
@@ -259,5 +292,8 @@ func get_debug_data() -> Dictionary:
 		"spike_threshold_ms": spike_threshold_ms,
 		"sample_count": sample_count,
 		"history_samples": frame_history_ms.size(),
+		"history_capacity": maximum_history_samples,
+		"history_cursor": frame_history_cursor,
+		"history_overwrites": frame_history_overwrite_count,
 		"latest": latest_snapshot.duplicate(true),
 	}

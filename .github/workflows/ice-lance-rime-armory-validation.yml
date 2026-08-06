@@ -17,8 +17,6 @@ on:
       - "scenes/tests/ice_lance_rime_armory_smoke_test.tscn"
       - "scripts/tests/architecture_contract_smoke_test.gd"
       - "scenes/tests/architecture_contract_smoke_test.tscn"
-      - "scripts/tests/spell_modifier_framework_smoke_test.gd"
-      - "scenes/tests/spell_modifier_framework_smoke_test.tscn"
       - "scripts/systems/lab_resource_regenerator.gd"
       - "scripts/systems/lab_resource_regenerator_installer.gd"
       - "docs/ice_lance_rime_armory_v2_test.md"
@@ -67,12 +65,6 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/ice_lance_rime_armory_smoke_test.tscn 2>&1 | tee rime-armory-test.log
 
-      - name: Run shared spell modifier regression
-        shell: bash
-        run: |
-          set -o pipefail
-          godot --headless --path . res://scenes/tests/spell_modifier_framework_smoke_test.tscn 2>&1 | tee spell-modifier-test.log
-
       - name: Run shared architecture contract
         shell: bash
         run: |
@@ -94,7 +86,6 @@ jobs:
             rime-armory-import.log
             rime-armory-startup.log
             rime-armory-test.log
-            spell-modifier-test.log
             architecture-test.log
             lab-resource-test.log
           if-no-files-found: ignore

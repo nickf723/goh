@@ -57,6 +57,28 @@ func _validate_monitor_budget_math() -> void:
 	_expect(str(red.get("budget_state", "")) == "red", "40 ms frames classify outside the frame budget")
 	_expect(int(red.get("recent_spikes", 0)) == 20, "monitor counts recent frame spikes")
 	_expect(int(red.get("lifetime_spikes", 0)) >= 20, "monitor retains lifetime spike history")
+
+	# The monitor is always installed through GameUI. Once its old Array history
+	# filled, pop_front shifted the whole buffer on every frame. Prove the rolling
+	# history now overwrites one slot in constant time instead.
+	monitor.reset_history()
+	monitor.maximum_history_samples = 8
+	for _index: int in range(20):
+		monitor.record_frame_sample(0.016)
+	_expect(
+		monitor.frame_history_ms.size() == 8,
+		"performance history remains at its authored fixed capacity"
+	)
+	_expect(
+		monitor.frame_history_overwrite_count == 12,
+		"full performance history uses ring overwrites instead of front shifts"
+	)
+	var bounded: Dictionary = monitor.sample_performance()
+	_expect(
+		int(bounded.get("history_samples", 0)) == 8,
+		"performance snapshots expose the bounded history size"
+	)
+
 	monitor.set_overlay_visible(true)
 	_expect(monitor.is_overlay_visible(), "performance overlay can be shown for live profiling")
 	monitor.set_overlay_visible(false)

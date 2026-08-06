@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_jpcdm")
-amount = 2
+amount = 3
 stance_damage = 5
 element = "ice"
 source_name = "Ice Lance"

@@ -134,13 +134,22 @@ func _test_frozen_shatter(player: Node3D) -> void:
 	var payload_receiver: PayloadReceiver = target.get_node_or_null(
 		"PayloadReceiver"
 	) as PayloadReceiver
+	var force_receiver: ForceReceiver = target.get_node_or_null(
+		"ForceReceiver"
+	) as ForceReceiver
 	_expect(status_receiver != null, "frozen-target test exposes StatusReceiver")
 	_expect(payload_receiver != null, "frozen-target test exposes PayloadReceiver")
-	if status_receiver == null or payload_receiver == null:
+	_expect(force_receiver != null, "frozen-target test exposes ForceReceiver")
+	if (
+		status_receiver == null
+		or payload_receiver == null
+		or force_receiver == null
+	):
 		target.queue_free()
 		await get_tree().process_frame
 		return
 
+	force_receiver.reset_forces()
 	status_receiver.call(
 		"apply_status",
 		"frozen",
@@ -170,6 +179,11 @@ func _test_frozen_shatter(player: Node3D) -> void:
 	_expect(
 		payload_receiver.last_reaction_summary.to_lower().contains("shatter"),
 		"Ice Lance records Shatter rather than a bespoke spell-only exception"
+	)
+	_expect(
+		force_receiver.external_velocity.z > 0.1
+		and absf(force_receiver.external_velocity.x) < 0.05,
+		"Ice Lance drives the target along the spear's authored travel direction"
 	)
 
 	lance.queue_free()

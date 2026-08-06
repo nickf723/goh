@@ -44,6 +44,22 @@ func bind_exported_thermal_source() -> bool:
 	return bind_source(source)
 
 
+# The source's Boolean threshold is useful to other mechanism consumers, but it
+# must not activate this node by itself. This node owns the additional time
+# requirement and publishes only after the heat has remained high long enough.
+func _on_source_state_changed(
+	_source_id: String,
+	_previous_active: bool,
+	_next_active: bool,
+	_packet: Dictionary
+) -> void:
+	pass
+
+
+func _evaluate_source_states() -> void:
+	pass
+
+
 func _process(delta: float) -> void:
 	if completed and latch_when_completed:
 		return

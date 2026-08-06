@@ -98,7 +98,7 @@ font_size = 72
 transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 7.5, 2.3, 10.5)
 billboard = 1
 text = "Controller: Right Trigger casts
-Firebolt charges, Ice pierces
+Ice Lance pierces three; its upgrade reaches four
 Lightning Spark chains once upgraded"
 font_size = 42
 
@@ -159,8 +159,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
 prompt_text = "Unlock Piercing Ice Lance"
 pedestal_title = "Piercing Ice Lance"
 unlock_ids = Array[String](["piercing_ice_lance"])
-success_message = "Ice Lance can now pierce lined targets."
-objective_after = "Equip Ice Lance and shoot through the center target line."
+success_message = "Ice Lance is reinforced to carry through a fourth target."
+objective_after = "Compare the base three-target spear with the upgraded four-target line."
 should_restore_resources = true
 should_reset_targets = true
 
@@ -207,7 +207,7 @@ transform = Transform3D(1, 0, 0, 0, 0.9659258, -0.25881904, 0, 0.25881904, 0.965
 billboard = 1
 text = "Targets
 Lock-on: R3 / T
-Ice pierces the line, Lightning chains nearby"
+Base Ice Lance stops after C; the upgrade reaches D"
 font_size = 44
 
 [node name="TrainingTargets" type="Node3D" parent="." unique_id=1433173746]
@@ -231,6 +231,10 @@ target_label = "Pierce / Chain Target B"
 [node name="IcePierceTargetC" parent="TrainingTargets" unique_id=150646997 instance=ExtResource("7_target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -11)
 target_label = "Pierce / Chain Target C"
+
+[node name="IcePierceTargetD" parent="TrainingTargets" instance=ExtResource("7_target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, -14)
+target_label = "Pierce Upgrade Target D"
 
 [node name="GuardTestGoblin" parent="TrainingTargets" unique_id=1527247462 instance=ExtResource("8_goblin")]
 transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 12, 0.85, -7)

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityTraitProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_trait_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "orbiting_guard"
+display_name = "Orbiting Guard"
+description = "Persistent self-centered satellites that reward spacing and punish contact at an authored orbit radius."
+roles = Array[String](["defense", "damage", "stance", "zone_control", "positioning", "persistent", "force", "setup"])
+targeting_style = "self"
+delivery_type = "orbiting_satellites"
+combo_tags = Array[String](["orbit", "satellite", "contact_field", "bodyguard", "space_control"])
+ui_tags = Array[String](["persistent", "self", "positioning", "zone_control"])
+debug_tags = Array[String](["spell_profile", "orbit", "performance_budgeted"])
+design_notes = "Use for spells whose effective area is a moving ring around the caster rather than a conventional centered aura."

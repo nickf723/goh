@@ -40,7 +40,7 @@ The base lance:
 
 The lance then shatters and removes its temporary geometry.
 
-The existing `piercing_ice_lance` progression upgrade remains compatible. Its modified payload raises the runtime pierce limit, speed, stance pressure, and Chill duration beyond the base spell.
+The existing `piercing_ice_lance` progression upgrade remains compatible. Its modified payload raises the runtime pierce limit from three to four, increases travel speed and stance pressure, and extends Chill duration.
 
 ## Room I: The Long Point
 
@@ -70,6 +70,33 @@ A glowing Rime Anchor waits in the second chamber.
 7. Wait and confirm the embedded lance eventually fades, shatters, and removes its collision.
 
 Although the trial uses one designated anchor to verify progression, the runtime lance can embed in ordinary static architecture unless a surface explicitly rejects lodging.
+
+## Frozen shatter check
+
+Ice Lance is a physical Ice spell, not merely a source of cold. Its payload participates in the existing `force × frozen` reaction.
+
+1. Freeze a target with an appropriate setup.
+2. Strike it with Ice Lance.
+3. Confirm the Frozen state is consumed.
+4. Confirm the shared **Shatter** reaction triggers before Ice Lance applies its own Chill.
+
+This behavior comes from the reusable reaction grammar rather than an Ice-Lance-specific exception.
+
+## Upgrade compatibility check
+
+Run:
+
+```text
+res://scenes/levels/prototypes/prototype_upgrade_lab_v1.tscn
+```
+
+The center line now contains four marks:
+
+```text
+A → B → C → D
+```
+
+Without `piercing_ice_lance`, the base spear damages A, B, and C, then breaks against D. After unlocking the upgrade, the reinforced spear reaches D as well. The stable unlock ID and progression data remain unchanged.
 
 ## Mastery
 
@@ -112,6 +139,7 @@ The regression covers:
 - two-Mana casting cost;
 - physical-lance delivery metadata;
 - force, Chill, stance, and damage identity;
+- the shared Frozen-to-Shatter reaction;
 - decreasing payload force along the line;
 - shared AbilityCaster creation of `IceLanceProjectile`;
 - one cast piercing three aligned targets;
@@ -120,6 +148,8 @@ The regression covers:
 - hard-surface lodging;
 - temporary collision geometry;
 - finite embedded lifetime;
+- compatibility with the existing four-target progression upgrade;
+- the fourth upgrade-lab mark;
 - mastery persistence; and
 - full reset behavior.
 

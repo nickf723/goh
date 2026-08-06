@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/wind_well.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/wind_well_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/lingering_hazard_profile.tres" id="4_profile"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Wind Well"
+description = "Place a persistent column of rising air. Lifts Grace, creatures, and movable objects without dealing damage."
+element = "air"
+category = 4
+mana_cost = 3
+trait_profile = ExtResource("4_profile")
+spell_id = "wind_well"
+short_label = "Well"
+icon_text = "↑"
+roles = Array[String](["control", "force", "lift", "traversal", "field", "puzzle", "setup"])
+targeting_style = "ground_aoe"
+delivery_type = "updraft_field"
+combo_tags = Array[String](["air", "wind", "updraft", "lift", "airborne", "field", "traversal", "force"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["control", "field", "vertical", "non_damage"])
+debug_tags = Array[String](["prototype", "air_updraft", "persistent_field", "physics_control"])
+scaling_stats = Array[String](["arcana", "air", "focus"])
+scaling_note = "Arcana and Air govern lift strength; Focus is reserved for future field duration and placement efficiency."
+design_notes = "Wind Well is deliberately non-damaging. It creates vertical routes, separates grounded and airborne states, and combines with horizontal force tools such as Gust and Wave."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")

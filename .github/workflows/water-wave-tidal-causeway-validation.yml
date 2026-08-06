@@ -1,0 +1,89 @@
+name: Water Wave Tidal Causeway validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/water_wave.gd"
+      - "scenes/actions/water_wave.tscn"
+      - "data/damage_payloads/water_wave_payload.tres"
+      - "data/abilities/wave_ability.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "scripts/levels/prototype_tidal_causeway_spell_trial.gd"
+      - "scenes/levels/prototypes/prototype_tidal_causeway_spell_trial_v1.tscn"
+      - "scripts/tests/water_wave_tidal_causeway_smoke_test.gd"
+      - "scenes/tests/water_wave_tidal_causeway_smoke_test.tscn"
+      - "scripts/tests/architecture_contract_smoke_test.gd"
+      - "scenes/tests/architecture_contract_smoke_test.tscn"
+      - "scripts/systems/lab_resource_regenerator.gd"
+      - "scripts/systems/lab_resource_regenerator_installer.gd"
+      - "docs/water_wave_tidal_causeway_v1_test.md"
+      - ".github/workflows/water-wave-tidal-causeway-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: water-wave-tidal-causeway-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Import and zero-damage Wave regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee tidal-causeway-import.log
+
+      - name: Boot Tidal Causeway spell trial
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/levels/prototypes/prototype_tidal_causeway_spell_trial_v1.tscn --quit-after 6 2>&1 | tee tidal-causeway-startup.log
+
+      - name: Run Wave Tidal Causeway regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/water_wave_tidal_causeway_smoke_test.tscn 2>&1 | tee tidal-causeway-test.log
+
+      - name: Run shared architecture contract
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/architecture_contract_smoke_test.tscn 2>&1 | tee architecture-test.log
+
+      - name: Run shared laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: water-wave-tidal-causeway-validation-logs
+          path: |
+            tidal-causeway-import.log
+            tidal-causeway-startup.log
+            tidal-causeway-test.log
+            architecture-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

@@ -3,6 +3,15 @@ extends "res://scripts/tests/ice_lance_rime_armory_smoke_test.gd"
 const RunnerTrialScene: PackedScene = preload(
 	"res://scenes/levels/prototypes/prototype_rime_armory_spell_trial_v1.tscn"
 )
+const RunnerUpgradeLabScene: PackedScene = preload(
+	"res://scenes/levels/prototypes/prototype_upgrade_lab_v1.tscn"
+)
+const RunnerIceLanceScene: PackedScene = preload(
+	"res://scenes/actions/ice_lance_projectile.tscn"
+)
+const RunnerIceLancePayload: DamagePayload = preload(
+	"res://data/damage_payloads/ice_lance_payload.tres"
+)
 
 # The base file keeps the individual test cases readable. This runner owns the
 # coroutine order so reset cleanup finishes before the trial is freed and the
@@ -57,3 +66,51 @@ func run_tests() -> void:
 	trial.queue_free()
 	await get_tree().process_frame
 	_finish()
+
+
+func _test_ability_contract() -> void:
+	super._test_ability_contract()
+
+	var upgraded_payload: DamagePayload = (
+		RunnerIceLancePayload.duplicate(true) as DamagePayload
+	)
+	var upgraded_tags: Array[String] = []
+	for tag: String in upgraded_payload.tags:
+		upgraded_tags.append(tag)
+	for upgrade_tag: String in [
+		"piercing",
+		"upgrade",
+		"ice_lance",
+		"piercing_ice_lance",
+	]:
+		if not upgraded_tags.has(upgrade_tag):
+			upgraded_tags.append(upgrade_tag)
+	upgraded_payload.tags = upgraded_tags
+	upgraded_payload.source_name = "Piercing Ice Lance"
+
+	var upgraded_lance: IceLanceProjectile = (
+		RunnerIceLanceScene.instantiate() as IceLanceProjectile
+	)
+	add_child(upgraded_lance)
+	upgraded_lance.set_process(false)
+	upgraded_lance.set_payload(upgraded_payload)
+	_expect(
+		upgraded_lance.hit_limit >= 4,
+		"Piercing Ice Lance upgrade extends the rebuilt spear to a fourth target"
+	)
+	_expect(
+		upgraded_lance.speed >= 24.0,
+		"the existing upgrade still reinforces Ice Lance travel speed"
+	)
+	upgraded_lance.queue_free()
+
+	var upgrade_lab: Node = RunnerUpgradeLabScene.instantiate()
+	_expect(upgrade_lab != null, "upgrade compatibility lab still instantiates")
+	if upgrade_lab != null:
+		_expect(
+			upgrade_lab.get_node_or_null(
+				"TrainingTargets/IcePierceTargetD"
+			) != null,
+			"upgrade lab provides a fourth mark beyond the base three-target limit"
+		)
+		upgrade_lab.free()

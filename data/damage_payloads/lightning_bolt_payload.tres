@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 5
+stance_damage = 4
+element = "lightning"
+source_name = "Lightning Bolt"
+hit_type = "sky_strike"
+status_effect = "stunned"
+status_duration = 0.6
+status_strength = 1.0
+tags = Array[String](["lightning", "magic", "ground_targeted", "sky_strike", "direct_strike", "burst", "damage", "shock"])
+knockback_strength = 0.6
+knockback_up_strength = 0.05

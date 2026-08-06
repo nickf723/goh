@@ -422,7 +422,7 @@ func _update_impact_visual() -> void:
 		strike_light.light_energy = 1.0 + ratio * 5.2
 	if impact_flash != null:
 		impact_flash.scale = Vector3.ONE * (1.0 + (1.0 - ratio) * 0.8)
-		impact_flash.modulate.a = ratio
+		impact_flash.transparency = 1.0 - ratio
 
 
 func get_debug_data() -> Dictionary:

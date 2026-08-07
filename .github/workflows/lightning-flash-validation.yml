@@ -1,0 +1,127 @@
+name: Lightning Flash validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/lightning_flash.gd"
+      - "scripts/abilities/ability_caster_focus_library.gd"
+      - "scripts/input/controller_haptic_pattern.gd"
+      - "scripts/levels/prototype_lightning_flash_spell_trial.gd"
+      - "scripts/levels/thunderline_gate_dividers.gd"
+      - "scripts/tests/lightning_flash_smoke_test.gd"
+      - "scripts/tests/lightning_flash_trial_smoke_test.gd"
+      - "scenes/actions/lightning_flash.tscn"
+      - "scenes/levels/prototypes/prototype_lightning_flash_spell_trial_v1.tscn"
+      - "scenes/tests/lightning_flash_smoke_test.tscn"
+      - "scenes/tests/lightning_flash_trial_smoke_test.tscn"
+      - "data/abilities/lightning_flash_ability.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "docs/LIGHTNING_FLASH_V1.md"
+      - ".github/workflows/lightning-flash-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lightning-flash-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-lightning-flash:
+    name: Import and Flash regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Show Godot version
+        run: godot --version
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee lightning-flash-import.log
+
+      - name: Boot the Thunderline
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 3 res://scenes/levels/prototypes/prototype_lightning_flash_spell_trial_v1.tscn 2>&1 | tee lightning-flash-trial-boot.log
+
+      - name: Run Flash collision and vertical-aim regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lightning_flash_smoke_test.tscn 2>&1 | tee lightning-flash-test.log
+
+      - name: Run Thunderline progression regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lightning_flash_trial_smoke_test.tscn 2>&1 | tee lightning-flash-trial-test.log
+
+      - name: Run Focus and quickbar independence regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_independence_smoke_test.tscn 2>&1 | tee focus-quickbar-test.log
+
+      - name: Run Focus icon-row regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_icon_independence_smoke_test.tscn 2>&1 | tee focus-icon-test.log
+
+      - name: Run permanent quickbar regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/quick_spell_belt_smoke_test.tscn 2>&1 | tee quickbar-test.log
+
+      - name: Run shared ability architecture regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/ability_architecture_smoke_test.tscn 2>&1 | tee ability-architecture-test.log
+
+      - name: Run performance foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance-test.log
+
+      - name: Run laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload Flash validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lightning-flash-validation-logs
+          path: |
+            lightning-flash-import.log
+            lightning-flash-trial-boot.log
+            lightning-flash-test.log
+            lightning-flash-trial-test.log
+            focus-quickbar-test.log
+            focus-icon-test.log
+            quickbar-test.log
+            ability-architecture-test.log
+            performance-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

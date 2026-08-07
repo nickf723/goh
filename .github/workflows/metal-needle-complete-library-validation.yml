@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "scripts/actions/metal_needle_fan.gd"
+      - "scripts/actions/metal_needle_fan_ready.gd"
       - "scripts/concentration/concentration_runtime_access.gd"
       - "scripts/weather/weather_spell_runtime.gd"
       - "scripts/abilities/rain_weather_spell.gd"

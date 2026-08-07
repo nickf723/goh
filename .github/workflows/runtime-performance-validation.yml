@@ -34,6 +34,8 @@ on:
       - "scenes/levels/prototypes/prototype_mechanism_network_lab_v1.tscn"
       - "scripts/tests/runtime_performance_foundation_smoke_test.gd"
       - "scenes/tests/runtime_performance_foundation_smoke_test.tscn"
+      - "scripts/tests/runtime_performance_incremental_census_smoke_test.gd"
+      - "scenes/tests/runtime_performance_incremental_census_smoke_test.tscn"
       - "scripts/tests/mechanism_value_signal_smoke_test.gd"
       - "scenes/tests/mechanism_value_signal_smoke_test.tscn"
       - "scripts/tests/mechanism_soul_weight_smoke_test.gd"
@@ -42,6 +44,7 @@ on:
       - "scenes/tests/mechanism_routing_smoke_test.tscn"
       - "scripts/tests/mechanism_priority_decoder_smoke_test.gd"
       - "scenes/tests/mechanism_priority_decoder_smoke_test.tscn"
+      - "docs/PERFORMANCE_FOUNDATION_V1.md"
       - ".github/workflows/runtime-performance-validation.yml"
   workflow_dispatch:
 
@@ -79,6 +82,12 @@ jobs:
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance-test.log
+
+      - name: Run incremental F7 census regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_incremental_census_smoke_test.tscn 2>&1 | tee performance-census-test.log
 
       - name: Run mechanism network regression
         shell: bash
@@ -130,6 +139,7 @@ jobs:
           path: |
             performance-import.log
             performance-test.log
+            performance-census-test.log
             mechanism-test.log
             mechanism-value-test.log
             mechanism-soul-weight-test.log

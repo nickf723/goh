@@ -50,12 +50,35 @@ func _ensure_focus_safe_router() -> void:
 			and existing_script.resource_path
 			== "res://scripts/input/player_control_router_focus_library.gd"
 		):
+			_rebind_router_consumers(existing)
 			return
 		actor.remove_child(existing)
 		existing.queue_free()
 	var router: Node = FocusRouterScript.new()
 	router.name = "PlayerControlRouter"
 	actor.add_child(router)
+	call_deferred("_rebind_router_consumers", router)
+
+
+func _rebind_router_consumers(router: Node) -> void:
+	if router == null or not is_instance_valid(router):
+		return
+	var actor: Node = get_parent()
+	if actor == null or not is_instance_valid(actor):
+		return
+	var command_dock: Node = actor.get_node_or_null(
+		"QuickSpellBeltPresentation"
+	)
+	if command_dock == null or not is_instance_valid(command_dock):
+		return
+	# The optimized dock is event-driven. If the original router was already
+	# installed when the Focus-safe router replaced it, transfer the binding and
+	# reconnect once so the dock never falls back to stale signal sources.
+	command_dock.set("router", router)
+	if command_dock.has_method("_connect_runtime_signals"):
+		command_dock.call("_connect_runtime_signals")
+	if command_dock.has_method("_mark_slots_dirty"):
+		command_dock.call("_mark_slots_dirty")
 
 
 func get_focus_library_abilities() -> Array[AbilityDefinition]:
@@ -82,7 +105,7 @@ func get_spell_indices_for_element(element: String) -> Array[int]:
 	return indices
 
 
-func get_selected_focus_spell_global_index() -> int:
+func _get_selected_focus_library_index() -> int:
 	var spell_indices: Array[int] = get_spell_indices_for_element(
 		get_selected_focus_element()
 	)
@@ -96,8 +119,16 @@ func get_selected_focus_spell_global_index() -> int:
 	return spell_indices[focus_spell_index]
 
 
+# Legacy router callers expect this method to return an index into the runtime
+# equipped array. Focus itself uses the learned-library helper above. Returning a
+# runtime index here keeps even an older router safe during the one-frame startup
+# handoff and prevents an equipped-array lookup from misreading a learned index.
+func get_selected_focus_spell_global_index() -> int:
+	return _ensure_runtime_ability(get_selected_focus_ability())
+
+
 func get_selected_focus_ability() -> AbilityDefinition:
-	var selected_index: int = get_selected_focus_spell_global_index()
+	var selected_index: int = _get_selected_focus_library_index()
 	var learned: Array[AbilityDefinition] = get_focus_library_abilities()
 	if selected_index < 0 or selected_index >= learned.size():
 		return null
@@ -259,5 +290,6 @@ func get_debug_data() -> Dictionary:
 	data["focus_selected_spell_id"] = (
 		selected.get_spell_id() if selected != null else ""
 	)
+	data["focus_selected_runtime_index"] = _ensure_runtime_ability(selected)
 	data["focus_safe_router"] = true
 	return data

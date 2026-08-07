@@ -88,11 +88,10 @@ func run_tests() -> void:
 		== persistent_before,
 		"Flash never registers as a persistent spell"
 	)
-	for _frame: int in range(8):
-		await get_tree().process_frame
+	direct_flash.call("_process", 0.06)
 	_expect(player.visible, "Grace reappears at the destination after the bolt flash")
-	for _frame: int in range(20):
-		await get_tree().process_frame
+	direct_flash.call("_process", 0.2)
+	await get_tree().process_frame
 	_expect(
 		get_tree().get_node_count_in_group("spell_effects") == spell_effects_before,
 		"Flash removes its temporary spell effect after the trail fades"
@@ -119,8 +118,11 @@ func run_tests() -> void:
 		int(player.get_meta("lightning_flash_serial", 0)) == serial_before + 1,
 		"an ordinary Flash cast publishes one traversal result"
 	)
-	for _frame: int in range(20):
-		await get_tree().process_frame
+	var caster_flash: Node = _find_flash_effect_for_player(player)
+	_expect(caster_flash != null, "ordinary casting creates the Flash trail effect")
+	if caster_flash != null:
+		caster_flash.call("_process", 0.25)
+	await get_tree().process_frame
 
 	wall.collision_layer = 0
 	wall.collision_mask = 0
@@ -190,6 +192,16 @@ func run_tests() -> void:
 		"Flash and Surf cleanup return persistent effects to baseline"
 	)
 	_finish([player, wall, floor])
+
+
+func _find_flash_effect_for_player(player: Node) -> Node:
+	for effect: Node in get_tree().get_nodes_in_group("lightning_flash_effects"):
+		if (
+			effect.has_method("belongs_to_source")
+			and bool(effect.call("belongs_to_source", player))
+		):
+			return effect
+	return null
 
 
 func _test_ability_contract() -> void:

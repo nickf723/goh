@@ -63,7 +63,7 @@ func run_tests() -> void:
 	await _wait_frames(2)
 	_expect(curl_gate.is_mechanism_active(), "a valid curled route opens the first door")
 	_expect(
-		bool(curl_gate.get_debug_data().get("collision_disabled", false)),
+		not bool(curl_gate.get_debug_data().get("collision_enabled", true)),
 		"the first open door no longer blocks Grace"
 	)
 	_expect(
@@ -87,7 +87,7 @@ func run_tests() -> void:
 	await _wait_frames(2)
 	_expect(crossing_gate.is_mechanism_active(), "a frozen route and far-shore arrival open the second door")
 	_expect(
-		bool(crossing_gate.get_debug_data().get("collision_disabled", false)),
+		not bool(crossing_gate.get_debug_data().get("collision_enabled", true)),
 		"the second open door no longer blocks Grace"
 	)
 	_expect(
@@ -120,7 +120,7 @@ func run_tests() -> void:
 	await _wait_frames(2)
 	_expect(momentum_gate.is_mechanism_active(), "a fresh ice-carried Boulder opens the third door")
 	_expect(
-		bool(momentum_gate.get_debug_data().get("collision_disabled", false)),
+		not bool(momentum_gate.get_debug_data().get("collision_enabled", true)),
 		"the third open door no longer blocks Grace"
 	)
 	_expect(

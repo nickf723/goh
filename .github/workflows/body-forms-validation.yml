@@ -1,0 +1,165 @@
+name: Body forms and reliable trial gates
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/body_form_cast.gd"
+      - "scripts/player/player_body_form_controller.gd"
+      - "scripts/player/player_body_form_dodge_bridge.gd"
+      - "scripts/weapons/safe_weapon_controller.gd"
+      - "scripts/effects/gameplay_effect_catalog.gd"
+      - "scripts/levels/prototype_body_forms_spell_trial.gd"
+      - "scripts/levels/prototype_curling_puck_spell_trial_reliable.gd"
+      - "scripts/levels/prototype_curling_puck_spell_trial_gate_ready.gd"
+      - "scripts/tests/body_forms_spell_smoke_test.gd"
+      - "scripts/tests/body_forms_dodge_smoke_test.gd"
+      - "scripts/tests/body_forms_spell_trial_smoke_test.gd"
+      - "scripts/tests/curling_puck_gate_reliability_smoke_test.gd"
+      - "scenes/actions/grow_cast.tscn"
+      - "scenes/actions/shrink_cast.tscn"
+      - "scenes/levels/prototypes/prototype_body_forms_spell_trial_v1.tscn"
+      - "scenes/levels/prototypes/prototype_curling_puck_spell_trial_v1.tscn"
+      - "scenes/tests/body_forms_spell_smoke_test.tscn"
+      - "scenes/tests/body_forms_dodge_smoke_test.tscn"
+      - "scenes/tests/body_forms_spell_trial_smoke_test.tscn"
+      - "scenes/tests/curling_puck_gate_reliability_smoke_test.tscn"
+      - "data/abilities/grow_ability.tres"
+      - "data/abilities/shrink_ability.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "docs/BODY_FORMS_V1.md"
+      - ".github/workflows/body-forms-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: body-forms-reliable-gates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-body-forms:
+    name: Import, transformations, doors, Focus, and performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Show Godot version
+        run: godot --version
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee body-forms-import.log
+
+      - name: Boot the Hall of Measure
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 4 res://scenes/levels/prototypes/prototype_body_forms_spell_trial_v1.tscn 2>&1 | tee hall-of-measure-boot.log
+
+      - name: Boot the repaired Rime Rink
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 4 res://scenes/levels/prototypes/prototype_curling_puck_spell_trial_v1.tscn 2>&1 | tee rime-rink-boot.log
+
+      - name: Run Grow and Shrink regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/body_forms_spell_smoke_test.tscn 2>&1 | tee body-forms-test.log
+
+      - name: Run body-form dodge regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/body_forms_dodge_smoke_test.tscn 2>&1 | tee body-forms-dodge-test.log
+
+      - name: Run Hall of Measure progression regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/body_forms_spell_trial_smoke_test.tscn 2>&1 | tee hall-of-measure-test.log
+
+      - name: Run Rime Rink gate reliability regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/curling_puck_gate_reliability_smoke_test.tscn 2>&1 | tee rime-gate-test.log
+
+      - name: Rerun the complete Curling Puck trial contract
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/curling_puck_spell_trial_smoke_test.tscn 2>&1 | tee rime-trial-test.log
+
+      - name: Run complete Focus library regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/complete_spell_library_smoke_test.tscn 2>&1 | tee complete-library-test.log
+
+      - name: Run Focus and quickbar independence regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_independence_smoke_test.tscn 2>&1 | tee focus-quickbar-test.log
+
+      - name: Run Focus icon-row regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_icon_independence_smoke_test.tscn 2>&1 | tee focus-icon-test.log
+
+      - name: Run permanent quickbar regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/quick_spell_belt_smoke_test.tscn 2>&1 | tee quickbar-test.log
+
+      - name: Run performance foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance-test.log
+
+      - name: Run laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: body-forms-reliable-gates-logs
+          path: |
+            body-forms-import.log
+            hall-of-measure-boot.log
+            rime-rink-boot.log
+            body-forms-test.log
+            body-forms-dodge-test.log
+            hall-of-measure-test.log
+            rime-gate-test.log
+            rime-trial-test.log
+            complete-library-test.log
+            focus-quickbar-test.log
+            focus-icon-test.log
+            quickbar-test.log
+            performance-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

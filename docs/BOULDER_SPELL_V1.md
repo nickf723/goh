@@ -15,6 +15,7 @@ Impact scaling:            current relative speed
 Lifetime:                  no fixed timer
 Settle confirmation:       0.8 seconds
 Dissolve duration:         0.48 seconds
+Maximum active per caster: 3
 ```
 
 Grace forms the Boulder directly on the ground in front of her. The spell projects the forward aim direction onto the local surface, so a Boulder cast on a slope begins along that grade instead of launching into the terrain.
@@ -30,6 +31,8 @@ Apply matching linear and rolling velocity
   ↓
 Let rigid-body physics determine the route
 ```
+
+The production launch authority uses the surface normal crossed with the travel direction for its angular axis. This gives the sphere matching no-slip spin instead of visually rolling backward while translating forward.
 
 ## Motion is the lifetime
 
@@ -65,7 +68,12 @@ Water Jet, Wave, collision, machinery, or another force
     → pending cleanup is cancelled
 ```
 
-The only non-motion cleanup is an emergency out-of-bounds safeguard far below the playable world.
+There are two bounded safety rules outside ordinary settling:
+
+- an emergency out-of-bounds cleanup far below the playable world;
+- a three-Boulder budget per caster, where forming a fourth Boulder begins dissolving the oldest one.
+
+The budget allows multi-Boulder physics setups without permitting an endless convoy of active rigid bodies on a perpetual slope.
 
 ## Physical integration
 
@@ -131,11 +139,12 @@ This allows encounters and puzzles to verify that the moving Boulder itself comp
 1 short unshadowed formation light
 0 particle emitters
 0 per-fragment scripts
+maximum 3 active bodies per caster
 ```
 
-Boulder registers as both `SPELL FX` and `PERSISTENT` because its physical lifetime can become long on a slope. Both counters return to baseline after the Boulder settles, is reset, or leaves the emergency world boundary.
+Boulder registers as both `SPELL FX` and `PERSISTENT` because its physical lifetime can become long on a slope. Both counters return to baseline after the Boulder settles, is reset, leaves the emergency world boundary, or is retired by the per-caster body budget.
 
-The visual crumbles by shrinking and fading only after the physical body has stopped. Collision is disabled before the dissolve begins.
+The visual crumbles by shrinking and fading only after physical collision has been disabled.
 
 ## Complete Focus library
 
@@ -195,13 +204,14 @@ F8 restores:
 
 1. Open Earth in Focus and confirm Boulder appears with the `●` badge.
 2. Cast on a flat floor and confirm a large stone sphere forms on the ground instead of flying through the air.
-3. Watch the visible scars rotate with the body.
+3. Watch the visible scars rotate forward with the body rather than backward against its travel.
 4. Confirm the Boulder rolls several meters, slows naturally, settles, and only then crumbles.
 5. Push a slowing Boulder with Water Jet or Wave and confirm its settle timer is cancelled.
 6. Roll it into an enemy and inspect heavy damage, stance pressure, and directional knockback.
 7. Roll it into movable props and confirm physical momentum transfers naturally.
 8. Place it on a pressure plate and confirm the plate reads 160 kg.
-9. In Momentum Quarry, clear the Flat Impact target with one Boulder.
-10. Cast a new Boulder from the top of the long grade and confirm it remains active all the way to the lower plate.
-11. Watch F7 during several casts. Each live Boulder should add one `SPELL FX` and one `PERSISTENT`, with no invisible residue after cleanup.
-12. Complete the mastery seal and press F8 to verify the full reset.
+9. Keep three Boulders moving, cast a fourth, and confirm the oldest crumbles while the new one forms.
+10. In Momentum Quarry, clear the Flat Impact target with one Boulder.
+11. Cast a new Boulder from the top of the long grade and confirm it remains active all the way to the lower plate.
+12. Watch F7 during several casts. Each live Boulder should add one `SPELL FX` and one `PERSISTENT`, with no invisible residue after cleanup.
+13. Complete the mastery seal and press F8 to verify the full reset.

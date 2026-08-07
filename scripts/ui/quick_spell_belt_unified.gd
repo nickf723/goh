@@ -12,6 +12,7 @@ var retired_duplicate_surface_count: int = 0
 var duplicate_surface_sweep_count: int = 0
 var duplicate_surface_node_checks: int = 0
 var duplicate_surface_listener_connected: bool = false
+var mode_property_write_count: int = 0
 
 
 func _finish_setup() -> void:
@@ -26,6 +27,7 @@ func _finish_setup() -> void:
 
 
 func _exit_tree() -> void:
+	super._exit_tree()
 	_disconnect_duplicate_surface_listener()
 
 
@@ -233,16 +235,24 @@ func _apply_mode_presentation() -> void:
 	var mode_id: String = str(hud.call("get_hud_mode"))
 	var placement: bool = mode_id == "placement"
 	var modal: bool = mode_id in ["focus", "ability_context", "dialogue"]
-	if item_menu_panel != null and (placement or modal):
+	if item_menu_panel != null and (placement or modal) and item_menu_panel.visible:
 		item_menu_panel.visible = false
-	if special_menu_panel != null and (placement or modal):
+		mode_property_write_count += 1
+	if special_menu_panel != null and (placement or modal) and special_menu_panel.visible:
 		special_menu_panel.visible = false
+		mode_property_write_count += 1
 	if dock_panel != null:
-		dock_panel.modulate.a = 0.34 if placement else (0.62 if modal else 1.0)
-	if item_tile != null:
+		var desired_alpha: float = 0.34 if placement else (0.62 if modal else 1.0)
+		if not is_equal_approx(dock_panel.modulate.a, desired_alpha):
+			dock_panel.modulate.a = desired_alpha
+			last_dock_alpha = desired_alpha
+			mode_property_write_count += 1
+	if item_tile != null and item_tile.visible == placement:
 		item_tile.visible = not placement
-	if special_tile != null:
+		mode_property_write_count += 1
+	if special_tile != null and special_tile.visible == placement:
 		special_tile.visible = not placement
+		mode_property_write_count += 1
 
 
 func _align_focus_panel() -> void:
@@ -281,6 +291,7 @@ func get_debug_data() -> Dictionary:
 	data["duplicate_surface_node_checks"] = duplicate_surface_node_checks
 	data["duplicate_surface_listener"] = duplicate_surface_listener_connected
 	data["per_frame_duplicate_tree_scan"] = false
+	data["mode_property_writes"] = mode_property_write_count
 	data["generated_dock_rows"] = dock_rows
 	data["visible_generated_docks"] = visible_docks
 	return data

@@ -5,6 +5,7 @@ signal water_entered(label: String)
 signal water_exited
 signal swim_state_changed(state: String)
 signal breath_depleted
+signal frozen_surface_changed(active: bool, source_count: int)
 
 @export_group("Movement")
 @export var surface_swim_speed: float = 4.2
@@ -27,6 +28,7 @@ signal breath_depleted
 @export var bubble_interval: float = 0.42
 
 var active_volumes: Array[SwimmingWaterVolume] = []
+var frozen_surface_sources: Dictionary = {}
 var swimming: bool = false
 var underwater: bool = false
 var surface_swimming: bool = false
@@ -48,8 +50,12 @@ var underwater_layer: CanvasLayer
 var underwater_tint: ColorRect
 
 @onready var actor: CharacterBody3D = get_parent() as CharacterBody3D
-@onready var action_state: PlayerActionState = get_parent().get_node_or_null("PlayerActionState") as PlayerActionState
-@onready var climbing_controller: PlayerClimbingController = get_parent().get_node_or_null("ClimbingController") as PlayerClimbingController
+@onready var action_state: PlayerActionState = (
+	get_parent().get_node_or_null("PlayerActionState") as PlayerActionState
+)
+@onready var climbing_controller: PlayerClimbingController = (
+	get_parent().get_node_or_null("ClimbingController") as PlayerClimbingController
+)
 
 
 func _ready() -> void:
@@ -69,18 +75,17 @@ func enter_water(volume: SwimmingWaterVolume) -> void:
 	if volume == null or active_volumes.has(volume):
 		return
 	active_volumes.append(volume)
-	if climbing_controller != null and climbing_controller.should_handle_locomotion():
+	if (
+		climbing_controller != null
+		and climbing_controller.should_handle_locomotion()
+	):
 		climbing_controller.reset_climbing()
+	_prune_frozen_surface_sources()
+	if is_supported_by_frozen_surface():
+		_set_state("FROZEN BRIDGE")
+		return
 	if not swimming:
-		swimming = true
-		wetness_remaining = wetness_seconds
-		water_exit_handoff = false
-		breath_seconds = maximum_breath_seconds
-		if action_state != null:
-			action_state.clear_action_locks()
-			action_state.begin_manipulation()
-		water_entered.emit(volume.water_label)
-		_set_state("SURFACE")
+		_begin_swimming(volume)
 
 
 func exit_water(volume: SwimmingWaterVolume) -> void:
@@ -88,23 +93,62 @@ func exit_water(volume: SwimmingWaterVolume) -> void:
 	_prune_volumes()
 	if active_volumes.size() > 0:
 		return
-	swimming = false
-	underwater = false
-	surface_swimming = false
-	sprinting = false
-	exhausted = false
-	water_exit_handoff = false
-	wetness_remaining = wetness_seconds
-	last_current = Vector3.ZERO
-	if action_state != null:
-		action_state.end_manipulation()
-	water_exited.emit()
-	_set_state("WET EXIT")
+	if swimming:
+		_end_swimming("WET EXIT", true)
+	else:
+		underwater = false
+		surface_swimming = false
+		sprinting = false
+		exhausted = false
+		water_exit_handoff = false
+		last_current = Vector3.ZERO
+		_set_state("WET EXIT")
+
+
+func enter_frozen_surface(source: Node) -> void:
+	if source == null or not is_instance_valid(source):
+		return
+	var source_id: int = source.get_instance_id()
+	if frozen_surface_sources.has(source_id):
+		return
+	frozen_surface_sources[source_id] = source
+	if swimming:
+		_suspend_swimming_for_frozen_surface()
+	else:
+		_set_state("FROZEN BRIDGE")
+	frozen_surface_changed.emit(true, frozen_surface_sources.size())
+
+
+func exit_frozen_surface(source: Node) -> void:
+	if source == null:
+		return
+	frozen_surface_sources.erase(source.get_instance_id())
+	_prune_frozen_surface_sources()
+	if not frozen_surface_sources.is_empty():
+		frozen_surface_changed.emit(true, frozen_surface_sources.size())
+		return
+	frozen_surface_changed.emit(false, 0)
+	_prune_volumes()
+	if not active_volumes.is_empty():
+		_begin_swimming(active_volumes[0])
+	elif not swimming:
+		_set_state("WET EXIT" if wetness_remaining > 0.0 else "DRY")
+
+
+func is_supported_by_frozen_surface() -> bool:
+	_prune_frozen_surface_sources()
+	return not frozen_surface_sources.is_empty()
 
 
 func should_handle_locomotion() -> bool:
 	_prune_volumes()
-	return swimming and not water_exit_handoff and active_volumes.size() > 0
+	_prune_frozen_surface_sources()
+	return (
+		swimming
+		and not water_exit_handoff
+		and active_volumes.size() > 0
+		and frozen_surface_sources.is_empty()
+	)
 
 
 func process_locomotion(delta: float) -> bool:
@@ -114,7 +158,12 @@ func process_locomotion(delta: float) -> bool:
 	var depth: float = surface_y - actor.global_position.y
 	underwater = depth > 1.18
 	surface_swimming = not underwater
-	var input_vector: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var input_vector: Vector2 = Input.get_vector(
+		"move_left",
+		"move_right",
+		"move_forward",
+		"move_back"
+	)
 	var camera: Camera3D = get_viewport().get_camera_3d()
 	var forward: Vector3 = -actor.global_transform.basis.z
 	var right: Vector3 = actor.global_transform.basis.x
@@ -129,14 +178,26 @@ func process_locomotion(delta: float) -> bool:
 		right = Vector3.RIGHT
 	forward = forward.normalized()
 	right = right.normalized()
-	var horizontal_direction: Vector3 = right * input_vector.x + forward * -input_vector.y
+	var horizontal_direction: Vector3 = (
+		right * input_vector.x + forward * -input_vector.y
+	)
 	if horizontal_direction.length() > 1.0:
 		horizontal_direction = horizontal_direction.normalized()
-	if surface_swimming and Input.is_action_just_pressed("jump") and _try_water_exit_handoff():
+	if (
+		surface_swimming
+		and Input.is_action_just_pressed("jump")
+		and _try_water_exit_handoff()
+	):
 		return false
 
-	sprinting = Input.is_action_pressed("guard") and input_vector.length() > 0.3 and not exhausted
-	var movement_speed: float = surface_swim_speed if surface_swimming else underwater_swim_speed
+	sprinting = (
+		Input.is_action_pressed("guard")
+		and input_vector.length() > 0.3
+		and not exhausted
+	)
+	var movement_speed: float = (
+		surface_swim_speed if surface_swimming else underwater_swim_speed
+	)
 	if sprinting and GameState.get_stat("stamina") > 0:
 		movement_speed *= sprint_multiplier
 		_drain_sprint_stamina(delta)
@@ -153,7 +214,9 @@ func process_locomotion(delta: float) -> bool:
 	if exhausted:
 		desired_velocity.y = exhaustion_rise_speed
 	elif underwater or descend > 0.1:
-		desired_velocity.y = (ascend - descend) * vertical_swim_speed
+		desired_velocity.y = (
+			(ascend - descend) * vertical_swim_speed
+		)
 		if ascend <= 0.1 and descend <= 0.1:
 			desired_velocity.y += clampf(depth * 0.22, 0.0, 0.8)
 	else:
@@ -174,6 +237,56 @@ func process_locomotion(delta: float) -> bool:
 	return true
 
 
+func _begin_swimming(volume: SwimmingWaterVolume) -> void:
+	if swimming or is_supported_by_frozen_surface():
+		return
+	swimming = true
+	underwater = false
+	surface_swimming = true
+	sprinting = false
+	exhausted = false
+	wetness_remaining = wetness_seconds
+	water_exit_handoff = false
+	breath_seconds = maximum_breath_seconds
+	if action_state != null:
+		action_state.clear_action_locks()
+		action_state.begin_manipulation()
+	water_entered.emit(volume.water_label if volume != null else "Water")
+	_set_state("SURFACE")
+
+
+func _suspend_swimming_for_frozen_surface() -> void:
+	if not swimming:
+		return
+	swimming = false
+	underwater = false
+	surface_swimming = false
+	sprinting = false
+	exhausted = false
+	water_exit_handoff = false
+	last_current = Vector3.ZERO
+	wetness_remaining = wetness_seconds
+	if action_state != null:
+		action_state.end_manipulation()
+	_set_state("FROZEN BRIDGE")
+
+
+func _end_swimming(next_state: String, should_emit_exit: bool) -> void:
+	swimming = false
+	underwater = false
+	surface_swimming = false
+	sprinting = false
+	exhausted = false
+	water_exit_handoff = false
+	wetness_remaining = wetness_seconds
+	last_current = Vector3.ZERO
+	if action_state != null:
+		action_state.end_manipulation()
+	if should_emit_exit:
+		water_exited.emit()
+	_set_state(next_state)
+
+
 func _try_water_exit_handoff() -> bool:
 	if actor == null or climbing_controller == null:
 		return false
@@ -188,7 +301,9 @@ func _try_water_exit_handoff() -> bool:
 	)
 	query.exclude = [actor.get_rid()]
 	query.collide_with_areas = false
-	var hit: Dictionary = actor.get_world_3d().direct_space_state.intersect_ray(query)
+	var hit: Dictionary = (
+		actor.get_world_3d().direct_space_state.intersect_ray(query)
+	)
 	if hit.is_empty():
 		return false
 	var collider: Node = hit.get("collider") as Node
@@ -258,7 +373,11 @@ func get_surface_y() -> float:
 	for volume: SwimmingWaterVolume in active_volumes:
 		if volume != null and is_instance_valid(volume):
 			surface_y = maxf(surface_y, volume.get_surface_y())
-	return actor.global_position.y if surface_y == -INF and actor != null else surface_y
+	return (
+		actor.global_position.y
+		if surface_y == -INF and actor != null
+		else surface_y
+	)
 
 
 func sample_total_current() -> Vector3:
@@ -299,6 +418,17 @@ func _prune_volumes() -> void:
 	active_volumes = valid
 
 
+func _prune_frozen_surface_sources() -> void:
+	var stale_ids: Array[int] = []
+	for source_id_value: Variant in frozen_surface_sources.keys():
+		var source_id: int = int(source_id_value)
+		var source_value: Variant = frozen_surface_sources.get(source_id)
+		if not source_value is Node or not is_instance_valid(source_value as Node):
+			stale_ids.append(source_id)
+	for source_id: int in stale_ids:
+		frozen_surface_sources.erase(source_id)
+
+
 func _build_wet_sheen() -> void:
 	if actor == null:
 		return
@@ -328,7 +458,9 @@ func _build_underwater_overlay() -> void:
 	underwater_layer.layer = 5
 	add_child(underwater_layer)
 	underwater_tint = ColorRect.new()
-	underwater_tint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	underwater_tint.set_anchors_and_offsets_preset(
+		Control.PRESET_FULL_RECT
+	)
 	underwater_tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	underwater_tint.color = Color(0.02, 0.22, 0.34, 0.0)
 	underwater_layer.add_child(underwater_tint)
@@ -336,14 +468,26 @@ func _build_underwater_overlay() -> void:
 
 func _update_presentation(_delta: float) -> void:
 	if wet_sheen != null and wet_material != null:
-		var wet_weight: float = 1.0 if swimming else clampf(wetness_remaining / maxf(wetness_seconds, 0.01), 0.0, 1.0)
+		var wet_weight: float = (
+			1.0
+			if swimming
+			else clampf(
+				wetness_remaining / maxf(wetness_seconds, 0.01),
+				0.0,
+				1.0
+			)
+		)
 		wet_sheen.visible = wet_weight > 0.01
 		var sheen_color: Color = wet_material.albedo_color
 		sheen_color.a = wet_weight * (0.2 if underwater else 0.12)
 		wet_material.albedo_color = sheen_color
 	if underwater_tint != null:
 		var target_alpha: float = 0.2 if underwater else 0.0
-		underwater_tint.color.a = lerpf(underwater_tint.color.a, target_alpha, 0.12)
+		underwater_tint.color.a = lerpf(
+			underwater_tint.color.a,
+			target_alpha,
+			0.12
+		)
 
 
 func _spawn_bubble() -> void:
@@ -365,29 +509,50 @@ func _spawn_bubble() -> void:
 	material.emission_energy_multiplier = 0.7
 	bubble.material_override = material
 	get_tree().current_scene.add_child(bubble)
-	var head_anchor := actor.get_node_or_null("GraceVisualV1/HeadAnchor") as Node3D
-	bubble.global_position = head_anchor.global_position if head_anchor != null else actor.global_position + Vector3.UP * 0.7
+	var head_anchor := actor.get_node_or_null(
+		"GraceVisualV1/HeadAnchor"
+	) as Node3D
+	bubble.global_position = (
+		head_anchor.global_position
+		if head_anchor != null
+		else actor.global_position + Vector3.UP * 0.7
+	)
 	live_bubbles.append(bubble)
 	while live_bubbles.size() > 8:
 		var oldest: Node3D = live_bubbles.pop_front()
 		if oldest != null and is_instance_valid(oldest):
 			oldest.queue_free()
 	var tween := bubble.create_tween()
-	tween.parallel().tween_property(bubble, "global_position:y", get_surface_y(), 1.2)
-	tween.parallel().tween_property(material, "albedo_color:a", 0.0, 1.2)
+	tween.parallel().tween_property(
+		bubble,
+		"global_position:y",
+		get_surface_y(),
+		1.2
+	)
+	tween.parallel().tween_property(
+		material,
+		"albedo_color:a",
+		0.0,
+		1.2
+	)
 	tween.finished.connect(bubble.queue_free)
 
 
 func _cleanup_bubbles() -> void:
 	var valid: Array[Node3D] = []
 	for bubble: Node3D in live_bubbles:
-		if bubble != null and is_instance_valid(bubble) and not bubble.is_queued_for_deletion():
+		if (
+			bubble != null
+			and is_instance_valid(bubble)
+			and not bubble.is_queued_for_deletion()
+		):
 			valid.append(bubble)
 	live_bubbles = valid
 
 
 func reset_swimming() -> void:
 	active_volumes.clear()
+	frozen_surface_sources.clear()
 	swimming = false
 	underwater = false
 	surface_swimming = false
@@ -419,6 +584,8 @@ func get_debug_data() -> Dictionary:
 		"current": last_current,
 		"wetness": snappedf(wetness_remaining, 0.1),
 		"volumes": active_volumes.size(),
+		"frozen_surface_sources": frozen_surface_sources.size(),
+		"frozen_surface_supported": is_supported_by_frozen_surface(),
 	}
 
 

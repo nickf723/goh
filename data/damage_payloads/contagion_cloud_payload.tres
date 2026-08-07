@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 0
+stance_damage = 0
+element = "poison"
+source_name = "Contagion Cloud"
+hit_type = "moving_field"
+status_effect = "poisoned"
+status_duration = 1.6
+status_strength = 1.0
+tags = Array[String](["poison", "gas", "cloud", "contagion", "moving_field", "hazard", "status", "magic"])

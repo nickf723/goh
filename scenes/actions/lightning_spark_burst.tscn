@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/actions/lightning_spark_burst.gd" id="1_spark"]
+[ext_resource type="Script" path="res://scripts/actions/lightning_spark_burst_upgraded.gd" id="1_spark"]
 
 [node name="LightningSparkBurst" type="Node3D"]
 script = ExtResource("1_spark")

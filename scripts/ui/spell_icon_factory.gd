@@ -57,6 +57,7 @@ const SPELL_GLYPHS: Dictionary = {
 	"flamethrower": "♨",
 	"water_jet": "≋",
 	"wave": "≈",
+	"bubble": "○",
 	"earth_spike": "▲",
 	"gust": "↝",
 	"wind_gust": "↝",

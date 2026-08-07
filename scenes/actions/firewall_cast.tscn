@@ -4,3 +4,10 @@
 
 [node name="FirewallCast" type="Node3D"]
 script = ExtResource("1_firewall")
+maximum_draw_seconds = 3.4
+maximum_path_points = 96
+sample_interval_seconds = 0.02
+minimum_sample_spacing = 0.12
+resample_spacing = 0.24
+maximum_ray_step_degrees = 1.35
+maximum_ray_subsamples = 12

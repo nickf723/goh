@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/actions/contagion_cloud.gd" id="1_cloud"]
+
+[node name="ContagionCloud" type="Node3D"]
+script = ExtResource("1_cloud")
+lifetime_seconds = 8.5
+cloud_radius = 3.25
+travel_speed = 2.35
+spawn_distance = 3.2
+spawn_height = 0.9
+movement_collision_radius = 2.35
+exposure_scan_seconds = 0.2
+poison_status_duration = 1.6
+poison_status_strength = 1.0
+puff_instance_count = 26
+visual_updates_per_second = 20.0

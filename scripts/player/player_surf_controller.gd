@@ -110,7 +110,7 @@ func activate_surf(initial_direction: Vector3 = Vector3.ZERO) -> Dictionary:
 		0.0,
 		actor.velocity.z
 	).length()
-	current_speed = maxf(current_speed, existing_speed, launch_speed)
+	current_speed = maxf(maxf(current_speed, existing_speed), launch_speed)
 	current_speed = minf(current_speed, maximum_speed)
 	activation_count += 1
 	last_end_reason = "active"

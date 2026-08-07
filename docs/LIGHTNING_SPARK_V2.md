@@ -55,6 +55,22 @@ PlayerPreferences preference: controller_vibration_scale
 
 and otherwise uses full authored strength. A value of `0.0` disables vibration without changing spell behavior.
 
+## Chain Lightning compatibility
+
+The existing Chain Lightning upgrade remains attached to Lightning Spark.
+
+The cone first resolves every direct primary hit. If the modified payload contains the Chain Lightning upgrade tags, exactly one chain begins from the nearest primary target. Every target already struck by the cone is pre-excluded from the secondary search, so the chain can jump to up to two additional nearby enemies without duplicating cone hits or starting one chain per primary target.
+
+```text
+cone primary targets
+        ↓
+nearest primary anchors one chain
+        ↓
+up to two targets outside the direct fan
+```
+
+The upgrade's older projectile-speed fields are irrelevant to the new instant cone, while its payload strengthening and registry-driven on-hit jumps remain active.
+
 ## Forked Conduit trial
 
 Launch:
@@ -66,6 +82,8 @@ res://scenes/levels/prototypes/prototype_lightning_spark_spell_trial_v1.tscn
 ### I. Forked Fan
 
 Stand on the indigo casting mark. Three two-health conductors fit inside one correctly centered Lightning Spark cone. The blue witness is close enough to see the burst, but sits outside the authored cone angle and should remain unharmed.
+
+All three conductors must answer the same cast. A partial hit resets only the three conductors, leaving Grace in place for another attempt.
 
 ### II. Broken Sightline
 
@@ -100,10 +118,12 @@ F8 restores:
 3. Stand on the first indigo mark and cast once.
 4. Confirm all three conductors are struck by the same fan.
 5. Confirm the outside-cone witness remains at full health.
-6. Repeat several casts and confirm the branch pattern changes without creating lingering `SPELL FX` or `PERSISTENT` counts.
-7. With a controller, feel for a strong crack, a brief electrical buzz, and a smaller closing snap.
-8. Walk to the second chamber and cast directly into the shield. The conductor should remain untouched.
-9. Flank the shield and cast from short range. The conductor should be struck.
-10. Enter the mastery seal.
-11. Press F8 and confirm the complete trial and any active vibration reset.
-12. Keep F7 visible during repeated casts. The frame rate should remain green, with one temporary spell effect and no persistent effect.
+6. Deliberately catch only one or two conductors and confirm the incomplete fork resets.
+7. Repeat several casts and confirm the branch pattern changes without creating lingering `SPELL FX` or `PERSISTENT` counts.
+8. With a controller, feel for a strong crack, a brief electrical buzz, and a smaller closing snap.
+9. Walk to the second chamber and cast directly into the shield. The conductor should remain untouched.
+10. Flank the shield and cast from short range. The conductor should be struck.
+11. Enter the mastery seal.
+12. In the Upgrade Lab, unlock Chain Lightning and cast at a cluster. The cone should resolve first, followed by no more than two secondary arcs from one primary target.
+13. Press F8 and confirm the complete trial and any active vibration reset.
+14. Keep F7 visible during repeated casts. The frame rate should remain green, with one temporary spell effect and no persistent effect.

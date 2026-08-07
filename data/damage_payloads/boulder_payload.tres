@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 5
+stance_damage = 11
+element = "earth"
+source_name = "Rolling Boulder"
+hit_type = "rolling_boulder"
+tags = Array[String](["earth", "stone", "boulder", "rolling", "crush", "physical", "projectile", "force", "terrain", "heavy_impact"])
+knockback_strength = 6.2
+knockback_up_strength = 0.35

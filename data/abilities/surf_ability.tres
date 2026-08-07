@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/surf_cast.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Surf"
+description = "Ride a compact wave for a fast, committed traversal burst. Surf protects Grace from tagged surface hazards, turns slowly, and collapses when she stops moving."
+element = "water"
+category = 4
+mana_cost = 3
+use_trait_profile = false
+spell_id = "surf"
+short_label = "Surf"
+icon_text = "≈>"
+roles = Array[String](["movement", "traversal", "speed", "hazard_crossing", "persistent", "positioning"])
+targeting_style = "self"
+delivery_type = "movement_state"
+combo_tags = Array[String](["water", "surf", "momentum", "surface_hazard", "terrain_traversal"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["movement", "fast", "limited_turning", "keep_moving"])
+debug_tags = Array[String](["prototype", "idle_sleeps", "single_controller", "no_per_foam_nodes"])
+scaling_stats = Array[String](["arcana", "water", "focus"])
+scaling_note = "Water and Arcana govern wave strength; Focus is reserved for future handling, duration grace, and hazard-interaction upgrades."
+design_notes = "Surf is an indefinite movement state maintained by player motion rather than a timer. The controller temporarily owns Grace's locomotion, accelerates toward a high cruising speed, limits steering rate, negates only explicitly tagged surface hazards, and returns control immediately when input idles, momentum is blocked, Grace is launched, or combat interrupts her."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

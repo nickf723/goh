@@ -1,7 +1,12 @@
 extends Node3D
 class_name FlightConcentrationSpell
 
-const FlightDefinition: Resource = preload("res://data/concentration/flight_concentration.tres")
+const FlightDefinition: Resource = preload(
+	"res://data/concentration/flight_concentration.tres"
+)
+const ConcentrationRuntime = preload(
+	"res://scripts/concentration/concentration_runtime_access.gd"
+)
 
 
 func execute(player: Node3D, _cast_direction: Vector3) -> void:
@@ -15,15 +20,26 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 		queue_free()
 		return
 
-	# AbilityCaster has already approved and paid for this cast before execute() runs.
-	# Hand the action lock off to the sustained Flight state so activation is not
-	# rejected by the brief generic cast timer that was just started.
+	# Presence in Grace's learned spell library is the development unlock. The
+	# progression layer can later remove the resource until Flight is earned.
+	aerial_locomotion.set("flight_unlocked", true)
+	if ConcentrationRuntime.ensure_manager(get_tree(), player) == null:
+		show_message("Flight could not establish its concentration service.")
+		queue_free()
+		return
+
+	# AbilityCaster has already approved this cast. Hand the brief generic cast
+	# lock to the sustained Flight state before activation checks run.
 	var action_state: Node = player.get_node_or_null("PlayerActionState")
 	if action_state != null:
 		action_state.set("is_casting", false)
 		action_state.set("cast_lock_timer", 0.0)
 
-	aerial_locomotion.call("activate_flight", FlightDefinition)
+	var activated: bool = bool(
+		aerial_locomotion.call("activate_flight", FlightDefinition)
+	)
+	if not activated:
+		show_message("Flight could not take hold.")
 	queue_free()
 
 

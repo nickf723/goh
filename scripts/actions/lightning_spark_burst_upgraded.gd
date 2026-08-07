@@ -42,7 +42,7 @@ func execute(player: Node3D, requested_direction: Vector3) -> void:
 	last_visual_range = _resolve_centerline_visual_range()
 
 	var hits: Array[Dictionary] = _collect_cone_targets()
-	hits.sort_custom(_sort_hit_by_distance)
+	hits.sort_custom(Callable(self, "_sort_hit_by_distance"))
 	primary_target_count = hits.size()
 	var used_target_ids: Dictionary = {}
 	for hit: Dictionary in hits:

@@ -18,14 +18,18 @@ func deliver_status_tick(payload: DamagePayload) -> void:
 			)
 			if (
 				defense_controller != null
-				and defense_controller.has_method("resolve_incoming_attack")
+				and defense_controller.has_method("resolve_bubble_absorb")
 			):
-				defense_controller.call(
-					"resolve_incoming_attack",
+				var result_value: Variant = defense_controller.call(
+					"resolve_bubble_absorb",
 					payload,
 					null
 				)
-				return
+				if (
+					result_value is Dictionary
+					and not (result_value as Dictionary).is_empty()
+				):
+					return
 	GameState.take_damage(payload.amount)
 
 

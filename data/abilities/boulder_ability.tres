@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/earth_boulder.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/boulder_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Boulder"
+description = "Conjure a massive stone sphere on the ground and send it rolling forward. It has no fixed lifetime: the boulder persists while motion continues and crumbles only after it settles."
+element = "earth"
+category = 0
+mana_cost = 3
+use_trait_profile = false
+spell_id = "boulder"
+short_label = "Boulder"
+icon_text = "●"
+roles = Array[String](["damage", "stance", "force", "terrain", "momentum", "physics", "puzzle", "rolling_projectile"])
+targeting_style = "forward"
+delivery_type = "rolling_rigid_body"
+combo_tags = Array[String](["earth", "stone", "boulder", "rolling", "crush", "momentum", "slope", "pressure_plate", "physical"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["heavy", "rolling", "motion_lifetime", "slope_sensitive", "physical_object"])
+debug_tags = Array[String](["rigid_body", "no_fixed_timer", "settle_cleanup", "pressure_plate_mass", "persistent_while_moving"])
+scaling_stats = Array[String](["power", "earth", "focus"])
+scaling_note = "Power and Earth govern impact pressure; Focus is reserved for future size, steering, formation distance, and momentum-retention upgrades."
+design_notes = "Boulder is a real 160 kg RigidBody rather than a translated projectile. Flat ground and damping eventually stop it, while slopes, collisions, Water force, and other physics can extend or redirect its journey. Its lifetime is determined by linear and rolling motion, not an elapsed timer."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

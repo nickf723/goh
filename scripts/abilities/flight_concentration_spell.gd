@@ -38,9 +38,26 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 	var activated: bool = bool(
 		aerial_locomotion.call("activate_flight", FlightDefinition)
 	)
-	if not activated:
+	if activated:
+		_release_inactive_runtime_weather()
+	else:
 		show_message("Flight could not take hold.")
 	queue_free()
+
+
+func _release_inactive_runtime_weather() -> void:
+	for controller: Node in get_tree().get_nodes_in_group(
+		"runtime_weather_controller"
+	):
+		if (
+			controller == null
+			or not is_instance_valid(controller)
+			or controller.is_queued_for_deletion()
+		):
+			continue
+		if bool(controller.get("active")):
+			continue
+		controller.queue_free()
 
 
 func show_message(text: String) -> void:

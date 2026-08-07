@@ -31,7 +31,7 @@ static func resolve_or_create(
 ) -> Node:
 	if tree == null:
 		return null
-	var normalized: String = weather_kind.strip_edges().to_lower()
+	var normalized: String = _normalize_kind(weather_kind)
 	var authored: Node = _find_controller(tree, normalized)
 	if authored != null:
 		return authored
@@ -67,7 +67,11 @@ static func resolve_or_create(
 
 static func _find_controller(tree: SceneTree, weather_kind: String) -> Node:
 	for candidate: Node in tree.get_nodes_in_group("weather_controller"):
-		if candidate == null or not is_instance_valid(candidate):
+		if (
+			candidate == null
+			or not is_instance_valid(candidate)
+			or candidate.is_queued_for_deletion()
+		):
 			continue
 		if _get_controller_kind(candidate) == weather_kind:
 			return candidate
@@ -79,7 +83,11 @@ static func _release_other_runtime_controllers(
 	incoming_kind: String
 ) -> void:
 	for candidate: Node in tree.get_nodes_in_group("runtime_weather_controller"):
-		if candidate == null or not is_instance_valid(candidate):
+		if (
+			candidate == null
+			or not is_instance_valid(candidate)
+			or candidate.is_queued_for_deletion()
+		):
 			continue
 		if _get_controller_kind(candidate) == incoming_kind:
 			continue
@@ -91,52 +99,65 @@ static func _release_other_runtime_controllers(
 static func _get_controller_kind(controller: Node) -> String:
 	if controller == null:
 		return ""
-	var meta_kind: String = str(
+	var meta_kind: String = _normalize_kind(str(
 		controller.get_meta("runtime_weather_kind", "")
-	).strip_edges().to_lower()
+	))
 	if meta_kind != "":
 		return meta_kind
 	var definition: Variant = controller.get("weather_definition")
 	if definition == null:
 		return ""
-	var kind: String = str(definition.get("weather_kind")).strip_edges().to_lower()
+	var kind: String = _normalize_kind(str(definition.get("weather_kind")))
 	if kind != "":
 		return kind
-	var effect_id: String = str(definition.get("effect_id")).strip_edges().to_lower()
-	return effect_id.trim_suffix("_weather")
+	var effect_id: String = str(
+		definition.get("effect_id")
+	).strip_edges().to_lower()
+	return _normalize_kind(effect_id.replace("_weather", ""))
+
+
+static func _normalize_kind(weather_kind: String) -> String:
+	var normalized: String = weather_kind.strip_edges().to_lower()
+	match normalized:
+		"snowfall":
+			return "snow"
+		"storm":
+			return "thunderstorm"
+		_:
+			return normalized
 
 
 static func _make_controller(weather_kind: String) -> Node:
-	match weather_kind:
+	match _normalize_kind(weather_kind):
 		"rain":
 			return RainControllerScript.new()
-		"snow", "snowfall":
+		"snow":
 			return SnowControllerScript.new()
-		"thunderstorm", "storm":
+		"thunderstorm":
 			return ThunderstormControllerScript.new()
 		_:
 			return null
 
 
 static func _get_definition(weather_kind: String) -> Resource:
-	match weather_kind:
+	match _normalize_kind(weather_kind):
 		"rain":
 			return RainDefinition
-		"snow", "snowfall":
+		"snow":
 			return SnowDefinition
-		"thunderstorm", "storm":
+		"thunderstorm":
 			return ThunderstormDefinition
 		_:
 			return null
 
 
 static func _get_controller_name(weather_kind: String) -> String:
-	match weather_kind:
+	match _normalize_kind(weather_kind):
 		"rain":
 			return "RuntimeRainWeatherController"
-		"snow", "snowfall":
+		"snow":
 			return "RuntimeSnowWeatherController"
-		"thunderstorm", "storm":
+		"thunderstorm":
 			return "RuntimeThunderstormWeatherController"
 		_:
 			return "RuntimeWeatherController"
@@ -146,6 +167,12 @@ static func get_debug_data(tree: SceneTree) -> Dictionary:
 	var kinds: Array[String] = []
 	if tree != null:
 		for controller: Node in tree.get_nodes_in_group("weather_controller"):
+			if (
+				controller == null
+				or not is_instance_valid(controller)
+				or controller.is_queued_for_deletion()
+			):
+				continue
 			var kind: String = _get_controller_kind(controller)
 			if kind != "" and not kinds.has(kind):
 				kinds.append(kind)

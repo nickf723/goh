@@ -37,7 +37,9 @@ The fractional debt is stored on Grace between short casts. Rapidly tapping the 
 
 Every physics frame, one center ray resolves the visible stream length and first solid obstruction. Walls, gates, props, enemies, and other bodies can shorten the stream.
 
-At a bounded 20 Hz contact cadence, one oriented cylinder query gathers valid targets inside the resolved stream. The jet does not create projectile actors, per-droplet colliders, or per-target stream nodes.
+At a bounded 20 Hz contact cadence, one oriented cylinder query gathers valid targets inside the resolved stream. The query shape and parameter object are reused for the complete channel rather than being allocated repeatedly.
+
+The center ray's first valid effect target is also inserted directly into the contact set. This closes the numerical seam where the cylinder ended exactly against a cube or enemy and therefore reported no overlap despite the visible stream striking it.
 
 The stream can affect:
 
@@ -53,15 +55,18 @@ Force and damage are separate processes.
 
 ### Target force
 
-At every pressure scan, Water Jet adds a small directional impulse. Repeated scans quickly drive ordinary targets toward the shared force-speed cap.
+At every pressure scan, Water Jet adds directional pressure along the complete three-dimensional aim line. Repeated scans quickly drive ordinary targets toward their authored speed limits.
 
 ```text
-ForceReceiver impulse: 0.72 per scan
-Scan cadence:          0.05 seconds
-Rigid-body pressure:   28 force units per second
-Fallback acceleration: 30 m/s²
-Boss multiplier:       18%
+ForceReceiver impulse:  0.72 per scan
+Scan cadence:           0.05 seconds
+Rigid-body pressure:    190 force units per second
+Rigid-body speed limit: 10 m/s
+Fallback acceleration:  30 m/s²
+Boss multiplier:        18%
 ```
+
+Rigid bodies are awakened before pressure is applied. Intentionally frozen bodies remain fixed. The stronger rigid-body tune is high enough to overcome ordinary floor friction while remaining capped against runaway prop speeds.
 
 Because pressure is repeated rather than delivered as one burst, targets can be pinned against architecture, swept along a lane, or continuously denied forward movement while the stream remains aligned.
 
@@ -114,7 +119,7 @@ Water Jet uses one action node for the complete channel:
 12 splash instances
 0 per-droplet nodes
 1 center obstruction ray per physics frame
-1 cylinder contact query at 20 Hz
+1 reused cylinder contact query at 20 Hz
 30 visual updates per second
 0 persistent spell fields
 ```
@@ -137,7 +142,7 @@ The development trial regenerates 2 Mana per second, slightly less than the 2.5-
 
 A 12 kg cargo block sits in a narrow hydraulic lane.
 
-Hold Water Jet on the cargo until repeated pressure drives it into the gold basin. The room tests sustained alignment and accumulated force rather than a single knockback burst.
+The cargo retains its heavy mass but uses an authored low-friction contact material and reduced linear damping. Hold Water Jet on it until repeated pressure drives it into the gold basin. The room tests sustained alignment and accumulated force rather than a single knockback burst.
 
 ### II. Counterflow Ascent
 
@@ -166,7 +171,7 @@ F8 restores:
 - Grace's transform, velocity, resources, and Water Jet selection;
 - fractional Water Jet Mana debt;
 - self-launch metadata;
-- the 12 kg cargo transform, velocity, sleep state, and latch;
+- the 12 kg cargo transform, velocity, sleep state, friction tune, and latch;
 - both progression gates;
 - trial stage and completion flag;
 - every active Water Jet action.
@@ -177,11 +182,22 @@ F8 restores:
 2. Hold Cast in open space and confirm the stream follows camera aim.
 3. Confirm Mana drains continuously instead of being spent once per stream.
 4. Tap the spell repeatedly and confirm the fractional Mana cost still accumulates.
-5. Hold the jet on the pressure cargo and confirm force builds while damage remains irrelevant to the object puzzle.
-6. Test an enemy and confirm rapid one-point health ticks, zero stance damage, Wet, and strong sustained knockback.
-7. Aim into a nearby wall and feel Grace push away from it.
-8. Aim sharply into the blue floor pad and maintain the stream until Grace launches onto the raised platform.
-9. Release while airborne and confirm earned velocity remains.
-10. Combine Water Jet recoil with Surf and ordinary movement.
-11. Watch F7 during a long channel. `SPELL FX` should rise by one, `PERSISTENT` should remain unchanged, and both frame distribution and effect cleanup should stay green.
-12. Complete the mastery seal and press F8 to verify the full reset.
+5. Aim directly at the pressure cargo and confirm the endpoint splash, target registration, and cube motion all agree.
+6. Hold the jet on the pressure cargo until it reaches the basin.
+7. Test an enemy and confirm rapid one-point health ticks, zero stance damage, Wet, and strong sustained knockback.
+8. Aim into a nearby wall and feel Grace push away from it.
+9. Aim sharply into the blue floor pad and maintain the stream until Grace launches onto the raised platform.
+10. Release while airborne and confirm earned velocity remains.
+11. Combine Water Jet recoil with Surf and ordinary movement.
+12. Watch F7 during a long channel. `SPELL FX` should rise by one, `PERSISTENT` should remain unchanged, and both frame distribution and effect cleanup should stay green.
+13. Complete the mastery seal and press F8 to verify the full reset.
+
+## Regression scenes
+
+```text
+res://scenes/tests/water_jet_spell_smoke_test.tscn
+res://scenes/tests/water_jet_rigid_body_smoke_test.tscn
+res://scenes/tests/water_jet_trial_smoke_test.tscn
+```
+
+The rigid-body regression uses a sleeping 12 kg cube with high friction. It verifies that the center-ray contact enters the pressure set, wakes the cube, applies repeated pressure, and produces real displacement rather than only a visual endpoint splash.

@@ -15,7 +15,6 @@ Impact scaling:            current relative speed
 Lifetime:                  no fixed timer
 Settle confirmation:       0.8 seconds
 Dissolve duration:         0.48 seconds
-Maximum active per caster: 3
 ```
 
 Grace forms the Boulder directly on the ground in front of her. The spell projects the forward aim direction onto the local surface, so a Boulder cast on a slope begins along that grade instead of launching into the terrain.
@@ -68,12 +67,7 @@ Water Jet, Wave, collision, machinery, or another force
     → pending cleanup is cancelled
 ```
 
-There are two bounded safety rules outside ordinary settling:
-
-- an emergency out-of-bounds cleanup far below the playable world;
-- a three-Boulder budget per caster, where forming a fourth Boulder begins dissolving the oldest one.
-
-The budget allows multi-Boulder physics setups without permitting an endless convoy of active rigid bodies on a perpetual slope.
+Normal spell cleanup is therefore purely motion-bound. A Boulder that keeps moving keeps existing, including when several Boulders are active at once. The only non-gameplay exception is an emergency out-of-bounds cleanup far below the playable world, preventing a fallen physics body from living forever outside the level.
 
 ## Physical integration
 
@@ -131,7 +125,7 @@ This allows encounters and puzzles to verify that the moving Boulder itself comp
 ## Presentation and performance
 
 ```text
-1 RigidBody3D controller
+1 RigidBody3D controller per Boulder
 1 spherical collision shape
 1 low-poly core mesh
 4 embedded rock lobes
@@ -139,10 +133,9 @@ This allows encounters and puzzles to verify that the moving Boulder itself comp
 1 short unshadowed formation light
 0 particle emitters
 0 per-fragment scripts
-maximum 3 active bodies per caster
 ```
 
-Boulder registers as both `SPELL FX` and `PERSISTENT` because its physical lifetime can become long on a slope. Both counters return to baseline after the Boulder settles, is reset, leaves the emergency world boundary, or is retired by the per-caster body budget.
+Boulder registers as both `SPELL FX` and `PERSISTENT` because its physical lifetime can become long on a slope. Both counters return to baseline after the Boulder settles, is reset, or leaves the emergency world boundary.
 
 The visual crumbles by shrinking and fading only after physical collision has been disabled.
 
@@ -210,7 +203,7 @@ F8 restores:
 6. Roll it into an enemy and inspect heavy damage, stance pressure, and directional knockback.
 7. Roll it into movable props and confirm physical momentum transfers naturally.
 8. Place it on a pressure plate and confirm the plate reads 160 kg.
-9. Keep three Boulders moving, cast a fourth, and confirm the oldest crumbles while the new one forms.
+9. Keep several Boulders moving and confirm none disappear merely because another is cast.
 10. In Momentum Quarry, clear the Flat Impact target with one Boulder.
 11. Cast a new Boulder from the top of the long grade and confirm it remains active all the way to the lower plate.
 12. Watch F7 during several casts. Each live Boulder should add one `SPELL FX` and one `PERSISTENT`, with no invisible residue after cleanup.

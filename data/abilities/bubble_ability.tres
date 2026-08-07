@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/bubble_cast.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/bubble_burst_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/one_hit_shield_profile.tres" id="4_profile"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Bubble"
+description = "Wrap Grace in a water ward that negates one incoming hit. The Bubble then bursts, knocking nearby enemies, mobs, and loose objects away without dealing damage."
+element = "water"
+category = 4
+mana_cost = 3
+trait_profile = ExtResource("4_profile")
+spell_id = "bubble"
+short_label = "Bubble"
+icon_text = "○"
+roles = Array[String](["defense", "shield", "negation", "force", "zone_control", "positioning", "reaction", "persistent"])
+targeting_style = "self"
+delivery_type = "one_hit_shield"
+combo_tags = Array[String](["water", "bubble", "shield", "impact_conversion", "force", "defensive_burst"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["defensive", "self", "one_hit", "persistent"])
+debug_tags = Array[String](["prototype", "idle_sleeps", "single_query_burst", "non_damaging_burst"])
+scaling_stats = Array[String](["arcana", "water", "focus"])
+scaling_note = "Arcana and Water govern the ward; Focus is reserved for future duration, radius, and multi-hit upgrade branches."
+design_notes = "Bubble is a one-hit defensive conversion spell. Dodged and element-immune attacks do not consume it. The first attack that reaches ordinary defense resolution loses all health and stance damage, applies no hit reaction, and triggers one bounded outward-force query. Recasting refreshes the same controller instead of stacking shields."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")

@@ -44,10 +44,18 @@ func run_tests() -> void:
 
 	var hud_before: Dictionary = hud.get_debug_data()
 	var belt_before: Dictionary = belt.get_debug_data()
+	var icon_cache_before: Dictionary = belt_before.get(
+		"spell_icon_cache",
+		{}
+	) as Dictionary
 	var updates_before: int = int(hud_before.get("unified_updates", 0))
 	var panel_cache_before: int = int(hud_before.get("panel_style_cache", 0))
 	var shell_cache_before: int = int(hud_before.get("shell_style_cache", 0))
 	var sweeps_before: int = int(belt_before.get("duplicate_surface_sweeps", 0))
+	var heavy_refreshes_before: int = int(belt_before.get("heavy_refreshes", 0))
+	var fallback_polls_before: int = int(belt_before.get("fallback_polls", 0))
+	var icon_probes_before: int = int(icon_cache_before.get("texture_path_probes", 0))
+	var icon_styles_before: int = int(icon_cache_before.get("badge_style_creations", 0))
 
 	for _frame: int in range(120):
 		hud.call("_process", 1.0 / 60.0)
@@ -55,6 +63,10 @@ func run_tests() -> void:
 
 	var hud_after: Dictionary = hud.get_debug_data()
 	var belt_after: Dictionary = belt.get_debug_data()
+	var icon_cache_after: Dictionary = belt_after.get(
+		"spell_icon_cache",
+		{}
+	) as Dictionary
 	var update_delta: int = int(hud_after.get("unified_updates", 0)) - updates_before
 
 	_expect(
@@ -92,6 +104,30 @@ func run_tests() -> void:
 	_expect(
 		bool(belt_after.get("duplicate_surface_listener", false)),
 		"quick belt listens for late generated surfaces without polling"
+	)
+	_expect(
+		bool(belt_after.get("event_driven_slots", false)),
+		"quick spell slots listen to caster, loadout, and persistent-slot events"
+	)
+	_expect(
+		not bool(belt_after.get("fallback_polling_enabled", true)),
+		"stable quick dock disables periodic safety polling"
+	)
+	_expect(
+		int(belt_after.get("fallback_polls", -1)) == fallback_polls_before,
+		"idle quick dock performs no fallback polls"
+	)
+	_expect(
+		int(belt_after.get("heavy_refreshes", -1)) == heavy_refreshes_before,
+		"idle quick dock performs no heavy presentation refreshes"
+	)
+	_expect(
+		int(icon_cache_after.get("texture_path_probes", -1)) == icon_probes_before,
+		"idle quick dock performs no repeated icon filesystem probes"
+	)
+	_expect(
+		int(icon_cache_after.get("badge_style_creations", -1)) == icon_styles_before,
+		"idle quick dock allocates no new spell badge styles"
 	)
 
 	_finish(player, floor)

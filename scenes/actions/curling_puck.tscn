@@ -1,0 +1,90 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/actions/curling_puck.gd" id="1_puck"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape_puck"]
+radius = 0.42
+height = 0.18
+
+[sub_resource type="StandardMaterial3D" id="Material_ice"]
+transparency = 1
+albedo_color = Color(0.34, 0.76, 0.98, 0.92)
+metallic = 0.22
+roughness = 0.16
+emission_enabled = true
+emission = Color(0.08, 0.42, 0.92, 1)
+emission_energy_multiplier = 1.75
+
+[sub_resource type="StandardMaterial3D" id="Material_rim"]
+transparency = 1
+albedo_color = Color(0.82, 0.97, 1, 0.96)
+metallic = 0.32
+roughness = 0.12
+emission_enabled = true
+emission = Color(0.38, 0.82, 1, 1)
+emission_energy_multiplier = 2.2
+
+[sub_resource type="StandardMaterial3D" id="Material_curl_mark"]
+transparency = 1
+albedo_color = Color(0.08, 0.28, 0.68, 0.95)
+metallic = 0.2
+roughness = 0.2
+emission_enabled = true
+emission = Color(0.05, 0.18, 0.72, 1)
+emission_energy_multiplier = 2.45
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_core"]
+top_radius = 0.42
+bottom_radius = 0.42
+height = 0.18
+radial_segments = 24
+rings = 2
+
+[sub_resource type="TorusMesh" id="TorusMesh_rim"]
+inner_radius = 0.31
+outer_radius = 0.43
+rings = 24
+ring_segments = 8
+
+[sub_resource type="BoxMesh" id="BoxMesh_mark"]
+size = Vector3(0.08, 0.025, 0.58)
+
+[node name="CurlingPuck" type="CharacterBody3D"]
+script = ExtResource("1_puck")
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CylinderShape_puck")
+
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="Core" type="MeshInstance3D" parent="VisualRoot"]
+material_override = SubResource("Material_ice")
+mesh = SubResource("CylinderMesh_core")
+
+[node name="TopRim" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.098, 0)
+rotation_degrees = Vector3(90, 0, 0)
+material_override = SubResource("Material_rim")
+mesh = SubResource("TorusMesh_rim")
+
+[node name="CurlMarkA" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.105, 0)
+rotation_degrees = Vector3(0, 28, 0)
+material_override = SubResource("Material_curl_mark")
+mesh = SubResource("BoxMesh_mark")
+
+[node name="CurlMarkB" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.108, 0)
+rotation_degrees = Vector3(0, -34, 0)
+scale = Vector3(0.72, 1, 0.62)
+material_override = SubResource("Material_curl_mark")
+mesh = SubResource("BoxMesh_mark")
+
+[node name="LaunchLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 0.32, 0)
+light_color = Color(0.24, 0.72, 1, 1)
+light_energy = 0.0
+omni_range = 3.6
+shadow_enabled = false

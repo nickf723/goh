@@ -8,6 +8,9 @@ const CHARACTER_SOURCES_META: String = "slippery_surface_sources"
 const RIGID_SOURCES_META: String = "slippery_rigid_sources"
 const ORIGINAL_LINEAR_DAMP_META: String = "slippery_original_linear_damp"
 const ORIGINAL_ANGULAR_DAMP_META: String = "slippery_original_angular_damp"
+const ORIGINAL_PHYSICS_MATERIAL_META: String = (
+	"slippery_original_physics_material"
+)
 
 @export_group("Character Traction")
 @export_range(0.01, 1.0, 0.01) var acceleration_multiplier: float = 0.34
@@ -18,6 +21,7 @@ const ORIGINAL_ANGULAR_DAMP_META: String = "slippery_original_angular_damp"
 @export_group("Rigid Body Glide")
 @export_range(0.0, 2.0, 0.01) var rigid_linear_damp: float = 0.04
 @export_range(0.0, 2.0, 0.01) var rigid_angular_damp: float = 0.035
+@export_range(0.0, 1.0, 0.01) var rigid_friction: float = 0.02
 
 @export_group("Identity")
 @export var surface_label: String = "Slippery Ice"
@@ -153,6 +157,11 @@ func _register_rigid_response(body: RigidBody3D) -> void:
 		body.set_meta(ORIGINAL_LINEAR_DAMP_META, body.linear_damp)
 	if not body.has_meta(ORIGINAL_ANGULAR_DAMP_META):
 		body.set_meta(ORIGINAL_ANGULAR_DAMP_META, body.angular_damp)
+	if not body.has_meta(ORIGINAL_PHYSICS_MATERIAL_META):
+		body.set_meta(ORIGINAL_PHYSICS_MATERIAL_META, {
+			"had_override": body.physics_material_override != null,
+			"material": body.physics_material_override,
+		})
 	var sources_value: Variant = body.get_meta(RIGID_SOURCES_META, {})
 	var sources: Dictionary = (
 		(sources_value as Dictionary).duplicate(true)
@@ -162,6 +171,7 @@ func _register_rigid_response(body: RigidBody3D) -> void:
 	sources[get_instance_id()] = {
 		"linear_damp": maxf(rigid_linear_damp, 0.0),
 		"angular_damp": maxf(rigid_angular_damp, 0.0),
+		"friction": clampf(rigid_friction, 0.0, 1.0),
 		"label": surface_label,
 	}
 	body.set_meta(RIGID_SOURCES_META, sources)
@@ -191,8 +201,12 @@ func _apply_rigid_response(body: RigidBody3D, sources: Dictionary) -> void:
 	var original_angular: float = float(
 		body.get_meta(ORIGINAL_ANGULAR_DAMP_META, body.angular_damp)
 	)
+	var original_material: PhysicsMaterial = _get_original_physics_material(body)
 	var resolved_linear: float = original_linear
 	var resolved_angular: float = original_angular
+	var resolved_friction: float = (
+		original_material.friction if original_material != null else 1.0
+	)
 	for source_value: Variant in sources.values():
 		if not source_value is Dictionary:
 			continue
@@ -205,8 +219,35 @@ func _apply_rigid_response(body: RigidBody3D, sources: Dictionary) -> void:
 			resolved_angular,
 			maxf(float(source.get("angular_damp", resolved_angular)), 0.0)
 		)
+		resolved_friction = minf(
+			resolved_friction,
+			clampf(float(source.get("friction", resolved_friction)), 0.0, 1.0)
+		)
 	body.linear_damp = resolved_linear
 	body.angular_damp = resolved_angular
+	var ice_material := PhysicsMaterial.new()
+	ice_material.friction = resolved_friction
+	ice_material.rough = false
+	if original_material != null:
+		ice_material.bounce = original_material.bounce
+		ice_material.absorbent = original_material.absorbent
+	body.physics_material_override = ice_material
+
+
+func _get_original_physics_material(body: RigidBody3D) -> PhysicsMaterial:
+	var state_value: Variant = body.get_meta(
+		ORIGINAL_PHYSICS_MATERIAL_META,
+		{}
+	)
+	if not state_value is Dictionary:
+		return null
+	var state: Dictionary = state_value as Dictionary
+	var material_value: Variant = state.get("material")
+	return (
+		material_value as PhysicsMaterial
+		if material_value is PhysicsMaterial
+		else null
+	)
 
 
 func _restore_rigid_response(body: RigidBody3D) -> void:
@@ -216,6 +257,18 @@ func _restore_rigid_response(body: RigidBody3D) -> void:
 	if body.has_meta(ORIGINAL_ANGULAR_DAMP_META):
 		body.angular_damp = float(body.get_meta(ORIGINAL_ANGULAR_DAMP_META))
 		body.remove_meta(ORIGINAL_ANGULAR_DAMP_META)
+	if body.has_meta(ORIGINAL_PHYSICS_MATERIAL_META):
+		var state_value: Variant = body.get_meta(
+			ORIGINAL_PHYSICS_MATERIAL_META
+		)
+		if state_value is Dictionary:
+			var state: Dictionary = state_value as Dictionary
+			var material_value: Variant = state.get("material")
+			if bool(state.get("had_override", false)) and material_value is PhysicsMaterial:
+				body.physics_material_override = material_value as PhysicsMaterial
+			else:
+				body.physics_material_override = null
+		body.remove_meta(ORIGINAL_PHYSICS_MATERIAL_META)
 
 
 func get_debug_data() -> Dictionary:
@@ -241,4 +294,6 @@ func get_debug_data() -> Dictionary:
 		"reversal_multiplier": reversal_multiplier,
 		"rigid_linear_damp": rigid_linear_damp,
 		"rigid_angular_damp": rigid_angular_damp,
+		"rigid_friction": rigid_friction,
+		"overrides_physics_material": true,
 	}

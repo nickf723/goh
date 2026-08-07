@@ -5,9 +5,13 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
 [ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator.gd" id="5_regen"]
+[ext_resource type="Script" path="res://scripts/levels/thunderline_gate_dividers.gd" id="6_dividers"]
 
 [node name="PrototypeLightningFlashSpellTrialV1" type="Node3D" groups=["lab_resource_regeneration", "spell_trial"]]
 script = ExtResource("1_trial")
+
+[node name="ThunderlineGateDividers" type="Node3D" parent="."]
+script = ExtResource("6_dividers")
 
 [node name="GameUI" parent="." instance=ExtResource("3_ui")]
 

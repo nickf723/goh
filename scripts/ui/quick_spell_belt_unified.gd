@@ -1,8 +1,17 @@
 extends "res://scripts/ui/quick_spell_belt_performance.gd"
 class_name QuickSpellBeltUnified
 
+const GENERATED_SURFACE_NAMES: Array[String] = [
+	"PermanentDPadCommandDock",
+	"DPadUpItemMenu",
+	"DPadDownSpecialMenu",
+]
+
 var unified_layout_applied: bool = false
 var retired_duplicate_surface_count: int = 0
+var duplicate_surface_sweep_count: int = 0
+var duplicate_surface_node_checks: int = 0
+var duplicate_surface_listener_connected: bool = false
 
 
 func _finish_setup() -> void:
@@ -10,16 +19,23 @@ func _finish_setup() -> void:
 	if not setup_complete:
 		return
 	_apply_unified_layout()
+	_connect_duplicate_surface_listener()
+	# One bounded startup sweep catches surfaces that existed before this
+	# presenter finished binding. Anything created later is handled by node_added.
+	_retire_duplicate_generated_surfaces()
+
+
+func _exit_tree() -> void:
+	_disconnect_duplicate_surface_listener()
 
 
 func _process(delta: float) -> void:
 	super._process(delta)
 	if not unified_layout_applied:
 		_apply_unified_layout()
-	# WeaponInputBootstrap and the contextual router finish their deferred
-	# presenter swaps on neighboring frames. Keep sweeping the named generated
-	# surfaces so a late legacy panel cannot survive as an orphan under the HUD.
-	_retire_duplicate_generated_surfaces()
+	# Duplicate retirement used to recursively search the complete HUD tree three
+	# times every frame. In a growing scene that became a major idle-process cost.
+	# Late surfaces are now caught once through SceneTree.node_added instead.
 	_apply_mode_presentation()
 
 
@@ -99,9 +115,69 @@ func _apply_unified_layout() -> void:
 	_align_focus_panel()
 
 
+func _connect_duplicate_surface_listener() -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var callback := Callable(self, "_on_tree_node_added")
+	if not tree.node_added.is_connected(callback):
+		tree.node_added.connect(callback)
+	duplicate_surface_listener_connected = true
+
+
+func _disconnect_duplicate_surface_listener() -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var callback := Callable(self, "_on_tree_node_added")
+	if tree.node_added.is_connected(callback):
+		tree.node_added.disconnect(callback)
+	duplicate_surface_listener_connected = false
+
+
+func _on_tree_node_added(node: Node) -> void:
+	if not setup_complete or node == null:
+		return
+	if not GENERATED_SURFACE_NAMES.has(str(node.name)):
+		return
+	duplicate_surface_node_checks += 1
+	# Installers commonly assign their authoritative member reference in the same
+	# frame they add the Control. Defer the comparison so the new current surface
+	# is never mistaken for an orphan.
+	call_deferred("_retire_duplicate_surface_candidate", node)
+
+
+func _retire_duplicate_surface_candidate(candidate: Node) -> void:
+	if candidate == null or not is_instance_valid(candidate):
+		return
+	if hud == null or hud.root == null or not hud.root.is_ancestor_of(candidate):
+		return
+	var current_surface: Control = _get_current_surface(str(candidate.name))
+	if candidate == current_surface:
+		return
+	var parent: Node = candidate.get_parent()
+	if parent != null:
+		parent.remove_child(candidate)
+	candidate.queue_free()
+	retired_duplicate_surface_count += 1
+
+
+func _get_current_surface(surface_name: String) -> Control:
+	match surface_name:
+		"PermanentDPadCommandDock":
+			return dock_panel
+		"DPadUpItemMenu":
+			return item_menu_panel
+		"DPadDownSpecialMenu":
+			return special_menu_panel
+		_:
+			return null
+
+
 func _retire_duplicate_generated_surfaces() -> void:
 	if hud == null or hud.root == null:
 		return
+	duplicate_surface_sweep_count += 1
 	_retire_duplicate_surface("PermanentDPadCommandDock", dock_panel)
 	_retire_duplicate_surface("DPadUpItemMenu", item_menu_panel)
 	_retire_duplicate_surface("DPadDownSpecialMenu", special_menu_panel)
@@ -201,6 +277,10 @@ func get_debug_data() -> Dictionary:
 		else "none"
 	)
 	data["retired_duplicate_surfaces"] = retired_duplicate_surface_count
+	data["duplicate_surface_sweeps"] = duplicate_surface_sweep_count
+	data["duplicate_surface_node_checks"] = duplicate_surface_node_checks
+	data["duplicate_surface_listener"] = duplicate_surface_listener_connected
+	data["per_frame_duplicate_tree_scan"] = false
 	data["generated_dock_rows"] = dock_rows
 	data["visible_generated_docks"] = visible_docks
 	return data

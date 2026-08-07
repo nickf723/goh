@@ -1,25 +1,30 @@
 [gd_resource type="Resource" script_class="AbilityDefinition" format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/actions/generic_projectile.tscn" id="1_scene"]
+[ext_resource type="PackedScene" path="res://scenes/actions/water_jet_cast.tscn" id="1_scene"]
 [ext_resource type="Resource" path="res://data/damage_payloads/water_jet_payload.tres" id="2_payload"]
 [ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
-[ext_resource type="Resource" path="res://data/ability_trait_profiles/control_projectile_profile.tres" id="4_profile"]
 
 [resource]
 script = ExtResource("3_definition")
 display_name = "Water Jet"
-description = "Water projectile that wets targets for ice and lightning follow-ups."
+description = "Hold Cast to sustain a narrow high-pressure stream. Water Jet rapidly chips and wets targets, drives them backward, and can launch Grace away from nearby ground or walls."
 element = "water"
-mana_cost = 1
-trait_profile = ExtResource("4_profile")
+category = 4
+mana_cost = 0
+use_trait_profile = false
 spell_id = "water_jet"
 short_label = "Jet"
-icon_text = "W"
-roles = Array[String](["setup", "control", "combo_starter"])
-combo_tags = Array[String](["water", "wet", "conduct", "freeze_setup"])
+icon_text = "≋"
+roles = Array[String](["damage", "force", "control", "channel", "setup", "movement", "traversal", "self_propulsion", "combo_starter"])
+targeting_style = "aimed"
+delivery_type = "channel"
+combo_tags = Array[String](["water", "wet", "conduct", "freeze_setup", "pressure", "force", "recoil"])
 status_tags = Array[String](["wet"])
-ui_tags = Array[String](["setup", "wet", "combo"])
-debug_tags = Array[String](["prototype", "water_projectile"])
-design_notes = "First water spell. Low damage on purpose. It exists to make wet-state chemistry visible."
+ui_tags = Array[String](["hold_cast", "continuous", "rapid_chip", "strong_push", "aim_down_to_launch"])
+debug_tags = Array[String](["single_node_channel", "one_cylinder_query", "single_splash_multimesh", "fractional_mana_debt", "no_per_droplet_nodes"])
+scaling_stats = Array[String](["arcana", "water", "focus"])
+scaling_note = "Water and Arcana govern pressure and chip damage; Focus is reserved for future range, efficiency, recoil control, and stream-width upgrades."
+design_notes = "Water Jet is a continuous pressure tool rather than a projectile. It drains Mana per second, resolves one narrow bounded stream, applies rapid one-point reaction-suppressed chip ticks, and pushes targets through the shared force substrate. Nearby solid contact produces recoil opposite the nozzle direction, allowing downward aim to launch Grace without granting general flight."
 ability_scene = ExtResource("1_scene")
 action_payload = ExtResource("2_payload")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

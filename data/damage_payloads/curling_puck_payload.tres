@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 1
+stance_damage = 2
+element = "ice"
+source_name = "Curling Puck"
+hit_type = "curling_puck"
+status_effect = "chill"
+status_duration = 2.4
+status_strength = 1.0
+tags = Array[String](["ice", "puck", "curling", "projectile", "terrain", "slippery", "freeze_water", "momentum_setup", "force"])
+knockback_strength = 1.2
+knockback_up_strength = 0.05

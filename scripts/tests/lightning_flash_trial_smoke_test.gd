@@ -3,10 +3,11 @@ extends Node
 const TrialScene: PackedScene = preload(
 	"res://scenes/levels/prototypes/prototype_lightning_flash_spell_trial_v1.tscn"
 )
+const COMPLETION_FLAG: String = "thunderline_flash_spell_trial_complete"
 
 var failures: Array[String] = []
 var original_stats: Dictionary = {}
-var original_flags: Dictionary = {}
+var original_completion_flag: bool = false
 
 
 func _ready() -> void:
@@ -15,7 +16,7 @@ func _ready() -> void:
 
 func run_tests() -> void:
 	original_stats = GameState.get_stat_snapshot()
-	original_flags = GameState.flags.duplicate(true)
+	original_completion_flag = GameState.get_flag(COMPLETION_FLAG)
 	_prepare_stats()
 
 	var trial: PrototypeLightningFlashSpellTrial = (
@@ -122,7 +123,7 @@ func run_tests() -> void:
 	var complete_debug: Dictionary = trial.get_debug_data()
 	_expect(bool(complete_debug.get("complete", false)), "mastery seal completes the Thunderline")
 	_expect(
-		GameState.get_flag("thunderline_flash_spell_trial_complete"),
+		GameState.get_flag(COMPLETION_FLAG),
 		"Thunderline records its mastery flag"
 	)
 
@@ -136,7 +137,7 @@ func run_tests() -> void:
 	_expect(not first_gate.is_mechanism_active(), "reset closes the first gate")
 	_expect(not chasm_gate.is_mechanism_active(), "reset closes the chasm gate")
 	_expect(
-		not GameState.get_flag("thunderline_flash_spell_trial_complete"),
+		not GameState.get_flag(COMPLETION_FLAG),
 		"reset clears the temporary mastery flag"
 	)
 	_expect(
@@ -191,7 +192,7 @@ func _restore_state() -> void:
 	for stat_value: Variant in GameState.stats.keys():
 		var stat_id: String = str(stat_value)
 		GameState.stat_changed.emit(stat_id, int(GameState.stats[stat_value]))
-	GameState.flags = original_flags.duplicate(true)
+	GameState.set_flag(COMPLETION_FLAG, original_completion_flag)
 
 
 func _finish(trial: Node) -> void:

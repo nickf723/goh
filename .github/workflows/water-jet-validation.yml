@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "scripts/actions/water_jet_cast.gd"
+      - "scripts/actions/water_jet_cast_ready.gd"
       - "scripts/levels/prototype_water_jet_spell_trial.gd"
       - "scripts/tests/water_jet_spell_smoke_test.gd"
       - "scripts/tests/water_jet_trial_smoke_test.gd"

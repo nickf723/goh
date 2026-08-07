@@ -30,9 +30,20 @@ The overlay reports:
 - visible Label3D count
 - recent frame spikes
 
-The overlay is hidden by default. Sampling remains active while hidden, but the more expensive scene-tree count is collected only while the overlay is visible.
+The overlay is hidden by default. Sampling remains active while hidden.
 
 Frame history uses a fixed-capacity circular buffer. Once full, a new sample overwrites one existing slot in constant time. It no longer calls `Array.pop_front()` every frame and shifts the complete history while the game is running.
+
+The visible overlay no longer performs a complete recursive scene-tree walk inside its half-second sample. That synchronous census could make the profiler itself create large p95 spikes in node-heavy scenes. Tree inspection now:
+
+- begins only while F7 is visible;
+- visits at most 192 nodes per frame by default;
+- uses an O(1) stack and index-based child traversal;
+- publishes counts only after a complete pass;
+- refreshes every two seconds; and
+- cancels unfinished work immediately when F7 is hidden.
+
+The overlay labels census state as `SCANNING` or `READY`, so measurements taken during a count remain transparent without loading the entire tree into one unlucky frame.
 
 ## Unified HUD budget
 
@@ -73,7 +84,9 @@ Persistent spells should behave like one effect, not a swarm of tiny actors.
 - Release processing immediately when the effect expires.
 - Report persistent effects through the F7 overlay.
 
-Asteroid Belt is the first explicit reference implementation: six visible rocks share one MultiMesh, one controller updates their orbit at 30 Hz, and one 10-Hz broadphase query resolves contacts.
+Asteroid Belt is the repeated-geometry reference: six visible rocks share one MultiMesh, one controller updates their orbit at 30 Hz, and one 10-Hz broadphase query resolves contacts.
+
+Bubble is the one-hit ward reference: its permanent player controller sleeps while inactive, wakes only for the ward's finite lifetime, uses one mesh, performs one bounded broadphase query when consumed, and returns to sleep after a short reused burst animation.
 
 ## Authoring rules
 
@@ -86,6 +99,7 @@ Asteroid Belt is the first explicit reference implementation: six visible rocks 
 7. Use the F7 overlay before and after adding a substantial mechanic.
 8. Add a deterministic regression for every new scheduler, cache, or culling rule.
 9. Give every persistent spell an explicit instance and update budget.
+10. Spread diagnostic tree work across frames rather than hiding a full traversal inside a sample callback.
 
 ## Regression
 
@@ -93,6 +107,7 @@ Run:
 
 ```text
 res://scenes/tests/runtime_performance_foundation_smoke_test.tscn
+res://scenes/tests/runtime_performance_incremental_census_smoke_test.tscn
 ```
 
-The regression verifies frame-budget classification, fixed-capacity history overwrite behavior, overlay installation, budgeted HUD synchronization, material and label caching, gate signal throttling, Label3D visibility ranges, and the mechanism lab's sleep/wake lifecycle.
+The regressions verify frame-budget classification, fixed-capacity history overwrite behavior, bounded incremental census steps, overlay installation, budgeted HUD synchronization, material and label caching, gate signal throttling, Label3D visibility ranges, and the mechanism lab's sleep/wake lifecycle.

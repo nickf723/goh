@@ -13,7 +13,7 @@ func execute(player: Node3D, requested_direction: Vector3) -> void:
 
 func _build_needle_states() -> void:
 	super._build_needle_states()
-	var center_index: int = needle_count / 2
+	var center_index: int = floori(float(needle_count) * 0.5)
 	for needle_index: int in range(needle_count):
 		var launch_rank: int = 0
 		if needle_index < center_index:

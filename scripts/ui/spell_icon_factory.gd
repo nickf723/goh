@@ -95,6 +95,12 @@ const FLAT_ICON_ROOTS: Array[String] = [
 const FLAT_ICON_EXTENSIONS: Array[String] = [".svg", ".png", ".webp"]
 
 static var texture_cache: Dictionary = {}
+static var texture_path_cache: Dictionary = {}
+static var badge_style_cache: Dictionary = {}
+static var texture_path_probe_count: int = 0
+static var badge_update_count: int = 0
+static var badge_update_skip_count: int = 0
+static var badge_style_creation_count: int = 0
 
 
 static func entry_from_ability(
@@ -112,12 +118,13 @@ static func entry_from_ability(
 			"global_index": global_index,
 			"equipped": equipped,
 		}
+	var spell_id: String = ability.get_spell_id()
 	return {
 		"name": ability.display_name,
-		"spell_id": ability.get_spell_id(),
+		"spell_id": spell_id,
 		"element": ability.element,
 		"icon_text": ability.icon_text,
-		"icon_path": _find_texture_path(ability.get_spell_id()),
+		"icon_path": _find_texture_path(spell_id),
 		"global_index": global_index,
 		"equipped": equipped,
 	}
@@ -130,7 +137,7 @@ static func normalize_entry(
 	if value is AbilityDefinition:
 		return entry_from_ability(value as AbilityDefinition)
 	if value is Dictionary:
-		var entry: Dictionary = (value as Dictionary).duplicate(true)
+		var entry: Dictionary = (value as Dictionary).duplicate(false)
 		entry["name"] = str(entry.get("name", entry.get("label", "Spell")))
 		entry["spell_id"] = str(entry.get("spell_id", entry.get("id", "")))
 		entry["element"] = str(entry.get("element", fallback_element))
@@ -196,31 +203,17 @@ static func update_badge(
 	if badge == null:
 		return
 	var entry: Dictionary = normalize_entry(raw_entry)
-	var element_color: Color = get_element_color(str(entry.get("element", "neutral")))
-	var border_color: Color = Color(
-		element_color.r,
-		element_color.g,
-		element_color.b,
-		0.84
+	var signature: String = _badge_signature(entry, highlighted, equipped)
+	if str(badge.get_meta("spell_icon_signature", "")) == signature:
+		badge_update_skip_count += 1
+		return
+	badge_update_count += 1
+
+	var element: String = str(entry.get("element", "neutral"))
+	badge.add_theme_stylebox_override(
+		"panel",
+		_get_badge_style(element, highlighted, equipped)
 	)
-	var border_width: int = 1
-	if highlighted:
-		border_color = Color(0.94, 0.98, 1.0, 1.0)
-		border_width = 2
-	if equipped:
-		border_color = Color(1.0, 0.72, 0.22, 1.0)
-		border_width = 3
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(
-		element_color.r * 0.2,
-		element_color.g * 0.2,
-		element_color.b * 0.2,
-		0.96
-	)
-	style.border_color = border_color
-	style.set_border_width_all(border_width)
-	style.set_corner_radius_all(9)
-	badge.add_theme_stylebox_override("panel", style)
 
 	var texture_rect: TextureRect = badge.get_node_or_null(
 		"IconHolder/IconTexture"
@@ -246,6 +239,68 @@ static func update_badge(
 	badge.set_meta("spell_icon_entry", entry)
 	badge.set_meta("spell_icon_has_texture", texture != null)
 	badge.set_meta("spell_icon_equipped", equipped)
+	badge.set_meta("spell_icon_signature", signature)
+
+
+static func _badge_signature(
+	entry: Dictionary,
+	highlighted: bool,
+	equipped: bool
+) -> String:
+	return "|".join([
+		str(entry.get("name", "Spell")),
+		str(entry.get("spell_id", "")),
+		str(entry.get("element", "neutral")),
+		str(entry.get("icon_text", "")),
+		str(entry.get("icon_path", "")),
+		str(highlighted),
+		str(equipped),
+	])
+
+
+static func _get_badge_style(
+	element: String,
+	highlighted: bool,
+	equipped: bool
+) -> StyleBoxFlat:
+	var normalized_element: String = element.strip_edges().to_lower()
+	if normalized_element == "":
+		normalized_element = "neutral"
+	var key: String = (
+		normalized_element
+		+ "|" + str(highlighted)
+		+ "|" + str(equipped)
+	)
+	if badge_style_cache.has(key):
+		return badge_style_cache[key] as StyleBoxFlat
+
+	var element_color: Color = get_element_color(normalized_element)
+	var border_color: Color = Color(
+		element_color.r,
+		element_color.g,
+		element_color.b,
+		0.84
+	)
+	var border_width: int = 1
+	if highlighted:
+		border_color = Color(0.94, 0.98, 1.0, 1.0)
+		border_width = 2
+	if equipped:
+		border_color = Color(1.0, 0.72, 0.22, 1.0)
+		border_width = 3
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(
+		element_color.r * 0.2,
+		element_color.g * 0.2,
+		element_color.b * 0.2,
+		0.96
+	)
+	style.border_color = border_color
+	style.set_border_width_all(border_width)
+	style.set_corner_radius_all(9)
+	badge_style_cache[key] = style
+	badge_style_creation_count += 1
+	return style
 
 
 static func resolve_texture(raw_entry: Variant) -> Texture2D:
@@ -288,12 +343,39 @@ static func _find_texture_path(spell_id: String) -> String:
 	var normalized: String = spell_id.strip_edges().to_lower()
 	if normalized == "":
 		return ""
+	if texture_path_cache.has(normalized):
+		return str(texture_path_cache[normalized])
+	texture_path_probe_count += 1
 	for root: String in FLAT_ICON_ROOTS:
 		for extension: String in FLAT_ICON_EXTENSIONS:
 			var candidate: String = root + normalized + extension
 			if ResourceLoader.exists(candidate):
+				texture_path_cache[normalized] = candidate
 				return candidate
+	texture_path_cache[normalized] = ""
 	return ""
+
+
+static func clear_caches() -> void:
+	texture_cache.clear()
+	texture_path_cache.clear()
+	badge_style_cache.clear()
+	texture_path_probe_count = 0
+	badge_update_count = 0
+	badge_update_skip_count = 0
+	badge_style_creation_count = 0
+
+
+static func get_cache_debug_data() -> Dictionary:
+	return {
+		"texture_cache_size": texture_cache.size(),
+		"texture_path_cache_size": texture_path_cache.size(),
+		"badge_style_cache_size": badge_style_cache.size(),
+		"texture_path_probes": texture_path_probe_count,
+		"badge_updates": badge_update_count,
+		"badge_update_skips": badge_update_skip_count,
+		"badge_style_creations": badge_style_creation_count,
+	}
 
 
 static func get_debug_descriptor(raw_entry: Variant) -> Dictionary:

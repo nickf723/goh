@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "scripts/actions/earth_boulder.gd"
+      - "scripts/actions/earth_boulder_ready.gd"
       - "scripts/levels/prototype_boulder_spell_trial.gd"
       - "scripts/tests/boulder_spell_smoke_test.gd"
       - "scripts/tests/boulder_spell_trial_smoke_test.gd"

@@ -1,6 +1,10 @@
 extends "res://scripts/actions/curling_puck.gd"
 class_name CurlingPuckReady
 
+const ReadyTrailScript = preload(
+	"res://scripts/actions/curling_ice_trail_ready.gd"
+)
+
 # Neutral input sends the puck straight. Holding left or right while casting
 # selects the curl direction, letting one spell author straight bridges, curved
 # puzzle routes, and momentum runways without a second aiming mode.
@@ -8,9 +12,36 @@ class_name CurlingPuckReady
 
 func execute(player: Node3D, requested_direction: Vector3) -> void:
 	super.execute(player, requested_direction)
-	if trail != null and is_instance_valid(trail):
-		trail.set_meta("curling_puck_curl_sign", curl_sign)
-		trail.set_meta("curling_puck_route_kind", _get_route_kind())
+	if not active or trail == null or not is_instance_valid(trail):
+		return
+	_install_ready_trail()
+	trail.set_meta("curling_puck_curl_sign", curl_sign)
+	trail.set_meta("curling_puck_route_kind", _get_route_kind())
+
+
+func _install_ready_trail() -> void:
+	if trail is CurlingIceTrailReady:
+		return
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		return
+	var old_trail: CurlingIceTrail = trail
+	old_trail.force_dissipate("replace_with_ready_trail")
+
+	var ready_trail: CurlingIceTrailReady = (
+		ReadyTrailScript.new() as CurlingIceTrailReady
+	)
+	ready_trail.trail_width = trail_width
+	ready_trail.segment_spacing = trail_segment_spacing
+	ready_trail.maximum_segments = trail_maximum_segments
+	ready_trail.linger_seconds = trail_linger_seconds
+	scene_root.add_child(ready_trail)
+	ready_trail.configure(source_actor, cast_serial, self)
+	ready_trail.add_sample(global_position, cast_direction)
+	trail = ready_trail
+	var trail_body: StaticBody3D = ready_trail.get_static_body()
+	if trail_body != null:
+		_collect_collision_rids(trail_body, collision_exclusions)
 
 
 func _resolve_curl_sign() -> float:
@@ -41,4 +72,5 @@ func get_debug_data() -> Dictionary:
 		and is_instance_valid(trail)
 		and trail.has_meta("curling_puck_curl_sign")
 	)
+	data["ready_trail_interactions"] = trail is CurlingIceTrailReady
 	return data

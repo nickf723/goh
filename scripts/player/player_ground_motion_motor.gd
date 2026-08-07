@@ -3,6 +3,8 @@ class_name PlayerGroundMotionMotor
 
 signal motion_state_changed(previous_state: String, next_state: String)
 
+const SLIPPERY_SURFACE_META: String = "slippery_surface_sources"
+
 @export var profile: GroundMotionProfile
 
 var actor: CharacterBody3D
@@ -20,6 +22,13 @@ var braking_weight: float = 0.0
 var reversal_weight: float = 0.0
 var turning_weight: float = 0.0
 var external_source: String = ""
+var slippery_active: bool = false
+var slippery_label: String = "none"
+var slippery_source_count: int = 0
+var slippery_acceleration_multiplier: float = 1.0
+var slippery_braking_multiplier: float = 1.0
+var slippery_turn_multiplier: float = 1.0
+var slippery_reversal_multiplier: float = 1.0
 
 
 func _ready() -> void:
@@ -60,7 +69,10 @@ func get_desired_velocity(
 
 	var normalized_strength: float = inverse_lerp(deadzone, 1.0, input_strength)
 	var exponent: float = profile.analog_exponent if profile != null else 1.0
-	shaped_input_strength = pow(clampf(normalized_strength, 0.0, 1.0), maxf(exponent, 0.01))
+	shaped_input_strength = pow(
+		clampf(normalized_strength, 0.0, 1.0),
+		maxf(exponent, 0.01)
+	)
 
 	requested_local_direction = Vector3(input_vector.x, 0.0, input_vector.y)
 	if requested_local_direction.length_squared() <= 0.0001:
@@ -110,6 +122,7 @@ func resolve_planar_velocity(
 	var requested: Vector3 = Vector3(requested_velocity.x, 0.0, requested_velocity.z)
 	desired_velocity = requested
 	external_source = ""
+	_resolve_slippery_surface_response()
 
 	if delta <= 0.0:
 		resolved_velocity = current
@@ -134,14 +147,29 @@ func resolve_planar_velocity(
 		turn_angle_degrees = rad_to_deg(acos(alignment_dot))
 
 	if not grounded:
-		var air_target: Vector3 = requested if requested_speed > profile.stop_speed else Vector3.ZERO
-		var air_rate: float = profile.air_acceleration if requested_speed > profile.stop_speed else profile.air_drag
-		resolved_velocity = current.move_toward(air_target, maxf(air_rate, 0.0) * delta)
-		_set_motion_state("airborne_control" if requested_speed > profile.stop_speed else "airborne_coast")
+		var air_target: Vector3 = (
+			requested if requested_speed > profile.stop_speed else Vector3.ZERO
+		)
+		var air_rate: float = (
+			profile.air_acceleration
+			if requested_speed > profile.stop_speed
+			else profile.air_drag
+		)
+		resolved_velocity = current.move_toward(
+			air_target,
+			maxf(air_rate, 0.0) * delta
+		)
+		_set_motion_state(
+			"airborne_control"
+			if requested_speed > profile.stop_speed
+			else "airborne_coast"
+		)
 		_update_feedback_weights(delta)
 		return resolved_velocity
 
-	var response_rate: float = profile.acceleration
+	var response_rate: float = (
+		profile.acceleration * slippery_acceleration_multiplier
+	)
 	var next_state: String = "accelerating"
 
 	if requested_speed <= profile.stop_speed:
@@ -149,41 +177,73 @@ func resolve_planar_velocity(
 			resolved_velocity = Vector3.ZERO
 			next_state = "idle"
 		else:
-			response_rate = profile.braking
+			response_rate = profile.braking * slippery_braking_multiplier
 			if current_speed > profile.maximum_speed + profile.cruise_speed_tolerance:
-				response_rate = profile.overspeed_braking
-			resolved_velocity = current.move_toward(Vector3.ZERO, response_rate * delta)
-			next_state = "braking"
+				response_rate = (
+					profile.overspeed_braking
+					* slippery_braking_multiplier
+				)
+			resolved_velocity = current.move_toward(
+				Vector3.ZERO,
+				maxf(response_rate, 0.0) * delta
+			)
+			next_state = "sliding" if slippery_active else "braking"
 	elif current_speed <= profile.stop_speed:
-		resolved_velocity = current.move_toward(requested, profile.acceleration * delta)
-		var response_floor: float = minf(profile.initial_response_speed, requested_speed)
+		response_rate = profile.acceleration * slippery_acceleration_multiplier
+		resolved_velocity = current.move_toward(
+			requested,
+			maxf(response_rate, 0.0) * delta
+		)
+		var response_floor: float = minf(
+			profile.initial_response_speed * slippery_acceleration_multiplier,
+			requested_speed
+		)
 		if resolved_velocity.length() < response_floor and requested_speed > 0.0:
 			resolved_velocity = requested.normalized() * response_floor
 		next_state = "accelerating"
 	else:
 		if alignment_dot <= profile.reversal_dot:
-			response_rate = profile.reversal_acceleration
+			response_rate = (
+				profile.reversal_acceleration
+				* slippery_reversal_multiplier
+			)
 			next_state = "reversing"
 		elif alignment_dot <= profile.sharp_turn_dot:
-			response_rate = profile.turn_acceleration
+			response_rate = (
+				profile.turn_acceleration
+				* slippery_turn_multiplier
+			)
 			next_state = "turning"
 		elif current_speed > requested_speed + profile.cruise_speed_tolerance:
-			response_rate = profile.braking
+			response_rate = profile.braking * slippery_braking_multiplier
 			if current_speed > profile.maximum_speed + profile.cruise_speed_tolerance:
-				response_rate = profile.overspeed_braking
-			next_state = "braking"
+				response_rate = (
+					profile.overspeed_braking
+					* slippery_braking_multiplier
+				)
+			next_state = "sliding" if slippery_active else "braking"
 		elif (
 			absf(current_speed - requested_speed) <= profile.cruise_speed_tolerance
 			and alignment_dot >= 0.985
 		):
-			response_rate = profile.acceleration
+			response_rate = (
+				profile.acceleration * slippery_acceleration_multiplier
+			)
 			next_state = "cruising"
 		else:
-			response_rate = profile.acceleration
+			response_rate = (
+				profile.acceleration * slippery_acceleration_multiplier
+			)
 			next_state = "accelerating"
-		resolved_velocity = current.move_toward(requested, maxf(response_rate, 0.0) * delta)
+		resolved_velocity = current.move_toward(
+			requested,
+			maxf(response_rate, 0.0) * delta
+		)
 
-	if resolved_velocity.length() <= profile.stop_speed and requested_speed <= profile.stop_speed:
+	if (
+		resolved_velocity.length() <= profile.stop_speed
+		and requested_speed <= profile.stop_speed
+	):
 		resolved_velocity = Vector3.ZERO
 		next_state = "idle"
 
@@ -217,6 +277,7 @@ func reset_motion() -> void:
 	reversal_weight = 0.0
 	turning_weight = 0.0
 	external_source = ""
+	_resolve_slippery_surface_response()
 	_set_motion_state("idle")
 
 
@@ -232,7 +293,10 @@ func get_debug_data() -> Dictionary:
 		"post_move_velocity": post_move_velocity,
 		"target_speed": snappedf(desired_velocity.length(), 0.01),
 		"actual_speed": snappedf(actual_speed, 0.01),
-		"speed_ratio": snappedf(actual_speed / maxf(maximum_speed, 0.01), 0.01),
+		"speed_ratio": snappedf(
+			actual_speed / maxf(maximum_speed, 0.01),
+			0.01
+		),
 		"input_strength": snappedf(input_strength, 0.01),
 		"shaped_input_strength": snappedf(shaped_input_strength, 0.01),
 		"local_direction": requested_local_direction,
@@ -244,7 +308,73 @@ func get_debug_data() -> Dictionary:
 		"turning_weight": snappedf(turning_weight, 0.01),
 		"external_source": external_source,
 		"profile_ready": profile != null,
+		"slippery_active": slippery_active,
+		"slippery_label": slippery_label,
+		"slippery_sources": slippery_source_count,
+		"slippery_acceleration_multiplier": slippery_acceleration_multiplier,
+		"slippery_braking_multiplier": slippery_braking_multiplier,
+		"slippery_turn_multiplier": slippery_turn_multiplier,
+		"slippery_reversal_multiplier": slippery_reversal_multiplier,
 	}
+
+
+func _resolve_slippery_surface_response() -> void:
+	slippery_active = false
+	slippery_label = "none"
+	slippery_source_count = 0
+	slippery_acceleration_multiplier = 1.0
+	slippery_braking_multiplier = 1.0
+	slippery_turn_multiplier = 1.0
+	slippery_reversal_multiplier = 1.0
+	if actor == null:
+		return
+	var sources_value: Variant = actor.get_meta(SLIPPERY_SURFACE_META, {})
+	if not sources_value is Dictionary:
+		return
+	var labels: Array[String] = []
+	for source_value: Variant in (sources_value as Dictionary).values():
+		if not source_value is Dictionary:
+			continue
+		var source: Dictionary = source_value as Dictionary
+		slippery_active = true
+		slippery_source_count += 1
+		slippery_acceleration_multiplier = minf(
+			slippery_acceleration_multiplier,
+			clampf(
+				float(source.get("acceleration_multiplier", 1.0)),
+				0.01,
+				1.0
+			)
+		)
+		slippery_braking_multiplier = minf(
+			slippery_braking_multiplier,
+			clampf(
+				float(source.get("braking_multiplier", 1.0)),
+				0.01,
+				1.0
+			)
+		)
+		slippery_turn_multiplier = minf(
+			slippery_turn_multiplier,
+			clampf(
+				float(source.get("turn_multiplier", 1.0)),
+				0.01,
+				1.0
+			)
+		)
+		slippery_reversal_multiplier = minf(
+			slippery_reversal_multiplier,
+			clampf(
+				float(source.get("reversal_multiplier", 1.0)),
+				0.01,
+				1.0
+			)
+		)
+		var label: String = str(source.get("label", "Slippery Surface"))
+		if label != "" and not labels.has(label):
+			labels.append(label)
+	if not labels.is_empty():
+		slippery_label = ", ".join(labels)
 
 
 func _set_motion_state(next_state: String) -> void:
@@ -257,7 +387,9 @@ func _set_motion_state(next_state: String) -> void:
 
 func _update_feedback_weights(delta: float) -> void:
 	var response: float = profile.feedback_response if profile != null else 14.0
-	var blend: float = 1.0 - exp(-maxf(response, 0.0) * maxf(delta, 0.0))
+	var blend: float = 1.0 - exp(
+		-maxf(response, 0.0) * maxf(delta, 0.0)
+	)
 	acceleration_weight = lerpf(
 		acceleration_weight,
 		1.0 if motion_state == "accelerating" else 0.0,
@@ -265,7 +397,7 @@ func _update_feedback_weights(delta: float) -> void:
 	)
 	braking_weight = lerpf(
 		braking_weight,
-		1.0 if motion_state == "braking" else 0.0,
+		1.0 if motion_state in ["braking", "sliding"] else 0.0,
 		blend
 	)
 	reversal_weight = lerpf(

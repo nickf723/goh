@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/curling_puck.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/curling_puck_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Curling Puck"
+description = "Send a curling ice puck along the ground. It freezes a temporary bridge across water and leaves a slippery trail that preserves momentum for Grace, enemies, props, and rolling Boulders."
+element = "ice"
+category = 0
+mana_cost = 2
+use_trait_profile = false
+spell_id = "curling_puck"
+short_label = "Puck"
+icon_text = "◍"
+roles = Array[String](["control", "terrain", "traversal", "projectile", "water_freeze", "slippery", "momentum_setup", "physics", "puzzle"])
+targeting_style = "forward"
+delivery_type = "ground_curling_projectile"
+combo_tags = Array[String](["ice", "puck", "curling", "slippery", "freeze_water", "momentum", "boulder_setup", "terrain", "chill"])
+status_tags = Array[String](["chill"])
+ui_tags = Array[String](["curving", "ground_route", "temporary_bridge", "slippery_trail"])
+debug_tags = Array[String](["single_puck", "one_trail_multimesh", "shared_collision_bodies", "motion_path", "water_bridge"])
+scaling_stats = Array[String](["intelligence", "ice", "focus"])
+scaling_note = "Intelligence and Ice govern trail persistence and chill; Focus is reserved for future curl control, width, bridge duration, and ricochet upgrades."
+design_notes = "Curling Puck is a ground-conforming projectile with a gentle player-selected curl. Its trail uses one MultiMesh and shared static and area bodies with multiple collision shapes. Ice overlays lower character traction and rigid-body damping, while water segments become temporary physical bridges that suspend swimming locomotion until the ice melts."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

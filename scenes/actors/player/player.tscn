@@ -59,7 +59,7 @@
 [ext_resource type="Resource" path="res://data/divine_specials/ruvia_wildfire_procession.tres" id="57_procession"]
 [ext_resource type="Resource" path="res://data/divine_specials/ruvia_hearth_of_first_flame.tres" id="58_hearth"]
 [ext_resource type="Script" path="res://scripts/ui/divine_special_hud.gd" id="59_special_hud"]
-[ext_resource type="Script" path="res://scripts/ui/player_hud_unified.gd" id="60_hud_v2"]
+[ext_resource type="Script" path="res://scripts/ui/player_hud_unified_budgeted.gd" id="60_hud_v2"]
 [ext_resource type="Script" path="res://scripts/player/player_flamethrower_controller.gd" id="61_flamethrower"]
 [ext_resource type="Script" path="res://scripts/player/player_bubble_shield_controller.gd" id="62_bubble"]
 

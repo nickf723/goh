@@ -1,25 +1,30 @@
 [gd_resource type="Resource" script_class="AbilityDefinition" format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/actions/generic_projectile.tscn" id="1_scene"]
+[ext_resource type="PackedScene" path="res://scenes/actions/metal_needle_fan.tscn" id="1_scene"]
 [ext_resource type="Resource" path="res://data/damage_payloads/metal_needle_payload.tres" id="2_payload"]
 [ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
-[ext_resource type="Resource" path="res://data/ability_trait_profiles/damage_projectile_profile.tres" id="4_profile"]
 
 [resource]
 script = ExtResource("3_definition")
 display_name = "Metal Needle"
-description = "Sharp metal projectile with clean direct damage."
+description = "Fire nine needles in a rapid fan. The spread covers a crowd at range and concentrates several punctures into a close target."
 element = "metal"
-mana_cost = 1
-trait_profile = ExtResource("4_profile")
+category = 4
+mana_cost = 2
+use_trait_profile = false
 spell_id = "metal_needle"
-short_label = "Needle"
-icon_text = "M"
-roles = Array[String](["damage", "precision"])
-combo_tags = Array[String](["metal", "pierce", "sharp", "direct_hit"])
+short_label = "Needles"
+icon_text = ">>"
+roles = Array[String](["damage", "fan", "multishot", "crowd_control", "close_pressure", "projectile"])
+targeting_style = "aimed"
+delivery_type = "projectile_fan"
+combo_tags = Array[String](["metal", "pierce", "sharp", "projectile", "fan", "volley", "multihit"])
 status_tags = Array[String]([])
-ui_tags = Array[String](["damage", "precision"])
-debug_tags = Array[String](["prototype", "metal_projectile"])
-design_notes = "First metal spell. Simple and readable for now: accurate-feeling direct pressure."
+ui_tags = Array[String](["rapid_burst", "wide_fan", "close_multihit", "nine_needles"])
+debug_tags = Array[String](["single_controller", "one_multimesh", "no_per_needle_nodes", "target_hit_cap"])
+scaling_stats = Array[String](["arcana", "metal", "focus"])
+scaling_note = "Metal and Arcana govern puncture pressure; Focus is reserved for future fan width, needle count, ricochet, and homing upgrades."
+design_notes = "Metal Needle is one rapid fan volley rather than a generic projectile. One controller advances nine independent collision rays and renders all needles through one MultiMesh. A target can receive at most three needles from one cast, preserving close-range reward without allowing a point-blank nine-hit deletion."
 ability_scene = ExtResource("1_scene")
 action_payload = ExtResource("2_payload")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

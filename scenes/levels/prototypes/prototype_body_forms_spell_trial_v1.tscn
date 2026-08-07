@@ -1,0 +1,69 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_body_forms_spell_trial.gd" id="1_trial"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator.gd" id="5_regen"]
+
+[sub_resource type="Environment" id="Environment_measure"]
+background_mode = 1
+background_color = Color(0.08, 0.025, 0.07, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.72, 0.32, 0.62, 1)
+ambient_light_energy = 0.72
+reflected_light_source = 2
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.34, 0.12, 0.3, 1)
+fog_light_energy = 0.42
+fog_density = 0.0045
+
+[node name="PrototypeBodyFormsSpellTrialV1" type="Node3D" groups=["lab_resource_regeneration", "spell_trial"]]
+script = ExtResource("1_trial")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_measure")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="LabResourceRegenerator" type="Node" parent="."]
+script = ExtResource("5_regen")
+mana_per_second = 2.0
+stamina_per_second = 0.0
+focus_per_second = 0.0
+refill_on_ready = false
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-54, -24, 0)
+light_color = Color(1, 0.52, 0.82, 1)
+light_energy = 1.08
+shadow_enabled = true
+
+[node name="MassLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 4, 5)
+light_color = Color(1, 0.12, 0.48, 1)
+light_energy = 1.85
+omni_range = 16.0
+shadow_enabled = false
+
+[node name="PassageLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 2.2, 21)
+light_color = Color(0.58, 0.24, 1, 1)
+light_energy = 1.75
+omni_range = 15.0
+shadow_enabled = false
+
+[node name="MasteryLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 4, 36.5)
+light_color = Color(1, 0.78, 0.16, 1)
+light_energy = 1.9
+omni_range = 12.0
+shadow_enabled = false
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, -5.5)
+rotation_degrees = Vector3(0, 180, 0)

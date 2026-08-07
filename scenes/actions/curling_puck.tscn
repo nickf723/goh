@@ -65,7 +65,6 @@ mesh = SubResource("CylinderMesh_core")
 
 [node name="TopRim" type="MeshInstance3D" parent="VisualRoot"]
 position = Vector3(0, 0.098, 0)
-rotation_degrees = Vector3(90, 0, 0)
 material_override = SubResource("Material_rim")
 mesh = SubResource("TorusMesh_rim")
 

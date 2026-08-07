@@ -12,6 +12,7 @@ on:
       - "data/damage_payloads/bubble_burst_payload.tres"
       - "data/ability_trait_profiles/one_hit_shield_profile.tres"
       - "art/icons/spells/bubble.svg"
+      - "scripts/ui/spell_icon_factory.gd"
       - "data/loadouts/grace_starting_loadout.tres"
       - "scenes/actors/player/player.tscn"
       - "scripts/player/player_defense_controller.gd"

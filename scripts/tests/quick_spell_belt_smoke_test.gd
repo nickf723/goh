@@ -135,6 +135,63 @@ func run_tests() -> void:
 		"Assigning an existing spell swaps the displaced slot"
 	)
 
+	# The full equipment menu edits AbilityLoadout slots directly. Historically,
+	# that left GameState pointing at the displaced spell ID, so the permanent
+	# belt rendered the replacement as an invalid gray tile. Simulate that exact
+	# path with a learned spell beyond the default ten.
+	var original_slot_zero: AbilityDefinition = loadout.get_equipped_ability(0)
+	var original_saved_slot_zero: String = GameState.get_quick_spell_slot(
+		loadout_id,
+		0
+	)
+	var bubble: AbilityDefinition = null
+	for learned_ability: AbilityDefinition in loadout.get_learned_abilities():
+		if (
+			learned_ability != null
+			and learned_ability.get_spell_id() == "bubble"
+		):
+			bubble = learned_ability
+			break
+	_expect(bubble != null, "Bubble exists in the learned spell library")
+	if bubble != null:
+		loadout.equip_ability(0, bubble)
+		var replaced_rows: Array = router.call(
+			"get_quick_spell_slot_rows"
+		) as Array
+		var replaced_row: Dictionary = (
+			replaced_rows[0] as Dictionary
+			if replaced_rows.size() > 0
+			else {}
+		)
+		_expect(
+			GameState.get_quick_spell_slot(loadout_id, 0) == "bubble",
+			"full-menu loadout replacement updates the persistent quick-slot ID"
+		)
+		_expect(
+			str(replaced_row.get("name", "")) == "Bubble",
+			"replacement spell remains visible instead of becoming a gray empty tile"
+		)
+		_expect(
+			int(replaced_row.get("ability_index", -1)) >= 0,
+			"replacement quick slot resolves to a selectable runtime ability"
+		)
+		_expect(
+			bool(router.call("select_quick_spell_slot", 0, "keyboard", false)),
+			"replacement spell can be selected from the permanent quick belt"
+		)
+		_expect(
+			ability_caster.call("get_current_ability") == bubble,
+			"selecting the repaired slot equips the replacement spell"
+		)
+
+	# Restore the shared test loadout before the player leaves the tree.
+	loadout.equip_ability(0, original_slot_zero)
+	GameState.set_quick_spell_slot(
+		loadout_id,
+		0,
+		original_saved_slot_zero
+	)
+
 	router.call("select_quick_spell_slot", 4, "keyboard", false)
 	await get_tree().process_frame
 	var belt_debug: Dictionary = belt.get_debug_data()

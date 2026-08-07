@@ -26,7 +26,9 @@ const ORIGINAL_ANGULAR_DAMP_META: String = "slippery_original_angular_damp"
 var tracked_bodies: Dictionary = {}
 var registration_count: int = 0
 var unregistration_count: int = 0
+var rejected_body_count: int = 0
 var last_body_name: String = "none"
+var last_rejected_body_name: String = "none"
 
 
 func _ready() -> void:
@@ -59,6 +61,10 @@ func _on_body_exited(body: Node3D) -> void:
 func register_body(body: Node3D) -> void:
 	if body == null or not is_instance_valid(body):
 		return
+	if not _supports_body(body):
+		rejected_body_count += 1
+		last_rejected_body_name = str(body.name)
+		return
 	var body_id: int = body.get_instance_id()
 	if tracked_bodies.has(body_id):
 		return
@@ -86,6 +92,10 @@ func unregister_body(body: Node3D) -> void:
 	if body is RigidBody3D:
 		_unregister_rigid_response(body as RigidBody3D)
 	body_unregistered.emit(body)
+
+
+func _supports_body(body: Node3D) -> bool:
+	return body is CharacterBody3D or body is RigidBody3D
 
 
 func has_registered_body(body: Node) -> bool:
@@ -222,7 +232,9 @@ func get_debug_data() -> Dictionary:
 		"body_names": body_names,
 		"registrations": registration_count,
 		"unregistrations": unregistration_count,
+		"rejected_bodies": rejected_body_count,
 		"last_body": last_body_name,
+		"last_rejected_body": last_rejected_body_name,
 		"acceleration_multiplier": acceleration_multiplier,
 		"braking_multiplier": braking_multiplier,
 		"turn_multiplier": turn_multiplier,

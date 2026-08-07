@@ -27,9 +27,9 @@ func _exit_tree() -> void:
 
 
 func _on_tree_node_added(node: Node) -> void:
-	if node == null or not node.has_signal("spark_fired"):
-		return
-	if not node.is_in_group("lightning_spark_effects"):
+	# SceneTree.node_added fires before the new node's _ready method, so inspect
+	# the attached script class rather than waiting for its runtime groups.
+	if not node is LightningSparkBurst:
 		return
 	var callback := Callable(self, "_on_lightning_spark_fired")
 	if not node.is_connected("spark_fired", callback):

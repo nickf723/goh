@@ -1,6 +1,9 @@
 extends "res://scripts/weapons/weapon_controller.gd"
 class_name SafeWeaponController
 
+const GameplayEffectAccessBodyFormScript = preload(
+	"res://scripts/effects/gameplay_effect_access.gd"
+)
 
 @export_group("Camera-Decoupled Attack Facing")
 @export_range(0.0, 1.0, 0.05) var visual_facing_blend: float = 0.78
@@ -14,6 +17,72 @@ func _ready() -> void:
 	super._ready()
 	if not attack_finished.is_connected(_on_safe_attack_finished):
 		attack_finished.connect(_on_safe_attack_finished)
+
+
+func get_attack_speed() -> float:
+	return maxf(
+		GameplayEffectAccessBodyFormScript.modify_float(
+			"attack_speed",
+			super.get_attack_speed()
+		),
+		0.05
+	)
+
+
+func get_effective_attack_range(
+	attack: WeaponAttackDefinition
+) -> float:
+	return maxf(
+		GameplayEffectAccessBodyFormScript.modify_float(
+			"weapon_range",
+			super.get_effective_attack_range(attack)
+		),
+		0.1
+	)
+
+
+func send_payload_to_target(
+	target: Node,
+	payload: DamagePayload
+) -> Dictionary:
+	if payload == null:
+		return super.send_payload_to_target(target, payload)
+	var resolved: DamagePayload = payload.duplicate(true) as DamagePayload
+	if resolved == null:
+		return super.send_payload_to_target(target, payload)
+	resolved.amount = maxi(
+		GameplayEffectAccessBodyFormScript.modify_int(
+			"weapon_damage",
+			resolved.amount,
+			"round"
+		),
+		0
+	)
+	resolved.stance_damage = maxi(
+		GameplayEffectAccessBodyFormScript.modify_int(
+			"weapon_stance_damage",
+			resolved.stance_damage,
+			"round"
+		),
+		0
+	)
+	resolved.knockback_strength = maxf(
+		GameplayEffectAccessBodyFormScript.modify_float(
+			"weapon_knockback",
+			resolved.knockback_strength
+		),
+		0.0
+	)
+	var actor: Node3D = get_actor()
+	if actor != null:
+		var form_id: String = str(
+			actor.get_meta("body_form_id", "normal")
+		)
+		if form_id != "normal":
+			var form_tag: String = "body_form_" + form_id
+			if not resolved.tags.has(form_tag):
+				resolved.tags.append(form_tag)
+	return super.send_payload_to_target(target, resolved)
 
 
 func start_attack(attack: WeaponAttackDefinition) -> bool:
@@ -120,6 +189,12 @@ func get_attack_facing_debug_data() -> Dictionary:
 		"weapon_visual_yaw": rotation.y,
 		"grace_visual_yaw": grace_visual.rotation.y if grace_visual != null else 0.0,
 		"camera_decoupled": true,
+		"body_form": (
+			str(actor.get_meta("body_form_id", "normal"))
+			if actor != null
+			else "normal"
+		),
+		"body_form_attack_speed": get_attack_speed(),
 	}
 
 

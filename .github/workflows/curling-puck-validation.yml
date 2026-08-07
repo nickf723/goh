@@ -14,6 +14,7 @@ on:
       - "scripts/player/player_ground_motion_motor.gd"
       - "scripts/player/player_swimming_controller.gd"
       - "scripts/levels/prototype_curling_puck_spell_trial.gd"
+      - "scripts/levels/prototype_curling_puck_spell_trial_ready.gd"
       - "scripts/tests/curling_puck_spell_smoke_test.gd"
       - "scripts/tests/curling_puck_spell_trial_smoke_test.gd"
       - "scenes/actions/curling_puck.tscn"

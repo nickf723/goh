@@ -57,11 +57,17 @@ func run_tests() -> void:
 	puck.set_physics_process(false)
 	var trail: CurlingIceTrail = puck.get_trail()
 	_expect(trail != null, "the route fixture creates one ice trail")
-	for _step: int in range(150):
+
+	# Stop once the puck is safely on the far shore. Inspecting before its
+	# maximum-distance dissolve keeps the test focused on the support transition
+	# instead of accidentally racing the puck's short visual cleanup.
+	for _step: int in range(130):
 		if not is_instance_valid(puck) or not puck.active:
 			break
 		puck.advance_puck(0.02)
 		await get_tree().physics_frame
+		if puck.distance_travelled >= 17.5:
+			break
 
 	_expect(is_instance_valid(puck), "the puck survives the complete transition route")
 	if is_instance_valid(puck):

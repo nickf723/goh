@@ -220,12 +220,15 @@ func _spawn_target(
 	target.target_label = node_name
 	target.position = position_value
 	add_child(target)
+	target.set_physics_process(false)
 	var receiver: Node = target.get_node_or_null("HitReceiver")
 	if receiver != null:
+		receiver.set("hit_mode", 2)
 		receiver.set("max_health", health)
 		receiver.set("current_health", health)
-		receiver.set("max_stance", 12)
-		receiver.set("current_stance", 12)
+		receiver.set("max_stance", 1)
+		receiver.set("current_stance", 1)
+		receiver.set("regenerates_stance", false)
 	return target
 
 

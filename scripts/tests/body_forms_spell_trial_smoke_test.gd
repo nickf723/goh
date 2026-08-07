@@ -76,7 +76,7 @@ func run_tests() -> void:
 	)
 	_expect(mass_gate.is_mechanism_active(), "the mass gate opens")
 	_expect(
-		bool(mass_gate.get_debug_data().get("collision_disabled", false)),
+		not bool(mass_gate.get_debug_data().get("collision_enabled", true)),
 		"the opened mass gate removes its blocking collision"
 	)
 
@@ -97,7 +97,7 @@ func run_tests() -> void:
 	)
 	_expect(passage_gate.is_mechanism_active(), "the passage gate opens")
 	_expect(
-		bool(passage_gate.get_debug_data().get("collision_disabled", false)),
+		not bool(passage_gate.get_debug_data().get("collision_enabled", true)),
 		"the opened passage gate removes its blocking collision"
 	)
 

@@ -67,6 +67,10 @@ func run_tests() -> void:
 			bool(ordinary_debug.get("owns_cast_channel", false)),
 			"Firewall converts the base cast lock into an owned channel"
 		)
+		_expect(
+			bool(ordinary_debug.get("camera_brush_aim", false)),
+			"ordinary Firewall drawing enters camera-brush aim"
+		)
 		ordinary_cast.cancel_drawing("test_cleanup")
 		await get_tree().process_frame
 
@@ -191,6 +195,55 @@ func run_tests() -> void:
 			"automatic ignition records the time-limit reason"
 		)
 		timed_firewall.finish_firewall("test_cleanup")
+		await get_tree().process_frame
+
+	var brush_firewall: FirewallCast = _spawn_direct_firewall(player)
+	_expect(brush_firewall != null, "adaptive brush fixture creates another Firewall")
+	if brush_firewall != null:
+		brush_firewall.targeting_range = 30.0
+		var brush_origin := Vector3(0.0, 8.0, 5.0)
+		var first_floor_target := Vector3(-4.0, 0.0, -4.0)
+		var second_floor_target := Vector3(4.0, 0.0, -14.0)
+		brush_firewall.call(
+			"set_test_brush_ray_override",
+			brush_origin,
+			(first_floor_target - brush_origin).normalized(),
+			true
+		)
+		_expect(
+			bool(brush_firewall.call("sample_brush_ray_for_test")),
+			"adaptive brush records its first floor contact"
+		)
+		brush_firewall.call(
+			"set_test_brush_ray_override",
+			brush_origin,
+			(second_floor_target - brush_origin).normalized(),
+			true
+		)
+		_expect(
+			bool(brush_firewall.call("sample_brush_ray_for_test")),
+			"adaptive brush fills a fast camera sweep instead of dropping the stroke"
+		)
+		var brush_debug: Dictionary = brush_firewall.get_debug_data()
+		_expect(
+			int(brush_debug.get("brush_subdivision_passes", 0)) >= 1,
+			"large ray motion invokes bounded adaptive subdivision"
+		)
+		_expect(
+			int(brush_debug.get("brush_subsample_queries", 0)) > 2
+			and int(brush_debug.get("brush_recovered_samples", 0)) > 0,
+			"intermediate rays recover surface samples between fast look positions"
+		)
+		_expect(
+			int(brush_debug.get("point_count", 0)) >= 10
+			and float(brush_debug.get("path_length", 0.0)) >= 8.0,
+			"recovered brush stroke remains a dense continuous floor path"
+		)
+		_expect(
+			int(brush_debug.get("rejected_surface_jumps", 0)) == 0,
+			"adaptive floor sweep avoids a false maximum-gap rejection"
+		)
+		brush_firewall.finish_firewall("test_cleanup")
 		await get_tree().process_frame
 
 	_expect(

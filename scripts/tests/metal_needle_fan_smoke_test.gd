@@ -58,14 +58,13 @@ func run_tests() -> void:
 	await get_tree().process_frame
 
 	var fan_targets: Array[CharacterBody3D] = []
-	var selected_angles: Array[float] = [-27.0, -13.5, 0.0, 13.5, 27.0]
-	for target_index: int in range(selected_angles.size()):
+	for angle: float in [-27.0, -13.5, 0.0, 13.5, 27.0]:
 		var direction: Vector3 = Vector3.FORWARD.rotated(
 			Vector3.UP,
-			deg_to_rad(selected_angles[target_index])
+			deg_to_rad(angle)
 		)
 		var target: CharacterBody3D = _make_target(
-			"FanWitness" + str(target_index + 1),
+			"FanWitness" + str(fan_targets.size() + 1),
 			direction * 8.0,
 			0.76
 		)
@@ -80,11 +79,8 @@ func run_tests() -> void:
 		_finish([player, floor] + fan_targets)
 		return
 	fan.set_physics_process(false)
-	for _tick: int in range(24):
-		fan.advance_volley(0.02)
-		await get_tree().physics_frame
+	var fan_debug: Dictionary = await _advance_fan_to_completion(fan, 48, 0.02)
 
-	var fan_debug: Dictionary = fan.get_debug_data()
 	var shared_serial: int = 0
 	for target: CharacterBody3D in fan_targets:
 		var serial: int = int(
@@ -98,10 +94,7 @@ func run_tests() -> void:
 				serial == shared_serial,
 				"every separated target records the same volley serial"
 			)
-	_expect(
-		int(fan_debug.get("needle_count", 0)) == 9,
-		"Metal Needle launches nine authored needles"
-	)
+	_expect(int(fan_debug.get("needle_count", 0)) == 9, "Metal Needle launches nine authored needles")
 	_expect(
 		int(fan_debug.get("unique_targets", 0)) >= 5,
 		"one fan reaches at least five separated targets"
@@ -113,10 +106,13 @@ func run_tests() -> void:
 		"all nine needles render through one MultiMesh"
 	)
 	_expect(
+		bool(fan_debug.get("center_out_launch", false)),
+		"production volley blooms from the center"
+	)
+	_expect(
 		not bool(fan_debug.get("persistent", true)),
 		"Metal Needle is a temporary burst, not a persistent effect"
 	)
-	fan.finish_volley()
 	await get_tree().process_frame
 	for target: CharacterBody3D in fan_targets:
 		target.queue_free()
@@ -133,9 +129,11 @@ func run_tests() -> void:
 	_expect(close_fan != null, "close-pressure fan fixture instantiates")
 	if close_fan != null:
 		close_fan.set_physics_process(false)
-		for _tick: int in range(18):
-			close_fan.advance_volley(0.02)
-			await get_tree().physics_frame
+		var close_debug: Dictionary = await _advance_fan_to_completion(
+			close_fan,
+			36,
+			0.02
+		)
 		var close_hits: int = int(
 			close_target.get_meta("metal_needle_fan_hits_from_serial", 0)
 		)
@@ -144,10 +142,9 @@ func run_tests() -> void:
 			"a close target receives the authored three-needle multihit cap"
 		)
 		_expect(
-			int(close_fan.get_debug_data().get("total_hits", 0)) == 3,
+			int(close_debug.get("total_hits", 0)) == 3,
 			"extra intersecting needles stop without exceeding the damage cap"
 		)
-		close_fan.finish_volley()
 	await get_tree().process_frame
 	_expect(
 		get_tree().get_node_count_in_group("spell_effects") == effects_before,
@@ -157,13 +154,29 @@ func run_tests() -> void:
 	_finish([player, close_target, floor])
 
 
+func _advance_fan_to_completion(
+	fan: MetalNeedleFan,
+	maximum_steps: int,
+	step_seconds: float
+) -> Dictionary:
+	var snapshot: Dictionary = {}
+	for _step: int in range(maxi(maximum_steps, 1)):
+		if fan == null or not is_instance_valid(fan):
+			break
+		var continuing: bool = fan.advance_volley(step_seconds)
+		snapshot = fan.get_debug_data().duplicate(true)
+		if not continuing:
+			break
+		await get_tree().physics_frame
+	return snapshot
+
+
 func _test_ability_contract() -> void:
-	_expect(
-		MetalNeedleAbility.get_spell_id() == "metal_needle",
-		"Metal Needle keeps its stable spell ID"
-	)
+	_expect(MetalNeedleAbility.get_spell_id() == "metal_needle", "Metal Needle keeps its stable spell ID")
 	_expect(MetalNeedleAbility.element == "metal", "Metal Needle belongs to Metal")
 	_expect(MetalNeedleAbility.mana_cost == 2, "Metal Needle costs two Mana")
+	_expect(MetalNeedleAbility.category == AbilityDefinition.AbilityCategory.PROJECTILE, "Metal Needle remains a projectile ability")
+	_expect(MetalNeedleAbility.get_targeting_style() == "fan", "Metal Needle exposes a fan targeting preview")
 	_expect(
 		MetalNeedleAbility.ability_scene != null
 		and MetalNeedleAbility.ability_scene.resource_path

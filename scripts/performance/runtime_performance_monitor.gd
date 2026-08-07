@@ -14,6 +14,8 @@ signal performance_budget_state_changed(state: String, snapshot: Dictionary)
 @export var show_on_start: bool = false
 @export var toggle_key: Key = KEY_F7
 @export var collect_tree_counts_when_visible: bool = true
+@export_range(16, 2048, 16) var tree_census_nodes_per_frame: int = 192
+@export_range(0.25, 10.0, 0.25) var tree_census_refresh_seconds: float = 2.0
 
 var sample_remaining: float = 0.0
 var pending_frame_ms: Array[float] = []
@@ -26,6 +28,15 @@ var lifetime_spike_count: int = 0
 var sample_count: int = 0
 var overlay_panel: PanelContainer
 var overlay_label: Label
+
+var latest_tree_counts: Dictionary = {}
+var tree_census_working_counts: Dictionary = {}
+var tree_census_stack: Array[Node] = []
+var tree_census_active: bool = false
+var tree_census_refresh_remaining: float = 0.0
+var tree_census_scanned_nodes: int = 0
+var tree_census_completed_count: int = 0
+var tree_census_cancel_count: int = 0
 
 
 func _ready() -> void:
@@ -41,6 +52,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	record_frame_sample(delta)
+	_update_tree_census(delta)
 	sample_remaining -= maxf(delta, 0.0)
 	if sample_remaining > 0.0:
 		return
@@ -78,9 +90,8 @@ func _record_history_sample(frame_ms: float) -> void:
 			frame_history_cursor = 0
 		return
 
-	# The previous monitor used Array.pop_front() after the history filled. That
-	# shifted hundreds of floats every frame forever. A fixed ring overwrites one
-	# slot in O(1), so profiling the game no longer becomes part of the slowdown.
+	# A fixed ring overwrites one float in O(1). Profiling the game must never
+	# become a steadily growing source of work itself.
 	frame_history_ms[frame_history_cursor] = frame_ms
 	frame_history_cursor = (frame_history_cursor + 1) % capacity
 	frame_history_overwrite_count += 1
@@ -100,9 +111,12 @@ func sample_performance() -> Dictionary:
 	for frame_ms: float in batch:
 		if frame_ms >= spike_threshold_ms:
 			recent_spikes += 1
-	var tree_counts: Dictionary = {}
-	if is_overlay_visible() and collect_tree_counts_when_visible:
-		tree_counts = _collect_tree_counts()
+
+	# The previous overlay recursively walked the complete scene tree inside this
+	# sampling call. Large scenes therefore produced a profiler-authored frame
+	# spike every half second. The census is now amortized across ordinary frames,
+	# and sampling only copies the last completed result.
+	var tree_counts: Dictionary = latest_tree_counts.duplicate(true)
 	latest_snapshot = {
 		"fps": _monitor(Performance.TIME_FPS),
 		"average_frame_ms": snappedf(average_frame_ms, 0.01),
@@ -123,6 +137,9 @@ func sample_performance() -> Dictionary:
 		"history_samples": frame_history_ms.size(),
 		"history_overwrites": frame_history_overwrite_count,
 		"tree_counts": tree_counts,
+		"tree_census_active": tree_census_active,
+		"tree_census_scanned_nodes": tree_census_scanned_nodes,
+		"tree_census_completed": tree_census_completed_count,
 	}
 	var next_state: String = _resolve_budget_state(p95_frame_ms)
 	latest_snapshot["budget_state"] = next_state
@@ -140,6 +157,11 @@ func set_overlay_visible(value: bool) -> void:
 		overlay_panel.visible = value
 	if value:
 		sample_remaining = 0.0
+		tree_census_refresh_remaining = 0.0
+		if collect_tree_counts_when_visible and not tree_census_active:
+			_begin_tree_census()
+	else:
+		_cancel_tree_census()
 
 
 func is_overlay_visible() -> bool:
@@ -159,6 +181,10 @@ func reset_history() -> void:
 	sample_count = 0
 	latest_snapshot.clear()
 	latest_budget_state = "unknown"
+	latest_tree_counts.clear()
+	tree_census_completed_count = 0
+	tree_census_cancel_count = 0
+	_cancel_tree_census(false)
 	_refresh_overlay()
 
 
@@ -197,39 +223,120 @@ func _percentile(values: Array[float], percentile: float) -> float:
 	return sorted_values[index]
 
 
-func _collect_tree_counts() -> Dictionary:
+func _update_tree_census(delta: float) -> void:
+	if not is_overlay_visible() or not collect_tree_counts_when_visible:
+		return
+	if tree_census_active:
+		_step_tree_census(tree_census_nodes_per_frame)
+		return
+
+	tree_census_refresh_remaining = maxf(
+		tree_census_refresh_remaining - maxf(delta, 0.0),
+		0.0
+	)
+	if tree_census_refresh_remaining > 0.0:
+		return
+	_begin_tree_census()
+	_step_tree_census(tree_census_nodes_per_frame)
+
+
+func _begin_tree_census() -> void:
 	var scene: Node = get_tree().current_scene if get_tree() != null else null
 	if scene == null:
-		return {}
-	var stack: Array[Node] = [scene]
-	var processing: int = 0
-	var physics_processing: int = 0
-	var visible_labels: int = 0
-	var visible_geometry: int = 0
-	while not stack.is_empty():
-		var node: Node = stack.pop_back()
-		if node.is_processing():
-			processing += 1
-		if node.is_physics_processing():
-			physics_processing += 1
-		if node is Label3D and (node as Label3D).visible:
-			visible_labels += 1
-		elif node is GeometryInstance3D and (node as GeometryInstance3D).visible:
-			visible_geometry += 1
-		for child: Node in node.get_children():
-			stack.append(child)
-	return {
-		"processing_nodes": processing,
-		"physics_processing_nodes": physics_processing,
-		"visible_labels_3d": visible_labels,
-		"visible_geometry": visible_geometry,
-		"spell_effects": get_tree().get_nodes_in_group("spell_effects").size(),
-		"persistent_spell_effects": get_tree().get_nodes_in_group(
-			"persistent_spell_effects"
-		).size(),
-		"spell_projectiles": get_tree().get_nodes_in_group("spell_projectiles").size(),
-		"spell_fields": get_tree().get_nodes_in_group("spell_fields").size(),
+		latest_tree_counts.clear()
+		tree_census_active = false
+		return
+	tree_census_stack.clear()
+	tree_census_stack.append(scene)
+	tree_census_working_counts = {
+		"processing_nodes": 0,
+		"physics_processing_nodes": 0,
+		"visible_labels_3d": 0,
+		"visible_geometry": 0,
 	}
+	tree_census_scanned_nodes = 0
+	tree_census_active = true
+
+
+func _step_tree_census(node_budget: int) -> bool:
+	if not tree_census_active:
+		return false
+	var remaining_budget: int = maxi(node_budget, 1)
+	while remaining_budget > 0 and not tree_census_stack.is_empty():
+		var node: Node = tree_census_stack.pop_back()
+		remaining_budget -= 1
+		if node == null or not is_instance_valid(node):
+			continue
+		tree_census_scanned_nodes += 1
+		if node.is_processing():
+			tree_census_working_counts["processing_nodes"] = int(
+				tree_census_working_counts.get("processing_nodes", 0)
+			) + 1
+		if node.is_physics_processing():
+			tree_census_working_counts["physics_processing_nodes"] = int(
+				tree_census_working_counts.get("physics_processing_nodes", 0)
+			) + 1
+		if node is Label3D and (node as Label3D).visible:
+			tree_census_working_counts["visible_labels_3d"] = int(
+				tree_census_working_counts.get("visible_labels_3d", 0)
+			) + 1
+		elif node is GeometryInstance3D and (node as GeometryInstance3D).visible:
+			tree_census_working_counts["visible_geometry"] = int(
+				tree_census_working_counts.get("visible_geometry", 0)
+			) + 1
+
+		# Index-based traversal avoids allocating a temporary child Array for every
+		# node in the census.
+		for child_index: int in range(node.get_child_count()):
+			tree_census_stack.append(node.get_child(child_index))
+
+	if tree_census_stack.is_empty():
+		_finish_tree_census()
+		return true
+	return false
+
+
+func _finish_tree_census() -> void:
+	var tree: SceneTree = get_tree()
+	if tree != null:
+		tree_census_working_counts["spell_effects"] = tree.get_node_count_in_group(
+			"spell_effects"
+		)
+		tree_census_working_counts["persistent_spell_effects"] = tree.get_node_count_in_group(
+			"persistent_spell_effects"
+		)
+		tree_census_working_counts["spell_projectiles"] = tree.get_node_count_in_group(
+			"spell_projectiles"
+		)
+		tree_census_working_counts["spell_fields"] = tree.get_node_count_in_group(
+			"spell_fields"
+		)
+	tree_census_working_counts["scanned_nodes"] = tree_census_scanned_nodes
+	latest_tree_counts = tree_census_working_counts.duplicate(true)
+	tree_census_working_counts.clear()
+	tree_census_stack.clear()
+	tree_census_active = false
+	tree_census_completed_count += 1
+	tree_census_refresh_remaining = maxf(
+		tree_census_refresh_seconds,
+		0.25
+	)
+	_refresh_overlay()
+
+
+func _cancel_tree_census(count_cancel: bool = true) -> void:
+	if tree_census_active and count_cancel:
+		tree_census_cancel_count += 1
+	tree_census_active = false
+	tree_census_stack.clear()
+	tree_census_working_counts.clear()
+	tree_census_scanned_nodes = 0
+
+
+# Compatibility accessor for debug callers. It returns the last complete census
+# and never performs a synchronous recursive walk.
+func _collect_tree_counts() -> Dictionary:
+	return latest_tree_counts.duplicate(true)
 
 
 func _build_overlay() -> void:
@@ -239,7 +346,7 @@ func _build_overlay() -> void:
 	overlay_panel.offset_left = -310.0
 	overlay_panel.offset_top = 18.0
 	overlay_panel.offset_right = -18.0
-	overlay_panel.offset_bottom = 256.0
+	overlay_panel.offset_bottom = 274.0
 	overlay_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.015, 0.022, 0.038, 0.92)
@@ -265,6 +372,11 @@ func _refresh_overlay() -> void:
 		overlay_label.text = "PERFORMANCE • F7\nCollecting frame samples…"
 		return
 	var tree_counts: Dictionary = latest_snapshot.get("tree_counts", {}) as Dictionary
+	var census_label: String = (
+		"SCANNING " + str(tree_census_scanned_nodes)
+		if tree_census_active
+		else "READY " + str(tree_census_completed_count)
+	)
 	overlay_label.text = (
 		"PERFORMANCE • " + str(latest_snapshot.get("budget_state", "unknown")).to_upper() + " • F7\n"
 		+ "FPS " + str(snappedf(float(latest_snapshot.get("fps", 0.0)), 0.1))
@@ -280,7 +392,9 @@ func _refresh_overlay() -> void:
 		+ "SPELL FX " + str(tree_counts.get("spell_effects", "—"))
 		+ "   PERSISTENT " + str(tree_counts.get("persistent_spell_effects", "—")) + "\n"
 		+ "LABELS 3D " + str(tree_counts.get("visible_labels_3d", "—"))
-		+ "   SPIKES " + str(latest_snapshot.get("recent_spikes", 0))
+		+ "   CENSUS " + census_label + "\n"
+		+ "SPIKES " + str(latest_snapshot.get("recent_spikes", 0))
+		+ "   HISTORY " + str(frame_history_ms.size())
 	)
 
 
@@ -295,5 +409,11 @@ func get_debug_data() -> Dictionary:
 		"history_capacity": maximum_history_samples,
 		"history_cursor": frame_history_cursor,
 		"history_overwrites": frame_history_overwrite_count,
+		"tree_census_active": tree_census_active,
+		"tree_census_nodes_per_frame": tree_census_nodes_per_frame,
+		"tree_census_scanned_nodes": tree_census_scanned_nodes,
+		"tree_census_completed": tree_census_completed_count,
+		"tree_census_cancelled": tree_census_cancel_count,
+		"tree_counts": latest_tree_counts.duplicate(true),
 		"latest": latest_snapshot.duplicate(true),
 	}

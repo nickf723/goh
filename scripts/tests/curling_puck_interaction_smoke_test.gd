@@ -33,6 +33,8 @@ func run_tests() -> void:
 	trail.name = "CurlingInteractionTrail"
 	add_child(trail)
 	trail.configure(source, 701)
+	await get_tree().process_frame
+	await get_tree().physics_frame
 	trail.add_path_between(
 		Vector3(-2.0, 0.0, 0.0),
 		Vector3(2.0, 0.0, 0.0),

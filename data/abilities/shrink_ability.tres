@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/shrink_cast.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Shrink"
+description = "Reduce Grace's physical size and mass. Shrink improves movement and attack speed, makes dodging quicker, and opens narrow traversal routes, but reduces weapon power and stability. Cast Shrink again to return to normal size for free."
+element = "body"
+category = 3
+mana_cost = 2
+use_trait_profile = false
+spell_id = "shrink"
+short_label = "Shrink"
+icon_text = "⇩"
+roles = Array[String](["transformation", "movement", "agility", "traversal", "evasion", "small_space", "puzzle", "persistent"])
+targeting_style = "self"
+delivery_type = "persistent_body_form"
+combo_tags = Array[String](["body", "shrink", "small", "light", "speed", "nimble", "crawlspace", "evasion"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["small", "quick", "nimble", "light", "toggle"])
+debug_tags = Array[String](["collision_resize", "persistent_form", "dynamic_mass", "narrow_route"])
+scaling_stats = Array[String](["skill", "body", "focus"])
+scaling_note = "Skill and Body govern agility; Focus is reserved for future minimum scale, enhanced evasion, and form-switching techniques."
+design_notes = "Shrink is an indefinite mutually exclusive body form. The same spell toggles back to normal without a second Mana payment. Returning to normal is clearance-checked so Grace cannot expand inside a space that only the smaller form can occupy."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

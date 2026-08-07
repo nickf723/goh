@@ -1,0 +1,125 @@
+name: Firewall validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/firewall_cast.gd"
+      - "scripts/levels/prototype_firewall_spell_trial.gd"
+      - "scripts/tests/firewall_spell_smoke_test.gd"
+      - "scripts/tests/firewall_trial_smoke_test.gd"
+      - "scenes/actions/firewall_cast.tscn"
+      - "scenes/levels/prototypes/prototype_firewall_spell_trial_v1.tscn"
+      - "scenes/tests/firewall_spell_smoke_test.tscn"
+      - "scenes/tests/firewall_trial_smoke_test.tscn"
+      - "data/abilities/firewall_ability.tres"
+      - "data/damage_payloads/firewall_payload.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "docs/FIREWALL_V1.md"
+      - ".github/workflows/firewall-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firewall-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-firewall:
+    name: Import and Firewall regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Show Godot version
+        run: godot --version
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee firewall-import.log
+
+      - name: Boot the Ember Scriptorium
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 3 res://scenes/levels/prototypes/prototype_firewall_spell_trial_v1.tscn 2>&1 | tee firewall-trial-boot.log
+
+      - name: Run Firewall surface-path regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/firewall_spell_smoke_test.tscn 2>&1 | tee firewall-test.log
+
+      - name: Run Ember Scriptorium progression regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/firewall_trial_smoke_test.tscn 2>&1 | tee firewall-trial-test.log
+
+      - name: Run Focus and quickbar independence regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_independence_smoke_test.tscn 2>&1 | tee focus-quickbar-test.log
+
+      - name: Run Focus icon-row regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_icon_independence_smoke_test.tscn 2>&1 | tee focus-icon-test.log
+
+      - name: Run permanent quickbar regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/quick_spell_belt_smoke_test.tscn 2>&1 | tee quickbar-test.log
+
+      - name: Run performance foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance-test.log
+
+      - name: Run spell capability regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/spell_capability_manifest_smoke_test.tscn 2>&1 | tee spell-capability-test.log
+
+      - name: Run laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload Firewall validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firewall-validation-logs
+          path: |
+            firewall-import.log
+            firewall-trial-boot.log
+            firewall-test.log
+            firewall-trial-test.log
+            focus-quickbar-test.log
+            focus-icon-test.log
+            quickbar-test.log
+            performance-test.log
+            spell-capability-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

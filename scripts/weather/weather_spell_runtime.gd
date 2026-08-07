@@ -34,6 +34,10 @@ static func resolve_or_create(
 	var normalized: String = _normalize_kind(weather_kind)
 	var authored: Node = _find_controller(tree, normalized)
 	if authored != null:
+		# An authored controller may coexist with a generated controller left by a
+		# previous weather cast. Release generated presentations before handing
+		# authority to the authored scene node so inactive weather cannot pile up.
+		_release_other_runtime_controllers(tree, normalized)
 		return authored
 
 	var manager: Node = ConcentrationRuntime.ensure_manager(tree, player)

@@ -88,16 +88,19 @@ Aim into a nearby wall      → horizontal push away
 Aim into nearby ground      → upward launch
 ```
 
-The base tune uses:
+The production tune uses:
 
 ```text
-Maximum recoil distance: 4.2 meters
-Recoil acceleration:     34 m/s² at full pressure
-Maximum upward speed:    10.5 m/s
+Maximum recoil distance: 5 meters
+Recoil acceleration:     46 m/s² at full pressure
+Maximum upward speed:    11.5 m/s
 Maximum planar speed:     8 m/s
+Minimum close-contact factor: 30%
 ```
 
-Ground normals blend into the recoil direction, making a downward cast rise cleanly instead of sending Grace through the floor at an oblique angle. The launch is still continuous physics, not a teleport or scripted jump. Releasing Water Jet preserves the velocity already earned.
+The stronger traversal tune lets Grace clear the Pressureworks ledge through a maintained downward stream rather than receiving only a decorative hop. Ground normals blend into the recoil direction, making a downward cast rise cleanly instead of sending Grace through the floor at an oblique angle.
+
+The launch remains continuous physics, not a teleport or scripted jump. Releasing Water Jet preserves the velocity already earned.
 
 The spell publishes `water_jet_self_launch_serial` on Grace when upward speed crosses the traversal threshold. Authored rooms can require a genuine pressure launch without hard-coding the spell into ordinary movement logic.
 
@@ -115,6 +118,8 @@ Water Jet uses one action node for the complete channel:
 30 visual updates per second
 0 persistent spell fields
 ```
+
+The production authority initializes both stream transforms immediately when casting begins, so the reused cylinders never spend a frame sitting at the scene origin.
 
 F7 should show one additional `SPELL FX` while the stream is active. `PERSISTENT` should remain unchanged. Releasing or exhausting the channel returns `SPELL FX` to its prior value.
 
@@ -175,7 +180,7 @@ F8 restores:
 5. Hold the jet on the pressure cargo and confirm force builds while damage remains irrelevant to the object puzzle.
 6. Test an enemy and confirm rapid one-point health ticks, zero stance damage, Wet, and strong sustained knockback.
 7. Aim into a nearby wall and feel Grace push away from it.
-8. Aim sharply into the blue floor pad and maintain the stream until Grace launches.
+8. Aim sharply into the blue floor pad and maintain the stream until Grace launches onto the raised platform.
 9. Release while airborne and confirm earned velocity remains.
 10. Combine Water Jet recoil with Surf and ordinary movement.
 11. Watch F7 during a long channel. `SPELL FX` should rise by one, `PERSISTENT` should remain unchanged, and both frame distribution and effect cleanup should stay green.

@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("2_definition")
 display_name = "Flash"
-description = "Become a lightning bolt and cross the aimed line instantly, stopping at the first solid contact. Flash does not seek a safe landing."
+description = "Hold Cast to move an independent aim pointer, then release to become a lightning bolt and cross that line instantly until first solid contact. Flash does not seek a safe landing."
 element = "lightning"
 category = 1
 mana_cost = 4
@@ -20,10 +20,10 @@ targeting_style = "directional_3d"
 delivery_type = "instant_travel"
 combo_tags = Array[String](["lightning", "flash", "instant", "line_travel", "contact", "momentum"])
 status_tags = Array[String]([])
-ui_tags = Array[String](["movement", "instant", "aimed", "unsafe_landing"])
-debug_tags = Array[String](["prototype", "capsule_profile_sweep", "single_multimesh", "non_damaging"])
+ui_tags = Array[String](["movement", "instant", "aimed", "unsafe_landing", "hold_to_aim", "free_pointer"])
+debug_tags = Array[String](["prototype", "capsule_profile_sweep", "single_multimesh", "non_damaging", "pointer_aim"])
 scaling_stats = Array[String](["arcana", "lightning", "focus"])
-scaling_note = "Lightning and Arcana govern transformation strength; Focus is reserved for future distance, contact, and steering upgrades."
-design_notes = "Flash is a full three-dimensional line traversal spell. It moves Grace instantly toward the camera aim until the first solid collision or the prototype distance cap. It performs no ground snap and no safe-destination search, so upward casts deliberately leave Grace airborne. The base spell deals no damage and preserves ongoing states such as Surf."
+scaling_note = "Lightning and Arcana govern transformation strength; Focus is reserved for future distance, contact, and pointer-handling upgrades."
+design_notes = "Flash is a full three-dimensional line traversal spell. Pressing Cast enters a pointer-aim state without spending Mana; releasing commits the direction, pays the cost, and moves Grace instantly until first solid collision or the prototype distance cap. The pointer may travel beyond the visible viewport edge, so upward and downward aim are no longer limited by camera pitch. Flash performs no ground snap or safe-destination search, and the base spell deals no damage while preserving ongoing states such as Surf."
 ability_scene = ExtResource("1_scene")
 metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

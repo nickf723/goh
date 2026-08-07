@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "scripts/actions/firewall_cast.gd"
+      - "scripts/actions/firewall_cast_surface_safe.gd"
       - "scripts/levels/prototype_firewall_spell_trial.gd"
       - "scripts/tests/firewall_spell_smoke_test.gd"
       - "scripts/tests/firewall_trial_smoke_test.gd"

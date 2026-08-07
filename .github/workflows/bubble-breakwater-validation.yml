@@ -1,0 +1,116 @@
+name: Bubble Breakwater validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/player/player_bubble_shield_controller.gd"
+      - "scripts/actions/bubble_cast.gd"
+      - "scenes/actions/bubble_cast.tscn"
+      - "data/abilities/bubble_ability.tres"
+      - "data/damage_payloads/bubble_burst_payload.tres"
+      - "data/ability_trait_profiles/one_hit_shield_profile.tres"
+      - "art/icons/spells/bubble.svg"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "scenes/actors/player/player.tscn"
+      - "scripts/player/player_defense_controller.gd"
+      - "scripts/player/player_defense_controller_elemental.gd"
+      - "scripts/player/player_status_receiver.gd"
+      - "scripts/performance/runtime_performance_monitor.gd"
+      - "scripts/levels/prototype_bubble_breakwater_spell_trial.gd"
+      - "scenes/levels/prototypes/prototype_bubble_breakwater_spell_trial_v1.tscn"
+      - "scripts/tests/bubble_breakwater_smoke_test.gd"
+      - "scenes/tests/bubble_breakwater_smoke_test.tscn"
+      - "scripts/tests/runtime_performance_incremental_census_smoke_test.gd"
+      - "scenes/tests/runtime_performance_incremental_census_smoke_test.tscn"
+      - "scripts/tests/runtime_performance_foundation_smoke_test.gd"
+      - "scenes/tests/runtime_performance_foundation_smoke_test.tscn"
+      - "scripts/tests/architecture_contract_smoke_test.gd"
+      - "scenes/tests/architecture_contract_smoke_test.tscn"
+      - "scripts/systems/lab_resource_regenerator.gd"
+      - "scripts/systems/lab_resource_regenerator_installer.gd"
+      - "docs/bubble_breakwater_v1_test.md"
+      - "docs/PERFORMANCE_FOUNDATION_V1.md"
+      - ".github/workflows/bubble-breakwater-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bubble-breakwater-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Import, one-hit ward, and performance regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee bubble-import.log
+
+      - name: Boot Bubble Breakwater spell trial
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/levels/prototypes/prototype_bubble_breakwater_spell_trial_v1.tscn --quit-after 6 2>&1 | tee bubble-breakwater-startup.log
+
+      - name: Run Bubble Breakwater regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/bubble_breakwater_smoke_test.tscn 2>&1 | tee bubble-breakwater-test.log
+
+      - name: Run incremental F7 census regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_incremental_census_smoke_test.tscn 2>&1 | tee performance-census-test.log
+
+      - name: Run performance foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance-foundation-test.log
+
+      - name: Run shared architecture contract
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/architecture_contract_smoke_test.tscn 2>&1 | tee architecture-test.log
+
+      - name: Run shared laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bubble-breakwater-validation-logs
+          path: |
+            bubble-import.log
+            bubble-breakwater-startup.log
+            bubble-breakwater-test.log
+            performance-census-test.log
+            performance-foundation-test.log
+            architecture-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

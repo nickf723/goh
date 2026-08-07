@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/contagion_cloud.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/contagion_cloud_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Contagion Cloud"
+description = "Launch a large, slow-moving globe of poison gas. It persists through targets, poisons anything that enters, and lasts until its timer expires."
+element = "poison"
+category = 4
+mana_cost = 3
+use_trait_profile = false
+spell_id = "contagion_cloud"
+short_label = "Contagion"
+icon_text = "☣>"
+roles = Array[String](["damage_over_time", "moving_field", "area_control", "status", "setup", "positioning", "gas"])
+targeting_style = "aimed"
+delivery_type = "moving_field"
+combo_tags = Array[String](["poison", "gas", "cloud", "contagion", "toxic_ignition", "cloud_spread", "airflow", "moving_hazard"])
+status_tags = Array[String](["poisoned"])
+ui_tags = Array[String](["slow_projectile", "large_aoe", "persistent", "outpace", "passes_through_targets"])
+debug_tags = Array[String](["single_node_field", "one_sphere_query", "one_puff_multimesh", "time_limited", "no_contact_dissipation", "no_per_puff_nodes"])
+scaling_stats = Array[String](["arcana", "poison", "focus"])
+scaling_note = "Poison and Arcana govern exposure strength; Focus is reserved for future speed, duration, radius, and steering upgrades."
+design_notes = "Contagion Cloud is a moving area rather than an impact projectile. It travels horizontally at less than half Grace's run speed, passes through characters and props, stops against solid architecture without disappearing, and expires only when its lifetime ends or a reaction explicitly consumes it. Targets inside the volume have Poisoned sustained through the shared status system."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

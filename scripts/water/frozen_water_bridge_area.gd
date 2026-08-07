@@ -9,6 +9,7 @@ signal body_released(body: Node3D)
 var tracked_bodies: Dictionary = {}
 var support_count: int = 0
 var release_count: int = 0
+var rejected_body_count: int = 0
 
 
 func _ready() -> void:
@@ -41,6 +42,9 @@ func _on_body_exited(body: Node3D) -> void:
 func register_body(body: Node3D) -> void:
 	if body == null or not is_instance_valid(body):
 		return
+	if not _supports_body(body):
+		rejected_body_count += 1
+		return
 	var body_id: int = body.get_instance_id()
 	if tracked_bodies.has(body_id):
 		return
@@ -71,6 +75,10 @@ func unregister_body(body: Node3D) -> void:
 	):
 		swimming_controller.call("exit_frozen_surface", self)
 	body_released.emit(body)
+
+
+func _supports_body(body: Node3D) -> bool:
+	return body is CharacterBody3D or body is RigidBody3D
 
 
 func has_registered_body(body: Node) -> bool:
@@ -106,4 +114,5 @@ func get_debug_data() -> Dictionary:
 		"body_names": body_names,
 		"supports": support_count,
 		"releases": release_count,
+		"rejected_bodies": rejected_body_count,
 	}

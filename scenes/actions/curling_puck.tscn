@@ -1,6 +1,6 @@
 [gd_scene load_steps=9 format=3]
 
-[ext_resource type="Script" path="res://scripts/actions/curling_puck.gd" id="1_puck"]
+[ext_resource type="Script" path="res://scripts/actions/curling_puck_ready.gd" id="1_puck"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape_puck"]
 radius = 0.42

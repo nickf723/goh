@@ -1,0 +1,132 @@
+name: Contagion Cloud validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/contagion_cloud.gd"
+      - "scripts/levels/prototype_contagion_cloud_spell_trial.gd"
+      - "scripts/tests/contagion_cloud_spell_smoke_test.gd"
+      - "scripts/tests/contagion_cloud_trial_smoke_test.gd"
+      - "scenes/actions/contagion_cloud.tscn"
+      - "scenes/levels/prototypes/prototype_contagion_cloud_spell_trial_v1.tscn"
+      - "scenes/tests/contagion_cloud_spell_smoke_test.tscn"
+      - "scenes/tests/contagion_cloud_trial_smoke_test.tscn"
+      - "data/abilities/contagion_cloud_ability.tres"
+      - "data/damage_payloads/contagion_cloud_payload.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "docs/CONTAGION_CLOUD_V1.md"
+      - ".github/workflows/contagion-cloud-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contagion-cloud-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-contagion-cloud:
+    name: Import and Contagion Cloud regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Show Godot version
+        run: godot --version
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee contagion-cloud-import.log
+
+      - name: Boot the Pestilent Procession
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 3 res://scenes/levels/prototypes/prototype_contagion_cloud_spell_trial_v1.tscn 2>&1 | tee contagion-cloud-trial-boot.log
+
+      - name: Run Contagion Cloud movement and exposure regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/contagion_cloud_spell_smoke_test.tscn 2>&1 | tee contagion-cloud-test.log
+
+      - name: Run Pestilent Procession progression regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/contagion_cloud_trial_smoke_test.tscn 2>&1 | tee contagion-cloud-trial-test.log
+
+      - name: Run Focus and quickbar independence regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_independence_smoke_test.tscn 2>&1 | tee focus-quickbar-test.log
+
+      - name: Run Focus icon-row regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_icon_independence_smoke_test.tscn 2>&1 | tee focus-icon-test.log
+
+      - name: Run permanent quickbar regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/quick_spell_belt_smoke_test.tscn 2>&1 | tee quickbar-test.log
+
+      - name: Run spell capability regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/spell_capability_manifest_smoke_test.tscn 2>&1 | tee spell-capability-test.log
+
+      - name: Run Gas foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/gas_dynamics_smoke_test.tscn 2>&1 | tee gas-test.log
+
+      - name: Run performance foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance-test.log
+
+      - name: Run laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload Contagion Cloud validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contagion-cloud-validation-logs
+          path: |
+            contagion-cloud-import.log
+            contagion-cloud-trial-boot.log
+            contagion-cloud-test.log
+            contagion-cloud-trial-test.log
+            focus-quickbar-test.log
+            focus-icon-test.log
+            quickbar-test.log
+            spell-capability-test.log
+            gas-test.log
+            performance-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

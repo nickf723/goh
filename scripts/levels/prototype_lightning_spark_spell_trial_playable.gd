@@ -71,6 +71,12 @@ func _spawn_target(
 		position_value,
 		health
 	)
+	# These are puzzle conductors, not combat enemies. The cone can still find
+	# them through physics, while an already-unlocked Chain Lightning cannot use
+	# them as secondary jumps and counterfeit the authored fan solution.
+	if target.is_in_group("enemy"):
+		target.remove_from_group("enemy")
+	target.add_to_group("lightning_spark_trial_conductors")
 	target.set_physics_process(false)
 	var hit_receiver: Node = target.get_node_or_null("HitReceiver")
 	if hit_receiver != null:
@@ -89,4 +95,5 @@ func get_debug_data() -> Dictionary:
 	data["one_cast_fan_required"] = true
 	data["incomplete_fan_resets"] = incomplete_fan_reset_count
 	data["spark_listener"] = spark_listener_connected
+	data["conductors_are_chain_targets"] = false
 	return data

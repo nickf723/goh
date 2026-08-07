@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 0
+stance_damage = 0
+element = "water"
+source_name = "Bubble Burst"
+hit_type = "defense_burst"
+status_effect = ""
+status_duration = 0.0
+status_strength = 0.0
+tags = Array[String](["water", "magic", "shield", "bubble", "force", "defense", "non_damaging", "impact_conversion"])
+knockback_strength = 6.5
+knockback_up_strength = 1.1

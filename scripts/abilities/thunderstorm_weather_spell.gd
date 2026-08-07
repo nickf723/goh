@@ -17,8 +17,32 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 		queue_free()
 		return
 
-	weather_controller.call("toggle_weather", "thunderstorm", player)
+	var active_after_toggle: bool = bool(
+		weather_controller.call(
+			"toggle_weather",
+			"thunderstorm",
+			player
+		)
+	)
+	_cleanup_dismissed_runtime_controller(
+		weather_controller,
+		active_after_toggle
+	)
 	queue_free()
+
+
+func _cleanup_dismissed_runtime_controller(
+	weather_controller: Node,
+	active_after_toggle: bool
+) -> void:
+	if (
+		active_after_toggle
+		or weather_controller == null
+		or not is_instance_valid(weather_controller)
+		or not bool(weather_controller.get_meta("runtime_weather_controller", false))
+	):
+		return
+	weather_controller.queue_free()
 
 
 func show_message(text: String) -> void:

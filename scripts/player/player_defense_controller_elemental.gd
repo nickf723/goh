@@ -18,6 +18,8 @@ func resolve_incoming_attack(
 	attacker: Node3D = null
 ) -> Dictionary:
 	last_authority_result.clear()
+	if _surf_negates_surface_hazard(payload):
+		return _resolve_surf_surface_hazard(payload)
 	if (
 		payload != null
 		and actor != null
@@ -83,6 +85,65 @@ func resolve_incoming_attack(
 	return super.resolve_incoming_attack(payload, attacker)
 
 
+func _surf_negates_surface_hazard(payload: DamagePayload) -> bool:
+	if payload == null or actor == null:
+		return false
+	if not bool(actor.get_meta("surf_surface_hazard_immunity", false)):
+		return false
+	var normalized_hit_type: String = payload.hit_type.strip_edges().to_lower()
+	if normalized_hit_type in [
+		"surface_hazard",
+		"terrain_hazard",
+		"lava_surface",
+		"spike_floor",
+	]:
+		return true
+	for tag: String in payload.tags:
+		if tag.strip_edges().to_lower() in [
+			"surface_hazard",
+			"terrain_hazard",
+			"ground_hazard",
+			"lava_surface",
+			"spike_floor",
+		]:
+			return true
+	return false
+
+
+func _resolve_surf_surface_hazard(payload: DamagePayload) -> Dictionary:
+	last_outcome = "surf_surface_hazard"
+	last_authority_result = {
+		"immune": true,
+		"authority_id": "surf_surface_hazard",
+		"surface_hazard": true,
+		"element": payload.element,
+	}
+	var result: Dictionary = make_result(
+		"surf_surface_hazard",
+		payload,
+		"Surf carries Grace over " + payload.source_name + "."
+	)
+	result["surf"] = true
+	result["surface_hazard"] = true
+	result["negated_element"] = payload.element
+	result["damage"] = 0
+	result["stance_damage"] = 0
+	result["health_damage"] = 0
+	result["stance_cost"] = 0
+	result["stamina_cost"] = 0
+	result["negated_damage"] = payload.amount
+	result["negated_stance_damage"] = payload.stance_damage
+	var surf_controller: Node = actor.get_node_or_null("SurfController")
+	if (
+		surf_controller != null
+		and surf_controller.has_method("record_hazard_negation")
+	):
+		surf_controller.call("record_hazard_negation", payload)
+	attack_blocked.emit(result)
+	emit_defense_state()
+	return result
+
+
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["authority_ready"] = elemental_authority_controller != null
@@ -98,5 +159,9 @@ func get_debug_data() -> Dictionary:
 	data["hearth_fire_immunity"] = (
 		actor != null
 		and bool(actor.get_meta("divine_special_fire_immunity", false))
+	)
+	data["surf_surface_hazard_immunity"] = (
+		actor != null
+		and bool(actor.get_meta("surf_surface_hazard_immunity", false))
 	)
 	return data

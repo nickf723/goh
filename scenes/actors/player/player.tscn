@@ -61,6 +61,7 @@
 [ext_resource type="Script" path="res://scripts/ui/divine_special_hud.gd" id="59_special_hud"]
 [ext_resource type="Script" path="res://scripts/ui/player_hud_unified.gd" id="60_hud_v2"]
 [ext_resource type="Script" path="res://scripts/player/player_flamethrower_controller.gd" id="61_flamethrower"]
+[ext_resource type="Script" path="res://scripts/player/player_bubble_shield_controller.gd" id="62_bubble"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
 radius = 0.46
@@ -208,6 +209,9 @@ script = ExtResource("16_resources")
 
 [node name="PlayerDefenseController" type="Node" parent="."]
 script = ExtResource("17_defense")
+
+[node name="BubbleShieldController" type="Node3D" parent="."]
+script = ExtResource("62_bubble")
 
 [node name="PlayerQuickItemController" type="Node3D" parent="."]
 script = ExtResource("18_quick_items")

@@ -26,7 +26,10 @@ func _install_ready_trail() -> void:
 	if scene_root == null:
 		return
 	var old_trail: CurlingIceTrail = trail
+	var old_parent: Node = old_trail.get_parent()
 	old_trail.force_dissipate("replace_with_ready_trail")
+	if old_parent != null and old_trail.get_parent() == old_parent:
+		old_parent.remove_child(old_trail)
 
 	var ready_trail: CurlingIceTrailReady = (
 		ReadyTrailScript.new() as CurlingIceTrailReady
@@ -73,4 +76,5 @@ func get_debug_data() -> Dictionary:
 		and trail.has_meta("curling_puck_curl_sign")
 	)
 	data["ready_trail_interactions"] = trail is CurlingIceTrailReady
+	data["transient_duplicate_trail"] = false
 	return data

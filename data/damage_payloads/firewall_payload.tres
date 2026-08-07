@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 2
+stance_damage = 1
+element = "fire"
+source_name = "Firewall"
+hit_type = "lingering_wall"
+status_effect = "burning"
+status_duration = 1.4
+status_strength = 0.9
+tags = Array[String](["fire", "magic", "field", "hazard", "wall", "surface_path", "firewall"])

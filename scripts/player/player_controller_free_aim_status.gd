@@ -2,7 +2,7 @@ extends "res://scripts/player/player_controller_free_aim.gd"
 class_name PlayerControllerFreeAimStatus
 
 const SpellAimPointerScript = preload(
-	"res://scripts/player/player_spell_aim_pointer.gd"
+	"res://scripts/player/player_spell_aim_pointer_safe.gd"
 )
 const FlashAimControllerScript = preload(
 	"res://scripts/player/player_flash_aim_controller.gd"

@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("2_definition")
 display_name = "Firewall"
-description = "Hold Cast to laser-etch a path across floors, walls, and ceilings. Releasing Cast, reaching the path limit, or exhausting the draw timer erupts the traced line into lingering flame."
+description = "Hold Cast to move an independent pointer and laser-etch a path across floors, walls, and ceilings. Release, reach the path limit, or exhaust the draw timer to erupt the trace into lingering flame."
 element = "fire"
 category = 4
 mana_cost = 4
@@ -20,11 +20,11 @@ targeting_style = "aimed_surface_channel"
 delivery_type = "channel_then_field"
 combo_tags = Array[String](["fire", "firewall", "surface_path", "lingering", "wall", "heat", "terrain"])
 status_tags = Array[String](["burning"])
-ui_tags = Array[String](["hold_cast", "draw_path", "release_to_ignite", "surface_transition"])
-debug_tags = Array[String](["prototype", "single_node_lifecycle", "multimesh", "no_per_segment_nodes", "corner_bridge"])
+ui_tags = Array[String](["hold_cast", "draw_path", "release_to_ignite", "surface_transition", "free_pointer", "offscreen_aim"])
+debug_tags = Array[String](["prototype", "single_node_lifecycle", "multimesh", "no_per_segment_nodes", "corner_bridge", "pointer_aim"])
 scaling_stats = Array[String](["arcana", "fire", "focus"])
-scaling_note = "Fire and Arcana govern heat and damage; Focus is reserved for future draw time, path length, and corner stability upgrades."
-design_notes = "Firewall uses an authored surface-normal path rather than a flat ground spline. Each segment erupts away from the surface it was painted on, so floor lines rise, wall lines project outward, and ceiling lines burn downward. Sharp surface changes insert projected corner points and blended-normal plume joints to keep the result continuous around architectural edges."
+scaling_note = "Fire and Arcana govern heat and damage; Focus is reserved for future draw time, path length, pointer speed, and corner stability upgrades."
+design_notes = "Firewall uses an authored surface-normal path rather than a flat ground spline. During drawing, camera-look input moves a screen pointer while the camera remains stable. The pointer may travel beyond the visible viewport edge, allowing floor, wall, and ceiling targets beyond the camera's normal pitch range. Each segment erupts away from its recorded surface; sharp changes insert projected corner points and blended-normal plume joints so the result remains continuous around architectural edges."
 action_payload = ExtResource("3_payload")
 ability_scene = ExtResource("1_scene")
 metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

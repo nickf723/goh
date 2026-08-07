@@ -1,6 +1,11 @@
 extends Resource
 class_name AbilityLoadout
 
+signal equipped_ability_changed(
+	slot_index: int,
+	ability: AbilityDefinition
+)
+
 const DEFAULT_ELEMENT_ORDER: Array[String] = [
 	"water",
 	"earth",
@@ -129,6 +134,39 @@ func equip_ability(slot_index: int, ability: AbilityDefinition) -> void:
 		equipped_abilities.append(null)
 
 	equipped_abilities[slot_index] = ability
+	_sync_persistent_quick_slot(slot_index, ability)
+	equipped_ability_changed.emit(slot_index, ability)
+
+
+# The full equipment menu edits AbilityLoadout directly, while the permanent
+# ten-slot belt persists spell IDs in GameState. Keeping the two writes atomic
+# prevents a newly assigned spell from appearing as an invalid gray slot whose
+# historical spell ID no longer exists in the runtime loadout.
+func _sync_persistent_quick_slot(
+	slot_index: int,
+	ability: AbilityDefinition
+) -> void:
+	if slot_index < 0 or slot_index >= get_quick_slot_count():
+		return
+	if not GameState.has_method("set_quick_spell_slot"):
+		return
+	var spell_id: String = (
+		ability.get_spell_id()
+		if ability != null
+		else ""
+	)
+	GameState.call(
+		"set_quick_spell_slot",
+		get_quickbar_loadout_id(),
+		slot_index,
+		spell_id
+	)
+
+
+func get_quickbar_loadout_id() -> String:
+	if resource_path != "":
+		return resource_path.get_file().get_basename()
+	return "runtime_" + str(get_instance_id())
 
 
 func learn_ability(ability: AbilityDefinition) -> void:

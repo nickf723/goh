@@ -57,14 +57,14 @@ func run_tests() -> void:
 
 	_copy_abilities(loadout.equipped_abilities, original_equipped)
 	_copy_abilities(loadout.learned_abilities, original_learned)
-	var original_fire_names: Array[String] = caster.call(
+	var original_fire_names: Array = caster.call(
 		"get_focus_spell_names_for_element",
 		"fire"
-	) as Array[String]
-	var original_water_names: Array[String] = caster.call(
+	) as Array
+	var original_water_names: Array = caster.call(
 		"get_focus_spell_names_for_element",
 		"water"
-	) as Array[String]
+	) as Array
 	_expect(original_fire_names.has("Firebolt"), "Focus initially contains Firebolt")
 	_expect(original_water_names.has("Surf"), "Focus includes Surf from the learned library")
 
@@ -75,16 +75,16 @@ func run_tests() -> void:
 	if firebolt_index >= 0 and bubble != null:
 		loadout.equip_ability(firebolt_index, bubble)
 		await get_tree().process_frame
-		var fire_names_after_replace: Array[String] = caster.call(
+		var fire_names_after_replace: Array = caster.call(
 			"get_focus_spell_names_for_element",
 			"fire"
-		) as Array[String]
+		) as Array
 		_expect(
 			fire_names_after_replace == original_fire_names,
 			"overriding a quick runtime slot does not alter the Fire Focus list"
 		)
 		_expect(
-			caster.call("select_focus_spell_by_id", "firebolt"),
+			bool(caster.call("select_focus_spell_by_id", "firebolt")),
 			"Firebolt remains selectable in Focus after its quick slot is replaced"
 		)
 		var selected: Variant = caster.call("get_selected_focus_ability")
@@ -94,7 +94,7 @@ func run_tests() -> void:
 			"Focus resolves the learned Firebolt resource rather than the replaced slot"
 		)
 		_expect(
-			router.call("assign_selected_focus_spell_to_slot", firebolt_index),
+			bool(router.call("assign_selected_focus_spell_to_slot", firebolt_index)),
 			"Focus can assign the learned Firebolt back into the quickbar"
 		)
 		var rows: Array = router.call("get_quick_spell_slot_rows") as Array
@@ -116,17 +116,17 @@ func run_tests() -> void:
 	_expect(surf != null, "Surf remains available as a learned Water spell")
 	if surf != null:
 		_expect(
-			caster.call("select_focus_spell_by_id", "surf"),
+			bool(caster.call("select_focus_spell_by_id", "surf")),
 			"Focus can select Surf by learned spell ID"
 		)
 		_expect(
-			router.call("assign_selected_focus_spell_to_slot", 0),
+			bool(router.call("assign_selected_focus_spell_to_slot", 0)),
 			"Surf can override quick slot one"
 		)
-		var water_names_after_assignment: Array[String] = caster.call(
+		var water_names_after_assignment: Array = caster.call(
 			"get_focus_spell_names_for_element",
 			"water"
-		) as Array[String]
+		) as Array
 		_expect(
 			water_names_after_assignment == original_water_names,
 			"quickbar assignment does not reorder or remove Water Focus spells"

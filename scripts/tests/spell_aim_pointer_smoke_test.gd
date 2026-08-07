@@ -98,6 +98,9 @@ func run_tests() -> void:
 	pointer.end_aim(test_owner, "test_complete")
 	_expect(not pointer.is_aim_active(), "generic pointer ownership releases cleanly")
 
+	var original_camera_pitch: float = float(player.get("camera_pitch"))
+	var original_min_pitch: float = float(player.get("min_pitch"))
+	var original_max_pitch: float = float(player.get("max_pitch"))
 	var firewall: FirewallCast = (
 		FirewallAbility.ability_scene.instantiate() as FirewallCast
 	)
@@ -108,21 +111,64 @@ func run_tests() -> void:
 		add_child(firewall)
 		firewall.execute(player, Vector3.FORWARD)
 		await get_tree().process_frame
-		_expect(pointer.is_owned_by(firewall), "Firewall claims the shared pointer while drawing")
+		_expect(pointer.is_owned_by(firewall), "Firewall retains the shared center reticle while drawing")
 		_expect(
-			bool(firewall.get_debug_data().get("pointer_surface_ray", false)),
-			"Firewall reports pointer-driven surface raycasting"
+			not pointer.captures_look_input(),
+			"Firewall leaves look input with its camera brush instead of moving the reticle"
 		)
-		pointer.set_logical_position_for_test(Vector2(0.5, 1.2))
+		_expect(
+			player.has_method("is_spell_camera_brush_active")
+			and bool(player.call("is_spell_camera_brush_active")),
+			"Firewall claims the wide-pitch camera brush"
+		)
+		var firewall_debug: Dictionary = firewall.get_debug_data()
+		_expect(
+			bool(firewall_debug.get("pointer_surface_ray", false)),
+			"Firewall still resolves drawable surfaces through the shared reticle ray"
+		)
+		_expect(
+			bool(firewall_debug.get("camera_brush_aim", false)),
+			"Firewall reports camera-brush aiming authority"
+		)
+		var brush_debug: Dictionary = (
+			player.call("get_spell_camera_brush_debug_data") as Dictionary
+		)
+		_expect(
+			float(brush_debug.get("minimum_pitch_degrees", 0.0)) <= -80.0
+			and float(brush_debug.get("maximum_pitch_degrees", 0.0)) >= 70.0,
+			"camera brush temporarily expands the vertical look range"
+		)
+		player.call(
+			"apply_spell_camera_brush_look_for_test",
+			Vector2(0.0, 120.0),
+			0.0025
+		)
+		_expect(
+			not is_equal_approx(
+				float(player.get("camera_pitch")),
+				original_camera_pitch
+			),
+			"Firewall camera brush can move Grace's view while the reticle stays centered"
+		)
 		firewall.cancel_drawing("pointer_test_cleanup")
 		await get_tree().process_frame
-		_expect(not pointer.is_aim_active(), "Firewall release returns camera-look authority")
+		_expect(not pointer.is_aim_active(), "Firewall release returns reticle authority")
+		_expect(
+			not bool(player.call("is_spell_camera_brush_active")),
+			"Firewall release returns ordinary camera authority"
+		)
+		_expect(
+			is_equal_approx(float(player.get("camera_pitch")), original_camera_pitch)
+			and is_equal_approx(float(player.get("min_pitch")), original_min_pitch)
+			and is_equal_approx(float(player.get("max_pitch")), original_max_pitch),
+			"camera brush restores the pre-cast pitch and ordinary limits"
+		)
 
 	if flash_controller != null:
 		var flash_ability: AbilityDefinition = _find_ability(player, "flash")
 		_expect(
 			flash_ability != null and flash_controller.can_handle_ability(flash_ability),
-			"Flash aim controller claims the learned Flash spell"
+			"Flash aim controller still claims the learned Flash spell"
 		)
 
 	_finish([player, floor, test_owner])

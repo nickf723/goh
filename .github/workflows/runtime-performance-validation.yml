@@ -8,6 +8,9 @@ on:
       - "scripts/performance/**"
       - "scripts/ui/game_ui_unified.gd"
       - "scripts/ui/unified_hud_source_bridge_budgeted.gd"
+      - "scripts/ui/player_hud_unified_budgeted.gd"
+      - "scripts/ui/quick_spell_belt_unified.gd"
+      - "scenes/actors/player/player.tscn"
       - "scripts/physics/field_responsive_body.gd"
       - "scripts/levels/mechanism_network_lab_value.gd"
       - "scripts/levels/mechanism_network_lab_performance.gd"
@@ -36,6 +39,8 @@ on:
       - "scenes/tests/runtime_performance_foundation_smoke_test.tscn"
       - "scripts/tests/runtime_performance_incremental_census_smoke_test.gd"
       - "scenes/tests/runtime_performance_incremental_census_smoke_test.tscn"
+      - "scripts/tests/hud_idle_budget_smoke_test.gd"
+      - "scenes/tests/hud_idle_budget_smoke_test.tscn"
       - "scripts/tests/mechanism_value_signal_smoke_test.gd"
       - "scenes/tests/mechanism_value_signal_smoke_test.tscn"
       - "scripts/tests/mechanism_soul_weight_smoke_test.gd"
@@ -89,6 +94,12 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/runtime_performance_incremental_census_smoke_test.tscn 2>&1 | tee performance-census-test.log
 
+      - name: Run HUD idle-budget regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/hud_idle_budget_smoke_test.tscn 2>&1 | tee hud-idle-budget-test.log
+
       - name: Run mechanism network regression
         shell: bash
         run: |
@@ -140,6 +151,7 @@ jobs:
             performance-import.log
             performance-test.log
             performance-census-test.log
+            hud-idle-budget-test.log
             mechanism-test.log
             mechanism-value-test.log
             mechanism-soul-weight-test.log

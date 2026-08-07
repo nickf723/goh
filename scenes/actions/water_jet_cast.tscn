@@ -4,3 +4,7 @@
 
 [node name="WaterJetCast" type="Node3D"]
 script = ExtResource("1_water_jet")
+recoil_surface_range = 5.0
+self_recoil_acceleration = 46.0
+maximum_self_upward_speed = 11.5
+minimum_recoil_factor = 0.3

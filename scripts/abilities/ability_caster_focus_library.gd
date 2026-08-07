@@ -1,9 +1,61 @@
 extends "res://scripts/abilities/ability_caster_player_channels.gd"
 class_name AbilityCasterFocusLibrary
 
+const FocusRouterScript = preload(
+	"res://scripts/input/player_control_router_focus_library.gd"
+)
+
 # Focus is Grace's complete learned spell library. The permanent ten-slot belt is
 # only a shortcut surface. Keeping these collections separate prevents replacing
 # a quick slot from deleting, duplicating, or reordering the same spell in Focus.
+
+
+func _ready() -> void:
+	super._ready()
+	var tree: SceneTree = get_tree()
+	if tree != null:
+		var callback := Callable(self, "_on_tree_node_added")
+		if not tree.node_added.is_connected(callback):
+			tree.node_added.connect(callback)
+	call_deferred("_ensure_focus_safe_router")
+
+
+func _exit_tree() -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var callback := Callable(self, "_on_tree_node_added")
+	if tree.node_added.is_connected(callback):
+		tree.node_added.disconnect(callback)
+
+
+func _on_tree_node_added(node: Node) -> void:
+	if node == null or str(node.name) != "PlayerControlRouter":
+		return
+	var actor: Node = get_parent()
+	if actor == null or node.get_parent() != actor:
+		return
+	call_deferred("_ensure_focus_safe_router")
+
+
+func _ensure_focus_safe_router() -> void:
+	var actor: Node = get_parent()
+	if actor == null or not is_instance_valid(actor):
+		return
+	var existing: Node = actor.get_node_or_null("PlayerControlRouter")
+	if existing != null:
+		var existing_script: Script = existing.get_script() as Script
+		if (
+			existing_script != null
+			and existing_script.resource_path
+			== "res://scripts/input/player_control_router_focus_library.gd"
+		):
+			return
+		actor.remove_child(existing)
+		existing.queue_free()
+	var router: Node = FocusRouterScript.new()
+	router.name = "PlayerControlRouter"
+	actor.add_child(router)
 
 
 func get_focus_library_abilities() -> Array[AbilityDefinition]:
@@ -207,4 +259,5 @@ func get_debug_data() -> Dictionary:
 	data["focus_selected_spell_id"] = (
 		selected.get_spell_id() if selected != null else ""
 	)
+	data["focus_safe_router"] = true
 	return data

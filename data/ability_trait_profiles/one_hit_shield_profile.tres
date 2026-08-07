@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityTraitProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_trait_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "one_hit_shield"
+display_name = "One-Hit Shield"
+description = "A temporary personal ward that negates one incoming hit, then converts the impact into an outward control burst."
+roles = Array[String](["defense", "shield", "negation", "force", "zone_control", "reaction", "persistent"])
+targeting_style = "self"
+delivery_type = "one_hit_shield"
+combo_tags = Array[String](["shield", "ward", "impact_conversion", "burst", "force", "personal_field"])
+ui_tags = Array[String](["defensive", "self", "one_hit", "persistent"])
+debug_tags = Array[String](["spell_profile", "idle_sleeps", "single_query_burst"])
+design_notes = "Use for wards that intercept one harmful payload before ordinary guard resolution, then end immediately. The controller must sleep while inactive and perform at most one broadphase query when consumed."

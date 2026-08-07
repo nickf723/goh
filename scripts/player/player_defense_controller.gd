@@ -46,6 +46,7 @@ var last_outcome: String = "ready"
 
 var actor: CharacterBody3D
 var action_state: PlayerActionState
+var bubble_shield_controller: Node
 var guard_visual: MeshInstance3D
 var guard_material: StandardMaterial3D
 
@@ -54,6 +55,9 @@ func _ready() -> void:
 	actor = get_parent() as CharacterBody3D
 	if actor != null:
 		action_state = actor.get_node_or_null("PlayerActionState") as PlayerActionState
+		bubble_shield_controller = actor.get_node_or_null(
+			"BubbleShieldController"
+		)
 	ensure_guard_input_map()
 	create_guard_visual()
 	add_to_group("debuggable")
@@ -136,6 +140,14 @@ func resolve_incoming_attack(payload: DamagePayload, attacker: Node3D = null) ->
 		emit_defense_state()
 		return dodge_result
 
+	# Dodge and elemental immunity resolve before this method reaches the ward.
+	# Once an attack genuinely reaches ordinary defense, Bubble sits outside the
+	# guard and absorbs that complete hit before stamina, stance, health, or hit
+	# reactions are touched.
+	var bubble_result: Dictionary = resolve_bubble_absorb(payload, attacker)
+	if not bubble_result.is_empty():
+		return bubble_result
+
 	var incoming_direction: Vector3 = get_incoming_direction(attacker)
 
 	if is_guarding and is_attack_inside_guard(incoming_direction):
@@ -144,6 +156,68 @@ func resolve_incoming_attack(payload: DamagePayload, attacker: Node3D = null) ->
 		return resolve_block(payload, incoming_direction)
 
 	return resolve_direct_hit(payload, incoming_direction)
+
+
+func resolve_bubble_absorb(
+	payload: DamagePayload,
+	attacker: Node3D = null
+) -> Dictionary:
+	if actor == null:
+		return {}
+	if bubble_shield_controller == null or not is_instance_valid(
+		bubble_shield_controller
+	):
+		bubble_shield_controller = actor.get_node_or_null(
+			"BubbleShieldController"
+		)
+	if (
+		bubble_shield_controller == null
+		or not bubble_shield_controller.has_method("is_bubble_active")
+		or not bool(
+			bubble_shield_controller.call("is_bubble_active")
+		)
+		or not bubble_shield_controller.has_method("absorb_incoming_hit")
+	):
+		return {}
+
+	var raw_result: Variant = bubble_shield_controller.call(
+		"absorb_incoming_hit",
+		payload,
+		attacker
+	)
+	if not raw_result is Dictionary:
+		return {}
+	var shield_result: Dictionary = raw_result as Dictionary
+	if not bool(shield_result.get("absorbed", false)):
+		return {}
+
+	last_outcome = "bubble_absorbed"
+	var message: String = str(
+		shield_result.get(
+			"message",
+			"Bubble absorbs " + payload.source_name + "."
+		)
+	)
+	var result: Dictionary = make_result(
+		"bubble_absorbed",
+		payload,
+		message
+	)
+	result["damage"] = 0
+	result["stance_damage"] = 0
+	result["health_damage"] = 0
+	result["stance_cost"] = 0
+	result["stamina_cost"] = 0
+	result["negated_damage"] = payload.amount
+	result["negated_stance_damage"] = payload.stance_damage
+	result["burst_targets"] = int(
+		shield_result.get("burst_targets", 0)
+	)
+	result["bubble"] = true
+	show_message(message)
+	attack_blocked.emit(result)
+	emit_defense_state()
+	return result
 
 
 func resolve_perfect_guard(payload: DamagePayload, attacker: Node3D, incoming_direction: Vector3) -> Dictionary:
@@ -326,6 +400,12 @@ func reset_defense() -> void:
 	hit_reaction_velocity = Vector3.ZERO
 	feedback_flash_remaining = 0.0
 	last_outcome = "ready"
+	if (
+		bubble_shield_controller != null
+		and is_instance_valid(bubble_shield_controller)
+		and bubble_shield_controller.has_method("reset_target")
+	):
+		bubble_shield_controller.call("reset_target")
 	update_guard_visual()
 	emit_defense_state()
 
@@ -456,10 +536,21 @@ func emit_defense_state() -> void:
 
 
 func get_debug_data() -> Dictionary:
+	var bubble_active: bool = false
+	if (
+		bubble_shield_controller != null
+		and is_instance_valid(bubble_shield_controller)
+		and bubble_shield_controller.has_method("is_bubble_active")
+	):
+		bubble_active = bool(
+			bubble_shield_controller.call("is_bubble_active")
+		)
 	return {
 		"guarding": is_guarding,
 		"perfect_window": snapped(perfect_guard_remaining, 0.01),
 		"hit_reaction": snapped(hit_reaction_remaining, 0.01),
 		"last_outcome": last_outcome,
 		"guard_angle": guard_angle_degrees,
+		"bubble_ready": bubble_shield_controller != null,
+		"bubble_active": bubble_active,
 	}

@@ -3,8 +3,14 @@ extends Node
 const PlayerScene: PackedScene = preload(
 	"res://scenes/actors/player/player.tscn"
 )
+const SpellManifest = preload(
+	"res://scripts/abilities/spell_capability_manifest.gd"
+)
 
-const EXPECTED_LIBRARY_SPELLS: Array[String] = [
+const RESTORED_LIBRARY_SPELLS: Array[String] = [
+	"echolocation",
+	"resonant_pulse",
+	"gust",
 	"rain_weather",
 	"snow_weather",
 	"thunderstorm_weather",
@@ -59,36 +65,48 @@ func run_tests() -> void:
 
 	var learned_ids: Array[String] = _get_spell_ids(loadout.get_learned_abilities())
 	var equipped_ids: Array[String] = _get_spell_ids(loadout.equipped_abilities)
+	var authored_abilities: Array[AbilityDefinition] = SpellManifest.scan_abilities()
+	var authored_ids: Array[String] = _get_spell_ids(authored_abilities)
 	_expect(
-		learned_ids.size() >= 39,
-		"Grace's Focus library exposes the complete authored development set"
+		learned_ids.size() == authored_ids.size(),
+		"Grace's Focus library count matches every authored ability resource"
 	)
-	for spell_id: String in EXPECTED_LIBRARY_SPELLS:
-		_expect(learned_ids.has(spell_id), spell_id + " appears in learned Focus spells")
-		_expect(equipped_ids.has(spell_id), spell_id + " has a runtime casting reference")
+	_expect(
+		equipped_ids.size() == authored_ids.size(),
+		"Grace's runtime casting references match every authored ability resource"
+	)
+	for spell_id: String in authored_ids:
+		_expect(
+			learned_ids.has(spell_id),
+			spell_id + " appears in learned Focus spells"
+		)
+		_expect(
+			equipped_ids.has(spell_id),
+			spell_id + " has a runtime casting reference"
+		)
 
-	_expect(
-		_get_focus_names(caster, "water").has("Rain"),
-		"Rain appears inside the Water Focus page"
-	)
-	_expect(
-		_get_focus_names(caster, "ice").has("Snowfall"),
-		"Snowfall appears inside the Ice Focus page"
-	)
-	_expect(
-		_get_focus_names(caster, "lightning").has("Thunderstorm"),
-		"Thunderstorm appears inside the Lightning Focus page"
-	)
-	_expect(
-		_get_focus_names(caster, "air").has("Flight"),
-		"Flight appears inside the Air Focus page"
-	)
-
-	for spell_id: String in EXPECTED_LIBRARY_SPELLS:
+	for spell_id: String in RESTORED_LIBRARY_SPELLS:
+		_expect(
+			learned_ids.has(spell_id),
+			spell_id + " is restored to the complete Focus library"
+		)
 		_expect(
 			bool(caster.call("select_focus_spell_by_id", spell_id)),
 			spell_id + " remains selectable through Focus"
 		)
+
+	var sound_names: Array[String] = _get_focus_names(caster, "sound")
+	_expect(sound_names.has("Echolocation"), "Echolocation appears inside the Sound Focus page")
+	_expect(sound_names.has("Resonant Pulse"), "Resonant Pulse appears inside the Sound Focus page")
+	var air_names: Array[String] = _get_focus_names(caster, "air")
+	_expect(air_names.has("Gust"), "analytic Gust appears inside the Air Focus page")
+	_expect(air_names.has("Flight"), "Flight appears inside the Air Focus page")
+	_expect(_get_focus_names(caster, "water").has("Rain"), "Rain appears inside the Water Focus page")
+	_expect(_get_focus_names(caster, "ice").has("Snowfall"), "Snowfall appears inside the Ice Focus page")
+	_expect(
+		_get_focus_names(caster, "lightning").has("Thunderstorm"),
+		"Thunderstorm appears inside the Lightning Focus page"
+	)
 
 	await _cast_and_verify_weather(caster, player, "rain_weather", "rain")
 	await _cast_and_verify_weather(caster, player, "snow_weather", "snow")

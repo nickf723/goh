@@ -79,12 +79,16 @@ func run_tests() -> void:
 			and not bool(ordinary_debug.get("has_fixed_lifetime", true)),
 			"Boulder lifetime is controlled by motion instead of a timer"
 		)
+		_expect(
+			bool(ordinary_debug.get("no_slip_roll_axis", false)),
+			"Boulder spin is aligned to its forward rolling contact"
+		)
 		ordinary_boulder.call("reset_target")
 	await get_tree().process_frame
 
 	var impact_target: CharacterBody3D = _make_impact_target(
 		"BoulderImpactWitness",
-		Vector3(0.0, 1.0, 6.0)
+		Vector3(0.0, 1.0, -6.0)
 	)
 	add_child(impact_target)
 	await get_tree().physics_frame
@@ -146,7 +150,7 @@ func run_tests() -> void:
 				break
 			motion_body.sleeping = false
 			motion_body.linear_velocity = Vector3.FORWARD * 3.5
-			motion_body.angular_velocity = Vector3.LEFT * 3.2
+			motion_body.angular_velocity = Vector3.RIGHT * 3.2
 			await get_tree().physics_frame
 		_expect(
 			is_instance_valid(motion_boulder),

@@ -6,13 +6,16 @@ on:
       - main
     paths:
       - "scripts/actions/lightning_spark_burst.gd"
+      - "scripts/actions/lightning_spark_burst_upgraded.gd"
       - "scripts/input/controller_haptic_pattern.gd"
       - "scripts/levels/prototype_lightning_spark_spell_trial.gd"
       - "scripts/levels/prototype_lightning_spark_spell_trial_playable.gd"
       - "scripts/tests/lightning_spark_forked_conduit_smoke_test.gd"
+      - "scripts/tests/lightning_spark_chain_upgrade_smoke_test.gd"
       - "scenes/actions/lightning_spark_burst.tscn"
       - "scenes/levels/prototypes/prototype_lightning_spark_spell_trial_v1.tscn"
       - "scenes/tests/lightning_spark_forked_conduit_smoke_test.tscn"
+      - "scenes/tests/lightning_spark_chain_upgrade_smoke_test.tscn"
       - "data/abilities/lightning_spark_ability.tres"
       - "data/damage_payloads/lightning_spark_payload.tres"
       - "docs/LIGHTNING_SPARK_V2.md"
@@ -63,6 +66,12 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/lightning_spark_forked_conduit_smoke_test.tscn 2>&1 | tee lightning-spark-test.log
 
+      - name: Run Chain Lightning cone compatibility regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lightning_spark_chain_upgrade_smoke_test.tscn 2>&1 | tee lightning-spark-chain-test.log
+
       - name: Run spell capability architecture regression
         shell: bash
         run: |
@@ -84,6 +93,7 @@ jobs:
             lightning-spark-import.log
             lightning-spark-trial-boot.log
             lightning-spark-test.log
+            lightning-spark-chain-test.log
             spell-capability-test.log
             lab-resource-test.log
           if-no-files-found: ignore

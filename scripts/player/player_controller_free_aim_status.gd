@@ -10,11 +10,28 @@ const FlashAimControllerScript = preload(
 
 @export_range(8.0, 160.0, 1.0) var free_aim_ray_distance: float = 80.0
 
+@export_group("Spell Camera Brush")
+@export_range(-89.0, -30.0, 1.0) var spell_brush_min_pitch_degrees: float = -84.0
+@export_range(30.0, 89.0, 1.0) var spell_brush_max_pitch_degrees: float = 78.0
+@export_range(0.1, 1.0, 0.05) var spell_brush_mouse_sensitivity_scale: float = 0.5
+@export_range(0.1, 1.0, 0.05) var spell_brush_controller_sensitivity_scale: float = 0.58
+
 var player_status_receiver: PlayerStatusReceiver
 var spell_aim_pointer: PlayerSpellAimPointer
 var flash_aim_controller: PlayerFlashAimController
 var preserved_step_velocity: Vector3 = Vector3.ZERO
 var restore_step_velocity_after_move: bool = false
+
+var spell_camera_brush_active: bool = false
+var spell_camera_brush_owner: Node
+var spell_camera_brush_saved_pitch: float = 0.0
+var spell_camera_brush_saved_min_pitch: float = 0.0
+var spell_camera_brush_saved_max_pitch: float = 0.0
+var spell_camera_brush_mouse_scale: float = 0.5
+var spell_camera_brush_controller_scale: float = 0.58
+var spell_camera_brush_input_count: int = 0
+var spell_camera_brush_recenter_count: int = 0
+var spell_camera_brush_last_end_reason: String = "never_started"
 
 
 func _ready() -> void:
@@ -26,7 +43,36 @@ func _ready() -> void:
 	_ensure_flash_aim_controller()
 
 
+func _process(delta: float) -> void:
+	if (
+		spell_camera_brush_active
+		and (
+			spell_camera_brush_owner == null
+			or not is_instance_valid(spell_camera_brush_owner)
+		)
+	):
+		end_spell_camera_brush(null, "owner_freed", true)
+	super._process(delta)
+
+
 func _unhandled_input(event: InputEvent) -> void:
+	if (
+		spell_camera_brush_active
+		and not is_focus_spell_menu_open()
+	):
+		if event is InputEventMouseMotion:
+			var motion: InputEventMouseMotion = event as InputEventMouseMotion
+			_apply_spell_camera_brush_look(
+				motion.relative,
+				mouse_sensitivity * spell_camera_brush_mouse_scale
+			)
+			get_viewport().set_input_as_handled()
+			return
+		if event.is_action_pressed("lock_on"):
+			recenter_spell_camera_brush()
+			get_viewport().set_input_as_handled()
+			return
+
 	if (
 		spell_aim_pointer != null
 		and spell_aim_pointer.captures_look_input()
@@ -46,6 +92,32 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func update_controller_camera(delta: float) -> void:
+	if spell_camera_brush_active and not is_focus_spell_menu_open():
+		var look_vector: Vector2 = Input.get_vector(
+			"camera_left",
+			"camera_right",
+			"camera_up",
+			"camera_down"
+		)
+		var strength: float = look_vector.length()
+		if strength < controller_camera_deadzone:
+			return
+		var resolved_strength: float = inverse_lerp(
+			controller_camera_deadzone,
+			1.0,
+			clampf(strength, controller_camera_deadzone, 1.0)
+		)
+		var resolved_look: Vector2 = (
+			look_vector.normalized() * resolved_strength
+		)
+		_apply_spell_camera_brush_look(
+			resolved_look,
+			controller_camera_sensitivity
+			* spell_camera_brush_controller_scale
+			* maxf(delta, 0.0)
+		)
+		return
+
 	if (
 		spell_aim_pointer != null
 		and spell_aim_pointer.captures_look_input()
@@ -54,6 +126,153 @@ func update_controller_camera(delta: float) -> void:
 		spell_aim_pointer.advance_controller_input(delta)
 		return
 	super.update_controller_camera(delta)
+
+
+func begin_spell_camera_brush(
+	owner: Node,
+	options: Dictionary = {}
+) -> bool:
+	if owner == null or not is_instance_valid(owner):
+		return false
+	if spell_camera_brush_active:
+		if spell_camera_brush_owner == owner:
+			return true
+		end_spell_camera_brush(
+			spell_camera_brush_owner,
+			"replaced",
+			true
+		)
+
+	spell_camera_brush_saved_pitch = camera_pitch
+	spell_camera_brush_saved_min_pitch = min_pitch
+	spell_camera_brush_saved_max_pitch = max_pitch
+	spell_camera_brush_owner = owner
+	spell_camera_brush_active = true
+	spell_camera_brush_last_end_reason = "active"
+	spell_camera_brush_mouse_scale = clampf(
+		float(options.get(
+			"mouse_sensitivity_scale",
+			spell_brush_mouse_sensitivity_scale
+		)),
+		0.05,
+		1.0
+	)
+	spell_camera_brush_controller_scale = clampf(
+		float(options.get(
+			"controller_sensitivity_scale",
+			spell_brush_controller_sensitivity_scale
+		)),
+		0.05,
+		1.0
+	)
+
+	var brush_min_pitch: float = deg_to_rad(float(options.get(
+		"min_pitch_degrees",
+		spell_brush_min_pitch_degrees
+	)))
+	var brush_max_pitch: float = deg_to_rad(float(options.get(
+		"max_pitch_degrees",
+		spell_brush_max_pitch_degrees
+	)))
+	if brush_min_pitch > brush_max_pitch:
+		var swapped_pitch: float = brush_min_pitch
+		brush_min_pitch = brush_max_pitch
+		brush_max_pitch = swapped_pitch
+	min_pitch = brush_min_pitch
+	max_pitch = brush_max_pitch
+	camera_pitch = clampf(camera_pitch, min_pitch, max_pitch)
+	if camera_pivot != null:
+		camera_pivot.rotation.x = camera_pitch
+	if has_lock_on_target():
+		clear_lock_on()
+	set_meta("spell_camera_brush_active", true)
+	set_meta("spell_camera_brush_owner", str(owner.name))
+	set_meta("spell_camera_brush_pitch", camera_pitch)
+	return true
+
+
+func end_spell_camera_brush(
+	owner: Node = null,
+	reason: String = "released",
+	force: bool = false
+) -> bool:
+	if not spell_camera_brush_active:
+		return false
+	if (
+		not force
+		and owner != null
+		and owner != spell_camera_brush_owner
+	):
+		return false
+
+	spell_camera_brush_active = false
+	spell_camera_brush_owner = null
+	spell_camera_brush_last_end_reason = reason
+	min_pitch = spell_camera_brush_saved_min_pitch
+	max_pitch = spell_camera_brush_saved_max_pitch
+	camera_pitch = clampf(
+		spell_camera_brush_saved_pitch,
+		min_pitch,
+		max_pitch
+	)
+	if camera_pivot != null:
+		camera_pivot.rotation.x = camera_pitch
+	remove_meta("spell_camera_brush_active")
+	remove_meta("spell_camera_brush_owner")
+	remove_meta("spell_camera_brush_pitch")
+	return true
+
+
+func is_spell_camera_brush_active() -> bool:
+	return spell_camera_brush_active
+
+
+func is_spell_camera_brush_owned_by(owner: Node) -> bool:
+	return (
+		spell_camera_brush_active
+		and owner != null
+		and spell_camera_brush_owner == owner
+		and is_instance_valid(owner)
+	)
+
+
+func recenter_spell_camera_brush() -> void:
+	if not spell_camera_brush_active:
+		return
+	camera_pitch = clampf(
+		spell_camera_brush_saved_pitch,
+		min_pitch,
+		max_pitch
+	)
+	if camera_pivot != null:
+		camera_pivot.rotation.x = camera_pitch
+	set_meta("spell_camera_brush_pitch", camera_pitch)
+	spell_camera_brush_recenter_count += 1
+
+
+func apply_spell_camera_brush_look_for_test(
+	look_delta: Vector2,
+	radians_per_unit: float = 0.0025
+) -> void:
+	_apply_spell_camera_brush_look(
+		look_delta,
+		maxf(radians_per_unit, 0.00001)
+	)
+
+
+func _apply_spell_camera_brush_look(
+	look_delta: Vector2,
+	radians_per_unit: float
+) -> void:
+	if not spell_camera_brush_active:
+		return
+	rotate_y(-look_delta.x * radians_per_unit)
+	camera_pitch -= look_delta.y * radians_per_unit
+	camera_pitch = clampf(camera_pitch, min_pitch, max_pitch)
+	if camera_pivot != null:
+		camera_pivot.rotation.x = camera_pitch
+	set_meta("spell_camera_brush_pitch", camera_pitch)
+	spell_camera_brush_input_count += 1
 
 
 func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
@@ -142,6 +361,8 @@ func _collect_collision_rids(node: Node, exclusions: Array[RID]) -> void:
 
 func handle_lock_on_target_switch_input() -> void:
 	if is_focus_spell_menu_open():
+		return
+	if spell_camera_brush_active:
 		return
 	if spell_aim_pointer != null and spell_aim_pointer.captures_look_input():
 		return
@@ -236,6 +457,27 @@ func _finish_step_up() -> void:
 	restore_step_velocity_after_move = false
 
 
+func get_spell_camera_brush_debug_data() -> Dictionary:
+	return {
+		"active": spell_camera_brush_active,
+		"owner": (
+			str(spell_camera_brush_owner.name)
+			if spell_camera_brush_owner != null
+			and is_instance_valid(spell_camera_brush_owner)
+			else "none"
+		),
+		"camera_pitch_degrees": rad_to_deg(camera_pitch),
+		"minimum_pitch_degrees": rad_to_deg(min_pitch),
+		"maximum_pitch_degrees": rad_to_deg(max_pitch),
+		"saved_pitch_degrees": rad_to_deg(spell_camera_brush_saved_pitch),
+		"mouse_scale": spell_camera_brush_mouse_scale,
+		"controller_scale": spell_camera_brush_controller_scale,
+		"input_count": spell_camera_brush_input_count,
+		"recenter_count": spell_camera_brush_recenter_count,
+		"last_end_reason": spell_camera_brush_last_end_reason,
+	}
+
+
 func get_spell_aim_debug_data() -> Dictionary:
 	return {
 		"pointer": (
@@ -248,4 +490,5 @@ func get_spell_aim_debug_data() -> Dictionary:
 			if flash_aim_controller != null
 			else {}
 		),
+		"camera_brush": get_spell_camera_brush_debug_data(),
 	}

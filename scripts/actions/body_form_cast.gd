@@ -4,6 +4,9 @@ class_name BodyFormCast
 const BodyFormControllerScript = preload(
 	"res://scripts/player/player_body_form_controller.gd"
 )
+const BodyFormDodgeBridgeScript = preload(
+	"res://scripts/player/player_body_form_dodge_bridge.gd"
+)
 const GameplayEffectAccessScript = preload(
 	"res://scripts/effects/gameplay_effect_access.gd"
 )
@@ -36,12 +39,21 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 		controller = BodyFormControllerScript.new() as PlayerBodyFormController
 		controller.name = "BodyFormController"
 		source_actor.add_child(controller)
-		await get_tree().process_frame
 
 	if controller == null or not is_instance_valid(controller):
 		_refund_paid_mana()
 		queue_free()
 		return
+
+	var dodge_bridge: PlayerBodyFormDodgeBridge = source_actor.get_node_or_null(
+		"BodyFormDodgeBridge"
+	) as PlayerBodyFormDodgeBridge
+	if dodge_bridge == null:
+		dodge_bridge = (
+			BodyFormDodgeBridgeScript.new() as PlayerBodyFormDodgeBridge
+		)
+		dodge_bridge.name = "BodyFormDodgeBridge"
+		source_actor.add_child(dodge_bridge)
 
 	last_result = controller.request_form(requested_form)
 	var success: bool = bool(last_result.get("success", false))

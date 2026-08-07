@@ -51,17 +51,23 @@ jobs:
           set -o pipefail
           godot --headless --path . --editor --quit 2>&1 | tee lightning-spark-import.log
 
+      - name: Boot the Forked Conduit trial
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 3 res://scenes/levels/prototypes/prototype_lightning_spark_spell_trial_v1.tscn 2>&1 | tee lightning-spark-trial-boot.log
+
       - name: Run Lightning Spark cone and haptic regression
         shell: bash
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/lightning_spark_forked_conduit_smoke_test.tscn 2>&1 | tee lightning-spark-test.log
 
-      - name: Run shared architecture regression
+      - name: Run spell capability architecture regression
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/ability_architecture_smoke_test.tscn 2>&1 | tee ability-architecture-test.log
+          godot --headless --path . res://scenes/tests/spell_capability_manifest_smoke_test.tscn 2>&1 | tee spell-capability-test.log
 
       - name: Run laboratory resource regression
         shell: bash
@@ -76,7 +82,8 @@ jobs:
           name: lightning-spark-validation-logs
           path: |
             lightning-spark-import.log
+            lightning-spark-trial-boot.log
             lightning-spark-test.log
-            ability-architecture-test.log
+            spell-capability-test.log
             lab-resource-test.log
           if-no-files-found: ignore

@@ -9,6 +9,10 @@ class_name PortraitMedallion
 @export var expression: String = "neutral"
 @export var is_grace: bool = true
 
+var configure_count: int = 0
+var redraw_request_count: int = 0
+var unchanged_configure_skip_count: int = 0
+
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -17,7 +21,7 @@ func _ready() -> void:
 	# supplied, otherwise the portrait can force its entire HUD lane off-screen.
 	if custom_minimum_size == Vector2.ZERO:
 		custom_minimum_size = Vector2(168.0, 168.0)
-	queue_redraw()
+	_request_redraw()
 
 
 func configure(
@@ -26,26 +30,49 @@ func configure(
 	new_expression: String = "neutral",
 	grace_portrait: bool = true
 ) -> void:
+	configure_count += 1
+	var next_skin: Color
+	var next_hair: Color
+	if not grace_portrait:
+		next_skin = new_accent.lightened(0.28).lerp(
+			Color(0.62, 0.42, 0.3, 1.0),
+			0.55
+		)
+		next_hair = new_accent.darkened(0.72)
+	else:
+		next_skin = Color(0.57, 0.35, 0.24, 1.0)
+		next_hair = Color(0.055, 0.045, 0.05, 1.0)
+
+	var changed: bool = (
+		display_name != new_name
+		or accent_color != new_accent
+		or expression != new_expression
+		or is_grace != grace_portrait
+		or skin_color != next_skin
+		or hair_color != next_hair
+	)
+
 	display_name = new_name
 	accent_color = new_accent
 	expression = new_expression
 	is_grace = grace_portrait
-	if not grace_portrait:
-		skin_color = new_accent.lightened(0.28).lerp(
-			Color(0.62, 0.42, 0.3, 1.0),
-			0.55
-		)
-		hair_color = new_accent.darkened(0.72)
-	else:
-		skin_color = Color(0.57, 0.35, 0.24, 1.0)
-		hair_color = Color(0.055, 0.045, 0.05, 1.0)
-	queue_redraw()
+	skin_color = next_skin
+	hair_color = next_hair
+	if not changed:
+		unchanged_configure_skip_count += 1
+		return
+	_request_redraw()
 
 
 func set_expression(value: String) -> void:
 	if expression == value:
 		return
 	expression = value
+	_request_redraw()
+
+
+func _request_redraw() -> void:
+	redraw_request_count += 1
 	queue_redraw()
 
 
@@ -213,3 +240,12 @@ func _draw_badge(center: Vector2, radius: float) -> void:
 		2.0,
 		true
 	)
+
+
+func get_debug_data() -> Dictionary:
+	return {
+		"portrait_medallion": true,
+		"configure_count": configure_count,
+		"redraw_requests": redraw_request_count,
+		"unchanged_configure_skips": unchanged_configure_skip_count,
+	}

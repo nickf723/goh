@@ -1,0 +1,140 @@
+name: Metal Needle and complete Focus validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/metal_needle_fan.gd"
+      - "scripts/concentration/concentration_runtime_access.gd"
+      - "scripts/weather/weather_spell_runtime.gd"
+      - "scripts/abilities/rain_weather_spell.gd"
+      - "scripts/abilities/snow_weather_spell.gd"
+      - "scripts/abilities/thunderstorm_weather_spell.gd"
+      - "scripts/abilities/flight_concentration_spell.gd"
+      - "scripts/levels/prototype_metal_needle_fan_spell_trial.gd"
+      - "scripts/tests/metal_needle_fan_smoke_test.gd"
+      - "scripts/tests/metal_needle_fan_trial_smoke_test.gd"
+      - "scripts/tests/complete_spell_library_smoke_test.gd"
+      - "scenes/actions/metal_needle_fan.tscn"
+      - "scenes/levels/prototypes/prototype_metal_needle_fan_spell_trial_v1.tscn"
+      - "scenes/tests/metal_needle_fan_smoke_test.tscn"
+      - "scenes/tests/metal_needle_fan_trial_smoke_test.tscn"
+      - "scenes/tests/complete_spell_library_smoke_test.tscn"
+      - "data/abilities/metal_needle_ability.tres"
+      - "data/damage_payloads/metal_needle_payload.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "docs/METAL_NEEDLE_FAN_V2.md"
+      - ".github/workflows/metal-needle-complete-library-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: metal-needle-complete-library-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-metal-needle:
+    name: Import, fan, weather, and Flight regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Show Godot version
+        run: godot --version
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee metal-needle-import.log
+
+      - name: Boot the Needle Loom
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 3 res://scenes/levels/prototypes/prototype_metal_needle_fan_spell_trial_v1.tscn 2>&1 | tee needle-loom-boot.log
+
+      - name: Run Metal Needle fan regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/metal_needle_fan_smoke_test.tscn 2>&1 | tee metal-needle-test.log
+
+      - name: Run Needle Loom progression regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/metal_needle_fan_trial_smoke_test.tscn 2>&1 | tee needle-loom-test.log
+
+      - name: Run complete Focus, weather, and Flight regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/complete_spell_library_smoke_test.tscn 2>&1 | tee complete-library-test.log
+
+      - name: Run Focus and quickbar independence regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_independence_smoke_test.tscn 2>&1 | tee focus-quickbar-test.log
+
+      - name: Run Focus icon-row regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_icon_independence_smoke_test.tscn 2>&1 | tee focus-icon-test.log
+
+      - name: Run permanent quickbar regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/quick_spell_belt_smoke_test.tscn 2>&1 | tee quickbar-test.log
+
+      - name: Run spell capability regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/spell_capability_manifest_smoke_test.tscn 2>&1 | tee spell-capability-test.log
+
+      - name: Run performance foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance-test.log
+
+      - name: Run laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metal-needle-complete-library-logs
+          path: |
+            metal-needle-import.log
+            needle-loom-boot.log
+            metal-needle-test.log
+            needle-loom-test.log
+            complete-library-test.log
+            focus-quickbar-test.log
+            focus-icon-test.log
+            quickbar-test.log
+            spell-capability-test.log
+            performance-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

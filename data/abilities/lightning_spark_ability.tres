@@ -1,26 +1,28 @@
 [gd_resource type="Resource" script_class="AbilityDefinition" format=3 uid="uid://bbwloguh30ok4"]
 
-[ext_resource type="PackedScene" uid="uid://tj563cjynma8" path="res://scenes/actions/generic_projectile.tscn" id="1_blcr8"]
-[ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="2_blcr8"]
-[ext_resource type="Resource" uid="uid://btmw4r7ihn7hk" path="res://data/damage_payloads/lightning_spark_payload.tres" id="2_padcn"]
-[ext_resource type="Resource" path="res://data/ability_trait_profiles/control_projectile_profile.tres" id="3_profile"]
+[ext_resource type="PackedScene" path="res://scenes/actions/lightning_spark_burst.tscn" id="1_burst"]
+[ext_resource type="Script" uid="uid://cyp8hkceavuj4" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+[ext_resource type="Resource" uid="uid://btmw4r7ihn7hk" path="res://data/damage_payloads/lightning_spark_payload.tres" id="3_payload"]
 
 [resource]
-script = ExtResource("2_blcr8")
+script = ExtResource("2_definition")
 display_name = "Lightning Spark"
-description = "Fast spark that briefly interrupts enemies."
+description = "Burst a short fan of branching lightning that interrupts every exposed target in front of Grace."
 element = "lightning"
-trait_profile = ExtResource("3_profile")
+category = 1
+mana_cost = 1
+use_trait_profile = false
 spell_id = "lightning_spark"
 short_label = "Spark"
-icon_text = "L"
-roles = Array[String](["interrupt", "damage", "combo_reactor"])
-targeting_style = "aimed"
-delivery_type = "projectile"
-combo_tags = Array[String](["lightning", "shock", "wet_shock", "conductive"])
+icon_text = "ϟ"
+roles = Array[String](["interrupt", "area", "close_range", "damage", "combo_reactor"])
+targeting_style = "forward_cone"
+delivery_type = "instant_burst"
+combo_tags = Array[String](["lightning", "shock", "cone", "burst", "wet_shock", "conductive"])
 status_tags = Array[String](["stunned"])
-ui_tags = Array[String](["interrupt", "fast", "shock"])
-debug_tags = Array[String](["prototype", "interrupt_projectile"])
-design_notes = "Tiny stun gives Lightning a quick interrupt identity without replacing heavier control spells."
-ability_scene = ExtResource("1_blcr8")
-action_payload = ExtResource("2_padcn")
+ui_tags = Array[String](["interrupt", "close_range", "cone", "haptic"])
+debug_tags = Array[String](["prototype", "procedural_cone", "single_query", "multimesh"])
+design_notes = "Lightning Spark is a close-range interrupt fan rather than a projectile. One bounded cone query applies the payload while one procedural MultiMesh renders a different crackling branch pattern each cast."
+ability_scene = ExtResource("1_burst")
+action_payload = ExtResource("3_payload")
+metadata/_custom_type_script = "uid://cyp8hkceavuj4"

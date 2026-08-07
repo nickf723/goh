@@ -1,0 +1,132 @@
+name: Boulder and Momentum Quarry validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/earth_boulder.gd"
+      - "scripts/levels/prototype_boulder_spell_trial.gd"
+      - "scripts/tests/boulder_spell_smoke_test.gd"
+      - "scripts/tests/boulder_spell_trial_smoke_test.gd"
+      - "scenes/actions/earth_boulder.tscn"
+      - "scenes/levels/prototypes/prototype_boulder_spell_trial_v1.tscn"
+      - "scenes/tests/boulder_spell_smoke_test.tscn"
+      - "scenes/tests/boulder_spell_trial_smoke_test.tscn"
+      - "data/abilities/boulder_ability.tres"
+      - "data/damage_payloads/boulder_payload.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "docs/BOULDER_SPELL_V1.md"
+      - ".github/workflows/boulder-spell-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boulder-momentum-quarry-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-boulder:
+    name: Import, rolling physics, trial, and Focus regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Show Godot version
+        run: godot --version
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee boulder-import.log
+
+      - name: Boot Momentum Quarry
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 4 res://scenes/levels/prototypes/prototype_boulder_spell_trial_v1.tscn 2>&1 | tee momentum-quarry-boot.log
+
+      - name: Run Boulder physics regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/boulder_spell_smoke_test.tscn 2>&1 | tee boulder-test.log
+
+      - name: Run Momentum Quarry progression regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/boulder_spell_trial_smoke_test.tscn 2>&1 | tee momentum-quarry-test.log
+
+      - name: Run complete Focus library regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/complete_spell_library_smoke_test.tscn 2>&1 | tee complete-library-test.log
+
+      - name: Run Focus and quickbar independence regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_independence_smoke_test.tscn 2>&1 | tee focus-quickbar-test.log
+
+      - name: Run Focus icon-row regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_icon_independence_smoke_test.tscn 2>&1 | tee focus-icon-test.log
+
+      - name: Run permanent quickbar regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/quick_spell_belt_smoke_test.tscn 2>&1 | tee quickbar-test.log
+
+      - name: Run spell capability regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/spell_capability_manifest_smoke_test.tscn 2>&1 | tee spell-capability-test.log
+
+      - name: Run performance foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance-test.log
+
+      - name: Run laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boulder-momentum-quarry-logs
+          path: |
+            boulder-import.log
+            momentum-quarry-boot.log
+            boulder-test.log
+            momentum-quarry-test.log
+            complete-library-test.log
+            focus-quickbar-test.log
+            focus-icon-test.log
+            quickbar-test.log
+            spell-capability-test.log
+            performance-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

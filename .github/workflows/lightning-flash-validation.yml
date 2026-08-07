@@ -8,17 +8,23 @@ on:
       - "scripts/actions/lightning_flash.gd"
       - "scripts/abilities/ability_caster_focus_library.gd"
       - "scripts/input/controller_haptic_pattern.gd"
+      - "scripts/player/player_controller_free_aim_status.gd"
+      - "scripts/player/player_spell_aim_pointer.gd"
+      - "scripts/player/player_flash_aim_controller.gd"
       - "scripts/levels/prototype_lightning_flash_spell_trial.gd"
       - "scripts/levels/thunderline_gate_dividers.gd"
-      - "scripts/tests/lightning_flash_smoke_test.gd"
+      - "scripts/tests/lightning_flash_pointer_smoke_test.gd"
       - "scripts/tests/lightning_flash_trial_smoke_test.gd"
+      - "scripts/tests/spell_aim_pointer_smoke_test.gd"
       - "scenes/actions/lightning_flash.tscn"
       - "scenes/levels/prototypes/prototype_lightning_flash_spell_trial_v1.tscn"
       - "scenes/tests/lightning_flash_smoke_test.tscn"
       - "scenes/tests/lightning_flash_trial_smoke_test.tscn"
+      - "scenes/tests/spell_aim_pointer_smoke_test.tscn"
       - "data/abilities/lightning_flash_ability.tres"
       - "data/loadouts/grace_starting_loadout.tres"
       - "docs/LIGHTNING_FLASH_V1.md"
+      - "docs/SPELL_AIM_POINTER_V1.md"
       - ".github/workflows/lightning-flash-validation.yml"
   workflow_dispatch:
 
@@ -60,11 +66,17 @@ jobs:
           set -o pipefail
           godot --headless --path . --quit-after 3 res://scenes/levels/prototypes/prototype_lightning_flash_spell_trial_v1.tscn 2>&1 | tee lightning-flash-trial-boot.log
 
-      - name: Run Flash collision and vertical-aim regression
+      - name: Run pointer-aimed Flash regression
         shell: bash
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/lightning_flash_smoke_test.tscn 2>&1 | tee lightning-flash-test.log
+
+      - name: Run shared spell-pointer regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/spell_aim_pointer_smoke_test.tscn 2>&1 | tee spell-pointer-test.log
 
       - name: Run Thunderline progression regression
         shell: bash
@@ -117,6 +129,7 @@ jobs:
             lightning-flash-import.log
             lightning-flash-trial-boot.log
             lightning-flash-test.log
+            spell-pointer-test.log
             lightning-flash-trial-test.log
             focus-quickbar-test.log
             focus-icon-test.log

@@ -1,0 +1,53 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_surf_spell_trial.gd" id="1_trial"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator.gd" id="5_regen"]
+
+[node name="PrototypeSurfSpellTrialV1" type="Node3D" groups=["lab_resource_regeneration", "spell_trial"]]
+script = ExtResource("1_trial")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="LabResourceRegenerator" type="Node" parent="."]
+script = ExtResource("5_regen")
+mana_per_second = 2.0
+stamina_per_second = 0.0
+focus_per_second = 0.0
+refill_on_ready = false
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, -24, 0)
+light_color = Color(0.58, 0.72, 0.94, 1)
+light_energy = 1.12
+shadow_enabled = true
+
+[node name="CausewayFillLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 5, 20)
+light_color = Color(0.1, 0.42, 1, 1)
+light_energy = 2.0
+omni_range = 34.0
+shadow_enabled = false
+
+[node name="HazardLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 3.5, 20)
+light_color = Color(1, 0.18, 0.04, 1)
+light_energy = 1.8
+omni_range = 9.0
+shadow_enabled = false
+
+[node name="MasteryLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 4, 40)
+light_color = Color(1, 0.72, 0.14, 1)
+light_energy = 1.6
+omni_range = 11.0
+shadow_enabled = false
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, -4.5)
+rotation_degrees = Vector3(0, 180, 0)

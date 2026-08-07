@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/tests/lightning_flash_smoke_test.gd" id="1_test"]
+[ext_resource type="Script" path="res://scripts/tests/lightning_flash_pointer_smoke_test.gd" id="1_test"]
 
-[node name="LightningFlashSmokeTest" type="Node3D"]
+[node name="LightningFlashPointerSmokeTest" type="Node3D"]
 script = ExtResource("1_test")

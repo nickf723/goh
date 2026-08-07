@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/actions/metal_needle_fan.gd" id="1_fan"]
+
+[node name="MetalNeedleFan" type="Node3D"]
+script = ExtResource("1_fan")
+needle_count = 9
+fan_angle_degrees = 54.0
+vertical_stagger_degrees = 2.4
+launch_interval_seconds = 0.018
+needle_speed = 36.0
+maximum_range = 17.0
+maximum_hits_per_target = 3

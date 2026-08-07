@@ -6,8 +6,20 @@ const GameplayEffectAccessScript = preload(
 )
 
 # The production authority primes the stream transform immediately, routes
-# sustained Mana through gameplay effects, and preserves Water Jet's complete
-# three-dimensional pressure direction for targets.
+# sustained Mana through gameplay effects, preserves the complete three-
+# dimensional pressure direction, and reuses its bounded contact-query resources.
+
+var cached_stream_shape: CylinderShape3D
+var cached_stream_query: PhysicsShapeQueryParameters3D
+
+
+func _ready() -> void:
+	super._ready()
+	cached_stream_shape = CylinderShape3D.new()
+	cached_stream_query = PhysicsShapeQueryParameters3D.new()
+	cached_stream_query.shape = cached_stream_shape
+	cached_stream_query.collide_with_bodies = true
+	cached_stream_query.collide_with_areas = true
 
 
 func execute(player: Node3D, requested_direction: Vector3) -> void:
@@ -53,6 +65,56 @@ func _consume_channel_mana(delta: float) -> bool:
 		mana_fractional_cost = fmod(mana_fractional_cost, 1.0)
 	_store_mana_debt()
 	return spent >= whole_cost and GameState.get_stat("mana") > 0
+
+
+func _collect_stream_targets(
+	origin: Vector3,
+	direction: Vector3,
+	stream_length: float
+) -> Array[Node]:
+	var targets: Array[Node] = []
+	if (
+		cached_stream_shape == null
+		or cached_stream_query == null
+		or source_actor == null
+		or not is_instance_valid(source_actor)
+		or stream_length <= 0.01
+	):
+		return targets
+	var world: World3D = source_actor.get_world_3d()
+	if world == null:
+		return targets
+
+	var resolved_direction: Vector3 = direction
+	if resolved_direction.length_squared() <= 0.0001:
+		resolved_direction = Vector3.FORWARD
+	resolved_direction = resolved_direction.normalized()
+	cached_stream_shape.radius = maxf(stream_radius, 0.05)
+	cached_stream_shape.height = maxf(stream_length, 0.1)
+	cached_stream_query.transform = Transform3D(
+		_make_axis_basis(resolved_direction),
+		origin + resolved_direction * stream_length * 0.5
+	)
+	cached_stream_query.collision_mask = collision_mask
+	cached_stream_query.exclude = collision_exclusions
+
+	var target_ids: Dictionary = {}
+	for result: Dictionary in world.direct_space_state.intersect_shape(
+		cached_stream_query,
+		48
+	):
+		var collider_value: Variant = result.get("collider")
+		if not collider_value is Node:
+			continue
+		var target: Node = _resolve_effect_target(collider_value as Node)
+		if target == null:
+			continue
+		var target_id: int = target.get_instance_id()
+		if target_ids.has(target_id):
+			continue
+		target_ids[target_id] = true
+		targets.append(target)
+	return targets
 
 
 func _apply_pressure_scan(
@@ -154,4 +216,6 @@ func get_debug_data() -> Dictionary:
 	data["effective_mana_per_second"] = get_effective_mana_rate()
 	data["gameplay_effect_cost_modifier"] = true
 	data["full_3d_target_pressure"] = true
+	data["reused_contact_shape"] = cached_stream_shape != null
+	data["reused_contact_query"] = cached_stream_query != null
 	return data

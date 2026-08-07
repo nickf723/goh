@@ -4,15 +4,18 @@ class_name QuickSpellBeltPerformance
 const SpellIcons = preload("res://scripts/ui/spell_icon_factory.gd")
 
 @export_range(0.05, 0.3, 0.01) var static_refresh_interval: float = 0.1
-@export_range(0.25, 2.0, 0.05) var fallback_poll_interval: float = 0.55
+@export var fallback_polling_enabled: bool = false
+@export_range(1.0, 30.0, 0.5) var fallback_poll_interval: float = 5.0
 
 var equipped_ability_caster: Node
+var observed_loadout: AbilityLoadout
 var equipped_slot_indices: Array[int] = []
 var cursor_slot_indices: Array[int] = []
 var slot_icon_badges: Array[PanelContainer] = []
 var slot_icon_entries: Array[Dictionary] = []
 var equipped_spell_name: String = "None"
 var equipped_spell_glyph: String = "·"
+var cached_selected_special: DivineSpecialDefinition
 var static_refresh_remaining: float = 0.0
 var fallback_poll_remaining: float = 0.0
 var slots_dirty: bool = false
@@ -21,9 +24,19 @@ var special_dirty: bool = false
 var last_focus_state: bool = false
 var last_radial_state: bool = false
 var last_viewport_width: float = -1.0
+var last_item_progress: float = -1.0
+var last_item_menu_visible: bool = false
+var last_special_percent: int = -1
+var last_special_maximum: float = -1.0
+var last_dock_alpha: float = -1.0
 var style_cache: Dictionary = {}
 var process_frames: int = 0
 var heavy_refreshes: int = 0
+var fallback_poll_count: int = 0
+var fast_item_writes: int = 0
+var fast_special_writes: int = 0
+var loadout_signal_connected: bool = false
+var game_state_signals_connected: bool = false
 
 
 func _resolve_bindings() -> void:
@@ -36,6 +49,7 @@ func _resolve_bindings() -> void:
 	):
 		equipped_ability_caster = actor.get_node_or_null("AbilityCaster")
 		_connect_equipped_spell_signal()
+	_connect_loadout_signal()
 
 
 func _finish_setup() -> void:
@@ -45,6 +59,8 @@ func _finish_setup() -> void:
 	_resolve_bindings()
 	_ensure_slot_icon_badges()
 	_connect_equipped_spell_signal()
+	_connect_loadout_signal()
+	_connect_game_state_signals()
 	_update_responsive_scale()
 	_align_focus_panel()
 	last_focus_state = focus_assignment_visible
@@ -56,6 +72,12 @@ func _finish_setup() -> void:
 	items_dirty = false
 	special_dirty = false
 	_refresh_all_slots()
+	_capture_fast_special_state()
+
+
+func _exit_tree() -> void:
+	_disconnect_loadout_signal()
+	_disconnect_game_state_signals()
 
 
 func _process(delta: float) -> void:
@@ -92,12 +114,14 @@ func _process(delta: float) -> void:
 	_update_fast_item_progress()
 	_update_fast_special_visibility()
 
-	fallback_poll_remaining -= step
-	if fallback_poll_remaining <= 0.0:
-		fallback_poll_remaining = fallback_poll_interval
-		slots_dirty = true
-		items_dirty = true
-		special_dirty = true
+	if fallback_polling_enabled:
+		fallback_poll_remaining -= step
+		if fallback_poll_remaining <= 0.0:
+			fallback_poll_remaining = fallback_poll_interval
+			fallback_poll_count += 1
+			slots_dirty = true
+			items_dirty = true
+			special_dirty = true
 
 	if slots_dirty or items_dirty or special_dirty:
 		static_refresh_remaining -= step
@@ -117,8 +141,12 @@ func _process(delta: float) -> void:
 		static_refresh_remaining = static_refresh_interval
 
 	if dock_panel != null:
-		dock_panel.visible = true
-		dock_panel.modulate.a = 0.84 if focus_assignment_visible else 1.0
+		if not dock_panel.visible:
+			dock_panel.visible = true
+		var target_alpha: float = 0.84 if focus_assignment_visible else 1.0
+		if not is_equal_approx(target_alpha, last_dock_alpha):
+			last_dock_alpha = target_alpha
+			dock_panel.modulate.a = target_alpha
 
 
 func _ensure_slot_icon_badges() -> void:
@@ -266,7 +294,7 @@ func _refresh_all_slots() -> void:
 					ability_index,
 					equipped
 				)
-		slot_icon_entries.append(icon_entry.duplicate(true))
+		slot_icon_entries.append(icon_entry.duplicate(false))
 		var marker: String = ""
 		if equipped:
 			marker = " ★"
@@ -320,11 +348,113 @@ func _connect_equipped_spell_signal() -> void:
 		equipped_ability_caster.connect("ability_changed", callback)
 
 
+func _connect_loadout_signal() -> void:
+	var next_loadout: AbilityLoadout = null
+	if equipped_ability_caster != null and is_instance_valid(equipped_ability_caster):
+		var loadout_value: Variant = equipped_ability_caster.get("loadout")
+		if loadout_value is AbilityLoadout:
+			next_loadout = loadout_value as AbilityLoadout
+	if next_loadout == observed_loadout and loadout_signal_connected:
+		return
+	_disconnect_loadout_signal()
+	observed_loadout = next_loadout
+	if observed_loadout == null or not observed_loadout.has_signal(
+		"equipped_ability_changed"
+	):
+		return
+	var callback := Callable(self, "_on_loadout_equipped_ability_changed")
+	if not observed_loadout.is_connected("equipped_ability_changed", callback):
+		observed_loadout.connect("equipped_ability_changed", callback)
+	loadout_signal_connected = true
+
+
+func _disconnect_loadout_signal() -> void:
+	if observed_loadout != null and is_instance_valid(observed_loadout):
+		var callback := Callable(self, "_on_loadout_equipped_ability_changed")
+		if observed_loadout.is_connected("equipped_ability_changed", callback):
+			observed_loadout.disconnect("equipped_ability_changed", callback)
+	loadout_signal_connected = false
+	observed_loadout = null
+
+
+func _connect_game_state_signals() -> void:
+	if game_state_signals_connected:
+		return
+	var slot_callback := Callable(self, "_on_persistent_quick_spell_slot_changed")
+	var selection_callback := Callable(
+		self,
+		"_on_persistent_quick_spell_selection_changed"
+	)
+	if (
+		GameState.has_signal("quick_spell_slot_changed")
+		and not GameState.is_connected("quick_spell_slot_changed", slot_callback)
+	):
+		GameState.connect("quick_spell_slot_changed", slot_callback)
+	if (
+		GameState.has_signal("quick_spell_selection_changed")
+		and not GameState.is_connected(
+			"quick_spell_selection_changed",
+			selection_callback
+		)
+	):
+		GameState.connect("quick_spell_selection_changed", selection_callback)
+	game_state_signals_connected = true
+
+
+func _disconnect_game_state_signals() -> void:
+	var slot_callback := Callable(self, "_on_persistent_quick_spell_slot_changed")
+	var selection_callback := Callable(
+		self,
+		"_on_persistent_quick_spell_selection_changed"
+	)
+	if GameState.is_connected("quick_spell_slot_changed", slot_callback):
+		GameState.disconnect("quick_spell_slot_changed", slot_callback)
+	if GameState.is_connected("quick_spell_selection_changed", selection_callback):
+		GameState.disconnect("quick_spell_selection_changed", selection_callback)
+	game_state_signals_connected = false
+
+
+func _current_quickbar_loadout_id() -> String:
+	if router != null:
+		var router_id: String = str(router.get("current_quickbar_loadout_id"))
+		if router_id != "":
+			return router_id
+	if observed_loadout != null and observed_loadout.has_method(
+		"get_quickbar_loadout_id"
+	):
+		return str(observed_loadout.call("get_quickbar_loadout_id"))
+	return ""
+
+
 func _on_equipped_spell_changed(
 	_ability_name: String,
 	_ability_index: int
 ) -> void:
 	_mark_slots_dirty()
+
+
+func _on_loadout_equipped_ability_changed(
+	_slot_index: int,
+	_ability: AbilityDefinition
+) -> void:
+	_mark_slots_dirty()
+
+
+func _on_persistent_quick_spell_slot_changed(
+	loadout_id: String,
+	_slot_index: int,
+	_spell_id: String
+) -> void:
+	if loadout_id == _current_quickbar_loadout_id():
+		_mark_slots_dirty()
+
+
+func _on_persistent_quick_spell_selection_changed(
+	loadout_id: String,
+	_slot_index: int
+) -> void:
+	if loadout_id == _current_quickbar_loadout_id():
+		_mark_slots_dirty()
 
 
 func _make_equipped_slot_style(
@@ -369,12 +499,18 @@ func _update_fast_item_progress() -> void:
 			quick_item_controller.use_timer
 			/ maxf(quick_item_controller.use_total_duration, 0.01)
 		)
-	item_progress_bar.value = clampf(progress, 0.0, 1.0)
-	if item_menu_panel != null:
-		item_menu_panel.visible = (
-			(button_down or item_reveal_remaining > 0.0)
-			and not focus_assignment_visible
-		)
+	progress = clampf(progress, 0.0, 1.0)
+	if not is_equal_approx(progress, last_item_progress):
+		last_item_progress = progress
+		item_progress_bar.value = progress
+		fast_item_writes += 1
+	var menu_visible: bool = (
+		(button_down or item_reveal_remaining > 0.0)
+		and not focus_assignment_visible
+	)
+	if item_menu_panel != null and menu_visible != last_item_menu_visible:
+		last_item_menu_visible = menu_visible
+		item_menu_panel.visible = menu_visible
 
 
 func _update_fast_special_visibility() -> void:
@@ -384,7 +520,9 @@ func _update_fast_special_visibility() -> void:
 		special_dirty = true
 		static_refresh_remaining = 0.0
 		_suppress_fullscreen_special_radial(radial_now)
-	if special_menu_panel != null:
+	if special_menu_panel != null and special_menu_panel.visible != (
+		radial_now and not focus_assignment_visible
+	):
 		special_menu_panel.visible = radial_now and not focus_assignment_visible
 
 
@@ -437,18 +575,67 @@ func _on_quick_item_belt_changed() -> void:
 	_mark_items_dirty()
 
 
-func _on_selected_special_changed(_definition: DivineSpecialDefinition) -> void:
+func _on_selected_special_changed(definition: DivineSpecialDefinition) -> void:
+	cached_selected_special = definition
 	_mark_special_dirty()
 
 
 func _on_divine_charge_changed(
-	_current: float,
-	_maximum: float,
+	current: float,
+	maximum: float,
 	_reason: String
 ) -> void:
-	# Passive charge can emit every frame. Mark the snapshot dirty, but let the
-	# throttled refresh cadence coalesce those emissions into one UI update.
-	_mark_special_dirty(false)
+	_apply_fast_special_charge(current, maximum)
+	# The closed command tile only needs its numeric charge state. The four-row
+	# radial menu is rebuilt at the throttled cadence only while it is open.
+	if _is_special_radial_open():
+		_mark_special_dirty(false)
+
+
+func _refresh_special_presentation() -> void:
+	if divine_controller != null:
+		cached_selected_special = divine_controller.get_selected_special(
+			OS.is_debug_build()
+		)
+	super._refresh_special_presentation()
+	_capture_fast_special_state()
+
+
+func _capture_fast_special_state() -> void:
+	if special_charge_bar == null:
+		return
+	last_special_maximum = float(special_charge_bar.max_value)
+	last_special_percent = roundi(
+		float(special_charge_bar.value)
+		/ maxf(last_special_maximum, 1.0)
+		* 100.0
+	)
+
+
+func _apply_fast_special_charge(current: float, maximum: float) -> void:
+	if special_charge_bar == null or special_charge_label == null:
+		return
+	var resolved_maximum: float = maxf(maximum, 1.0)
+	var percent: int = roundi(clampf(current / resolved_maximum, 0.0, 1.0) * 100.0)
+	if (
+		percent == last_special_percent
+		and is_equal_approx(resolved_maximum, last_special_maximum)
+	):
+		return
+	last_special_percent = percent
+	last_special_maximum = resolved_maximum
+	special_charge_bar.max_value = resolved_maximum
+	special_charge_bar.value = clampf(current, 0.0, resolved_maximum)
+	var ready: bool = (
+		cached_selected_special != null
+		and current + 0.001 >= cached_selected_special.required_charge
+	)
+	special_charge_label.text = (
+		str(percent)
+		+ "%  •  "
+		+ ("TAP ACTIVATE" if ready else "RECHARGING")
+	)
+	fast_special_writes += 1
 
 
 func _make_panel_style(
@@ -488,6 +675,12 @@ func get_debug_data() -> Dictionary:
 	data["heavy_refreshes"] = heavy_refreshes
 	data["style_cache_size"] = style_cache.size()
 	data["static_refresh_interval"] = static_refresh_interval
+	data["fallback_polling_enabled"] = fallback_polling_enabled
+	data["fallback_poll_interval"] = fallback_poll_interval
+	data["fallback_polls"] = fallback_poll_count
+	data["event_driven_slots"] = loadout_signal_connected and game_state_signals_connected
+	data["fast_item_writes"] = fast_item_writes
+	data["fast_special_writes"] = fast_special_writes
 	data["equipped_slot_indices"] = equipped_slot_indices.duplicate()
 	data["cursor_slot_indices"] = cursor_slot_indices.duplicate()
 	data["slot_icon_badge_count"] = slot_icon_badges.size()
@@ -503,4 +696,5 @@ func get_debug_data() -> Dictionary:
 		else -1
 	)
 	data["authoritative_equipped_spell"] = true
+	data["spell_icon_cache"] = SpellIcons.get_cache_debug_data()
 	return data

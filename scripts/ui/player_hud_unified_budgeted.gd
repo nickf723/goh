@@ -22,6 +22,8 @@ var shell_refresh_remaining: float = 0.0
 var shell_elapsed_since_refresh: float = 0.0
 var shell_update_count: int = 0
 var shell_skipped_frame_count: int = 0
+var visible_refresh_count: int = 0
+var legacy_quick_refresh_skip_count: int = 0
 var legacy_suppression_pass_count: int = 0
 var legacy_node_check_count: int = 0
 var legacy_processing_disabled_count: int = 0
@@ -75,6 +77,19 @@ func _process(delta: float) -> void:
 	shell_elapsed_since_refresh = 0.0
 	shell_update_count += 1
 	_update_unified_shell(elapsed)
+
+
+# The permanent command dock is now authoritative for spells, items, and Divine
+# Specials. Do not keep rebuilding PlayerHUDV2's fully hidden quick panel and its
+# styles on every data refresh. The visible stats, dialogue, portrait, and status
+# surfaces retain the same bounded update cadence.
+func refresh_data(_force: bool = false) -> void:
+	visible_refresh_count += 1
+	legacy_quick_refresh_skip_count += 1
+	_refresh_stats()
+	_refresh_dialogue()
+	_refresh_statuses_and_portrait()
+	_refresh_support_status()
 
 
 # The old base implementation repeatedly searched both the actor and GameUI tree
@@ -307,6 +322,8 @@ func get_debug_data() -> Dictionary:
 	data["unified_refresh_interval"] = unified_shell_refresh_interval
 	data["unified_updates"] = shell_update_count
 	data["unified_skipped_frames"] = shell_skipped_frame_count
+	data["visible_refreshes"] = visible_refresh_count
+	data["legacy_quick_refresh_skips"] = legacy_quick_refresh_skip_count
 	data["legacy_suppression_passes"] = legacy_suppression_pass_count
 	data["legacy_node_checks"] = legacy_node_check_count
 	data["legacy_processing_disabled"] = legacy_processing_disabled_count
@@ -317,4 +334,5 @@ func get_debug_data() -> Dictionary:
 	data["per_frame_style_allocation"] = false
 	data["per_refresh_recursive_legacy_scan"] = false
 	data["suppressed_legacy_processing"] = true
+	data["hidden_quick_panel_refresh"] = false
 	return data

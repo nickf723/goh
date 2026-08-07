@@ -1,10 +1,13 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/actions/water_jet_cast_ready.gd" id="1_water_jet"]
+[ext_resource type="Script" path="res://scripts/actions/water_jet_cast_contact_safe.gd" id="1_water_jet"]
 
 [node name="WaterJetCast" type="Node3D"]
 script = ExtResource("1_water_jet")
+rigid_body_force_per_second = 190.0
 recoil_surface_range = 5.0
 self_recoil_acceleration = 46.0
 maximum_self_upward_speed = 11.5
 minimum_recoil_factor = 0.3
+contact_query_margin = 0.08
+rigid_body_maximum_speed = 10.0

@@ -1,9 +1,18 @@
 extends "res://scripts/player/player_controller_free_aim.gd"
 class_name PlayerControllerFreeAimStatus
 
+const SpellAimPointerScript = preload(
+	"res://scripts/player/player_spell_aim_pointer.gd"
+)
+const FlashAimControllerScript = preload(
+	"res://scripts/player/player_flash_aim_controller.gd"
+)
+
 @export_range(8.0, 160.0, 1.0) var free_aim_ray_distance: float = 80.0
 
 var player_status_receiver: PlayerStatusReceiver
+var spell_aim_pointer: PlayerSpellAimPointer
+var flash_aim_controller: PlayerFlashAimController
 var preserved_step_velocity: Vector3 = Vector3.ZERO
 var restore_step_velocity_after_move: bool = false
 
@@ -13,6 +22,38 @@ func _ready() -> void:
 	player_status_receiver = get_node_or_null(
 		"StatusReceiver"
 	) as PlayerStatusReceiver
+	_ensure_spell_aim_pointer()
+	_ensure_flash_aim_controller()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if (
+		spell_aim_pointer != null
+		and spell_aim_pointer.captures_look_input()
+		and not is_focus_spell_menu_open()
+	):
+		if event is InputEventMouseMotion:
+			spell_aim_pointer.handle_mouse_motion(
+				(event as InputEventMouseMotion).relative
+			)
+			get_viewport().set_input_as_handled()
+			return
+		if event.is_action_pressed("lock_on"):
+			spell_aim_pointer.recenter()
+			get_viewport().set_input_as_handled()
+			return
+	super._unhandled_input(event)
+
+
+func update_controller_camera(delta: float) -> void:
+	if (
+		spell_aim_pointer != null
+		and spell_aim_pointer.captures_look_input()
+		and not is_focus_spell_menu_open()
+	):
+		spell_aim_pointer.advance_controller_input(delta)
+		return
+	super.update_controller_camera(delta)
 
 
 func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
@@ -33,13 +74,23 @@ func get_lock_on_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
 
 
 func get_camera_center_cast_direction(cast_origin: Vector3 = Vector3.ZERO) -> Vector3:
-	var camera: Camera3D = get_viewport().get_camera_3d()
-	if camera == null:
-		return Vector3.ZERO
-
 	var resolved_origin: Vector3 = cast_origin
 	if resolved_origin == Vector3.ZERO:
 		resolved_origin = global_position + Vector3.UP * lock_on_cast_origin_height
+
+	if spell_aim_pointer != null and spell_aim_pointer.is_aim_active():
+		return spell_aim_pointer.get_converged_direction(
+			resolved_origin,
+			free_aim_ray_distance,
+			collision_mask,
+			true,
+			true,
+			get_free_aim_exclusion_rids()
+		)
+
+	var camera: Camera3D = get_viewport().get_camera_3d()
+	if camera == null:
+		return Vector3.ZERO
 
 	var viewport_rect: Rect2 = camera.get_viewport().get_visible_rect()
 	var screen_center: Vector2 = viewport_rect.position + viewport_rect.size * 0.5
@@ -92,7 +143,39 @@ func _collect_collision_rids(node: Node, exclusions: Array[RID]) -> void:
 func handle_lock_on_target_switch_input() -> void:
 	if is_focus_spell_menu_open():
 		return
+	if spell_aim_pointer != null and spell_aim_pointer.captures_look_input():
+		return
 	super.handle_lock_on_target_switch_input()
+
+
+func get_spell_aim_pointer() -> PlayerSpellAimPointer:
+	return spell_aim_pointer
+
+
+func is_spell_aim_pointer_active() -> bool:
+	return spell_aim_pointer != null and spell_aim_pointer.is_aim_active()
+
+
+func _ensure_spell_aim_pointer() -> void:
+	spell_aim_pointer = get_node_or_null(
+		"SpellAimPointer"
+	) as PlayerSpellAimPointer
+	if spell_aim_pointer != null:
+		return
+	spell_aim_pointer = SpellAimPointerScript.new() as PlayerSpellAimPointer
+	spell_aim_pointer.name = "SpellAimPointer"
+	add_child(spell_aim_pointer)
+
+
+func _ensure_flash_aim_controller() -> void:
+	flash_aim_controller = get_node_or_null(
+		"FlashAimController"
+	) as PlayerFlashAimController
+	if flash_aim_controller != null:
+		return
+	flash_aim_controller = FlashAimControllerScript.new() as PlayerFlashAimController
+	flash_aim_controller.name = "FlashAimController"
+	add_child(flash_aim_controller)
 
 
 func _get_requested_ground_velocity() -> Vector3:
@@ -151,3 +234,18 @@ func _finish_step_up() -> void:
 	velocity.z = preserved_step_velocity.z
 	preserved_step_velocity = Vector3.ZERO
 	restore_step_velocity_after_move = false
+
+
+func get_spell_aim_debug_data() -> Dictionary:
+	return {
+		"pointer": (
+			spell_aim_pointer.get_debug_data()
+			if spell_aim_pointer != null
+			else {}
+		),
+		"flash_aim": (
+			flash_aim_controller.get_debug_data()
+			if flash_aim_controller != null
+			else {}
+		),
+	}

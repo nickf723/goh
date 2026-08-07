@@ -24,6 +24,7 @@ var shell_update_count: int = 0
 var shell_skipped_frame_count: int = 0
 var legacy_suppression_pass_count: int = 0
 var legacy_node_check_count: int = 0
+var legacy_processing_disabled_count: int = 0
 var legacy_listener_connected: bool = false
 
 var panel_style_cache: Dictionary = {}
@@ -78,12 +79,36 @@ func _process(delta: float) -> void:
 
 # The old base implementation repeatedly searched both the actor and GameUI tree
 # every refresh. One initial pass is sufficient; late legacy surfaces are hidden
-# through SceneTree.node_added without another recursive search.
+# through SceneTree.node_added without another recursive search. Because these
+# surfaces are fully replaced by the unified HUD, their processing is disabled
+# as well as their rendering.
 func _suppress_legacy_hud() -> void:
 	if legacy_suppression_pass_count > 0:
 		return
 	legacy_suppression_pass_count += 1
 	super._suppress_legacy_hud()
+	_disable_legacy_actor_surface_processing()
+
+
+func _disable_legacy_actor_surface_processing() -> void:
+	if actor == null:
+		return
+	for node_name: String in LEGACY_ACTOR_SURFACE_NAMES:
+		var legacy: Node = actor.get_node_or_null(node_name)
+		if legacy != null:
+			_disable_legacy_surface(legacy)
+
+
+func _disable_legacy_surface(node: Node) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	if node is CanvasLayer:
+		(node as CanvasLayer).visible = false
+	elif node is CanvasItem:
+		(node as CanvasItem).visible = false
+	if node.process_mode != Node.PROCESS_MODE_DISABLED:
+		node.process_mode = Node.PROCESS_MODE_DISABLED
+		legacy_processing_disabled_count += 1
 
 
 func _connect_legacy_surface_listener() -> void:
@@ -126,16 +151,16 @@ func _hide_late_legacy_surface(node: Node) -> void:
 	if LEGACY_ACTOR_SURFACE_NAMES.has(node_name):
 		if actor == null or not (node == actor or actor.is_ancestor_of(node)):
 			return
-	elif LEGACY_GAME_UI_SURFACE_NAMES.has(node_name):
+		_disable_legacy_surface(node)
+		return
+	if LEGACY_GAME_UI_SURFACE_NAMES.has(node_name):
 		var game_ui: Node = get_tree().get_first_node_in_group("game_ui")
 		if game_ui == null or not (node == game_ui or game_ui.is_ancestor_of(node)):
 			return
-	else:
-		return
-	if node is CanvasLayer:
-		(node as CanvasLayer).visible = false
-	elif node is CanvasItem:
-		(node as CanvasItem).visible = false
+		if node is CanvasLayer:
+			(node as CanvasLayer).visible = false
+		elif node is CanvasItem:
+			(node as CanvasItem).visible = false
 
 
 func _update_zone_visibility() -> void:
@@ -284,10 +309,12 @@ func get_debug_data() -> Dictionary:
 	data["unified_skipped_frames"] = shell_skipped_frame_count
 	data["legacy_suppression_passes"] = legacy_suppression_pass_count
 	data["legacy_node_checks"] = legacy_node_check_count
+	data["legacy_processing_disabled"] = legacy_processing_disabled_count
 	data["legacy_listener"] = legacy_listener_connected
 	data["panel_style_cache"] = panel_style_cache.size()
 	data["bar_style_cache"] = bar_style_cache.size()
 	data["shell_style_cache"] = shell_style_cache.size()
 	data["per_frame_style_allocation"] = false
 	data["per_refresh_recursive_legacy_scan"] = false
+	data["suppressed_legacy_processing"] = true
 	return data

@@ -1,0 +1,153 @@
+name: Curling Puck and Rime Rink validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/curling_puck.gd"
+      - "scripts/actions/curling_puck_ready.gd"
+      - "scripts/actions/curling_ice_trail.gd"
+      - "scripts/surfaces/slippery_surface_area.gd"
+      - "scripts/water/frozen_water_bridge_area.gd"
+      - "scripts/water/swimming_water_volume.gd"
+      - "scripts/player/player_ground_motion_motor.gd"
+      - "scripts/player/player_swimming_controller.gd"
+      - "scripts/levels/prototype_curling_puck_spell_trial.gd"
+      - "scripts/tests/curling_puck_spell_smoke_test.gd"
+      - "scripts/tests/curling_puck_spell_trial_smoke_test.gd"
+      - "scenes/actions/curling_puck.tscn"
+      - "scenes/levels/prototypes/prototype_curling_puck_spell_trial_v1.tscn"
+      - "scenes/tests/curling_puck_spell_smoke_test.tscn"
+      - "scenes/tests/curling_puck_spell_trial_smoke_test.tscn"
+      - "data/abilities/curling_puck_ability.tres"
+      - "data/damage_payloads/curling_puck_payload.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "docs/CURLING_PUCK_V1.md"
+      - ".github/workflows/curling-puck-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: curling-puck-rime-rink-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-curling-puck:
+    name: Import, ice terrain, water bridge, and momentum regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Show Godot version
+        run: godot --version
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee curling-puck-import.log
+
+      - name: Boot the Rime Rink
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 4 res://scenes/levels/prototypes/prototype_curling_puck_spell_trial_v1.tscn 2>&1 | tee rime-rink-boot.log
+
+      - name: Run Curling Puck physics and terrain regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/curling_puck_spell_smoke_test.tscn 2>&1 | tee curling-puck-test.log
+
+      - name: Run Rime Rink progression regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/curling_puck_spell_trial_smoke_test.tscn 2>&1 | tee rime-rink-test.log
+
+      - name: Run Boulder physics regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/boulder_spell_smoke_test.tscn 2>&1 | tee boulder-test.log
+
+      - name: Run swimming regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/swimming_smoke_test.tscn 2>&1 | tee swimming-test.log
+
+      - name: Run complete Focus library regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/complete_spell_library_smoke_test.tscn 2>&1 | tee complete-library-test.log
+
+      - name: Run Focus and quickbar independence regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_independence_smoke_test.tscn 2>&1 | tee focus-quickbar-test.log
+
+      - name: Run Focus icon-row regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/focus_quickbar_icon_independence_smoke_test.tscn 2>&1 | tee focus-icon-test.log
+
+      - name: Run permanent quickbar regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/quick_spell_belt_smoke_test.tscn 2>&1 | tee quickbar-test.log
+
+      - name: Run spell capability regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/spell_capability_manifest_smoke_test.tscn 2>&1 | tee spell-capability-test.log
+
+      - name: Run performance foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance-test.log
+
+      - name: Run laboratory resource regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lab_resource_regenerator_smoke_test.tscn 2>&1 | tee lab-resource-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: curling-puck-rime-rink-logs
+          path: |
+            curling-puck-import.log
+            rime-rink-boot.log
+            curling-puck-test.log
+            rime-rink-test.log
+            boulder-test.log
+            swimming-test.log
+            complete-library-test.log
+            focus-quickbar-test.log
+            focus-icon-test.log
+            quickbar-test.log
+            spell-capability-test.log
+            performance-test.log
+            lab-resource-test.log
+          if-no-files-found: ignore

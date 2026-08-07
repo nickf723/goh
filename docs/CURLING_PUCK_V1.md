@@ -27,7 +27,9 @@ Hold left + Cast   → left-hand curl
 Hold right + Cast  → right-hand curl
 ```
 
-The puck keeps its selected rotation instead of homing toward later input. The result is a committed route that can bend around a corner, curve toward a mechanism, or remain straight for a bridge and momentum runway.
+The puck keeps its selected rotation instead of homing toward later input. The chosen curl is stored on the resulting trail, so rooms can verify the route itself even after a later cast changes Grace's current input state.
+
+The result is a committed route that can bend around a corner, curve toward a mechanism, or remain straight for a bridge and momentum runway.
 
 ## Ground-conforming movement
 
@@ -41,7 +43,9 @@ Each movement step:
 4. Sweeps several rays across the puck's width.
 5. Adds evenly spaced trail segments between the old and new positions.
 
-The support sampler accepts ordinary ground and authored freezable water volumes. A puck stops when it loses a valid route, reaches its maximum distance, loses enough speed, or contacts a solid obstruction or target.
+The support sampler accepts ordinary ground and authored freezable water volumes. It can preserve one continuous route through a ground-to-water-to-ground transition rather than treating the shoreline as an impact.
+
+A puck stops when it loses a valid route, reaches its maximum distance, loses enough speed, or contacts a solid obstruction or target.
 
 The puck deals only a light chilling impact. The spell's main value is the terrain it leaves behind.
 
@@ -53,9 +57,9 @@ Grace receives:
 
 ```text
 Acceleration response: 34%
-Braking response:      8%
-Turning response:      18%
-Reversal response:     12%
+Braking response:       8%
+Turning response:       18%
+Reversal response:      12%
 ```
 
 These values do not add free speed. They preserve existing velocity and make direction changes slow, producing a readable slide rather than ordinary walking with a blue floor decal.
@@ -63,11 +67,13 @@ These values do not add free speed. They preserve existing velocity and make dir
 Rigid bodies temporarily receive:
 
 ```text
-Linear damping:   0.04
-Angular damping:  0.035
+Linear damping:    0.04
+Angular damping:   0.035
+Contact friction:  0.02
+Rough contact:     false
 ```
 
-Their original damping values are restored when they leave the trail or when the ice disappears. This lets crates, mechanisms, and especially Boulder preserve translation and rotation across the route.
+The low-friction contact material matters for rough objects such as Boulder. Reducing damping alone would preserve motion in the air while the object's original high-friction surface still gripped the ground. The trail temporarily replaces both the damping and the contact material, then restores the exact original values and material resource when the object leaves or the ice disappears.
 
 A Boulder that contacts the trail records:
 
@@ -77,6 +83,22 @@ ice_curl_last_trail_name
 ```
 
 Authored puzzles can therefore require a specific Puck-to-Boulder combination instead of merely detecting that a heavy object reached the destination.
+
+## Reliable contact volumes
+
+The solid ice support remains approximately 0.1 meters thick. The slippery and frozen-water detection volumes rise roughly 0.85 meters above that support and overlap it slightly.
+
+This separation prevents a common physics edge case:
+
+```text
+Thin support top merely touches a resting collision body
+        ↓
+Area3D reports no overlap
+        ↓
+The object looks on the ice but never receives ice behavior
+```
+
+The raised interaction volume ensures Grace, rigid props, and Boulders inherit slippery or frozen-water behavior while physically resting on the thin bridge. Static floors and support geometry are rejected from those interaction areas.
 
 ## Freezing water
 
@@ -89,7 +111,7 @@ The frozen path performs two jobs:
 
 When the ice melts beneath Grace, the handoff releases and swimming resumes if she is still inside the water volume.
 
-This is local freezing, not a global water toggle. Only the path actually written by the puck becomes traversable.
+This is local freezing, not a global water toggle. Only the path actually written by the puck becomes traversable. The same trail can begin on shore, cross the water, and reacquire solid ground on the opposite side.
 
 ## Trail lifecycle
 
@@ -131,7 +153,7 @@ up to 56 visual instances
 0 per-segment processing callbacks
 ```
 
-Trail segments add collision shapes to the shared bodies rather than creating an independently processing node for every strip of ice.
+Trail segments add collision shapes to the shared bodies rather than creating an independently processing node for every strip of ice. Water-supported instances receive a slightly brighter tint, making the bridge portion readable against the pool.
 
 ## Complete Focus library
 
@@ -175,7 +197,7 @@ Swimming across the pool does not satisfy the room.
 
 ### III. The Long Slide
 
-Lay a straight Curling Puck runway along the final chamber, switch to Boulder, and roll a fresh Boulder onto the 120 kg plate.
+Lay a straight Curling Puck runway along the final chamber, step forward on the same centerline, switch to Boulder, and roll a fresh Boulder onto the 120 kg plate.
 
 The gate requires:
 
@@ -220,12 +242,13 @@ F8 restores:
 4. Hold right while casting and confirm the route curls right.
 5. Walk onto the trail with existing speed, release movement, and confirm Grace slides.
 6. Attempt a sharp turn and confirm the response is slower than on ordinary ground.
-7. Push a rigid prop onto the trail and confirm it retains motion longer.
+7. Push a rough rigid prop onto the trail and confirm both its damping and contact friction drop until it exits.
 8. Complete the three right-hand curling marks with one cast.
-9. Cast straight across the pool and walk over the frozen path.
-10. Wait for the bridge to melt while standing over water and confirm swimming resumes.
-11. Lay an ice runway, switch to Boulder, and roll it onto the 120 kg plate.
-12. Confirm the Boulder records the trail serial and keeps rolling longer than on the dry runway.
-13. Apply Fire to a trail and confirm it melts early.
-14. Watch F7 through puck travel, lingering ice, multiple casts, and cleanup.
-15. Complete the mastery seal and press F8 to verify the full reset.
+9. Cast straight across the pool and confirm the puck transitions from shore to water and back to shore.
+10. Walk over the frozen path without entering the swimming state.
+11. Wait for the bridge to melt while standing over water and confirm swimming resumes.
+12. Lay an ice runway, switch to Boulder, and roll it onto the 120 kg plate.
+13. Confirm the Boulder records the trail serial and keeps rolling longer than on the dry runway.
+14. Apply Fire to a trail and confirm it melts early.
+15. Watch F7 through puck travel, lingering ice, multiple casts, and cleanup.
+16. Complete the mastery seal and press F8 to verify the full reset.

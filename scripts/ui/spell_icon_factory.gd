@@ -59,6 +59,7 @@ const SPELL_GLYPHS: Dictionary = {
 	"wave": "≈",
 	"bubble": "○",
 	"earth_spike": "▲",
+	"boulder": "●",
 	"gust": "↝",
 	"wind_gust": "↝",
 	"wind_well": "↑",

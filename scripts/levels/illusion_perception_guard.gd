@@ -73,6 +73,8 @@ func _physics_process(delta: float) -> void:
 			velocity.y = -0.1
 		move_and_slide()
 		return
+	if current_target != null and not is_instance_valid(current_target):
+		current_target = null
 	perception_remaining -= step
 	attack_remaining = maxf(attack_remaining - step, 0.0)
 	if perception_remaining <= 0.0:
@@ -87,6 +89,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _refresh_target() -> void:
+	if current_target != null and not is_instance_valid(current_target):
+		current_target = null
 	var next: Node3D = PerceptionResolver.resolve_target(
 		get_tree(),
 		self,
@@ -94,7 +98,7 @@ func _refresh_target() -> void:
 		perception_range
 	)
 	var target_speed: float = 0.0
-	if next is CharacterBody3D:
+	if next != null and is_instance_valid(next) and next is CharacterBody3D:
 		var target_velocity: Vector3 = (next as CharacterBody3D).velocity
 		target_speed = Vector2(target_velocity.x, target_velocity.z).length()
 	if perception != null:
@@ -112,13 +116,14 @@ func _refresh_target() -> void:
 	target_change_count += 1
 	var kind: String = _target_kind(current_target)
 	target_changed.emit(current_target, kind)
-	if kind == "illusion":
+	if kind == "illusion" and current_target != null and is_instance_valid(current_target):
 		illusion_target_count += 1
 		illusion_targeted.emit(current_target)
 
 
 func _move_toward_perceived_target(delta: float) -> void:
 	if current_target == null or not is_instance_valid(current_target):
+		current_target = null
 		velocity.x = move_toward(velocity.x, 0.0, acceleration * delta)
 		velocity.z = move_toward(velocity.z, 0.0, acceleration * delta)
 		return
@@ -152,6 +157,9 @@ func _move_toward_perceived_target(delta: float) -> void:
 
 
 func _arrive_and_attack() -> void:
+	if current_target == null or not is_instance_valid(current_target):
+		current_target = null
+		return
 	arrived_count += 1
 	arrived_at_target.emit(current_target)
 	if attack_remaining > 0.0:
@@ -173,10 +181,21 @@ func _arrive_and_attack() -> void:
 	_flash_eyes()
 
 
-func _target_kind(target: Node3D) -> String:
-	if target == null:
+func _target_kind(target: Variant) -> String:
+	# A queued-for-deletion illusion can survive in a typed member until the next
+	# perception tick. Accept Variant here so debug/progression reads cannot throw
+	# a typed-argument error while Godot is retiring that Object.
+	if target == null or not is_instance_valid(target):
 		return "none"
-	return str(target.get_meta("perception_target_kind", "grace"))
+	if not target is Node:
+		return "none"
+	return str((target as Node).get_meta("perception_target_kind", "grace"))
+
+
+func _safe_target_name() -> String:
+	if current_target == null or not is_instance_valid(current_target):
+		return "none"
+	return str(current_target.name)
 
 
 func reset_target() -> void:
@@ -253,7 +272,7 @@ func get_debug_data() -> Dictionary:
 	return {
 		"illusion_perception_guard": true,
 		"enabled": training_enabled,
-		"target": str(current_target.name) if current_target != null else "none",
+		"target": _safe_target_name(),
 		"target_kind": _target_kind(current_target),
 		"target_changes": target_change_count,
 		"illusion_targets": illusion_target_count,

@@ -3,11 +3,24 @@ class_name SoulDuplicateActorCombatSynced
 
 var last_mirrored_attack_forward: Vector3 = Vector3.FORWARD
 var mirrored_attack_count: int = 0
+var jump_release_multiplier: float = 0.52
 
 
 func configure(source: CharacterBody3D, index: int = 0) -> void:
 	super.configure(source, index)
 	_sync_motion_constants_from_source()
+
+
+func _physics_process(delta: float) -> void:
+	super._physics_process(delta)
+	if (
+		Input.is_action_just_released("jump")
+		and velocity.y > 0.0
+	):
+		velocity.y = maxf(
+			velocity.y * jump_release_multiplier,
+			0.45
+		)
 
 
 func mirror_weapon_attack_with_forward(
@@ -158,4 +171,5 @@ func get_debug_data() -> Dictionary:
 		source_actor != null
 		and is_equal_approx(jump_velocity, float(source_actor.get("jump_velocity")))
 	)
+	data["jump_release_multiplier"] = jump_release_multiplier
 	return data

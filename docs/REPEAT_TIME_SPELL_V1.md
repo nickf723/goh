@@ -1,226 +1,200 @@
-# Repeat v1
+# Repeat v2: timeline reenactment
 
-Repeat is a Time concentration spell that creates a friendly delayed copy of Grace's timeline.
+Repeat is a Time concentration spell that reserves 30% of Grace's maximum Mana and creates a delayed echo of her timeline.
 
-## Concentration contract
+## Core rule
 
-```text
-Element: Time
-Mana reservation: 30% of maximum Mana
-Base echo count: 1
-Base delay: 1.0 second
-Additional echo spacing: 0.42 seconds
-Repeated weapon damage: 68%
-Repeated stance pressure: 80%
-```
-
-Casting Repeat while it is inactive reserves 30% of Grace's maximum Mana and creates the echo. Casting Repeat again releases concentration and removes all Repeat echoes. Activating another concentration effect also releases Repeat through the shared concentration manager.
-
-## Timeline replay
-
-The controller records Grace once per physics frame. Each snapshot stores:
-
-- Grace's world transform;
-- the complete Grace visual root transform, including Grow/Shrink scale;
-- articulated body, head, hands, shoulders, legs, face, hair, and sash pivots;
-- the active Body form identifier.
-
-The echo samples an older snapshot instead of independently simulating movement. This makes it reproduce the animation Grace actually performed rather than guessing from current input.
-
-The echo has no collision and cannot hurt Grace. It is rendered as a translucent blue-violet time image.
-
-## Weapon attacks
-
-Repeat listens to Grace's ordinary weapon attack signal. A delayed attack event is created for every active echo. When that echo reaches the attack moment, Repeat performs a fresh overlap query at the echo's location and delivers a `DamagePayload` to valid receivers.
-
-Repeated weapon payloads receive:
+Repeat does **not** run a second simulation of the original action. It records what actually happened and reenacts that timeline one second later.
 
 ```text
-time
-repeat
-echo
-delayed_copy
+Original event
+    ↓ record motion / state / timing
+One second later
+    ↓
+Temporal reenactment
 ```
 
-If Grace was Grown or Shrunk when the original attack began, the repeated payload also records that Body-form tag and captures the form-adjusted weapon range and force.
-
-This means the useful part is spatial, not merely cosmetic: Grace can move away while her old position attacks again one second later.
-
-## Spell replay: copy the action, never the original result
-
-Repeat now observes the actual ability scene Grace adds to the world. One second later, a clone-safe spell is instantiated again from the echo's historical position and recorded cast direction.
-
-The important rule is:
-
-```text
-Original cast happens
-        ↓
-The world changes normally
-        ↓
-One second later Repeat performs a NEW cast
-        ↓
-That cast interacts with whatever exists now
-```
-
-Repeat never stores or reapplies the original spell's hit list.
+The replay may affect new targets that now occupy the prerecorded route, but those new contacts never alter the remembered motion.
 
 Example:
 
 ```text
-Grace casts Boulder at Enemy A
-Boulder hits A, knocks A left, then veers left
-        ↓ one second
-Echo Boulder starts from old Grace's position
-Enemy A is no longer in the lane
-        ↓
-Echo Boulder misses A
-But Enemy B walks into the new lane
-        ↓
-Echo Boulder can hit B normally
+Grace launches Boulder A
+Boulder A hits Enemy A
+Enemy A is knocked away
+Boulder A deflects left and continues
+
+one second later...
+
+Boulder B follows the exact remembered path
+It visibly performs the same left deflection
+Enemy A is gone, so that remembered deflection has no new cause
+Enemy B walks into the remembered path
+Boulder B can damage Enemy B
+Boulder B still continues along the original path
 ```
 
-This same rule applies to Firebolt, Ice Lance, Metal Needle, Curling Puck, Contagion Cloud, and every other approved clone-safe cast.
-
-Replay roots are tagged with:
+This is intentionally different from the planned Soul Duplicate spell.
 
 ```text
-clone_spell_replay = true
-clone_spell_kind = repeat
-clone_copies_original_result = false
-clone_fresh_world_interaction = true
+REPEAT
+prerecorded timeline authority
+same path, same timing, delayed
+new contacts cannot redirect the memory
+
+SOUL DUPLICATE
+live second actor
+same action at the same time
+physics and world state resolve independently
 ```
 
-A lightweight blue-violet temporal tint is applied after the echoed spell finishes constructing its own visuals, making repeated spells readable without replacing their underlying elemental identity.
+## Grace timeline
 
-## Clone-safe policy
+Repeat records Grace every physics frame, including:
 
-`SpellCloneReplayPolicy` is deliberately shared infrastructure rather than Repeat-specific logic. A future Soul duplicate can use the same rules.
+- world transform;
+- articulated body pose;
+- Grow/Shrink visual scale;
+- traversal produced by Surf, Flash, Flight, jumps, dodges, and ordinary movement.
 
-Currently approved examples include:
+This means transformations and traversal do not need to be re-cast. The echo simply reaches the same recorded state one second later.
+
+## Weapon attacks
+
+Weapon attacks replay at the delayed Grace position. The repeated attack receives the original Body-form-adjusted damage, stance, reach, and force identity, then evaluates targets occupying that historical attack space at replay time.
+
+## Spell semantics
+
+`SpellCloneSemantics` gives every ability two independent modes:
 
 ```text
-Firebolt
-Ice Lance
-Lightning Spark
-Sound Pulse
-Poison Cloud
-Fire Field
-Wind Gust
-Earth Spike
-Metal Needle
-Life Thorn
-Death Hex
-Body Burst
-Soul Thread
-Dream Snare
-Time Snare
-Wave
-Lightning Bolt
-Wind Well
-Contagion Cloud
-Boulder
-Curling Puck
-Echolocation
-Resonant Pulse
-Gust
+repeat_mode
+    timeline_trajectory
+    timeline_recast
+    timeline_source_state
+    timeline_channel
+    world_state_noop
+    suppress
+
+duplicate_mode
+    live_recast
+    live_source_state
+    world_state_noop
+    suppress
 ```
 
-These casts are replayed as independent actions.
+### Timeline trajectory
 
-The following families are suppressed instead of copied:
+Used for physical/projectile motion such as:
+
+- Firebolt
+- Ice Lance
+- Metal Needle
+- Boulder
+- Curling Puck
+- similar authored projectile spells
+
+Repeat records the original effect's world transform every physics frame. A kinematic temporal shell later follows those exact transforms. It performs swept overlap checks for new targets but cannot be redirected by those contacts.
+
+### Timeline recast
+
+Used for deterministic bursts and fields whose meaningful motion is already tied to the delayed Grace echo, including:
+
+- Lightning Spark
+- Wave
+- Lightning Bolt
+- Wind Well
+- Contagion Cloud
+- Asteroid Belt
+- Echolocation
+- similar instant or deterministic effects
+
+These are recreated around the delayed echo using the recorded cast intent.
+
+### Timeline channels
+
+Water Jet and Flamethrower record their actual stream origin, aim direction, resolved length, and duration every physics frame. Their temporal streams later consume those recorded samples instead of reading current input.
+
+Water Jet's temporal stream can damage, Wet, and push new targets occupying the recorded hose line. It does not reapply self-propulsion to Grace because the echo's movement timeline already contains the original launch.
+
+Firewall records the actual authored `path_points`, surface normals, and phase progression. Its temporal Firewall redraws the same route and erupts on the same delayed schedule. New targets occupying the repeated flame wall can be damaged without changing the remembered path.
+
+### Source-state replay
+
+- Grow / Shrink: copied by Grace's recorded visual and collision-state timeline.
+- Surf / Flash / Flight: copied by Grace's recorded traversal timeline.
+- Bubble: activation is delayed, and its burst is scheduled for the same delayed moment the original Bubble popped.
+
+### World-state no-op
+
+Global weather does not stack or cancel itself:
 
 ```text
-Concentration spells
-Weather ownership
-Body transformations
-Self-teleports / traversal states
-Self-defense states
-Held channels
-Firewall's drawn path
-Grab / tether ownership
-Summons and deployed persistent objects
+Rain
+Snowfall
+Thunderstorm
 ```
 
-Examples:
+The echo reaches the cast moment and intentionally does nothing because the original world state already exists.
+
+### Suppressed ownership
+
+These remain intentionally blocked:
+
+- Repeat recursively casting itself;
+- Soul Grip;
+- Metal Tether;
+- persistent summons;
+- recorded-object summons;
+- artificer assemblies;
+- deployed contraptions.
+
+These actions create ownership relationships or persistent autonomous actors rather than a replayable spell event.
+
+## Bubble timing
+
+Repeat's Bubble is event-driven:
 
 ```text
-Rain / Snowfall / Thunderstorm → echo does nothing
-Repeat                         → cannot recursively Repeat
-Grow / Shrink                  → echo uses recorded visual form, does not transform
-Flight                         → no second concentration
-Surf / Flash                   → movement is already represented by the delayed timeline
-Bubble / Asteroid Belt         → original body owns the persistent self-state
-Water Jet / Flamethrower       → blocked until channel duration is explicitly recorded
+Original Bubble activates at t = 0
+Original Bubble absorbs a hit at t = 2.3
+
+Echo Bubble activates at t = 1.0
+Echo Bubble performs its burst at t = 3.3
 ```
 
-New ordinary projectile and instant spells default to replayable unless their roles or delivery type declare clone-unsafe ownership. New utility, summon, transformation, and movement spells default to suppressed until their semantics are reviewed.
+The echo does not need the original attacker to still exist. The burst happens because that event belongs to the recorded timeline, then affects whatever valid bodies are near the delayed echo at that moment.
 
-## Shared Duplicate architecture
+## Future Soul Duplicate
 
-The policy and replay engine are named around **clones**, not Repeat, because the eventual Soul duplicate should use exactly the same contract.
+Soul Duplicate should consume the same semantics table but use `duplicate_mode`.
 
-A Soul double should therefore be able to say:
+For most spells this means `live_recast`: a second Firebolt, Boulder, Water Jet, Firewall, Asteroid Belt, etc. happens simultaneously and owns an independent simulation.
+
+Transformations and traversal use `live_source_state`, because the duplicate is a real controlled body that can Grow, Shrink, Surf, Flash, or Fly for itself.
+
+Weather remains a world-state no-op, while summon/grab/object ownership remains suppressed unless explicitly upgraded later.
+
+This creates the intended composition:
 
 ```text
-SpellCloneReplayPolicy.get_policy(ability)
-SpellCloneReplay.replay_cast(...)
+Grace performs action now
+Soul Grace performs a second live action now
+Repeat Grace reenacts Grace one second later
+Repeat Soul Grace can eventually reenact Soul Grace one second later
 ```
 
-and inherit the same rule: duplicate the action, not the previous outcome.
+## Focused playtest
 
-This allows future compositions like:
-
-```text
-Grace casts Firebolt
-Soul Grace casts its own Firebolt
-Repeat trails Grace with another Firebolt
-Repeat trails Soul Grace with another Firebolt
-```
-
-Every projectile owns its own trajectory and collisions. No duplicate is handed a prerecorded target list.
-
-## Upgrade architecture
-
-`RepeatEchoController.echo_count` already supports multiple time followers. Every additional echo uses the same timeline with an additional delay offset.
-
-The controller also exposes `register_repeat_source()`. v1 records Grace as the authoritative timeline, but the public source registry is intentionally present for a future Soul duplication spell. A Soul double can register itself as a Repeat source without changing the spell-facing API.
-
-That future composition can become:
-
-```text
-Grace
-Soul Double
-    ×
-Repeat Echo 1
-Repeat Echo 2
-Repeat Echo 3
-```
-
-The eventual multi-source implementation should give each registered source its own history lane and echo set.
-
-## Grow/Shrink visual fix
-
-Body-form collision was already correct, but Grace's presentation stack could reclaim the visual root after the transform and return the model to normal size.
-
-Runtime Body casting now installs `PlayerBodyFormControllerVisualAuthority`. It runs at process priority 80, after Grace's articulated visual rig, and reapplies the authoritative Body-form root scale and grounded visual position every transformed frame.
-
-This deliberately separates responsibilities:
-
-```text
-Animation rig owns pose
-Body form owns scale
-Physics owns collision
-```
-
-Grow and Shrink therefore remain visually matched to their working collision capsules instead of flashing at the correct size and snapping back.
-
-## Focused test
-
-1. Cast Repeat (`R↺`), then cast Firebolt. A blue-violet echo Firebolt should leave the historical Grace about one second later.
-2. Move sideways immediately after the first Firebolt. The repeated Firebolt should still originate from the echo's old position.
-3. Cast Boulder toward a moving enemy. The echoed Boulder should replay the launch, not the original hit result.
-4. Put a different target into the echoed projectile's future path and confirm the echoed spell can hit it independently.
-5. Test Curling Puck or Contagion Cloud and confirm their later world interactions belong to the echo instance.
-6. Cast Grow while Repeat is active. The echo should replay the recorded large visual state when it reaches that portion of the timeline, but it should not cast Grow itself.
-7. Inspect the policy for Rain, Snowfall, Thunderstorm, Flight, Repeat, Grow, Shrink, Surf, and Bubble. These should be suppressed rather than recursively or globally duplicated.
-8. Cast Repeat again. Echoes and pending spell replay events should be cleaned up and reserved Mana restored.
+1. Cast Repeat and fire a projectile into a wall or target that changes its route.
+2. Watch the temporal projectile follow the exact same recorded route one second later even if the original target moved.
+3. Put another target into the temporal route and confirm it can be hit without redirecting the replay.
+4. Cast Boulder into an enemy and inspect the remembered deflection carefully.
+5. Hold Water Jet while sweeping the camera. The temporal jet should reproduce the same sweep one second later.
+6. Do the same with Flamethrower.
+7. Draw a bent Firewall. The temporal line should redraw and erupt on the same delayed route.
+8. Cast Bubble and let it absorb a hit. The temporal Bubble should pop one second after the original pop.
+9. Cast Asteroid Belt while moving. The belt should appear around the delayed echo and follow that echo's recorded Grace path.
+10. Use Surf, Flash, Flight, Grow, or Shrink and confirm the delayed Grace reenacts those state changes without recursively casting them.
+11. Cast Rain/Snowfall/Thunderstorm and confirm no duplicate world-state weather is created.
+12. Release Repeat and confirm every pending timeline effect cleans up.

@@ -76,24 +76,12 @@ func run_tests() -> void:
 		"Grace's runtime casting references match every authored ability resource"
 	)
 	for spell_id: String in authored_ids:
-		_expect(
-			learned_ids.has(spell_id),
-			spell_id + " appears in learned Focus spells"
-		)
-		_expect(
-			equipped_ids.has(spell_id),
-			spell_id + " has a runtime casting reference"
-		)
+		_expect(learned_ids.has(spell_id), spell_id + " appears in learned Focus spells")
+		_expect(equipped_ids.has(spell_id), spell_id + " has a runtime casting reference")
 
 	for spell_id: String in RESTORED_LIBRARY_SPELLS:
-		_expect(
-			learned_ids.has(spell_id),
-			spell_id + " is restored to the complete Focus library"
-		)
-		_expect(
-			bool(caster.call("select_focus_spell_by_id", spell_id)),
-			spell_id + " remains selectable through Focus"
-		)
+		_expect(learned_ids.has(spell_id), spell_id + " is restored to the complete Focus library")
+		_expect(bool(caster.call("select_focus_spell_by_id", spell_id)), spell_id + " remains selectable through Focus")
 
 	var sound_names: Array[String] = _get_focus_names(caster, "sound")
 	_expect(sound_names.has("Echolocation"), "Echolocation appears inside the Sound Focus page")
@@ -103,27 +91,22 @@ func run_tests() -> void:
 	_expect(air_names.has("Flight"), "Flight appears inside the Air Focus page")
 	_expect(_get_focus_names(caster, "water").has("Rain"), "Rain appears inside the Water Focus page")
 	_expect(_get_focus_names(caster, "ice").has("Snowfall"), "Snowfall appears inside the Ice Focus page")
-	_expect(
-		_get_focus_names(caster, "lightning").has("Thunderstorm"),
-		"Thunderstorm appears inside the Lightning Focus page"
-	)
+	_expect(_get_focus_names(caster, "lightning").has("Thunderstorm"), "Thunderstorm appears inside the Lightning Focus page")
 
 	await _cast_and_verify_weather(caster, player, "rain_weather", "rain")
 	await _cast_and_verify_weather(caster, player, "snow_weather", "snow")
-	await _cast_and_verify_weather(
-		caster,
-		player,
-		"thunderstorm_weather",
-		"thunderstorm"
-	)
+	await _cast_and_verify_weather(caster, player, "thunderstorm_weather", "thunderstorm")
+
+	var manager: Node = get_tree().get_first_node_in_group("concentration_manager")
+	_expect(manager != null, "weather resolves one shared concentration manager")
+	if manager != null and manager.has_method("has_effect"):
+		_expect(bool(manager.call("has_effect", "thunderstorm_weather")), "Thunderstorm owns its concentration entry")
 
 	var flight_index: int = _find_ability_index(loadout, "flight_concentration")
 	_expect(flight_index >= 0, "Flight has a runtime index")
 	if flight_index >= 0:
 		caster.call("select_ability", flight_index, false)
-		var did_cast_flight: bool = bool(
-			caster.call("cast_from_player", player, 0.0, false)
-		)
+		var did_cast_flight: bool = bool(caster.call("cast_from_player", player, 0.0, false))
 		_expect(did_cast_flight, "Flight casts from the complete Focus library")
 		await _wait_frames(3)
 
@@ -133,26 +116,25 @@ func run_tests() -> void:
 		_expect(bool(aerial.get("flight_unlocked")), "learned Flight activates its development unlock")
 		_expect(bool(aerial.get("flight_active")), "Flight enters the sustained flying state")
 
-	var manager: Node = get_tree().get_first_node_in_group("concentration_manager")
+	manager = get_tree().get_first_node_in_group("concentration_manager")
 	_expect(manager != null, "weather and Flight share one concentration manager")
 	if manager != null:
-		var active_effect: Variant = manager.get("active_effect")
-		_expect(
-			active_effect != null
-			and str(active_effect.get("effect_id")) == "flight_concentration",
-			"Flight replaces active weather concentration cleanly"
-		)
-	_expect(
-		_count_active_weather_controllers() == 0,
-		"entering Flight releases the previously active Thunderstorm"
-	)
+		if manager.has_method("has_effect"):
+			_expect(bool(manager.call("has_effect", "flight_concentration")), "Flight has its own concentration entry")
+			_expect(bool(manager.call("has_effect", "thunderstorm_weather")), "Flight no longer evicts active weather")
+			_expect(int(manager.call("get_active_effect_count")) == 2, "weather and Flight coexist inside one Mana budget")
+		else:
+			var active_effect: Variant = manager.get("active_effect")
+			_expect(active_effect != null and str(active_effect.get("effect_id")) == "flight_concentration", "legacy concentration exposes Flight")
+	_expect(_count_active_weather_controllers() == 1, "Flight can coexist with the active Thunderstorm")
 
 	if aerial != null and aerial.has_method("finish_flight"):
 		aerial.call("finish_flight", true, false)
 		await _wait_frames(2)
 		_expect(not bool(aerial.get("flight_active")), "Flight can be released normally")
-	if manager != null:
-		_expect(manager.get("active_effect") == null, "releasing Flight restores the full Mana ceiling")
+	if manager != null and manager.has_method("has_effect"):
+		_expect(not bool(manager.call("has_effect", "flight_concentration")), "releasing Flight removes only Flight")
+		_expect(bool(manager.call("has_effect", "thunderstorm_weather")), "releasing Flight leaves Thunderstorm concentrated")
 
 	_finish([player, floor])
 
@@ -173,9 +155,7 @@ func _cast_and_verify_weather(
 	if ability_index < 0:
 		return
 	caster.call("select_ability", ability_index, false)
-	var did_cast: bool = bool(
-		caster.call("cast_from_player", player, 0.0, false)
-	)
+	var did_cast: bool = bool(caster.call("cast_from_player", player, 0.0, false))
 	_expect(did_cast, spell_id + " casts from the complete Focus library")
 	await _wait_frames(3)
 
@@ -184,45 +164,28 @@ func _cast_and_verify_weather(
 	if controller != null:
 		_expect(bool(controller.get("active")), weather_kind + " becomes active")
 		var definition: Variant = controller.get("weather_definition")
-		_expect(
-			definition != null
-			and str(definition.get("weather_kind")) == weather_kind,
-			weather_kind + " controller uses the matching definition"
-		)
+		_expect(definition != null and str(definition.get("weather_kind")) == weather_kind, weather_kind + " controller uses the matching definition")
 
 	var manager: Node = get_tree().get_first_node_in_group("concentration_manager")
 	_expect(manager != null, weather_kind + " resolves concentration at runtime")
 	if manager != null:
-		var active_effect: Variant = manager.get("active_effect")
-		_expect(
-			active_effect != null
-			and str(active_effect.get("weather_kind")) == weather_kind,
-			weather_kind + " owns the active concentration effect"
-		)
-	_expect(
-		get_tree().get_node_count_in_group("concentration_manager") == 1,
-		"weather spells share one concentration manager"
-	)
-	_expect(
-		get_tree().get_node_count_in_group("runtime_weather_controller") <= 1,
-		"runtime weather keeps at most one generated controller"
-	)
-	_expect(
-		_count_active_weather_controllers() == 1,
-		"weather concentration remains exclusive"
-	)
+		if manager.has_method("has_effect"):
+			var definition_id: String = str(controller.get("weather_definition").get("effect_id")) if controller != null else ""
+			_expect(bool(manager.call("has_effect", definition_id)), weather_kind + " owns an active concentration entry")
+		else:
+			var active_effect: Variant = manager.get("active_effect")
+			_expect(active_effect != null and str(active_effect.get("weather_kind")) == weather_kind, weather_kind + " owns the active concentration effect")
+	_expect(get_tree().get_node_count_in_group("concentration_manager") == 1, "weather spells share one concentration manager")
+	_expect(get_tree().get_node_count_in_group("runtime_weather_controller") <= 1, "runtime weather keeps at most one generated controller")
+	_expect(_count_active_weather_controllers() == 1, "weather remains exclusive with other weather")
 
 
 func _find_weather_controller(weather_kind: String) -> Node:
 	for controller: Node in get_tree().get_nodes_in_group("weather_controller"):
-		if controller == null or not is_instance_valid(controller):
-			continue
-		if controller.is_queued_for_deletion():
+		if controller == null or not is_instance_valid(controller) or controller.is_queued_for_deletion():
 			continue
 		var definition: Variant = controller.get("weather_definition")
-		if definition == null:
-			continue
-		if str(definition.get("weather_kind")) == weather_kind:
+		if definition != null and str(definition.get("weather_kind")) == weather_kind:
 			return controller
 	return null
 
@@ -230,22 +193,14 @@ func _find_weather_controller(weather_kind: String) -> Node:
 func _count_active_weather_controllers() -> int:
 	var count: int = 0
 	for controller: Node in get_tree().get_nodes_in_group("weather_controller"):
-		if (
-			controller != null
-			and is_instance_valid(controller)
-			and not controller.is_queued_for_deletion()
-			and bool(controller.get("active"))
-		):
+		if controller != null and is_instance_valid(controller) and not controller.is_queued_for_deletion() and bool(controller.get("active")):
 			count += 1
 	return count
 
 
 func _get_focus_names(caster: Node, element: String) -> Array[String]:
 	var names: Array[String] = []
-	var raw_value: Variant = caster.call(
-		"get_focus_spell_names_for_element",
-		element
-	)
+	var raw_value: Variant = caster.call("get_focus_spell_names_for_element", element)
 	if raw_value is Array:
 		for raw_name: Variant in raw_value as Array:
 			names.append(str(raw_name))
@@ -315,9 +270,7 @@ func _restore_state() -> void:
 		var stat_id: String = str(stat_value)
 		GameState.stat_changed.emit(stat_id, int(GameState.stats[stat_value]))
 	GameState.quick_spell_loadouts = original_quick_spell_loadouts.duplicate(true)
-	GameState.quick_spell_selected_slots = (
-		original_quick_spell_selected_slots.duplicate(true)
-	)
+	GameState.quick_spell_selected_slots = original_quick_spell_selected_slots.duplicate(true)
 
 
 func _cleanup_runtime_services() -> void:
@@ -330,6 +283,8 @@ func _cleanup_runtime_services() -> void:
 	for manager: Node in get_tree().get_nodes_in_group("concentration_manager"):
 		if manager == null or not is_instance_valid(manager):
 			continue
+		if manager.has_method("deactivate_all_effects"):
+			manager.call("deactivate_all_effects", false)
 		if bool(manager.get_meta("runtime_spell_library_service", false)):
 			manager.queue_free()
 

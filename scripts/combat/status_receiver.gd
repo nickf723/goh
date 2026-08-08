@@ -204,6 +204,10 @@ func get_status_strength(status_name: String) -> float:
 func get_movement_multiplier() -> float:
 	if has_status("stunned") or has_status("frozen") or has_status("staggered"):
 		return 0.0
+	# Root Bind immobilizes translation but deliberately does not enter
+	# blocks_actions(). A rooted enemy can still turn, attack, cast, or defend.
+	if has_status("rooted"):
+		return 0.0
 	var multiplier: float = 1.0
 	if has_status("chill"):
 		multiplier = minf(

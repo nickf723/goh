@@ -200,9 +200,21 @@ func get_status_strength(status_name: String) -> float:
 func get_movement_multiplier() -> float:
 	if has_status("stunned") or has_status("frozen") or has_status("staggered"):
 		return 0.0
+	var multiplier: float = 1.0
 	if has_status("chill"):
-		return clampf(get_status_strength("chill"), 0.0, 1.0)
-	return 1.0
+		multiplier = minf(
+			multiplier,
+			clampf(get_status_strength("chill"), 0.0, 1.0)
+		)
+	# Leaf Pelt deliberately lives at the edge of perception. Three fresh leaves
+	# bottom out at roughly 97.6% movement speed, enough to be irritating without
+	# becoming a substitute for Ice or other true control elements.
+	if has_status("leaf_pelted"):
+		multiplier = minf(
+			multiplier,
+			clampf(get_status_strength("leaf_pelted"), 0.85, 1.0)
+		)
+	return multiplier
 
 
 func resolve_status_conflicts(new_status: String) -> void:

@@ -53,8 +53,12 @@ func apply_status(
 		"source": source,
 		"element": StatePolicy.get_state_element(normalized),
 	}
-	print("Applied status: ", normalized, " from ", source, " for ", duration, " seconds.")
-	show_status_feedback(normalized)
+	# Leaf Pelt is intentionally subliminal control. Do not cover combat in giant
+	# status text three times per volley; the movement change and leaf impacts are
+	# the feedback. Other authored statuses retain the existing announcement.
+	if normalized != "leaf_pelted":
+		print("Applied status: ", normalized, " from ", source, " for ", duration, " seconds.")
+		show_status_feedback(normalized)
 	status_applied.emit(
 		normalized,
 		(active_statuses[normalized] as Dictionary).duplicate(true)

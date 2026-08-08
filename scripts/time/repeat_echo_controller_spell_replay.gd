@@ -169,7 +169,12 @@ func _capture_cast_metadata(
 		"curling_puck":
 			var left_strength: float = Input.get_action_strength("move_left")
 			var right_strength: float = Input.get_action_strength("move_right")
-			metadata["curl_sign"] = -1.0 if left_strength > right_strength + 0.12 else 1.0
+			if left_strength > right_strength + 0.12:
+				metadata["curl_sign"] = -1.0
+			elif right_strength > left_strength + 0.12:
+				metadata["curl_sign"] = 1.0
+			else:
+				metadata["curl_sign"] = 0.0
 	if payload_override is DamagePayload:
 		var payload: DamagePayload = payload_override as DamagePayload
 		if payload.tags.has("charged"):

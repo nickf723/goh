@@ -12,6 +12,9 @@ const BoulderAbility: AbilityDefinition = preload(
 const FireboltAbility: AbilityDefinition = preload(
 	"res://data/abilities/firebolt_ability.tres"
 )
+const MetalNeedleAbility: AbilityDefinition = preload(
+	"res://data/abilities/metal_needle_ability.tres"
+)
 const RainAbility: AbilityDefinition = preload(
 	"res://data/abilities/rain_weather_ability.tres"
 )
@@ -67,7 +70,11 @@ func _test_semantic_table() -> void:
 	)
 	_expect(
 		Semantics.get_repeat_mode(FireboltAbility) == Semantics.REPEAT_TRAJECTORY,
-		"Repeat treats ordinary projectiles as prerecorded trajectories"
+		"Repeat treats moving-root projectiles as prerecorded trajectories"
+	)
+	_expect(
+		Semantics.get_repeat_mode(MetalNeedleAbility) == Semantics.REPEAT_RECAST,
+		"Metal Needle replays its deterministic MultiMesh fan instead of recording a stationary controller root"
 	)
 	_expect(
 		Semantics.get_repeat_mode(WaterJetAbility) == Semantics.REPEAT_CHANNEL,

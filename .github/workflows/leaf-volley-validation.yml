@@ -1,0 +1,82 @@
+name: Life Leaf Volley
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/life_leaf_projectile.gd"
+      - "scripts/actions/life_leaf_volley.gd"
+      - "scripts/combat/status_receiver.gd"
+      - "scripts/systems/reaction_state_policy.gd"
+      - "scripts/ui/game_ui_focus_minimal.gd"
+      - "scripts/tests/leaf_volley_smoke_test.gd"
+      - "scripts/tests/compact_focus_menu_smoke_test.gd"
+      - "scenes/actions/life_leaf_projectile.tscn"
+      - "scenes/actions/life_leaf_volley.tscn"
+      - "scenes/tests/leaf_volley_smoke_test.tscn"
+      - "scenes/ui/game_ui.tscn"
+      - "data/abilities/leaf_volley_ability.tres"
+      - "data/damage_payloads/leaf_volley_payload.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - ".github/workflows/leaf-volley-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: life-leaf-volley-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-leaf-volley:
+    name: Import, leaf harassment, minimal Focus, and library
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee leaf-import.log
+
+      - name: Run Leaf Volley regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/leaf_volley_smoke_test.tscn 2>&1 | tee leaf-volley-test.log
+
+      - name: Run minimal Focus regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/compact_focus_menu_smoke_test.tscn 2>&1 | tee minimal-focus-test.log
+
+      - name: Run complete Focus library regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/complete_spell_library_smoke_test.tscn 2>&1 | tee complete-library-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: life-leaf-volley-logs
+          path: |
+            leaf-import.log
+            leaf-volley-test.log
+            minimal-focus-test.log
+            complete-library-test.log
+          if-no-files-found: ignore

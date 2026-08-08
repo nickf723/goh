@@ -1,8 +1,10 @@
 extends "res://scripts/ui/game_ui_focus_grid.gd"
 class_name GameUIFocusMinimal
 
-# Compatibility entry point retained by game_ui.tscn. Focus now shrink-wraps the
-# two standardized grids instead of reserving a dashboard-sized rectangle.
+# Compatibility entry point retained by game_ui.tscn. Focus shrink-wraps the
+# standardized 4x4 -> 3x3 grids. This class now applies the compact geometry both
+# before and after every visible refresh so the inherited first render can never
+# flash the older, larger Focus frame.
 
 const COMPACT_PANEL_WIDTH: float = 316.0
 const COMPACT_PANEL_HEIGHT: float = 192.0
@@ -10,8 +12,28 @@ const COMPACT_ELEMENT_CELL_SIZE: Vector2 = Vector2(68.0, 34.0)
 const COMPACT_SPELL_CELL_SIZE: Vector2 = Vector2(94.0, 54.0)
 
 
+func _ready() -> void:
+	super._ready()
+	_force_compact_focus_geometry()
+	call_deferred("_force_compact_focus_geometry")
+
+
 func ensure_focus_spell_selector_ui() -> void:
 	super.ensure_focus_spell_selector_ui()
+	_force_compact_focus_geometry()
+
+
+func show_spell_focus_menu(menu_data: Dictionary) -> void:
+	# The old large border came from the inherited grid geometry owning the first
+	# visible frame, then this compatibility layer correcting it on navigation.
+	# Apply the compact contract before visibility changes and again afterward.
+	_force_compact_focus_geometry()
+	super.show_spell_focus_menu(menu_data)
+	_force_compact_focus_geometry()
+	call_deferred("_force_compact_focus_geometry")
+
+
+func _force_compact_focus_geometry() -> void:
 	if focus_spell_panel == null:
 		return
 	focus_spell_panel.offset_left = -COMPACT_PANEL_WIDTH * 0.5
@@ -32,6 +54,15 @@ func ensure_focus_spell_selector_ui() -> void:
 	if focus_spell_grid != null:
 		focus_spell_grid.add_theme_constant_override("h_separation", 5)
 		focus_spell_grid.add_theme_constant_override("v_separation", 5)
+
+	# Correct any cells that may have been constructed by an inherited first-pass
+	# renderer before this most-derived compatibility layer received control.
+	for cell: PanelContainer in focus_element_cells:
+		if cell != null:
+			cell.custom_minimum_size = COMPACT_ELEMENT_CELL_SIZE
+	for cell: PanelContainer in focus_spell_cells:
+		if cell != null:
+			cell.custom_minimum_size = COMPACT_SPELL_CELL_SIZE
 
 
 func get_short_element_name(element: String) -> String:
@@ -150,4 +181,5 @@ func get_compact_focus_grid_debug_data() -> Dictionary:
 	data["compact_height"] = COMPACT_PANEL_HEIGHT
 	data["lightning_label"] = get_short_element_name("lightning")
 	data["spell_labels_visible"] = true
+	data["compact_applied_before_show"] = true
 	return data

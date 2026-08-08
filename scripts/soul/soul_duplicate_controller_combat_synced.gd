@@ -32,6 +32,7 @@ func _on_weapon_attack_started(attack: WeaponAttackDefinition) -> void:
 	var attack_forward: Vector3 = Vector3.FORWARD
 	if weapon_controller != null and weapon_controller.has_method("get_attack_forward"):
 		attack_forward = weapon_controller.call("get_attack_forward") as Vector3
+	var repeat_controller: Node = get_tree().get_first_node_in_group("repeat_echo_controller")
 	for duplicate: SoulDuplicateActor in duplicates:
 		if duplicate is SoulDuplicateActorCombatSynced:
 			(duplicate as SoulDuplicateActorCombatSynced).mirror_weapon_attack_with_forward(
@@ -41,10 +42,24 @@ func _on_weapon_attack_started(attack: WeaponAttackDefinition) -> void:
 			)
 		elif duplicate != null and is_instance_valid(duplicate):
 			duplicate.mirror_weapon_attack(attack, weapon)
+		if (
+			repeat_controller != null
+			and repeat_controller.has_method("record_registered_source_attack")
+			and duplicate != null
+			and is_instance_valid(duplicate)
+		):
+			repeat_controller.call(
+				"record_registered_source_attack",
+				duplicate,
+				attack,
+				weapon,
+				attack_forward
+			)
 
 
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["combat_aim_forward_bridge"] = true
 	data["jump_constants_synced"] = true
+	data["repeat_attack_lane_bridge"] = true
 	return data

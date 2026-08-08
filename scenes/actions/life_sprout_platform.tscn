@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/actions/life_sprout_platform.gd" id="1_sprout"]
+[ext_resource type="Script" path="res://scripts/actions/life_sprout_platform_species.gd" id="1_sprout"]
+[ext_resource type="Resource" path="res://data/plants/broadleaf_sprout.tres" id="2_plant"]
 
 [node name="LifeSproutPlatform" type="Node3D"]
 script = ExtResource("1_sprout")
+plant_definition = ExtResource("2_plant")

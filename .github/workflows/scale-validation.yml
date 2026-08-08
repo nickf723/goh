@@ -1,0 +1,86 @@
+name: Scale sound traversal
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/scale_cast.gd"
+      - "scripts/player/player_scale_controller.gd"
+      - "scripts/soul/soul_duplicate_actor_combat_synced.gd"
+      - "scripts/abilities/spell_clone_semantics.gd"
+      - "scripts/levels/prototype_scale_spell_trial.gd"
+      - "scripts/tests/scale_spell_smoke_test.gd"
+      - "scenes/actions/scale_cast.tscn"
+      - "scenes/levels/prototypes/prototype_scale_spell_trial_v1.tscn"
+      - "scenes/tests/scale_spell_smoke_test.tscn"
+      - "data/abilities/scale_ability.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - ".github/workflows/scale-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scale-sound-traversal-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-scale:
+    name: Import, Scale traversal, Focus library, and clone semantics
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee scale-import.log
+
+      - name: Boot Resonant Stair
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 5 res://scenes/levels/prototypes/prototype_scale_spell_trial_v1.tscn 2>&1 | tee resonant-stair-boot.log
+
+      - name: Run Scale traversal regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/scale_spell_smoke_test.tscn 2>&1 | tee scale-test.log
+
+      - name: Run complete Focus library regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/complete_spell_library_smoke_test.tscn 2>&1 | tee complete-library-test.log
+
+      - name: Run Duplicate and Repeat composition regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/duplicate_repeat_composition_smoke_test.tscn 2>&1 | tee duplicate-repeat-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scale-sound-traversal-logs
+          path: |
+            scale-import.log
+            resonant-stair-boot.log
+            scale-test.log
+            complete-library-test.log
+            duplicate-repeat-test.log
+          if-no-files-found: ignore

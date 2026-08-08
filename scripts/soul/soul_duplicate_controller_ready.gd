@@ -51,6 +51,14 @@ func _spawn_duplicates() -> void:
 		duplicate_spawned.emit(duplicate)
 
 
+func _mirror_ability(ability: AbilityDefinition, original_instance: Node) -> void:
+	var direction: Vector3 = _get_cast_direction()
+	for duplicate: SoulDuplicateActor in duplicates:
+		if duplicate is SoulDuplicateActorReady:
+			(duplicate as SoulDuplicateActorReady).set_mirrored_ability(ability, direction)
+	super._mirror_ability(ability, original_instance)
+
+
 func _spawn_live_spell(
 	duplicate: SoulDuplicateActor,
 	ability: AbilityDefinition,
@@ -59,6 +67,8 @@ func _spawn_live_spell(
 ) -> void:
 	if ability == null:
 		return
+	if duplicate is SoulDuplicateActorReady:
+		(duplicate as SoulDuplicateActorReady).set_mirrored_ability(ability, cast_direction)
 	if ability.get_spell_id() == "flamethrower":
 		_start_duplicate_flamethrower(duplicate, ability)
 		return
@@ -70,8 +80,6 @@ func _spawn_live_spell(
 	instance.set_meta("clone_spell_replay", true)
 	instance.set_meta("clone_spell_kind", "soul_duplicate")
 	instance.set_meta("clone_live_simulation", true)
-	# Duplicate's 25% concentration reservation pays for the second action. The
-	# mirrored channel does not drain Grace's shared GameState Mana a second time.
 	if _has_property(instance, "mana_per_second"):
 		instance.set("mana_per_second", 0.0)
 	if payload_override != null and instance.has_method("set_payload"):
@@ -95,7 +103,10 @@ func _on_source_flamethrower_started() -> void:
 	var ability: AbilityDefinition = _get_current_player_ability()
 	if ability == null or ability.get_spell_id() != "flamethrower":
 		return
+	var direction: Vector3 = _get_cast_direction()
 	for duplicate: SoulDuplicateActor in duplicates:
+		if duplicate is SoulDuplicateActorReady:
+			(duplicate as SoulDuplicateActorReady).set_mirrored_ability(ability, direction)
 		_start_duplicate_flamethrower(duplicate, ability)
 	mirrored_spell_count += 1
 	last_spell_id = "flamethrower"
@@ -136,5 +147,6 @@ func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["free_mirrored_channels"] = true
 	data["flamethrower_signal_bridge"] = source_flamethrower != null
+	data["ability_proxy_sync"] = true
 	data["ready_duplicate_actor"] = true
 	return data

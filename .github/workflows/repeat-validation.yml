@@ -21,6 +21,11 @@ on:
       - "scripts/abilities/spell_clone_semantics.gd"
       - "scripts/abilities/spell_clone_replay.gd"
       - "scripts/abilities/repeat_concentration_spell.gd"
+      - "scripts/concentration/concentration_manager.gd"
+      - "scripts/weather/weather_spell_runtime.gd"
+      - "scripts/weather/weather_controller_concentration_budget.gd"
+      - "scripts/weather/snow_weather_controller_concentration_budget.gd"
+      - "scripts/weather/thunderstorm_weather_controller_concentration_budget.gd"
       - "data/concentration/repeat_concentration.tres"
       - "data/abilities/repeat_ability.tres"
       - "data/loadouts/grace_starting_loadout.tres"
@@ -31,6 +36,8 @@ on:
       - "scenes/tests/repeat_spell_replay_smoke_test.tscn"
       - "scripts/tests/repeat_timeline_semantics_smoke_test.gd"
       - "scenes/tests/repeat_timeline_semantics_smoke_test.tscn"
+      - "scripts/tests/repeat_concentration_budget_smoke_test.gd"
+      - "scenes/tests/repeat_concentration_budget_smoke_test.tscn"
       - "docs/REPEAT_TIME_SPELL_V1.md"
       - ".github/workflows/repeat-validation.yml"
   workflow_dispatch:
@@ -41,7 +48,7 @@ permissions:
 jobs:
   validate-repeat:
     runs-on: ubuntu-latest
-    timeout-minutes: 24
+    timeout-minutes: 26
     steps:
       - uses: actions/checkout@v4
       - uses: chickensoft-games/setup-godot@v2
@@ -68,6 +75,11 @@ jobs:
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/repeat_timeline_semantics_smoke_test.tscn 2>&1 | tee repeat-timeline-test.log
+      - name: Run Repeat concentration budget regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/repeat_concentration_budget_smoke_test.tscn 2>&1 | tee repeat-budget-test.log
       - name: Run complete spell library regression
         shell: bash
         run: |
@@ -88,6 +100,7 @@ jobs:
             repeat-test.log
             repeat-spell-test.log
             repeat-timeline-test.log
+            repeat-budget-test.log
             complete-library-test.log
             performance-test.log
           if-no-files-found: ignore

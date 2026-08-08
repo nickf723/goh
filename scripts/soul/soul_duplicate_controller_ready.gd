@@ -1,0 +1,140 @@
+extends "res://scripts/soul/soul_duplicate_controller.gd"
+class_name SoulDuplicateControllerReady
+
+const ReadyDuplicateActorScript = preload(
+	"res://scripts/soul/soul_duplicate_actor_ready.gd"
+)
+
+var source_flamethrower: PlayerFlamethrowerController = null
+
+
+func bind_duplicate(actor: CharacterBody3D, manager: Node) -> bool:
+	var bound: bool = super.bind_duplicate(actor, manager)
+	if not bound:
+		return false
+	source_flamethrower = actor.get_node_or_null("FlamethrowerController") as PlayerFlamethrowerController
+	if source_flamethrower != null:
+		var start_callback := Callable(self, "_on_source_flamethrower_started")
+		var end_callback := Callable(self, "_on_source_flamethrower_ended")
+		if not source_flamethrower.channel_started.is_connected(start_callback):
+			source_flamethrower.channel_started.connect(start_callback)
+		if not source_flamethrower.channel_ended.is_connected(end_callback):
+			source_flamethrower.channel_ended.connect(end_callback)
+	return true
+
+
+func _exit_tree() -> void:
+	if source_flamethrower != null and is_instance_valid(source_flamethrower):
+		var start_callback := Callable(self, "_on_source_flamethrower_started")
+		var end_callback := Callable(self, "_on_source_flamethrower_ended")
+		if source_flamethrower.channel_started.is_connected(start_callback):
+			source_flamethrower.channel_started.disconnect(start_callback)
+		if source_flamethrower.channel_ended.is_connected(end_callback):
+			source_flamethrower.channel_ended.disconnect(end_callback)
+	super._exit_tree()
+
+
+func _spawn_duplicates() -> void:
+	_clear_duplicates()
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		return
+	for index: int in range(maxi(duplicate_count, 1)):
+		var duplicate := ReadyDuplicateActorScript.new() as SoulDuplicateActorReady
+		duplicate.name = "SoulDuplicate" + str(index + 1)
+		duplicate.default_side_offset = side_spacing
+		duplicate.set_meta("clone_spell_replay", true)
+		duplicate.set_meta("clone_spell_kind", "soul_duplicate")
+		scene_root.add_child(duplicate)
+		duplicate.configure(source_actor, index)
+		duplicates.append(duplicate)
+		duplicate_spawned.emit(duplicate)
+
+
+func _spawn_live_spell(
+	duplicate: SoulDuplicateActor,
+	ability: AbilityDefinition,
+	cast_direction: Vector3,
+	payload_override: Resource
+) -> void:
+	if ability == null:
+		return
+	if ability.get_spell_id() == "flamethrower":
+		_start_duplicate_flamethrower(duplicate, ability)
+		return
+	if ability.ability_scene == null:
+		return
+	var instance: Node = ability.ability_scene.instantiate()
+	if instance == null:
+		return
+	instance.set_meta("clone_spell_replay", true)
+	instance.set_meta("clone_spell_kind", "soul_duplicate")
+	instance.set_meta("clone_live_simulation", true)
+	# Duplicate's 25% concentration reservation pays for the second action. The
+	# mirrored channel does not drain Grace's shared GameState Mana a second time.
+	if _has_property(instance, "mana_per_second"):
+		instance.set("mana_per_second", 0.0)
+	if payload_override != null and instance.has_method("set_payload"):
+		instance.call("set_payload", payload_override.duplicate(true))
+	if instance.has_method("set_source_actor"):
+		instance.call("set_source_actor", duplicate)
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		return
+	scene_root.add_child(instance)
+	if instance.has_method("execute"):
+		instance.call("execute", duplicate, cast_direction)
+		return
+	if instance is Node3D:
+		(instance as Node3D).global_position = duplicate.global_position + Vector3.UP * 0.85 + cast_direction * 0.3
+	if instance.has_method("launch"):
+		instance.call("launch", cast_direction)
+
+
+func _on_source_flamethrower_started() -> void:
+	var ability: AbilityDefinition = _get_current_player_ability()
+	if ability == null or ability.get_spell_id() != "flamethrower":
+		return
+	for duplicate: SoulDuplicateActor in duplicates:
+		_start_duplicate_flamethrower(duplicate, ability)
+	mirrored_spell_count += 1
+	last_spell_id = "flamethrower"
+	last_mode = CloneSemantics.DUPLICATE_LIVE
+	spell_mirrored.emit(last_spell_id, last_mode)
+
+
+func _on_source_flamethrower_ended(reason: String) -> void:
+	for duplicate: SoulDuplicateActor in duplicates:
+		if duplicate == null or not is_instance_valid(duplicate):
+			continue
+		var controller: PlayerFlamethrowerController = duplicate.flamethrower_controller
+		if controller != null and controller.channel_requested:
+			controller.cancel_ability_channel("source_" + reason)
+
+
+func _start_duplicate_flamethrower(
+	duplicate: SoulDuplicateActor,
+	ability: AbilityDefinition
+) -> void:
+	if duplicate == null or not is_instance_valid(duplicate):
+		return
+	var controller: PlayerFlamethrowerController = duplicate.flamethrower_controller
+	if controller == null:
+		return
+	controller.mana_per_second = 0.0
+	controller.begin_ability_channel(duplicate, ability)
+
+
+func _has_property(node: Object, property_name: String) -> bool:
+	for row_value: Variant in node.get_property_list():
+		if row_value is Dictionary and str((row_value as Dictionary).get("name", "")) == property_name:
+			return true
+	return false
+
+
+func get_debug_data() -> Dictionary:
+	var data: Dictionary = super.get_debug_data()
+	data["free_mirrored_channels"] = true
+	data["flamethrower_signal_bridge"] = source_flamethrower != null
+	data["ready_duplicate_actor"] = true
+	return data

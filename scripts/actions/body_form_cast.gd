@@ -2,7 +2,7 @@ extends Node3D
 class_name BodyFormCast
 
 const BodyFormControllerScript = preload(
-	"res://scripts/player/player_body_form_controller.gd"
+	"res://scripts/player/player_body_form_controller_visual_authority.gd"
 )
 const BodyFormDodgeBridgeScript = preload(
 	"res://scripts/player/player_body_form_dodge_bridge.gd"

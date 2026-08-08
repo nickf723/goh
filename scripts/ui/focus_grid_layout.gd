@@ -39,8 +39,6 @@ static func move_element_index(
 	if candidate < element_count:
 		return candidate
 
-	# The production grid has exactly sixteen elements, but keep partial grids
-	# safe for tests and future alternate spellbooks.
 	for step: int in range(1, ELEMENT_COLUMNS * ELEMENT_ROWS + 1):
 		candidate = posmod(candidate + step, ELEMENT_COLUMNS * ELEMENT_ROWS)
 		if candidate < element_count:
@@ -92,7 +90,11 @@ static func find_directional_spell_index(
 			continue
 		var perpendicular: int = abs(offset.x * direction.y - offset.y * direction.x)
 		var distance_sq: int = offset.x * offset.x + offset.y * offset.y
-		var score: float = float(perpendicular) * 10.0 + float(distance_sq) - float(projection) * 0.1
+		# Prefer the candidate most directly in the requested direction. Distance
+		# only breaks close angular ties, so Down from a top spell chooses a lower
+		# diagonal instead of a merely adjacent side cell.
+		var angular_penalty: float = float(perpendicular) / float(maxi(projection, 1))
+		var score: float = angular_penalty * 10.0 + float(distance_sq) * 0.1
 		if score < best_score:
 			best_score = score
 			best_index = candidate_index

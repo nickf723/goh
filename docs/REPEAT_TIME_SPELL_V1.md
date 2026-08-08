@@ -85,21 +85,23 @@ duplicate_mode
 
 ### Timeline trajectory
 
-Used for physical/projectile motion such as:
+Used for effects whose actual world root travels with the spell, such as:
 
 - Firebolt
 - Ice Lance
-- Metal Needle
 - Boulder
 - Curling Puck
-- similar authored projectile spells
+- similar moving-root projectiles
 
 Repeat records the original effect's world transform every physics frame. A kinematic temporal shell later follows those exact transforms. It performs swept overlap checks for new targets but cannot be redirected by those contacts.
 
+Multi-instance spells whose individual pieces move inside a stationary controller are handled differently. Metal Needle, for example, owns nine needles inside one MultiMesh, so recording the controller root would record no useful motion. Its deterministic fan is instead recreated from the delayed echo. A future per-instance timeline recorder can promote spells like this to exact needle-by-needle memory if needed.
+
 ### Timeline recast
 
-Used for deterministic bursts and fields whose meaningful motion is already tied to the delayed Grace echo, including:
+Used for deterministic bursts and fields whose meaningful geometry can be recreated from the delayed Grace echo, including:
 
+- Metal Needle
 - Lightning Spark
 - Wave
 - Lightning Bolt
@@ -196,5 +198,6 @@ Repeat Soul Grace can eventually reenact Soul Grace one second later
 8. Cast Bubble and let it absorb a hit. The temporal Bubble should pop one second after the original pop.
 9. Cast Asteroid Belt while moving. The belt should appear around the delayed echo and follow that echo's recorded Grace path.
 10. Use Surf, Flash, Flight, Grow, or Shrink and confirm the delayed Grace reenacts those state changes without recursively casting them.
-11. Cast Rain/Snowfall/Thunderstorm and confirm no duplicate world-state weather is created.
-12. Release Repeat and confirm every pending timeline effect cleans up.
+11. Fire Metal Needle and confirm the delayed echo recreates the same fan rather than trying to record a stationary MultiMesh root.
+12. Cast Rain/Snowfall/Thunderstorm and confirm no duplicate world-state weather is created.
+13. Release Repeat and confirm every pending timeline effect cleans up.

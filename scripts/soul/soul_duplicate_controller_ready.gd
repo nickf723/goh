@@ -82,14 +82,17 @@ func _spawn_live_spell(
 	instance.set_meta("clone_live_simulation", true)
 	if _has_property(instance, "mana_per_second"):
 		instance.set("mana_per_second", 0.0)
-	if payload_override != null and instance.has_method("set_payload"):
-		instance.call("set_payload", payload_override.duplicate(true))
+	var resolved_payload: Resource = _make_duplicate_payload(payload_override)
+	if resolved_payload != null and instance.has_method("set_payload"):
+		instance.call("set_payload", resolved_payload)
 	if instance.has_method("set_source_actor"):
 		instance.call("set_source_actor", duplicate)
 	var scene_root: Node = get_tree().current_scene
 	if scene_root == null:
 		return
 	scene_root.add_child(instance)
+	instance.add_to_group("clone_spell_replays")
+	instance.add_to_group("soul_duplicate_spell_replays")
 	if instance.has_method("execute"):
 		instance.call("execute", duplicate, cast_direction)
 		return
@@ -97,6 +100,19 @@ func _spawn_live_spell(
 		(instance as Node3D).global_position = duplicate.global_position + Vector3.UP * 0.85 + cast_direction * 0.3
 	if instance.has_method("launch"):
 		instance.call("launch", cast_direction)
+
+
+func _make_duplicate_payload(payload_override: Resource) -> Resource:
+	if payload_override == null:
+		return null
+	var duplicate_value: Resource = payload_override.duplicate(true)
+	if duplicate_value is DamagePayload:
+		var payload: DamagePayload = duplicate_value as DamagePayload
+		for tag: String in ["soul", "duplicate", "live_clone"]:
+			if not payload.tags.has(tag):
+				payload.tags.append(tag)
+		payload.source_name = "Duplicate • " + payload.source_name
+	return duplicate_value
 
 
 func _on_source_flamethrower_started() -> void:
@@ -146,6 +162,7 @@ func _has_property(node: Object, property_name: String) -> bool:
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["free_mirrored_channels"] = true
+	data["duplicate_payload_tags"] = true
 	data["flamethrower_signal_bridge"] = source_flamethrower != null
 	data["ability_proxy_sync"] = true
 	data["ready_duplicate_actor"] = true

@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="PlantSummonDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/life/plant_summon_definition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+plant_id = "broadleaf_sprout"
+display_name = "Broadleaf Sprout"
+description = "A fast-growing broadleaf plant Grace can summon as temporary living terrain. Its wide crown forms a sturdy platform and its emergence can lift nearby bodies."
+growth_archetype = "platform"
+discovery_tags = Array[String](["broadleaf", "platform", "starter", "temperate"])
+roles = Array[String](["platform", "traversal", "lift", "terrain", "utility"])
+lifetime = 10.0
+growth_height = 1.45
+canopy_radius = 1.05
+body_thickness = 0.24
+maximum_active_per_caster = 3
+creates_platform = true
+climbable = false
+character_growth_lift_speed = 4.8
+rigid_growth_lift_speed = 4.2
+bounce_strength = 0.0
+contact_damage = 0
+attack_damage = 0
+attack_range = 0.0
+attack_interval = 1.0
+hostile_to_enemies = false
+traps_targets = false
+metadata/_custom_type_script = "res://scripts/life/plant_summon_definition.gd"

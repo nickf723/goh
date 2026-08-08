@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/abilities/duplicate_concentration_spell.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Duplicate"
+description = "Reserve 25 percent of Grace's maximum mana to create one live Soul copy. Both bodies receive the same movement, attacks, and clone-safe spell actions simultaneously, but collisions and outcomes resolve independently. Cast again to release it."
+element = "soul"
+category = 4
+mana_cost = 0
+use_trait_profile = false
+spell_id = "duplicate"
+short_label = "Duplicate"
+icon_text = "Ⅱ"
+roles = Array[String](["concentration", "soul", "clone", "ally", "parallel_action", "live_simulation", "spell_multiplier", "persistent"])
+targeting_style = "self_centered"
+delivery_type = "live_duplicate_concentration"
+combo_tags = Array[String](["soul", "duplicate", "clone", "parallel", "repeat_synergy", "spell_echo", "double"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["concentration", "25% reserve", "live clone", "same input", "independent collision"])
+debug_tags = Array[String](["live_simulation", "independent_collision", "clone_semantics", "repeat_source_hook", "multi_duplicate_ready"])
+scaling_stats = Array[String](["focus", "soul", "skill"])
+scaling_note = "Future upgrades can reduce reservation, increase Soul Integrity, and add additional simultaneous duplicates."
+design_notes = "Duplicate is intentionally distinct from Repeat. Duplicate runs a second live simulation now; Repeat reenacts recorded history later. Weather remains world-state no-op and ownership spells remain suppressed."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

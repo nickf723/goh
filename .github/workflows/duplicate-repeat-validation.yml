@@ -1,0 +1,101 @@
+name: Duplicate and Repeat multi-source
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/soul/soul_duplicate_actor_combat_synced.gd"
+      - "scripts/soul/soul_duplicate_controller_combat_synced.gd"
+      - "scripts/soul/soul_duplicate_controller_ready.gd"
+      - "scripts/abilities/duplicate_concentration_spell.gd"
+      - "scripts/abilities/repeat_concentration_spell.gd"
+      - "scripts/time/repeat_echo_controller_multi_source.gd"
+      - "scripts/time/repeat_echo_controller_multi_source_ready.gd"
+      - "scripts/tests/duplicate_repeat_multisource_smoke_test.gd"
+      - "scenes/tests/duplicate_repeat_multisource_smoke_test.tscn"
+      - ".github/workflows/duplicate-repeat-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: duplicate-repeat-multisource-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee duplicate-repeat-import.log
+
+      - name: Run Duplicate base regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/duplicate_spell_smoke_test_ready.tscn 2>&1 | tee duplicate-base.log
+
+      - name: Run Duplicate trial regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/duplicate_spell_trial_smoke_test.tscn 2>&1 | tee duplicate-trial.log
+
+      - name: Run Duplicate and Repeat multi-source regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/duplicate_repeat_multisource_smoke_test.tscn 2>&1 | tee duplicate-repeat.log
+
+      - name: Run Repeat timeline semantics regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/repeat_timeline_semantics_smoke_test.tscn 2>&1 | tee repeat-timeline.log
+
+      - name: Run concentration stacking regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/repeat_concentration_budget_smoke_test.tscn 2>&1 | tee concentration-budget.log
+
+      - name: Run complete spell library regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/complete_spell_library_smoke_test.tscn 2>&1 | tee complete-library.log
+
+      - name: Run performance foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance.log
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: duplicate-repeat-multisource-logs
+          path: |
+            duplicate-repeat-import.log
+            duplicate-base.log
+            duplicate-trial.log
+            duplicate-repeat.log
+            repeat-timeline.log
+            concentration-budget.log
+            complete-library.log
+            performance.log
+          if-no-files-found: ignore

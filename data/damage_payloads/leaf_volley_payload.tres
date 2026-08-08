@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DamagePayload" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="1_payload"]
+
+[resource]
+script = ExtResource("1_payload")
+amount = 1
+stance_damage = 0
+element = "life"
+source_name = "Leaf Volley"
+hit_type = "projectile"
+tags = Array[String](["life", "leaf", "plant", "magic", "projectile", "homing", "harassment"])
+knockback_strength = 0.0

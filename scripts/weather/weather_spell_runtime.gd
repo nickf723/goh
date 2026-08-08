@@ -5,13 +5,13 @@ const ConcentrationRuntime = preload(
 	"res://scripts/concentration/concentration_runtime_access.gd"
 )
 const RainControllerScript = preload(
-	"res://scripts/weather/weather_controller.gd"
+	"res://scripts/weather/weather_controller_concentration_budget.gd"
 )
 const SnowControllerScript = preload(
-	"res://scripts/weather/snow_weather_controller.gd"
+	"res://scripts/weather/snow_weather_controller_concentration_budget.gd"
 )
 const ThunderstormControllerScript = preload(
-	"res://scripts/weather/thunderstorm_weather_controller.gd"
+	"res://scripts/weather/thunderstorm_weather_controller_concentration_budget.gd"
 )
 const RainDefinition: Resource = preload(
 	"res://data/weather/rain_weather.tres"
@@ -34,9 +34,6 @@ static func resolve_or_create(
 	var normalized: String = _normalize_kind(weather_kind)
 	var authored: Node = _find_controller(tree, normalized)
 	if authored != null:
-		# An authored controller may coexist with a generated controller left by a
-		# previous weather cast. Release generated presentations before handing
-		# authority to the authored scene node so inactive weather cannot pile up.
 		_release_other_runtime_controllers(tree, normalized)
 		return authored
 
@@ -62,6 +59,7 @@ static func resolve_or_create(
 	controller.set("show_messages", true)
 	controller.set_meta("runtime_weather_controller", true)
 	controller.set_meta("runtime_weather_kind", normalized)
+	controller.set_meta("concentration_budget_aware", true)
 	parent.add_child(controller)
 	controller.add_to_group("runtime_weather_controller")
 	if controller.has_method("resolve_dependencies"):
@@ -188,4 +186,5 @@ static func get_debug_data(tree: SceneTree) -> Dictionary:
 			if tree != null
 			else 0
 		),
+		"concentration_budget_aware": true,
 	}

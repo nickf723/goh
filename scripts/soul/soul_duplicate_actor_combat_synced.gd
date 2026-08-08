@@ -1,6 +1,10 @@
 extends "res://scripts/soul/soul_duplicate_actor_final.gd"
 class_name SoulDuplicateActorCombatSynced
 
+const ScaleControllerScriptDuplicate = preload(
+	"res://scripts/player/player_scale_controller.gd"
+)
+
 var last_mirrored_attack_forward: Vector3 = Vector3.FORWARD
 var mirrored_attack_count: int = 0
 var jump_release_multiplier: float = 0.52
@@ -21,6 +25,25 @@ func _physics_process(delta: float) -> void:
 			velocity.y * jump_release_multiplier,
 			0.45
 		)
+
+
+func apply_source_state_spell(spell_id: String, cast_direction: Vector3) -> void:
+	if spell_id == "scale":
+		_activate_live_scale(cast_direction)
+		mirrored_spell_count += 1
+		duplicate_spell_mirrored.emit(spell_id)
+		return
+	super.apply_source_state_spell(spell_id, cast_direction)
+
+
+func _activate_live_scale(cast_direction: Vector3) -> void:
+	var controller: Node = get_node_or_null("ScaleController")
+	if controller == null:
+		controller = ScaleControllerScriptDuplicate.new()
+		controller.name = "ScaleController"
+		add_child(controller)
+	if controller.has_method("activate_scale"):
+		controller.call("activate_scale", cast_direction)
 
 
 func mirror_weapon_attack_with_forward(
@@ -172,4 +195,5 @@ func get_debug_data() -> Dictionary:
 		and is_equal_approx(jump_velocity, float(source_actor.get("jump_velocity")))
 	)
 	data["jump_release_multiplier"] = jump_release_multiplier
+	data["scale_live_source_state"] = true
 	return data

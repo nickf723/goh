@@ -10,6 +10,7 @@ description = "A fast-growing broadleaf plant Grace can summon as temporary livi
 growth_archetype = "platform"
 discovery_tags = Array[String](["broadleaf", "platform", "starter", "temperate"])
 roles = Array[String](["platform", "traversal", "lift", "terrain", "utility"])
+summon_scene_path = "res://scenes/actions/life_sprout_platform.tscn"
 lifetime = 10.0
 growth_height = 1.45
 canopy_radius = 1.05

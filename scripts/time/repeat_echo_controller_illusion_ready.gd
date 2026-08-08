@@ -6,23 +6,37 @@ const CloneReplayIllusion = preload(
 )
 
 
+func _schedule_spell_replays(
+	original_instance: Node,
+	ability: AbilityDefinition
+) -> void:
+	var first_new_index: int = pending_spell_events.size()
+	super._schedule_spell_replays(original_instance, ability)
+	if ability == null or ability.get_spell_id() != "illusion" or original_instance == null:
+		return
+	for index: int in range(first_new_index, pending_spell_events.size()):
+		var event: Dictionary = pending_spell_events[index]
+		event["original_instance_id"] = original_instance.get_instance_id()
+		pending_spell_events[index] = event
+
+
 func record_illusion_cast_metadata(
-	_original_instance: Node,
+	original_instance: Node,
 	metadata: Dictionary
 ) -> void:
-	if not metadata.has("target_world_position"):
+	if original_instance == null or not metadata.has("target_world_position"):
 		return
-	# The player action node is observed as soon as it enters the SceneTree, before
-	# execute() has resolved its ground point. execute() calls back here immediately
-	# afterward, so the still-pending events receive the authored point before their
-	# one-second due time.
+	var original_id: int = original_instance.get_instance_id()
+	# Action scenes are observed before execute() resolves the ground point. The
+	# action calls back immediately afterward, and this stable instance ID keeps a
+	# simultaneously spawned Soul Illusion from overwriting Grace's pending event.
 	for index: int in range(pending_spell_events.size() - 1, -1, -1):
 		var event: Dictionary = pending_spell_events[index]
 		if str(event.get("spell_id", "")) != "illusion":
 			continue
-		var existing: Dictionary = event.get("cast_metadata", {}) as Dictionary
-		if existing.has("target_world_position"):
+		if int(event.get("original_instance_id", -1)) != original_id:
 			continue
+		var existing: Dictionary = event.get("cast_metadata", {}) as Dictionary
 		existing.merge(metadata.duplicate(true), true)
 		event["cast_metadata"] = existing
 		pending_spell_events[index] = event
@@ -35,6 +49,7 @@ func record_registered_source_spell(
 	cast_direction: Vector3,
 	payload_override: Resource = null
 ) -> void:
+	var first_new_index: int = secondary_spell_events.size()
 	super.record_registered_source_spell(
 		actor,
 		ability,
@@ -55,7 +70,7 @@ func record_registered_source_spell(
 		return
 	var metadata: Dictionary = (metadata_value as Dictionary).duplicate(true)
 	var source_id: int = actor.get_instance_id()
-	for index: int in range(secondary_spell_events.size() - 1, -1, -1):
+	for index: int in range(first_new_index, secondary_spell_events.size()):
 		var event: Dictionary = secondary_spell_events[index]
 		if int(event.get("source_id", -1)) != source_id:
 			continue
@@ -64,11 +79,7 @@ func record_registered_source_spell(
 			continue
 		if (event_ability as AbilityDefinition).get_spell_id() != "illusion":
 			continue
-		var existing: Dictionary = event.get("cast_metadata", {}) as Dictionary
-		if existing.has("target_world_position"):
-			continue
-		existing.merge(metadata, true)
-		event["cast_metadata"] = existing
+		event["cast_metadata"] = metadata.duplicate(true)
 		secondary_spell_events[index] = event
 
 
@@ -115,4 +126,5 @@ func _process_secondary_spell_events() -> void:
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["illusion_target_point_memory"] = true
+	data["illusion_cast_instance_binding"] = true
 	return data

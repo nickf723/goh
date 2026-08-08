@@ -91,11 +91,22 @@ func run_tests() -> void:
 	left_event.pressed = true
 	router.call("_handle_focus_dpad", left_event)
 
-	caster.call("enter_focus_spell_grid")
+	# This project intentionally maps Nintendo A to `interact` on physical button
+	# index 1. That is JOY_BUTTON_B in Godot's Xbox-oriented constants, so the test
+	# must exercise the actual project mapping rather than symbolic A/B constants.
+	var confirm_event := InputEventJoypadButton.new()
+	confirm_event.button_index = 1
+	confirm_event.pressed = true
+	_expect(confirm_event.is_action_pressed("interact"), "physical Nintendo A resolves to the interact action")
+	_expect(
+		bool(router.call("_handle_focus_grid_action_button", confirm_event)),
+		"Interact is consumed as Focus confirm"
+	)
 	for _frame: int in range(2):
 		await get_tree().process_frame
 	var spell_page: Dictionary = game_ui.call("get_focus_grid_debug_data") as Dictionary
-	_expect(str(spell_page.get("page", "")) == "spells", "confirming an element swaps to the spell screen")
+	_expect(str(spell_page.get("page", "")) == "spells", "confirming an element keeps Focus open and swaps to the spell screen")
+	_expect(bool(caster.call("is_focus_spell_grid_active")), "element confirmation does not close Focus")
 	_expect(int(spell_page.get("spell_columns", 0)) == 3, "spell screen is a 3x3 grid")
 	_expect(int(spell_page.get("spell_center_slot", -1)) == 4, "chosen element owns the center cell")
 	_expect(int(spell_page.get("spell_count", 0)) == 5, "Life exposes five learned spells including Sprout")
@@ -116,30 +127,40 @@ func run_tests() -> void:
 	else:
 		_expect(false, "spell label cache is available")
 
-	# B is now owned directly by the Focus router, so controller navigation does
-	# not depend on ui_cancel being routed through Player._unhandled_input.
+	# Nintendo B is physical button 0 and already means `dodge` in gameplay. In
+	# Focus the same semantic action becomes Back: spells -> elements -> close.
 	var back_event := InputEventJoypadButton.new()
-	back_event.button_index = JOY_BUTTON_B
+	back_event.button_index = 0
 	back_event.pressed = true
+	_expect(back_event.is_action_pressed("dodge"), "physical Nintendo B resolves to the dodge/back action")
 	_expect(
 		bool(router.call("_handle_focus_grid_action_button", back_event)),
-		"B is consumed as a Focus back command"
+		"Dodge is consumed as a Focus back command"
 	)
 	await get_tree().process_frame
 	var returned_page: Dictionary = game_ui.call("get_focus_grid_debug_data") as Dictionary
-	_expect(str(returned_page.get("page", "")) == "elements", "B returns from spells to the 4x4 element screen")
+	_expect(str(returned_page.get("page", "")) == "elements", "Back returns from spells to the 4x4 element screen")
+	_expect(bool(caster.call("is_focus_spell_menu_open")), "backing to elements keeps Focus open")
 
-	# A enters again, proving A/B form a complete two-state controller grammar.
-	var accept_event := InputEventJoypadButton.new()
-	accept_event.button_index = JOY_BUTTON_A
-	accept_event.pressed = true
-	_expect(bool(router.call("_handle_focus_grid_action_button", accept_event)), "A is consumed as Focus confirm")
+	# Confirm enters again, proving the same physical Nintendo A no longer closes
+	# the element page by being mistaken for Xbox B.
+	confirm_event.pressed = true
+	router.call("_handle_focus_grid_action_button", confirm_event)
 	await get_tree().process_frame
-	_expect(bool(caster.call("is_focus_spell_grid_active")), "A enters the selected element spell grid")
+	_expect(bool(caster.call("is_focus_spell_grid_active")), "Interact re-enters the selected element spell grid")
 	back_event.pressed = true
 	router.call("_handle_focus_grid_action_button", back_event)
 	await get_tree().process_frame
-	_expect(not bool(caster.call("is_focus_spell_grid_active")), "B can back out repeatedly without trapping the player")
+	_expect(not bool(caster.call("is_focus_spell_grid_active")), "Back can return from spells repeatedly")
+	_expect(bool(caster.call("is_focus_spell_menu_open")), "first Back never closes from the spell page")
+	back_event.pressed = true
+	router.call("_handle_focus_grid_action_button", back_event)
+	await get_tree().process_frame
+	_expect(not bool(caster.call("is_focus_spell_menu_open")), "second Back closes Focus from the element page")
+
+	var router_debug: Dictionary = router.call("get_debug_data") as Dictionary
+	_expect(bool(router_debug.get("controller_layout_agnostic", false)), "Focus confirm/back uses actions rather than Xbox button constants")
+	_expect(str(router_debug.get("focus_confirm_action", "")) == "interact", "Focus confirm is bound to semantic Interact")
 
 	var router_script: Script = router.get_script() as Script
 	_expect(
@@ -148,7 +169,6 @@ func run_tests() -> void:
 		"controller uses the grid-specific D-pad router"
 	)
 
-	caster.call("close_focus_spell_menu")
 	_finish([player, game_ui])
 
 

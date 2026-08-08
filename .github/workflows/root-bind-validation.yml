@@ -1,0 +1,80 @@
+name: Life Root Bind
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/life_root_binding.gd"
+      - "scripts/actions/life_root_cast.gd"
+      - "scripts/combat/status_receiver.gd"
+      - "scripts/systems/reaction_state_policy.gd"
+      - "scripts/ui/game_ui_focus_minimal.gd"
+      - "scripts/tests/root_bind_smoke_test.gd"
+      - "scripts/tests/compact_focus_menu_smoke_test.gd"
+      - "scenes/actions/life_root_binding.tscn"
+      - "scenes/actions/life_root_cast.tscn"
+      - "scenes/tests/root_bind_smoke_test.tscn"
+      - "data/abilities/root_bind_ability.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - ".github/workflows/root-bind-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: life-root-bind-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-root-bind:
+    name: Import, enemy roots, utility pinning, and compact Focus
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee root-import.log
+
+      - name: Run Root Bind regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/root_bind_smoke_test.tscn 2>&1 | tee root-bind-test.log
+
+      - name: Run compact Focus regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/compact_focus_menu_smoke_test.tscn 2>&1 | tee compact-focus-test.log
+
+      - name: Run complete Focus library regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/complete_spell_library_smoke_test.tscn 2>&1 | tee complete-library-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: life-root-bind-logs
+          path: |
+            root-import.log
+            root-bind-test.log
+            compact-focus-test.log
+            complete-library-test.log
+          if-no-files-found: ignore

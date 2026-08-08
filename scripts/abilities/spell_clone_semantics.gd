@@ -24,7 +24,7 @@ const CHANNEL_REPEAT_IDS: Array[String] = [
 
 const SOURCE_STATE_REPEAT_IDS: Array[String] = [
 	"space_blink", "flash", "surf", "flight", "flight_concentration",
-	"grow", "shrink", "bubble",
+	"grow", "shrink", "bubble", "scale",
 ]
 
 const WORLD_STATE_NOOP_IDS: Array[String] = [

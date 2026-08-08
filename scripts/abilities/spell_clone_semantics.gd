@@ -53,6 +53,7 @@ const WORLD_STATE_NOOP_IDS: Array[String] = [
 
 const SUPPRESSED_OWNERSHIP_IDS: Array[String] = [
 	"repeat",
+	"duplicate",
 	"soul_grip",
 	"metal_tether",
 	"spectral_familiar",

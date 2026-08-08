@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/life_root_cast.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Root Bind"
+description = "Command roots to seize an enemy or movable object. Enemies remain able to act but cannot translate; physics objects are pinned in place until the roots release."
+element = "life"
+category = 4
+mana_cost = 2
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "root_bind"
+short_label = "Roots"
+icon_text = "RB"
+roles = Array[String](["control", "root", "bind", "anchor", "utility", "object_interaction", "enemy_control"])
+targeting_style = "soft_aim"
+delivery_type = "target_binding"
+combo_tags = Array[String](["life", "roots", "plant", "bind", "anchor", "immobilize", "utility"])
+status_tags = Array[String](["rooted"])
+ui_tags = Array[String](["control", "utility", "enemy_or_object"])
+debug_tags = Array[String](["rooted_status", "rigid_body_pin", "action_preserving_control"])
+scaling_stats = Array[String](["life", "arcana", "skill"])
+scaling_note = "Life can extend root duration; Arcana can increase the mass ceiling; Skill can improve acquisition without turning Root Bind into a stun."
+design_notes = "Root Bind deliberately stops translation without blocking actions. Enemy targets receive the rooted status; RigidBody targets are frozen at rest and restored when the binding expires. Recasting refreshes one binding rather than stacking duplicate root controllers."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

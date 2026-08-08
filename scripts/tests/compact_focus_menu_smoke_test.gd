@@ -36,13 +36,14 @@ func run_tests() -> void:
 	_expect(caster != null, "player exposes the Focus caster")
 	_expect(router != null, "Focus grid router installs")
 	_expect(game_ui.has_method("get_focus_grid_debug_data"), "two-state Focus renderer is active")
+	_expect(game_ui.has_method("get_compact_focus_grid_debug_data"), "compact Focus wrapper is active")
 	if caster == null or router == null or not game_ui.has_method("get_focus_grid_debug_data"):
 		_finish([player, game_ui])
 		return
 
 	_expect(
-		bool(caster.call("select_focus_spell_by_id", "leaf_volley")),
-		"test can align Focus to Life"
+		bool(caster.call("select_focus_spell_by_id", "root_bind")),
+		"test can align Focus to the fourth Life spell"
 	)
 	caster.call("open_focus_spell_menu")
 	for _frame: int in range(3):
@@ -53,10 +54,16 @@ func run_tests() -> void:
 	_expect(str(element_page.get("page", "")) == "elements", "Focus always opens on the element screen")
 	_expect(int(element_page.get("element_columns", 0)) == 4, "element screen is four columns")
 	_expect(int(element_page.get("element_count", 0)) == 16, "element screen contains all sixteen elements")
-	_expect(int(element_page.get("family_labels", -1)) == 0, "NAT/PRI/VIT/MYS labels are removed")
+	_expect(int(element_page.get("family_labels", -1)) == 0, "NAT/PRI/VIT/MYS labels stay removed")
 	_expect(bool(element_page.get("fixed_panel", false)), "Focus renderer has one fixed physical panel")
 	var panel_width: float = float(element_page.get("panel_width", 0.0))
 	var panel_height: float = float(element_page.get("panel_height", 0.0))
+
+	var compact: Dictionary = game_ui.call("get_compact_focus_grid_debug_data") as Dictionary
+	_expect(float(compact.get("compact_width", 9999.0)) <= 320.0, "Focus panel shrink-wraps the useful controls")
+	_expect(float(compact.get("compact_height", 9999.0)) <= 195.0, "Focus panel no longer reserves dashboard height")
+	_expect(str(compact.get("lightning_label", "")) == "Lightning", "Lightning is no longer abbreviated as Bolt")
+	_expect(bool(compact.get("spell_labels_visible", false)), "spell cells explicitly keep their names visible")
 
 	var start_element_index: int = int(caster.get("focus_element_index"))
 	var right_event := InputEventJoypadButton.new()
@@ -80,13 +87,22 @@ func run_tests() -> void:
 	_expect(str(spell_page.get("page", "")) == "spells", "confirming an element swaps to the spell screen")
 	_expect(int(spell_page.get("spell_columns", 0)) == 3, "spell screen is a 3x3 grid")
 	_expect(int(spell_page.get("spell_center_slot", -1)) == 4, "chosen element owns the center cell")
-	_expect(int(spell_page.get("spell_count", 0)) == 3, "Life currently exposes its three learned spells")
+	_expect(int(spell_page.get("spell_count", 0)) == 4, "Life exposes four learned spells")
 	_expect(
-		spell_page.get("spell_slots", []) == FocusGridLayoutScript.get_spell_slots(3),
-		"Life spells occupy the shared triangular ring layout"
+		spell_page.get("spell_slots", []) == FocusGridLayoutScript.get_spell_slots(4),
+		"four Life spells occupy the shared cardinal ring layout"
 	)
 	_expect(absf(float(spell_page.get("panel_width", 0.0)) - panel_width) < 0.01, "element and spell screens keep identical width")
 	_expect(absf(float(spell_page.get("panel_height", 0.0)) - panel_height) < 0.01, "element and spell screens keep identical height")
+
+	var labels_value: Variant = game_ui.get("focus_spell_labels")
+	if labels_value is Array:
+		var labels: Array = labels_value as Array
+		_expect(labels.size() == 4, "all four Life spell cells own text labels")
+		for label_value: Variant in labels:
+			_expect(label_value is Label and str((label_value as Label).text).strip_edges() != "", "spell label text is nonempty")
+	else:
+		_expect(false, "spell label cache is available")
 
 	caster.call("return_to_focus_element_grid")
 	await get_tree().process_frame

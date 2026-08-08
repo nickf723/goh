@@ -102,8 +102,6 @@ func _spawn_next_leaf() -> void:
 	shots_spawned += 1
 	burst_timer = burst_interval
 	if shots_spawned >= projectiles_per_cast:
-		# Give the last projectile one frame to finish launch setup before the
-		# lightweight volley coordinator removes itself.
 		call_deferred("_finish_if_complete")
 
 
@@ -115,7 +113,7 @@ func _finish_if_complete() -> void:
 
 func acquire_volley_targets() -> Array[Node3D]:
 	var targets: Array[Node3D] = []
-	if source_actor == null or get_tree() == null:
+	if source_actor == null or not is_instance_valid(source_actor) or get_tree() == null:
 		return targets
 
 	var hard_target: Node3D = _get_hard_target()
@@ -128,10 +126,8 @@ func acquire_volley_targets() -> Array[Node3D]:
 	var seen: Dictionary = {}
 	var assist: Node = source_actor.get_node_or_null("CombatTargetingAssist")
 	var soft_target: Node3D = null
-	if assist != null:
-		var soft_value: Variant = assist.get("soft_target")
-		if soft_value is Node3D:
-			soft_target = soft_value as Node3D
+	if assist != null and is_instance_valid(assist):
+		soft_target = _valid_node3d_reference(assist.get("soft_target"))
 
 	for raw_candidate: Node in get_tree().get_nodes_in_group("enemy"):
 		if not raw_candidate is Node3D:
@@ -162,9 +158,9 @@ func acquire_volley_targets() -> Array[Node3D]:
 
 	rows.sort_custom(_sort_target_rows)
 	for row: Dictionary in rows:
-		var candidate_value: Variant = row.get("target")
-		if candidate_value is Node3D:
-			targets.append(candidate_value as Node3D)
+		var candidate: Node3D = _valid_node3d_reference(row.get("target"))
+		if candidate != null:
+			targets.append(candidate)
 		if targets.size() >= projectiles_per_cast:
 			break
 	return targets
@@ -177,22 +173,42 @@ func _sort_target_rows(a: Dictionary, b: Dictionary) -> bool:
 func _get_target_for_shot(shot_index: int) -> Node3D:
 	if resolved_targets.is_empty():
 		return null
-	return resolved_targets[shot_index % resolved_targets.size()]
+	var index: int = posmod(shot_index, resolved_targets.size())
+	return _valid_node3d_reference(resolved_targets[index])
 
 
 func _get_hard_target() -> Node3D:
-	var lock_value: Variant = source_actor.get("lock_on_target")
-	if lock_value is Node3D and is_instance_valid(lock_value as Node3D):
-		return lock_value as Node3D
+	if source_actor == null or not is_instance_valid(source_actor):
+		return null
+
+	# A killed target can remain in the player's property until the next player
+	# update clears lock-on. Never run `is Node3D` on that freed Object reference:
+	# is_instance_valid must be the first authority check.
+	var lock_target: Node3D = _valid_node3d_reference(
+		source_actor.get("lock_on_target")
+	)
+	if lock_target != null:
+		return lock_target
+
 	var assist: Node = source_actor.get_node_or_null("CombatTargetingAssist")
-	if assist != null:
-		var hard_value: Variant = assist.get("hard_target")
-		if hard_value is Node3D and is_instance_valid(hard_value as Node3D):
-			return hard_value as Node3D
+	if assist == null or not is_instance_valid(assist):
+		return null
+	return _valid_node3d_reference(assist.get("hard_target"))
+
+
+func _valid_node3d_reference(value: Variant) -> Node3D:
+	if typeof(value) != TYPE_OBJECT:
+		return null
+	if not is_instance_valid(value):
+		return null
+	if value is Node3D:
+		return value as Node3D
 	return null
 
 
 func _get_target_point(target: Node3D) -> Vector3:
+	if target == null or not is_instance_valid(target):
+		return _get_cast_origin()
 	var assist: Node = source_actor.get_node_or_null("CombatTargetingAssist")
 	if assist != null and assist.has_method("get_target_aim_point"):
 		var point_value: Variant = assist.call("get_target_aim_point", target)
@@ -202,6 +218,8 @@ func _get_target_point(target: Node3D) -> Vector3:
 
 
 func _get_cast_origin() -> Vector3:
+	if source_actor == null or not is_instance_valid(source_actor):
+		return global_position
 	for anchor_path: String in [
 		"GraceVisualV1/RightHandAnchor",
 		"RightHandAnchor",
@@ -219,8 +237,9 @@ func _get_cast_origin() -> Vector3:
 func get_debug_data() -> Dictionary:
 	var target_names: Array[String] = []
 	for target: Node3D in resolved_targets:
-		if target != null and is_instance_valid(target):
-			target_names.append(target.name)
+		if not is_instance_valid(target):
+			continue
+		target_names.append(target.name)
 	return {
 		"spell": "leaf_volley",
 		"projectiles_per_cast": projectiles_per_cast,
@@ -229,4 +248,5 @@ func get_debug_data() -> Dictionary:
 		"targets": target_names,
 		"distributes_without_lock": true,
 		"focuses_hard_lock": true,
+		"freed_target_safe": true,
 	}

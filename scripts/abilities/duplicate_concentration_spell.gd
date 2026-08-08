@@ -8,7 +8,7 @@ const ConcentrationRuntime = preload(
 	"res://scripts/concentration/concentration_runtime_access.gd"
 )
 const DuplicateControllerScript = preload(
-	"res://scripts/soul/soul_duplicate_controller.gd"
+	"res://scripts/soul/soul_duplicate_controller_ready.gd"
 )
 
 
@@ -46,13 +46,14 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 	var existing: Node = get_tree().get_first_node_in_group("soul_duplicate_controller")
 	if existing != null and is_instance_valid(existing):
 		existing.queue_free()
-	var controller := DuplicateControllerScript.new() as SoulDuplicateController
+	var controller := DuplicateControllerScript.new() as SoulDuplicateControllerReady
 	controller.name = "SoulDuplicateController"
 	var scene_root: Node = get_tree().current_scene
 	if scene_root == null:
 		scene_root = get_parent()
 	if scene_root == null:
-		manager.call("deactivate_effect_by_id", "duplicate_concentration", false)
+		if manager.has_method("deactivate_effect_by_id"):
+			manager.call("deactivate_effect_by_id", "duplicate_concentration", false)
 		queue_free()
 		return
 	scene_root.add_child(controller)

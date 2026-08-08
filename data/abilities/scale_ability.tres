@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/scale_cast.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Scale"
+description = "Commit to an eight-note ascent. Grace runs straight forward through the air; every footfall raises her one step and sounds the next pitch of a rising scale."
+element = "sound"
+category = 4
+mana_cost = 2
+use_trait_profile = false
+spell_id = "scale"
+short_label = "Scale"
+icon_text = "♪↑"
+roles = Array[String](["movement", "traversal", "verticality", "committed", "rhythm", "sound"])
+targeting_style = "forward"
+delivery_type = "committed_traversal_state"
+combo_tags = Array[String](["sound", "scale", "music", "ascent", "rhythm", "air_step", "straight_line"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["movement", "vertical", "straight_line", "eight_steps", "efficient"])
+debug_tags = Array[String](["prototype", "single_controller", "eight_note_scale", "fixed_heading"])
+scaling_stats = Array[String](["focus", "sound", "dexterity"])
+scaling_note = "Focus and Sound are reserved for future phrase length, recovery, and harmonic upgrades; Dexterity may later tighten the cadence."
+design_notes = "Scale is deliberately not free flight. The cast locks the initial horizontal heading and performs eight automatic footfalls. Each beat advances Grace forward and raises the next target height by one step. Architecture can interrupt the phrase. Completion returns ordinary airborne locomotion."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

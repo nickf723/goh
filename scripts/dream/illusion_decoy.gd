@@ -14,6 +14,7 @@ const GraceVisualScene: PackedScene = preload(
 @export_range(0.0, 1.0, 0.01) var body_alpha: float = 0.52
 @export_range(0.0, 8.0, 0.1) var emission_energy: float = 2.5
 @export_range(0.05, 1.0, 0.01) var attack_flicker_seconds: float = 0.18
+@export_range(4.0, 60.0, 1.0) var visual_updates_per_second: float = 24.0
 
 var source_actor: Node3D = null
 var cast_serial: int = 0
@@ -25,6 +26,8 @@ var last_attack_source: String = "none"
 var grace_visual: Node3D = null
 var aura_ring: MeshInstance3D = null
 var aura_material: StandardMaterial3D = null
+var visual_geometry: Array[GeometryInstance3D] = []
+var visual_accumulator: float = 0.0
 var expired: bool = false
 
 
@@ -75,7 +78,11 @@ func _process(delta: float) -> void:
 	elapsed += step
 	remaining = maxf(remaining - step, 0.0)
 	attack_flicker_remaining = maxf(attack_flicker_remaining - step, 0.0)
-	_update_visual()
+	visual_accumulator += step
+	var interval: float = 1.0 / maxf(visual_updates_per_second, 1.0)
+	if visual_accumulator >= interval:
+		visual_accumulator = fmod(visual_accumulator, interval)
+		_update_visual()
 	if remaining <= 0.0:
 		expire_illusion("duration_complete")
 
@@ -118,8 +125,7 @@ func receive_damage_payload(payload: DamagePayload) -> Dictionary:
 	attack_count += 1
 	last_attack_source = payload.source_name
 	attack_flicker_remaining = attack_flicker_seconds
-	var attacker: Node3D = null
-	illusion_attacked.emit(payload, attacker)
+	illusion_attacked.emit(payload, null)
 	return {
 		"received": true,
 		"illusion": true,
@@ -197,6 +203,7 @@ func _tint_recursive(node: Node) -> void:
 		var geometry := node as GeometryInstance3D
 		geometry.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		geometry.transparency = 0.28
+		visual_geometry.append(geometry)
 	if node is MeshInstance3D:
 		var mesh_instance := node as MeshInstance3D
 		var material := StandardMaterial3D.new()
@@ -226,23 +233,13 @@ func _update_visual() -> void:
 			if attack_flicker_remaining > 0.0 and int(elapsed * 36.0) % 2 == 0
 			else 0.22
 		)
-		for geometry: Node in _collect_geometry(grace_visual):
-			(geometry as GeometryInstance3D).transparency = attack_alpha + (1.0 - lifetime_ratio) * 0.28
+		for geometry: GeometryInstance3D in visual_geometry:
+			if geometry != null and is_instance_valid(geometry):
+				geometry.transparency = attack_alpha + (1.0 - lifetime_ratio) * 0.28
 	if aura_ring != null:
-		aura_ring.rotation.y += 0.025
+		aura_ring.rotation.y += 0.08
 		var ring_pulse: float = 1.0 + sin(elapsed * 5.0) * 0.08
 		aura_ring.scale = Vector3(ring_pulse, 1.0, ring_pulse)
-
-
-func _collect_geometry(root: Node) -> Array[Node]:
-	var result: Array[Node] = []
-	if root == null:
-		return result
-	if root is GeometryInstance3D:
-		result.append(root)
-	for child: Node in root.get_children():
-		result.append_array(_collect_geometry(child))
-	return result
 
 
 func get_debug_data() -> Dictionary:
@@ -257,4 +254,6 @@ func get_debug_data() -> Dictionary:
 		"perceived_threat_score": perceived_threat_score,
 		"perception_priority": perception_priority,
 		"source_id": source_actor.get_instance_id() if source_actor != null else 0,
+		"cached_visuals": visual_geometry.size(),
+		"visual_hz": visual_updates_per_second,
 	}

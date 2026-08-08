@@ -11,6 +11,8 @@ const RepeatControllerScript = preload(
 	"res://scripts/time/repeat_echo_controller_time_memory.gd"
 )
 
+const REPEAT_EFFECT_ID: String = "repeat_concentration"
+
 
 func execute(player: Node3D, _cast_direction: Vector3) -> void:
 	if player == null or not is_instance_valid(player):
@@ -22,20 +24,27 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 		queue_free()
 		return
 
-	var active_value: Variant = manager.get("active_effect")
-	var repeat_already_active: bool = (
-		active_value is Resource
-		and str((active_value as Resource).get("effect_id"))
-		== "repeat_concentration"
-	)
+	var repeat_already_active: bool = false
+	if manager.has_method("has_effect"):
+		repeat_already_active = bool(manager.call("has_effect", REPEAT_EFFECT_ID))
+	else:
+		var active_value: Variant = manager.get("active_effect")
+		repeat_already_active = (
+			active_value is Resource
+			and str((active_value as Resource).get("effect_id"))
+			== REPEAT_EFFECT_ID
+		)
 	if repeat_already_active:
-		manager.call("deactivate_effect", true)
+		if manager.has_method("deactivate_effect_by_id"):
+			manager.call("deactivate_effect_by_id", REPEAT_EFFECT_ID, true)
+		else:
+			manager.call("deactivate_effect", true)
 		queue_free()
 		return
 
 	var caster: Node = player.get_node_or_null("AbilityCaster")
 	if not bool(manager.call("activate_effect", RepeatDefinition, caster)):
-		_show_message("Repeat could not take hold.")
+		_show_message("Repeat could not take hold within the current concentration budget.")
 		queue_free()
 		return
 
@@ -51,19 +60,28 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 	if scene_root == null:
 		scene_root = get_parent()
 	if scene_root == null:
-		manager.call("deactivate_effect", false)
+		_release_repeat(manager, false)
 		queue_free()
 		return
 	scene_root.add_child(controller)
 	if not controller.bind_repeat(player, manager, RepeatDefinition):
 		controller.queue_free()
-		manager.call("deactivate_effect", false)
+		_release_repeat(manager, false)
 		_show_message("Repeat could not find Grace's timeline.")
 	else:
 		_show_message(
-			"Repeat concentrates. One second later, Grace's time echo reenacts the exact remembered timeline while new targets may still intersect it."
+			"Repeat concentrates alongside compatible effects. One second later, Grace's time echo reenacts the remembered timeline."
 		)
 	queue_free()
+
+
+func _release_repeat(manager: Node, show_feedback: bool) -> void:
+	if manager == null:
+		return
+	if manager.has_method("deactivate_effect_by_id"):
+		manager.call("deactivate_effect_by_id", REPEAT_EFFECT_ID, show_feedback)
+	elif manager.has_method("deactivate_effect"):
+		manager.call("deactivate_effect", show_feedback)
 
 
 func _show_message(text: String) -> void:

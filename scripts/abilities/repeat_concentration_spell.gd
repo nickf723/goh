@@ -8,7 +8,7 @@ const ConcentrationRuntime = preload(
 	"res://scripts/concentration/concentration_runtime_access.gd"
 )
 const RepeatControllerScript = preload(
-	"res://scripts/time/repeat_echo_controller.gd"
+	"res://scripts/time/repeat_echo_controller_spell_replay.gd"
 )
 
 
@@ -45,7 +45,7 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 	if existing != null and is_instance_valid(existing):
 		existing.queue_free()
 
-	var controller := RepeatControllerScript.new() as RepeatEchoController
+	var controller := RepeatControllerScript.new() as RepeatEchoControllerSpellReplay
 	controller.name = "RepeatEchoController"
 	var scene_root: Node = get_tree().current_scene
 	if scene_root == null:
@@ -61,7 +61,7 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 		_show_message("Repeat could not find Grace's timeline.")
 	else:
 		_show_message(
-			"Repeat concentrates. A time echo follows Grace one second behind and repeats her weapon attacks."
+			"Repeat concentrates. The time echo follows Grace one second behind and independently replays clone-safe attacks and spells."
 		)
 	queue_free()
 

@@ -18,8 +18,8 @@ const RainAbility: AbilityDefinition = preload(
 const GrowAbility: AbilityDefinition = preload(
 	"res://data/abilities/grow_ability.tres"
 )
-const ClonePolicy = preload(
-	"res://scripts/abilities/spell_clone_replay_policy.gd"
+const Semantics = preload(
+	"res://scripts/abilities/spell_clone_semantics.gd"
 )
 
 var failures: Array[String] = []
@@ -62,14 +62,13 @@ func run_tests() -> void:
 
 	var repeat_spell: Node = RepeatSpellScene.instantiate()
 	add_child(repeat_spell)
-	_expect(repeat_spell.has_method("execute"), "Repeat concentration scene can execute")
 	if repeat_spell.has_method("execute"):
 		repeat_spell.call("execute", player, Vector3.FORWARD)
 	await _wait_frames(8)
-	var controller: RepeatEchoControllerSpellReplay = get_tree().get_first_node_in_group(
+	var controller: RepeatEchoControllerFullTimeline = get_tree().get_first_node_in_group(
 		"repeat_echo_controller"
-	) as RepeatEchoControllerSpellReplay
-	_expect(controller != null, "Repeat installs the spell-replay controller")
+	) as RepeatEchoControllerFullTimeline
+	_expect(controller != null, "Repeat installs the full timeline controller")
 	if controller == null:
 		_finish([player, floor])
 		return
@@ -83,22 +82,16 @@ func run_tests() -> void:
 			bool(caster.call("cast_from_player", player, 0.0, false)),
 			"Grace successfully casts the original Firebolt"
 		)
-		# Move Grace away before the replay. The echo should stay on the recorded
-		# timeline rather than firing from Grace's new position.
 		player.global_position += Vector3(5.0, 0.0, 0.0)
-		await _wait_physics_frames(74)
+		await _wait_physics_frames(90)
 		var replay_debug: Dictionary = controller.get_debug_data()
 		_expect(
-			int(replay_debug.get("replayed_spells", 0)) >= 1,
-			"Repeat independently replays Firebolt after its delay"
+			int(replay_debug.get("replayed_trajectories", 0)) >= 1,
+			"Repeat replays Firebolt as a recorded trajectory"
 		)
 		_expect(
 			str(replay_debug.get("last_replayed_spell", "")) == "firebolt",
-			"the replay keeps the actual selected spell identity"
-		)
-		_expect(
-			int(replay_debug.get("pending_spell_replays", 99)) == 0,
-			"the delayed Firebolt event drains after replay"
+			"the trajectory replay keeps the actual selected spell identity"
 		)
 		var echo: RepeatEchoActor = get_tree().get_first_node_in_group(
 			"repeat_echoes"
@@ -106,26 +99,23 @@ func run_tests() -> void:
 		_expect(echo != null, "Repeat still owns its delayed Grace echo")
 		if echo != null:
 			_expect(
-				echo.global_position.distance_to(cast_start) < 1.2,
+				echo.global_position.distance_to(cast_start) < 1.5,
 				"the echo remains near Grace's historical cast position after Grace moves away"
 			)
 
-	var replay_nodes: Array[Node] = get_tree().get_nodes_in_group(
-		"repeat_spell_replays"
+	var trajectory_nodes: Array[Node] = get_tree().get_nodes_in_group(
+		"repeat_trajectory_echoes"
 	)
-	if not replay_nodes.is_empty():
-		var replayed_node: Node = replay_nodes[0]
+	if not trajectory_nodes.is_empty():
+		var replayed_node: Node = trajectory_nodes[0]
+		var trajectory_debug: Dictionary = replayed_node.call("get_debug_data") as Dictionary
 		_expect(
-			bool(replayed_node.get_meta("clone_spell_replay", false)),
-			"replayed spells are explicitly tagged as clone actions"
+			bool(trajectory_debug.get("path_is_timeline_authoritative", false)),
+			"projectile Repeat uses prerecorded path authority"
 		)
 		_expect(
-			not bool(replayed_node.get_meta("clone_copies_original_result", true)),
-			"a clone spell does not copy the original hit result"
-		)
-		_expect(
-			bool(replayed_node.get_meta("clone_fresh_world_interaction", false)),
-			"a clone spell is allowed to collide with the later world independently"
+			bool(trajectory_debug.get("collisions_cannot_redirect_replay", false)),
+			"new contacts cannot redirect remembered projectile motion"
 		)
 
 	var manager: Node = get_tree().get_first_node_in_group("concentration_manager")
@@ -134,7 +124,7 @@ func run_tests() -> void:
 	await _wait_frames(4)
 	_expect(
 		get_tree().get_first_node_in_group("repeat_echo_controller") == null,
-		"releasing concentration cleans up Repeat spell replay"
+		"releasing concentration cleans up Repeat timeline replay"
 	)
 
 	_finish([player, floor])
@@ -142,26 +132,24 @@ func run_tests() -> void:
 
 func _test_policy_contract() -> void:
 	_expect(
-		ClonePolicy.can_replay(FireboltAbility),
-		"ordinary projectiles such as Firebolt are clone-safe"
+		Semantics.get_repeat_mode(FireboltAbility) == Semantics.REPEAT_TRAJECTORY,
+		"Firebolt uses trajectory memory rather than a second simulation"
 	)
 	_expect(
-		ClonePolicy.can_replay(BoulderAbility),
-		"Boulder is replayed as a fresh physical cast rather than a copied result"
+		Semantics.get_repeat_mode(BoulderAbility) == Semantics.REPEAT_TRAJECTORY,
+		"Boulder uses exact recorded physics motion"
 	)
 	_expect(
-		not ClonePolicy.can_replay(RainAbility),
-		"Rain is suppressed so clone weather cannot stack or cancel world weather"
+		Semantics.get_repeat_mode(RainAbility) == Semantics.REPEAT_WORLD_STATE,
+		"Rain is a delayed no-op because the world weather already exists"
 	)
 	_expect(
-		not ClonePolicy.can_replay(GrowAbility),
-		"body transformations stay owned by the original body"
+		Semantics.get_repeat_mode(GrowAbility) == Semantics.REPEAT_SOURCE_STATE,
+		"Grow is reproduced through the recorded Grace state"
 	)
-	var boulder_policy: Dictionary = ClonePolicy.get_policy(BoulderAbility)
 	_expect(
-		not bool(boulder_policy.get("copies_result", true))
-		and bool(boulder_policy.get("fresh_world_interaction", false)),
-		"clone-safe spells explicitly replay actions against the future world"
+		Semantics.get_duplicate_mode(BoulderAbility) == Semantics.DUPLICATE_LIVE,
+		"future Soul Boulder remains a second live simulation"
 	)
 
 

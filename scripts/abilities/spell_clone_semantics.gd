@@ -13,72 +13,34 @@ const DUPLICATE_SOURCE_STATE: String = "live_source_state"
 const DUPLICATE_WORLD_STATE: String = "world_state_noop"
 const DUPLICATE_SUPPRESS: String = "suppress"
 
-# Repeat is a recording. Soul duplication is another actor doing the action now.
-# Never collapse these into one generic "clone-safe" boolean.
-
 const TRAJECTORY_REPEAT_IDS: Array[String] = [
-	"arcane_spark",
-	"firebolt",
-	"ice_lance",
-	"life_thorn",
-	"death_hex",
-	"soul_thread",
-	"dream_snare",
-	"time_snare",
-	"boulder",
-	"curling_puck",
+	"arcane_spark", "firebolt", "ice_lance", "life_thorn", "death_hex",
+	"soul_thread", "dream_snare", "time_snare", "boulder", "curling_puck",
 ]
 
 const CHANNEL_REPEAT_IDS: Array[String] = [
-	"flamethrower",
-	"water_jet",
-	"firewall",
+	"flamethrower", "water_jet", "firewall",
 ]
 
 const SOURCE_STATE_REPEAT_IDS: Array[String] = [
-	"space_blink",
-	"flash",
-	"surf",
-	"flight",
-	"grow",
-	"shrink",
-	"bubble",
+	"space_blink", "flash", "surf", "flight", "flight_concentration",
+	"grow", "shrink", "bubble",
 ]
 
 const WORLD_STATE_NOOP_IDS: Array[String] = [
-	"rain_weather",
-	"snow_weather",
-	"thunderstorm_weather",
+	"rain_weather", "snow_weather", "thunderstorm_weather",
 ]
 
 const SUPPRESSED_OWNERSHIP_IDS: Array[String] = [
-	"repeat",
-	"duplicate",
-	"soul_grip",
-	"metal_tether",
-	"spectral_familiar",
-	"recorded_object_summon",
-	"artificer_assembly",
-	"deploy_contraption",
+	"repeat", "duplicate", "soul_grip", "metal_tether", "spectral_familiar",
+	"recorded_object_summon", "artificer_assembly", "deploy_contraption",
 ]
 
 const EXPLICIT_RECAST_IDS: Array[String] = [
-	"lightning_spark",
-	"sound_pulse",
-	"poison_cloud",
-	"fire_field",
-	"wind_gust",
-	"earth_spike",
-	"metal_needle",
-	"body_burst",
-	"wave",
-	"lightning_bolt",
-	"wind_well",
-	"contagion_cloud",
-	"echolocation",
-	"resonant_pulse",
-	"gust",
-	"asteroid_belt",
+	"lightning_spark", "sound_pulse", "poison_cloud", "fire_field",
+	"wind_gust", "earth_spike", "metal_needle", "body_burst", "wave",
+	"lightning_bolt", "wind_well", "contagion_cloud", "echolocation",
+	"resonant_pulse", "gust", "asteroid_belt",
 ]
 
 
@@ -98,10 +60,7 @@ static func get_repeat_mode(ability: AbilityDefinition) -> String:
 		return REPEAT_TRAJECTORY
 	if spell_id in EXPLICIT_RECAST_IDS:
 		return REPEAT_RECAST
-	if ability.category in [
-		AbilityDefinition.AbilityCategory.PROJECTILE,
-		AbilityDefinition.AbilityCategory.INSTANT,
-	]:
+	if ability.category in [AbilityDefinition.AbilityCategory.PROJECTILE, AbilityDefinition.AbilityCategory.INSTANT]:
 		return REPEAT_RECAST
 	return REPEAT_SUPPRESS
 
@@ -116,9 +75,6 @@ static func get_duplicate_mode(ability: AbilityDefinition) -> String:
 		return DUPLICATE_WORLD_STATE
 	if spell_id in SOURCE_STATE_REPEAT_IDS:
 		return DUPLICATE_SOURCE_STATE
-	# Asteroid Belt, beams, Firewall, projectiles, bursts, and fields run as live
-	# second simulations for a Soul duplicate. Only ownership/world-state effects
-	# need special handling.
 	return DUPLICATE_LIVE
 
 

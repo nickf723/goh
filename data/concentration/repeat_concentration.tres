@@ -6,8 +6,8 @@
 script = ExtResource("1_concentration")
 effect_id = "repeat_concentration"
 display_name = "Repeat"
-description = "Reserve 30 percent of Grace's mana capacity to sustain a time-lagged echo. The echo replays Grace's movement and articulated pose one second later and repeats her weapon attacks at reduced power."
-mana_reservation_fraction = 0.30
+description = "Reserve 20 percent of Grace's mana capacity to sustain a time-lagged echo. The echo reenacts Grace's movement, attacks, and supported spell timelines one second later."
+mana_reservation_fraction = 0.20
 free_elements = Array[String]([])
 discounted_elements = {}
-effect_tags = Array[String](["concentration", "time", "repeat", "echo", "ally", "delayed_copy"])
+effect_tags = Array[String](["concentration", "time", "repeat", "echo", "ally", "delayed_copy", "stackable_concentration"])

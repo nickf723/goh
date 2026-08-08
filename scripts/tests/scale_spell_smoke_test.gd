@@ -99,11 +99,11 @@ func run_tests() -> void:
 		"Duplicate treats Scale as a live source-state traversal"
 	)
 
-	# A wall across the committed route should interrupt rather than steering the
-	# phrase around it.
+	# A wall across the committed Vector3.FORWARD route should interrupt rather
+	# than steering the phrase around it.
 	player.global_position = Vector3(0.0, 0.96, 0.0)
 	player.velocity = Vector3.ZERO
-	var blocker: StaticBody3D = _make_blocker(Vector3(0.0, 2.0, 1.6))
+	var blocker: StaticBody3D = _make_blocker(Vector3(0.0, 2.0, -1.6))
 	add_child(blocker)
 	await get_tree().physics_frame
 	var blocked_result: Dictionary = controller.activate_scale(Vector3.FORWARD)

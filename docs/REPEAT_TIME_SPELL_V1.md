@@ -46,6 +46,139 @@ If Grace was Grown or Shrunk when the original attack began, the repeated payloa
 
 This means the useful part is spatial, not merely cosmetic: Grace can move away while her old position attacks again one second later.
 
+## Spell replay: copy the action, never the original result
+
+Repeat now observes the actual ability scene Grace adds to the world. One second later, a clone-safe spell is instantiated again from the echo's historical position and recorded cast direction.
+
+The important rule is:
+
+```text
+Original cast happens
+        ↓
+The world changes normally
+        ↓
+One second later Repeat performs a NEW cast
+        ↓
+That cast interacts with whatever exists now
+```
+
+Repeat never stores or reapplies the original spell's hit list.
+
+Example:
+
+```text
+Grace casts Boulder at Enemy A
+Boulder hits A, knocks A left, then veers left
+        ↓ one second
+Echo Boulder starts from old Grace's position
+Enemy A is no longer in the lane
+        ↓
+Echo Boulder misses A
+But Enemy B walks into the new lane
+        ↓
+Echo Boulder can hit B normally
+```
+
+This same rule applies to Firebolt, Ice Lance, Metal Needle, Curling Puck, Contagion Cloud, and every other approved clone-safe cast.
+
+Replay roots are tagged with:
+
+```text
+clone_spell_replay = true
+clone_spell_kind = repeat
+clone_copies_original_result = false
+clone_fresh_world_interaction = true
+```
+
+A lightweight blue-violet temporal tint is applied after the echoed spell finishes constructing its own visuals, making repeated spells readable without replacing their underlying elemental identity.
+
+## Clone-safe policy
+
+`SpellCloneReplayPolicy` is deliberately shared infrastructure rather than Repeat-specific logic. A future Soul duplicate can use the same rules.
+
+Currently approved examples include:
+
+```text
+Firebolt
+Ice Lance
+Lightning Spark
+Sound Pulse
+Poison Cloud
+Fire Field
+Wind Gust
+Earth Spike
+Metal Needle
+Life Thorn
+Death Hex
+Body Burst
+Soul Thread
+Dream Snare
+Time Snare
+Wave
+Lightning Bolt
+Wind Well
+Contagion Cloud
+Boulder
+Curling Puck
+Echolocation
+Resonant Pulse
+Gust
+```
+
+These casts are replayed as independent actions.
+
+The following families are suppressed instead of copied:
+
+```text
+Concentration spells
+Weather ownership
+Body transformations
+Self-teleports / traversal states
+Self-defense states
+Held channels
+Firewall's drawn path
+Grab / tether ownership
+Summons and deployed persistent objects
+```
+
+Examples:
+
+```text
+Rain / Snowfall / Thunderstorm → echo does nothing
+Repeat                         → cannot recursively Repeat
+Grow / Shrink                  → echo uses recorded visual form, does not transform
+Flight                         → no second concentration
+Surf / Flash                   → movement is already represented by the delayed timeline
+Bubble / Asteroid Belt         → original body owns the persistent self-state
+Water Jet / Flamethrower       → blocked until channel duration is explicitly recorded
+```
+
+New ordinary projectile and instant spells default to replayable unless their roles or delivery type declare clone-unsafe ownership. New utility, summon, transformation, and movement spells default to suppressed until their semantics are reviewed.
+
+## Shared Duplicate architecture
+
+The policy and replay engine are named around **clones**, not Repeat, because the eventual Soul duplicate should use exactly the same contract.
+
+A Soul double should therefore be able to say:
+
+```text
+SpellCloneReplayPolicy.get_policy(ability)
+SpellCloneReplay.replay_cast(...)
+```
+
+and inherit the same rule: duplicate the action, not the previous outcome.
+
+This allows future compositions like:
+
+```text
+Grace casts Firebolt
+Soul Grace casts its own Firebolt
+Repeat trails Grace with another Firebolt
+Repeat trails Soul Grace with another Firebolt
+```
+
+Every projectile owns its own trajectory and collisions. No duplicate is handed a prerecorded target list.
+
 ## Upgrade architecture
 
 `RepeatEchoController.echo_count` already supports multiple time followers. Every additional echo uses the same timeline with an additional delay offset.
@@ -65,20 +198,6 @@ Repeat Echo 3
 
 The eventual multi-source implementation should give each registered source its own history lane and echo set.
 
-## Spell replay boundary
-
-v1 repeats movement, articulated animation, and weapon attacks. It does not re-cast arbitrary spells yet. Replaying arbitrary abilities needs an action relay rather than blindly invoking `AbilityDefinition` again because self-targeted transformations, concentration spells, channels, summons, and world-authority spells have very different ownership rules.
-
-A later Repeat upgrade can add a safe replay policy such as:
-
-```text
-Projectile / burst spell → duplicate from echo position
-Movement spell           → visual replay only unless explicitly supported
-Transformation           → copy recorded form visually, do not recast
-Concentration            → never recursively recast
-Summon                    → upgrade-gated duplication
-```
-
 ## Grow/Shrink visual fix
 
 Body-form collision was already correct, but Grace's presentation stack could reclaim the visual root after the transform and return the model to normal size.
@@ -97,10 +216,11 @@ Grow and Shrink therefore remain visually matched to their working collision cap
 
 ## Focused test
 
-1. Cast Grow and keep moving for several seconds. Grace should remain visibly large.
-2. Cast Shrink and keep moving/dodging. Grace should remain visibly small.
-3. Open Time in Focus and cast Repeat (`R↺`).
-4. Run in a curved path. The translucent echo should trace that same route about one second behind.
-5. Attack a dummy, then move away. The echo should attack again from the old location one second later.
-6. Cast Grow while Repeat is active. The echo should replay the recorded large visual state when it reaches that portion of the timeline.
-7. Cast Repeat again. The echo should vanish and the reserved Mana ceiling should be restored.
+1. Cast Repeat (`R↺`), then cast Firebolt. A blue-violet echo Firebolt should leave the historical Grace about one second later.
+2. Move sideways immediately after the first Firebolt. The repeated Firebolt should still originate from the echo's old position.
+3. Cast Boulder toward a moving enemy. The echoed Boulder should replay the launch, not the original hit result.
+4. Put a different target into the echoed projectile's future path and confirm the echoed spell can hit it independently.
+5. Test Curling Puck or Contagion Cloud and confirm their later world interactions belong to the echo instance.
+6. Cast Grow while Repeat is active. The echo should replay the recorded large visual state when it reaches that portion of the timeline, but it should not cast Grow itself.
+7. Inspect the policy for Rain, Snowfall, Thunderstorm, Flight, Repeat, Grow, Shrink, Surf, and Bubble. These should be suppressed rather than recursively or globally duplicated.
+8. Cast Repeat again. Echoes and pending spell replay events should be cleaned up and reserved Mana restored.

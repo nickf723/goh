@@ -11,7 +11,7 @@ var remaining: float = 0.0
 var status_receiver: Node = null
 var rigid_body: RigidBody3D = null
 var original_freeze: bool = false
-var original_freeze_mode: RigidBody3D.FreezeMode = RigidBody3D.FREEZE_MODE_STATIC
+var original_freeze_mode: int = RigidBody3D.FREEZE_MODE_STATIC
 var released: bool = false
 var visual_root: Node3D = null
 var elapsed: float = 0.0
@@ -47,7 +47,7 @@ func bind_to_target(
 	if target is RigidBody3D:
 		rigid_body = target as RigidBody3D
 		original_freeze = rigid_body.freeze
-		original_freeze_mode = rigid_body.freeze_mode
+		original_freeze_mode = int(rigid_body.freeze_mode)
 		_pin_rigid_body()
 	elif target.has_method("apply_root_trap"):
 		target.call("apply_root_trap", remaining, source_actor)
@@ -106,7 +106,7 @@ func release_binding() -> void:
 			status_receiver.call("remove_status", "rooted")
 
 	if rigid_body != null and is_instance_valid(rigid_body):
-		rigid_body.freeze_mode = original_freeze_mode
+		rigid_body.freeze_mode = original_freeze_mode as RigidBody3D.FreezeMode
 		rigid_body.freeze = original_freeze
 		rigid_body.linear_velocity = Vector3.ZERO
 		rigid_body.angular_velocity = Vector3.ZERO
@@ -117,7 +117,7 @@ func release_binding() -> void:
 	if visual_root != null and is_instance_valid(visual_root):
 		var tween := create_tween()
 		tween.tween_property(visual_root, "scale", Vector3(1.12, 0.05, 1.12), 0.18)
-		tween.tween_callback(queue_free)
+		tween.tween_callback(Callable(self, "queue_free"))
 	else:
 		queue_free()
 

@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/life_vine_grapple.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Vine Grapple"
+description = "Launch a living Life vine at an enemy or movable object and reel the target toward Grace while Cast is held. Unlike Metal Tether, the vine moves the world instead of moving Grace."
+element = "life"
+category = 4
+mana_cost = 0
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "vine_grapple"
+short_label = "Vine"
+icon_text = "VG"
+roles = Array[String](["control", "force", "grapple", "pull", "utility", "object_interaction", "enemy_displacement"])
+targeting_style = "aimed"
+delivery_type = "channeled_tether"
+combo_tags = Array[String](["life", "vine", "grapple", "pull", "force", "living", "tether"])
+ui_tags = Array[String](["utility", "channeled", "control"])
+debug_tags = Array[String](["flexible_tether", "target_pull", "rigid_body", "force_receiver"])
+scaling_stats = Array[String](["arcana", "life", "skill"])
+scaling_note = "Life can eventually improve vine strength and mass handling; Arcana can improve pull force; Skill can widen acquisition and control."
+design_notes = "Press and hold Cast to latch a visible enemy or movable object. The vine continuously pulls the target toward Grace and automatically releases once it reaches close range. Rigid bodies use mass-aware force; CharacterBody targets reuse ForceReceiver when available."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

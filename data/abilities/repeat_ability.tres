@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/abilities/repeat_concentration_spell.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Repeat"
+description = "Concentrate to reserve 30 percent of Grace's maximum mana and summon a time-lagged echo that copies her movement about one second later. The echo also repeats weapon attacks at reduced power. Cast Repeat again to release it."
+element = "time"
+category = 4
+mana_cost = 0
+use_trait_profile = false
+spell_id = "repeat"
+short_label = "Repeat"
+icon_text = "R↺"
+roles = Array[String](["concentration", "time", "echo", "ally", "delayed_copy", "damage_support", "persistent"])
+targeting_style = "self_centered"
+delivery_type = "delayed_echo_concentration"
+combo_tags = Array[String](["time", "repeat", "echo", "delayed", "copy", "ally", "clone_synergy"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["concentration", "30% reserve", "1s delay", "echo"])
+debug_tags = Array[String](["timeline_history", "pose_replay", "weapon_replay", "multi_echo_ready", "multi_source_hook"])
+scaling_stats = Array[String](["focus", "time", "skill"])
+scaling_note = "Future upgrades can reduce mana reservation, shorten or lengthen delay, increase repeated attack power, and add additional echoes."
+design_notes = "Repeat v1 records Grace's transform and articulated visual pose, then replays that timeline one second later. Its controller exposes echo_count and a source registry so future Soul doubles can each receive their own trailing time echoes."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

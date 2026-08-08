@@ -13,6 +13,7 @@ signal mechanism_value_changed(value: float, packet: Dictionary)
 
 @export_group("Weight Value")
 @export_range(0.0, 1000.0, 0.1) var default_non_rigid_body_mass_kg: float = 70.0
+@export_range(0.0, 10000.0, 0.1) var minimum_mass_kg: float = 0.0
 @export_range(0.1, 10000.0, 0.1) var maximum_reported_mass_kg: float = 100.0
 @export_range(0.0001, 1.0, 0.0001) var mass_change_epsilon: float = 0.001
 @export var show_weight_in_label: bool = true
@@ -48,7 +49,6 @@ func _ready() -> void:
 	state_label = get_node_or_null(state_label_path) as Label3D
 	if plate_visual != null:
 		plate_up_position = plate_visual.position
-
 	connect_body_detection_signals()
 	_set_plate_state(false, 0.0, true, true)
 	refresh_energized_visual()
@@ -57,7 +57,6 @@ func _ready() -> void:
 func connect_body_detection_signals() -> void:
 	var entered_callback: Callable = Callable(self, "_on_body_entered")
 	var exited_callback: Callable = Callable(self, "_on_body_exited")
-
 	if has_signal("body_entered") and not is_connected("body_entered", entered_callback):
 		connect("body_entered", entered_callback)
 	if has_signal("body_exited") and not is_connected("body_exited", exited_callback):
@@ -83,15 +82,10 @@ func _on_body_exited(body: Node3D) -> void:
 func accepts_body(body: Node3D) -> bool:
 	if body == null:
 		return false
-
-	# Area3D body detection also reports the StaticBody3D floor and authored
-	# station platform beneath a plate. Those are support geometry, not load.
-	# Counting both through the 70 kg fallback produced the phantom 140 kg bug.
 	if body is StaticBody3D:
 		return accept_static_bodies
 	if body is AnimatableBody3D:
 		return accept_animatable_bodies
-
 	if accepted_group != "" and body.is_in_group(accepted_group):
 		return true
 	if body.has_method("get_mechanism_mass_kg"):
@@ -100,9 +94,6 @@ func accepts_body(body: Node3D) -> bool:
 		return true
 	if not accept_any_physics_body:
 		return false
-
-	# Movable rigid bodies and CharacterBody3D actors can genuinely transfer
-	# weight onto a plate. Other PhysicsBody3D types require an explicit opt-in.
 	return body is RigidBody3D or body is CharacterBody3D
 
 
@@ -114,12 +105,19 @@ func refresh_pressed_state() -> void:
 			stale_ids.append(raw_id)
 	for raw_id: Variant in stale_ids:
 		occupying_bodies.erase(raw_id)
+	var mass: float = calculate_total_mass_kg()
 	_set_plate_state(
-		not occupying_bodies.is_empty(),
-		calculate_total_mass_kg(),
+		_not_empty_and_meets_threshold(mass),
+		mass,
 		false,
 		false
 	)
+
+
+func _not_empty_and_meets_threshold(mass: float) -> bool:
+	if occupying_bodies.is_empty():
+		return false
+	return mass + mass_change_epsilon >= maxf(minimum_mass_kg, 0.0)
 
 
 func calculate_total_mass_kg() -> float:
@@ -146,30 +144,21 @@ func get_body_mass_kg(body: Node3D) -> float:
 	return maxf(default_non_rigid_body_mass_kg, 0.0)
 
 
-func set_pressed(
-	next_pressed: bool,
-	immediate: bool = false,
-	force_emit: bool = false
-) -> void:
+func set_pressed(next_pressed: bool, immediate: bool = false, force_emit: bool = false) -> void:
 	_set_plate_state(next_pressed, measured_mass_kg, immediate, force_emit)
 
 
 func set_simulated_mass_kg(next_mass_kg: float, immediate: bool = true) -> void:
 	var safe_mass: float = maxf(next_mass_kg, 0.0)
-	_set_plate_state(safe_mass > mass_change_epsilon, safe_mass, immediate, true)
+	var threshold: float = maxf(minimum_mass_kg, 0.0)
+	var pressed: bool = safe_mass > mass_change_epsilon and safe_mass + mass_change_epsilon >= threshold
+	_set_plate_state(pressed, safe_mass, immediate, true)
 
 
-func _set_plate_state(
-	next_pressed: bool,
-	next_mass_kg: float,
-	immediate: bool,
-	force_emit: bool
-) -> void:
+func _set_plate_state(next_pressed: bool, next_mass_kg: float, immediate: bool, force_emit: bool) -> void:
 	var pressed_changed_now: bool = is_pressed != next_pressed
 	var safe_mass: float = maxf(next_mass_kg, 0.0)
-	var value_changed_now: bool = (
-		absf(measured_mass_kg - safe_mass) > mass_change_epsilon
-	)
+	var value_changed_now: bool = absf(measured_mass_kg - safe_mass) > mass_change_epsilon
 	is_pressed = next_pressed
 	measured_mass_kg = safe_mass
 	if path_enabled != is_pressed:
@@ -181,16 +170,9 @@ func _set_plate_state(
 	if pressed_changed_now:
 		pressed_changed.emit(is_pressed)
 	if value_changed_now or force_emit:
-		mechanism_value_changed.emit(
-			measured_mass_kg,
-			last_mechanism_packet.duplicate(true)
-		)
+		mechanism_value_changed.emit(measured_mass_kg, last_mechanism_packet.duplicate(true))
 	if pressed_changed_now or value_changed_now or force_emit:
-		mechanism_signal_changed.emit(
-			get_mechanism_id(),
-			is_pressed,
-			last_mechanism_packet.duplicate(true)
-		)
+		mechanism_signal_changed.emit(get_mechanism_id(), is_pressed, last_mechanism_packet.duplicate(true))
 
 
 func build_mechanism_packet() -> Dictionary:
@@ -216,11 +198,7 @@ func get_body_mass_rows() -> Array[Dictionary]:
 		var body := body_value as Node3D
 		if body == null or not is_instance_valid(body):
 			continue
-		rows.append({
-			"name": body.name,
-			"instance_id": body.get_instance_id(),
-			"mass_kg": get_body_mass_kg(body),
-		})
+		rows.append({"name": body.name, "instance_id": body.get_instance_id(), "mass_kg": get_body_mass_kg(body)})
 	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return str(a.get("name", "")) < str(b.get("name", ""))
 	)
@@ -233,13 +211,11 @@ func animate_plate(immediate: bool) -> void:
 	var target_position: Vector3 = plate_up_position
 	if is_pressed:
 		target_position.y -= depress_distance
-
 	if plate_tween != null and plate_tween.is_valid():
 		plate_tween.kill()
 	if immediate:
 		plate_visual.position = target_position
 		return
-
 	plate_tween = create_tween()
 	plate_tween.set_trans(Tween.TRANS_QUAD)
 	plate_tween.set_ease(Tween.EASE_OUT)
@@ -261,24 +237,17 @@ func refresh_label() -> void:
 		return
 	var state_text: String = "PRESSED" if is_pressed else "RELEASED"
 	if show_weight_in_label:
-		state_label.text = (
-			"PRESSURE PLATE\n"
-			+ str(snappedf(measured_mass_kg, 0.1))
-			+ " kg • "
-			+ state_text
-		)
+		var threshold_text: String = ""
+		if minimum_mass_kg > mass_change_epsilon:
+			threshold_text = " / " + str(snappedf(minimum_mass_kg, 0.1)) + " kg"
+		state_label.text = "PRESSURE PLATE\n" + str(snappedf(measured_mass_kg, 0.1)) + " kg" + threshold_text + " • " + state_text
 	else:
 		state_label.text = "PRESSURE PLATE\n" + state_text
 
 
 func interact() -> Dictionary:
 	return {
-		"message": (
-			display_name
-			+ " reports both contact and total supported mass. Current load: "
-			+ str(snappedf(measured_mass_kg, 0.1))
-			+ " kg."
-		),
+		"message": display_name + " reports both contact and total supported mass. Current load: " + str(snappedf(measured_mass_kg, 0.1)) + " kg.",
 		"objective": "Stand on the plate or combine movable objects to reach a weight threshold.",
 	}
 
@@ -297,19 +266,15 @@ func get_mechanism_value() -> float:
 
 
 func get_mechanism_min_value() -> float:
-	return 0.0
+	return maxf(minimum_mass_kg, 0.0)
 
 
 func get_mechanism_max_value() -> float:
-	return maxf(maximum_reported_mass_kg, 0.1)
+	return maxf(maximum_reported_mass_kg, maxf(minimum_mass_kg, 0.1))
 
 
 func get_mechanism_normalized_value() -> float:
-	return clampf(
-		measured_mass_kg / get_mechanism_max_value(),
-		0.0,
-		1.0
-	)
+	return clampf(measured_mass_kg / get_mechanism_max_value(), 0.0, 1.0)
 
 
 func get_mechanism_value_unit() -> String:
@@ -336,6 +301,8 @@ func get_debug_data() -> Dictionary:
 	data["pressed"] = is_pressed
 	data["occupants"] = occupying_bodies.size()
 	data["mass_kg"] = measured_mass_kg
+	data["minimum_mass_kg"] = minimum_mass_kg
+	data["threshold_met"] = measured_mass_kg + mass_change_epsilon >= minimum_mass_kg
 	data["mass_rows"] = get_body_mass_rows()
 	data["mechanism_id"] = get_mechanism_id()
 	data["mechanism_packet"] = last_mechanism_packet.duplicate(true)

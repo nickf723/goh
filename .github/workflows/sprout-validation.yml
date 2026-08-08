@@ -1,4 +1,4 @@
-name: Life Sprout
+name: Life Plant Summoning
 
 on:
   push:
@@ -6,13 +6,20 @@ on:
       - main
     paths:
       - "scripts/actions/life_sprout_platform.gd"
-      - "scripts/ui/game_ui_focus_minimal.gd"
+      - "scripts/actions/life_sprout_platform_species.gd"
+      - "scripts/abilities/ability_caster_plant_summons.gd"
+      - "scripts/abilities/ability_caster_focus_library.gd"
       - "scripts/input/player_control_router_focus_grid.gd"
+      - "scripts/life/plant_summon_definition.gd"
+      - "scripts/life/plant_summon_catalog.gd"
+      - "scripts/ui/game_ui_focus_minimal.gd"
       - "scripts/tests/sprout_smoke_test.gd"
       - "scripts/tests/compact_focus_menu_smoke_test.gd"
+      - "scripts/tests/ground_target_focus_ui_smoke_test.gd"
       - "scenes/actions/life_sprout_platform.tscn"
       - "scenes/tests/sprout_smoke_test.tscn"
       - "data/abilities/sprout_ability.tres"
+      - "data/plants/broadleaf_sprout.tres"
       - "data/loadouts/grace_starting_loadout.tres"
       - ".github/workflows/sprout-validation.yml"
   workflow_dispatch:
@@ -21,12 +28,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: life-sprout-${{ github.ref }}
+  group: life-plant-summoning-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  validate-sprout:
-    name: Import, temporary platform, and Focus navigation
+  validate-plant-summoning:
+    name: Import, aimed plants, Focus confirm/back, and library
     runs-on: ubuntu-latest
     timeout-minutes: 18
 
@@ -44,19 +51,25 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . --editor --quit 2>&1 | tee sprout-import.log
+          godot --headless --path . --editor --quit 2>&1 | tee plant-import.log
 
-      - name: Run Sprout regression
+      - name: Run Plant Summon and Sprout regression
         shell: bash
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/sprout_smoke_test.tscn 2>&1 | tee sprout-test.log
 
-      - name: Run Focus first-render and navigation regression
+      - name: Run Focus controller regression
         shell: bash
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/compact_focus_menu_smoke_test.tscn 2>&1 | tee focus-grid-test.log
+
+      - name: Run ground-target ownership regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/ground_target_focus_ui_smoke_test.tscn 2>&1 | tee ground-target-test.log
 
       - name: Run complete Focus library regression
         shell: bash
@@ -68,10 +81,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: life-sprout-logs
+          name: life-plant-summoning-logs
           path: |
-            sprout-import.log
+            plant-import.log
             sprout-test.log
             focus-grid-test.log
+            ground-target-test.log
             complete-library-test.log
           if-no-files-found: ignore

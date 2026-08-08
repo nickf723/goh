@@ -40,7 +40,7 @@ const EXPLICIT_RECAST_IDS: Array[String] = [
 	"lightning_spark", "sound_pulse", "poison_cloud", "fire_field",
 	"wind_gust", "earth_spike", "metal_needle", "body_burst", "wave",
 	"lightning_bolt", "wind_well", "contagion_cloud", "echolocation",
-	"resonant_pulse", "gust", "asteroid_belt",
+	"resonant_pulse", "gust", "asteroid_belt", "illusion",
 ]
 
 

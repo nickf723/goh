@@ -15,26 +15,14 @@ func _input(event: InputEvent) -> void:
 
 
 func _handle_focus_grid_action_button(event: InputEventJoypadButton) -> bool:
-	# Never reason about Nintendo/Xbox face-button letters here. The project maps
-	# Nintendo A to `interact` (button 1) and Nintendo B to `dodge` (button 0),
-	# while Godot's JOY_BUTTON_A/B constants use the Xbox ordering. Semantic input
-	# actions keep Focus correct on either layout.
-	var confirm_pressed: bool = (
-		event.is_action_pressed("interact")
-		or event.is_action_pressed("ui_accept")
-	)
-	var confirm_released: bool = (
-		event.is_action_released("interact")
-		or event.is_action_released("ui_accept")
-	)
-	var back_pressed: bool = (
-		event.is_action_pressed("dodge")
-		or event.is_action_pressed("ui_cancel")
-	)
-	var back_released: bool = (
-		event.is_action_released("dodge")
-		or event.is_action_released("ui_cancel")
-	)
+	# Never reason about Nintendo/Xbox face-button letters here. This project's
+	# controller grammar is semantic: `interact` confirms and `dodge` backs out.
+	# Godot's built-in ui_accept/ui_cancel joypad defaults use Xbox face-button
+	# ordering, so they are intentionally excluded from this controller path.
+	var confirm_pressed: bool = event.is_action_pressed("interact")
+	var confirm_released: bool = event.is_action_released("interact")
+	var back_pressed: bool = event.is_action_pressed("dodge")
+	var back_released: bool = event.is_action_released("dodge")
 	if not (
 		confirm_pressed
 		or confirm_released
@@ -43,8 +31,8 @@ func _handle_focus_grid_action_button(event: InputEventJoypadButton) -> bool:
 	):
 		return false
 
-	# Consume releases too so confirm/back cannot leak into gameplay on the frame
-	# that the Focus page changes or closes.
+	# Consume releases too while Focus remains open so face buttons cannot leak
+	# into gameplay on the frame the page changes.
 	if confirm_released or back_released:
 		return true
 	if ability_caster == null:
@@ -130,6 +118,7 @@ func get_debug_data() -> Dictionary:
 	data["focus_grid_navigation"] = true
 	data["focus_dpad_only"] = true
 	data["focus_confirm_action"] = "interact"
-	data["focus_back_action"] = "dodge_or_cancel"
+	data["focus_back_action"] = "dodge"
 	data["controller_layout_agnostic"] = true
+	data["godot_ui_face_buttons_ignored"] = true
 	return data

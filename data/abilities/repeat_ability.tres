@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("2_definition")
 display_name = "Repeat"
-description = "Reserve 30 percent of Grace's maximum mana to summon a time-lagged echo one second behind her. It reenacts Grace's recorded movement, attacks, projectile paths, channels, and clone-safe spell states on the same delayed timeline. Cast Repeat again to release it."
+description = "Reserve 20 percent of Grace's maximum mana to summon a time-lagged echo one second behind her. It reenacts Grace's recorded movement, attacks, projectile paths, channels, and clone-safe spell states on the same delayed timeline. Compatible concentration effects can coexist within the shared Mana budget."
 element = "time"
 category = 4
 mana_cost = 0
@@ -19,10 +19,10 @@ targeting_style = "self_centered"
 delivery_type = "delayed_echo_concentration"
 combo_tags = Array[String](["time", "repeat", "echo", "delayed", "copy", "ally", "clone_synergy", "spell_echo", "timeline"])
 status_tags = Array[String]([])
-ui_tags = Array[String](["concentration", "30% reserve", "1s delay", "timeline echo", "spell echo"])
-debug_tags = Array[String](["timeline_history", "pose_replay", "weapon_replay", "trajectory_memory", "channel_memory", "multi_echo_ready", "multi_source_hook"])
+ui_tags = Array[String](["concentration", "20% reserve", "1s delay", "timeline echo", "spell echo"])
+debug_tags = Array[String](["timeline_history", "pose_replay", "weapon_replay", "trajectory_memory", "channel_memory", "multi_echo_ready", "multi_source_hook", "stackable_concentration"])
 scaling_stats = Array[String](["focus", "time", "skill"])
 scaling_note = "Future upgrades can reduce mana reservation, tune delay, increase repeated attack power, and add additional echoes."
-design_notes = "Repeat is temporal reenactment rather than a second simulation. Physical projectiles follow their recorded world paths; channels replay their recorded aim and duration; source transformations and traversal are inherited from Grace's recorded actor timeline. New targets may be affected when they enter a remembered effect, but they cannot redirect the prerecorded motion. A future Soul Duplicate uses separate live-simulation semantics."
+design_notes = "Repeat is temporal reenactment rather than a second simulation. Physical projectiles follow their recorded world paths; channels replay their recorded aim and duration; source transformations and traversal are inherited from Grace's recorded actor timeline. New targets may be affected when they enter a remembered effect, but they cannot redirect the prerecorded motion. Repeat reserves 20% and can coexist with other compatible concentration effects such as Rain as long as the total reservation fits the shared budget."
 ability_scene = ExtResource("1_scene")
 metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

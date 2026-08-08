@@ -12,6 +12,8 @@ var initial_player_transform: Transform3D
 var environment_root: Node3D = null
 var evaluation_remaining: float = 0.0
 var trial_complete: bool = false
+var balcony_collision: CollisionShape3D = null
+var balcony_collision_enabled: bool = false
 var floor_material: StandardMaterial3D
 var platform_material: StandardMaterial3D
 var note_material: StandardMaterial3D
@@ -20,6 +22,7 @@ var gold_material: StandardMaterial3D
 const STEP_HEIGHT: float = 0.62
 const STEP_FORWARD: float = 1.18
 const STEP_COUNT: int = 8
+const PLAYER_FOOT_OFFSET: float = 0.96
 const START_POSITION: Vector3 = Vector3(0.0, 1.0, -5.0)
 
 
@@ -46,8 +49,10 @@ func _process(delta: float) -> void:
 	if evaluation_remaining > 0.0:
 		return
 	evaluation_remaining = evaluation_interval
-	var balcony_y: float = START_POSITION.y + STEP_HEIGHT * float(STEP_COUNT)
-	if player.global_position.z >= 3.0 and player.global_position.y >= balcony_y - 0.8:
+	var final_root_y: float = START_POSITION.y + STEP_HEIGHT * float(STEP_COUNT)
+	if not balcony_collision_enabled and player.global_position.y >= final_root_y - 0.18:
+		_set_balcony_collision(true)
+	if player.global_position.z >= 3.0 and player.global_position.y >= final_root_y - 0.35:
 		_complete_trial()
 
 
@@ -69,14 +74,19 @@ func _build_environment() -> void:
 	environment_root.name = "ResonantStairEnvironment"
 	add_child(environment_root)
 	_create_static_box("StartRunway", Vector3(0.0, -0.5, -5.0), Vector3(8.0, 1.0, 10.0), floor_material)
-	var balcony_center_z: float = 5.6
-	var balcony_top_y: float = START_POSITION.y + STEP_HEIGHT * float(STEP_COUNT) - 0.05
-	_create_static_box(
+	var balcony_top_y: float = (
+		START_POSITION.y
+		+ STEP_HEIGHT * float(STEP_COUNT)
+		- PLAYER_FOOT_OFFSET
+	)
+	var balcony: StaticBody3D = _create_static_box(
 		"ResonantBalcony",
-		Vector3(0.0, balcony_top_y - 0.5, balcony_center_z),
+		Vector3(0.0, balcony_top_y - 0.5, 5.6),
 		Vector3(8.0, 1.0, 7.0),
 		platform_material
 	)
+	balcony_collision = balcony.get_node_or_null("CollisionShape3D") as CollisionShape3D
+	_set_balcony_collision(false)
 	_create_label("RESONANT STAIR", Vector3(0.0, 4.0, -7.8), Color(1.0, 0.62, 0.18), 32)
 	_create_label("COMMIT • ASCEND • RESOLVE", Vector3(0.0, balcony_top_y + 2.5, 6.5), Color(1.0, 0.84, 0.3), 22)
 	_create_marker(Vector3(0.0, 0.04, -3.8), Vector3(2.2, 0.08, 1.4), note_material)
@@ -95,13 +105,20 @@ func _build_environment() -> void:
 	)
 
 
-func _create_static_box(node_name: String, position_value: Vector3, size_value: Vector3, material: Material) -> void:
+func _set_balcony_collision(value: bool) -> void:
+	balcony_collision_enabled = value
+	if balcony_collision != null:
+		balcony_collision.set_deferred("disabled", not value)
+
+
+func _create_static_box(node_name: String, position_value: Vector3, size_value: Vector3, material: Material) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.name = node_name
 	body.position = position_value
 	body.collision_layer = 1
 	body.collision_mask = 1
 	var collision := CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
 	var shape := BoxShape3D.new()
 	shape.size = size_value
 	collision.shape = shape
@@ -113,6 +130,7 @@ func _create_static_box(node_name: String, position_value: Vector3, size_value: 
 	mesh_instance.material_override = material
 	body.add_child(mesh_instance)
 	environment_root.add_child(body)
+	return body
 
 
 func _create_marker(position_value: Vector3, size_value: Vector3, material: Material) -> void:
@@ -175,6 +193,7 @@ func _complete_trial() -> void:
 	if trial_complete:
 		return
 	trial_complete = true
+	_set_balcony_collision(true)
 	GameState.set_flag(completion_flag, true)
 	_set_objective("Scale mastered: eight notes convert commitment into vertical distance.")
 	_show_message("Scale mastered • COMMIT • ASCEND • RESOLVE")
@@ -190,6 +209,7 @@ func reset_trial() -> void:
 	if player != null:
 		player.transform = initial_player_transform
 		player.velocity = Vector3.ZERO
+	_set_balcony_collision(false)
 	_restore_resources()
 	call_deferred("_equip_spell", "scale")
 	_set_objective("Cast Scale from the launch mark. Commit to the straight eight-note ascent and land on the Resonant Balcony.")
@@ -243,5 +263,6 @@ func get_debug_data() -> Dictionary:
 		"scale_trial": true,
 		"complete": trial_complete,
 		"player_position": player.global_position if player != null else Vector3.ZERO,
+		"balcony_collision_enabled": balcony_collision_enabled,
 		"completion_flag": GameState.get_flag(completion_flag),
 	}

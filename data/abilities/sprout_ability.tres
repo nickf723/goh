@@ -5,8 +5,8 @@
 
 [resource]
 script = ExtResource("2_definition")
-display_name = "Sprout"
-description = "Place a living broadleaf sprout with a movable ground reticle, then grow it into temporary terrain. This starter plant is the first species in Grace's broader Plant Summoning catalog."
+display_name = "Plant Summon"
+description = "Grow the plant blueprint Grace prepared beforehand. The spell only handles placement and casting; species and tuning are configured outside combat."
 element = "life"
 category = 4
 mana_cost = 2
@@ -14,17 +14,17 @@ stamina_cost = 0
 focus_cost = 0
 use_trait_profile = false
 spell_id = "sprout"
-short_label = "Sprout"
-icon_text = "SP"
-roles = Array[String](["utility", "growth", "terrain", "platform", "traversal", "lift", "object_interaction", "control", "plant_summon"])
+short_label = "Plant"
+icon_text = "PS"
+roles = Array[String](["utility", "growth", "terrain", "platform", "traversal", "lift", "object_interaction", "control", "summon", "plant_summon"])
 targeting_style = "ground_placement"
-delivery_type = "plant_summon"
-combo_tags = Array[String](["life", "plant", "plant_summon", "growth", "platform", "terrain", "lift", "physics", "traversal"])
+delivery_type = "prepared_plant_summon"
+combo_tags = Array[String](["life", "plant", "plant_summon", "growth", "summon", "terrain", "physics", "traversal"])
 status_tags = Array[String]([])
-ui_tags = Array[String](["utility", "traversal", "temporary_platform", "plant_summon"])
-debug_tags = Array[String](["static_body_platform", "ground_targeting", "growth_lift", "temporary_geometry", "plant_catalog"])
+ui_tags = Array[String](["utility", "prepared_loadout", "plant_summon"])
+debug_tags = Array[String](["prepared_plant_blueprint", "ground_targeting", "species_catalog", "no_combat_configuration"])
 scaling_stats = Array[String](["life", "arcana", "skill"])
-scaling_note = "Life can extend summoned plant lifetime and growth; Arcana can strengthen plant effects; Skill can improve placement range and precision."
-design_notes = "Normal gameplay routes Sprout through the shared ground-placement controller before spending mana. The summoned actor reads a PlantSummonDefinition for Broadleaf Sprout. Future discovered cactus, flytrap, tree, mushroom, and other species can reuse the same catalog/placement pipeline while supplying different actors and behavior profiles."
+scaling_note = "The prepared plant blueprint determines species-specific behavior; Life, Arcana, and Skill can later modify unlocked preparation ranges without adding combat-time setup."
+design_notes = "Plant Summon mirrors Familiar Summon: preparation happens in the full menu, while combat only selects the spell, aims the placement marker, and casts. The legacy spell_id 'sprout' remains stable for saves and quick slots."
 ability_scene = ExtResource("1_scene")
 metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

@@ -4,6 +4,11 @@ class_name ScaleCast
 const ScaleControllerScript = preload(
 	"res://scripts/player/player_scale_controller.gd"
 )
+const GameplayEffectAccessScript = preload(
+	"res://scripts/effects/gameplay_effect_access.gd"
+)
+
+@export_range(0, 20, 1) var authored_mana_cost: int = 2
 
 var source_actor: Node3D = null
 
@@ -33,10 +38,10 @@ func execute(player: Node3D, cast_direction: Vector3) -> void:
 
 
 func _refund_cast_cost() -> void:
-	# Scale costs 2 Mana in v1. Failed recasts/blocked ownership should not charge
-	# the player for a traversal phrase that never began.
-	if GameState == null:
-		return
-	var current: int = GameState.get_stat("mana")
-	var maximum: int = GameState.get_stat("max_mana")
-	GameState.set_stat("mana", mini(current + 2, maximum))
+	var refund: int = GameplayEffectAccessScript.modify_int(
+		"mana_cost",
+		authored_mana_cost,
+		"ceil"
+	)
+	if refund > 0:
+		GameState.restore_mana(refund)

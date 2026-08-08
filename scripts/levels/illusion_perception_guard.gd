@@ -17,6 +17,7 @@ const PerceptionResolver = preload(
 @export_range(0.05, 2.0, 0.05) var attack_interval: float = 0.65
 @export_range(0.05, 1.0, 0.01) var perception_interval: float = 0.12
 @export var gravity: float = 18.0
+@export var training_enabled: bool = true
 
 var canonical_target: Node3D = null
 var current_target: Node3D = null
@@ -54,8 +55,24 @@ func set_canonical_target(target: Node3D) -> void:
 	perception_remaining = 0.0
 
 
+func set_training_enabled(value: bool) -> void:
+	training_enabled = value
+	perception_remaining = 0.0
+	if not training_enabled:
+		current_target = null
+		velocity.x = 0.0
+		velocity.z = 0.0
+
+
 func _physics_process(delta: float) -> void:
 	var step: float = maxf(delta, 0.0)
+	if not training_enabled:
+		if not is_on_floor():
+			velocity.y -= gravity * step
+		elif velocity.y < 0.0:
+			velocity.y = -0.1
+		move_and_slide()
+		return
 	perception_remaining -= step
 	attack_remaining = maxf(attack_remaining - step, 0.0)
 	if perception_remaining <= 0.0:
@@ -235,6 +252,7 @@ func _flash_eyes() -> void:
 func get_debug_data() -> Dictionary:
 	return {
 		"illusion_perception_guard": true,
+		"enabled": training_enabled,
 		"target": str(current_target.name) if current_target != null else "none",
 		"target_kind": _target_kind(current_target),
 		"target_changes": target_change_count,

@@ -9,7 +9,6 @@ const CloneReplay = preload(
 )
 
 var ability_caster: Node = null
-var ability_by_scene_path: Dictionary = {}
 var pending_spell_events: Array[Dictionary] = []
 var replayed_spell_count: int = 0
 var suppressed_spell_count: int = 0
@@ -28,7 +27,6 @@ func bind_repeat(
 	if not bound:
 		return false
 	ability_caster = source_actor.get_node_or_null("AbilityCaster")
-	_rebuild_ability_scene_map()
 	var tree: SceneTree = get_tree()
 	if tree != null:
 		var callback := Callable(self, "_on_scene_node_added")
@@ -54,22 +52,6 @@ func _physics_process(delta: float) -> void:
 	_process_spell_events()
 
 
-func _rebuild_ability_scene_map() -> void:
-	ability_by_scene_path.clear()
-	if ability_caster == null or not is_instance_valid(ability_caster):
-		return
-	var loadout_value: Variant = ability_caster.get("loadout")
-	if not loadout_value is AbilityLoadout:
-		return
-	var loadout: AbilityLoadout = loadout_value as AbilityLoadout
-	for ability: AbilityDefinition in loadout.get_learned_abilities():
-		if ability == null or ability.ability_scene == null:
-			continue
-		var path: String = ability.ability_scene.resource_path
-		if path != "":
-			ability_by_scene_path[path] = ability
-
-
 func _on_scene_node_added(node: Node) -> void:
 	if (
 		node == null
@@ -78,16 +60,14 @@ func _on_scene_node_added(node: Node) -> void:
 		or bool(node.get_meta("clone_spell_replay", false))
 	):
 		return
-	var scene_path: String = node.scene_file_path
-	if scene_path == "" or not ability_by_scene_path.has(scene_path):
+	var ability: AbilityDefinition = _get_current_player_ability()
+	if ability == null or ability.ability_scene == null:
 		return
-	var ability: AbilityDefinition = ability_by_scene_path[scene_path] as AbilityDefinition
-	if ability == null:
+	var scene_path: String = node.scene_file_path
+	if scene_path == "" or scene_path != ability.ability_scene.resource_path:
 		return
 	var observed_source: Node = _read_source_actor(node)
 	if observed_source != null and observed_source != source_actor:
-		return
-	if observed_source == null and not _matches_current_player_ability(ability):
 		return
 
 	observed_player_cast_count += 1
@@ -100,16 +80,13 @@ func _on_scene_node_added(node: Node) -> void:
 	_schedule_spell_replays(node, ability)
 
 
-func _matches_current_player_ability(ability: AbilityDefinition) -> bool:
+func _get_current_player_ability() -> AbilityDefinition:
 	if ability_caster == null or not is_instance_valid(ability_caster):
-		return false
+		return null
 	if not ability_caster.has_method("get_current_ability"):
-		return false
+		return null
 	var current_value: Variant = ability_caster.call("get_current_ability")
-	return (
-		current_value is AbilityDefinition
-		and (current_value as AbilityDefinition).get_spell_id() == ability.get_spell_id()
-	)
+	return current_value as AbilityDefinition if current_value is AbilityDefinition else null
 
 
 func _read_source_actor(node: Node) -> Node:
@@ -200,6 +177,8 @@ func _replay_spell_event(event: Dictionary) -> void:
 	if not ability_value is AbilityDefinition:
 		return
 	var ability: AbilityDefinition = ability_value as AbilityDefinition
+	var payload_value: Variant = event.get("payload")
+	var payload: Resource = payload_value as Resource if payload_value is Resource else null
 	var replayed: Node = CloneReplay.replay_cast(
 		get_tree(),
 		echo,
@@ -207,7 +186,7 @@ func _replay_spell_event(event: Dictionary) -> void:
 		event.get("cast_direction", Vector3.FORWARD) as Vector3,
 		event.get("origin_offset", Vector3.UP) as Vector3,
 		float(event.get("spawn_distance", 1.0)),
-		event.get("payload") as Resource,
+		payload,
 		0.0,
 		"repeat"
 	)

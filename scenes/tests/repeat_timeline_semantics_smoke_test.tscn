@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/tests/repeat_timeline_semantics_smoke_test.gd" id="1_test"]
+
+[node name="RepeatTimelineSemanticsSmokeTest" type="Node3D"]
+script = ExtResource("1_test")

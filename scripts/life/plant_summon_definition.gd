@@ -8,6 +8,7 @@ class_name PlantSummonDefinition
 @export var growth_archetype: String = "utility"
 @export var discovery_tags: Array[String] = []
 @export var roles: Array[String] = []
+@export_file("*.tscn") var summon_scene_path: String = ""
 
 @export_group("Growth")
 @export_range(0.5, 60.0, 0.25) var lifetime: float = 10.0
@@ -42,6 +43,7 @@ func get_debug_data() -> Dictionary:
 		"display_name": display_name,
 		"archetype": growth_archetype,
 		"roles": roles.duplicate(),
+		"scene_path": summon_scene_path,
 		"lifetime": lifetime,
 		"height": growth_height,
 		"radius": canopy_radius,

@@ -8,7 +8,7 @@ const ConcentrationRuntime = preload(
 	"res://scripts/concentration/concentration_runtime_access.gd"
 )
 const DuplicateControllerScript = preload(
-	"res://scripts/soul/soul_duplicate_controller_ready.gd"
+	"res://scripts/soul/soul_duplicate_controller_combat_synced.gd"
 )
 
 
@@ -46,7 +46,7 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 	var existing: Node = get_tree().get_first_node_in_group("soul_duplicate_controller")
 	if existing != null and is_instance_valid(existing):
 		existing.queue_free()
-	var controller := DuplicateControllerScript.new() as SoulDuplicateControllerReady
+	var controller := DuplicateControllerScript.new() as SoulDuplicateControllerCombatSynced
 	controller.name = "SoulDuplicateController"
 	var scene_root: Node = get_tree().current_scene
 	if scene_root == null:
@@ -63,7 +63,7 @@ func execute(player: Node3D, _cast_direction: Vector3) -> void:
 			manager.call("deactivate_effect_by_id", "duplicate_concentration", false)
 		_show_message("Duplicate could not resolve Grace's live action stream.")
 	else:
-		_show_message("Duplicate concentrates. Soul Grace now performs Grace's actions in parallel with independent collision and spell outcomes.")
+		_show_message("Duplicate concentrates. Soul Grace mirrors Grace's attack intent while resolving movement, collisions, and spell outcomes independently.")
 	queue_free()
 
 

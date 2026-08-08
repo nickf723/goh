@@ -1,0 +1,60 @@
+name: Repeat and Body visual authority
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/player/player_body_form_controller_visual_authority.gd"
+      - "scripts/actions/body_form_cast.gd"
+      - "scripts/time/repeat_echo_actor.gd"
+      - "scripts/time/repeat_echo_controller.gd"
+      - "scripts/abilities/repeat_concentration_spell.gd"
+      - "data/concentration/repeat_concentration.tres"
+      - "data/abilities/repeat_ability.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - "scenes/abilities/repeat_concentration_spell.tscn"
+      - "scripts/tests/repeat_and_body_visual_smoke_test.gd"
+      - "scenes/tests/repeat_and_body_visual_smoke_test.tscn"
+      - "docs/REPEAT_TIME_SPELL_V1.md"
+      - ".github/workflows/repeat-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-repeat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+      - name: Import project
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee repeat-import.log
+      - name: Run Repeat and Body visual regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/repeat_and_body_visual_smoke_test.tscn 2>&1 | tee repeat-test.log
+      - name: Run complete spell library regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/complete_spell_library_smoke_test.tscn 2>&1 | tee complete-library-test.log
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repeat-validation-logs
+          path: |
+            repeat-import.log
+            repeat-test.log
+            complete-library-test.log
+          if-no-files-found: ignore

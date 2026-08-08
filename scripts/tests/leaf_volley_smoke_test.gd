@@ -12,6 +12,9 @@ const VolleyScene: PackedScene = preload(
 const LeafScene: PackedScene = preload(
 	"res://scenes/actions/life_leaf_projectile.tscn"
 )
+const PlayerScene: PackedScene = preload(
+	"res://scenes/actors/player/player.tscn"
+)
 const StatusReceiverScript = preload(
 	"res://scripts/combat/status_receiver.gd"
 )
@@ -29,6 +32,7 @@ func run_tests() -> void:
 	await validate_wake_homing()
 	await validate_leaf_pelt()
 	validate_deterioration_palette()
+	await validate_freed_lock_target_safety()
 	_finish()
 
 
@@ -106,6 +110,36 @@ func validate_deterioration_palette() -> void:
 	_expect(fresh.g > fresh.r, "fresh leaves read green")
 	_expect(old.r > old.g, "old leaves turn amber-orange before crumbling")
 	leaf.queue_free()
+
+
+func validate_freed_lock_target_safety() -> void:
+	var player: CharacterBody3D = PlayerScene.instantiate() as CharacterBody3D
+	player.name = "LeafFreedTargetPlayer"
+	add_child(player)
+	for _frame: int in range(4):
+		await get_tree().process_frame
+
+	var target := CharacterBody3D.new()
+	target.name = "DisposableLeafTarget"
+	target.add_to_group("enemy")
+	add_child(target)
+	player.set("lock_on_target", target)
+	var assist: Node = player.get_node_or_null("CombatTargetingAssist")
+	if assist != null and assist.has_method("set_hard_target"):
+		assist.call("set_hard_target", target)
+
+	# Free immediately, before Player._process has a chance to clear its stale
+	# lock reference. This reproduces the real kill-and-recast crash window.
+	target.free()
+	var volley: LifeLeafVolley = VolleyScene.instantiate() as LifeLeafVolley
+	add_child(volley)
+	volley.set_source_actor(player)
+	var resolved: Node3D = volley.call("_get_hard_target") as Node3D
+	_expect(resolved == null, "freed hard-lock target safely collapses to no target")
+	var acquired: Array[Node3D] = volley.acquire_volley_targets()
+	_expect(acquired.is_empty(), "Leaf Volley can reacquire after a target dies without touching freed memory")
+	volley.queue_free()
+	player.queue_free()
 
 
 func _expect(condition: bool, label: String) -> void:

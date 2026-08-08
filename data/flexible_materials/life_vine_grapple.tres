@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="FlexibleMaterialProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/flexible/flexible_material_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+material_id = "life_vine_grapple"
+display_name = "Conjured Living Vine"
+visual_style = 0
+linear_density = 0.38
+stiffness = 920.0
+tension_damping = 38.0
+break_strength = 2400.0
+radius = 0.072
+base_color = Color(0.19, 0.63, 0.16, 1)
+metallic = 0.0
+roughness = 0.82
+burnable = true
+ignition_threshold = 0.42
+burn_rate = 0.58
+conductive = false
+frozen_stiffness_multiplier = 2.0
+frozen_break_strength_multiplier = 0.38
+frozen_color = Color(0.55, 0.86, 0.72, 1)

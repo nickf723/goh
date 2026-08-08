@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/life_leaf_volley.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/leaf_volley_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Leaf Volley"
+description = "Flick three fast living leaves in a staggered burst. They draft toward moving enemies, pelt them for tiny chip damage, and briefly shave a sliver from movement speed before aging orange and crumbling away."
+element = "life"
+category = 0
+mana_cost = 1
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "leaf_volley"
+short_label = "Leaves"
+icon_text = "LV"
+roles = Array[String](["damage", "chip", "harassment", "homing", "slow", "projectile", "multi_target"])
+targeting_style = "soft_aim"
+delivery_type = "staggered_homing_volley"
+combo_tags = Array[String](["life", "leaf", "plant", "airflow", "homing", "wake", "harassment", "slow"])
+status_tags = Array[String](["leaf_pelted"])
+ui_tags = Array[String](["fast", "three_shot", "homing", "chip", "annoying"])
+debug_tags = Array[String](["target_wake_prediction", "airflow_projectile", "deteriorating_projectile", "micro_slow"])
+scaling_stats = Array[String](["dexterity", "life", "skill"])
+scaling_note = "Dexterity can tighten the burst and increase leaf speed; Life can improve persistence; Skill can strengthen wake tracking without turning the spell into a heavy damage option."
+design_notes = "One Cast releases three leaves 0.11 seconds apart. Hard lock concentrates all three on one enemy; without lock, nearby valid enemies can split the volley. Each leaf predicts target motion and still responds to world airflow. Hits apply a tiny stacking Leaf Pelt movement multiplier, capped so the spell remains nuisance control rather than a true slow."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

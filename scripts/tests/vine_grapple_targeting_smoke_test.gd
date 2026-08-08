@@ -99,8 +99,19 @@ func run_tests() -> void:
 	if preview != null and preview.has_method("get_debug_data"):
 		var preview_data: Dictionary = preview.call("get_debug_data") as Dictionary
 		_expect(bool(preview_data.get("active", false)), "Vine target preview becomes visible while the spell is active")
-		_expect(str(preview_data.get("target", "")) == "Locked Goblin", "preview names the same hard-locked target")
+		_expect(
+			str(preview_data.get("target", ""))
+			== VineTargeting.get_target_display_name(target_b),
+			"preview names the same hard-locked target"
+		)
 		_expect(str(preview_data.get("source", "")) == VineTargeting.SOURCE_HARD_LOCK, "preview and cast share targeting authority")
+
+	var arbiter: Node = get_tree().get_first_node_in_group("vine_grapple_marker_arbiters")
+	_expect(arbiter != null, "Vine Grapple installs a marker-ownership arbiter")
+	if arbiter != null and arbiter.has_method("get_debug_data"):
+		var arbiter_data: Dictionary = arbiter.call("get_debug_data") as Dictionary
+		_expect(bool(arbiter_data.get("vine_selected", false)), "marker arbiter recognizes the active Vine spell")
+		_expect(not bool(arbiter_data.get("generic_soft_marker_visible", true)), "generic soft marker does not compete with the Vine marker")
 
 	heavy.queue_free()
 	_finish([target_b, target_a, player, game_ui, floor])

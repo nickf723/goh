@@ -105,9 +105,10 @@ func update_airflow_motion(delta: float) -> void:
 		var target_velocity: Vector3 = _get_target_velocity(homing_target)
 		last_target_wake_velocity = target_velocity
 		var distance: float = global_position.distance_to(target_point)
+		var travel_speed: float = maxf(maxf(motion_velocity.length(), speed), 0.01)
 		var lead_time: float = minf(
 			maximum_lead_time,
-			distance / maxf(motion_velocity.length(), speed, 0.01)
+			distance / travel_speed
 		)
 		var wake_point: Vector3 = (
 			target_point

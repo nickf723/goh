@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/life_sprout_platform.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Sprout"
+description = "Grow a temporary living platform from the aimed surface. The sprout can create a step, catch or lift objects, interrupt enemies from below, and become temporary traversal geometry."
+element = "life"
+category = 4
+mana_cost = 2
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "sprout"
+short_label = "Sprout"
+icon_text = "SP"
+roles = Array[String](["utility", "growth", "terrain", "platform", "traversal", "lift", "object_interaction", "control"])
+targeting_style = "aimed_surface"
+delivery_type = "temporary_growth_geometry"
+combo_tags = Array[String](["life", "plant", "growth", "platform", "terrain", "lift", "physics", "traversal"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["utility", "traversal", "temporary_platform"])
+debug_tags = Array[String](["static_body_platform", "surface_raycast", "growth_lift", "temporary_geometry"])
+scaling_stats = Array[String](["life", "arcana", "skill"])
+scaling_note = "Life can extend the platform lifetime and size; Arcana can strengthen the growth lift; Skill can improve placement range and precision."
+design_notes = "Sprout creates real temporary collision geometry rather than a marker. It grows roughly waist-high, lifts nearby CharacterBody and RigidBody targets as it emerges, supports normal traversal/physics, then browns and wilts away. Each caster may sustain up to three sprouts; the oldest wilts when a fourth is created."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

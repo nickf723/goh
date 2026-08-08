@@ -57,6 +57,18 @@ func _mirror_ability(ability: AbilityDefinition, original_instance: Node) -> voi
 		if duplicate is SoulDuplicateActorReady:
 			(duplicate as SoulDuplicateActorReady).set_mirrored_ability(ability, direction)
 	super._mirror_ability(ability, original_instance)
+	if ability == null:
+		return
+	var mode: String = CloneSemantics.get_duplicate_mode(ability)
+	if mode == CloneSemantics.DUPLICATE_SOURCE_STATE:
+		for duplicate: SoulDuplicateActor in duplicates:
+			_notify_repeat_spell(
+				duplicate,
+				ability,
+				null,
+				direction,
+				ability.get_action_payload()
+			)
 
 
 func _spawn_live_spell(
@@ -80,6 +92,7 @@ func _spawn_live_spell(
 	instance.set_meta("clone_spell_replay", true)
 	instance.set_meta("clone_spell_kind", "soul_duplicate")
 	instance.set_meta("clone_live_simulation", true)
+	instance.set_meta("clone_spell_id", ability.get_spell_id())
 	if _has_property(instance, "mana_per_second"):
 		instance.set("mana_per_second", 0.0)
 	var resolved_payload: Resource = _make_duplicate_payload(payload_override)
@@ -95,11 +108,13 @@ func _spawn_live_spell(
 	instance.add_to_group("soul_duplicate_spell_replays")
 	if instance.has_method("execute"):
 		instance.call("execute", duplicate, cast_direction)
+		_notify_repeat_spell(duplicate, ability, instance, cast_direction, resolved_payload)
 		return
 	if instance is Node3D:
 		(instance as Node3D).global_position = duplicate.global_position + Vector3.UP * 0.85 + cast_direction * 0.3
 	if instance.has_method("launch"):
 		instance.call("launch", cast_direction)
+	_notify_repeat_spell(duplicate, ability, instance, cast_direction, resolved_payload)
 
 
 func _make_duplicate_payload(payload_override: Resource) -> Resource:
@@ -124,6 +139,14 @@ func _on_source_flamethrower_started() -> void:
 		if duplicate is SoulDuplicateActorReady:
 			(duplicate as SoulDuplicateActorReady).set_mirrored_ability(ability, direction)
 		_start_duplicate_flamethrower(duplicate, ability)
+		if duplicate != null and is_instance_valid(duplicate):
+			_notify_repeat_spell(
+				duplicate,
+				ability,
+				duplicate.flamethrower_controller,
+				direction,
+				null
+			)
 	mirrored_spell_count += 1
 	last_spell_id = "flamethrower"
 	last_mode = CloneSemantics.DUPLICATE_LIVE
@@ -152,6 +175,28 @@ func _start_duplicate_flamethrower(
 	controller.begin_ability_channel(duplicate, ability)
 
 
+func _notify_repeat_spell(
+	duplicate: SoulDuplicateActor,
+	ability: AbilityDefinition,
+	instance: Node,
+	cast_direction: Vector3,
+	payload: Resource
+) -> void:
+	if duplicate == null or not is_instance_valid(duplicate):
+		return
+	var repeat_controller: Node = get_tree().get_first_node_in_group("repeat_echo_controller")
+	if repeat_controller == null or not repeat_controller.has_method("record_registered_source_spell"):
+		return
+	repeat_controller.call(
+		"record_registered_source_spell",
+		duplicate,
+		ability,
+		instance,
+		cast_direction,
+		payload
+	)
+
+
 func _has_property(node: Object, property_name: String) -> bool:
 	for row_value: Variant in node.get_property_list():
 		if row_value is Dictionary and str((row_value as Dictionary).get("name", "")) == property_name:
@@ -165,5 +210,6 @@ func get_debug_data() -> Dictionary:
 	data["duplicate_payload_tags"] = true
 	data["flamethrower_signal_bridge"] = source_flamethrower != null
 	data["ability_proxy_sync"] = true
+	data["repeat_spell_lane_bridge"] = true
 	data["ready_duplicate_actor"] = true
 	return data

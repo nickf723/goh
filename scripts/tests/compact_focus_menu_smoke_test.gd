@@ -30,8 +30,8 @@ func run_tests() -> void:
 
 	var caster: Node = player.get_node_or_null("AbilityCaster")
 	_expect(caster != null, "player exposes the Focus caster")
-	_expect(game_ui.has_method("get_compact_focus_debug_data"), "compact Focus presentation is active")
-	if caster == null or not game_ui.has_method("get_compact_focus_debug_data"):
+	_expect(game_ui.has_method("get_minimal_focus_debug_data"), "minimal Focus presentation is active")
+	if caster == null or not game_ui.has_method("get_minimal_focus_debug_data"):
 		_finish([player, game_ui])
 		return
 
@@ -43,29 +43,36 @@ func run_tests() -> void:
 	for _frame: int in range(4):
 		await get_tree().process_frame
 
-	var compact: Dictionary = game_ui.call("get_compact_focus_debug_data") as Dictionary
-	_expect(bool(compact.get("compact", false)), "Focus reports compact picker mode")
-	_expect(str(compact.get("title", "")) == "SPELL FOCUS", "Focus no longer presents itself as a full library dashboard")
-	_expect(bool(compact.get("scroll_backed", false)), "spell list is capped by a ScrollContainer")
-	_expect(float(compact.get("panel_bottom", 0.0)) <= -120.0, "Focus picker sits above the permanent command dock")
-	_expect(bool(compact.get("selection_detail_hidden", false)), "redundant selection-detail row is removed")
+	var minimal: Dictionary = game_ui.call("get_minimal_focus_debug_data") as Dictionary
+	_expect(bool(minimal.get("minimal", false)), "Focus reports minimal picker mode")
+	_expect(float(minimal.get("panel_width", 9999.0)) <= 650.0, "Focus wraps tightly around the two useful panes")
+	_expect(float(minimal.get("panel_height", 9999.0)) <= 200.0, "Focus no longer occupies a large dashboard rectangle")
+	_expect(bool(minimal.get("title_hidden", false)), "Focus title chrome is removed")
+	_expect(bool(minimal.get("active_hidden", false)), "redundant active-spell header is removed")
+	_expect(bool(minimal.get("element_header_hidden", false)), "redundant element heading is removed")
+	_expect(bool(minimal.get("detail_hidden", false)), "redundant selected-spell detail is removed")
+	_expect(bool(minimal.get("help_hidden", false)), "instruction footer is removed")
+	_expect(int(minimal.get("element_matrix", 0)) == 16, "all sixteen element buttons remain")
+	_expect(int(minimal.get("spell_rows", 0)) >= 5, "Soul spell rows remain visible")
 
 	var focus_debug: Dictionary = game_ui.call("get_focus_presentation_debug_data") as Dictionary
-	_expect(int(focus_debug.get("cached_elements", 0)) == 16, "all sixteen elements remain visible")
+	_expect(int(focus_debug.get("cached_elements", 0)) == 16, "Focus still caches all sixteen elements")
 	var grid_value: Variant = game_ui.get("focus_spell_element_grid")
-	_expect(grid_value is GridContainer and (grid_value as GridContainer).columns == 5, "four labeled element families remain a compact five-column matrix")
+	_expect(
+		grid_value is GridContainer
+		and (grid_value as GridContainer).columns == 5,
+		"element families remain the compact labeled matrix"
+	)
 
 	var scroll_value: Variant = game_ui.get("focus_spell_scroll")
 	var list_value: Variant = game_ui.get("focus_spell_list")
 	var scroll: ScrollContainer = scroll_value as ScrollContainer if scroll_value is ScrollContainer else null
 	var spell_list: VBoxContainer = list_value as VBoxContainer if list_value is VBoxContainer else null
-	_expect(scroll != null, "compact spell window exposes its scroll viewport")
-	_expect(spell_list != null, "compact spell window keeps the cached spell list")
+	_expect(scroll != null, "spell pane remains growth-safe with scrolling")
+	_expect(spell_list != null, "spell pane retains its cached rows")
 	if scroll != null and spell_list != null:
-		_expect(spell_list.get_parent() == scroll, "spell rows live inside the capped viewport")
-		_expect(spell_list.size.y > scroll.size.y, "a five-spell element scrolls instead of growing the panel")
-		await get_tree().process_frame
-		_expect(scroll.scroll_vertical > 0, "highlighting the last Soul spell auto-scrolls it into view")
+		_expect(spell_list.get_parent() == scroll, "spell rows live directly inside the scroll viewport")
+		_expect(scroll.custom_minimum_size.y >= 165.0, "five ordinary spell rows fit without needless clipping")
 
 	caster.call("close_focus_spell_menu")
 	_finish([player, game_ui])

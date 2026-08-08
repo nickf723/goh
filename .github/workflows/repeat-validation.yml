@@ -9,6 +9,10 @@ on:
       - "scripts/actions/body_form_cast.gd"
       - "scripts/time/repeat_echo_actor.gd"
       - "scripts/time/repeat_echo_controller.gd"
+      - "scripts/time/repeat_echo_controller_spell_replay.gd"
+      - "scripts/time/repeat_echo_spell_tint.gd"
+      - "scripts/abilities/spell_clone_replay_policy.gd"
+      - "scripts/abilities/spell_clone_replay.gd"
       - "scripts/abilities/repeat_concentration_spell.gd"
       - "data/concentration/repeat_concentration.tres"
       - "data/abilities/repeat_ability.tres"
@@ -16,6 +20,8 @@ on:
       - "scenes/abilities/repeat_concentration_spell.tscn"
       - "scripts/tests/repeat_and_body_visual_smoke_test.gd"
       - "scenes/tests/repeat_and_body_visual_smoke_test.tscn"
+      - "scripts/tests/repeat_spell_replay_smoke_test.gd"
+      - "scenes/tests/repeat_spell_replay_smoke_test.tscn"
       - "docs/REPEAT_TIME_SPELL_V1.md"
       - ".github/workflows/repeat-validation.yml"
   workflow_dispatch:
@@ -43,11 +49,21 @@ jobs:
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/repeat_and_body_visual_smoke_test.tscn 2>&1 | tee repeat-test.log
+      - name: Run Repeat spell replay regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/repeat_spell_replay_smoke_test.tscn 2>&1 | tee repeat-spell-test.log
       - name: Run complete spell library regression
         shell: bash
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/complete_spell_library_smoke_test.tscn 2>&1 | tee complete-library-test.log
+      - name: Run performance foundation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/runtime_performance_foundation_smoke_test.tscn 2>&1 | tee performance-test.log
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -56,5 +72,7 @@ jobs:
           path: |
             repeat-import.log
             repeat-test.log
+            repeat-spell-test.log
             complete-library-test.log
+            performance-test.log
           if-no-files-found: ignore

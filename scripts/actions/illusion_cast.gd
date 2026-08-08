@@ -37,7 +37,6 @@ func execute(player: Node3D, cast_direction: Vector3) -> void:
 
 	var decoy := IllusionDecoyScript.new() as DreamIllusionDecoy
 	decoy.name = "DreamIllusion_%d" % last_cast_serial
-	decoy.position = last_target_position
 	decoy.set_meta("clone_spell_replay", bool(get_meta("clone_spell_replay", false)))
 	decoy.set_meta("clone_spell_kind", str(get_meta("clone_spell_kind", "original")))
 	var scene_root: Node = get_tree().current_scene
@@ -71,16 +70,24 @@ func _resolve_target_position(cast_direction: Vector3) -> Vector3:
 
 	var world: World3D = source_actor.get_world_3d()
 	var direction: Vector3 = cast_direction
+	var ray_origin: Vector3 = source_actor.global_position + Vector3.UP * 1.05
+	var camera: Camera3D = source_actor.get_viewport().get_camera_3d()
+
+	# Ground-targeted spells should use the actual center-screen sight ray. The
+	# generic cast direction is excellent for projectiles, but using it with a
+	# fixed planar fallback made Illusion look as though it picked an arbitrary
+	# point several metres ahead whenever the forward ray missed the floor.
+	if camera != null:
+		var viewport_size: Vector2 = source_actor.get_viewport().get_visible_rect().size
+		var screen_center: Vector2 = viewport_size * 0.5
+		ray_origin = camera.project_ray_origin(screen_center)
+		direction = camera.project_ray_normal(screen_center)
 	if direction.length_squared() <= 0.0001:
 		direction = -source_actor.global_transform.basis.z
 	if direction.length_squared() <= 0.0001:
 		direction = Vector3.FORWARD
 	direction = direction.normalized()
 
-	var ray_origin: Vector3 = source_actor.global_position + Vector3.UP * 1.05
-	var camera: Camera3D = source_actor.get_viewport().get_camera_3d()
-	if camera != null:
-		ray_origin = camera.global_position
 	var ray_end: Vector3 = ray_origin + direction * maximum_range
 	if world != null:
 		var query := PhysicsRayQueryParameters3D.create(
@@ -95,8 +102,22 @@ func _resolve_target_position(cast_direction: Vector3) -> Vector3:
 			var hit_position: Vector3 = hit.get("position", ray_end) as Vector3
 			var hit_normal: Vector3 = hit.get("normal", Vector3.UP) as Vector3
 			if hit_normal.y >= 0.45:
-				return hit_position + hit_normal * surface_offset
-			return _probe_ground(hit_position - direction * 0.45)
+				return _clamp_to_cast_range(hit_position + hit_normal * surface_offset)
+			# A wall or prop under the reticle still resolves to the walkable ground
+			# immediately in front of it rather than putting fake Grace inside it.
+			return _probe_ground(
+				_clamp_to_cast_range(hit_position - direction * 0.45)
+			)
+
+	# If the sight ray reaches no collider, intersect it with Grace's ground
+	# plane. This preserves where the reticle is actually pointing instead of
+	# snapping to a hard-coded 8 m point in front of the character.
+	if direction.y < -0.001:
+		var ground_y: float = source_actor.global_position.y
+		var plane_distance: float = (ground_y - ray_origin.y) / direction.y
+		if plane_distance > 0.0:
+			var plane_point: Vector3 = ray_origin + direction * plane_distance
+			return _probe_ground(_clamp_to_cast_range(plane_point))
 
 	var planar: Vector3 = direction
 	planar.y = 0.0
@@ -104,7 +125,20 @@ func _resolve_target_position(cast_direction: Vector3) -> Vector3:
 		planar = -source_actor.global_transform.basis.z
 		planar.y = 0.0
 	planar = planar.normalized() if planar.length_squared() > 0.0001 else Vector3.FORWARD
-	return _probe_ground(source_actor.global_position + planar * fallback_distance)
+	return _probe_ground(
+		source_actor.global_position + planar * minf(fallback_distance, maximum_range)
+	)
+
+
+func _clamp_to_cast_range(position: Vector3) -> Vector3:
+	var origin: Vector3 = source_actor.global_position
+	var flat_offset: Vector3 = position - origin
+	flat_offset.y = 0.0
+	if flat_offset.length() <= maximum_range:
+		return position
+	var clamped: Vector3 = origin + flat_offset.normalized() * maximum_range
+	clamped.y = position.y
+	return clamped
 
 
 func _probe_ground(near_position: Vector3) -> Vector3:
@@ -123,7 +157,7 @@ func _probe_ground(near_position: Vector3) -> Vector3:
 	var hit: Dictionary = world.direct_space_state.intersect_ray(query)
 	if hit.is_empty():
 		var fallback: Vector3 = near_position
-		fallback.y = source_actor.global_position.y - 0.92
+		fallback.y = source_actor.global_position.y
 		return fallback
 	var position_value: Vector3 = hit.get("position", near_position) as Vector3
 	var normal_value: Vector3 = hit.get("normal", Vector3.UP) as Vector3

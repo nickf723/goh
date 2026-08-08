@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/actions/life_vine_grapple.gd" id="1_vine"]
+[ext_resource type="Script" path="res://scripts/actions/life_vine_grapple_targeted.gd" id="1_vine"]
 
 [node name="LifeVineGrapple" type="Node3D"]
 script = ExtResource("1_vine")

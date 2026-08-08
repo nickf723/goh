@@ -16,6 +16,7 @@ var observed_player_cast_count: int = 0
 var last_replayed_spell_id: String = "none"
 var last_suppressed_spell_id: String = "none"
 var last_suppression_reason: String = "none"
+var last_cast_metadata: Dictionary = {}
 
 
 func bind_repeat(
@@ -137,6 +138,8 @@ func _schedule_spell_replays(
 	elif ability.get_action_payload() != null:
 		payload_override = ability.get_action_payload().duplicate(true)
 
+	var cast_metadata: Dictionary = _capture_cast_metadata(ability, payload_override)
+	last_cast_metadata = cast_metadata.duplicate(true)
 	var origin_offset: Vector3 = cast_origin - source_actor.global_position
 	for echo_index: int in range(echoes.size()):
 		var echo: RepeatEchoActor = echoes[echo_index]
@@ -151,7 +154,27 @@ func _schedule_spell_replays(
 			"origin_offset": origin_offset,
 			"spawn_distance": spawn_distance,
 			"payload": payload_override.duplicate(true) if payload_override != null else null,
+			"cast_metadata": cast_metadata.duplicate(true),
 		})
+
+
+func _capture_cast_metadata(
+	ability: AbilityDefinition,
+	payload_override: Resource
+) -> Dictionary:
+	var metadata: Dictionary = {}
+	if ability == null:
+		return metadata
+	match ability.get_spell_id():
+		"curling_puck":
+			var left_strength: float = Input.get_action_strength("move_left")
+			var right_strength: float = Input.get_action_strength("move_right")
+			metadata["curl_sign"] = -1.0 if left_strength > right_strength + 0.12 else 1.0
+	if payload_override is DamagePayload:
+		var payload: DamagePayload = payload_override as DamagePayload
+		if payload.tags.has("charged"):
+			metadata["charged"] = true
+	return metadata
 
 
 func _process_spell_events() -> void:
@@ -179,6 +202,12 @@ func _replay_spell_event(event: Dictionary) -> void:
 	var ability: AbilityDefinition = ability_value as AbilityDefinition
 	var payload_value: Variant = event.get("payload")
 	var payload: Resource = payload_value as Resource if payload_value is Resource else null
+	var metadata_value: Variant = event.get("cast_metadata", {})
+	var cast_metadata: Dictionary = (
+		(metadata_value as Dictionary).duplicate(true)
+		if metadata_value is Dictionary
+		else {}
+	)
 	var replayed: Node = CloneReplay.replay_cast(
 		get_tree(),
 		echo,
@@ -187,8 +216,9 @@ func _replay_spell_event(event: Dictionary) -> void:
 		event.get("origin_offset", Vector3.UP) as Vector3,
 		float(event.get("spawn_distance", 1.0)),
 		payload,
-		0.0,
-		"repeat"
+		1.0 if bool(cast_metadata.get("charged", false)) else 0.0,
+		"repeat",
+		cast_metadata
 	)
 	if replayed == null:
 		return
@@ -206,5 +236,6 @@ func get_debug_data() -> Dictionary:
 	data["last_replayed_spell"] = last_replayed_spell_id
 	data["last_suppressed_spell"] = last_suppressed_spell_id
 	data["last_suppression_reason"] = last_suppression_reason
+	data["last_cast_metadata"] = last_cast_metadata.duplicate(true)
 	data["policy_shared_with_future_soul_duplicates"] = true
 	return data

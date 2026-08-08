@@ -46,7 +46,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/duplicate_spell_smoke_test_ready.tscn 2>&1 | tee duplicate-base.log
+          godot --headless --path . res://scenes/tests/duplicate_spell_smoke_test.tscn 2>&1 | tee duplicate-base.log
 
       - name: Run Duplicate trial regression
         shell: bash

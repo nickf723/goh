@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://j44g36yeu58k"]
+[gd_scene load_steps=7 format=3 uid="uid://j44g36yeu58k"]
 
-[ext_resource type="Script" path="res://scripts/ui/game_ui_unified.gd" id="1_dcmab"]
+[ext_resource type="Script" path="res://scripts/ui/game_ui_compact_focus_resolved.gd" id="1_dcmab"]
 [ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator_installer.gd" id="2_lab"]
 [ext_resource type="Script" path="res://scripts/performance/runtime_performance_monitor.gd" id="3_perf"]
+[ext_resource type="Script" path="res://scripts/ui/vine_grapple_marker_arbiter.gd" id="4_vine_arbiter"]
 
 [sub_resource type="StyleBoxFlat" id="MessageStyle"]
 bg_color = Color(0.02, 0.025, 0.04, 0.86)
@@ -41,6 +42,9 @@ script = ExtResource("1_dcmab")
 
 [node name="LabResourceRegeneratorInstaller" type="Node" parent="."]
 script = ExtResource("2_lab")
+
+[node name="VineGrappleMarkerArbiter" type="Node" parent="."]
+script = ExtResource("4_vine_arbiter")
 
 [node name="RuntimePerformanceMonitor" type="Control" parent="."]
 layout_mode = 3

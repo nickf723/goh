@@ -171,7 +171,10 @@ func _build_visual() -> void:
 	grace_visual = GraceVisualScene.instantiate() as Node3D
 	if grace_visual != null:
 		grace_visual.name = "IllusionGraceVisual"
-		grace_visual.position = Vector3(0.0, -0.92, 0.0)
+		# GraceVisualV1 is authored with its feet at local y ~= 0, so the decoy
+		# root itself should sit on the sampled surface. The old -0.92 offset
+		# buried roughly half the apparition below the floor.
+		grace_visual.position = Vector3.ZERO
 		add_child(grace_visual)
 		grace_visual.set_process(false)
 		grace_visual.set_physics_process(false)

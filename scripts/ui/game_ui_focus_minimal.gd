@@ -34,7 +34,7 @@ func _apply_minimal_focus_layout() -> void:
 			label.visible = false
 
 	focus_spell_panel.offset_left = -322.0
-	focus_spell_panel.offset_top = -286.0
+	focus_spell_panel.offset_top = -306.0
 	focus_spell_panel.offset_right = 322.0
 	focus_spell_panel.offset_bottom = -112.0
 	focus_spell_panel.add_theme_stylebox_override(
@@ -55,7 +55,7 @@ func _apply_minimal_focus_layout() -> void:
 		outer_margin.add_theme_constant_override("margin_bottom", 2)
 
 	if compact_focus_element_panel != null:
-		compact_focus_element_panel.custom_minimum_size = Vector2(236.0, 154.0)
+		compact_focus_element_panel.custom_minimum_size = Vector2(236.0, 184.0)
 		compact_focus_element_panel.add_theme_stylebox_override(
 			"panel",
 			make_panel_style(
@@ -67,7 +67,7 @@ func _apply_minimal_focus_layout() -> void:
 		)
 
 	if compact_focus_detail_panel != null:
-		compact_focus_detail_panel.custom_minimum_size = Vector2(396.0, 154.0)
+		compact_focus_detail_panel.custom_minimum_size = Vector2(396.0, 184.0)
 		compact_focus_detail_panel.add_theme_stylebox_override(
 			"panel",
 			make_panel_style(
@@ -79,7 +79,7 @@ func _apply_minimal_focus_layout() -> void:
 		)
 
 	if focus_spell_scroll != null:
-		focus_spell_scroll.custom_minimum_size = Vector2(0.0, 146.0)
+		focus_spell_scroll.custom_minimum_size = Vector2(0.0, 172.0)
 
 
 func get_minimal_focus_debug_data() -> Dictionary:

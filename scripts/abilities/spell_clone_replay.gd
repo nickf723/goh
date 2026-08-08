@@ -15,7 +15,8 @@ static func replay_cast(
 	cast_spawn_distance: float,
 	payload_override: Resource = null,
 	power_ratio: float = 0.0,
-	clone_kind: String = "repeat"
+	clone_kind: String = "repeat",
+	cast_metadata: Dictionary = {}
 ) -> Node:
 	if (
 		tree == null
@@ -37,11 +38,19 @@ static func replay_cast(
 	instance.set_meta("clone_spell_id", ability.get_spell_id())
 	instance.set_meta("clone_copies_original_result", false)
 	instance.set_meta("clone_fresh_world_interaction", true)
+	instance.set_meta("clone_cast_metadata", cast_metadata.duplicate(true))
+
+	# Cast-specific intent lives briefly on the source proxy so an authored spell
+	# can consume it through its normal execute path. This is intent, not outcome:
+	# curl direction, charge choice, etc. Never target IDs or previous hit results.
+	for key_value: Variant in cast_metadata.keys():
+		var key: String = str(key_value)
+		source_proxy.set_meta("clone_cast_" + key, cast_metadata[key_value])
 
 	var payload: Resource = payload_override
 	if payload == null:
 		payload = ability.get_action_payload()
-	if payload != null and payload.has_method("duplicate"):
+	if payload != null:
 		payload = payload.duplicate(true)
 	if payload != null and instance.has_method("set_payload"):
 		instance.call("set_payload", payload)
@@ -64,6 +73,7 @@ static func replay_cast(
 
 	if instance.has_method("execute"):
 		instance.call("execute", source_proxy, direction)
+		_clear_cast_metadata(source_proxy, cast_metadata)
 		return instance
 
 	if instance is Node3D:
@@ -78,4 +88,17 @@ static func replay_cast(
 			node_3d.scale *= scale_bonus
 	if instance.has_method("launch"):
 		instance.call("launch", direction)
+	_clear_cast_metadata(source_proxy, cast_metadata)
 	return instance
+
+
+static func _clear_cast_metadata(
+	source_proxy: Node3D,
+	cast_metadata: Dictionary
+) -> void:
+	if source_proxy == null or not is_instance_valid(source_proxy):
+		return
+	for key_value: Variant in cast_metadata.keys():
+		var meta_key: String = "clone_cast_" + str(key_value)
+		if source_proxy.has_meta(meta_key):
+			source_proxy.remove_meta(meta_key)

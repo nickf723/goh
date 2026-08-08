@@ -12,12 +12,17 @@ on:
       - "scripts/input/player_control_router_focus_grid.gd"
       - "scripts/life/plant_summon_definition.gd"
       - "scripts/life/plant_summon_catalog.gd"
+      - "scripts/life/prepared_plant_loadout.gd"
+      - "scripts/ui/full_menu_shell_plants.gd"
+      - "scripts/ui/full_menu_shell_settings.gd"
       - "scripts/ui/game_ui_focus_minimal.gd"
       - "scripts/tests/sprout_smoke_test.gd"
+      - "scripts/tests/plant_preparation_smoke_test.gd"
       - "scripts/tests/compact_focus_menu_smoke_test.gd"
       - "scripts/tests/ground_target_focus_ui_smoke_test.gd"
       - "scenes/actions/life_sprout_platform.tscn"
       - "scenes/tests/sprout_smoke_test.tscn"
+      - "scenes/tests/plant_preparation_smoke_test.tscn"
       - "data/abilities/sprout_ability.tres"
       - "data/plants/broadleaf_sprout.tres"
       - "data/loadouts/grace_starting_loadout.tres"
@@ -33,7 +38,7 @@ concurrency:
 
 jobs:
   validate-plant-summoning:
-    name: Import, aimed plants, Focus confirm/back, and library
+    name: Import, prepared plants, aimed casting, Focus, and library
     runs-on: ubuntu-latest
     timeout-minutes: 18
 
@@ -53,7 +58,13 @@ jobs:
           set -o pipefail
           godot --headless --path . --editor --quit 2>&1 | tee plant-import.log
 
-      - name: Run Plant Summon and Sprout regression
+      - name: Run prepared plant blueprint regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/plant_preparation_smoke_test.tscn 2>&1 | tee plant-preparation-test.log
+
+      - name: Run Plant Summon actor regression
         shell: bash
         run: |
           set -o pipefail
@@ -84,6 +95,7 @@ jobs:
           name: life-plant-summoning-logs
           path: |
             plant-import.log
+            plant-preparation-test.log
             sprout-test.log
             focus-grid-test.log
             ground-target-test.log

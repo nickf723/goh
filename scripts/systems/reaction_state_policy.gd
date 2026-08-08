@@ -25,6 +25,7 @@ const STATUS_ELEMENTS: Dictionary = {
 	"electrified": "lightning",
 	"conductive": "lightning",
 	"leaf_pelted": "life",
+	"rooted": "life",
 	"oily": "neutral",
 	"obscured": "neutral",
 	"revealed": "sound",

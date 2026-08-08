@@ -10,6 +10,8 @@ on:
       - "scripts/player/vine_grapple_targeting.gd"
       - "scripts/player/vine_grapple_target_preview.gd"
       - "scripts/ui/game_ui_compact_focus.gd"
+      - "scripts/ui/game_ui_compact_focus_resolved.gd"
+      - "scripts/ui/vine_grapple_marker_arbiter.gd"
       - "scripts/levels/prototype_vine_grapple_spell_trial.gd"
       - "scripts/tests/life_vine_grapple_smoke_test.gd"
       - "scripts/tests/vine_grapple_targeting_smoke_test.gd"

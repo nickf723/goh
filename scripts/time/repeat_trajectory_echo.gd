@@ -40,6 +40,8 @@ func configure(
 	name = "RepeatTrajectory_" + (
 		ability.get_spell_id() if ability != null else "spell"
 	)
+	set_meta("clone_spell_replay", true)
+	set_meta("repeat_memory_root", true)
 	add_to_group("repeat_trajectory_echoes")
 	add_to_group("clone_spell_replays")
 	add_to_group("repeat_spell_replays")
@@ -75,12 +77,26 @@ func _build_visual_shell() -> void:
 	if visual_shell == null:
 		return
 	visual_shell.name = "RememberedSpellVisual"
+	# This metadata must exist before the shell enters the SceneTree. Otherwise
+	# Repeat's node-added observer sees the original scene path and mistakes its
+	# own visual memory for another player cast, recursively creating memories.
+	_tag_clone_subtree(visual_shell)
 	_neutralize_recursive(visual_shell)
 	var tint: Node = EchoTintScript.new()
 	tint.name = "RepeatTimelineTint"
 	visual_shell.add_child(tint)
 	add_child(visual_shell)
 	hit_radius = maxf(_infer_collision_radius(visual_shell), default_hit_radius)
+
+
+func _tag_clone_subtree(node: Node) -> void:
+	if node == null:
+		return
+	node.set_meta("clone_spell_replay", true)
+	node.set_meta("clone_spell_kind", "repeat")
+	node.set_meta("repeat_memory_visual", true)
+	for child: Node in node.get_children():
+		_tag_clone_subtree(child)
 
 
 func _neutralize_recursive(node: Node) -> void:
@@ -91,6 +107,12 @@ func _neutralize_recursive(node: Node) -> void:
 	node.set_physics_process(false)
 	node.set_process_input(false)
 	node.set_process_unhandled_input(false)
+	if node is RigidBody3D:
+		var rigid := node as RigidBody3D
+		rigid.freeze = true
+		rigid.sleeping = true
+		rigid.linear_velocity = Vector3.ZERO
+		rigid.angular_velocity = Vector3.ZERO
 	if node is CollisionObject3D:
 		var collision_object := node as CollisionObject3D
 		collision_object.collision_layer = 0
@@ -233,5 +255,9 @@ func get_debug_data() -> Dictionary:
 		"hit_radius": hit_radius,
 		"path_is_timeline_authoritative": true,
 		"collisions_cannot_redirect_replay": true,
+		"visual_shell_clone_tagged": (
+			visual_shell != null
+			and bool(visual_shell.get_meta("clone_spell_replay", false))
+		),
 		"finished": replay_finished,
 	}

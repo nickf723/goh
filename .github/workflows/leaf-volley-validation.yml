@@ -9,9 +9,15 @@ on:
       - "scripts/actions/life_leaf_volley.gd"
       - "scripts/combat/status_receiver.gd"
       - "scripts/systems/reaction_state_policy.gd"
+      - "scripts/abilities/ability_caster_focus_grid.gd"
+      - "scripts/abilities/ability_caster_focus_library.gd"
+      - "scripts/input/player_control_router_focus_grid.gd"
+      - "scripts/ui/focus_grid_layout.gd"
+      - "scripts/ui/game_ui_focus_grid.gd"
       - "scripts/ui/game_ui_focus_minimal.gd"
       - "scripts/tests/leaf_volley_smoke_test.gd"
       - "scripts/tests/compact_focus_menu_smoke_test.gd"
+      - "scripts/tests/ground_target_focus_ui_smoke_test.gd"
       - "scenes/actions/life_leaf_projectile.tscn"
       - "scenes/actions/life_leaf_volley.tscn"
       - "scenes/tests/leaf_volley_smoke_test.tscn"
@@ -31,7 +37,7 @@ concurrency:
 
 jobs:
   validate-leaf-volley:
-    name: Import, leaf harassment, minimal Focus, and library
+    name: Import, leaf safety, Focus grids, and library
     runs-on: ubuntu-latest
     timeout-minutes: 18
 
@@ -57,11 +63,17 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/leaf_volley_smoke_test.tscn 2>&1 | tee leaf-volley-test.log
 
-      - name: Run minimal Focus regression
+      - name: Run two-state Focus regression
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/compact_focus_menu_smoke_test.tscn 2>&1 | tee minimal-focus-test.log
+          godot --headless --path . res://scenes/tests/compact_focus_menu_smoke_test.tscn 2>&1 | tee focus-grid-test.log
+
+      - name: Run ground-target ownership regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/ground_target_focus_ui_smoke_test.tscn 2>&1 | tee ground-target-focus-test.log
 
       - name: Run complete Focus library regression
         shell: bash
@@ -77,6 +89,7 @@ jobs:
           path: |
             leaf-import.log
             leaf-volley-test.log
-            minimal-focus-test.log
+            focus-grid-test.log
+            ground-target-focus-test.log
             complete-library-test.log
           if-no-files-found: ignore

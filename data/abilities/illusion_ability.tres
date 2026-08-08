@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/illusion_cast.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Illusion"
+description = "Project a false Grace onto a chosen point. Creatures can see, remember, investigate, flee from, or attack the phantom, but it has no physical or combat authority."
+element = "dreams"
+category = 4
+mana_cost = 2
+use_trait_profile = false
+spell_id = "illusion"
+short_label = "Illusion"
+icon_text = "◌?"
+roles = Array[String](["perception", "decoy", "control", "misdirection", "setup", "stealth", "persistent"])
+targeting_style = "ground_targeted"
+delivery_type = "perception_decoy"
+combo_tags = Array[String](["dreams", "illusion", "decoy", "lure", "misdirection", "hazard_setup", "perception", "false_actor"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["ground target", "8s decoy", "nonphysical", "enemy attention"])
+debug_tags = Array[String](["perception_target", "zero_authenticity", "no_combat_authority", "one_per_source"])
+scaling_stats = Array[String](["intelligence", "dreams", "focus"])
+scaling_note = "Future upgrades can increase duration, perceived salience, placement range, behavior complexity, and the number of simultaneous phantoms."
+design_notes = "Illusion separates perceived presence from physical presence and combat authority. Recasting replaces the caster's existing phantom. Repeat reenacts placement later; Duplicate creates an independent simultaneous phantom from Soul Grace."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

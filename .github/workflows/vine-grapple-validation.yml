@@ -6,11 +6,20 @@ on:
       - main
     paths:
       - "scripts/actions/life_vine_grapple.gd"
+      - "scripts/actions/life_vine_grapple_targeted.gd"
+      - "scripts/player/vine_grapple_targeting.gd"
+      - "scripts/player/vine_grapple_target_preview.gd"
+      - "scripts/ui/game_ui_compact_focus.gd"
       - "scripts/levels/prototype_vine_grapple_spell_trial.gd"
       - "scripts/tests/life_vine_grapple_smoke_test.gd"
+      - "scripts/tests/vine_grapple_targeting_smoke_test.gd"
+      - "scripts/tests/compact_focus_menu_smoke_test.gd"
       - "scenes/actions/life_vine_grapple.tscn"
+      - "scenes/ui/game_ui.tscn"
       - "scenes/levels/prototypes/prototype_vine_grapple_spell_trial_v1.tscn"
       - "scenes/tests/life_vine_grapple_smoke_test.tscn"
+      - "scenes/tests/vine_grapple_targeting_smoke_test.tscn"
+      - "scenes/tests/compact_focus_menu_smoke_test.tscn"
       - "data/abilities/life_vine_grapple_ability.tres"
       - "data/flexible_materials/life_vine_grapple.tres"
       - "data/loadouts/grace_starting_loadout.tres"
@@ -26,7 +35,7 @@ concurrency:
 
 jobs:
   validate-vine-grapple:
-    name: Import, Vine Grapple pull contract, trial boot, and Focus library
+    name: Import, target clarity, compact Focus, and pull contract
     runs-on: ubuntu-latest
     timeout-minutes: 18
 
@@ -52,11 +61,29 @@ jobs:
           set -o pipefail
           godot --headless --path . --quit-after 5 res://scenes/levels/prototypes/prototype_vine_grapple_spell_trial_v1.tscn 2>&1 | tee vine-trial-boot.log
 
-      - name: Run Vine Grapple regression
+      - name: Run Vine Grapple pull regression
         shell: bash
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/life_vine_grapple_smoke_test.tscn 2>&1 | tee vine-test.log
+
+      - name: Run Vine Grapple targeting regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/vine_grapple_targeting_smoke_test.tscn 2>&1 | tee vine-targeting-test.log
+
+      - name: Run compact Focus regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/compact_focus_menu_smoke_test.tscn 2>&1 | tee compact-focus-test.log
+
+      - name: Run ground-target Focus ownership regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/ground_target_focus_ui_smoke_test.tscn 2>&1 | tee ground-target-focus-test.log
 
       - name: Run complete Focus library regression
         shell: bash
@@ -73,5 +100,8 @@ jobs:
             vine-import.log
             vine-trial-boot.log
             vine-test.log
+            vine-targeting-test.log
+            compact-focus-test.log
+            ground-target-focus-test.log
             complete-library-test.log
           if-no-files-found: ignore

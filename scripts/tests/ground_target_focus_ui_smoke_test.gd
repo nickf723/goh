@@ -37,7 +37,7 @@ func run_tests() -> void:
 	_expect(ability_caster != null, "Ability caster remains available")
 	_expect(router != null, "Unified controller router remains available")
 	_expect(dock != null, "Optimized command dock installs")
-	_expect(game_ui.has_method("get_focus_presentation_debug_data"), "Upgraded Focus UI installs")
+	_expect(game_ui.has_method("get_focus_presentation_debug_data"), "Grid Focus UI installs")
 	if ability_caster == null or router == null or dock == null:
 		_finish(player, floor, game_ui)
 		return
@@ -75,7 +75,7 @@ func run_tests() -> void:
 	)
 	_expect(
 		focus_panel != null and not focus_panel.visible,
-		"AoE targeting keeps the Focus library hidden"
+		"AoE targeting keeps the Focus grid hidden"
 	)
 	var router_mode: Dictionary = router.call("get_input_mode_debug_data") as Dictionary
 	_expect(
@@ -92,7 +92,7 @@ func run_tests() -> void:
 	_expect(
 		int(ability_caster.get("focus_element_index")) == element_before
 		and int(ability_caster.get("focus_spell_index")) == spell_before,
-		"Right-stick aiming cannot navigate the Focus library"
+		"Right-stick aiming cannot navigate Focus during AoE targeting"
 	)
 	_expect(
 		bool(router.call("handle_focus_action", true)),
@@ -100,7 +100,7 @@ func run_tests() -> void:
 	)
 	_expect(
 		focus_panel != null and not focus_panel.visible,
-		"Focus bumper cannot reopen the library during AoE aiming"
+		"Focus bumper cannot reopen the grid during AoE aiming"
 	)
 
 	ability_caster.call("cancel_ground_targeting", false)
@@ -115,19 +115,20 @@ func run_tests() -> void:
 	await get_tree().process_frame
 	_expect(
 		focus_panel != null and focus_panel.visible,
-		"Focus library becomes visible in library mode"
+		"Focus grid becomes visible after targeting ends"
 	)
 
 	var focus_debug: Dictionary = game_ui.call(
 		"get_focus_presentation_debug_data"
 	) as Dictionary
-	_expect(bool(focus_debug.get("upgraded", false)), "Focus uses the upgraded presentation")
+	_expect(bool(focus_debug.get("upgraded", false)), "Focus uses the grid presentation")
+	_expect(bool(focus_debug.get("two_state_grid", false)), "Focus reports its two-state grid contract")
 	_expect(int(focus_debug.get("cached_elements", 0)) == 16, "Focus caches all sixteen elements")
 	var element_grid_value: Variant = game_ui.get("focus_spell_element_grid")
 	_expect(
 		element_grid_value is GridContainer
-		and (element_grid_value as GridContainer).columns == 5,
-		"Element families form four readable labeled rows"
+		and (element_grid_value as GridContainer).columns == 4,
+		"Focus uses the unlabeled 4x4 element grid"
 	)
 
 	var menu_data: Dictionary = ability_caster.call("get_focus_menu_data") as Dictionary
@@ -137,14 +138,14 @@ func run_tests() -> void:
 	focus_debug = game_ui.call("get_focus_presentation_debug_data") as Dictionary
 	_expect(
 		int(focus_debug.get("structure_rebuilds", 0)) == rebuilds_before,
-		"Repeated Focus refreshes reuse cached controls"
+		"Repeated Focus refreshes keep the fixed grid structure"
 	)
 
 	var dock_script: Script = dock.get_script() as Script
 	_expect(
 		dock_script != null
-		and dock_script.resource_path == "res://scripts/ui/quick_spell_belt_performance.gd",
-		"Permanent command dock uses the optimized coordinator"
+		and dock_script.resource_path == "res://scripts/ui/quick_spell_belt_unified.gd",
+		"Permanent command dock uses the unified optimized coordinator"
 	)
 	var dock_before: Dictionary = dock.call("get_debug_data") as Dictionary
 	for _frame: int in range(120):

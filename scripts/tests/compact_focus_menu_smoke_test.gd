@@ -42,12 +42,13 @@ func run_tests() -> void:
 		return
 
 	_expect(
-		bool(caster.call("select_focus_spell_by_id", "root_bind")),
-		"test can align Focus to the fourth Life spell"
+		bool(caster.call("select_focus_spell_by_id", "sprout")),
+		"test can align Focus to the fifth Life spell"
 	)
 	caster.call("open_focus_spell_menu")
-	for _frame: int in range(3):
-		await get_tree().process_frame
+	# Intentionally inspect the first visible render before any navigation. This
+	# catches the old bug where the large inherited border survived until D-pad.
+	await get_tree().process_frame
 
 	var element_page: Dictionary = game_ui.call("get_focus_grid_debug_data") as Dictionary
 	_expect(bool(element_page.get("two_state", false)), "Focus reports the two-state grid contract")
@@ -56,14 +57,24 @@ func run_tests() -> void:
 	_expect(int(element_page.get("element_count", 0)) == 16, "element screen contains all sixteen elements")
 	_expect(int(element_page.get("family_labels", -1)) == 0, "NAT/PRI/VIT/MYS labels stay removed")
 	_expect(bool(element_page.get("fixed_panel", false)), "Focus renderer has one fixed physical panel")
-	var panel_width: float = float(element_page.get("panel_width", 0.0))
-	var panel_height: float = float(element_page.get("panel_height", 0.0))
 
 	var compact: Dictionary = game_ui.call("get_compact_focus_grid_debug_data") as Dictionary
 	_expect(float(compact.get("compact_width", 9999.0)) <= 320.0, "Focus panel shrink-wraps the useful controls")
 	_expect(float(compact.get("compact_height", 9999.0)) <= 195.0, "Focus panel no longer reserves dashboard height")
 	_expect(str(compact.get("lightning_label", "")) == "Lightning", "Lightning is no longer abbreviated as Bolt")
 	_expect(bool(compact.get("spell_labels_visible", false)), "spell cells explicitly keep their names visible")
+	_expect(bool(compact.get("compact_applied_before_show", false)), "compact geometry owns the first visible Focus frame")
+
+	var panel_value: Variant = game_ui.get("focus_spell_panel")
+	var panel: PanelContainer = panel_value as PanelContainer if panel_value is PanelContainer else null
+	_expect(panel != null, "Focus panel exists on first render")
+	var panel_width: float = 0.0
+	var panel_height: float = 0.0
+	if panel != null:
+		panel_width = panel.offset_right - panel.offset_left
+		panel_height = panel.offset_bottom - panel.offset_top
+		_expect(panel_width <= 320.0, "first element render never uses the large inherited border")
+		_expect(panel_height <= 195.0, "first element render never uses the tall inherited border")
 
 	var start_element_index: int = int(caster.get("focus_element_index"))
 	var right_event := InputEventJoypadButton.new()
@@ -81,34 +92,54 @@ func run_tests() -> void:
 	router.call("_handle_focus_dpad", left_event)
 
 	caster.call("enter_focus_spell_grid")
-	for _frame: int in range(3):
+	for _frame: int in range(2):
 		await get_tree().process_frame
 	var spell_page: Dictionary = game_ui.call("get_focus_grid_debug_data") as Dictionary
 	_expect(str(spell_page.get("page", "")) == "spells", "confirming an element swaps to the spell screen")
 	_expect(int(spell_page.get("spell_columns", 0)) == 3, "spell screen is a 3x3 grid")
 	_expect(int(spell_page.get("spell_center_slot", -1)) == 4, "chosen element owns the center cell")
-	_expect(int(spell_page.get("spell_count", 0)) == 4, "Life exposes four learned spells")
+	_expect(int(spell_page.get("spell_count", 0)) == 5, "Life exposes five learned spells including Sprout")
 	_expect(
-		spell_page.get("spell_slots", []) == FocusGridLayoutScript.get_spell_slots(4),
-		"four Life spells occupy the shared cardinal ring layout"
+		spell_page.get("spell_slots", []) == FocusGridLayoutScript.get_spell_slots(5),
+		"five Life spells use the shared ring layout"
 	)
-	_expect(absf(float(spell_page.get("panel_width", 0.0)) - panel_width) < 0.01, "element and spell screens keep identical width")
-	_expect(absf(float(spell_page.get("panel_height", 0.0)) - panel_height) < 0.01, "element and spell screens keep identical height")
+	if panel != null:
+		_expect(absf((panel.offset_right - panel.offset_left) - panel_width) < 0.01, "element and spell screens keep identical width")
+		_expect(absf((panel.offset_bottom - panel.offset_top) - panel_height) < 0.01, "element and spell screens keep identical height")
 
 	var labels_value: Variant = game_ui.get("focus_spell_labels")
 	if labels_value is Array:
 		var labels: Array = labels_value as Array
-		_expect(labels.size() == 4, "all four Life spell cells own text labels")
+		_expect(labels.size() == 5, "all five Life spell cells own text labels")
 		for label_value: Variant in labels:
 			_expect(label_value is Label and str((label_value as Label).text).strip_edges() != "", "spell label text is nonempty")
 	else:
 		_expect(false, "spell label cache is available")
 
-	caster.call("return_to_focus_element_grid")
+	# B is now owned directly by the Focus router, so controller navigation does
+	# not depend on ui_cancel being routed through Player._unhandled_input.
+	var back_event := InputEventJoypadButton.new()
+	back_event.button_index = JOY_BUTTON_B
+	back_event.pressed = true
+	_expect(
+		bool(router.call("_handle_focus_grid_action_button", back_event)),
+		"B is consumed as a Focus back command"
+	)
 	await get_tree().process_frame
 	var returned_page: Dictionary = game_ui.call("get_focus_grid_debug_data") as Dictionary
-	_expect(str(returned_page.get("page", "")) == "elements", "back returns to the same 4x4 element screen")
-	_expect(absf(float(returned_page.get("panel_width", 0.0)) - panel_width) < 0.01, "returning never resizes Focus")
+	_expect(str(returned_page.get("page", "")) == "elements", "B returns from spells to the 4x4 element screen")
+
+	# A enters again, proving A/B form a complete two-state controller grammar.
+	var accept_event := InputEventJoypadButton.new()
+	accept_event.button_index = JOY_BUTTON_A
+	accept_event.pressed = true
+	_expect(bool(router.call("_handle_focus_grid_action_button", accept_event)), "A is consumed as Focus confirm")
+	await get_tree().process_frame
+	_expect(bool(caster.call("is_focus_spell_grid_active")), "A enters the selected element spell grid")
+	back_event.pressed = true
+	router.call("_handle_focus_grid_action_button", back_event)
+	await get_tree().process_frame
+	_expect(not bool(caster.call("is_focus_spell_grid_active")), "B can back out repeatedly without trapping the player")
 
 	var router_script: Script = router.get_script() as Script
 	_expect(

@@ -14,7 +14,7 @@ const DUPLICATE_WORLD_STATE: String = "world_state_noop"
 const DUPLICATE_SUPPRESS: String = "suppress"
 
 # Repeat is a recording. Soul duplication is another actor doing the action now.
-# Never collapse these into one "clone-safe" boolean again.
+# Never collapse these into one generic "clone-safe" boolean.
 
 const TRAJECTORY_REPEAT_IDS: Array[String] = [
 	"arcane_spark",
@@ -44,7 +44,6 @@ const SOURCE_STATE_REPEAT_IDS: Array[String] = [
 	"grow",
 	"shrink",
 	"bubble",
-	"asteroid_belt",
 ]
 
 const WORLD_STATE_NOOP_IDS: Array[String] = [
@@ -78,6 +77,7 @@ const EXPLICIT_RECAST_IDS: Array[String] = [
 	"echolocation",
 	"resonant_pulse",
 	"gust",
+	"asteroid_belt",
 ]
 
 
@@ -113,10 +113,11 @@ static func get_duplicate_mode(ability: AbilityDefinition) -> String:
 		return DUPLICATE_SUPPRESS
 	if spell_id in WORLD_STATE_NOOP_IDS:
 		return DUPLICATE_WORLD_STATE
-	# Body/transformation/traversal/defense effects belong to the duplicate actor
-	# and therefore should happen live on that actor rather than being suppressed.
 	if spell_id in SOURCE_STATE_REPEAT_IDS:
 		return DUPLICATE_SOURCE_STATE
+	# Asteroid Belt, beams, Firewall, projectiles, bursts, and fields run as live
+	# second simulations for a Soul duplicate. Only ownership/world-state effects
+	# need special handling.
 	return DUPLICATE_LIVE
 
 
@@ -127,5 +128,6 @@ static func describe(ability: AbilityDefinition) -> Dictionary:
 		"duplicate_mode": get_duplicate_mode(ability),
 		"repeat_copies_world_result": false,
 		"repeat_copies_motion_timeline": true,
+		"repeat_new_targets_can_intersect_memory": true,
 		"duplicate_runs_live_simulation": true,
 	}

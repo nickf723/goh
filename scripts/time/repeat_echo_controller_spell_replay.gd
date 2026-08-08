@@ -1,17 +1,25 @@
 extends "res://scripts/time/repeat_echo_controller.gd"
 class_name RepeatEchoControllerSpellReplay
 
-const ClonePolicy = preload(
-	"res://scripts/abilities/spell_clone_replay_policy.gd"
+const CloneSemantics = preload(
+	"res://scripts/abilities/spell_clone_semantics.gd"
 )
 const CloneReplay = preload(
 	"res://scripts/abilities/spell_clone_replay.gd"
 )
+const TrajectoryEchoScript = preload(
+	"res://scripts/time/repeat_trajectory_echo.gd"
+)
 
 var ability_caster: Node = null
 var pending_spell_events: Array[Dictionary] = []
+var trajectory_records: Array[Dictionary] = []
 var replayed_spell_count: int = 0
+var replayed_trajectory_count: int = 0
 var suppressed_spell_count: int = 0
+var world_state_noop_count: int = 0
+var source_state_replay_count: int = 0
+var channel_timeline_count: int = 0
 var observed_player_cast_count: int = 0
 var last_replayed_spell_id: String = "none"
 var last_suppressed_spell_id: String = "none"
@@ -43,6 +51,7 @@ func _exit_tree() -> void:
 		if tree.node_added.is_connected(callback):
 			tree.node_added.disconnect(callback)
 	pending_spell_events.clear()
+	_clear_trajectory_records()
 	super._exit_tree()
 
 
@@ -50,6 +59,7 @@ func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
 	if is_queued_for_deletion():
 		return
+	_advance_trajectory_records(maxf(delta, 0.0))
 	_process_spell_events()
 
 
@@ -72,13 +82,26 @@ func _on_scene_node_added(node: Node) -> void:
 		return
 
 	observed_player_cast_count += 1
-	var policy: Dictionary = ClonePolicy.get_policy(ability)
-	if str(policy.get("mode", "suppress")) != ClonePolicy.MODE_REPLAY:
-		suppressed_spell_count += 1
-		last_suppressed_spell_id = ability.get_spell_id()
-		last_suppression_reason = str(policy.get("reason", "suppressed"))
-		return
-	_schedule_spell_replays(node, ability)
+	var mode: String = CloneSemantics.get_repeat_mode(ability)
+	match mode:
+		CloneSemantics.REPEAT_TRAJECTORY:
+			_begin_trajectory_record(node, ability)
+		CloneSemantics.REPEAT_RECAST:
+			_schedule_spell_replays(node, ability)
+		CloneSemantics.REPEAT_SOURCE_STATE:
+			source_state_replay_count += 1
+			last_replayed_spell_id = ability.get_spell_id()
+		CloneSemantics.REPEAT_CHANNEL:
+			channel_timeline_count += 1
+			last_replayed_spell_id = ability.get_spell_id()
+		CloneSemantics.REPEAT_WORLD_STATE:
+			world_state_noop_count += 1
+			last_suppressed_spell_id = ability.get_spell_id()
+			last_suppression_reason = "world state already exists; Repeat intentionally does nothing"
+		_:
+			suppressed_spell_count += 1
+			last_suppressed_spell_id = ability.get_spell_id()
+			last_suppression_reason = "ownership spell is not duplicated by Repeat"
 
 
 func _get_current_player_ability() -> AbilityDefinition:
@@ -98,6 +121,158 @@ func _read_source_actor(node: Node) -> Node:
 			continue
 		var source_value: Variant = node.get("source_actor")
 		return source_value as Node if source_value is Node else null
+	return null
+
+
+func _begin_trajectory_record(
+	original_instance: Node,
+	ability: AbilityDefinition
+) -> void:
+	if not original_instance is Node3D:
+		_schedule_spell_replays(original_instance, ability)
+		return
+	var payload_override: Resource = _capture_payload(original_instance, ability)
+	var playback_states: Array[Dictionary] = []
+	for echo_index: int in range(echoes.size()):
+		playback_states.append({
+			"echo_index": echo_index,
+			"next_sample": 0,
+			"actor": null,
+			"finished": false,
+		})
+	trajectory_records.append({
+		"ability": ability,
+		"original": weakref(original_instance),
+		"payload": payload_override,
+		"samples": [],
+		"start_time": elapsed,
+		"end_time": -1.0,
+		"playbacks": playback_states,
+	})
+
+
+func _advance_trajectory_records(delta: float) -> void:
+	if trajectory_records.is_empty():
+		return
+	var remaining_records: Array[Dictionary] = []
+	for record_value: Dictionary in trajectory_records:
+		var record: Dictionary = record_value
+		var original_ref_value: Variant = record.get("original")
+		var original: Node3D = null
+		if original_ref_value is WeakRef:
+			var ref_value: Variant = (original_ref_value as WeakRef).get_ref()
+			if ref_value is Node3D and is_instance_valid(ref_value):
+				original = ref_value as Node3D
+		var samples: Array = record.get("samples", []) as Array
+		if original != null and not original.is_queued_for_deletion():
+			samples.append({
+				"time": elapsed,
+				"transform": original.global_transform,
+			})
+			record["samples"] = samples
+		elif float(record.get("end_time", -1.0)) < 0.0:
+			record["end_time"] = elapsed
+
+		var playbacks: Array = record.get("playbacks", []) as Array
+		for state_index: int in range(playbacks.size()):
+			var state: Dictionary = playbacks[state_index] as Dictionary
+			if bool(state.get("finished", false)):
+				continue
+			var echo_index: int = int(state.get("echo_index", -1))
+			if echo_index < 0 or echo_index >= echoes.size():
+				state["finished"] = true
+				playbacks[state_index] = state
+				continue
+			var echo: RepeatEchoActor = echoes[echo_index]
+			if echo == null or not is_instance_valid(echo):
+				state["finished"] = true
+				playbacks[state_index] = state
+				continue
+			var playback_time: float = elapsed - echo.replay_delay
+			var next_sample: int = int(state.get("next_sample", 0))
+			var playback_value: Variant = state.get("actor")
+			var playback: RepeatTrajectoryEcho = (
+				playback_value as RepeatTrajectoryEcho
+				if playback_value is RepeatTrajectoryEcho
+				else null
+			)
+			while next_sample < samples.size():
+				var sample: Dictionary = samples[next_sample] as Dictionary
+				if float(sample.get("time", INF)) > playback_time:
+					break
+				if playback == null:
+					playback = _spawn_trajectory_echo(record, echo)
+					state["actor"] = playback
+					if playback != null:
+						replayed_trajectory_count += 1
+						var record_ability: AbilityDefinition = record.get("ability") as AbilityDefinition
+						last_replayed_spell_id = record_ability.get_spell_id() if record_ability != null else "unknown"
+				if playback != null:
+					var transform_value: Variant = sample.get("transform")
+					if transform_value is Transform3D:
+						playback.advance_to(transform_value as Transform3D, delta)
+				next_sample += 1
+			state["next_sample"] = next_sample
+			var end_time: float = float(record.get("end_time", -1.0))
+			if end_time >= 0.0 and playback_time >= end_time and next_sample >= samples.size():
+				if playback != null and is_instance_valid(playback):
+					playback.finish_replay()
+				state["finished"] = true
+			playbacks[state_index] = state
+		record["playbacks"] = playbacks
+		var every_playback_finished: bool = true
+		for state_value: Variant in playbacks:
+			if state_value is Dictionary and not bool((state_value as Dictionary).get("finished", false)):
+				every_playback_finished = false
+				break
+		if not every_playback_finished:
+			remaining_records.append(record)
+	trajectory_records = remaining_records
+
+
+func _spawn_trajectory_echo(
+	record: Dictionary,
+	echo: RepeatEchoActor
+) -> RepeatTrajectoryEcho:
+	var ability_value: Variant = record.get("ability")
+	if not ability_value is AbilityDefinition:
+		return null
+	var trajectory := TrajectoryEchoScript.new() as RepeatTrajectoryEcho
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		return null
+	scene_root.add_child(trajectory)
+	var payload_value: Variant = record.get("payload")
+	trajectory.configure(
+		ability_value as AbilityDefinition,
+		echo,
+		payload_value as Resource if payload_value is Resource else null
+	)
+	return trajectory
+
+
+func _clear_trajectory_records() -> void:
+	for record: Dictionary in trajectory_records:
+		var playbacks: Array = record.get("playbacks", []) as Array
+		for state_value: Variant in playbacks:
+			if not state_value is Dictionary:
+				continue
+			var playback_value: Variant = (state_value as Dictionary).get("actor")
+			if playback_value is RepeatTrajectoryEcho and is_instance_valid(playback_value):
+				(playback_value as RepeatTrajectoryEcho).queue_free()
+	trajectory_records.clear()
+
+
+func _capture_payload(
+	original_instance: Node,
+	ability: AbilityDefinition
+) -> Resource:
+	if original_instance != null and original_instance.has_method("get_payload"):
+		var payload_value: Variant = original_instance.call("get_payload")
+		if payload_value is Resource:
+			return (payload_value as Resource).duplicate(true)
+	if ability != null and ability.get_action_payload() != null:
+		return ability.get_action_payload().duplicate(true)
 	return null
 
 
@@ -129,15 +304,7 @@ func _schedule_spell_replays(
 	if cast_direction.length_squared() <= 0.0001:
 		cast_direction = Vector3.FORWARD
 	cast_direction = cast_direction.normalized()
-
-	var payload_override: Resource = null
-	if original_instance.has_method("get_payload"):
-		var payload_value: Variant = original_instance.call("get_payload")
-		if payload_value is Resource:
-			payload_override = (payload_value as Resource).duplicate(true)
-	elif ability.get_action_payload() != null:
-		payload_override = ability.get_action_payload().duplicate(true)
-
+	var payload_override: Resource = _capture_payload(original_instance, ability)
 	var cast_metadata: Dictionary = _capture_cast_metadata(ability, payload_override)
 	last_cast_metadata = cast_metadata.duplicate(true)
 	var origin_offset: Vector3 = cast_origin - source_actor.global_position
@@ -234,13 +401,19 @@ func _replay_spell_event(event: Dictionary) -> void:
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["spell_replay_ready"] = true
+	data["repeat_semantics"] = "timeline_reenactment"
 	data["observed_player_casts"] = observed_player_cast_count
 	data["pending_spell_replays"] = pending_spell_events.size()
+	data["active_trajectory_records"] = trajectory_records.size()
 	data["replayed_spells"] = replayed_spell_count
+	data["replayed_trajectories"] = replayed_trajectory_count
+	data["source_state_replays"] = source_state_replay_count
+	data["channel_timelines_seen"] = channel_timeline_count
+	data["world_state_noops"] = world_state_noop_count
 	data["suppressed_spells"] = suppressed_spell_count
 	data["last_replayed_spell"] = last_replayed_spell_id
 	data["last_suppressed_spell"] = last_suppressed_spell_id
 	data["last_suppression_reason"] = last_suppression_reason
 	data["last_cast_metadata"] = last_cast_metadata.duplicate(true)
-	data["policy_shared_with_future_soul_duplicates"] = true
+	data["duplicate_semantics_are_separate"] = true
 	return data

@@ -106,7 +106,7 @@ func release_binding() -> void:
 			status_receiver.call("remove_status", "rooted")
 
 	if rigid_body != null and is_instance_valid(rigid_body):
-		rigid_body.freeze_mode = original_freeze_mode as RigidBody3D.FreezeMode
+		rigid_body.freeze_mode = original_freeze_mode
 		rigid_body.freeze = original_freeze
 		rigid_body.linear_velocity = Vector3.ZERO
 		rigid_body.angular_velocity = Vector3.ZERO

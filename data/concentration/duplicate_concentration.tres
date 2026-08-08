@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ConcentrationEffectDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/concentration/concentration_effect_definition.gd" id="1_concentration"]
+
+[resource]
+script = ExtResource("1_concentration")
+effect_id = "duplicate_concentration"
+display_name = "Duplicate"
+description = "Reserve 25 percent of Grace's mana capacity to sustain one live Soul duplicate. The duplicate receives the same movement, attacks, and clone-safe spell actions at the same time, but resolves collisions and world interactions independently."
+mana_reservation_fraction = 0.25
+free_elements = Array[String]([])
+discounted_elements = {}
+effect_tags = Array[String](["concentration", "soul", "duplicate", "clone", "live_simulation", "ally"])

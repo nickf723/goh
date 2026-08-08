@@ -48,6 +48,12 @@ func _install_ready_trail() -> void:
 
 
 func _resolve_curl_sign() -> float:
+	if source_actor != null and source_actor.has_meta("clone_cast_curl_sign"):
+		return clampf(
+			float(source_actor.get_meta("clone_cast_curl_sign", 0.0)),
+			-1.0,
+			1.0
+		)
 	var left_strength: float = Input.get_action_strength("move_left")
 	var right_strength: float = Input.get_action_strength("move_right")
 	if left_strength > right_strength + 0.12:
@@ -69,6 +75,7 @@ func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["player_selected_curl"] = true
 	data["neutral_cast_is_straight"] = true
+	data["clone_preserves_curl_intent"] = true
 	data["route_kind"] = _get_route_kind()
 	data["trail_records_curl"] = (
 		trail != null

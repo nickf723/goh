@@ -15,16 +15,42 @@ func _input(event: InputEvent) -> void:
 
 
 func _handle_focus_grid_action_button(event: InputEventJoypadButton) -> bool:
-	if event.button_index not in [JOY_BUTTON_A, JOY_BUTTON_B]:
+	# Never reason about Nintendo/Xbox face-button letters here. The project maps
+	# Nintendo A to `interact` (button 1) and Nintendo B to `dodge` (button 0),
+	# while Godot's JOY_BUTTON_A/B constants use the Xbox ordering. Semantic input
+	# actions keep Focus correct on either layout.
+	var confirm_pressed: bool = (
+		event.is_action_pressed("interact")
+		or event.is_action_pressed("ui_accept")
+	)
+	var confirm_released: bool = (
+		event.is_action_released("interact")
+		or event.is_action_released("ui_accept")
+	)
+	var back_pressed: bool = (
+		event.is_action_pressed("dodge")
+		or event.is_action_pressed("ui_cancel")
+	)
+	var back_released: bool = (
+		event.is_action_released("dodge")
+		or event.is_action_released("ui_cancel")
+	)
+	if not (
+		confirm_pressed
+		or confirm_released
+		or back_pressed
+		or back_released
+	):
 		return false
-	# Consume releases too so A/B cannot leak into gameplay on the same frame the
-	# Focus state changes.
-	if not event.pressed:
+
+	# Consume releases too so confirm/back cannot leak into gameplay on the frame
+	# that the Focus page changes or closes.
+	if confirm_released or back_released:
 		return true
 	if ability_caster == null:
 		return true
 
-	if event.button_index == JOY_BUTTON_B:
+	if back_pressed:
 		if (
 			ability_caster.has_method("is_focus_spell_grid_active")
 			and bool(ability_caster.call("is_focus_spell_grid_active"))
@@ -35,7 +61,7 @@ func _handle_focus_grid_action_button(event: InputEventJoypadButton) -> bool:
 			ability_caster.call("close_focus_spell_menu")
 		return true
 
-	if event.button_index == JOY_BUTTON_A:
+	if confirm_pressed:
 		if (
 			ability_caster.has_method("is_focus_spell_grid_active")
 			and bool(ability_caster.call("is_focus_spell_grid_active"))
@@ -103,6 +129,7 @@ func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["focus_grid_navigation"] = true
 	data["focus_dpad_only"] = true
-	data["focus_a_confirms"] = true
-	data["focus_b_backs_out"] = true
+	data["focus_confirm_action"] = "interact"
+	data["focus_back_action"] = "dodge_or_cancel"
+	data["controller_layout_agnostic"] = true
 	return data

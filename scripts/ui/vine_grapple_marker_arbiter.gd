@@ -5,6 +5,10 @@ var player: Node3D = null
 
 
 func _ready() -> void:
+	# CombatTargetingAssist uses the default process priority. Running late makes
+	# marker ownership deterministic even when the GameUI appears before Player
+	# in the scene tree.
+	process_priority = 1000
 	add_to_group("vine_grapple_marker_arbiters")
 	add_to_group("debuggable")
 
@@ -67,4 +71,5 @@ func get_debug_data() -> Dictionary:
 		"vine_marker_arbiter": true,
 		"vine_selected": _vine_grapple_is_selected(),
 		"generic_soft_marker_visible": generic_visible,
+		"process_priority": process_priority,
 	}

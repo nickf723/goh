@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3]
+[gd_scene load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_reflection_pass.gd" id="1_target"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
@@ -31,6 +31,8 @@
 [ext_resource type="Resource" path="res://data/reflections/green_grotto_reflection_fidelity.tres" id="29_reflection_profile"]
 [ext_resource type="Script" path="res://scripts/reflections/reflection_fidelity_director_3d.gd" id="30_reflection_director"]
 [ext_resource type="Script" path="res://scripts/reflections/reflection_region_3d.gd" id="31_reflection_region"]
+[ext_resource type="Script" path="res://scripts/levels/green_grotto_ground_contact_adapter.gd" id="32_ground_contact"]
+[ext_resource type="Resource" path="res://data/presentation/green_grotto_ground_contact.tres" id="33_ground_contact_profile"]
 
 [node name="PrototypeGreenGrottoArtTargetV1" type="Node3D" groups=["green_grotto_art_target", "environment_art_target", "lab_resource_regeneration"]]
 script = ExtResource("1_target")
@@ -284,6 +286,10 @@ origin_offset = Vector3(0, 0.8, 1.0)
 intensity = 1.05
 max_distance = 54.0
 box_projection = true
+
+[node name="GreenGrottoGroundContact" type="Node3D" parent="."]
+script = ExtResource("32_ground_contact")
+profile = ExtResource("33_ground_contact_profile")
 
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1.2, 16)

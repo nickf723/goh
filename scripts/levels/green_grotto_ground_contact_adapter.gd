@@ -38,10 +38,9 @@ func _retire_legacy_surface_contact() -> void:
 	):
 		if candidate == self or not is_instance_valid(candidate):
 			continue
-		if candidate.has_method("set_enabled"):
-			candidate.call("set_enabled", false)
-		elif "enabled" in candidate:
-			candidate.set("enabled", false)
+		if not candidate.has_method("set_enabled"):
+			continue
+		candidate.call("set_enabled", false)
 		candidate.set_meta("retired_by_ground_contact_presentation", true)
 		retired_legacy_surface_contact_count += 1
 	set_meta(

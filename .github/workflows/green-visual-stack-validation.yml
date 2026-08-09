@@ -18,6 +18,7 @@ on:
       - "scripts/character_presentation/**"
       - "scripts/visual_lod/**"
       - "scripts/surface_contact/**"
+      - "scripts/image_fidelity/**"
       - "scripts/environment/green_grotto_fauna_visual.gd"
       - "scripts/environment/green_grotto_fauna_ambient_behavior.gd"
       - "scripts/levels/prototype_green_grotto_*.gd"
@@ -35,6 +36,7 @@ on:
       - "data/character_presentation/**"
       - "data/visual_lod/**"
       - "data/surface_contact/**"
+      - "data/image_fidelity/**"
       - "shaders/water_surface_v1.gdshader"
       - "shaders/waterfall_surface_v1.gdshader"
       - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
@@ -52,6 +54,7 @@ on:
       - "scenes/tests/surface_contact_presentation_smoke_test.tscn"
       - "docs/GREEN_GROTTO_VISUAL_LAB_V1.md"
       - "docs/VISUAL_BENCHMARK_DIRECTOR_V1.md"
+      - "docs/IMAGE_FIDELITY_DIRECTOR_V1.md"
       - ".github/workflows/green-visual-stack-validation.yml"
   workflow_dispatch:
 
@@ -99,6 +102,7 @@ jobs:
             "grace_material_presentation_smoke_test"
             "visual_lod_director_smoke_test"
             "surface_contact_presentation_smoke_test"
+            "image_fidelity_director_smoke_test"
             "visual_benchmark_director_smoke_test"
           )
           : > green-visual-stack-tests.log

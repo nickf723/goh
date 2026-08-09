@@ -8,6 +8,7 @@ signal atmospheric_quality_changed(quality: int, visible_instances: int)
 
 var lighting_director: LightingDirector3D = null
 var motion_director: EnvironmentalMotionDirector3D = null
+var active_camera: Camera3D = null
 var fields: Array[Dictionary] = []
 var soft_texture: ImageTexture = null
 var elapsed: float = 0.0
@@ -146,6 +147,7 @@ func set_enabled(value: bool) -> void:
 func _resolve_dependencies() -> void:
 	lighting_director = null
 	motion_director = null
+	active_camera = null
 	if get_tree() == null:
 		return
 	var lighting_candidate: Node = get_tree().get_first_node_in_group(
@@ -158,6 +160,8 @@ func _resolve_dependencies() -> void:
 	)
 	if motion_candidate is EnvironmentalMotionDirector3D:
 		motion_director = motion_candidate as EnvironmentalMotionDirector3D
+	if get_viewport() != null:
+		active_camera = get_viewport().get_camera_3d()
 
 
 func _current_quality() -> int:
@@ -195,6 +199,8 @@ func _apply_quality(quality: int) -> void:
 func _update_fields() -> void:
 	if visible_instance_count <= 0:
 		return
+	if get_viewport() != null:
+		active_camera = get_viewport().get_camera_3d()
 	for record: Dictionary in fields:
 		var field: MultiMeshInstance3D = record.get("node") as MultiMeshInstance3D
 		var multi: MultiMesh = record.get("multimesh") as MultiMesh
@@ -241,16 +247,35 @@ func _update_fields() -> void:
 			local.z = _wrap_axis(local.z, extents.z)
 
 			var pulse: float = 1.0 + sin(elapsed * 0.9 + phase) * 0.12
-			var scale_value := Vector3(size, size, size) * pulse
+			var camera_fade: float = _camera_fade_for(field, local)
+			var scale_value := Vector3(size, size, size) * pulse * camera_fade
 			if kind == "mist":
-				scale_value = Vector3(size * 2.2, size * 0.72, size) * pulse
+				scale_value = Vector3(size * 2.2, size * 0.72, size) * pulse * camera_fade
 			elif kind == "pollen":
-				scale_value = Vector3(size * 0.72, size * 1.15, size) * pulse
+				scale_value = Vector3(size * 0.72, size * 1.15, size) * pulse * camera_fade
 			multi.set_instance_transform(
 				index,
 				Transform3D(Basis().scaled(scale_value), local)
 			)
 	update_count += 1
+
+
+func _camera_fade_for(field: MultiMeshInstance3D, local_position: Vector3) -> float:
+	if profile == null or profile.camera_clear_radius <= 0.0:
+		return 1.0
+	if active_camera == null or not is_instance_valid(active_camera):
+		return 1.0
+	var world_position: Vector3 = field.to_global(local_position)
+	var distance_to_camera: float = active_camera.global_position.distance_to(world_position)
+	var clear_radius: float = maxf(profile.camera_clear_radius, 0.0)
+	var fade_distance: float = maxf(profile.camera_fade_distance, 0.0)
+	if fade_distance <= 0.001:
+		return 0.0 if distance_to_camera < clear_radius else 1.0
+	return smoothstep(
+		clear_radius,
+		clear_radius + fade_distance,
+		distance_to_camera
+	)
 
 
 func _ensure_soft_texture() -> void:
@@ -310,6 +335,9 @@ func get_debug_data() -> Dictionary:
 		"multimesh_batched": true,
 		"follows_lighting_quality": profile != null and profile.follow_lighting_quality,
 		"samples_environmental_motion": motion_director != null,
+		"camera_clear_radius": profile.camera_clear_radius if profile != null else 0.0,
+		"camera_fade_distance": profile.camera_fade_distance if profile != null else 0.0,
+		"camera_safe_fade": profile != null and profile.camera_clear_radius > 0.0,
 		"update_count": update_count,
 		"soft_texture_runtime_generated": soft_texture != null,
 		"gameplay_authority": false,

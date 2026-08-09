@@ -1,0 +1,68 @@
+name: Lighting Director
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/lighting/**"
+      - "data/lighting/**"
+      - "scripts/levels/prototype_green_grotto_lighting_pass.gd"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "scripts/tests/lighting_director_smoke_test.gd"
+      - "scenes/tests/lighting_director_smoke_test.tscn"
+      - "docs/LIGHTING_DIRECTOR_V1.md"
+      - ".github/workflows/lighting-director-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lighting-director-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-lighting:
+    name: Import, lighting contract, and Green Grotto boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee lighting-import.log
+
+      - name: Run Lighting Director regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lighting_director_smoke_test.tscn 2>&1 | tee lighting-director-test.log
+
+      - name: Boot directed Green Grotto
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee lighting-green-grotto-boot.log
+
+      - name: Upload lighting logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighting-director-logs
+          path: |
+            lighting-import.log
+            lighting-director-test.log
+            lighting-green-grotto-boot.log
+          if-no-files-found: ignore

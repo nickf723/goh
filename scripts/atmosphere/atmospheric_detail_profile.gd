@@ -8,7 +8,6 @@ class_name AtmosphericDetailProfile
 @export_range(0.0, 1.0, 0.01) var cinematic_density_scale: float = 1.0
 @export_range(0.02, 0.25, 0.01) var update_interval: float = 0.05
 @export_range(32, 1024, 1) var maximum_instances: int = 520
-@export_range(0.005, 0.25, 0.005) var maximum_billboard_size: float = 0.18
 @export_range(0.5, 8.0, 0.1) var maximum_visual_wind_speed: float = 3.5
 @export_range(8, 64, 1) var soft_texture_resolution: int = 32
 @export_range(0.0, 8.0, 0.05) var camera_clear_radius: float = 0.0
@@ -34,7 +33,6 @@ func get_debug_data() -> Dictionary:
 		"balanced_density_scale": balanced_density_scale,
 		"cinematic_density_scale": cinematic_density_scale,
 		"maximum_instances": maximum_instances,
-		"maximum_billboard_size": maximum_billboard_size,
 		"camera_clear_radius": camera_clear_radius,
 		"camera_fade_distance": camera_fade_distance,
 		"follow_lighting_quality": follow_lighting_quality,

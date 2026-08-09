@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SurfaceContactPresentationProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/surface_contact/surface_contact_presentation_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_surface_contact"
+display_name = "Green Grotto Surface Contact"
+performance_footstep_pieces = 0
+performance_landing_pieces = 0
+balanced_footstep_pieces = 3
+balanced_landing_pieces = 7
+cinematic_footstep_pieces = 5
+cinematic_landing_pieces = 11
+footstep_duration = 0.34
+landing_duration = 0.52
+maximum_live_pieces = 72
+global_opacity_scale = 0.68

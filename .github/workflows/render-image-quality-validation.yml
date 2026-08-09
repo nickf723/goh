@@ -1,0 +1,67 @@
+name: Render Image Quality
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/render_quality/**"
+      - "data/render_quality/**"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "scripts/tests/render_image_quality_director_smoke_test.gd"
+      - "scenes/tests/render_image_quality_director_smoke_test.tscn"
+      - "docs/RENDER_IMAGE_QUALITY_DIRECTOR_V1.md"
+      - ".github/workflows/render-image-quality-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-image-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-render-image-quality:
+    name: Import, viewport quality contract, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee render-image-quality-import.log
+
+      - name: Run Render Image Quality regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/render_image_quality_director_smoke_test.tscn 2>&1 | tee render-image-quality-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee render-image-quality-green-boot.log
+
+      - name: Upload Render Image Quality logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-image-quality-logs
+          path: |
+            render-image-quality-import.log
+            render-image-quality-test.log
+            render-image-quality-green-boot.log
+          if-no-files-found: ignore

@@ -87,7 +87,6 @@ func create_stamp(
 		if stamp_label.strip_edges() != ""
 		else "%sStamp%03d" % [normalized_kind.capitalize(), created_count]
 	)
-	decal.global_position = world_position
 	decal.size = Vector3(
 		maxf(absf(footprint.x), 0.05),
 		maxf(depth, 0.02),
@@ -106,9 +105,10 @@ func create_stamp(
 	decal.visible = enabled
 	add_child(decal)
 
-	# Decals project along local -Y. Align that direction into the receiving
-	# surface, then spin around local Y for authored variation.
-	decal.quaternion = Quaternion(Vector3.DOWN, -normal)
+	# Decals project along local -Y. Build the receiving orientation in world
+	# space so the API remains correct even if the Director itself is transformed.
+	var orientation := Basis(Quaternion(Vector3.DOWN, -normal))
+	decal.global_transform = Transform3D(orientation, world_position)
 	if absf(rotation_radians) > 0.00001:
 		decal.rotate_object_local(Vector3.UP, rotation_radians)
 

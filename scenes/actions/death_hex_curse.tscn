@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/actions/death_hex_curse.gd" id="1_curse"]
+[ext_resource type="Script" path="res://scripts/actions/death_hex_curse_presented.gd" id="1_curse"]
 
 [node name="DeathHexCurse" type="Node3D"]
 script = ExtResource("1_curse")

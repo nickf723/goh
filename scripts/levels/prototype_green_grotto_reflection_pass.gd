@@ -13,11 +13,15 @@ const AtmosphericDetailDirectorScript = preload(
 const GreenGrottoAtmosphereProfile = preload(
 	"res://data/atmosphere/green_grotto_atmospheric_detail.tres"
 )
+const FaunaAmbientBehaviorScript = preload(
+	"res://scripts/environment/green_grotto_fauna_ambient_behavior.gd"
+)
 
 var reflection_fidelity_director: ReflectionFidelityDirector3D = null
 var visual_benchmark_director: VisualBenchmarkDirector = null
 var grace_motion_influencer: EnvironmentalMotionInfluencer3D = null
 var atmospheric_detail_director: AtmosphericDetailDirector3D = null
+var fauna_ambient_behavior_count: int = 0
 
 
 func _ready() -> void:
@@ -28,6 +32,7 @@ func _ready() -> void:
 	if reflection_fidelity_director != null:
 		reflection_fidelity_director.call_deferred("synchronize_now")
 	_ensure_grace_motion_influencer()
+	_ensure_fauna_ambient_behavior()
 	_ensure_atmospheric_detail_director()
 	_ensure_visual_benchmark_director()
 	set_meta("reflection_fidelity_pass", "reflection_fidelity_director_v1")
@@ -41,6 +46,7 @@ func _ready() -> void:
 	set_meta("visual_benchmark_presets", ["BASELINE", "BALANCED", "HERO"])
 	set_meta("grace_environment_interaction", grace_motion_influencer != null)
 	set_meta("atmospheric_detail", atmospheric_detail_director != null)
+	set_meta("fauna_ambient_behavior_count", fauna_ambient_behavior_count)
 
 
 func _ensure_grace_motion_influencer() -> void:
@@ -71,6 +77,35 @@ func _ensure_grace_motion_influencer() -> void:
 	) as EnvironmentalMotionDirector3D
 	if motion_director != null:
 		motion_director.call_deferred("_refresh_influencers")
+
+
+func _ensure_fauna_ambient_behavior() -> void:
+	fauna_ambient_behavior_count = 0
+	if fauna_root == null:
+		return
+	for child: Node in fauna_root.get_children():
+		if not child is GreenGrottoFaunaVisual:
+			continue
+		var creature: GreenGrottoFaunaVisual = child as GreenGrottoFaunaVisual
+		var behavior: GreenGrottoFaunaAmbientBehavior = creature.get_node_or_null(
+			"AmbientBehavior"
+		) as GreenGrottoFaunaAmbientBehavior
+		if behavior == null:
+			behavior = (
+				FaunaAmbientBehaviorScript.new()
+				as GreenGrottoFaunaAmbientBehavior
+			)
+			behavior.name = "AmbientBehavior"
+			if creature.species == "sauropod":
+				behavior.curiosity_distance = 0.0
+				behavior.startled_distance = 0.0
+				behavior.startled_step_distance = 0.0
+			else:
+				behavior.curiosity_distance = 7.5
+				behavior.startled_distance = 3.2
+				behavior.startled_step_distance = 1.05
+			creature.add_child(behavior)
+		fauna_ambient_behavior_count += 1
 
 
 func _ensure_atmospheric_detail_director() -> void:
@@ -173,5 +208,9 @@ func get_debug_data() -> Dictionary:
 	data["atmospheric_detail"] = atmospheric_detail_director != null
 	data["atmospheric_detail_strategy"] = (
 		"quality-scaled MultiMesh motes sampling the environment motion wind"
+	)
+	data["fauna_ambient_behavior_count"] = fauna_ambient_behavior_count
+	data["fauna_behavior_strategy"] = (
+		"presentation-only roam, pause, forage, curiosity, and startle beats"
 	)
 	return data

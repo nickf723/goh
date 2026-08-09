@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=3]
+[gd_scene load_steps=39 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_reflection_pass.gd" id="1_target"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
@@ -36,6 +36,8 @@
 [ext_resource type="Script" path="res://scripts/visuals/grace_locomotion_polish.gd" id="34_grace_locomotion"]
 [ext_resource type="Resource" path="res://data/render_quality/green_grotto_render_image_quality.tres" id="35_image_quality_profile"]
 [ext_resource type="Script" path="res://scripts/render_quality/render_image_quality_director.gd" id="36_image_quality"]
+[ext_resource type="Resource" path="res://data/lighting/green_grotto_projected_canopy_light.tres" id="37_dapple_profile"]
+[ext_resource type="Script" path="res://scripts/lighting/projected_canopy_light_director_3d.gd" id="38_dapple_director"]
 
 [node name="PrototypeGreenGrottoArtTargetV1" type="Node3D" groups=["green_grotto_art_target", "environment_art_target", "lab_resource_regeneration"]]
 script = ExtResource("1_target")
@@ -59,6 +61,12 @@ channel = "green_grotto"
 quality = 2
 transition_seconds = 1.15
 debug_hotkeys_enabled = true
+
+[node name="ProjectedCanopyLightDirector" type="Node3D" parent="."]
+position = Vector3(0, 18, 2)
+rotation_degrees = Vector3(-90, 0, -6)
+script = ExtResource("38_dapple_director")
+profile = ExtResource("37_dapple_profile")
 
 [node name="EntranceShadowZone" type="Node3D" parent="."]
 position = Vector3(0, 2.5, 12.5)

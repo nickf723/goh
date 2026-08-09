@@ -1,0 +1,78 @@
+name: Death Wraith Pursuit
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/death_wraith_projectile.gd"
+      - "scripts/actions/death_pursuer_spirit.gd"
+      - "scripts/player/vine_grapple_targeting.gd"
+      - "scripts/tests/wraith_pursuit_smoke_test.gd"
+      - "scenes/actions/death_wraith_projectile.tscn"
+      - "scenes/actions/death_pursuer_spirit.tscn"
+      - "scenes/tests/wraith_pursuit_smoke_test.tscn"
+      - "data/abilities/wraith_pursuit_ability.tres"
+      - "data/damage_payloads/wraith_pursuit_payload.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - ".github/workflows/wraith-pursuit-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: death-wraith-pursuit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-wraith-pursuit:
+    name: Import, pursuit passes, stale targets, and spell library
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee wraith-import.log
+
+      - name: Run Wraith Pursuit regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/wraith_pursuit_smoke_test.tscn 2>&1 | tee wraith-test.log
+
+      - name: Run Vine Grapple regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/life_vine_grapple_smoke_test.tscn 2>&1 | tee vine-test.log
+
+      - name: Run complete Focus library regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/complete_spell_library_smoke_test.tscn 2>&1 | tee complete-library-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: death-wraith-pursuit-logs
+          path: |
+            wraith-import.log
+            wraith-test.log
+            vine-test.log
+            complete-library-test.log
+          if-no-files-found: ignore

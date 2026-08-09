@@ -19,8 +19,14 @@ func configure(
 		entry_direction
 	)
 	if configured:
-		_present_wraith_phase("sustain", "pursuit_started", 0.28, true)
+		call_deferred("_emit_initial_sustain")
 	return configured
+
+
+func _emit_initial_sustain() -> void:
+	if dissolving or not is_inside_tree():
+		return
+	_present_wraith_phase("sustain", "pursuit_started", 0.28, true)
 
 
 func _apply_pass_damage() -> void:
@@ -86,4 +92,5 @@ func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["presentation_sustain"] = true
 	data["presentation_pass_resolve"] = true
+	data["handoff_precedes_sustain"] = true
 	return data

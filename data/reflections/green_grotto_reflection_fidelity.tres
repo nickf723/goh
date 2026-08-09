@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ReflectionFidelityProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/reflections/reflection_fidelity_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_reflections"
+performance_enabled = false
+performance_intensity_scale = 0.0
+performance_mesh_lod_threshold = 4.0
+performance_enable_probe_shadows = false
+balanced_enabled = true
+balanced_intensity_scale = 0.78
+balanced_mesh_lod_threshold = 2.5
+balanced_enable_probe_shadows = false
+cinematic_enabled = true
+cinematic_intensity_scale = 1.0
+cinematic_mesh_lod_threshold = 1.0
+cinematic_enable_probe_shadows = true
+maximum_intensity = 1.22
+maximum_capture_distance = 68.0

@@ -1,0 +1,71 @@
+name: Material Fidelity Director
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/material_fidelity/**"
+      - "data/material_fidelity/**"
+      - "scripts/levels/prototype_green_grotto_material_pass.gd"
+      - "scripts/tests/material_fidelity_director_smoke_test.gd"
+      - "scenes/tests/material_fidelity_director_smoke_test.tscn"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "scripts/environment/green_grotto_material_library.gd"
+      - "scripts/environment/green_grotto_detail_material_library.gd"
+      - "scripts/environment/green_grotto_hero_material_library.gd"
+      - "docs/MATERIAL_FIDELITY_DIRECTOR_V1.md"
+      - ".github/workflows/material-fidelity-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: material-fidelity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-material-fidelity:
+    name: Import, material contract, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee material-fidelity-import.log
+
+      - name: Run Material Fidelity Director regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/material_fidelity_director_smoke_test.tscn 2>&1 | tee material-fidelity-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee material-fidelity-green-boot.log
+
+      - name: Upload material logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: material-fidelity-logs
+          path: |
+            material-fidelity-import.log
+            material-fidelity-test.log
+            material-fidelity-green-boot.log
+          if-no-files-found: ignore

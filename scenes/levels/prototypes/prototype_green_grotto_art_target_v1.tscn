@@ -1,6 +1,6 @@
-[gd_scene load_steps=27 format=3]
+[gd_scene load_steps=29 format=3]
 
-[ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_vegetation_pass.gd" id="1_target"]
+[ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_shadow_pass.gd" id="1_target"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
@@ -26,6 +26,8 @@
 [ext_resource type="Script" path="res://scripts/water/water_presentation_director_3d.gd" id="24_water_director"]
 [ext_resource type="Resource" path="res://data/vegetation/green_grotto_vegetation_presentation.tres" id="25_vegetation_profile"]
 [ext_resource type="Script" path="res://scripts/vegetation/vegetation_presentation_director_3d.gd" id="26_vegetation_director"]
+[ext_resource type="Resource" path="res://data/shadows/green_grotto_shadow_fidelity.tres" id="27_shadow_profile"]
+[ext_resource type="Script" path="res://scripts/shadows/shadow_fidelity_director_3d.gd" id="28_shadow_director"]
 
 [node name="PrototypeGreenGrottoArtTargetV1" type="Node3D" groups=["green_grotto_art_target", "environment_art_target", "lab_resource_regeneration"]]
 script = ExtResource("1_target")
@@ -221,6 +223,11 @@ debug_hotkeys_enabled = true
 script = ExtResource("26_vegetation_director")
 profile = ExtResource("25_vegetation_profile")
 debug_hotkeys_enabled = true
+
+[node name="ShadowFidelityDirector" type="Node3D" parent="."]
+script = ExtResource("28_shadow_director")
+profile = ExtResource("27_shadow_profile")
+lighting_director_path = NodePath("../LightingDirector")
 
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1.2, 16)

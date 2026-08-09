@@ -12,7 +12,12 @@ static func get_or_create(tree: SceneTree) -> GamePresentationDirector:
 		return null
 	var existing: Node = tree.root.get_node_or_null(DIRECTOR_NODE_NAME)
 	if existing is GamePresentationDirector:
-		return existing as GamePresentationDirector
+		if existing.has_method("present_spell"):
+			return existing as GamePresentationDirector
+		# Hot-reload/dev sessions can retain the older Director at the scene-tree
+		# root. Replace it rather than silently dropping spell lifecycle feedback.
+		tree.root.remove_child(existing)
+		existing.queue_free()
 	var director: GamePresentationDirector = DirectorScript.new() as GamePresentationDirector
 	director.name = DIRECTOR_NODE_NAME
 	director.process_mode = Node.PROCESS_MODE_ALWAYS

@@ -171,6 +171,7 @@ func _apply_pass_damage() -> void:
 	if pass_damage_done or not _target_is_alive():
 		return
 	pass_damage_done = true
+	var impact_position: Vector3 = _get_target_point()
 	var payload_to_send: DamagePayload = (
 		runtime_payload.duplicate(true) as DamagePayload
 		if runtime_payload != null
@@ -182,7 +183,7 @@ func _apply_pass_damage() -> void:
 	if not payload_to_send.tags.has("spirit_pass"):
 		payload_to_send.tags.append("spirit_pass")
 	_send_payload(target_node, payload_to_send)
-	_spawn_pass_flash()
+	_spawn_pass_flash(impact_position)
 
 
 func _send_payload(target: Node, damage_payload: DamagePayload) -> void:
@@ -370,26 +371,24 @@ func _update_trail(delta: float) -> void:
 	tween.tween_callback(Callable(wisp, "queue_free"))
 
 
-func _spawn_pass_flash() -> void:
-	if visual_root == null:
+func _spawn_pass_flash(impact_position: Vector3) -> void:
+	if get_tree() == null or get_tree().current_scene == null:
 		return
 	var flash := MeshInstance3D.new()
 	flash.name = "SpiritPassFlash"
+	flash.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var mesh := TorusMesh.new()
 	mesh.inner_radius = 0.24
 	mesh.outer_radius = 0.32
 	mesh.rings = 14
 	mesh.ring_segments = 7
 	flash.mesh = mesh
-	flash.material_override = pale_material
-	add_child(flash)
-	flash.global_position = _get_target_point()
+	flash.material_override = _make_material(SPIRIT_PALE, 2.2, 0.72)
+	get_tree().current_scene.add_child(flash)
+	flash.global_position = impact_position
 	flash.scale = Vector3.ONE * 0.45
 	var tween := flash.create_tween()
-	tween.set_parallel(true)
 	tween.tween_property(flash, "scale", Vector3.ONE * 1.8, 0.2)
-	tween.tween_property(flash, "modulate:a", 0.0, 0.2)
-	tween.set_parallel(false)
 	tween.tween_callback(Callable(flash, "queue_free"))
 
 
@@ -429,7 +428,7 @@ func _make_material(
 func _make_fallback_payload() -> DamagePayload:
 	var fallback := DamagePayload.new()
 	fallback.amount = 1
-	fallback.stance_damage = 0
+	fallback.stance_damage = 1
 	fallback.element = "death"
 	fallback.source_name = "Wraith Pursuit"
 	fallback.hit_type = "spirit_pass"

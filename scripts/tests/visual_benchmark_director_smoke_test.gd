@@ -95,7 +95,7 @@ func _validate_balanced(benchmark: VisualBenchmarkDirector) -> void:
 		_expect(int(benchmark.reflections.get_debug_data().get("active_probes", 0)) == 3, "Balanced includes three local reflection regions")
 	if benchmark.atmosphere != null:
 		var atmosphere_count: int = int(benchmark.atmosphere.get_debug_data().get("visible_instances", 0))
-		_expect(atmosphere_count >= 22 and atmosphere_count <= 24, "Balanced reports the sparse readability atmosphere budget")
+		_expect(atmosphere_count >= 11 and atmosphere_count <= 13, "Balanced reports the background-accent atmosphere budget")
 	if benchmark.character_materials != null:
 		_expect(int(benchmark.character_materials.get_debug_data().get("quality", -1)) == 1, "Balanced reports Grace material quality 1")
 	_expect(benchmark.call("_contact_footstep_count") == 3, "Balanced reports three contact pieces per footstep")
@@ -119,7 +119,7 @@ func _validate_hero(benchmark: VisualBenchmarkDirector) -> void:
 		_expect(str(benchmark.shadows.get_debug_data().get("tier", "")) == "Cinematic", "Hero synchronizes Cinematic shadow fidelity")
 	if benchmark.atmosphere != null:
 		var atmosphere_count: int = int(benchmark.atmosphere.get_debug_data().get("visible_instances", 0))
-		_expect(atmosphere_count >= 45 and atmosphere_count <= 47, "Hero keeps the full field set within the readability budget")
+		_expect(atmosphere_count >= 23 and atmosphere_count <= 26, "Hero keeps the full field set secondary to route readability")
 	if benchmark.character_materials != null:
 		_expect(int(benchmark.character_materials.get_debug_data().get("quality", -1)) == 2, "Hero reports Cinematic Grace material quality")
 	if benchmark.visual_lod != null:

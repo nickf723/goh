@@ -138,15 +138,15 @@ static func is_pullable(
 
 
 static func get_target_point(source_actor: Node3D, target: Node3D) -> Vector3:
-	if target == null:
-		return source_actor.global_position if source_actor != null else Vector3.ZERO
+	if target == null or not is_instance_valid(target):
+		return source_actor.global_position if source_actor != null and is_instance_valid(source_actor) else Vector3.ZERO
 	if target.has_method("get_vine_grapple_anchor_position"):
 		var custom_value: Variant = target.call("get_vine_grapple_anchor_position")
 		if custom_value is Vector3:
 			return custom_value as Vector3
 
-	var assist: Node = source_actor.get_node_or_null("CombatTargetingAssist") if source_actor != null else null
-	if assist != null and assist.has_method("get_target_aim_point"):
+	var assist: Node = source_actor.get_node_or_null("CombatTargetingAssist") if source_actor != null and is_instance_valid(source_actor) else null
+	if assist != null and is_instance_valid(assist) and assist.has_method("get_target_aim_point"):
 		var assist_value: Variant = assist.call("get_target_aim_point", target)
 		if assist_value is Vector3:
 			return assist_value as Vector3
@@ -159,7 +159,7 @@ static func get_target_point(source_actor: Node3D, target: Node3D) -> Vector3:
 
 
 static func get_source_anchor_position(source_actor: Node3D) -> Vector3:
-	if source_actor == null:
+	if source_actor == null or not is_instance_valid(source_actor):
 		return Vector3.ZERO
 	for anchor_path: String in [
 		"GraceVisualV1/RightHandAnchor",
@@ -180,7 +180,7 @@ static func get_source_anchor_position(source_actor: Node3D) -> Vector3:
 
 
 static func get_target_display_name(target: Node) -> String:
-	if target == null:
+	if target == null or not is_instance_valid(target):
 		return "Target"
 	var display_value: Variant = target.get("display_name")
 	if display_value != null and str(display_value).strip_edges() != "":
@@ -219,7 +219,7 @@ static func get_reason_label(reason: String) -> String:
 
 
 static func find_force_receiver(target: Node) -> Node:
-	if target == null:
+	if target == null or not is_instance_valid(target):
 		return null
 	if target is ForceReceiver:
 		return target
@@ -237,7 +237,9 @@ static func has_line_of_sight(
 	point: Vector3,
 	target: Node3D
 ) -> bool:
-	if source_actor == null:
+	if source_actor == null or not is_instance_valid(source_actor):
+		return false
+	if target == null or not is_instance_valid(target):
 		return false
 	var world: World3D = source_actor.get_world_3d()
 	if world == null:
@@ -262,25 +264,44 @@ static func get_source_collision_exclusions(source_actor: Node) -> Array[RID]:
 
 
 static func _get_hard_target(source_actor: Node3D) -> Node3D:
-	var lock_value: Variant = source_actor.get("lock_on_target")
-	if lock_value is Node3D and is_instance_valid(lock_value as Node3D):
-		return _resolve_candidate(lock_value as Node, source_actor)
+	if source_actor == null or not is_instance_valid(source_actor):
+		return null
+	var lock_target: Node3D = _valid_node3d_reference(
+		source_actor.get("lock_on_target")
+	)
+	if lock_target != null:
+		return _resolve_candidate(lock_target, source_actor)
 	var assist: Node = source_actor.get_node_or_null("CombatTargetingAssist")
-	if assist != null:
-		var assist_target: Variant = assist.get("hard_target")
-		if assist_target is Node3D and is_instance_valid(assist_target as Node3D):
-			return _resolve_candidate(assist_target as Node, source_actor)
+	if assist != null and is_instance_valid(assist):
+		var assist_target: Node3D = _valid_node3d_reference(
+			assist.get("hard_target")
+		)
+		if assist_target != null:
+			return _resolve_candidate(assist_target, source_actor)
 	return null
 
 
 static func _get_soft_target(source_actor: Node3D) -> Node3D:
+	if source_actor == null or not is_instance_valid(source_actor):
+		return null
 	var assist: Node = source_actor.get_node_or_null("CombatTargetingAssist")
-	if assist == null:
+	if assist == null or not is_instance_valid(assist):
 		return null
-	var target_value: Variant = assist.get("soft_target")
-	if not target_value is Node3D:
+	var target: Node3D = _valid_node3d_reference(assist.get("soft_target"))
+	if target == null:
 		return null
-	return _resolve_candidate(target_value as Node, source_actor)
+	return _resolve_candidate(target, source_actor)
+
+
+static func _valid_node3d_reference(value: Variant) -> Node3D:
+	# A target may be freed between the enemy update and the player's targeting
+	# preview update. Never ask GDScript `value is Node3D` until validity has been
+	# established, because type-testing a freed Object reference raises at runtime.
+	if typeof(value) != TYPE_OBJECT:
+		return null
+	if not is_instance_valid(value):
+		return null
+	return value as Node3D if value is Node3D else null
 
 
 static func _raycast_camera_target(
@@ -393,8 +414,12 @@ static func _find_soft_target(
 
 
 static func _resolve_candidate(start_node: Node, source_actor: Node3D) -> Node3D:
+	if start_node == null or not is_instance_valid(start_node):
+		return null
 	var current: Node = start_node
 	while current != null and current != source_actor:
+		if not is_instance_valid(current):
+			return null
 		if current is Node3D and _looks_like_candidate(current as Node3D):
 			return current as Node3D
 		current = current.get_parent()
@@ -402,6 +427,8 @@ static func _resolve_candidate(start_node: Node, source_actor: Node3D) -> Node3D
 
 
 static func _looks_like_candidate(candidate: Node3D) -> bool:
+	if candidate == null or not is_instance_valid(candidate):
+		return false
 	return (
 		candidate.has_method("can_accept_vine_grapple")
 		or candidate.is_in_group("vine_grapple_target")
@@ -415,8 +442,12 @@ static func _looks_like_candidate(candidate: Node3D) -> bool:
 static func _node_belongs_to_target(node: Node, target: Node) -> bool:
 	if node == null or target == null:
 		return false
+	if not is_instance_valid(node) or not is_instance_valid(target):
+		return false
 	var current: Node = node
 	while current != null:
+		if not is_instance_valid(current):
+			return false
 		if current == target:
 			return true
 		current = current.get_parent()
@@ -424,7 +455,7 @@ static func _node_belongs_to_target(node: Node, target: Node) -> bool:
 
 
 static func _collect_collision_rids(node: Node, exclusions: Array[RID]) -> void:
-	if node == null:
+	if node == null or not is_instance_valid(node):
 		return
 	if node is CollisionObject3D:
 		var collision_object: CollisionObject3D = node as CollisionObject3D

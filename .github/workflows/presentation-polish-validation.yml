@@ -1,0 +1,86 @@
+name: Presentation Polish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/presentation/**"
+      - "scripts/systems/game_feedback.gd"
+      - "scripts/components/hit_reaction_controller.gd"
+      - "scripts/combat/combat_feedback.gd"
+      - "scripts/visuals/player_motion_feedback.gd"
+      - "scripts/interaction/breakable_prop.gd"
+      - "scripts/enemies/hit_reaction_test_target.gd"
+      - "scripts/levels/prototype_polish_studio.gd"
+      - "scripts/tests/presentation_director_smoke_test.gd"
+      - "scenes/levels/prototypes/prototype_polish_studio_v1.tscn"
+      - "scenes/tests/presentation_director_smoke_test.tscn"
+      - ".github/workflows/presentation-polish-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: presentation-polish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-presentation:
+    name: Import, presentation contract, studio boot, movement, and reactions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee presentation-import.log
+
+      - name: Run Presentation Director regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/presentation_director_smoke_test.tscn 2>&1 | tee presentation-director-test.log
+
+      - name: Boot Polish Studio
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 5 res://scenes/levels/prototypes/prototype_polish_studio_v1.tscn 2>&1 | tee polish-studio-boot.log
+
+      - name: Run hit-reaction regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/hit_reaction_smoke_test.tscn 2>&1 | tee hit-reaction-test.log
+
+      - name: Run Grace animation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/grace_animation_smoke_test.tscn 2>&1 | tee grace-animation-test.log
+
+      - name: Upload presentation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: presentation-polish-logs
+          path: |
+            presentation-import.log
+            presentation-director-test.log
+            polish-studio-boot.log
+            hit-reaction-test.log
+            grace-animation-test.log
+          if-no-files-found: ignore

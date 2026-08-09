@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3]
+[gd_scene load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_reflection_pass.gd" id="1_target"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
@@ -34,6 +34,8 @@
 [ext_resource type="Script" path="res://scripts/levels/green_grotto_ground_contact_adapter.gd" id="32_ground_contact"]
 [ext_resource type="Resource" path="res://data/presentation/green_grotto_ground_contact.tres" id="33_ground_contact_profile"]
 [ext_resource type="Script" path="res://scripts/visuals/grace_locomotion_polish.gd" id="34_grace_locomotion"]
+[ext_resource type="Resource" path="res://data/render_quality/green_grotto_render_image_quality.tres" id="35_image_quality_profile"]
+[ext_resource type="Script" path="res://scripts/render_quality/render_image_quality_director.gd" id="36_image_quality"]
 
 [node name="PrototypeGreenGrottoArtTargetV1" type="Node3D" groups=["green_grotto_art_target", "environment_art_target", "lab_resource_regeneration"]]
 script = ExtResource("1_target")
@@ -291,6 +293,10 @@ box_projection = true
 [node name="GreenGrottoGroundContact" type="Node3D" parent="."]
 script = ExtResource("32_ground_contact")
 profile = ExtResource("33_ground_contact_profile")
+
+[node name="RenderImageQualityDirector" type="Node" parent="."]
+script = ExtResource("36_image_quality")
+profile = ExtResource("35_image_quality_profile")
 
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1.2, 16)

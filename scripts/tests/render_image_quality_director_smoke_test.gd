@@ -80,11 +80,11 @@ func _validate_quality_ladder(
 	director.synchronize_now()
 	_expect(viewport.use_taa, "Cinematic retains TAA")
 	_expect(viewport.screen_space_aa == Viewport.SCREEN_SPACE_AA_DISABLED, "Cinematic leaves screen-space AA disabled")
-	_expect(viewport.msaa_3d == Viewport.MSAA_2X, "Cinematic adds 2x MSAA for geometry edges")
+	_expect(viewport.msaa_3d == Viewport.MSAA_DISABLED, "Cinematic no longer stacks MSAA on top of TAA")
 	_expect(viewport.use_debanding, "Cinematic retains debanding")
 	var cinematic_data: Dictionary = director.get_debug_data()
 	_expect(str(cinematic_data.get("tier", "")) == "Cinematic", "Cinematic tier reports correctly")
-	_expect(str(cinematic_data.get("msaa_label", "")) == "2x", "Cinematic debug contract reports 2x MSAA")
+	_expect(str(cinematic_data.get("msaa_label", "")) == "Off", "Cinematic debug contract reports MSAA disabled")
 
 
 func _validate_restore(director: RenderImageQualityDirector) -> void:

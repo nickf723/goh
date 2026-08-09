@@ -4,6 +4,7 @@ class_name GreenGrottoGroundContactAdapter
 var tagged_surface_count: int = 0
 var tagged_counts: Dictionary = {}
 var retired_legacy_surface_contact_count: int = 0
+var benchmark_overlay_hidden_by_default: bool = false
 
 
 func _ready() -> void:
@@ -14,6 +15,7 @@ func _ready() -> void:
 func _finish_green_contact_setup() -> void:
 	_tag_scene_surfaces()
 	_retire_legacy_surface_contact()
+	_hide_visual_benchmark_overlay()
 
 
 func _tag_scene_surfaces() -> void:
@@ -47,6 +49,26 @@ func _retire_legacy_surface_contact() -> void:
 		"retired_legacy_surface_contact_count",
 		retired_legacy_surface_contact_count
 	)
+
+
+func _hide_visual_benchmark_overlay() -> void:
+	benchmark_overlay_hidden_by_default = false
+	if get_tree() == null:
+		return
+	var candidate: Node = get_tree().get_first_node_in_group(
+		"visual_benchmark_director"
+	)
+	if not candidate is VisualBenchmarkDirector:
+		# The benchmark is installed by the Green root at runtime. If sibling
+		# initialization order puts us first, retry once after the current frame.
+		call_deferred("_hide_visual_benchmark_overlay")
+		return
+	var benchmark: VisualBenchmarkDirector = candidate as VisualBenchmarkDirector
+	benchmark.overlay_enabled = false
+	if benchmark.panel != null:
+		benchmark.panel.visible = false
+	benchmark_overlay_hidden_by_default = true
+	set_meta("green_visual_benchmark_overlay_default_hidden", true)
 
 
 func _tag_recursive(node: Node) -> void:
@@ -93,4 +115,5 @@ func get_debug_data() -> Dictionary:
 	data["tags_collision_metadata_only"] = true
 	data["retired_legacy_surface_contact"] = retired_legacy_surface_contact_count
 	data["single_contact_visual_authority"] = true
+	data["benchmark_overlay_hidden_by_default"] = benchmark_overlay_hidden_by_default
 	return data

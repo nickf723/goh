@@ -1,0 +1,67 @@
+[gd_resource type="Resource" script_class="WaterPresentationProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/water/water_presentation_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_water"
+display_name = "Green Grotto Water"
+stream_shallow_color = Color(0.055, 0.42, 0.315, 0.72)
+stream_deep_color = Color(0.012, 0.115, 0.118, 0.88)
+stream_foam_color = Color(0.60, 0.82, 0.66, 0.76)
+stream_reflection_tint = Color(0.49, 0.70, 0.57, 1)
+stream_wave_amplitude = 0.018
+stream_wave_speed = 0.92
+stream_refraction_strength = 1.15
+stream_refraction_mix = 0.36
+stream_depth_tint_distance = 1.15
+stream_shoreline_depth = 0.28
+stream_shoreline_foam = 0.48
+stream_micro_wave_strength = 0.16
+stream_micro_wave_scale = 25.0
+stream_reflection_strength = 0.13
+stream_depth_alpha_strength = 0.08
+basin_shallow_color = Color(0.028, 0.245, 0.215, 0.76)
+basin_deep_color = Color(0.004, 0.052, 0.062, 0.93)
+basin_foam_color = Color(0.50, 0.72, 0.60, 0.72)
+basin_reflection_tint = Color(0.42, 0.60, 0.52, 1)
+basin_wave_amplitude = 0.012
+basin_wave_speed = 0.42
+basin_refraction_strength = 0.68
+basin_refraction_mix = 0.24
+basin_depth_tint_distance = 2.9
+basin_shoreline_depth = 0.38
+basin_shoreline_foam = 0.30
+basin_micro_wave_strength = 0.10
+basin_micro_wave_scale = 17.0
+basin_reflection_strength = 0.21
+basin_depth_alpha_strength = 0.17
+large_wave_scale = 0.78
+small_wave_scale = 2.65
+normal_strength = 0.34
+surface_emission = 0.012
+surface_roughness = 0.095
+surface_specular = 0.94
+fresnel_power = 3.6
+default_flow_speed = 0.72
+flow_band_scale = 32.0
+flow_band_strength = 0.16
+waterfall_body_color = Color(0.075, 0.36, 0.30, 0.64)
+waterfall_highlight_color = Color(0.54, 0.82, 0.67, 0.78)
+waterfall_foam_color = Color(0.70, 0.90, 0.75, 0.86)
+waterfall_shadow_color = Color(0.016, 0.085, 0.082, 0.60)
+waterfall_reflection_tint = Color(0.40, 0.62, 0.52, 1)
+waterfall_flow_speed = 1.22
+waterfall_streak_scale = 27.0
+waterfall_cross_streak_scale = 6.5
+waterfall_turbulence = 0.33
+waterfall_flutter_amplitude = 0.022
+waterfall_flutter_scale = 9.5
+waterfall_refraction_strength = 0.62
+waterfall_refraction_mix = 0.38
+waterfall_edge_foam = 0.52
+waterfall_terminal_foam = 0.70
+waterfall_fresnel_strength = 0.14
+waterfall_roughness = 0.13
+waterfall_specular = 0.80
+waterfall_emission = 0.020

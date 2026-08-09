@@ -25,7 +25,7 @@ func _ready() -> void:
 	_build_environment()
 	_configure_floor_materials()
 	_configure_player()
-	_connect_breakables()
+	_collect_breakables()
 	_build_labels()
 	_build_hud()
 	GameState.set_objective(
@@ -162,16 +162,11 @@ func _configure_player() -> void:
 	GameState.set_stat("stance", 50)
 
 
-func _connect_breakables() -> void:
+func _collect_breakables() -> void:
 	breakables.clear()
 	for raw: Node in get_tree().get_nodes_in_group("breakable"):
-		if not is_ancestor_of(raw):
-			continue
-		breakables.append(raw)
-		if raw.has_signal("broken"):
-			var callback: Callable = _on_breakable_broken.bind(raw)
-			if not raw.is_connected("broken", callback):
-				raw.connect("broken", callback)
+		if is_ancestor_of(raw):
+			breakables.append(raw)
 
 
 func _build_labels() -> void:
@@ -290,12 +285,6 @@ func _audio_summary(value: Variant) -> String:
 
 func _on_presentation_event(_event_type: String, data: Dictionary) -> void:
 	last_event = data.duplicate(true)
-
-
-func _on_breakable_broken(target: Node) -> void:
-	if director == null or not is_instance_valid(director):
-		return
-	director.present_break({"target": target})
 
 
 func _preview_next_profile() -> void:

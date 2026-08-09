@@ -18,22 +18,11 @@ func run_tests() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	_expect(
-		target is PrototypeGreenGrottoReflectionPass,
-		"Green Grotto installs Reflection Fidelity integration"
-	)
-	_expect(
-		str(target.get_meta("reflection_fidelity_authority", ""))
-		== "ReflectionFidelityDirector",
-		"Green declares ReflectionFidelityDirector authority"
-	)
+	_expect(target is PrototypeGreenGrottoReflectionPass, "Green Grotto installs Reflection Fidelity integration")
+	_expect(str(target.get_meta("reflection_fidelity_authority", "")) == "ReflectionFidelityDirector", "Green declares ReflectionFidelityDirector authority")
 
-	var director: ReflectionFidelityDirector3D = target.get_node_or_null(
-		"ReflectionFidelityDirector"
-	) as ReflectionFidelityDirector3D
-	var lighting: LightingDirector3D = target.get_node_or_null(
-		"LightingDirector"
-	) as LightingDirector3D
+	var director: ReflectionFidelityDirector3D = target.get_node_or_null("ReflectionFidelityDirector") as ReflectionFidelityDirector3D
+	var lighting: LightingDirector3D = target.get_node_or_null("LightingDirector") as LightingDirector3D
 	_expect(director != null, "ReflectionFidelityDirector exists")
 	_expect(lighting != null, "LightingDirector remains available")
 	if director != null and lighting != null:
@@ -112,7 +101,8 @@ func _validate_quality_tiers(
 	var cinematic: Dictionary = director.get_debug_data()
 	_expect(str(cinematic.get("tier", "")) == "Cinematic", "Cinematic reflection tier follows F7")
 	_expect(int(cinematic.get("active_probes", 0)) == 4, "Cinematic enables all four local reflection regions")
-	_expect(int(cinematic.get("shadowed_probes", 0)) == 4, "Cinematic reflection captures include shadows")
+	_expect(int(cinematic.get("shadowed_probes", -1)) == 0, "Cinematic probes stay shadow-free after the performance detox")
+	_expect(director.profile.maximum_capture_distance <= 56.0, "Cinematic capture distance stays bounded")
 
 
 func _validate_layer_coexistence(target: Node) -> void:

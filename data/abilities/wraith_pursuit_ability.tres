@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/death_wraith_projectile.tscn" id="1_scene"]
+[ext_resource type="Resource" path="res://data/damage_payloads/wraith_pursuit_payload.tres" id="2_payload"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
+
+[resource]
+script = ExtResource("3_definition")
+display_name = "Wraith Pursuit"
+description = "Fire a Death sigil that releases a pursuing spirit on contact. The wraith shadows its victim, repeatedly dives through them from changing angles, and deals damage only when its body crosses theirs."
+element = "death"
+category = 4
+mana_cost = 2
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "wraith_pursuit"
+short_label = "Wraith"
+icon_text = "WP"
+roles = Array[String](["damage", "summon", "pursuit", "persistent_damage", "single_target", "harassment"])
+targeting_style = "aimed"
+delivery_type = "projectile_spirit_pursuit"
+combo_tags = Array[String](["death", "spirit", "wraith", "pursuit", "pass_through", "persistent", "summon"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["projectile", "summon", "persistent_damage"])
+debug_tags = Array[String](["delivery_projectile", "target_bound_spirit", "segment_crossing_damage", "freed_target_safe"])
+scaling_stats = Array[String](["death", "arcana", "skill"])
+scaling_note = "Death can increase pass damage or the number of dives; Arcana can extend manifestation time; Skill can improve projectile acquisition without turning the wraith itself into a homing missile."
+design_notes = "The initial projectile deals no damage. On a valid hit it creates one scene-root wraith bound to that target. The wraith alternates stalking and high-speed pass-through dives, sending one small Death payload only when its movement segment intersects the target. A dead or freed target causes the spirit to dissolve safely."
+ability_scene = ExtResource("1_scene")
+action_payload = ExtResource("2_payload")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

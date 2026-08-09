@@ -1,0 +1,54 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_polish_studio.gd" id="1_studio"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="PackedScene" path="res://scenes/actors/enemies/hit_reaction_test_target.tscn" id="4_target"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/breakable_wooden_crate.tscn" id="5_wood"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/breakable_stone_urn.tscn" id="6_stone"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/breakable_metal_box.tscn" id="7_metal"]
+[ext_resource type="PackedScene" path="res://scenes/actors/interactables/breakable_glass_jar.tscn" id="8_glass"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="9_focus"]
+[ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator.gd" id="10_regen"]
+
+[node name="PrototypePolishStudioV1" type="Node3D" groups=["presentation_polish_studio", "lab_resource_regeneration"]]
+script = ExtResource("1_studio")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("9_focus")
+
+[node name="LabResourceRegenerator" type="Node" parent="."]
+script = ExtResource("10_regen")
+mana_per_second = 8.0
+stamina_per_second = 10.0
+focus_per_second = 8.0
+refill_on_ready = true
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1.1, 7.2)
+
+[node name="LightGremlin" parent="." instance=ExtResource("4_target")]
+position = Vector3(-4.3, 0, -2.2)
+profile = "light"
+
+[node name="ArmoredGoblin" parent="." instance=ExtResource("4_target")]
+position = Vector3(0, 0, -2.2)
+profile = "armored"
+
+[node name="UnstoppableBrute" parent="." instance=ExtResource("4_target")]
+position = Vector3(4.3, 0, -2.2)
+profile = "unstoppable"
+
+[node name="WoodCrate" parent="." instance=ExtResource("5_wood")]
+position = Vector3(-6.0, 0.02, -7.0)
+
+[node name="StoneUrn" parent="." instance=ExtResource("6_stone")]
+position = Vector3(-2.0, 0.02, -7.0)
+
+[node name="MetalBox" parent="." instance=ExtResource("7_metal")]
+position = Vector3(2.0, 0.02, -7.0)
+
+[node name="GlassJar" parent="." instance=ExtResource("8_glass")]
+position = Vector3(6.0, 0.02, -7.0)

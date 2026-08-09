@@ -1,0 +1,78 @@
+name: Death Hex
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/death_hex_projectile.gd"
+      - "scripts/actions/death_hex_curse.gd"
+      - "scripts/systems/reaction_state_policy.gd"
+      - "scripts/tests/death_hex_smoke_test.gd"
+      - "scenes/actions/death_hex_projectile.tscn"
+      - "scenes/actions/death_hex_curse.tscn"
+      - "scenes/tests/death_hex_smoke_test.tscn"
+      - "data/abilities/death_hex_ability.tres"
+      - "data/damage_payloads/death_hex_payload.tres"
+      - "data/loadouts/grace_starting_loadout.tres"
+      - ".github/workflows/death-hex-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: death-hex-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-death-hex:
+    name: Import, escalating curse, and Death spell library
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee death-hex-import.log
+
+      - name: Run Death Hex regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/death_hex_smoke_test.tscn 2>&1 | tee death-hex-test.log
+
+      - name: Run Wraith Pursuit regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/wraith_pursuit_smoke_test.tscn 2>&1 | tee wraith-test.log
+
+      - name: Run complete Focus library regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/complete_spell_library_smoke_test.tscn 2>&1 | tee complete-library-test.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: death-hex-logs
+          path: |
+            death-hex-import.log
+            death-hex-test.log
+            wraith-test.log
+            complete-library-test.log
+          if-no-files-found: ignore

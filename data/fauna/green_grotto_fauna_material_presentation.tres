@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="FaunaMaterialPresentationProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/fauna/fauna_material_presentation_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_fauna_materials"
+display_name = "Green Grotto Fauna Materials"
+texture_resolution = 128
+detail_seed = 90371
+normal_noise_frequency = 0.075
+balanced_normal_scale = 0.34
+cinematic_normal_scale = 0.52
+normal_bump_strength = 2.4
+balanced_hide_roughness_scale = 0.94
+cinematic_hide_roughness_scale = 0.86
+hide_backlight_color = Color(0.20, 0.30, 0.13, 1)
+cinematic_hide_backlight_strength = 0.08
+balanced_feather_roughness_scale = 0.90
+cinematic_feather_roughness_scale = 0.80
+feather_backlight_color = Color(0.46, 0.30, 0.10, 1)
+balanced_feather_backlight_strength = 0.10
+cinematic_feather_backlight_strength = 0.22
+balanced_accent_roughness_scale = 0.91
+cinematic_accent_roughness_scale = 0.82
+accent_backlight_color = Color(0.34, 0.25, 0.10, 1)
+cinematic_accent_backlight_strength = 0.10
+balanced_eye_roughness = 0.13
+cinematic_eye_roughness = 0.07
+cinematic_eye_metallic = 0.16
+maximum_shared_variants = 28

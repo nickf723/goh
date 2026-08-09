@@ -9,7 +9,7 @@ EnvironmentalMotionProfile + spatial Motion Zones + optional real AirflowManager
                                    ↓
                     EnvironmentalMotionDirector3D
                                    ↓
-          foliage / canopy / vines / water / waterfall transforms
+      foliage / canopy / vines / water / waterfall / Grace accessories
 ```
 
 The system is deliberately quiet. It is intended to add coordinated background motion, not spectacle.
@@ -20,6 +20,7 @@ The system is deliberately quiet. It is intended to add coordinated background m
 scripts/environmental_motion/environmental_motion_profile.gd
 scripts/environmental_motion/environmental_motion_zone_3d.gd
 scripts/environmental_motion/environmental_motion_director_3d.gd
+scripts/visuals/player_accessory_wind_response.gd
 ```
 
 ## Ownership boundary
@@ -31,6 +32,7 @@ Environmental Motion may:
 - bend foliage and hanging vines;
 - add tiny water-surface breathing;
 - vary waterfall ribbon width/position;
+- add a late, additive wind offset to Grace's existing sash/hair animation;
 - sample an existing `AirflowManager` so real wind fields can influence visual motion;
 - spatially vary ambient visual wind through motion zones.
 
@@ -39,6 +41,7 @@ Environmental Motion must not:
 - create ambient gameplay wind just to make foliage move;
 - apply force to Grace, enemies, rigid bodies, projectiles, or vehicles;
 - move collision geometry;
+- replace Grace's normal locomotion/action accessory animation;
 - decide weather gameplay;
 - decide traversal/combat state;
 - own fauna AI.
@@ -52,9 +55,10 @@ If an `AirflowManager` appears, the Director discovers it and samples `sample_to
 A useful example is Wind Well:
 
 1. the Green Grotto normally sways from visual ambient wind;
-2. Wind Well creates/registers a real airflow field through the existing airflow system;
-3. nearby enrolled foliage/vines receive that local airflow in addition to the ambient visual breeze;
-4. the existing airflow system remains the only gameplay-force authority.
+2. Grace's sash/hair receive a small additive offset from that same visual wind;
+3. Wind Well creates/registers a real airflow field through the existing airflow system;
+4. nearby enrolled foliage/vines and Grace's accessories receive that local airflow in addition to the ambient visual breeze;
+5. the existing airflow system remains the only gameplay-force authority.
 
 ## Green Grotto reference integration
 
@@ -83,6 +87,8 @@ Green enrolls clusters rather than individual leaf meshes:
 
 Rock, masonry, structural roots, railings, and collision scaffolding remain static.
 
+The integration also installs `PlayerAccessoryWindResponse` on Grace for the benchmark. This runs after the existing stylized actor pose layer and only adds a small directional sash/hair offset. In a scene with no Environmental Motion Director it contributes nothing.
+
 ### Spatial motion zones
 
 ```text
@@ -104,11 +110,11 @@ F6  Camera Director ON/OFF
 F7  Lighting quality tier
 ```
 
-F5 restores every enrolled target to the exact transform captured at registration, making the A/B comparison deterministic.
+F5 restores every enrolled environment target to the exact transform captured at registration, making the A/B comparison deterministic. Grace's additive accessory wind naturally decays toward zero while the Director is disabled.
 
 ## Performance approach
 
-The Director animates selected cluster roots, not every leaf mesh. Real airflow is sampled on a staggered interval and cached per target rather than queried every frame. Ambient wind remains procedural and cheap.
+The Director animates selected cluster roots, not every leaf mesh. Real airflow is sampled on a staggered interval and cached per environment target rather than queried every frame. Ambient wind remains procedural and cheap.
 
 ## Validation
 
@@ -122,6 +128,8 @@ The regression verifies:
 - foliage/canopy/vine/water target categories are present;
 - spatial zones create different motion intensity;
 - ambient motion changes enrolled presentation transforms;
-- disabling the Director restores exact authored transforms;
+- disabling the Director restores exact authored environment transforms;
+- Grace resolves sash/hair pivots and receives the same ambient visual wind;
 - Green creates no ambient gameplay AirflowManager;
-- a real AirflowManager/AirflowField can be discovered and sampled by the Director.
+- a real AirflowManager/AirflowField can be discovered and sampled by the Director;
+- real airflow also increases Grace's accessory-wind response.

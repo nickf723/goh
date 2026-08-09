@@ -2,6 +2,9 @@ extends Node
 class_name CombatFeedback
 
 const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
+const PresentationServiceScript = preload(
+	"res://scripts/presentation/presentation_service.gd"
+)
 
 const DAMAGE_COLOR: Color = Color(1.0, 0.82, 0.35, 1.0)
 const STANCE_COLOR: Color = Color(0.55, 0.82, 1.0, 1.0)
@@ -25,6 +28,31 @@ static func show_payload_feedback(target: Node, payload: DamagePayload, result: 
 
 	show_world_text(target, text, color, emphasis)
 	show_hit_burst(target, color, emphasis)
+	present_payload_impact(target, payload, result)
+
+
+static func present_payload_impact(
+	target: Node,
+	payload: DamagePayload,
+	result: Dictionary
+) -> void:
+	if target == null or payload == null or target.get_tree() == null:
+		return
+	var director: GamePresentationDirector = PresentationServiceScript.get_or_create(
+		target.get_tree()
+	)
+	if director == null:
+		return
+	director.present_impact({
+		"target": target,
+		"position": get_target_node_position(target) + Vector3.UP * 0.45,
+		"payload": payload,
+		"element": payload.element,
+		"damage": payload.amount,
+		"stance_damage": payload.stance_damage,
+		"result": result,
+		"source_name": payload.source_name,
+	})
 
 
 static func show_status_feedback(target: Node, status_name: String) -> void:
@@ -297,6 +325,10 @@ static func get_status_color(status_name: String) -> Color:
 			return ElementVisuals.get_element_color("sound")
 		"staggered":
 			return STANCE_COLOR
+		"rooted":
+			return Color(0.28, 0.88, 0.18, 1.0)
+		"hexed":
+			return Color(0.78, 0.08, 0.12, 1.0)
 		_:
 			return STATUS_COLOR
 
@@ -334,6 +366,10 @@ static func get_element_color(element: String) -> Color:
 			return Color(0.72, 0.72, 1.0, 1.0)
 		"poison":
 			return Color(0.48, 1.0, 0.22, 1.0)
+		"life":
+			return Color(0.28, 0.88, 0.18, 1.0)
+		"death":
+			return Color(0.78, 0.08, 0.12, 1.0)
 		"sound":
 			return Color(1.0, 0.43, 0.74, 1.0)
 		"space":

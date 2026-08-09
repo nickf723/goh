@@ -1,6 +1,6 @@
 [gd_scene load_steps=11 format=3]
 
-[ext_resource type="Script" path="res://scripts/levels/prototype_polish_studio.gd" id="1_studio"]
+[ext_resource type="Script" path="res://scripts/levels/prototype_polish_studio_spells.gd" id="1_studio"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="PackedScene" path="res://scenes/actors/enemies/hit_reaction_test_target.tscn" id="4_target"]

@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_payload")
 amount = 1
-stance_damage = 0
+stance_damage = 1
 element = "death"
 source_name = "Wraith Pursuit"
 hit_type = "spirit_pass"

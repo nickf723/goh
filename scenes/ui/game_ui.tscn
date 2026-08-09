@@ -55,6 +55,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("3_perf")
+toggle_key = 4194339
 
 [node name="ObjectiveLabel" type="Label" parent="." unique_id=787688870]
 anchors_preset = 1

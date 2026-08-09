@@ -17,6 +17,16 @@ class_name EnvironmentalMotionProfile
 @export_range(0.0, 1.0, 0.01) var systemic_airflow_scale: float = 0.22
 @export_range(0.02, 1.0, 0.01) var airflow_resample_interval: float = 0.14
 
+@export_group("Local Interaction")
+@export var local_interaction_enabled: bool = true
+@export_range(0.1, 20.0, 0.1) var interaction_response_smoothing: float = 10.0
+@export_range(0.0, 30.0, 0.1) var interaction_foliage_bend_degrees: float = 12.0
+@export_range(0.0, 30.0, 0.1) var interaction_vine_bend_degrees: float = 8.5
+@export_range(0.0, 0.35, 0.005) var interaction_foliage_displacement: float = 0.085
+@export_range(0.0, 0.35, 0.005) var interaction_vine_displacement: float = 0.045
+@export_range(0.0, 0.30, 0.005) var interaction_foliage_compression: float = 0.055
+@export_range(0.0, 2.5, 0.01) var interaction_strength_scale: float = 1.0
+
 @export_group("Vegetation")
 @export_range(0.0, 18.0, 0.1) var foliage_sway_degrees: float = 5.2
 @export_range(0.0, 8.0, 0.1) var foliage_flutter_degrees: float = 1.35
@@ -44,4 +54,7 @@ func get_debug_data() -> Dictionary:
 		"systemic_airflow_scale": systemic_airflow_scale,
 		"reference_wind_speed": reference_wind_speed,
 		"maximum_visual_wind_speed": maximum_visual_wind_speed,
+		"local_interaction_enabled": local_interaction_enabled,
+		"interaction_foliage_bend_degrees": interaction_foliage_bend_degrees,
+		"interaction_vine_bend_degrees": interaction_vine_bend_degrees,
 	}

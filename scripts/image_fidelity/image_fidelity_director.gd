@@ -31,6 +31,11 @@ func _ready() -> void:
 		_apply_quality(_current_quality())
 
 
+func _exit_tree() -> void:
+	if initialized:
+		_restore_original_state()
+
+
 func _process(_delta: float) -> void:
 	if not enabled or not initialized:
 		return
@@ -144,5 +149,6 @@ func get_debug_data() -> Dictionary:
 		"performance_is_raw": true,
 		"balanced_temporal_aa": true,
 		"cinematic_temporal_plus_msaa": true,
+		"restores_on_exit": true,
 		"gameplay_authority": false,
 	}

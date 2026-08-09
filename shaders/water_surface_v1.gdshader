@@ -49,7 +49,7 @@ varying vec2 world_planar;
 float linear_depth(float raw_depth, vec2 screen_uv) {
  vec3 ndc = vec3(screen_uv * 2.0 - 1.0, raw_depth);
  vec4 view = INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
- view.xyz /= max(abs(view.w), 0.00001);
+ view.xyz /= view.w;
  return max(-view.z, 0.0);
 }
 

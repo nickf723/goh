@@ -56,7 +56,7 @@ func _validate_director(director: LightingDirector3D) -> void:
 	if director.environment != null:
 		_expect(director.environment.tonemap_mode == Environment.TONE_MAPPER_FILMIC, "Director keeps filmic tonemapping")
 		_expect(director.environment.sdfgi_cascades == 3, "Green cinematic profile uses three SDFGI cascades")
-		_expect(director.environment.ssr_max_steps == 72, "Green cinematic profile publishes SSR step budget")
+		_expect(director.environment.ssr_max_steps == 56, "Green cinematic profile uses the detoxed SSR step budget")
 
 
 func _validate_zone_sampling(director: LightingDirector3D) -> void:
@@ -65,9 +65,11 @@ func _validate_zone_sampling(director: LightingDirector3D) -> void:
 	var shrine_state: Dictionary = director.sample_state_at(Vector3(0.0, 4.0, -15.0))
 
 	_expect(float(entrance_state.get("sun_energy", 99.0)) < 1.3, "entrance zone lowers direct sun")
-	_expect(float(canopy_state.get("sun_energy", 0.0)) > 1.65, "canopy break strengthens direct sun")
+	var canopy_energy: float = float(canopy_state.get("sun_energy", 0.0))
+	_expect(canopy_energy > 1.20 and canopy_energy < 1.55, "canopy break is a controlled warm focal key instead of a second sun")
+	_expect(float(canopy_state.get("sun_volumetric_energy", 99.0)) < 1.10, "canopy break keeps volumetric sun energy restrained")
 	_expect(float(canopy_state.get("tonemap_exposure", 2.0)) < 0.92, "canopy break reins in exposure")
-	_expect(float(shrine_state.get("sun_energy", 0.0)) > 1.5, "shrine restores warm focal key")
+	_expect(float(shrine_state.get("sun_energy", 0.0)) > 1.5, "shrine retains its authored warm focal key")
 	_expect(float(shrine_state.get("ambient_energy", 2.0)) < 0.50, "shrine reduces ambient flattening")
 
 	var active: Array[String] = director.active_zone_ids

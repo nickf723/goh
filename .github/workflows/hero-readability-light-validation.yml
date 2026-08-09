@@ -1,0 +1,67 @@
+name: Hero Readability Light
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/character_presentation/hero_readability_light_*.gd"
+      - "data/character_presentation/grace_readability_light.tres"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "scripts/tests/hero_readability_light_director_smoke_test.gd"
+      - "scenes/tests/hero_readability_light_director_smoke_test.tscn"
+      - "docs/HERO_READABILITY_LIGHT_V1.md"
+      - ".github/workflows/hero-readability-light-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hero-readability-light-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-hero-readability-light:
+    name: Import, private-layer contract, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee hero-readability-import.log
+
+      - name: Run Hero Readability regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/hero_readability_light_director_smoke_test.tscn 2>&1 | tee hero-readability-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee hero-readability-green-boot.log
+
+      - name: Upload readability logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hero-readability-light-logs
+          path: |
+            hero-readability-import.log
+            hero-readability-test.log
+            hero-readability-green-boot.log
+          if-no-files-found: ignore

@@ -190,6 +190,7 @@ func _apply_horizontal_parameters(
 	material.set_shader_parameter("micro_wave_scale", profile.stream_micro_wave_scale if is_stream else profile.basin_micro_wave_scale)
 	material.set_shader_parameter("micro_wave_speed", (profile.stream_wave_speed if is_stream else profile.basin_wave_speed) * 1.15)
 	material.set_shader_parameter("depth_alpha_strength", profile.stream_depth_alpha_strength if is_stream else profile.basin_depth_alpha_strength)
+	material.set_shader_parameter("world_space_flow", 1.0)
 
 
 func _apply_waterfall_parameters(material: ShaderMaterial) -> void:
@@ -237,6 +238,7 @@ func get_debug_data() -> Dictionary:
 		"waterfall_shader": WaterfallShader.resource_path,
 		"depth_aware": true,
 		"screen_refraction": true,
+		"world_space_horizontal_flow": true,
 		"physics_authority": false,
 		"restored_target_count": restored_target_count,
 	}

@@ -1,10 +1,17 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=13 format=3]
 
-[ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_hero_surface_finish.gd" id="1_target"]
+[ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_lighting_pass.gd" id="1_target"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
 [ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator.gd" id="5_regen"]
+[ext_resource type="Script" path="res://scripts/lighting/lighting_director_3d.gd" id="6_director"]
+[ext_resource type="Script" path="res://scripts/lighting/lighting_zone_3d.gd" id="7_zone"]
+[ext_resource type="Resource" path="res://data/lighting/green_grotto_base.tres" id="8_base"]
+[ext_resource type="Resource" path="res://data/lighting/green_grotto_entrance.tres" id="9_entrance"]
+[ext_resource type="Resource" path="res://data/lighting/green_grotto_canopy_break.tres" id="10_canopy"]
+[ext_resource type="Resource" path="res://data/lighting/green_grotto_waterfall.tres" id="11_waterfall"]
+[ext_resource type="Resource" path="res://data/lighting/green_grotto_shrine.tres" id="12_shrine"]
 
 [node name="PrototypeGreenGrottoArtTargetV1" type="Node3D" groups=["green_grotto_art_target", "environment_art_target", "lab_resource_regeneration"]]
 script = ExtResource("1_target")
@@ -20,6 +27,71 @@ mana_per_second = 8.0
 stamina_per_second = 10.0
 focus_per_second = 8.0
 refill_on_ready = true
+
+[node name="LightingDirector" type="Node3D" parent="."]
+script = ExtResource("6_director")
+default_profile = ExtResource("8_base")
+channel = "green_grotto"
+quality = 2
+transition_seconds = 1.15
+
+[node name="EntranceShadowZone" type="Node3D" parent="."]
+position = Vector3(0, 2.5, 12.5)
+script = ExtResource("7_zone")
+profile = ExtResource("9_entrance")
+channel = "green_grotto"
+priority = 10
+zone_extents = Vector3(7, 5, 6.8)
+blend_distance = 4.0
+
+[node name="CanopyBreakZone" type="Node3D" parent="."]
+position = Vector3(0, 3.5, 1.5)
+script = ExtResource("7_zone")
+profile = ExtResource("10_canopy")
+channel = "green_grotto"
+priority = 20
+zone_extents = Vector3(5.5, 5.5, 7)
+blend_distance = 4.2
+local_fog_density = 0.006
+local_fog_color = Color(0.68, 0.53, 0.27, 1)
+local_fog_edge_fade = 0.62
+
+[node name="WaterfallZone" type="Node3D" parent="."]
+position = Vector3(5.8, -1, -9)
+script = ExtResource("7_zone")
+profile = ExtResource("11_waterfall")
+channel = "green_grotto"
+priority = 30
+zone_extents = Vector3(4.8, 6.5, 5.2)
+blend_distance = 3.2
+local_fog_density = 0.015
+local_fog_color = Color(0.26, 0.58, 0.48, 1)
+local_fog_emission = Color(0.005, 0.025, 0.02, 1)
+local_fog_edge_fade = 0.58
+accent_light_enabled = true
+accent_light_offset = Vector3(0, -1, 0)
+accent_light_color = Color(0.08, 0.55, 0.43, 1)
+accent_light_energy = 0.85
+accent_light_range = 9.5
+accent_light_volumetric_energy = 1.35
+
+[node name="ShrineZone" type="Node3D" parent="."]
+position = Vector3(0, 4, -15)
+script = ExtResource("7_zone")
+profile = ExtResource("12_shrine")
+channel = "green_grotto"
+priority = 40
+zone_extents = Vector3(7.5, 5.5, 7)
+blend_distance = 4.5
+local_fog_density = 0.004
+local_fog_color = Color(0.58, 0.48, 0.25, 1)
+local_fog_edge_fade = 0.7
+accent_light_enabled = true
+accent_light_offset = Vector3(0, 1.5, -1.5)
+accent_light_color = Color(1, 0.43, 0.12, 1)
+accent_light_energy = 1.45
+accent_light_range = 12.5
+accent_light_volumetric_energy = 1.15
 
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1.2, 16)

@@ -357,7 +357,7 @@ func get_debug_data() -> Dictionary:
 	)
 	data["retired_duplicate_surfaces"] = retired_duplicate_surface_count
 	data["duplicate_surface_sweeps"] = duplicate_surface_sweep_count
-	data["duplicate_surface_node_checks"] = duplicate_surface_node_check_count
+	data["duplicate_surface_node_checks"] = duplicate_surface_node_checks
 	data["duplicate_surface_listener"] = duplicate_surface_listener_connected
 	data["per_frame_duplicate_tree_scan"] = false
 	data["mode_property_writes"] = mode_property_write_count

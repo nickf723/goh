@@ -3,11 +3,17 @@ class_name GreenGrottoGroundContactAdapter
 
 var tagged_surface_count: int = 0
 var tagged_counts: Dictionary = {}
+var retired_legacy_surface_contact_count: int = 0
 
 
 func _ready() -> void:
 	super._ready()
-	call_deferred("_tag_scene_surfaces")
+	call_deferred("_finish_green_contact_setup")
+
+
+func _finish_green_contact_setup() -> void:
+	_tag_scene_surfaces()
+	_retire_legacy_surface_contact()
 
 
 func _tag_scene_surfaces() -> void:
@@ -21,6 +27,27 @@ func _tag_scene_surfaces() -> void:
 		return
 	_tag_recursive(environment_root)
 	set_meta("green_grotto_contact_surfaces_tagged", tagged_surface_count)
+
+
+func _retire_legacy_surface_contact() -> void:
+	retired_legacy_surface_contact_count = 0
+	if get_tree() == null:
+		return
+	for candidate: Node in get_tree().get_nodes_in_group(
+		"surface_contact_presentation_director"
+	):
+		if candidate == self or not is_instance_valid(candidate):
+			continue
+		if candidate.has_method("set_enabled"):
+			candidate.call("set_enabled", false)
+		elif "enabled" in candidate:
+			candidate.set("enabled", false)
+		candidate.set_meta("retired_by_ground_contact_presentation", true)
+		retired_legacy_surface_contact_count += 1
+	set_meta(
+		"retired_legacy_surface_contact_count",
+		retired_legacy_surface_contact_count
+	)
 
 
 func _tag_recursive(node: Node) -> void:
@@ -65,4 +92,6 @@ func get_debug_data() -> Dictionary:
 	data["tagged_surfaces"] = tagged_surface_count
 	data["tagged_counts"] = tagged_counts.duplicate(true)
 	data["tags_collision_metadata_only"] = true
+	data["retired_legacy_surface_contact"] = retired_legacy_surface_contact_count
+	data["single_contact_visual_authority"] = true
 	return data

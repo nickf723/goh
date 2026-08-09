@@ -34,6 +34,7 @@ default_profile = ExtResource("8_base")
 channel = "green_grotto"
 quality = 2
 transition_seconds = 1.15
+debug_hotkeys_enabled = true
 
 [node name="EntranceShadowZone" type="Node3D" parent="."]
 position = Vector3(0, 2.5, 12.5)

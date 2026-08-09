@@ -5,7 +5,7 @@ const SAMPLE_RATE: int = 22050
 const MAX_LIVE_PLAYERS: int = 20
 
 var stream_cache: Dictionary = {}
-var live_players: Array[AudioStreamPlayer3D] = []
+var live_players: Array[WeakRef] = []
 var cue_counts: Dictionary = {}
 var last_cue_id: String = "none"
 
@@ -31,9 +31,11 @@ func play_cue(
 
 	_cleanup_players()
 	while live_players.size() >= MAX_LIVE_PLAYERS:
-		var oldest: AudioStreamPlayer3D = live_players.pop_front()
-		if oldest != null and is_instance_valid(oldest):
-			oldest.queue_free()
+		var oldest_ref: WeakRef = live_players.pop_front()
+		var oldest_value: Variant = oldest_ref.get_ref() if oldest_ref != null else null
+		if typeof(oldest_value) == TYPE_OBJECT and is_instance_valid(oldest_value):
+			if oldest_value is Node:
+				(oldest_value as Node).queue_free()
 
 	var player := AudioStreamPlayer3D.new()
 	player.name = "PresentationCue_" + normalized
@@ -48,7 +50,7 @@ func play_cue(
 		return {}
 	scene_root.add_child(player)
 	player.global_position = world_position
-	live_players.append(player)
+	live_players.append(weakref(player))
 	player.play()
 	var duration: float = get_cue_duration(normalized) / maxf(player.pitch_scale, 0.1)
 	get_tree().create_timer(duration + 0.08, true, false, true).timeout.connect(
@@ -203,10 +205,18 @@ func _deterministic_noise(index: int, salt: int) -> float:
 
 
 func _cleanup_players() -> void:
-	var valid: Array[AudioStreamPlayer3D] = []
-	for player: AudioStreamPlayer3D in live_players:
-		if player != null and is_instance_valid(player) and not player.is_queued_for_deletion():
-			valid.append(player)
+	var valid: Array[WeakRef] = []
+	for player_ref: WeakRef in live_players:
+		if player_ref == null:
+			continue
+		var player_value: Variant = player_ref.get_ref()
+		if typeof(player_value) != TYPE_OBJECT or not is_instance_valid(player_value):
+			continue
+		if not player_value is AudioStreamPlayer3D:
+			continue
+		var player := player_value as AudioStreamPlayer3D
+		if not player.is_queued_for_deletion():
+			valid.append(player_ref)
 	live_players = valid
 
 
@@ -219,4 +229,5 @@ func get_debug_data() -> Dictionary:
 		"live_players": live_players.size(),
 		"last_cue": last_cue_id,
 		"cue_counts": cue_counts.duplicate(true),
+		"temporary_players_use_weak_refs": true,
 	}

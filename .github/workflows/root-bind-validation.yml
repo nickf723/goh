@@ -29,7 +29,7 @@ concurrency:
 
 jobs:
   validate-root-bind:
-    name: Import, enemy roots, utility pinning, and compact Focus
+    name: Import, precise aim, visible prop wrapping, enemy roots, and utility pinning
     runs-on: ubuntu-latest
     timeout-minutes: 18
 

@@ -26,6 +26,7 @@ func run_tests() -> void:
 	if director != null:
 		_validate_director(director)
 		_validate_zone_sampling(director)
+		_validate_quality_tiers(director)
 
 	_validate_zones(target)
 	_validate_legacy_light_retirement(target)
@@ -44,6 +45,8 @@ func _validate_director(director: LightingDirector3D) -> void:
 	_expect(str(data.get("sun", "")) == "CanopySunset", "Director resolves authored sunset key")
 	_expect(str(data.get("fill", "")) == "GrottoGreenFill", "Director resolves authored green fill")
 	_expect(bool(data.get("camera_attributes", false)), "Director installs practical camera exposure attributes")
+	_expect(bool(data.get("debug_hotkeys", false)), "Green art target enables lighting comparison hotkey")
+	_expect(str(data.get("quality_label", "")) == "Cinematic", "Green art target starts in Cinematic lighting quality")
 	_expect(bool(data.get("sdfgi", false)), "Cinematic tier enables SDFGI")
 	_expect(bool(data.get("ssil", false)), "Cinematic tier enables SSIL")
 	_expect(bool(data.get("ssr", false)), "Cinematic tier enables SSR")
@@ -74,6 +77,39 @@ func _validate_zone_sampling(director: LightingDirector3D) -> void:
 			found_shrine = true
 			break
 	_expect(found_shrine, "sampling shrine reports shrine zone activity")
+
+
+func _validate_quality_tiers(director: LightingDirector3D) -> void:
+	if director.environment == null:
+		_expect(false, "quality test has an Environment")
+		return
+
+	director.set_quality(LightingDirector3D.Quality.PERFORMANCE)
+	var performance_data: Dictionary = director.get_debug_data()
+	_expect(str(performance_data.get("quality_label", "")) == "Performance", "Performance tier publishes its label")
+	_expect(not bool(performance_data.get("sdfgi", true)), "Performance tier disables SDFGI")
+	_expect(not bool(performance_data.get("ssil", true)), "Performance tier disables SSIL")
+	_expect(not bool(performance_data.get("ssr", true)), "Performance tier disables SSR")
+	_expect(not bool(performance_data.get("volumetric_fog", true)), "Performance tier disables global volumetric fog")
+	_expect(director.environment.ssao_enabled, "Performance tier retains inexpensive depth grounding through SSAO")
+
+	director.set_quality(LightingDirector3D.Quality.BALANCED)
+	var balanced_data: Dictionary = director.get_debug_data()
+	_expect(str(balanced_data.get("quality_label", "")) == "Balanced", "Balanced tier publishes its label")
+	_expect(bool(balanced_data.get("sdfgi", false)), "Balanced tier restores SDFGI")
+	_expect(bool(balanced_data.get("ssil", false)), "Balanced tier restores SSIL")
+	_expect(not bool(balanced_data.get("ssr", true)), "Balanced tier keeps SSR disabled")
+	_expect(bool(balanced_data.get("volumetric_fog", false)), "Balanced tier restores volumetric fog")
+	_expect(director.environment.sdfgi_cascades <= 2, "Balanced tier reduces SDFGI cascade cost")
+
+	director.set_quality(LightingDirector3D.Quality.CINEMATIC)
+	var cinematic_data: Dictionary = director.get_debug_data()
+	_expect(str(cinematic_data.get("quality_label", "")) == "Cinematic", "Cinematic tier publishes its label")
+	_expect(bool(cinematic_data.get("sdfgi", false)), "Cinematic tier restores full SDFGI")
+	_expect(bool(cinematic_data.get("ssil", false)), "Cinematic tier restores SSIL")
+	_expect(bool(cinematic_data.get("ssr", false)), "Cinematic tier restores SSR")
+	_expect(bool(cinematic_data.get("volumetric_fog", false)), "Cinematic tier restores volumetric fog")
+	_expect(director.environment.sdfgi_cascades == 3, "Cinematic tier restores full Green SDFGI cascade count")
 
 
 func _validate_zones(target: Node) -> void:

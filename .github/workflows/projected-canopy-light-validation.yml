@@ -1,0 +1,67 @@
+name: Projected Canopy Light
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/lighting/projected_canopy_light_*.gd"
+      - "data/lighting/green_grotto_projected_canopy_light.tres"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "scripts/tests/projected_canopy_light_director_smoke_test.gd"
+      - "scenes/tests/projected_canopy_light_director_smoke_test.tscn"
+      - "docs/PROJECTED_CANOPY_LIGHT_V1.md"
+      - ".github/workflows/projected-canopy-light-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: projected-canopy-light-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-projected-canopy-light:
+    name: Import, dapple contract, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee projected-canopy-import.log
+
+      - name: Run Projected Canopy Light regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/projected_canopy_light_director_smoke_test.tscn 2>&1 | tee projected-canopy-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee projected-canopy-green-boot.log
+
+      - name: Upload projected canopy logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: projected-canopy-light-logs
+          path: |
+            projected-canopy-import.log
+            projected-canopy-test.log
+            projected-canopy-green-boot.log
+          if-no-files-found: ignore

@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="AbilityDefinition" format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/actions/generic_projectile.tscn" id="1_scene"]
+[ext_resource type="PackedScene" path="res://scenes/actions/death_hex_projectile.tscn" id="1_scene"]
 [ext_resource type="Resource" path="res://data/damage_payloads/death_hex_payload.tres" id="2_payload"]
 [ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
 [ext_resource type="Resource" path="res://data/ability_trait_profiles/control_projectile_profile.tres" id="4_profile"]
@@ -8,18 +8,18 @@
 [resource]
 script = ExtResource("3_definition")
 display_name = "Death Hex"
-description = "Decay projectile that poisons over time."
+description = "Launch a curse sigil that marks one victim with escalating decay. The hex begins with weak health-draining pulses, then withers harder the longer it survives. Recasting refreshes the same curse without stacking copies."
 element = "death"
 mana_cost = 1
 trait_profile = ExtResource("4_profile")
 spell_id = "death_hex"
 short_label = "Hex"
-icon_text = "D"
-roles = Array[String](["debuff", "damage_over_time", "control"])
-combo_tags = Array[String](["death", "decay", "curse", "poisoned"])
-status_tags = Array[String](["poisoned"])
-ui_tags = Array[String](["dot", "debuff"])
-debug_tags = Array[String](["prototype", "death_projectile"])
-design_notes = "Death gets a prototype curse using the existing poisoned status until we build true decay/necrosis logic."
+icon_text = "DH"
+roles = Array[String](["debuff", "curse", "persistent_damage", "single_target", "health_decay", "setup"])
+combo_tags = Array[String](["death", "hexed", "decay", "curse", "persistent", "health_decay"])
+status_tags = Array[String](["hexed"])
+ui_tags = Array[String](["curse", "persistent_damage", "single_target"])
+debug_tags = Array[String](["escalating_decay", "single_instance_per_target", "direct_health_damage", "custom_curse_runtime"])
+design_notes = "The projectile is delivery only. On contact it attaches one DeathHexCurse controller to the target. Pulses escalate 1→1→2→2→3 health damage, bypassing stance as bodily decay. Recasting refreshes the existing curse and preserves its current decay stage rather than stacking multiple curse nodes."
 ability_scene = ExtResource("1_scene")
 action_payload = ExtResource("2_payload")

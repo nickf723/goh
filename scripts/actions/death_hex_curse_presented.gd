@@ -19,8 +19,14 @@ func bind_to_target(
 		duration
 	)
 	if bound:
-		_present_hex_phase("sustain", "curse_active", 0.24, true)
+		call_deferred("_emit_initial_sustain")
 	return bound
+
+
+func _emit_initial_sustain() -> void:
+	if released or not is_inside_tree():
+		return
+	_present_hex_phase("sustain", "curse_active", 0.24, true)
 
 
 func refresh_hex(
@@ -80,4 +86,5 @@ func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["presentation_sustain"] = true
 	data["presentation_decay_pulses"] = true
+	data["manifest_precedes_sustain"] = true
 	return data

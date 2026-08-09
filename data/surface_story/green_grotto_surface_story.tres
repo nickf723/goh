@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SurfaceStoryProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/surface_story/surface_story_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_surface_story"
+display_name = "Green Grotto Surface Story"
+texture_resolution = 128
+global_intensity = 0.9
+distance_fade_begin = 32.0
+distance_fade_length = 18.0
+normal_fade = 0.76
+floor_projection_depth = 0.16
+wall_projection_depth = 0.24
+crack_intensity = 0.92
+moss_intensity = 0.86
+wet_intensity = 0.96
+grime_intensity = 0.68
+wear_intensity = 0.58
+carving_intensity = 0.66

@@ -131,9 +131,12 @@ func begin_ground_targeting(
 ) -> bool:
 	var started: bool = super.begin_ground_targeting(player, ability, ground_spell)
 	if started:
+		var fallback_spell_key: String = ""
+		if ability != null:
+			fallback_spell_key = ability.get_spell_id()
 		_present_ability_phase("prepare", ability, player, _null_position(), 0.0, {
 			"ground_targeting": true,
-			"spell_key": str(ground_spell.get("spell_key", ability.get_spell_id() if ability != null else "")),
+			"spell_key": str(ground_spell.get("spell_key", fallback_spell_key)),
 		})
 	return started
 

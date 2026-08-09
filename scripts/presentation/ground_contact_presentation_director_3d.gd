@@ -249,11 +249,11 @@ func _particle_count(
 		return maxi(int(round(float(authored) * density * impact_scale)), 0)
 	match family:
 		"soil":
-		authored = profile.soil_footstep_particles
+			authored = profile.soil_footstep_particles
 		"wet":
-		authored = profile.wet_footstep_particles
+			authored = profile.wet_footstep_particles
 		_:
-		authored = profile.stone_footstep_particles
+			authored = profile.stone_footstep_particles
 	return maxi(int(round(float(authored) * density)), 0)
 
 
@@ -296,6 +296,11 @@ func _spawn_burst(
 		if event_type == "landing"
 		else profile.footstep_velocity_scale
 	)
+	var local_origin: Vector3 = world_position
+	var velocity_basis: Basis = Basis.IDENTITY
+	if contact_multimesh_instance != null:
+		local_origin = contact_multimesh_instance.to_local(world_position)
+		velocity_basis = contact_multimesh_instance.global_basis.inverse()
 	for particle_index: int in range(count):
 		var slot: int = next_particle_index % particle_states.size()
 		next_particle_index = (next_particle_index + 1) % particle_states.size()
@@ -309,11 +314,12 @@ func _spawn_burst(
 		elif family == "soil":
 			horizontal_speed *= 1.08
 			upward_speed *= 1.10
-		var velocity := Vector3(
+		var world_velocity := Vector3(
 			cos(angle) * horizontal_speed,
 			upward_speed,
 			sin(angle) * horizontal_speed
 		) * event_velocity_scale * lerpf(0.72, 1.25, strength)
+		var velocity: Vector3 = velocity_basis * world_velocity
 		var lifetime: float = lerpf(0.26, profile.maximum_lifetime, _rand01(seed + 4))
 		if family == "wet":
 			lifetime *= 0.72
@@ -322,13 +328,14 @@ func _spawn_burst(
 			size *= lerpf(1.0, 1.35, strength)
 		var color: Color = base_color
 		color.a *= lerpf(0.72, 1.0, _rand01(seed + 6))
+		var world_jitter := Vector3(
+			cos(angle) * 0.08,
+			0.025,
+			sin(angle) * 0.08
+		)
 		particle_states[slot] = {
 			"active": true,
-			"position": world_position + Vector3(
-				cos(angle) * 0.08,
-				0.025,
-				sin(angle) * 0.08
-			),
+			"position": local_origin + velocity_basis * world_jitter,
 			"velocity": velocity,
 			"age": 0.0,
 			"lifetime": lifetime,
@@ -437,6 +444,7 @@ func get_debug_data() -> Dictionary:
 		"last_surface": last_surface,
 		"last_event_type": last_event_type,
 		"pooled_multimesh": true,
+		"transform_safe_pool": true,
 		"raycasts_on_semantic_events_only": true,
 		"follows_lighting_quality": true,
 		"collision_unchanged": true,

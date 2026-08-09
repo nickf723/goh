@@ -33,7 +33,7 @@ F7 is the shared quality spine. It controls more than Lighting Director itself:
 - Grace material quality;
 - environment detail visibility ranges;
 - surface-contact density;
-- final-image TAA / MSAA / debanding / specular-aliasing policy.
+- final-image MSAA / debanding / specular-aliasing policy.
 
 ## Whole-stack presets
 
@@ -42,6 +42,8 @@ F9  BASELINE → BALANCED → HERO
 F10 Benchmark HUD ON/OFF
 F11 Five-second performance capture
 ```
+
+The benchmark HUD starts hidden so normal play and screenshot review show the production presentation. F10 restores the full renderer telemetry whenever it is needed.
 
 ### BASELINE
 
@@ -61,11 +63,11 @@ F11 Five-second performance capture
 - ambient fauna acting on;
 - Lighting/Shadow quality = Balanced;
 - three local reflection probes;
-- reduced-density entrance/canopy/waterfall atmosphere;
+- roughly 23 visible entrance/canopy/waterfall atmosphere instances;
 - Balanced Grace material variants;
 - Balanced detail visibility ranges;
 - three contact pieces per footstep and seven per landing;
-- TAA + debanding + screen-space roughness limiting, without extra 3D MSAA.
+- non-temporal 2x 3D MSAA + debanding + screen-space roughness limiting.
 
 ### HERO
 
@@ -73,11 +75,13 @@ F11 Five-second performance capture
 - ambient fauna acting on;
 - Lighting/Shadow quality = Cinematic;
 - all four reflection regions;
-- all 460 authored atmosphere instances;
+- roughly 46 visible atmosphere instances across all four authored fields;
 - Cinematic Grace skin/hair/cloth/metal/leather presentation;
 - longest visual-LOD ranges;
 - five contact pieces per footstep and eleven per landing;
-- TAA + 2x 3D MSAA + debanding + stronger screen-space roughness limiting.
+- non-temporal 2x 3D MSAA + debanding + stronger screen-space roughness limiting.
+
+The Green Grotto no longer uses TAA in Balanced or HERO. Camera motion was producing enough temporal softness to read as motion blur, so the current art target favors crisp geometry and stable presentation over temporal accumulation.
 
 Manual F1-F7 changes are still supported. Once a named preset no longer matches, the benchmark HUD reports `CUSTOM`.
 
@@ -94,12 +98,24 @@ The Green scene installs a development-only `VisualBenchmarkDirector` overlay. I
 - active reflection-probe count;
 - visible atmosphere-instance count;
 - managed visual-LOD target count;
-- final image mode (`RAW`, `TAA`, or `TAA+2x`);
+- final image mode (`RAW` or `2x MSAA` for the current Green presets);
 - Grace material quality tier;
 - current footstep contact-piece budget;
 - ambient fauna actor state.
 
-The overlay is not part of the production HUD.
+The overlay is not part of the production HUD and starts hidden by default.
+
+## Readability atmosphere contract
+
+Green still authors 460 deterministic atmosphere candidates, but only a small subset is rendered at once:
+
+```text
+Performance   0%
+Balanced      6% on Balanced-eligible fields
+Cinematic    10% on all fields
+```
+
+The atmosphere director also reserves a `1.35 m` clear radius around the active gameplay camera and fades motes back in over the next `1.75 m`. Nearby billboards therefore cannot balloon into large soft discs that cover Grace, the path, or the destination.
 
 ## Recommended visual test route
 
@@ -110,19 +126,20 @@ Use HERO for the first unstructured playthrough, then repeat the same observatio
 Watch for:
 
 - sheltered/cool lighting transition;
-- dust motes and dry foot contacts;
+- sparse dust motes and dry foot contacts;
 - nearby foliage reacting physically when Grace brushes through it;
-- the arrival raptor watching Grace before retreating at close distance.
+- the arrival raptor watching Grace before retreating at close distance;
+- no large atmosphere billboard crossing the immediate camera bubble.
 
 ### Canopy / causeway
 
 Watch for:
 
 - transmitted sunset light through foliage;
-- pollen revealing the air volume and visual wind;
+- sparse pollen revealing the air volume and visual wind without obscuring the route;
 - shadow grounding on Grace, roots and paving;
 - material microdetail under grazing light;
-- reduced shimmer/crawling on thin leaves and railings in Balanced/HERO;
+- crisp thin leaves and railings while the camera moves in Balanced/HERO;
 - far detail disappearing only once it is no longer useful to the composition.
 
 ### Waterfall
@@ -133,7 +150,7 @@ Watch for:
 - refraction/depth tint/shoreline response on horizontal water;
 - cool local reflection capture;
 - localized mist and damp foot/landing presentation;
-- steadier specular water highlights in TAA-enabled tiers;
+- stable water and geometry edges without temporal smearing;
 - motion wind affecting mist and nearby vegetation without inventing gameplay force.
 
 ### Shrine court
@@ -154,6 +171,7 @@ For useful F11 measurements, keep camera position, viewing direction, resolution
 Recommended sequence:
 
 ```text
+F10 if benchmark telemetry is needed
 F9 until BASELINE
 wait 2 seconds
 F11
@@ -178,7 +196,7 @@ The five-second capture records:
 - average draw calls;
 - average rendered primitives.
 
-The purpose is not to crown HERO automatically. A feature that costs substantial frame time but creates no meaningful visual gain should be tuned down or removed. In particular, HERO's additional 2x MSAA should survive only if the moving image looks meaningfully calmer than Balanced TAA alone.
+The purpose is not to crown HERO automatically. A feature that costs substantial frame time but creates no meaningful visual gain should be tuned down or removed.
 
 ## Ownership boundaries
 
@@ -187,6 +205,7 @@ The visual lab deliberately keeps presentation separate from gameplay truth.
 Examples:
 
 - atmospheric motes may reveal air movement but cannot create airflow force;
+- the camera readability bubble only changes presentation scale;
 - wet decals or damp contact mist do not make a surface slippery;
 - foliage interaction can bend presentation transforms but never collision;
 - reflection regions describe image-based lighting volumes, not gameplay rooms;

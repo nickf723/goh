@@ -66,20 +66,20 @@ A small soft alpha texture is generated at runtime in Godot and shared as the sh
 
 ## F7 quality contract
 
-Atmospheric Detail has no independent benchmark key. The authored pools stay intact, but the visible presentation budget is deliberately small:
+Atmospheric Detail has no independent benchmark key. The authored pools stay intact, but the visible presentation budget is intentionally tiny so particles read as depth rather than foreground decoration:
 
 ```text
 Performance   0% density
-Balanced      6% density on Balanced-eligible fields
-Cinematic    10% density on all four fields
+Balanced      3% density on Balanced-eligible fields
+Cinematic     5% density on all four fields
 ```
 
 This means the existing F9 benchmark presets automatically include the correct atmosphere cost through their F7 tier:
 
 ```text
 BASELINE → no atmosphere
-BALANCED → roughly 23 visible entrance/canopy/waterfall motes
-HERO → roughly 46 visible motes across all four fields
+BALANCED → roughly 12 visible entrance/canopy/waterfall motes
+HERO → roughly 24–25 visible motes across all four fields
 ```
 
 ## Camera readability bubble
@@ -87,8 +87,8 @@ HERO → roughly 46 visible motes across all four fields
 Green Grotto reserves a presentation-only clear zone around the active gameplay camera:
 
 ```text
-clear radius   1.35 m
-fade distance  1.75 m
+clear radius   2.0 m
+fade distance  2.5 m
 ```
 
 Motes inside the clear radius scale to zero. They ease back to authored size across the fade distance. This prevents a nearby billboard from becoming a giant soft bokeh blob while preserving atmosphere deeper in the composition.
@@ -136,8 +136,8 @@ The regression verifies:
 - runtime-generated soft texture;
 - camera-safe presentation fading;
 - Performance = 0 visible instances;
-- Balanced = roughly 23 visible instances and no shrine field;
-- Cinematic = roughly 46 visible instances across all four fields;
+- Balanced = roughly 12 visible instances and no shrine field;
+- Cinematic = roughly 24–25 visible instances across all four fields;
 - atmospheric transforms drift over time;
 - Environmental Motion is available as the wind source;
 - no gameplay authority is introduced.

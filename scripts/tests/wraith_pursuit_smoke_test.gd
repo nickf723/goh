@@ -12,6 +12,9 @@ const StartingLoadout: AbilityLoadout = preload(
 const ProjectileScene: PackedScene = preload(
 	"res://scenes/actions/death_wraith_projectile.tscn"
 )
+const SpiritScene: PackedScene = preload(
+	"res://scenes/actions/death_pursuer_spirit.tscn"
+)
 const HitReceiverScript: Script = preload(
 	"res://scripts/combat/hit_receiver.gd"
 )
@@ -123,8 +126,7 @@ func validate_freed_target_contract() -> void:
 	add_child(source)
 	var target := _make_health_target("ShortLivedWraithTarget", 3)
 	add_child(target)
-	var spirit_scene: PackedScene = preload("res://scenes/actions/death_pursuer_spirit.tscn")
-	var spirit: DeathPursuerSpirit = spirit_scene.instantiate() as DeathPursuerSpirit
+	var spirit: DeathPursuerSpirit = SpiritScene.instantiate() as DeathPursuerSpirit
 	add_child(spirit)
 	await get_tree().process_frame
 	_expect(spirit.configure(target, source, WraithPayload, Vector3.FORWARD), "spirit accepts a live target")
@@ -184,7 +186,9 @@ func _make_health_target(target_name: String, health: int) -> CharacterBody3D:
 
 func _get_first_spirit() -> DeathPursuerSpirit:
 	for raw: Node in get_tree().get_nodes_in_group("death_pursuer_spirits"):
-		if raw is DeathPursuerSpirit and is_instance_valid(raw):
+		if not is_instance_valid(raw):
+			continue
+		if raw is DeathPursuerSpirit:
 			return raw as DeathPursuerSpirit
 	return null
 

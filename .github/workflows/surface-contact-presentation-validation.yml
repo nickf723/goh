@@ -1,0 +1,67 @@
+name: Surface Contact Presentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/surface_contact/**"
+      - "data/surface_contact/**"
+      - "scripts/levels/prototype_green_grotto_reflection_pass.gd"
+      - "scripts/tests/surface_contact_presentation_smoke_test.gd"
+      - "scenes/tests/surface_contact_presentation_smoke_test.tscn"
+      - "docs/SURFACE_CONTACT_PRESENTATION_V1.md"
+      - ".github/workflows/surface-contact-presentation-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: surface-contact-presentation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-surface-contact:
+    name: Import, surface-contact contract, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee surface-contact-import.log
+
+      - name: Run surface contact regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/surface_contact_presentation_smoke_test.tscn 2>&1 | tee surface-contact-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee surface-contact-green-boot.log
+
+      - name: Upload surface contact logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surface-contact-logs
+          path: |
+            surface-contact-import.log
+            surface-contact-test.log
+            surface-contact-green-boot.log
+          if-no-files-found: ignore

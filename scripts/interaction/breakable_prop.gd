@@ -5,6 +5,10 @@ signal cracked
 signal broken
 signal reset_completed
 
+const PresentationServiceScript = preload(
+	"res://scripts/presentation/presentation_service.gd"
+)
+
 @export_group("Component Paths")
 @export var hit_receiver_path: NodePath = NodePath("HitReceiver")
 @export var visual_anchor_path: NodePath = NodePath("VisualAnchor")
@@ -18,6 +22,7 @@ signal reset_completed
 @export var hit_wobble_time: float = 0.16
 @export var crack_scale_pulse: float = 1.08
 @export var auto_reset_seconds: float = 4.0
+@export_enum("auto", "wood", "stone", "metal", "glass", "flesh", "soft") var presentation_material: String = "auto"
 
 @export_group("Fragments")
 @export var fragment_material: Material
@@ -156,7 +161,8 @@ func break_prop() -> void:
 	set_visual_state(false, false)
 	set_collision_enabled(false)
 	spawn_fragments()
-	GameFeedback.play("heavy_impact", {"source": name})
+	if not _present_break():
+		GameFeedback.play("heavy_impact", {"source": name})
 	broken.emit()
 
 	if auto_reset_seconds > 0.0:
@@ -166,6 +172,45 @@ func break_prop() -> void:
 				if scheduled_generation == reset_generation:
 					reset_prop()
 		)
+
+
+func _present_break() -> bool:
+	if get_tree() == null:
+		return false
+	var director: GamePresentationDirector = PresentationServiceScript.get_or_create(
+		get_tree()
+	)
+	if director == null:
+		return false
+	director.present_break({
+		"target": self,
+		"material": get_presentation_material(),
+		"position": global_position + Vector3.UP * 0.55,
+	})
+	return true
+
+
+func get_presentation_material() -> String:
+	var configured: String = presentation_material.strip_edges().to_lower()
+	if configured not in ["", "auto"]:
+		return configured
+
+	var tag_component: Node = get_node_or_null("TagComponent")
+	if tag_component != null:
+		var tags_value: Variant = tag_component.get("tags")
+		if tags_value is Array:
+			for raw_tag: Variant in tags_value as Array:
+				var tag: String = str(raw_tag).strip_edges().to_lower()
+				match tag:
+					"wood", "wooden":
+						return "wood"
+					"stone", "rock":
+						return "stone"
+					"metal", "metallic", "iron", "steel", "copper":
+						return "metal"
+					"glass", "crystal":
+						return "glass"
+	return "auto"
 
 
 func reset_prop() -> void:
@@ -374,4 +419,6 @@ func get_debug_data() -> Dictionary:
 		"state": "broken" if is_broken else ("cracked" if is_cracked else "intact"),
 		"fragments": live_fragment_count,
 		"auto_reset": auto_reset_seconds,
+		"presentation_material": get_presentation_material(),
+		"presentation_directed": true,
 	}

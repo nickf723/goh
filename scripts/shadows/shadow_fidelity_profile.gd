@@ -30,6 +30,7 @@ class_name ShadowFidelityProfile
 @export_range(0.0, 1.0, 0.01) var balanced_shadow_opacity: float = 0.98
 @export_range(0.0, 40.0, 0.5) var balanced_pancake_size: float = 10.0
 @export var balanced_accent_shadows: bool = false
+@export var balanced_four_splits: bool = true
 
 @export_group("Cinematic")
 @export var cinematic_directional_atlas_size: int = 8192
@@ -44,6 +45,7 @@ class_name ShadowFidelityProfile
 @export_range(0.0, 1.0, 0.01) var cinematic_shadow_opacity: float = 1.0
 @export_range(0.0, 40.0, 0.5) var cinematic_pancake_size: float = 7.0
 @export var cinematic_accent_shadows: bool = true
+@export var cinematic_four_splits: bool = true
 
 @export_group("PSSM")
 @export_range(0.01, 0.4, 0.01) var split_1: float = 0.08
@@ -84,7 +86,11 @@ func get_tier(quality: int) -> Dictionary:
 				"atlas": balanced_directional_atlas_size,
 				"positional_atlas": balanced_positional_atlas_size,
 				"filter": balanced_filter_quality,
-				"mode": DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS,
+				"mode": (
+					DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+					if balanced_four_splits
+					else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+				),
 				"distance": balanced_shadow_distance,
 				"fade_start": balanced_fade_start,
 				"bias": balanced_bias,
@@ -93,7 +99,7 @@ func get_tier(quality: int) -> Dictionary:
 				"angular_distance": balanced_angular_distance,
 				"opacity": balanced_shadow_opacity,
 				"pancake": balanced_pancake_size,
-				"blend_splits": blend_splits_balanced,
+				"blend_splits": blend_splits_balanced if balanced_four_splits else false,
 				"accent_shadows": balanced_accent_shadows,
 				"double_sided_close": balanced_double_sided_close_foliage,
 				"double_sided_canopy": false,
@@ -103,7 +109,11 @@ func get_tier(quality: int) -> Dictionary:
 				"atlas": cinematic_directional_atlas_size,
 				"positional_atlas": cinematic_positional_atlas_size,
 				"filter": cinematic_filter_quality,
-				"mode": DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS,
+				"mode": (
+					DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+					if cinematic_four_splits
+					else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+				),
 				"distance": cinematic_shadow_distance,
 				"fade_start": cinematic_fade_start,
 				"bias": cinematic_bias,
@@ -112,7 +122,7 @@ func get_tier(quality: int) -> Dictionary:
 				"angular_distance": cinematic_angular_distance,
 				"opacity": cinematic_shadow_opacity,
 				"pancake": cinematic_pancake_size,
-				"blend_splits": blend_splits_cinematic,
+				"blend_splits": blend_splits_cinematic if cinematic_four_splits else false,
 				"accent_shadows": cinematic_accent_shadows,
 				"double_sided_close": true,
 				"double_sided_canopy": cinematic_double_sided_canopy,

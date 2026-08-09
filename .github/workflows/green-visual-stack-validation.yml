@@ -1,0 +1,125 @@
+name: Green Visual Stack
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/lighting/**"
+      - "scripts/camera/**"
+      - "scripts/environmental_motion/**"
+      - "scripts/surface_story/**"
+      - "scripts/material_fidelity/**"
+      - "scripts/water/**"
+      - "scripts/vegetation/**"
+      - "scripts/shadows/**"
+      - "scripts/reflections/**"
+      - "scripts/atmosphere/**"
+      - "scripts/character_presentation/**"
+      - "scripts/visual_lod/**"
+      - "scripts/surface_contact/**"
+      - "scripts/environment/green_grotto_fauna_visual.gd"
+      - "scripts/environment/green_grotto_fauna_ambient_behavior.gd"
+      - "scripts/levels/prototype_green_grotto_*.gd"
+      - "scripts/testing/visual_benchmark_director.gd"
+      - "data/lighting/**"
+      - "data/camera/**"
+      - "data/environmental_motion/**"
+      - "data/surface_story/**"
+      - "data/material_fidelity/**"
+      - "data/water/**"
+      - "data/vegetation/**"
+      - "data/shadows/**"
+      - "data/reflections/**"
+      - "data/atmosphere/**"
+      - "data/character_presentation/**"
+      - "data/visual_lod/**"
+      - "data/surface_contact/**"
+      - "shaders/water_surface_v1.gdshader"
+      - "shaders/waterfall_surface_v1.gdshader"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "scripts/tests/*green_grotto*smoke_test.gd"
+      - "scripts/tests/*director_smoke_test.gd"
+      - "scripts/tests/environmental_interaction_smoke_test.gd"
+      - "scripts/tests/atmospheric_detail_smoke_test.gd"
+      - "scripts/tests/grace_material_presentation_smoke_test.gd"
+      - "scripts/tests/surface_contact_presentation_smoke_test.gd"
+      - "scenes/tests/*green_grotto*smoke_test.tscn"
+      - "scenes/tests/*director_smoke_test.tscn"
+      - "scenes/tests/environmental_interaction_smoke_test.tscn"
+      - "scenes/tests/atmospheric_detail_smoke_test.tscn"
+      - "scenes/tests/grace_material_presentation_smoke_test.tscn"
+      - "scenes/tests/surface_contact_presentation_smoke_test.tscn"
+      - "docs/GREEN_GROTTO_VISUAL_LAB_V1.md"
+      - "docs/VISUAL_BENCHMARK_DIRECTOR_V1.md"
+      - ".github/workflows/green-visual-stack-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: green-visual-stack-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-green-visual-stack:
+    name: Import, visual contracts, and assembled Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Cold import project
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee green-visual-stack-import.log
+
+      - name: Run Green visual stack regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          tests=(
+            "green_grotto_art_target_smoke_test"
+            "lighting_director_smoke_test"
+            "camera_director_smoke_test"
+            "environmental_motion_director_smoke_test"
+            "environmental_interaction_smoke_test"
+            "atmospheric_detail_smoke_test"
+            "green_grotto_fauna_ambient_behavior_smoke_test"
+            "grace_material_presentation_smoke_test"
+            "visual_lod_director_smoke_test"
+            "surface_contact_presentation_smoke_test"
+            "visual_benchmark_director_smoke_test"
+          )
+          : > green-visual-stack-tests.log
+          for test_name in "${tests[@]}"; do
+            echo "===== ${test_name} =====" | tee -a green-visual-stack-tests.log
+            godot --headless --path . "res://scenes/tests/${test_name}.tscn" 2>&1 | tee -a green-visual-stack-tests.log
+          done
+
+      - name: Boot fully assembled Green visual lab
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 10 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee green-visual-stack-boot.log
+
+      - name: Upload Green visual stack logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: green-visual-stack-logs
+          path: |
+            green-visual-stack-import.log
+            green-visual-stack-tests.log
+            green-visual-stack-boot.log
+          if-no-files-found: ignore

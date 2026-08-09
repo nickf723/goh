@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_lighting_pass.gd" id="1_target"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
@@ -12,6 +12,9 @@
 [ext_resource type="Resource" path="res://data/lighting/green_grotto_canopy_break.tres" id="10_canopy"]
 [ext_resource type="Resource" path="res://data/lighting/green_grotto_waterfall.tres" id="11_waterfall"]
 [ext_resource type="Resource" path="res://data/lighting/green_grotto_shrine.tres" id="12_shrine"]
+[ext_resource type="Resource" path="res://data/camera/grace_exploration_camera.tres" id="13_camera_profile"]
+[ext_resource type="Script" path="res://scripts/camera/camera_director_3d.gd" id="14_camera_director"]
+[ext_resource type="Script" path="res://scripts/camera/camera_zone_3d.gd" id="15_camera_zone"]
 
 [node name="PrototypeGreenGrottoArtTargetV1" type="Node3D" groups=["green_grotto_art_target", "environment_art_target", "lab_resource_regeneration"]]
 script = ExtResource("1_target")
@@ -93,6 +96,48 @@ accent_light_color = Color(1, 0.43, 0.12, 1)
 accent_light_energy = 1.45
 accent_light_range = 12.5
 accent_light_volumetric_energy = 1.15
+
+[node name="CameraDirector" type="Node3D" parent="."]
+script = ExtResource("14_camera_director")
+profile = ExtResource("13_camera_profile")
+channel = "green_grotto_camera"
+debug_hotkeys_enabled = true
+
+[node name="CausewayVistaCameraZone" type="Node3D" parent="."]
+position = Vector3(0, 2.8, 1.2)
+script = ExtResource("15_camera_zone")
+channel = "green_grotto_camera"
+priority = 10
+zone_extents = Vector3(6.2, 5.2, 7.5)
+blend_distance = 4.2
+distance_offset = 0.55
+fov_offset = 1.4
+pivot_height_offset = 0.08
+lead_scale = 0.82
+
+[node name="WaterfallCameraZone" type="Node3D" parent="."]
+position = Vector3(5.4, 1.0, -8.5)
+script = ExtResource("15_camera_zone")
+channel = "green_grotto_camera"
+priority = 20
+zone_extents = Vector3(4.5, 5.5, 5.2)
+blend_distance = 3.2
+distance_offset = 0.35
+fov_offset = 0.8
+pivot_height_offset = 0.10
+lead_scale = 0.78
+
+[node name="ShrineThresholdCameraZone" type="Node3D" parent="."]
+position = Vector3(0, 3.5, -14.5)
+script = ExtResource("15_camera_zone")
+channel = "green_grotto_camera"
+priority = 30
+zone_extents = Vector3(7.2, 5.5, 6.2)
+blend_distance = 4.4
+distance_offset = -0.28
+fov_offset = -1.1
+pivot_height_offset = 0.10
+lead_scale = 0.62
 
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1.2, 16)

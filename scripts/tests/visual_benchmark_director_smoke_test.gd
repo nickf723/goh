@@ -14,7 +14,7 @@ func _ready() -> void:
 func run_tests() -> void:
 	var target: Node = GreenScene.instantiate()
 	add_child(target)
-	for _index: int in range(5):
+	for _index: int in range(6):
 		await get_tree().process_frame
 
 	var benchmark: VisualBenchmarkDirector = target.get_node_or_null(
@@ -42,11 +42,17 @@ func _validate_contract(benchmark: VisualBenchmarkDirector) -> void:
 	_expect(bool(data.get("f10_overlay_toggle", false)), "F10 overlay toggle is part of the contract")
 	_expect(bool(data.get("f11_timed_capture", false)), "F11 timed capture is part of the contract")
 	_expect(bool(data.get("baseline_disables_f1_f6", false)), "baseline explicitly disables F1-F6 presentation layers")
+	_expect(int(data.get("ambient_fauna_count", 0)) == 4, "benchmark discovers all four ambient fauna behavior adapters")
+	_expect(benchmark.atmosphere != null, "benchmark resolves F7-linked atmospheric detail")
+	_expect(benchmark.character_materials != null, "benchmark resolves F7-linked Grace material presentation")
+	_expect(benchmark.visual_lod != null, "benchmark resolves F7-linked visual LOD")
+	_expect(benchmark.surface_contact != null, "benchmark resolves F7-linked surface contact presentation")
 	_expect(benchmark.panel != null and benchmark.status_label != null, "benchmark installs its development-only status readout")
 
 
 func _validate_baseline(benchmark: VisualBenchmarkDirector) -> void:
 	benchmark.apply_preset(VisualBenchmarkDirector.PRESET_BASELINE)
+	await get_tree().process_frame
 	await get_tree().process_frame
 	_expect(not benchmark.vegetation.enabled, "Baseline disables vegetation presentation")
 	_expect(not benchmark.water.enabled, "Baseline disables water presentation")
@@ -55,27 +61,50 @@ func _validate_baseline(benchmark: VisualBenchmarkDirector) -> void:
 	_expect(not benchmark.motion.enabled, "Baseline disables environmental motion")
 	_expect(not benchmark.camera_director.enabled, "Baseline restores the authored camera")
 	_expect(benchmark.lighting.quality == LightingDirector3D.Quality.PERFORMANCE, "Baseline selects Performance lighting")
+	_expect(benchmark.call("_all_ambient_fauna_disabled"), "Baseline disables ambient fauna acting")
+	for behavior: GreenGrottoFaunaAmbientBehavior in benchmark.ambient_fauna:
+		_expect(behavior.fauna != null and behavior.fauna.animate_creature, "Baseline hands fauna back to the original simple animator")
 	if benchmark.reflections != null:
 		benchmark.reflections.synchronize_now()
-		_expect(int(benchmark.reflections.get_debug_data().get("active_probes", -1)) == 0, "Baseline also collapses local reflection probes")
-	_expect(str(benchmark.get_debug_data().get("matched_preset", "")) == "BASELINE", "Baseline is detected exactly")
+		_expect(int(benchmark.reflections.get_debug_data().get("active_probes", -1)) == 0, "Baseline collapses local reflection probes")
+	if benchmark.atmosphere != null:
+		_expect(int(benchmark.atmosphere.get_debug_data().get("visible_instances", -1)) == 0, "Baseline removes micro-atmosphere instances")
+	if benchmark.character_materials != null:
+		_expect(int(benchmark.character_materials.get_debug_data().get("quality", -1)) == 0, "Baseline restores original Grace material tier")
+	if benchmark.surface_contact != null:
+		_expect(benchmark.call("_contact_footstep_count") == 0, "Baseline disables micro surface-contact pieces")
+	var data: Dictionary = benchmark.get_debug_data()
+	_expect(bool(data.get("baseline_restores_legacy_fauna", false)), "Baseline debug contract records legacy fauna restoration")
+	_expect(str(data.get("matched_preset", "")) == "BASELINE", "Baseline is detected exactly")
 
 
 func _validate_balanced(benchmark: VisualBenchmarkDirector) -> void:
 	benchmark.apply_preset(VisualBenchmarkDirector.PRESET_BALANCED)
 	await get_tree().process_frame
+	await get_tree().process_frame
 	_expect(_all_presentation_enabled(benchmark), "Balanced enables all F1-F6 presentation systems")
+	_expect(benchmark.call("_all_ambient_fauna_enabled"), "Balanced enables ambient fauna acting")
+	for behavior: GreenGrottoFaunaAmbientBehavior in benchmark.ambient_fauna:
+		_expect(behavior.fauna != null and not behavior.fauna.animate_creature, "Balanced retires the legacy fauna animator")
 	_expect(benchmark.lighting.quality == LightingDirector3D.Quality.BALANCED, "Balanced selects Balanced lighting")
 	if benchmark.reflections != null:
 		benchmark.reflections.synchronize_now()
 		_expect(int(benchmark.reflections.get_debug_data().get("active_probes", 0)) == 3, "Balanced includes three local reflection regions")
+	if benchmark.atmosphere != null:
+		var atmosphere_count: int = int(benchmark.atmosphere.get_debug_data().get("visible_instances", 0))
+		_expect(atmosphere_count >= 180 and atmosphere_count <= 195, "Balanced reports reduced atmosphere density")
+	if benchmark.character_materials != null:
+		_expect(int(benchmark.character_materials.get_debug_data().get("quality", -1)) == 1, "Balanced reports Grace material quality 1")
+	_expect(benchmark.call("_contact_footstep_count") == 3, "Balanced reports three contact pieces per footstep")
 	_expect(str(benchmark.get_debug_data().get("matched_preset", "")) == "BALANCED", "Balanced is detected exactly")
 
 
 func _validate_hero(benchmark: VisualBenchmarkDirector) -> void:
 	benchmark.apply_preset(VisualBenchmarkDirector.PRESET_HERO)
 	await get_tree().process_frame
+	await get_tree().process_frame
 	_expect(_all_presentation_enabled(benchmark), "Hero enables all F1-F6 presentation systems")
+	_expect(benchmark.call("_all_ambient_fauna_enabled"), "Hero enables ambient fauna acting")
 	_expect(benchmark.lighting.quality == LightingDirector3D.Quality.CINEMATIC, "Hero selects Cinematic lighting")
 	if benchmark.reflections != null:
 		benchmark.reflections.synchronize_now()
@@ -83,6 +112,13 @@ func _validate_hero(benchmark: VisualBenchmarkDirector) -> void:
 	if benchmark.shadows != null:
 		benchmark.shadows.synchronize_now()
 		_expect(str(benchmark.shadows.get_debug_data().get("tier", "")) == "Cinematic", "Hero synchronizes Cinematic shadow fidelity")
+	if benchmark.atmosphere != null:
+		_expect(int(benchmark.atmosphere.get_debug_data().get("visible_instances", 0)) == 460, "Hero reports all 460 atmosphere instances")
+	if benchmark.character_materials != null:
+		_expect(int(benchmark.character_materials.get_debug_data().get("quality", -1)) == 2, "Hero reports Cinematic Grace material quality")
+	if benchmark.visual_lod != null:
+		_expect(int(benchmark.visual_lod.get_debug_data().get("quality", -1)) == 2, "Hero reports Cinematic visual LOD tier")
+	_expect(benchmark.call("_contact_footstep_count") == 5, "Hero reports five contact pieces per footstep")
 	_expect(str(benchmark.get_debug_data().get("matched_preset", "")) == "HERO", "Hero is detected exactly")
 
 

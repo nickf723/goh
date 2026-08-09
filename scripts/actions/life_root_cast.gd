@@ -7,7 +7,7 @@ const RootBindingScene: PackedScene = preload(
 
 @export_group("Targeting")
 @export_range(2.0, 40.0, 0.5) var maximum_range: float = 18.0
-@export_range(5.0, 80.0, 1.0) var soft_aim_angle_degrees: float = 24.0
+@export_range(3.0, 45.0, 1.0) var soft_aim_angle_degrees: float = 13.0
 @export_range(1.0, 2000.0, 1.0) var maximum_rigidbody_mass: float = 520.0
 @export var require_line_of_sight: bool = true
 
@@ -18,6 +18,7 @@ const RootBindingScene: PackedScene = preload(
 var source_actor: Node3D = null
 var last_target: Node3D = null
 var last_target_kind: String = "none"
+var last_target_source: String = "none"
 
 
 func _ready() -> void:
@@ -25,7 +26,7 @@ func _ready() -> void:
 
 
 func set_source_actor(actor: Node) -> void:
-	if actor is Node3D:
+	if actor is Node3D and is_instance_valid(actor as Node3D):
 		source_actor = actor as Node3D
 
 
@@ -39,7 +40,7 @@ func execute(player: Node3D, cast_direction: Vector3) -> void:
 	var result: Dictionary = find_root_target(cast_direction)
 	var target: Node3D = _valid_node3d_reference(result.get("target"))
 	if target == null:
-		show_message("Roots found nothing they can bind.")
+		show_message("Aim Root Bind at an enemy or movable object.")
 		queue_free()
 		return
 
@@ -50,6 +51,7 @@ func execute(player: Node3D, cast_direction: Vector3) -> void:
 
 	last_target = target
 	last_target_kind = "object" if target is RigidBody3D else "enemy"
+	last_target_source = str(result.get("source", "unknown"))
 	var duration: float = object_duration if target is RigidBody3D else enemy_duration
 	if bind_target(target, duration):
 		show_message("Roots bind " + get_target_display_name(target) + ".")
@@ -83,20 +85,24 @@ func find_root_target(cast_direction: Vector3) -> Dictionary:
 
 	var hard_target: Node3D = get_hard_target()
 	if hard_target != null and can_root_target(hard_target):
-		return {"target": hard_target, "source": "hard_lock"}
+		if _target_is_in_range(hard_target):
+			return {"target": hard_target, "source": "hard_lock"}
 
 	var direct: Dictionary = raycast_camera_target()
 	if not direct.is_empty():
 		return direct
 
+	var direction: Vector3 = _resolve_cast_direction(cast_direction)
+	if direction.length_squared() <= 0.0001:
+		return {}
+
 	var assist: Node = source_actor.get_node_or_null("CombatTargetingAssist")
 	if assist != null and is_instance_valid(assist):
 		var soft_target: Node3D = _valid_node3d_reference(assist.get("soft_target"))
-		if soft_target != null and can_root_target(soft_target):
-			if not require_line_of_sight or has_line_of_sight(soft_target):
-				return {"target": soft_target, "source": "soft_assist"}
+		if soft_target != null and _candidate_matches_aim(soft_target, direction):
+			return {"target": soft_target, "source": "soft_assist"}
 
-	return scan_enemy_target(cast_direction)
+	return scan_aimed_targets(direction)
 
 
 func raycast_camera_target() -> Dictionary:
@@ -121,44 +127,87 @@ func raycast_camera_target() -> Dictionary:
 	if hit.is_empty():
 		return {}
 	var candidate: Node3D = resolve_root_target(hit.get("collider") as Node)
-	if candidate == null or not can_root_target(candidate):
+	if candidate == null or not can_root_target(candidate) or not _target_is_in_range(candidate):
 		return {}
-	return {"target": candidate, "source": "direct"}
+	return {"target": candidate, "source": "camera_center"}
 
 
-func scan_enemy_target(cast_direction: Vector3) -> Dictionary:
-	var origin: Vector3 = get_cast_origin()
+func scan_aimed_targets(cast_direction: Vector3) -> Dictionary:
+	var world: World3D = source_actor.get_world_3d()
+	if world == null:
+		return {}
+	var direction: Vector3 = _resolve_cast_direction(cast_direction)
+	if direction.length_squared() <= 0.0001:
+		return {}
+
+	var sphere := SphereShape3D.new()
+	sphere.radius = maximum_range
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = sphere
+	query.transform = Transform3D(Basis.IDENTITY, source_actor.global_position)
+	query.collide_with_areas = true
+	query.collide_with_bodies = true
+	query.exclude = get_source_collision_exclusions()
+
+	var rows: Array[Dictionary] = []
+	var seen: Dictionary = {}
+	for hit: Dictionary in world.direct_space_state.intersect_shape(query, 96):
+		var candidate: Node3D = resolve_root_target(hit.get("collider") as Node)
+		if candidate == null or not is_instance_valid(candidate):
+			continue
+		var candidate_id: int = candidate.get_instance_id()
+		if seen.has(candidate_id):
+			continue
+		seen[candidate_id] = true
+		if not _candidate_matches_aim(candidate, direction):
+			continue
+
+		var point: Vector3 = get_target_point(candidate)
+		var offset: Vector3 = point - get_cast_origin()
+		var distance: float = maxf(offset.length(), 0.001)
+		var aim_dot: float = direction.dot(offset / distance)
+		var score: float = (1.0 - aim_dot) * 42.0 + distance / maximum_range
+		rows.append({"target": candidate, "score": score})
+
+	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a.get("score", INF)) < float(b.get("score", INF))
+	)
+	if rows.is_empty():
+		return {}
+	return {"target": rows[0].get("target"), "source": "narrow_aim_assist"}
+
+
+func _candidate_matches_aim(target: Node3D, cast_direction: Vector3) -> bool:
+	if target == null or not is_instance_valid(target) or not can_root_target(target):
+		return false
+	var point: Vector3 = get_target_point(target)
+	var offset: Vector3 = point - get_cast_origin()
+	var distance: float = offset.length()
+	if distance <= 0.1 or distance > maximum_range:
+		return false
+	var direction: Vector3 = cast_direction.normalized()
+	if direction.length_squared() <= 0.0001:
+		return false
+	var minimum_dot: float = cos(deg_to_rad(soft_aim_angle_degrees))
+	if direction.dot(offset / distance) < minimum_dot:
+		return false
+	if require_line_of_sight and not has_line_of_sight(target):
+		return false
+	return true
+
+
+func _resolve_cast_direction(cast_direction: Vector3) -> Vector3:
 	var direction: Vector3 = cast_direction
 	if direction.length_squared() <= 0.0001:
 		var camera: Camera3D = source_actor.get_viewport().get_camera_3d()
 		direction = -camera.global_basis.z if camera != null else -source_actor.global_basis.z
-	if direction.length_squared() <= 0.0001:
-		return {}
-	direction = direction.normalized()
-	var minimum_dot: float = cos(deg_to_rad(soft_aim_angle_degrees))
-	var best_target: Node3D = null
-	var best_score: float = INF
+	return direction.normalized() if direction.length_squared() > 0.0001 else Vector3.ZERO
 
-	for raw_candidate: Node in get_tree().get_nodes_in_group("enemy"):
-		var candidate: Node3D = _valid_node3d_reference(raw_candidate)
-		if candidate == null or not can_root_target(candidate):
-			continue
-		var point: Vector3 = get_target_point(candidate)
-		var offset: Vector3 = point - origin
-		var distance: float = offset.length()
-		if distance <= 0.1 or distance > maximum_range:
-			continue
-		var dot: float = direction.dot(offset.normalized())
-		if dot < minimum_dot:
-			continue
-		if require_line_of_sight and not has_line_of_sight(candidate):
-			continue
-		var score: float = (1.0 - dot) * 18.0 + distance / maximum_range
-		if score < best_score:
-			best_score = score
-			best_target = candidate
 
-	return {"target": best_target, "source": "soft_scan"} if best_target != null else {}
+func _target_is_in_range(target: Node3D) -> bool:
+	if target == null or not is_instance_valid(target):
+		return false
+	return get_cast_origin().distance_to(get_target_point(target)) <= maximum_range
 
 
 func can_root_target(target: Node3D) -> bool:
@@ -286,8 +335,11 @@ func get_debug_data() -> Dictionary:
 		"spell": "root_bind",
 		"target": get_target_display_name(last_target) if last_target != null and is_instance_valid(last_target) else "none",
 		"target_kind": last_target_kind,
+		"target_source": last_target_source,
 		"enemy_duration": enemy_duration,
 		"object_duration": object_duration,
 		"maximum_rigidbody_mass": maximum_rigidbody_mass,
+		"soft_aim_angle_degrees": soft_aim_angle_degrees,
+		"aimed_enemy_or_object": true,
 		"preserves_enemy_actions": true,
 	}

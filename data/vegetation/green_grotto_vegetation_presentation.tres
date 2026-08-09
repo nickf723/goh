@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="VegetationPresentationProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/vegetation/vegetation_presentation_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_vegetation"
+display_name = "Green Grotto Vegetation"
+triplanar_sharpness = 1.75
+world_scale_multiplier = 0.58
+normal_scale = 0.36
+normal_noise_frequency = 0.115
+texture_resolution = 128
+detail_seed = 6173
+ground_backlight_color = Color(0.24, 0.55, 0.10, 1)
+ground_backlight_strength = 0.74
+ground_sss_strength = 0.075
+ground_transmittance_color = Color(0.25, 0.62, 0.11, 1)
+ground_transmittance_boost = 0.82
+ground_transmittance_depth = 0.11
+ground_roughness = 0.88
+sunlit_backlight_color = Color(0.74, 0.83, 0.18, 1)
+sunlit_backlight_strength = 0.98
+sunlit_sss_strength = 0.12
+sunlit_transmittance_color = Color(0.58, 0.80, 0.13, 1)
+sunlit_transmittance_boost = 1.22
+sunlit_transmittance_depth = 0.09
+sunlit_roughness = 0.83
+canopy_backlight_color = Color(0.11, 0.34, 0.075, 1)
+canopy_backlight_strength = 0.60
+canopy_sss_strength = 0.022
+canopy_transmittance_color = Color(0.11, 0.38, 0.07, 1)
+canopy_transmittance_boost = 0.30
+canopy_transmittance_depth = 0.19
+canopy_roughness = 0.95
+maximum_shared_variants = 6

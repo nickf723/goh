@@ -49,16 +49,16 @@ func _validate_contract(
 	_expect(bool(data.get("initialized", false)), "atmosphere initializes with runtime soft texture")
 	_expect(str(data.get("profile_id", "")) == "green_grotto_atmosphere", "Green uses dedicated atmosphere profile")
 	_expect(int(data.get("field_count", 0)) == 4, "Green owns four authored atmosphere fields")
-	_expect(int(data.get("authored_instances", 0)) == 460, "Green atmosphere budget is exactly 460 authored instances")
+	_expect(int(data.get("authored_instances", 0)) == 460, "Green retains 460 deterministic authored atmosphere candidates")
 	_expect(bool(data.get("multimesh_batched", false)), "atmosphere uses MultiMesh batching")
 	_expect(bool(data.get("follows_lighting_quality", false)), "atmosphere follows the F7 lighting tier")
 	_expect(bool(data.get("samples_environmental_motion", false)), "atmosphere can inherit Environmental Motion wind")
 	_expect(bool(data.get("soft_texture_runtime_generated", false)), "atmosphere generates its soft mote texture in Godot")
 	_expect(not bool(data.get("gameplay_authority", true)), "atmosphere owns no gameplay state")
 	var counts: Dictionary = _dictionary_value(data.get("field_counts", {}))
-	_expect(int(counts.get("dust", 0)) == 140, "entrance and shrine dust total 140 authored motes")
-	_expect(int(counts.get("pollen", 0)) == 170, "canopy pollen budget is 170")
-	_expect(int(counts.get("mist", 0)) == 150, "waterfall mist budget is 150")
+	_expect(int(counts.get("dust", 0)) == 140, "entrance and shrine dust retain 140 authored candidates")
+	_expect(int(counts.get("pollen", 0)) == 170, "canopy pollen authoring pool is 170")
+	_expect(int(counts.get("mist", 0)) == 150, "waterfall mist authoring pool is 150")
 
 	var pass_data: Dictionary = {}
 	if target.has_method("get_debug_data"):
@@ -84,15 +84,17 @@ func _validate_quality_ladder(
 	var balanced: Dictionary = director.get_debug_data()
 	var balanced_visible: int = int(balanced.get("visible_instances", 0))
 	_expect(int(balanced.get("quality", -1)) == 1, "Balanced atmosphere tier follows F7")
-	_expect(balanced_visible >= 180 and balanced_visible <= 195, "Balanced runs roughly half-density atmosphere")
+	_expect(balanced_visible >= 37 and balanced_visible <= 41, "Balanced uses sparse atmosphere instead of screen-filling motes")
 	_expect(_visible_field_count(director) == 3, "Balanced skips the Cinematic-only shrine field")
 
 	lighting.set_quality(LightingDirector3D.Quality.CINEMATIC)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var cinematic: Dictionary = director.get_debug_data()
+	var cinematic_visible: int = int(cinematic.get("visible_instances", 0))
 	_expect(int(cinematic.get("quality", -1)) == 2, "Cinematic atmosphere tier follows F7")
-	_expect(int(cinematic.get("visible_instances", 0)) == 460, "Cinematic restores the full atmosphere budget")
+	_expect(cinematic_visible >= 80 and cinematic_visible <= 88, "Cinematic keeps atmosphere sparse enough to preserve gameplay readability")
+	_expect(cinematic_visible < 100, "Cinematic never restores the old 460-mote bokeh wall")
 	_expect(_visible_field_count(director) == 4, "Cinematic enables all four atmosphere fields")
 
 

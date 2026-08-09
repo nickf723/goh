@@ -1,0 +1,68 @@
+name: Ground Contact Presentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/presentation/ground_contact_presentation_*.gd"
+      - "data/presentation/green_grotto_ground_contact.tres"
+      - "scripts/levels/green_grotto_ground_contact_adapter.gd"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "scripts/tests/ground_contact_presentation_smoke_test.gd"
+      - "scenes/tests/ground_contact_presentation_smoke_test.tscn"
+      - "docs/GROUND_CONTACT_PRESENTATION_V1.md"
+      - ".github/workflows/ground-contact-presentation-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ground-contact-presentation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-ground-contact:
+    name: Import, contact contract, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee ground-contact-import.log
+
+      - name: Run Ground Contact regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/ground_contact_presentation_smoke_test.tscn 2>&1 | tee ground-contact-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee ground-contact-green-boot.log
+
+      - name: Upload Ground Contact logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ground-contact-presentation-logs
+          path: |
+            ground-contact-import.log
+            ground-contact-test.log
+            ground-contact-green-boot.log
+          if-no-files-found: ignore

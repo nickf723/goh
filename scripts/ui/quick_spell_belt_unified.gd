@@ -6,7 +6,6 @@ const GENERATED_SURFACE_NAMES: Array[String] = [
 	"DPadUpItemMenu",
 	"DPadDownSpecialMenu",
 ]
-const COMPACT_VISIBLE_SPELL_SLOTS: int = 3
 
 var unified_layout_applied: bool = false
 var retired_duplicate_surface_count: int = 0
@@ -14,7 +13,6 @@ var duplicate_surface_sweep_count: int = 0
 var duplicate_surface_node_checks: int = 0
 var duplicate_surface_listener_connected: bool = false
 var mode_property_write_count: int = 0
-var compact_window_start: int = 0
 
 
 func _finish_setup() -> void:
@@ -22,7 +20,6 @@ func _finish_setup() -> void:
 	if not setup_complete:
 		return
 	_apply_unified_layout()
-	_update_compact_spell_window()
 	_connect_duplicate_surface_listener()
 	# One bounded startup sweep catches surfaces that existed before this
 	# presenter finished binding. Anything created later is handled by node_added.
@@ -42,33 +39,6 @@ func _process(delta: float) -> void:
 	# times every frame. In a growing scene that became a major idle-process cost.
 	# Late surfaces are now caught once through SceneTree.node_added instead.
 	_apply_mode_presentation()
-
-
-func _refresh_all_slots() -> void:
-	super._refresh_all_slots()
-	if belt_hint_label != null:
-		belt_hint_label.visible = false
-	_update_compact_spell_window()
-
-
-func _refresh_item_presentation(delta: float) -> void:
-	super._refresh_item_presentation(delta)
-	if item_label == null:
-		return
-	var lines: PackedStringArray = item_label.text.split("\n")
-	if lines.size() >= 2:
-		item_label.text = "D↑\n" + _compact_name(str(lines[1]), 16)
-
-
-func _refresh_special_presentation() -> void:
-	super._refresh_special_presentation()
-	if special_label == null:
-		return
-	var lines: PackedStringArray = special_label.text.split("\n")
-	if lines.size() >= 2:
-		special_label.text = "D↓\n" + _compact_name(str(lines[1]), 16)
-	if special_charge_label != null:
-		special_charge_label.visible = false
 
 
 func _build_command_dock() -> void:
@@ -101,84 +71,50 @@ func _apply_unified_layout() -> void:
 	dock_panel.anchor_top = 1.0
 	dock_panel.anchor_right = 0.5
 	dock_panel.anchor_bottom = 1.0
-	dock_panel.offset_left = -340.0
-	dock_panel.offset_top = -96.0
-	dock_panel.offset_right = 340.0
+	dock_panel.offset_left = -510.0
+	dock_panel.offset_top = -124.0
+	dock_panel.offset_right = 510.0
 	dock_panel.offset_bottom = -16.0
 	dock_panel.add_theme_stylebox_override(
 		"panel",
 		_make_panel_style(
-			Color(0.005, 0.011, 0.02, 0.90),
-			Color(0.86, 0.58, 0.2, 0.58),
-			16,
+			Color(0.006, 0.013, 0.024, 0.96),
+			Color(0.3, 0.5, 0.78, 0.68),
+			15,
 			2
 		)
 	)
 	if item_tile != null:
-		item_tile.custom_minimum_size = Vector2(108.0, 58.0)
-		item_label.add_theme_font_size_override("font_size", 9)
-		_hide_secondary_labels(item_tile, item_label)
+		item_tile.custom_minimum_size = Vector2(142.0, 78.0)
 	if special_tile != null:
-		special_tile.custom_minimum_size = Vector2(108.0, 58.0)
-		special_label.add_theme_font_size_override("font_size", 9)
-		_hide_secondary_labels(special_tile, special_label)
+		special_tile.custom_minimum_size = Vector2(142.0, 78.0)
 	var spell_section: Control = dock_panel.find_child(
 		"TenSpellSection",
 		true,
 		false
 	) as Control
 	if spell_section != null:
-		spell_section.custom_minimum_size = Vector2(280.0, 58.0)
+		spell_section.custom_minimum_size = Vector2(680.0, 78.0)
 	for panel: PanelContainer in slot_panels:
-		panel.custom_minimum_size = Vector2(50.0, 48.0)
+		panel.custom_minimum_size = Vector2(62.0, 53.0)
 	for label: Label in slot_labels:
-		label.add_theme_font_size_override("font_size", 7)
+		label.add_theme_font_size_override("font_size", 8)
 	if belt_hint_label != null:
-		belt_hint_label.visible = false
+		belt_hint_label.add_theme_font_size_override("font_size", 8)
 	if item_menu_panel != null:
 		_reparent_overlay_to_hud(item_menu_panel)
-		item_menu_panel.offset_left = -340.0
-		item_menu_panel.offset_top = -306.0
-		item_menu_panel.offset_right = -174.0
-		item_menu_panel.offset_bottom = -104.0
+		item_menu_panel.offset_left = -510.0
+		item_menu_panel.offset_top = -342.0
+		item_menu_panel.offset_right = -344.0
+		item_menu_panel.offset_bottom = -134.0
 	if special_menu_panel != null:
 		_reparent_overlay_to_hud(special_menu_panel)
-		special_menu_panel.offset_left = 174.0
-		special_menu_panel.offset_top = -306.0
-		special_menu_panel.offset_right = 340.0
-		special_menu_panel.offset_bottom = -104.0
+		special_menu_panel.offset_left = 344.0
+		special_menu_panel.offset_top = -342.0
+		special_menu_panel.offset_right = 510.0
+		special_menu_panel.offset_bottom = -134.0
 	unified_layout_applied = true
-	_update_compact_spell_window()
 	_align_focus_panel()
-
-
-func _hide_secondary_labels(container: Control, primary: Label) -> void:
-	for candidate: Node in container.find_children("*", "Label", true, false):
-		if candidate is Label and candidate != primary:
-			(candidate as Label).visible = false
-
-
-func _update_compact_spell_window() -> void:
-	if slot_panels.is_empty():
-		return
-	var anchor: int = 0
-	if not equipped_slot_indices.is_empty():
-		anchor = equipped_slot_indices[0]
-	elif not cursor_slot_indices.is_empty():
-		anchor = cursor_slot_indices[0]
-	var maximum_start: int = maxi(
-		slot_panels.size() - COMPACT_VISIBLE_SPELL_SLOTS,
-		0
-	)
-	compact_window_start = clampi(anchor - 1, 0, maximum_start)
-	var compact_window_end: int = mini(
-		compact_window_start + COMPACT_VISIBLE_SPELL_SLOTS,
-		slot_panels.size()
-	)
-	for index: int in range(slot_panels.size()):
-		slot_panels[index].visible = (
-			index >= compact_window_start and index < compact_window_end
-		)
 
 
 func _connect_duplicate_surface_listener() -> void:
@@ -317,7 +253,6 @@ func _apply_mode_presentation() -> void:
 	if special_tile != null and special_tile.visible == placement:
 		special_tile.visible = not placement
 		mode_property_write_count += 1
-	_update_compact_spell_window()
 
 
 func _align_focus_panel() -> void:
@@ -333,22 +268,18 @@ func _align_focus_panel() -> void:
 	panel.anchor_right = 0.5
 	panel.anchor_bottom = 1.0
 	panel.offset_left = -half_width
-	panel.offset_top = -390.0
+	panel.offset_top = -426.0
 	panel.offset_right = half_width
-	panel.offset_bottom = -106.0
+	panel.offset_bottom = -136.0
 
 
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	var dock_rows: Array[Dictionary] = _generated_dock_debug_rows()
 	var visible_docks: int = 0
-	var visible_spell_slots: int = 0
 	for row: Dictionary in dock_rows:
 		if bool(row.get("visible", false)) and float(row.get("alpha", 0.0)) > 0.01:
 			visible_docks += 1
-	for panel: PanelContainer in slot_panels:
-		if panel.visible:
-			visible_spell_slots += 1
 	data["unified_layout"] = unified_layout_applied
 	data["dock_parent_zone"] = (
 		str(dock_panel.get_parent().name)
@@ -363,7 +294,4 @@ func get_debug_data() -> Dictionary:
 	data["mode_property_writes"] = mode_property_write_count
 	data["generated_dock_rows"] = dock_rows
 	data["visible_generated_docks"] = visible_docks
-	data["compact_command_dock"] = true
-	data["compact_visible_spell_slots"] = visible_spell_slots
-	data["compact_window_start"] = compact_window_start
 	return data

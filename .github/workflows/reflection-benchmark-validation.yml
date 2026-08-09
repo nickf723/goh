@@ -1,0 +1,79 @@
+name: Reflection and Visual Benchmark Validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/reflections/**"
+      - "data/reflections/**"
+      - "scripts/testing/visual_benchmark_director.gd"
+      - "scripts/levels/prototype_green_grotto_reflection_pass.gd"
+      - "scripts/tests/reflection_fidelity_director_smoke_test.gd"
+      - "scripts/tests/visual_benchmark_director_smoke_test.gd"
+      - "scenes/tests/reflection_fidelity_director_smoke_test.tscn"
+      - "scenes/tests/visual_benchmark_director_smoke_test.tscn"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "docs/REFLECTION_FIDELITY_DIRECTOR_V1.md"
+      - "docs/VISUAL_BENCHMARK_DIRECTOR_V1.md"
+      - ".github/workflows/reflection-benchmark-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reflection-benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-reflections-and-benchmark:
+    name: Import, reflection contract, presets, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee reflection-benchmark-import.log
+
+      - name: Run Reflection Fidelity regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/reflection_fidelity_director_smoke_test.tscn 2>&1 | tee reflection-fidelity-test.log
+
+      - name: Run Visual Benchmark regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/visual_benchmark_director_smoke_test.tscn 2>&1 | tee visual-benchmark-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 10 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee reflection-benchmark-green-boot.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reflection-benchmark-logs
+          path: |
+            reflection-benchmark-import.log
+            reflection-fidelity-test.log
+            visual-benchmark-test.log
+            reflection-benchmark-green-boot.log
+          if-no-files-found: ignore

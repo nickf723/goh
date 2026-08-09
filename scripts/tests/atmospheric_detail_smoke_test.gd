@@ -55,8 +55,8 @@ func _validate_contract(
 	_expect(bool(data.get("samples_environmental_motion", false)), "atmosphere can inherit Environmental Motion wind")
 	_expect(bool(data.get("soft_texture_runtime_generated", false)), "atmosphere generates its soft mote texture in Godot")
 	_expect(bool(data.get("camera_safe_fade", false)), "atmosphere clears presentation motes around the active camera")
-	_expect(is_equal_approx(float(data.get("camera_clear_radius", 0.0)), 1.35), "Green reserves a 1.35m clear camera bubble")
-	_expect(is_equal_approx(float(data.get("camera_fade_distance", 0.0)), 1.75), "Green fades motes back in gradually after the clear bubble")
+	_expect(is_equal_approx(float(data.get("camera_clear_radius", 0.0)), 2.0), "Green reserves a 2m clear camera bubble")
+	_expect(is_equal_approx(float(data.get("camera_fade_distance", 0.0)), 2.5), "Green fades motes back in gradually beyond the clear bubble")
 	_expect(not bool(data.get("gameplay_authority", true)), "atmosphere owns no gameplay state")
 	var counts: Dictionary = _dictionary_value(data.get("field_counts", {}))
 	_expect(int(counts.get("dust", 0)) == 140, "entrance and shrine dust retain 140 authored candidates")
@@ -87,7 +87,7 @@ func _validate_quality_ladder(
 	var balanced: Dictionary = director.get_debug_data()
 	var balanced_visible: int = int(balanced.get("visible_instances", 0))
 	_expect(int(balanced.get("quality", -1)) == 1, "Balanced atmosphere tier follows F7")
-	_expect(balanced_visible >= 22 and balanced_visible <= 24, "Balanced keeps only a light dusting of atmosphere")
+	_expect(balanced_visible >= 11 and balanced_visible <= 13, "Balanced keeps atmosphere at a background-accent density")
 	_expect(_visible_field_count(director) == 3, "Balanced skips the Cinematic-only shrine field")
 
 	lighting.set_quality(LightingDirector3D.Quality.CINEMATIC)
@@ -96,8 +96,8 @@ func _validate_quality_ladder(
 	var cinematic: Dictionary = director.get_debug_data()
 	var cinematic_visible: int = int(cinematic.get("visible_instances", 0))
 	_expect(int(cinematic.get("quality", -1)) == 2, "Cinematic atmosphere tier follows F7")
-	_expect(cinematic_visible >= 45 and cinematic_visible <= 47, "Cinematic preserves atmosphere without rebuilding the bokeh wall")
-	_expect(cinematic_visible < 50, "Cinematic keeps fewer than fifty visible motes")
+	_expect(cinematic_visible >= 23 and cinematic_visible <= 26, "Cinematic keeps atmosphere secondary to route readability")
+	_expect(cinematic_visible < 30, "Cinematic keeps fewer than thirty visible motes")
 	_expect(_visible_field_count(director) == 4, "Cinematic enables all four atmosphere fields")
 
 

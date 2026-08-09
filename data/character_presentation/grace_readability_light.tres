@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="HeroReadabilityLightProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/character_presentation/hero_readability_light_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "grace_readability_light"
+display_name = "Grace Cool Rim"
+character_render_layer = 2
+light_color = Color(0.64, 0.75, 1.0, 1.0)
+balanced_energy = 0.18
+cinematic_energy = 0.30
+light_specular = 0.36
+behind_distance = 3.2
+side_offset = 1.0
+height_offset = 2.0
+target_height = 1.05
+direction_smoothing = 5.5

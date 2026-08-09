@@ -14,15 +14,19 @@ on:
       - "scripts/life/plant_summon_catalog.gd"
       - "scripts/life/prepared_plant_loadout.gd"
       - "scripts/ui/full_menu_shell_plants.gd"
+      - "scripts/ui/full_menu_shell_plant_spell_detail.gd"
+      - "scripts/ui/full_menu_shell_feedback_v1.gd"
       - "scripts/ui/full_menu_shell_settings.gd"
       - "scripts/ui/game_ui_focus_minimal.gd"
       - "scripts/tests/sprout_smoke_test.gd"
       - "scripts/tests/plant_preparation_smoke_test.gd"
+      - "scripts/tests/plant_spell_detail_smoke_test.gd"
       - "scripts/tests/compact_focus_menu_smoke_test.gd"
       - "scripts/tests/ground_target_focus_ui_smoke_test.gd"
       - "scenes/actions/life_sprout_platform.tscn"
       - "scenes/tests/sprout_smoke_test.tscn"
       - "scenes/tests/plant_preparation_smoke_test.tscn"
+      - "scenes/tests/plant_spell_detail_smoke_test.tscn"
       - "data/abilities/sprout_ability.tres"
       - "data/plants/broadleaf_sprout.tres"
       - "data/loadouts/grace_starting_loadout.tres"
@@ -38,7 +42,7 @@ concurrency:
 
 jobs:
   validate-plant-summoning:
-    name: Import, prepared plants, aimed casting, Focus, and library
+    name: Import, prepared plants, spell detail controls, aimed casting, and library
     runs-on: ubuntu-latest
     timeout-minutes: 18
 
@@ -63,6 +67,12 @@ jobs:
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/plant_preparation_smoke_test.tscn 2>&1 | tee plant-preparation-test.log
+
+      - name: Run Plant Summon spell-detail controls regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/plant_spell_detail_smoke_test.tscn 2>&1 | tee plant-spell-detail-test.log
 
       - name: Run Plant Summon actor regression
         shell: bash
@@ -96,6 +106,7 @@ jobs:
           path: |
             plant-import.log
             plant-preparation-test.log
+            plant-spell-detail-test.log
             sprout-test.log
             focus-grid-test.log
             ground-target-test.log

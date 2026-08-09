@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AtmosphericDetailProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/atmosphere/atmospheric_detail_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_atmosphere"
+display_name = "Green Grotto Micro Atmosphere"
+performance_density_scale = 0.0
+balanced_density_scale = 0.48
+cinematic_density_scale = 1.0
+update_interval = 0.05
+maximum_instances = 520
+maximum_visual_wind_speed = 3.2
+soft_texture_resolution = 32
+follow_lighting_quality = true

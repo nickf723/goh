@@ -40,7 +40,12 @@ func validate_preparation_store() -> void:
 		str(initial.get("plant_id", "")) == "broadleaf_sprout",
 		"starter Broadleaf is prepared by default"
 	)
-	var initial_parameters: Dictionary = initial.get("parameters", {}) as Dictionary
+	var initial_parameters_value: Variant = initial.get("parameters", {})
+	var initial_parameters: Dictionary = (
+		initial_parameters_value as Dictionary
+		if initial_parameters_value is Dictionary
+		else {}
+	)
 	_expect(str(initial_parameters.get("size", "")) == "standard", "size defaults to standard")
 	_expect(str(initial_parameters.get("persistence", "")) == "standard", "persistence defaults to standard")
 	_expect(str(initial_parameters.get("emergence", "")) == "balanced", "emergence defaults to balanced")
@@ -49,7 +54,10 @@ func validate_preparation_store() -> void:
 	store.set_parameter("persistence", "persistent", false)
 	store.set_parameter("emergence", "forceful", true)
 	var prepared: Dictionary = store.get_prepared_snapshot()
-	var parameters: Dictionary = prepared.get("parameters", {}) as Dictionary
+	var parameters_value: Variant = prepared.get("parameters", {})
+	var parameters: Dictionary = (
+		parameters_value as Dictionary if parameters_value is Dictionary else {}
+	)
 	_expect(str(parameters.get("size", "")) == "large", "prepared size persists in blueprint")
 	_expect(str(parameters.get("persistence", "")) == "persistent", "prepared persistence persists in blueprint")
 	_expect(str(parameters.get("emergence", "")) == "forceful", "prepared emergence persists in blueprint")
@@ -124,14 +132,28 @@ func validate_combat_contract() -> void:
 		"broadleaf_sprout",
 		{"size": "large"}
 	)
-	var compact_target: Dictionary = compact.get("target", {}) as Dictionary
-	var large_target: Dictionary = large.get("target", {}) as Dictionary
+	var compact_target_value: Variant = compact.get("target", {})
+	var large_target_value: Variant = large.get("target", {})
+	var compact_target: Dictionary = (
+		compact_target_value as Dictionary
+		if compact_target_value is Dictionary
+		else {}
+	)
+	var large_target: Dictionary = (
+		large_target_value as Dictionary
+		if large_target_value is Dictionary
+		else {}
+	)
 	_expect(
 		float(large_target.get("radius", 0.0)) > float(compact_target.get("radius", 0.0)),
 		"placement preview reflects prepared plant size"
 	)
+	var prepared_value: Variant = large.get("prepared_parameters", {})
+	var prepared_parameters: Dictionary = (
+		prepared_value as Dictionary if prepared_value is Dictionary else {}
+	)
 	_expect(
-		str(large.get("prepared_parameters", {}).get("size", "")) == "large",
+		str(prepared_parameters.get("size", "")) == "large",
 		"ground targeting carries a sanitized prepared snapshot"
 	)
 

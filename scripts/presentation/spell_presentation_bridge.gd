@@ -20,7 +20,10 @@ static func present(
 		return {}
 	var payload: Dictionary = context.duplicate(true)
 	payload["phase"] = phase
-	return director.present_spell(payload)
+	if director.has_method("present_spell"):
+		var result: Variant = director.call("present_spell", payload)
+		return result as Dictionary if result is Dictionary else {}
+	return director.present("spell", payload)
 
 
 static func make_ability_context(

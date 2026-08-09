@@ -32,8 +32,10 @@ func run_tests() -> void:
 	_expect(str(data.get("landmark", "")) == "sunset shrine", "sunset shrine remains the hero landmark")
 	_expect(str(data.get("route", "")) == "fractured causeway", "fractured causeway remains the hero route")
 
+	var counts: Dictionary = {}
 	var counts_value: Variant = data.get("build_counts", {})
-	var counts: Dictionary = counts_value as Dictionary if counts_value is Dictionary else {}
+	if counts_value is Dictionary:
+		counts = counts_value as Dictionary
 	_expect(int(counts.get("static_surfaces", 0)) >= 25, "art target builds substantial walkable/collidable geometry")
 	_expect(int(counts.get("visual_meshes", 0)) >= 180, "art target has layered visual density beyond graybox geometry")
 	_expect(int(counts.get("ruin_modules", 0)) >= 40, "ancient ruin composition has enough authored breakup")
@@ -53,8 +55,10 @@ func run_tests() -> void:
 		_expect(art_root.get_node_or_null("Water/GrottoPool") != null, "cool chasm water counterpoint exists")
 		_expect(art_root.get_node_or_null("Fauna/DistantSauropod") != null, "distant prehistoric scale landmark exists")
 
+	var material_data: Dictionary = {}
 	var material_value: Variant = data.get("materials", {})
-	var material_data: Dictionary = material_value as Dictionary if material_value is Dictionary else {}
+	if material_value is Dictionary:
+		material_data = material_value as Dictionary
 	_expect(bool(material_data.get("green_grotto_material_library", false)), "procedural material library is active")
 	_expect(int(material_data.get("cached_materials", 0)) >= 10, "art target resolves a broad material palette")
 	_expect(int(material_data.get("procedural_textures", 0)) >= 10, "surface variation uses procedural textures")

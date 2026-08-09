@@ -1,6 +1,6 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=19 format=3]
 
-[ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_lighting_pass.gd" id="1_target"]
+[ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_motion_pass.gd" id="1_target"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
@@ -15,6 +15,9 @@
 [ext_resource type="Resource" path="res://data/camera/grace_exploration_camera.tres" id="13_camera_profile"]
 [ext_resource type="Script" path="res://scripts/camera/camera_director_3d.gd" id="14_camera_director"]
 [ext_resource type="Script" path="res://scripts/camera/camera_zone_3d.gd" id="15_camera_zone"]
+[ext_resource type="Resource" path="res://data/environmental_motion/green_grotto_motion.tres" id="16_motion_profile"]
+[ext_resource type="Script" path="res://scripts/environmental_motion/environmental_motion_director_3d.gd" id="17_motion_director"]
+[ext_resource type="Script" path="res://scripts/environmental_motion/environmental_motion_zone_3d.gd" id="18_motion_zone"]
 
 [node name="PrototypeGreenGrottoArtTargetV1" type="Node3D" groups=["green_grotto_art_target", "environment_art_target", "lab_resource_regeneration"]]
 script = ExtResource("1_target")
@@ -138,6 +141,58 @@ distance_offset = -0.28
 fov_offset = -1.1
 pivot_height_offset = 0.10
 lead_scale = 0.62
+
+[node name="EnvironmentalMotionDirector" type="Node3D" parent="."]
+script = ExtResource("17_motion_director")
+profile = ExtResource("16_motion_profile")
+channel = "green_grotto_motion"
+debug_hotkeys_enabled = true
+
+[node name="EntranceMotionZone" type="Node3D" parent="."]
+position = Vector3(0, 4, 12.5)
+script = ExtResource("18_motion_zone")
+channel = "green_grotto_motion"
+priority = 10
+zone_extents = Vector3(8, 8, 7)
+blend_distance = 4.0
+wind_multiplier = 0.55
+gust_multiplier = 0.65
+
+[node name="CanopyMotionZone" type="Node3D" parent="."]
+position = Vector3(0, 7, 0)
+script = ExtResource("18_motion_zone")
+channel = "green_grotto_motion"
+priority = 20
+zone_extents = Vector3(9, 9, 10)
+blend_distance = 4.5
+wind_multiplier = 1.35
+gust_multiplier = 1.30
+direction_override = Vector3(0.72, 0, 0.69)
+direction_influence = 0.22
+
+[node name="WaterfallMotionZone" type="Node3D" parent="."]
+position = Vector3(5.7, 1.5, -9)
+script = ExtResource("18_motion_zone")
+channel = "green_grotto_motion"
+priority = 30
+zone_extents = Vector3(5, 7, 6)
+blend_distance = 3.5
+wind_multiplier = 0.90
+gust_multiplier = 1.45
+direction_override = Vector3(0.25, 0, -1)
+direction_influence = 0.30
+
+[node name="ShrineMotionZone" type="Node3D" parent="."]
+position = Vector3(0, 5, -15)
+script = ExtResource("18_motion_zone")
+channel = "green_grotto_motion"
+priority = 40
+zone_extents = Vector3(8, 8, 7)
+blend_distance = 4.5
+wind_multiplier = 0.68
+gust_multiplier = 0.72
+direction_override = Vector3(1, 0, 0.12)
+direction_influence = 0.12
 
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1.2, 16)

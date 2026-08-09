@@ -63,7 +63,7 @@ The benchmark HUD starts hidden so normal play and screenshot review show the pr
 - ambient fauna acting on;
 - Lighting/Shadow quality = Balanced;
 - three local reflection probes;
-- roughly 23 visible entrance/canopy/waterfall atmosphere instances;
+- roughly 12 visible entrance/canopy/waterfall atmosphere instances;
 - Balanced Grace material variants;
 - Balanced detail visibility ranges;
 - three contact pieces per footstep and seven per landing;
@@ -75,7 +75,7 @@ The benchmark HUD starts hidden so normal play and screenshot review show the pr
 - ambient fauna acting on;
 - Lighting/Shadow quality = Cinematic;
 - all four reflection regions;
-- roughly 46 visible atmosphere instances across all four authored fields;
+- roughly 24–25 visible atmosphere instances across all four authored fields;
 - Cinematic Grace skin/hair/cloth/metal/leather presentation;
 - longest visual-LOD ranges;
 - five contact pieces per footstep and eleven per landing;
@@ -84,6 +84,26 @@ The benchmark HUD starts hidden so normal play and screenshot review show the pr
 The Green Grotto no longer uses TAA in Balanced or HERO. Camera motion was producing enough temporal softness to read as motion blur, so the current art target favors crisp geometry and stable presentation over temporal accumulation.
 
 Manual F1-F7 changes are still supported. Once a named preset no longer matches, the benchmark HUD reports `CUSTOM`.
+
+## V4 readability composition
+
+The V3 hero pass proved the procedural geometry/material vocabulary, but the assembled entrance became too uniformly dense. V4 is deliberately subtractive and protects one visual hierarchy:
+
+```text
+Grace → broad route stones → shrine
+```
+
+The composition pass:
+
+- visually retires the dense arrival/causeway micro-pavers while retaining their underlying collision scaffolds;
+- removes repeated edge rubble and ecology stones from the primary shot;
+- culls foliage that enters the central travel corridor while preserving lush side pockets;
+- thins the dense foreground chasm-rock wall into a smaller set of framing masses;
+- reduces the arrival perimeter rocks;
+- replaces the tiled route read with five broad arrival stones plus one broad route stone per causeway segment;
+- adds one restrained warm shrine focus light so the destination remains legible through the grotto.
+
+This is a presentation-only composition pass. Traversal, collision, water geography, fauna, and gameplay systems remain unchanged.
 
 ## Benchmark HUD
 
@@ -111,11 +131,11 @@ Green still authors 460 deterministic atmosphere candidates, but only a small su
 
 ```text
 Performance   0%
-Balanced      6% on Balanced-eligible fields
-Cinematic    10% on all fields
+Balanced      3% on Balanced-eligible fields
+Cinematic     5% on all fields
 ```
 
-The atmosphere director also reserves a `1.35 m` clear radius around the active gameplay camera and fades motes back in over the next `1.75 m`. Nearby billboards therefore cannot balloon into large soft discs that cover Grace, the path, or the destination.
+The atmosphere director reserves a `2.0 m` clear radius around the active gameplay camera and fades motes back in over the next `2.5 m`. Nearby billboards therefore cannot dominate Grace, the route, or the destination.
 
 ## Recommended visual test route
 
@@ -125,22 +145,23 @@ Use HERO for the first unstructured playthrough, then repeat the same observatio
 
 Watch for:
 
-- sheltered/cool lighting transition;
+- a clear first read of Grace and the primary route;
+- only a few large framing rock masses rather than an unbroken wall of boulders;
+- broad route stones rather than a tiled-floor grid;
 - sparse dust motes and dry foot contacts;
 - nearby foliage reacting physically when Grace brushes through it;
-- the arrival raptor watching Grace before retreating at close distance;
 - no large atmosphere billboard crossing the immediate camera bubble.
 
 ### Canopy / causeway
 
 Watch for:
 
+- the route remaining visually continuous toward the shrine;
 - transmitted sunset light through foliage;
-- sparse pollen revealing the air volume and visual wind without obscuring the route;
+- sparse pollen revealing air volume and visual wind without obscuring the route;
+- side vegetation reading as clusters instead of centerline scatter;
 - shadow grounding on Grace, roots and paving;
-- material microdetail under grazing light;
-- crisp thin leaves and railings while the camera moves in Balanced/HERO;
-- far detail disappearing only once it is no longer useful to the composition.
+- crisp thin leaves and railings while the camera moves in Balanced/HERO.
 
 ### Waterfall
 
@@ -157,12 +178,12 @@ Watch for:
 
 Watch for:
 
+- the shrine reading as the destination before its small details are noticed;
 - authored surface history and carved motifs;
 - local reflection and shadow response on roof/trim/Grace;
 - leaf-litter contact pieces;
 - subtle Cinematic-only warm motes;
-- stable thin roof/railing edges and Grace gold highlights;
-- tighter Camera Director framing.
+- stable thin roof/railing edges and Grace gold highlights.
 
 ## Performance comparison routine
 
@@ -206,6 +227,7 @@ Examples:
 
 - atmospheric motes may reveal air movement but cannot create airflow force;
 - the camera readability bubble only changes presentation scale;
+- V4 route stones and visual retirement do not change the collision scaffolds beneath them;
 - wet decals or damp contact mist do not make a surface slippery;
 - foliage interaction can bend presentation transforms but never collision;
 - reflection regions describe image-based lighting volumes, not gameplay rooms;

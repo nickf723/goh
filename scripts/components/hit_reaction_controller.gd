@@ -3,6 +3,10 @@ class_name HitReactionController
 
 signal reaction_resolved(data: Dictionary)
 
+const PresentationServiceScript = preload(
+	"res://scripts/presentation/presentation_service.gd"
+)
+
 @export var maximum_poise: float = 8.0
 @export var mass_scale: float = 1.0
 @export_range(0.0, 1.0, 0.05) var armor: float = 0.0
@@ -132,7 +136,31 @@ func resolve_impact(payload: DamagePayload, direction: Vector3, attack: WeaponAt
 		"resistance": snappedf(reaction_resistance, 0.01),
 	}
 	reaction_resolved.emit(result)
+	_present_reaction(payload, horizontal.normalized(), result)
 	return result
+
+
+func _present_reaction(
+	payload: DamagePayload,
+	direction: Vector3,
+	result: Dictionary
+) -> void:
+	if get_tree() == null:
+		return
+	var director: GamePresentationDirector = PresentationServiceScript.get_or_create(
+		get_tree()
+	)
+	if director == null:
+		return
+	director.present_reaction({
+		"target": get_parent(),
+		"payload": payload,
+		"element": payload.element if payload != null else "neutral",
+		"reaction": str(result.get("reaction", "RESIST")),
+		"impact": float(result.get("impact", 0.0)),
+		"direction": direction,
+		"interrupts": bool(result.get("interrupts", false)),
+	})
 
 
 func reset_reactions() -> void:
@@ -152,4 +180,5 @@ func get_debug_data() -> Dictionary:
 		"interrupts": consecutive_interrupts,
 		"armor": snappedf(armor, 0.05),
 		"super_armor": super_armor,
+		"presentation_directed": true,
 	}

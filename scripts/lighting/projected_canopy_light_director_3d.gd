@@ -108,14 +108,8 @@ func _build_projector_texture() -> void:
 	var threshold_high: float = profile.opening_threshold + softness * 0.5
 	for y: int in range(resolution):
 		for x: int in range(resolution):
-			var sample: float = (
-				noise.get_noise_2d(float(x), float(y)) * 0.5 + 0.5
-			)
-			var opening: float = smoothstep(
-				threshold_low,
-				threshold_high,
-				sample
-			)
+			var sample: float = noise.get_noise_2d(float(x), float(y)) * 0.5 + 0.5
+			var opening: float = smoothstep(threshold_low, threshold_high, sample)
 			var uv := Vector2(
 				(float(x) + 0.5) / float(resolution),
 				(float(y) + 0.5) / float(resolution)
@@ -126,11 +120,7 @@ func _build_projector_texture() -> void:
 				1.0,
 				radial
 			)
-			var value: float = lerpf(
-				profile.blocked_floor,
-				1.0,
-				opening
-			) * edge
+			var value: float = lerpf(profile.blocked_floor, 1.0, opening) * edge
 			value = clampf(value, 0.0, 1.0)
 			total_value += value
 			if value >= 0.60:
@@ -151,13 +141,11 @@ func _build_light() -> void:
 	spot_light.light_projector = projector_texture
 	spot_light.light_specular = profile.light_specular
 	spot_light.light_indirect_energy = 0.0
+	spot_light.light_volumetric_fog_energy = 0.0
 	spot_light.spot_range = profile.spot_range
 	spot_light.spot_angle = profile.spot_angle
 	spot_light.spot_attenuation = profile.spot_attenuation
-	spot_light.shadow_bias = profile.shadow_bias
-	spot_light.shadow_normal_bias = profile.shadow_normal_bias
-	spot_light.shadow_blur = profile.shadow_blur
-	spot_light.shadow_opacity = profile.shadow_opacity
+	spot_light.shadow_enabled = false
 	spot_light.distance_fade_enabled = true
 	spot_light.distance_fade_begin = maxf(profile.spot_range * 1.05, 1.0)
 	spot_light.distance_fade_length = maxf(profile.spot_range * 0.25, 1.0)
@@ -170,7 +158,9 @@ func _apply_quality(quality: int) -> void:
 	active_quality = clampi(quality, 0, 2)
 	var active: bool = enabled and active_quality >= LightingDirector3D.Quality.BALANCED
 	spot_light.visible = active
-	spot_light.shadow_enabled = active
+	# The projector texture already supplies the broken-canopy pattern. A second
+	# shadow map multiplied thousands of tiny Green meshes for very little gain.
+	spot_light.shadow_enabled = false
 	if not active:
 		spot_light.light_energy = 0.0
 		spot_light.light_volumetric_fog_energy = 0.0
@@ -179,14 +169,10 @@ func _apply_quality(quality: int) -> void:
 		return
 	if active_quality == LightingDirector3D.Quality.CINEMATIC:
 		spot_light.light_energy = profile.cinematic_energy
-		spot_light.light_volumetric_fog_energy = (
-			profile.cinematic_volumetric_energy
-		)
+		spot_light.light_volumetric_fog_energy = profile.cinematic_volumetric_energy
 	else:
 		spot_light.light_energy = profile.balanced_energy
-		spot_light.light_volumetric_fog_energy = (
-			profile.balanced_volumetric_energy
-		)
+		spot_light.light_volumetric_fog_energy = profile.balanced_volumetric_energy
 	canopy_light_quality_changed.emit(active_quality, true)
 	apply_count += 1
 
@@ -205,7 +191,7 @@ func get_debug_data() -> Dictionary:
 		"projector_resolution": profile.projector_resolution if profile != null else 0,
 		"mask_average": snappedf(mask_average, 0.001),
 		"mask_bright_fraction": snappedf(mask_bright_fraction, 0.001),
-		"shadow_enabled": spot_light.shadow_enabled if spot_light != null else false,
+		"shadow_enabled": false,
 		"follows_lighting_quality": true,
 		"runtime_generated_projector": true,
 		"indirect_energy_zero": spot_light != null and spot_light.light_indirect_energy == 0.0,

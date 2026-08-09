@@ -7,13 +7,17 @@ on:
     paths:
       - "scripts/environment/green_grotto_material_library.gd"
       - "scripts/environment/green_grotto_detail_material_library.gd"
+      - "scripts/environment/green_grotto_hero_material_library.gd"
       - "scripts/environment/green_grotto_fauna_visual.gd"
       - "scripts/levels/prototype_green_grotto_art_target.gd"
       - "scripts/levels/prototype_green_grotto_detail_pass.gd"
+      - "scripts/levels/prototype_green_grotto_hero_pass.gd"
+      - "scripts/levels/prototype_green_grotto_hero_surface_finish.gd"
       - "scripts/tests/green_grotto_art_target_smoke_test.gd"
       - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
       - "scenes/tests/green_grotto_art_target_smoke_test.tscn"
       - "docs/GREEN_GROTTO_ART_TARGET_V1.md"
+      - "docs/GREEN_GROTTO_HERO_PASS_V3.md"
       - ".github/workflows/green-grotto-art-target-validation.yml"
   workflow_dispatch:
 
@@ -26,7 +30,7 @@ concurrency:
 
 jobs:
   validate-green-grotto:
-    name: Import, detailed art-target contract, and scene boot
+    name: Import, V3 hero contract, and scene boot
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -46,17 +50,17 @@ jobs:
           set -o pipefail
           godot --headless --path . --editor --quit 2>&1 | tee green-grotto-import.log
 
-      - name: Run Green Grotto detail regression
+      - name: Run Green Grotto V3 hero regression
         shell: bash
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/green_grotto_art_target_smoke_test.tscn 2>&1 | tee green-grotto-test.log
 
-      - name: Boot Green Grotto detailed art target
+      - name: Boot Green Grotto V3 hero target
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . --quit-after 6 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee green-grotto-boot.log
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee green-grotto-boot.log
 
       - name: Upload Green Grotto logs
         if: always()

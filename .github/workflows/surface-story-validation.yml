@@ -1,0 +1,68 @@
+name: Surface Story Director
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/surface_story/**"
+      - "data/surface_story/**"
+      - "scripts/levels/prototype_green_grotto_surface_story_pass.gd"
+      - "scripts/tests/surface_story_director_smoke_test.gd"
+      - "scenes/tests/surface_story_director_smoke_test.tscn"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "docs/SURFACE_STORY_DIRECTOR_V1.md"
+      - ".github/workflows/surface-story-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: surface-story-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-surface-story:
+    name: Import, decal contract, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee surface-story-import.log
+
+      - name: Run Surface Story Director regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/surface_story_director_smoke_test.tscn 2>&1 | tee surface-story-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee surface-story-green-boot.log
+
+      - name: Upload surface story logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surface-story-logs
+          path: |
+            surface-story-import.log
+            surface-story-test.log
+            surface-story-green-boot.log
+          if-no-files-found: ignore

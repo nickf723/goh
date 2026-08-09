@@ -4,11 +4,12 @@
 
 The Green Grotto now contains multiple independent presentation systems. Visual Benchmark Director provides stable whole-stack comparison presets without replacing their individual debug controls.
 
-## Presets
+## Presets and controls
 
 ```text
-F9  BASELINE → BALANCED → HERO
-F10 Benchmark status HUD ON/OFF
+F9   BASELINE → BALANCED → HERO
+F10  Benchmark status HUD ON/OFF
+F11  Capture current state for 5 seconds
 ```
 
 ### BASELINE
@@ -42,11 +43,39 @@ Individual F1-F7 controls remain authoritative. If a user changes any of them af
 The benchmark creates a development-only CanvasLayer status panel. It reports:
 
 - current matched preset;
+- rolling FPS and frame time;
+- current draw calls and rendered primitives;
 - F1-F6 ON/OFF state;
 - current F7 lighting tier;
-- F9/F10 controls.
+- F9/F10/F11 controls;
+- the last completed timed benchmark result.
 
 The overlay exists only because the Green art target explicitly installs Visual Benchmark Director. It is not part of the production HUD.
+
+## Timed capture
+
+F11 records the current visual state over a short window instead of trusting one frame. The result records:
+
+```text
+preset/state label
+sample count
+average FPS
+average frame time in milliseconds
+1% low FPS estimate
+average draw calls
+average rendered primitives
+```
+
+Recommended comparison:
+
+```text
+fixed camera position
+→ F9 BASELINE → F11
+→ F9 BALANCED → F11
+→ F9 HERO → F11
+```
+
+Keep Grace and the camera still during each capture when the goal is renderer comparison. Movement/combat benchmarks can be run separately later.
 
 ## Validation
 
@@ -54,4 +83,4 @@ The overlay exists only because the Green art target explicitly installs Visual 
 res://scenes/tests/visual_benchmark_director_smoke_test.tscn
 ```
 
-The regression verifies exact BASELINE, BALANCED, and HERO state changes, reflection/shadow synchronization, CUSTOM detection, and the benchmark-only overlay contract.
+The regression verifies exact BASELINE, BALANCED, and HERO state changes, reflection/shadow synchronization, CUSTOM detection, the benchmark-only overlay, and a deterministic short telemetry capture.

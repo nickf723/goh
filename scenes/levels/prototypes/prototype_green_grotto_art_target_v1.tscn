@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3]
+[gd_scene load_steps=41 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_reflection_pass.gd" id="1_target"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
@@ -38,6 +38,8 @@
 [ext_resource type="Script" path="res://scripts/render_quality/render_image_quality_director.gd" id="36_image_quality"]
 [ext_resource type="Resource" path="res://data/lighting/green_grotto_projected_canopy_light.tres" id="37_dapple_profile"]
 [ext_resource type="Script" path="res://scripts/lighting/projected_canopy_light_director_3d.gd" id="38_dapple_director"]
+[ext_resource type="Resource" path="res://data/character_presentation/grace_readability_light.tres" id="39_readability_profile"]
+[ext_resource type="Script" path="res://scripts/character_presentation/hero_readability_light_director_3d.gd" id="40_readability_director"]
 
 [node name="PrototypeGreenGrottoArtTargetV1" type="Node3D" groups=["green_grotto_art_target", "environment_art_target", "lab_resource_regeneration"]]
 script = ExtResource("1_target")
@@ -305,6 +307,10 @@ profile = ExtResource("33_ground_contact_profile")
 [node name="RenderImageQualityDirector" type="Node" parent="."]
 script = ExtResource("36_image_quality")
 profile = ExtResource("35_image_quality_profile")
+
+[node name="HeroReadabilityLightDirector" type="Node3D" parent="."]
+script = ExtResource("40_readability_director")
+profile = ExtResource("39_readability_profile")
 
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1.2, 16)

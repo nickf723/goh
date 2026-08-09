@@ -6,6 +6,7 @@ const SpellPresentation = preload(
 )
 
 var charged_presentation_prepared: bool = false
+var charge_presentation_bucket: int = 0
 var channel_presentation_prepared: bool = false
 var presentation_confirming_ground_target: bool = false
 
@@ -23,11 +24,7 @@ func cast_from_player(
 	):
 		channel_presentation_prepared = true
 		_present_ability_phase("prepare", ability, player)
-		var channel_result: bool = super.cast_from_player(
-			player,
-			cast_lock_duration,
-			allow_charge
-		)
+		var channel_result: bool = super.cast_from_player(player, cast_lock_duration, allow_charge)
 		if not channel_result:
 			_present_ability_phase("cancel", ability, player)
 		channel_presentation_prepared = false
@@ -43,10 +40,7 @@ func execute_ability_from_player(
 	power_ratio: float = 0.0,
 	extra_mana_cost: int = 0
 ) -> bool:
-	var is_channel: bool = (
-		ability != null
-		and _is_channeled_delivery(ability.get_delivery_type())
-	)
+	var is_channel: bool = ability != null and _is_channeled_delivery(ability.get_delivery_type())
 	var charge_prepare_owned: bool = (
 		charged_presentation_prepared
 		and ability != null
@@ -56,13 +50,11 @@ func execute_ability_from_player(
 		is_channel and channel_presentation_prepared
 	)
 	if not prepare_owned_elsewhere:
-		_present_ability_phase(
-			"prepare",
-			ability,
-			player,
-			_null_position(),
-			power_ratio
-		)
+		_present_ability_phase("prepare", ability, player, _null_position(), power_ratio, {
+			"subtle": true,
+			"suppress_haptics": true,
+			"detail": "instant_prepare",
+		})
 
 	var did_cast: bool = super.execute_ability_from_player(
 		player,
@@ -87,6 +79,7 @@ func execute_ability_from_player(
 
 	if charge_prepare_owned:
 		charged_presentation_prepared = false
+		charge_presentation_bucket = 0
 	return did_cast
 
 
@@ -98,10 +91,27 @@ func begin_charged_firebolt(
 	var started: bool = super.begin_charged_firebolt(player, ability)
 	if started and not was_charging:
 		charged_presentation_prepared = true
+		charge_presentation_bucket = 0
 		_present_ability_phase("prepare", ability, player, _null_position(), 0.2, {
 			"charging": true,
 		})
 	return started
+
+
+func update_charged_firebolt(delta: float) -> void:
+	super.update_charged_firebolt(delta)
+	if not is_charging_firebolt or not charged_presentation_prepared:
+		return
+	var ratio: float = get_charged_firebolt_ratio()
+	var next_bucket: int = clampi(floori(ratio * 4.0), 0, 4)
+	if next_bucket <= charge_presentation_bucket or next_bucket <= 0:
+		return
+	charge_presentation_bucket = next_bucket
+	_present_ability_phase("sustain", charge_ability, charge_player, _null_position(), ratio, {
+		"charging": true,
+		"detail": "charge_step_" + str(next_bucket),
+		"intensity": clampf(0.26 + ratio * 0.42, 0.26, 0.68),
+	})
 
 
 func cancel_charged_firebolt(should_emit: bool = true) -> void:
@@ -110,6 +120,7 @@ func cancel_charged_firebolt(should_emit: bool = true) -> void:
 			"charging": true,
 		})
 	charged_presentation_prepared = false
+	charge_presentation_bucket = 0
 	super.cancel_charged_firebolt(should_emit)
 
 
@@ -211,6 +222,7 @@ func get_debug_data() -> Dictionary:
 		"prepare", "release", "travel", "manifest", "latch", "sustain", "resolve", "cancel", "handoff",
 	]
 	data["charged_prepare_owned"] = charged_presentation_prepared
+	data["charge_presentation_bucket"] = charge_presentation_bucket
 	data["channel_prepare_owned"] = channel_presentation_prepared
 	data["ground_confirming"] = presentation_confirming_ground_target
 	return data

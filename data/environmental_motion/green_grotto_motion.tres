@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="EnvironmentalMotionProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environmental_motion/environmental_motion_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_motion"
+display_name = "Green Grotto Living Canopy"
+ambient_direction = Vector3(0.84, 0.0, 0.34)
+ambient_speed = 0.82
+gust_strength = 0.32
+gust_frequency = 0.19
+gust_spatial_frequency = 0.072
+reference_wind_speed = 1.45
+maximum_visual_wind_speed = 5.2
+systemic_airflow_scale = 0.23
+airflow_resample_interval = 0.16
+foliage_sway_degrees = 5.6
+foliage_flutter_degrees = 1.25
+canopy_sway_degrees = 1.05
+vine_sway_degrees = 4.4
+root_sway_degrees = 0.18
+water_bob_height = 0.006
+water_scale_pulse = 0.003
+waterfall_flutter_distance = 0.028
+waterfall_width_pulse = 0.038
+response_smoothing = 7.4
+base_frequency = 0.68

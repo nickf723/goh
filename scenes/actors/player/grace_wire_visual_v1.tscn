@@ -1,95 +1,11 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/visuals/grace_elemental_authority_motion_visual.gd" id="1_motion"]
-[ext_resource type="Script" path="res://scripts/visuals/avatar_wire_skeleton_renderer.gd" id="2_wire"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/grace_solid_runtime_visual_v1.tscn" id="1_solid"]
+[ext_resource type="Script" path="res://scripts/visuals/grace_wire_skeleton_renderer.gd" id="2_wire"]
 
-[node name="GraceVisualV1" type="Node3D"]
-script = ExtResource("1_motion")
-idle_bob_height = 0.008
-movement_bob_height = 0.028
-movement_bob_speed = 9.4
-stride_radians = 0.7
-arm_swing_radians = 0.54
-maximum_lean_radians = 0.14
-locomotion_blend_response = 14.0
-pose_response = 18.0
-accessory_response = 12.0
-idle_breath_amount = 0.01
-landing_pose_seconds = 0.22
-
-[node name="VisualRoot" type="Node3D" parent="."]
-
-[node name="LeftLegPivot" type="Node3D" parent="VisualRoot"]
-position = Vector3(-0.16, 0.76, 0)
-
-[node name="RightLegPivot" type="Node3D" parent="VisualRoot"]
-position = Vector3(0.16, 0.76, 0)
-
-[node name="BodyRoot" type="Node3D" parent="VisualRoot"]
-position = Vector3(0, 1.03, 0)
-
-[node name="LeftShoulderPivot" type="Node3D" parent="VisualRoot"]
-position = Vector3(-0.34, 1.39, 0)
-rotation_degrees = Vector3(0, 0, -6)
-
-[node name="LeftHand" type="Node3D" parent="VisualRoot/LeftShoulderPivot"]
-position = Vector3(-0.035, -0.58, -0.015)
-
-[node name="RightShoulderPivot" type="Node3D" parent="VisualRoot"]
-position = Vector3(0.34, 1.39, 0)
-rotation_degrees = Vector3(0, 0, 6)
-
-[node name="RightHand" type="Node3D" parent="VisualRoot/RightShoulderPivot"]
-position = Vector3(0.035, -0.58, -0.015)
-
-[node name="HeadRoot" type="Node3D" parent="VisualRoot"]
-position = Vector3(0, 1.68, -0.035)
-
-[node name="LeftEye" type="Node3D" parent="VisualRoot/HeadRoot"]
-position = Vector3(-0.08, 0.03, -0.22)
-scale = Vector3(0.85, 1.15, 0.55)
-
-[node name="RightEye" type="Node3D" parent="VisualRoot/HeadRoot"]
-position = Vector3(0.08, 0.03, -0.22)
-scale = Vector3(0.85, 1.15, 0.55)
-
-[node name="LeftBrow" type="Node3D" parent="VisualRoot/HeadRoot"]
-position = Vector3(-0.08, 0.1, -0.23)
-rotation_degrees = Vector3(0, 0, -5)
-
-[node name="RightBrow" type="Node3D" parent="VisualRoot/HeadRoot"]
-position = Vector3(0.08, 0.1, -0.23)
-rotation_degrees = Vector3(0, 0, 5)
-
-[node name="Mouth" type="Node3D" parent="VisualRoot/HeadRoot"]
-position = Vector3(0, -0.09, -0.24)
-
-[node name="SashTailPivot" type="Node3D" parent="VisualRoot"]
-position = Vector3(0.26, 0.98, -0.22)
-rotation_degrees = Vector3(0, 0, -8)
-
-[node name="LeftHairLockPivot" type="Node3D" parent="VisualRoot"]
-position = Vector3(-0.22, 1.75, 0)
-rotation_degrees = Vector3(4, 0, -5)
-
-[node name="RightHairLockPivot" type="Node3D" parent="VisualRoot"]
-position = Vector3(0.22, 1.75, 0)
-rotation_degrees = Vector3(4, 0, 5)
-
-[node name="HeadAnchor" type="Marker3D" parent="."]
-position = Vector3(0, 1.73, -0.05)
-
-[node name="LeftHandAnchor" type="Marker3D" parent="."]
-position = Vector3(-0.4, 0.82, -0.02)
-
-[node name="RightHandAnchor" type="Marker3D" parent="."]
-position = Vector3(0.4, 0.82, -0.02)
-
-[node name="ChestVFXAnchor" type="Marker3D" parent="."]
-position = Vector3(0, 1.34, -0.18)
-
-[node name="FeetVFXAnchor" type="Marker3D" parent="."]
-position = Vector3(0, 0.06, 0)
+[node name="GraceVisualV1" instance=ExtResource("1_solid")]
 
 [node name="WireSkeletonRenderer" type="Node3D" parent="."]
+visible = false
 script = ExtResource("2_wire")
+hide_source_meshes = false

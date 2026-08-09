@@ -1,10 +1,13 @@
 extends GroundContactPresentationDirector3D
 class_name GreenGrottoGroundContactAdapter
 
+const BENCHMARK_HIDE_MAX_RETRIES: int = 4
+
 var tagged_surface_count: int = 0
 var tagged_counts: Dictionary = {}
 var retired_legacy_surface_contact_count: int = 0
 var benchmark_overlay_hidden_by_default: bool = false
+var benchmark_hide_retry_count: int = 0
 
 
 func _ready() -> void:
@@ -59,9 +62,9 @@ func _hide_visual_benchmark_overlay() -> void:
 		"visual_benchmark_director"
 	)
 	if not candidate is VisualBenchmarkDirector:
-		# The benchmark is installed by the Green root at runtime. If sibling
-		# initialization order puts us first, retry once after the current frame.
-		call_deferred("_hide_visual_benchmark_overlay")
+		benchmark_hide_retry_count += 1
+		if benchmark_hide_retry_count <= BENCHMARK_HIDE_MAX_RETRIES:
+			call_deferred("_hide_visual_benchmark_overlay")
 		return
 	var benchmark: VisualBenchmarkDirector = candidate as VisualBenchmarkDirector
 	benchmark.overlay_enabled = false
@@ -116,4 +119,5 @@ func get_debug_data() -> Dictionary:
 	data["retired_legacy_surface_contact"] = retired_legacy_surface_contact_count
 	data["single_contact_visual_authority"] = true
 	data["benchmark_overlay_hidden_by_default"] = benchmark_overlay_hidden_by_default
+	data["benchmark_hide_retry_count"] = benchmark_hide_retry_count
 	return data

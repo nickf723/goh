@@ -2,7 +2,7 @@ extends RefCounted
 class_name PresentationService
 
 const DirectorScript = preload(
-	"res://scripts/presentation/presentation_director_spells.gd"
+	"res://scripts/presentation/presentation_director_spell_audio.gd"
 )
 const DIRECTOR_NODE_NAME: String = "PresentationDirector"
 

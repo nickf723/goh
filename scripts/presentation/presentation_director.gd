@@ -46,7 +46,7 @@ func present(event_type: String, context: Dictionary = {}) -> Dictionary:
 		"footstep", "jump", "landing":
 			return present_movement(event_type, context)
 		_:
-			return _record_event(event_type, context.duplicate(true))
+			return _record_event(event_type, context)
 
 
 func present_impact(context: Dictionary = {}) -> Dictionary:
@@ -110,7 +110,7 @@ func present_impact(context: Dictionary = {}) -> Dictionary:
 			42 if tier == "light" else 28
 		)
 
-	var data: Dictionary = {
+	return _record_event("impact", {
 		"target": target,
 		"position": position,
 		"material": material_id,
@@ -121,10 +121,9 @@ func present_impact(context: Dictionary = {}) -> Dictionary:
 		"defeated": defeated,
 		"resisted": resisted,
 		"audio": audio_rows,
-		"haptic": haptic_id if haptic_played else "throttled",
+		"haptic": haptic_id if haptic_played else ("suppressed" if bool(context.get("suppress_haptics", false)) else "throttled"),
 		"source_name": str(context.get("source_name", "impact")),
-	}
-	return _record_event("impact", data)
+	})
 
 
 func present_reaction(context: Dictionary = {}) -> Dictionary:
@@ -154,7 +153,7 @@ func present_reaction(context: Dictionary = {}) -> Dictionary:
 	if audio != null and cue_id != "":
 		audio_data = audio.play_cue(cue_id, position, intensity, 0.035)
 	var haptic_played: bool = false
-	if haptic_id != "":
+	if haptic_id != "" and not bool(context.get("suppress_haptics", false)):
 		haptic_played = _play_haptic_throttled(haptic_id, "reaction", 45)
 
 	# WeaponController already owns authored melee hit stop and camera impact.
@@ -162,7 +161,7 @@ func present_reaction(context: Dictionary = {}) -> Dictionary:
 	# large temporal/camera layer for weapon hits.
 	var hit_stop_requested: bool = false
 	var camera_requested: bool = false
-	if not is_weapon:
+	if not is_weapon and not bool(context.get("suppress_temporal_feedback", false)):
 		var hit_stop_profile: Dictionary = _reaction_hit_stop(reaction)
 		if not hit_stop_profile.is_empty():
 			hit_stop_requested = _request_hit_stop(
@@ -172,7 +171,7 @@ func present_reaction(context: Dictionary = {}) -> Dictionary:
 		var camera_strength: float = _reaction_camera_strength(reaction)
 		if camera_strength > 0.0:
 			camera_requested = _request_camera_impulse(
-				context.get("direction", Vector3.ZERO) as Vector3,
+				context.get("direction", Vector3.ZERO),
 				camera_strength
 			)
 
@@ -197,7 +196,7 @@ func present_reaction(context: Dictionary = {}) -> Dictionary:
 		"element": element,
 		"weapon_owned_temporal_feedback": is_weapon,
 		"audio": audio_data,
-		"haptic": haptic_id if haptic_played else "throttled",
+		"haptic": haptic_id if haptic_played else ("suppressed" if bool(context.get("suppress_haptics", false)) else "throttled"),
 		"hit_stop": hit_stop_requested,
 		"camera": camera_requested,
 		"visual": visual_spawned,
@@ -209,19 +208,24 @@ func present_break(context: Dictionary = {}) -> Dictionary:
 	var position: Vector3 = _resolve_position(context, target)
 	var material_id: String = str(
 		context.get("material", infer_material(target))
-	).to_lower()
+	).strip_edges().to_lower()
+	if material_id in ["", "auto"]:
+		material_id = infer_material(target)
 	var cue_id: String = "break_" + _normalize_material_cue(material_id)
 	var audio_data: Dictionary = {}
 	if audio != null:
 		audio_data = audio.play_cue(cue_id, position, 0.88, 0.055)
-	var haptic_played: bool = _play_haptic_throttled("break_heavy", "break", 75)
-	_request_camera_impulse(Vector3.DOWN, 0.28)
+	var haptic_played: bool = false
+	if not bool(context.get("suppress_haptics", false)):
+		haptic_played = _play_haptic_throttled("break_heavy", "break", 75)
+	if not bool(context.get("suppress_camera", false)):
+		_request_camera_impulse(Vector3.DOWN, 0.28)
 	return _record_event("break", {
 		"target": target,
 		"position": position,
 		"material": material_id,
 		"audio": audio_data,
-		"haptic": "break_heavy" if haptic_played else "throttled",
+		"haptic": "break_heavy" if haptic_played else ("suppressed" if bool(context.get("suppress_haptics", false)) else "throttled"),
 	})
 
 
@@ -235,8 +239,6 @@ func present_movement(kind: String, context: Dictionary = {}) -> Dictionary:
 	var strength: float = clampf(float(context.get("strength", 0.5)), 0.0, 1.0)
 	var cue_id: String = normalized
 	if normalized == "footstep":
-		# Footsteps use the material timbre at low intensity, layered with the
-		# compact footstep transient.
 		if audio != null:
 			audio.play_cue(
 				"impact_" + _normalize_material_cue(material_id),
@@ -251,7 +253,8 @@ func present_movement(kind: String, context: Dictionary = {}) -> Dictionary:
 	var haptic_id: String = ""
 	if normalized == "landing" and strength >= 0.42:
 		haptic_id = "landing_impact"
-		_play_haptic_throttled(haptic_id, "landing", 90)
+		if not bool(context.get("suppress_haptics", false)):
+			_play_haptic_throttled(haptic_id, "landing", 90)
 	return _record_event(normalized, {
 		"actor": actor,
 		"position": position,
@@ -275,6 +278,9 @@ func infer_material(target: Node) -> String:
 			var meta_value: String = str(current.get_meta("presentation_material")).to_lower()
 			if meta_value not in ["", "auto"]:
 				return meta_value
+		var tag_material: String = _infer_material_from_tags(current)
+		if tag_material != "":
+			return tag_material
 		for material_id: String in ["metal", "stone", "wood", "glass", "flesh", "soft"]:
 			if current.is_in_group("presentation_material_" + material_id):
 				return material_id
@@ -291,6 +297,31 @@ func infer_material(target: Node) -> String:
 			return "flesh"
 		current = current.get_parent()
 	return "soft"
+
+
+func _infer_material_from_tags(node: Node) -> String:
+	if node == null or not is_instance_valid(node):
+		return ""
+	var tag_component: Node = node.get_node_or_null("TagComponent")
+	if tag_component == null:
+		return ""
+	var tags_value: Variant = tag_component.get("tags")
+	if not tags_value is Array:
+		return ""
+	for raw_tag: Variant in tags_value as Array:
+		var tag: String = str(raw_tag).strip_edges().to_lower()
+		match tag:
+			"glass", "crystal":
+				return "glass"
+			"metal", "metallic", "iron", "steel", "copper":
+				return "metal"
+			"stone", "rock":
+				return "stone"
+			"wood", "wooden":
+				return "wood"
+			"flesh", "creature", "organic_body":
+				return "flesh"
+	return ""
 
 
 func infer_floor_material(actor: Node, position: Vector3) -> String:
@@ -362,16 +393,12 @@ func _reaction_tier(reaction: String) -> String:
 
 func _reaction_cue(reaction: String) -> String:
 	match reaction:
-		"FLINCH":
-			return "reaction_stagger"
-		"STAGGER":
+		"FLINCH", "STAGGER":
 			return "reaction_stagger"
 		"LAUNCH":
 			return "reaction_launch"
 		"GUARD BREAK":
 			return "reaction_break"
-		"RESIST", "SUPER ARMOR", "ADAPTED":
-			return "reaction_resist"
 		_:
 			return "reaction_resist"
 
@@ -521,7 +548,7 @@ func _valid_payload(value: Variant) -> DamagePayload:
 
 func _record_event(event_type: String, data: Dictionary) -> Dictionary:
 	event_counter += 1
-	var record: Dictionary = data.duplicate(true)
+	var record: Dictionary = _sanitize_dictionary(data)
 	record["event_id"] = event_counter
 	record["event_type"] = event_type.strip_edges().to_lower()
 	record["time_msec"] = Time.get_ticks_msec()
@@ -533,6 +560,57 @@ func _record_event(event_type: String, data: Dictionary) -> Dictionary:
 	event_counts[normalized] = int(event_counts.get(normalized, 0)) + 1
 	event_presented.emit(normalized, record.duplicate(true))
 	return record
+
+
+func _sanitize_dictionary(source: Dictionary) -> Dictionary:
+	var clean: Dictionary = {}
+	for raw_key: Variant in source.keys():
+		var key: String = str(raw_key)
+		var value: Variant = source[raw_key]
+		if typeof(value) == TYPE_OBJECT:
+			if not is_instance_valid(value):
+				clean[key + "_name"] = "freed"
+				continue
+			if value is Node:
+				var node := value as Node
+				clean[key + "_name"] = node.name
+				clean[key + "_instance_id"] = node.get_instance_id()
+				continue
+			if value is Resource:
+				var resource := value as Resource
+				clean[key + "_resource"] = resource.resource_path
+				continue
+			clean[key + "_type"] = type_string(typeof(value))
+			continue
+		if value is Dictionary:
+			clean[key] = _sanitize_dictionary(value as Dictionary)
+			continue
+		if value is Array:
+			clean[key] = _sanitize_array(value as Array)
+			continue
+		clean[key] = value
+	return clean
+
+
+func _sanitize_array(source: Array) -> Array:
+	var clean: Array = []
+	for value: Variant in source:
+		if typeof(value) == TYPE_OBJECT:
+			if not is_instance_valid(value):
+				clean.append("freed")
+			elif value is Node:
+				clean.append((value as Node).name)
+			elif value is Resource:
+				clean.append((value as Resource).resource_path)
+			else:
+				clean.append(type_string(typeof(value)))
+		elif value is Dictionary:
+			clean.append(_sanitize_dictionary(value as Dictionary))
+		elif value is Array:
+			clean.append(_sanitize_array(value as Array))
+		else:
+			clean.append(value)
+	return clean
 
 
 func clear_history() -> void:
@@ -550,4 +628,5 @@ func get_debug_data() -> Dictionary:
 		"last_event": last_event.duplicate(true),
 		"audio": audio.get_debug_data() if audio != null else {},
 		"semantic_events": ["impact", "reaction", "break", "footstep", "jump", "landing"],
+		"telemetry_stores_live_nodes": false,
 	}

@@ -22,6 +22,11 @@ var camera_director: CameraDirector3D = null
 var lighting: LightingDirector3D = null
 var shadows: ShadowFidelityDirector3D = null
 var reflections: ReflectionFidelityDirector3D = null
+var atmosphere: AtmosphericDetailDirector3D = null
+var character_materials: CharacterMaterialPresentationDirector3D = null
+var visual_lod: VisualLODDirector3D = null
+var surface_contact: SurfaceContactPresentationDirector3D = null
+var ambient_fauna: Array[GreenGrottoFaunaAmbientBehavior] = []
 
 var panel: PanelContainer = null
 var status_label: Label = null
@@ -56,6 +61,7 @@ func _process(delta: float) -> void:
 	refresh_timer -= maxf(delta, 0.0)
 	if refresh_timer <= 0.0:
 		refresh_timer = 0.18
+		_refresh_optional_systems()
 		_refresh_overlay()
 
 
@@ -94,15 +100,55 @@ func _initialize() -> void:
 func _resolve_systems() -> void:
 	if get_tree() == null:
 		return
-	vegetation = get_tree().get_first_node_in_group("vegetation_presentation_director") as VegetationPresentationDirector3D
-	water = get_tree().get_first_node_in_group("water_presentation_director") as WaterPresentationDirector3D
-	material_fidelity = get_tree().get_first_node_in_group("material_fidelity_director") as MaterialFidelityDirector3D
-	surface_story = get_tree().get_first_node_in_group("surface_story_director") as SurfaceStoryDirector3D
-	motion = get_tree().get_first_node_in_group("environmental_motion_director") as EnvironmentalMotionDirector3D
-	camera_director = get_tree().get_first_node_in_group("camera_director") as CameraDirector3D
-	lighting = get_tree().get_first_node_in_group("lighting_director") as LightingDirector3D
-	shadows = get_tree().get_first_node_in_group("shadow_fidelity_director") as ShadowFidelityDirector3D
-	reflections = get_tree().get_first_node_in_group("reflection_fidelity_director") as ReflectionFidelityDirector3D
+	vegetation = get_tree().get_first_node_in_group(
+		"vegetation_presentation_director"
+	) as VegetationPresentationDirector3D
+	water = get_tree().get_first_node_in_group(
+		"water_presentation_director"
+	) as WaterPresentationDirector3D
+	material_fidelity = get_tree().get_first_node_in_group(
+		"material_fidelity_director"
+	) as MaterialFidelityDirector3D
+	surface_story = get_tree().get_first_node_in_group(
+		"surface_story_director"
+	) as SurfaceStoryDirector3D
+	motion = get_tree().get_first_node_in_group(
+		"environmental_motion_director"
+	) as EnvironmentalMotionDirector3D
+	camera_director = get_tree().get_first_node_in_group(
+		"camera_director"
+	) as CameraDirector3D
+	lighting = get_tree().get_first_node_in_group(
+		"lighting_director"
+	) as LightingDirector3D
+	shadows = get_tree().get_first_node_in_group(
+		"shadow_fidelity_director"
+	) as ShadowFidelityDirector3D
+	reflections = get_tree().get_first_node_in_group(
+		"reflection_fidelity_director"
+	) as ReflectionFidelityDirector3D
+	_refresh_optional_systems()
+
+
+func _refresh_optional_systems() -> void:
+	if get_tree() == null:
+		return
+	atmosphere = get_tree().get_first_node_in_group(
+		"atmospheric_detail_director"
+	) as AtmosphericDetailDirector3D
+	character_materials = get_tree().get_first_node_in_group(
+		"character_material_presentation_director"
+	) as CharacterMaterialPresentationDirector3D
+	visual_lod = get_tree().get_first_node_in_group(
+		"visual_lod_director"
+	) as VisualLODDirector3D
+	surface_contact = get_tree().get_first_node_in_group(
+		"surface_contact_presentation_director"
+	) as SurfaceContactPresentationDirector3D
+	ambient_fauna.clear()
+	for candidate: Node in get_tree().get_nodes_in_group("ambient_fauna_behavior"):
+		if candidate is GreenGrottoFaunaAmbientBehavior:
+			ambient_fauna.append(candidate as GreenGrottoFaunaAmbientBehavior)
 
 
 func _required_systems_ready() -> bool:
@@ -122,6 +168,7 @@ func apply_preset(index: int) -> void:
 		_resolve_systems()
 		if not _required_systems_ready():
 			return
+	_refresh_optional_systems()
 	preset_index = clampi(index, PRESET_BASELINE, PRESET_HERO)
 	var presentation_enabled: bool = preset_index != PRESET_BASELINE
 	vegetation.set_enabled(presentation_enabled)
@@ -130,6 +177,9 @@ func apply_preset(index: int) -> void:
 	surface_story.set_enabled(presentation_enabled)
 	motion.set_enabled(presentation_enabled)
 	camera_director.set_enabled(presentation_enabled)
+	for behavior: GreenGrottoFaunaAmbientBehavior in ambient_fauna:
+		if behavior != null and is_instance_valid(behavior):
+			behavior.set_enabled(presentation_enabled)
 
 	match preset_index:
 		PRESET_BASELINE:
@@ -239,7 +289,7 @@ func _one_percent_low_fps(values: Array[float]) -> float:
 		return 0.0
 	var sorted: Array[float] = values.duplicate()
 	sorted.sort()
-	var worst_count: int = maxi(ceili(float(sorted.size()) * 0.01), 1)
+	var worst_count: int = maxi(int(ceil(float(sorted.size()) * 0.01)), 1)
 	var worst_total: float = 0.0
 	for index: int in range(worst_count):
 		worst_total += sorted[sorted.size() - 1 - index]
@@ -261,6 +311,7 @@ func _detect_matching_preset() -> int:
 		and surface_story.enabled
 		and motion.enabled
 		and camera_director.enabled
+		and _all_ambient_fauna_enabled()
 	)
 	var all_presentation_off: bool = (
 		not vegetation.enabled
@@ -269,6 +320,7 @@ func _detect_matching_preset() -> int:
 		and not surface_story.enabled
 		and not motion.enabled
 		and not camera_director.enabled
+		and _all_ambient_fauna_disabled()
 	)
 	if all_presentation_off and lighting.quality == LightingDirector3D.Quality.PERFORMANCE:
 		return PRESET_BASELINE
@@ -279,13 +331,31 @@ func _detect_matching_preset() -> int:
 	return -1
 
 
+func _all_ambient_fauna_enabled() -> bool:
+	if ambient_fauna.is_empty():
+		return true
+	for behavior: GreenGrottoFaunaAmbientBehavior in ambient_fauna:
+		if behavior == null or not is_instance_valid(behavior) or not behavior.enabled:
+			return false
+	return true
+
+
+func _all_ambient_fauna_disabled() -> bool:
+	if ambient_fauna.is_empty():
+		return true
+	for behavior: GreenGrottoFaunaAmbientBehavior in ambient_fauna:
+		if behavior != null and is_instance_valid(behavior) and behavior.enabled:
+			return false
+	return true
+
+
 func _build_overlay() -> void:
 	if panel != null:
 		return
 	panel = PanelContainer.new()
 	panel.name = "BenchmarkStatusPanel"
 	panel.position = Vector2(14.0, 14.0)
-	panel.custom_minimum_size = Vector2(350.0, 0.0)
+	panel.custom_minimum_size = Vector2(430.0, 0.0)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.visible = overlay_enabled
 	add_child(panel)
@@ -294,7 +364,10 @@ func _build_overlay() -> void:
 	status_label.name = "BenchmarkStatus"
 	status_label.add_theme_font_size_override("font_size", 13)
 	status_label.add_theme_constant_override("outline_size", 3)
-	status_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.82))
+	status_label.add_theme_color_override(
+		"font_outline_color",
+		Color(0.0, 0.0, 0.0, 0.82)
+	)
 	status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(status_label)
 
@@ -310,7 +383,8 @@ func _refresh_overlay() -> void:
 		+ "FPS %.0f   %.2f ms   DC %d   Prim %s\n"
 		+ "F1 Veg %s   F2 Water %s   F3 Material %s\n"
 		+ "F4 Story %s   F5 Motion %s   F6 Camera %s\n"
-		+ "F7 %s   •   F9 Preset   F10 HUD   F11 Sample%s"
+		+ "F7 %s   •   Refl %d   Atm %d   LOD %d\n"
+		+ "Grace Q%d   Contact %d   Fauna %s   •   F9 Preset   F10 HUD   F11 Sample%s"
 	) % [
 		preset_label,
 		current_fps,
@@ -324,15 +398,57 @@ func _refresh_overlay() -> void:
 		_on_off(motion != null and motion.enabled),
 		_on_off(camera_director != null and camera_director.enabled),
 		_lighting_label(),
+		_reflection_probe_count(),
+		_atmosphere_instance_count(),
+		_lod_target_count(),
+		_character_material_quality(),
+		_contact_footstep_count(),
+		_on_off(_all_ambient_fauna_enabled()),
 		capture_line,
 	]
 	if panel != null:
 		panel.visible = overlay_enabled
 
 
+func _reflection_probe_count() -> int:
+	if reflections == null:
+		return 0
+	return int(reflections.get_debug_data().get("active_probes", 0))
+
+
+func _atmosphere_instance_count() -> int:
+	if atmosphere == null:
+		return 0
+	return int(atmosphere.get_debug_data().get("visible_instances", 0))
+
+
+func _lod_target_count() -> int:
+	if visual_lod == null:
+		return 0
+	return int(visual_lod.get_debug_data().get("target_count", 0))
+
+
+func _character_material_quality() -> int:
+	if character_materials == null:
+		return -1
+	return int(character_materials.get_debug_data().get("quality", -1))
+
+
+func _contact_footstep_count() -> int:
+	if surface_contact == null or surface_contact.profile == null:
+		return 0
+	return surface_contact.profile.get_piece_count(
+		"footstep",
+		lighting.quality if lighting != null else 2
+	)
+
+
 func _capture_status_line() -> String:
 	if capture_active:
-		return "\nCAPTURING %s  %.1fs" % [capture_label, maxf(capture_remaining, 0.0)]
+		return "\nCAPTURING %s  %.1fs" % [
+			capture_label,
+			maxf(capture_remaining, 0.0),
+		]
 	if last_capture.is_empty():
 		return ""
 	return (
@@ -395,6 +511,13 @@ func get_debug_data() -> Dictionary:
 		"f10_overlay_toggle": true,
 		"f11_timed_capture": true,
 		"baseline_disables_f1_f6": true,
+		"baseline_restores_legacy_fauna": _all_ambient_fauna_disabled(),
+		"ambient_fauna_count": ambient_fauna.size(),
+		"linked_reflection_probes": _reflection_probe_count(),
+		"linked_atmosphere_instances": _atmosphere_instance_count(),
+		"linked_lod_targets": _lod_target_count(),
+		"linked_character_quality": _character_material_quality(),
+		"linked_contact_footstep_pieces": _contact_footstep_count(),
 		"balanced_uses_lighting_balanced": true,
 		"hero_uses_lighting_cinematic": true,
 		"current_fps": current_fps,

@@ -55,6 +55,86 @@ const PRESETS: Dictionary = {
 		},
 		"tags": ["combat", "contact", "hit"],
 	},
+	"impact_light": {
+		"label": "Light Impact",
+		"haptic": {
+			"weak": 0.08,
+			"strong": 0.035,
+			"duration": 0.045,
+			"device": 0,
+		},
+		"tags": ["presentation", "combat", "impact", "light"],
+	},
+	"impact_medium": {
+		"label": "Medium Impact",
+		"haptic": {
+			"weak": 0.18,
+			"strong": 0.20,
+			"duration": 0.075,
+			"device": 0,
+		},
+		"tags": ["presentation", "combat", "impact", "medium"],
+	},
+	"impact_resist": {
+		"label": "Resisted Impact",
+		"haptic": {
+			"weak": 0.07,
+			"strong": 0.24,
+			"duration": 0.06,
+			"device": 0,
+		},
+		"tags": ["presentation", "combat", "impact", "resist"],
+	},
+	"impact_stagger": {
+		"label": "Stagger Impact",
+		"haptic": {
+			"weak": 0.26,
+			"strong": 0.58,
+			"duration": 0.115,
+			"device": 0,
+		},
+		"tags": ["presentation", "combat", "impact", "stagger"],
+	},
+	"impact_launch": {
+		"label": "Launch Impact",
+		"haptic": {
+			"weak": 0.34,
+			"strong": 0.78,
+			"duration": 0.15,
+			"device": 0,
+		},
+		"tags": ["presentation", "combat", "impact", "launch"],
+	},
+	"impact_break": {
+		"label": "Guard Break Impact",
+		"haptic": {
+			"weak": 0.36,
+			"strong": 0.90,
+			"duration": 0.17,
+			"device": 0,
+		},
+		"tags": ["presentation", "combat", "impact", "break"],
+	},
+	"break_heavy": {
+		"label": "Object Break",
+		"haptic": {
+			"weak": 0.28,
+			"strong": 0.68,
+			"duration": 0.13,
+			"device": 0,
+		},
+		"tags": ["presentation", "break", "destruction"],
+	},
+	"landing_impact": {
+		"label": "Landing Impact",
+		"haptic": {
+			"weak": 0.12,
+			"strong": 0.24,
+			"duration": 0.07,
+			"device": 0,
+		},
+		"tags": ["presentation", "movement", "landing"],
+	},
 	"player_hit": {
 		"label": "Player Hit",
 		"haptic": {

@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="GroundContactPresentationProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/ground_contact_presentation_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_ground_contact"
+display_name = "Green Grotto Ground Contact"
+performance_density = 0.0
+balanced_density = 0.62
+cinematic_density = 1.0
+maximum_particles = 72
+maximum_lifetime = 0.58
+gravity = 3.4
+drag = 2.3
+stone_footstep_particles = 2
+soil_footstep_particles = 4
+wet_footstep_particles = 3
+footstep_velocity_scale = 0.54
+stone_landing_particles = 6
+soil_landing_particles = 10
+wet_landing_particles = 8
+landing_velocity_scale = 1.02
+stone_color = Color(0.39, 0.38, 0.30, 0.38)
+paving_color = Color(0.50, 0.45, 0.31, 0.36)
+soil_color = Color(0.24, 0.20, 0.085, 0.44)
+moss_color = Color(0.20, 0.36, 0.10, 0.44)
+wet_color = Color(0.30, 0.67, 0.57, 0.38)

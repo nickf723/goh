@@ -107,14 +107,19 @@ func create_stamp(
 
 	# Decals project along local -Y. Build the receiving orientation in world
 	# space so the API remains correct even if the Director itself is transformed.
+	# Sink most of the projection volume into the receiving surface so decorative
+	# floor/wall history has minimal opportunity to overlap dynamic actors.
 	var orientation := Basis(Quaternion(Vector3.DOWN, -normal))
-	decal.global_transform = Transform3D(orientation, world_position)
+	var embedded_position: Vector3 = world_position - normal * depth * 0.44
+	decal.global_transform = Transform3D(orientation, embedded_position)
 	if absf(rotation_radians) > 0.00001:
 		decal.rotate_object_local(Vector3.UP, rotation_radians)
 
 	decal.add_to_group("surface_story_stamp")
 	decal.set_meta("surface_story_kind", normalized_kind)
 	decal.set_meta("surface_story_intensity", intensity)
+	decal.set_meta("surface_story_contact_point", world_position)
+	decal.set_meta("surface_story_projection_embedded", true)
 	decals.append(decal)
 	counts_by_kind[normalized_kind] = int(counts_by_kind.get(normalized_kind, 0)) + 1
 	stamp_created.emit(normalized_kind, decal.name)
@@ -182,4 +187,5 @@ func get_debug_data() -> Dictionary:
 		"texture_factory": texture_factory.get_debug_data() if texture_factory != null else {},
 		"native_decals": true,
 		"geometry_unchanged": true,
+		"projection_embedded": true,
 	}

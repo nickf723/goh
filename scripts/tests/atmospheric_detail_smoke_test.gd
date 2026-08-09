@@ -33,7 +33,7 @@ func run_tests() -> void:
 	if director != null and lighting != null:
 		_validate_contract(target, director)
 		await _validate_quality_ladder(director, lighting)
-		_validate_motion_update(director, motion)
+		_validate_direction_study_posture(director)
 
 	target.queue_free()
 	await get_tree().process_frame
@@ -48,80 +48,54 @@ func _validate_contract(
 	_expect(bool(data.get("atmospheric_detail_director", false)), "atmosphere publishes debug contract")
 	_expect(bool(data.get("initialized", false)), "atmosphere initializes with runtime soft texture")
 	_expect(str(data.get("profile_id", "")) == "green_grotto_atmosphere", "Green uses dedicated atmosphere profile")
-	_expect(int(data.get("field_count", 0)) == 4, "Green owns four authored atmosphere fields")
+	_expect(int(data.get("field_count", 0)) == 4, "Green retains four authored atmosphere fields")
 	_expect(int(data.get("authored_instances", 0)) == 460, "Green retains 460 deterministic authored atmosphere candidates")
 	_expect(bool(data.get("multimesh_batched", false)), "atmosphere uses MultiMesh batching")
-	_expect(bool(data.get("follows_lighting_quality", false)), "atmosphere follows the F7 lighting tier")
-	_expect(bool(data.get("samples_environmental_motion", false)), "atmosphere can inherit Environmental Motion wind")
-	_expect(bool(data.get("soft_texture_runtime_generated", false)), "atmosphere generates its soft mote texture in Godot")
-	_expect(bool(data.get("camera_safe_fade", false)), "atmosphere clears presentation motes around the active camera")
-	_expect(is_equal_approx(float(data.get("camera_clear_radius", 0.0)), 2.0), "Green reserves a 2m clear camera bubble")
-	_expect(is_equal_approx(float(data.get("camera_fade_distance", 0.0)), 2.5), "Green fades motes back in gradually beyond the clear bubble")
+	_expect(bool(data.get("follows_lighting_quality", false)), "atmosphere still follows the F7 lighting tier")
+	_expect(bool(data.get("samples_environmental_motion", false)), "atmosphere retains Environmental Motion integration")
+	_expect(bool(data.get("soft_texture_runtime_generated", false)), "atmosphere retains its runtime mote texture")
+	_expect(bool(data.get("camera_safe_fade", false)), "camera-safe fade remains available")
+	_expect(is_equal_approx(float(data.get("camera_clear_radius", 0.0)), 2.0), "Green retains a 2m clear camera bubble")
+	_expect(is_equal_approx(float(data.get("camera_fade_distance", 0.0)), 2.5), "Green retains the 2.5m fade distance")
 	_expect(not bool(data.get("gameplay_authority", true)), "atmosphere owns no gameplay state")
 	var counts: Dictionary = _dictionary_value(data.get("field_counts", {}))
-	_expect(int(counts.get("dust", 0)) == 140, "entrance and shrine dust retain 140 authored candidates")
-	_expect(int(counts.get("pollen", 0)) == 170, "canopy pollen authoring pool is 170")
-	_expect(int(counts.get("mist", 0)) == 150, "waterfall mist authoring pool is 150")
+	_expect(int(counts.get("dust", 0)) == 140, "dust authoring pool remains intact")
+	_expect(int(counts.get("pollen", 0)) == 170, "pollen authoring pool remains intact")
+	_expect(int(counts.get("mist", 0)) == 150, "mist authoring pool remains intact")
 
 	var pass_data: Dictionary = {}
 	if target.has_method("get_debug_data"):
 		pass_data = _dictionary_value(target.call("get_debug_data"))
-	_expect(bool(pass_data.get("atmospheric_detail", false)), "Green pass reports atmospheric detail")
+	_expect(bool(pass_data.get("atmospheric_detail", false)), "Green pass still reports atmospheric detail infrastructure")
 
 
 func _validate_quality_ladder(
 	director: AtmosphericDetailDirector3D,
 	lighting: LightingDirector3D
 ) -> void:
-	lighting.set_quality(LightingDirector3D.Quality.PERFORMANCE)
-	await get_tree().process_frame
-	await get_tree().process_frame
-	var performance: Dictionary = director.get_debug_data()
-	_expect(int(performance.get("quality", -1)) == 0, "Performance atmosphere tier follows F7")
-	_expect(int(performance.get("visible_instances", -1)) == 0, "Performance removes all atmosphere instances")
-	_expect(_visible_field_count(director) == 0, "Performance hides all four atmosphere fields")
-
-	lighting.set_quality(LightingDirector3D.Quality.BALANCED)
-	await get_tree().process_frame
-	await get_tree().process_frame
-	var balanced: Dictionary = director.get_debug_data()
-	var balanced_visible: int = int(balanced.get("visible_instances", 0))
-	_expect(int(balanced.get("quality", -1)) == 1, "Balanced atmosphere tier follows F7")
-	_expect(balanced_visible >= 11 and balanced_visible <= 13, "Balanced keeps atmosphere at a background-accent density")
-	_expect(_visible_field_count(director) == 3, "Balanced skips the Cinematic-only shrine field")
-
-	lighting.set_quality(LightingDirector3D.Quality.CINEMATIC)
-	await get_tree().process_frame
-	await get_tree().process_frame
-	var cinematic: Dictionary = director.get_debug_data()
-	var cinematic_visible: int = int(cinematic.get("visible_instances", 0))
-	_expect(int(cinematic.get("quality", -1)) == 2, "Cinematic atmosphere tier follows F7")
-	_expect(cinematic_visible >= 23 and cinematic_visible <= 26, "Cinematic keeps atmosphere secondary to route readability")
-	_expect(cinematic_visible < 30, "Cinematic keeps fewer than thirty visible motes")
-	_expect(_visible_field_count(director) == 4, "Cinematic enables all four atmosphere fields")
+	for quality: int in [
+		LightingDirector3D.Quality.PERFORMANCE,
+		LightingDirector3D.Quality.BALANCED,
+		LightingDirector3D.Quality.CINEMATIC,
+	]:
+		lighting.set_quality(quality)
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var data: Dictionary = director.get_debug_data()
+		_expect(int(data.get("quality", -1)) == quality, "atmosphere tier continues following F7")
+		_expect(int(data.get("visible_instances", -1)) == 0, "art-direction study suppresses decorative atmosphere")
+		_expect(_visible_field_count(director) == 0, "art-direction study renders no atmosphere fields")
 
 
-func _validate_motion_update(
-	director: AtmosphericDetailDirector3D,
-	motion: EnvironmentalMotionDirector3D
+func _validate_direction_study_posture(
+	director: AtmosphericDetailDirector3D
 ) -> void:
-	_expect(not director.fields.is_empty(), "atmosphere exposes at least one field for motion test")
-	if director.fields.is_empty():
-		return
-	var record: Dictionary = director.fields[0]
-	var multi: MultiMesh = record.get("multimesh") as MultiMesh
-	_expect(multi != null and multi.visible_instance_count > 0, "motion test resolves visible MultiMesh field")
-	if multi == null or multi.visible_instance_count <= 0:
-		return
-	motion.set_enabled(true)
-	director.elapsed = 0.0
-	director.call("_update_fields")
-	var before: Transform3D = multi.get_instance_transform(0)
-	director.elapsed = 1.25
-	director.call("_update_fields")
-	var after: Transform3D = multi.get_instance_transform(0)
-	_expect(before.origin.distance_to(after.origin) > 0.001, "atmospheric instances drift over time")
-	_expect(int(director.get_debug_data().get("update_count", 0)) >= 2, "atmosphere records batched transform updates")
+	_expect(not director.fields.is_empty(), "atmosphere authoring data remains available for later polish")
+	_expect(
+		is_zero_approx(director.profile.balanced_density_scale)
+		and is_zero_approx(director.profile.cinematic_density_scale),
+		"direction study explicitly disables decorative atmosphere"
+	)
 
 
 func _visible_field_count(director: AtmosphericDetailDirector3D) -> int:

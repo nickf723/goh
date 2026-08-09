@@ -1,7 +1,12 @@
 extends "res://scripts/levels/prototype_green_grotto_lighting_pass.gd"
 class_name PrototypeGreenGrottoMotionPass
 
+const PlayerAccessoryWindResponseScript = preload(
+	"res://scripts/visuals/player_accessory_wind_response.gd"
+)
+
 var environmental_motion_director: EnvironmentalMotionDirector3D = null
+var accessory_wind_response: PlayerAccessoryWindResponse = null
 var motion_registration_counts: Dictionary = {
 	"foliage": 0,
 	"canopy": 0,
@@ -17,9 +22,11 @@ func _ready() -> void:
 		"EnvironmentalMotionDirector"
 	) as EnvironmentalMotionDirector3D
 	_register_environment_motion_targets()
+	_ensure_grace_accessory_wind_response()
 	set_meta("environmental_motion_pass", "environmental_motion_director_v1")
 	set_meta("environmental_motion_authority", "EnvironmentalMotionDirector")
 	set_meta("motion_registration_counts", motion_registration_counts.duplicate(true))
+	set_meta("grace_accessory_wind", accessory_wind_response != null)
 
 
 func _register_environment_motion_targets() -> void:
@@ -122,6 +129,23 @@ func _register_water_motion() -> void:
 				motion_registration_counts["waterfall"] = int(motion_registration_counts["waterfall"]) + 1
 
 
+func _ensure_grace_accessory_wind_response() -> void:
+	var player: CharacterBody3D = get_node_or_null("Player") as CharacterBody3D
+	if player == null:
+		return
+	accessory_wind_response = player.get_node_or_null(
+		"AccessoryWindResponse"
+	) as PlayerAccessoryWindResponse
+	if accessory_wind_response != null:
+		return
+	accessory_wind_response = (
+		PlayerAccessoryWindResponseScript.new()
+		as PlayerAccessoryWindResponse
+	)
+	accessory_wind_response.name = "AccessoryWindResponse"
+	player.add_child(accessory_wind_response)
+
+
 func _phase_for_node(node: Node) -> float:
 	if node == null:
 		return 0.0
@@ -136,4 +160,5 @@ func get_debug_data() -> Dictionary:
 	data["motion_registration_counts"] = motion_registration_counts.duplicate(true)
 	data["visual_ambient_wind_only"] = true
 	data["wind_well_can_drive_environment_motion"] = true
+	data["grace_accessory_wind"] = accessory_wind_response != null
 	return data

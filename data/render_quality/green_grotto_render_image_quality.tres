@@ -16,5 +16,5 @@ balanced_msaa_3d = 0
 balanced_debanding = true
 cinematic_taa = true
 cinematic_screen_space_aa = 0
-cinematic_msaa_3d = 1
+cinematic_msaa_3d = 0
 cinematic_debanding = true

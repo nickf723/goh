@@ -20,11 +20,17 @@ func run_tests() -> void:
 	_expect(target is PrototypeGreenGrottoArtTarget, "scene keeps the Green Grotto base contract")
 	_expect(target is PrototypeGreenGrottoDetailPass, "scene keeps the V2 detail layer")
 	_expect(target is PrototypeGreenGrottoHeroPass, "scene promotes to the V3 hero layer")
+	_expect(target is PrototypeGreenGrottoHeroSurfaceFinish, "scene installs the completed V3 visible-surface finish")
 	_expect(str(target.get_meta("hero_pass", "")) == "green_grotto_v3", "scene identifies the V3 hero pass")
 	_expect(
 		str(target.get_meta("water_contract", ""))
 		== "localized_surface_meshes_no_global_plane",
 		"scene records the no-global-water-plane contract"
+	)
+	_expect(
+		str(target.get_meta("hero_surface_finish", ""))
+		== "v3_complete_visible_surface_replacement",
+		"scene records completed visible-surface replacement"
 	)
 	_expect(
 		str(target.get_meta("prototype_geometry_role", ""))
@@ -36,6 +42,7 @@ func run_tests() -> void:
 
 	var data: Dictionary = _debug_data(target)
 	_expect(bool(data.get("green_grotto_hero_pass", false)), "debug contract identifies the hero pass")
+	_expect(bool(data.get("green_grotto_hero_surface_finish", false)), "debug contract identifies the visible-surface finish")
 	_expect(str(data.get("hero_pass", "")) == "v3_structural_hero_rewrite", "debug data names the structural rewrite")
 	_expect(
 		str(data.get("expansion_strategy", ""))
@@ -46,6 +53,7 @@ func run_tests() -> void:
 	_validate_water_contract(target)
 	_validate_prototype_retirement(target)
 	_validate_hero_density(data)
+	_validate_surface_finish(target, data)
 	_validate_material_contract(data)
 	_validate_preserved_gameplay_contract(target)
 
@@ -114,12 +122,12 @@ func _validate_prototype_retirement(target: Node) -> void:
 func _validate_hero_density(data: Dictionary) -> void:
 	var counts: Dictionary = _dictionary_value(data.get("build_counts", {}))
 	var hero_counts: Dictionary = _dictionary_value(data.get("hero_counts", {}))
-	_expect(int(counts.get("visual_meshes", 0)) >= 550, "V3 reaches a substantially denser environment tier")
+	_expect(int(counts.get("visual_meshes", 0)) >= 700, "V3 reaches a substantially denser environment tier")
 	_expect(int(counts.get("foliage_clusters", 0)) >= 55, "V3 deepens clustered prehistoric ecology")
 	_expect(int(hero_counts.get("retired_water_nodes", 0)) >= 10, "V3 retires the old water fixture instead of covering it")
 	_expect(int(hero_counts.get("hidden_prototype_surfaces", 0)) >= 15, "V3 hides broad prototype surfaces")
 	_expect(int(hero_counts.get("localized_water_surfaces", 0)) == 3, "V3 publishes exactly three localized horizontal water/bed surfaces")
-	_expect(int(hero_counts.get("rock_sculptures", 0)) >= 105, "V3 sculpts the chasm and water banks with dense rock masses")
+	_expect(int(hero_counts.get("rock_sculptures", 0)) >= 120, "V3 sculpts the chasm, banks and arrival edge with dense rock masses")
 	_expect(int(hero_counts.get("causeway_face_blocks", 0)) >= 45, "causeway gains authored masonry faces")
 	_expect(int(hero_counts.get("causeway_supports", 0)) >= 6, "causeway gains visible ruined supports")
 	_expect(int(hero_counts.get("shrine_masonry_blocks", 0)) >= 80, "shrine foundation is rebuilt from individual masonry")
@@ -127,6 +135,20 @@ func _validate_hero_density(data: Dictionary) -> void:
 	_expect(int(hero_counts.get("railings", 0)) >= 20, "human-scale broken railings define ruin edges")
 	_expect(int(hero_counts.get("hero_foliage_masses", 0)) >= 24, "foliage is grouped into hero ecology masses")
 	_expect(int(hero_counts.get("hero_roots", 0)) >= 5, "large roots physically frame and invade the ruins")
+
+
+func _validate_surface_finish(target: Node, data: Dictionary) -> void:
+	var counts: Dictionary = _dictionary_value(data.get("hero_surface_counts", {}))
+	_expect(int(counts.get("terrace_tiles", 0)) >= 35, "side terraces receive individually fitted hero tiles")
+	_expect(int(counts.get("terrace_edge_blocks", 0)) >= 180, "terrace edges receive full masonry skirts")
+	_expect(int(counts.get("shrine_deck_tiles", 0)) >= 25, "shrine deck replaces the hidden broad foundation top")
+	_expect(int(counts.get("arrival_edge_rocks", 0)) == 16, "arrival shelf receives a sculpted rock perimeter")
+	var hero_architecture: Node = target.get_node_or_null("GreenGrottoArt/HeroPassV3/HeroArchitecture")
+	_expect(hero_architecture != null, "HeroArchitecture root exists")
+	if hero_architecture != null:
+		_expect(hero_architecture.get_node_or_null("LeftHeroTerraceTile00") != null, "left terrace has a visible hero deck")
+		_expect(hero_architecture.get_node_or_null("RightHeroTerraceTile01") != null, "right terrace has a visible hero deck")
+		_expect(hero_architecture.get_node_or_null("HeroShrineDeck01") != null, "shrine foundation has a visible hero deck")
 
 
 func _validate_material_contract(data: Dictionary) -> void:

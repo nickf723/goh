@@ -41,16 +41,17 @@ func _validate_contract(director: ProjectedCanopyLightDirector3D) -> void:
 	_expect(bool(data.get("initialized", false)), "dapple director initializes with light and texture")
 	_expect(str(data.get("profile_id", "")) == "green_grotto_projected_canopy_light", "Green owns dedicated dapple profile")
 	_expect(bool(data.get("projector_texture", false)), "dapple director creates projector texture")
-	_expect(int(data.get("projector_resolution", 0)) == 96, "Green dapple texture uses bounded 96px resolution")
+	_expect(int(data.get("projector_resolution", 0)) == 64, "Green dapple texture uses detoxed 64px resolution")
 	_expect(bool(data.get("runtime_generated_projector", false)), "projector mask is generated inside Godot")
 	_expect(bool(data.get("indirect_energy_zero", false)), "dapple light never double-feeds GI")
+	_expect(not bool(data.get("shadow_enabled", true)), "dapple projector stays shadow-free to avoid another full scene shadow pass")
 	_expect(bool(data.get("follows_lighting_quality", false)), "dapple light follows F7")
 	_expect(bool(data.get("geometry_unchanged", false)), "dapple light changes no geometry")
 	_expect(not bool(data.get("gameplay_authority", true)), "dapple light owns no gameplay state")
 	var average: float = float(data.get("mask_average", 0.0))
 	var bright_fraction: float = float(data.get("mask_bright_fraction", 0.0))
-	_expect(average > 0.03 and average < 0.75, "projector mask contains useful dark/light range")
-	_expect(bright_fraction > 0.01 and bright_fraction < 0.55, "projector has sparse bright canopy openings")
+	_expect(average > 0.01 and average < 0.65, "projector mask contains useful dark/light range")
+	_expect(bright_fraction >= 0.0 and bright_fraction < 0.45, "projector keeps canopy openings sparse")
 	_expect(director.projector_texture is ImageTexture, "projector is a real runtime ImageTexture")
 
 
@@ -60,6 +61,8 @@ func _validate_authored_placement(director: ProjectedCanopyLightDirector3D) -> v
 	if director.spot_light != null:
 		_expect(director.spot_light.light_projector == director.projector_texture, "SpotLight owns generated projector texture")
 		_expect(absf(director.spot_light.light_indirect_energy) < 0.001, "SpotLight indirect energy stays zero")
+		_expect(absf(director.spot_light.light_volumetric_fog_energy) < 0.05, "SpotLight volumetric contribution stays tiny")
+		_expect(not director.spot_light.shadow_enabled, "SpotLight never allocates a duplicate shadow map")
 		_expect(absf(director.spot_light.light_specular - director.profile.light_specular) < 0.001, "dapple uses restrained specular contribution")
 
 
@@ -80,17 +83,18 @@ func _validate_quality_ladder(
 	lighting.set_quality(LightingDirector3D.Quality.BALANCED)
 	director.synchronize_now()
 	_expect(spot.visible, "Balanced enables canopy dapple")
-	_expect(spot.shadow_enabled, "Balanced enables projector shadow support")
-	_expect(absf(spot.light_energy - director.profile.balanced_energy) < 0.001, "Balanced uses authored low dapple energy")
-	_expect(absf(spot.light_volumetric_fog_energy - director.profile.balanced_volumetric_energy) < 0.001, "Balanced adds restrained volumetric dapple")
+	_expect(not spot.shadow_enabled, "Balanced projector remains shadow-free")
+	_expect(absf(spot.light_energy - director.profile.balanced_energy) < 0.001, "Balanced uses subtle detoxed dapple energy")
+	_expect(absf(spot.light_volumetric_fog_energy - director.profile.balanced_volumetric_energy) < 0.001, "Balanced adds only a trace volumetric dapple")
 	var balanced_energy: float = spot.light_energy
 
 	lighting.set_quality(LightingDirector3D.Quality.CINEMATIC)
 	director.synchronize_now()
-	_expect(spot.visible and spot.shadow_enabled, "Cinematic retains projected canopy light")
-	_expect(spot.light_energy > balanced_energy, "Cinematic strengthens dapple over Balanced")
-	_expect(spot.light_energy < lighting.sun.light_energy, "dapple remains subordinate to main authored sun")
-	_expect(absf(spot.light_energy - director.profile.cinematic_energy) < 0.001, "Cinematic uses authored dapple energy")
+	_expect(spot.visible, "Cinematic retains projected canopy light")
+	_expect(not spot.shadow_enabled, "Cinematic still avoids a duplicate projector shadow pass")
+	_expect(spot.light_energy > balanced_energy, "Cinematic strengthens dapple slightly over Balanced")
+	_expect(spot.light_energy < lighting.sun.light_energy * 0.2, "dapple remains a tiny accent relative to the main sun")
+	_expect(absf(spot.light_energy - director.profile.cinematic_energy) < 0.001, "Cinematic uses authored detoxed dapple energy")
 
 
 func _expect(condition: bool, label: String) -> void:

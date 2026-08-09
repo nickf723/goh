@@ -1,0 +1,119 @@
+name: Green Grotto Visual Detox
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scenes/actors/player/grace_wire_visual_v1.tscn"
+      - "scenes/actors/player/grace_solid_runtime_visual_v1.tscn"
+      - "scenes/ui/game_ui.tscn"
+      - "scripts/performance/runtime_performance_monitor.gd"
+      - "scripts/atmosphere/**"
+      - "data/atmosphere/**"
+      - "scripts/lighting/**"
+      - "data/lighting/**"
+      - "scripts/shadows/**"
+      - "data/shadows/**"
+      - "scripts/reflections/**"
+      - "data/reflections/**"
+      - "scripts/render_quality/**"
+      - "data/render_quality/**"
+      - "scripts/levels/green_grotto_ground_contact_adapter.gd"
+      - "scripts/tests/grace_solid_runtime_visual_smoke_test.gd"
+      - "scripts/tests/atmospheric_detail_smoke_test.gd"
+      - "scripts/tests/lighting_director_smoke_test.gd"
+      - "scripts/tests/shadow_fidelity_director_smoke_test.gd"
+      - "scripts/tests/reflection_fidelity_director_smoke_test.gd"
+      - "scripts/tests/render_image_quality_director_smoke_test.gd"
+      - "scripts/tests/projected_canopy_light_director_smoke_test.gd"
+      - "scenes/tests/grace_solid_runtime_visual_smoke_test.tscn"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - ".github/workflows/green-grotto-visual-detox-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: green-grotto-visual-detox-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Import, detox contracts, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee detox-import.log
+
+      - name: Solid Grace runtime visual
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/grace_solid_runtime_visual_smoke_test.tscn 2>&1 | tee detox-grace.log
+
+      - name: Sparse atmosphere
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/atmospheric_detail_smoke_test.tscn 2>&1 | tee detox-atmosphere.log
+
+      - name: Lighting Director
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/lighting_director_smoke_test.tscn 2>&1 | tee detox-lighting.log
+
+      - name: Shadow Fidelity
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/shadow_fidelity_director_smoke_test.tscn 2>&1 | tee detox-shadows.log
+
+      - name: Reflection Fidelity
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/reflection_fidelity_director_smoke_test.tscn 2>&1 | tee detox-reflections.log
+
+      - name: Render Image Quality
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/render_image_quality_director_smoke_test.tscn 2>&1 | tee detox-image-quality.log
+
+      - name: Projected canopy accent
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/projected_canopy_light_director_smoke_test.tscn 2>&1 | tee detox-canopy.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee detox-green-boot.log
+
+      - name: Upload detox logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: green-grotto-visual-detox-logs
+          path: |
+            detox-*.log
+          if-no-files-found: ignore

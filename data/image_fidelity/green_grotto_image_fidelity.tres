@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ImageFidelityProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/image_fidelity/image_fidelity_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_image_fidelity"
+display_name = "Green Grotto Image Fidelity"
+performance_taa = false
+performance_debanding = false
+performance_msaa_2x = false
+performance_roughness_limiter = false
+balanced_taa = true
+balanced_debanding = true
+balanced_msaa_2x = false
+balanced_roughness_limiter = true
+balanced_roughness_amount = 0.25
+balanced_roughness_limit = 0.18
+cinematic_taa = true
+cinematic_debanding = true
+cinematic_msaa_2x = true
+cinematic_roughness_limiter = true
+cinematic_roughness_amount = 0.32
+cinematic_roughness_limit = 0.15

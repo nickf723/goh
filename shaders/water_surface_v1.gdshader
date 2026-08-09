@@ -41,8 +41,10 @@ uniform float micro_wave_strength = 0.0;
 uniform float micro_wave_scale = 18.0;
 uniform float micro_wave_speed = 0.8;
 uniform float depth_alpha_strength = 0.0;
+uniform float world_space_flow = 0.0;
 
 varying float crest;
+varying vec2 world_planar;
 
 float linear_depth(float raw_depth, vec2 screen_uv) {
  vec3 ndc = vec3(screen_uv * 2.0 - 1.0, raw_depth);
@@ -64,15 +66,17 @@ void vertex(){
   1.0,
   -sin(p.y * large_wave_scale - t) * normal_strength
  ));
+ world_planar = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xz;
 }
 
 void fragment(){
+ vec2 coordinate = mix(UV, world_planar, clamp(world_space_flow, 0.0, 1.0));
  vec2 d = normalize(flow_direction + vec2(0.0001));
- float flow_phase = dot(UV, d) * flow_band_scale - TIME * flow_speed;
+ float flow_phase = dot(coordinate, d) * flow_band_scale - TIME * flow_speed;
  float band = 0.5 + 0.5 * sin(flow_phase);
 
- float micro_a = sin((UV.x * micro_wave_scale) + TIME * micro_wave_speed + UV.y * 3.7);
- float micro_b = cos((UV.y * micro_wave_scale * 0.83) - TIME * micro_wave_speed * 1.17 + UV.x * 4.9);
+ float micro_a = sin((coordinate.x * micro_wave_scale) + TIME * micro_wave_speed + coordinate.y * 3.7);
+ float micro_b = cos((coordinate.y * micro_wave_scale * 0.83) - TIME * micro_wave_speed * 1.17 + coordinate.x * 4.9);
  vec3 surface_normal = normalize(NORMAL + vec3(
   micro_a * micro_wave_strength,
   0.0,
@@ -105,7 +109,7 @@ void fragment(){
  }
  float foam = clamp(crest_foam + shoreline_foam, 0.0, 1.0);
 
- float pulse = electrical_intensity * (0.55 + 0.45 * sin(TIME * 18.0 + UV.x * 40.0));
+ float pulse = electrical_intensity * (0.55 + 0.45 * sin(TIME * 18.0 + coordinate.x * 40.0));
  float legacy_mix = 0.4 + fresnel * 0.5;
  vec3 water_color = mix(deep_color.rgb, shallow_color.rgb, legacy_mix);
  if (depth_tint_distance > 0.0001) {

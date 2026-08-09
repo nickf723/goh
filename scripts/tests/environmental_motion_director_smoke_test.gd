@@ -40,6 +40,7 @@ func run_tests() -> void:
 		_validate_green_registration(target, director)
 		_validate_spatial_motion_zones(target, director)
 		_validate_motion_and_restore(director)
+		_validate_grace_accessory_bridge(target, director)
 		_validate_systemic_airflow_bridge(target, director)
 
 	target.queue_free()
@@ -79,6 +80,7 @@ func _validate_green_registration(
 	_expect(bool(pass_data.get("green_grotto_environmental_motion", false)), "Green pass reports environmental motion")
 	_expect(bool(pass_data.get("visual_ambient_wind_only", false)), "Green pass records no ambient gameplay force")
 	_expect(bool(pass_data.get("wind_well_can_drive_environment_motion", false)), "Green pass records Wind Well interoperability")
+	_expect(bool(pass_data.get("grace_accessory_wind", false)), "Green pass routes environment wind into Grace accessories")
 
 
 func _validate_spatial_motion_zones(
@@ -130,10 +132,37 @@ func _validate_motion_and_restore(director: EnvironmentalMotionDirector3D) -> vo
 	director.set_enabled(true)
 
 
+func _validate_grace_accessory_bridge(
+	target: Node,
+	director: EnvironmentalMotionDirector3D
+) -> void:
+	var accessory: PlayerAccessoryWindResponse = target.get_node_or_null(
+		"Player/AccessoryWindResponse"
+	) as PlayerAccessoryWindResponse
+	_expect(accessory != null, "Green installs Grace accessory wind response")
+	if accessory == null:
+		return
+	var data: Dictionary = accessory.get_debug_data()
+	_expect(bool(data.get("player_accessory_wind_response", false)), "accessory bridge publishes debug contract")
+	_expect(bool(data.get("additive_only", false)), "accessory wind is additive to existing Grace animation")
+	_expect(bool(data.get("sash", false)), "accessory bridge resolves Grace sash pivot")
+	_expect(bool(data.get("hair_locks", false)), "accessory bridge resolves both hair pivots")
+	_expect(str(data.get("director", "")) == director.name, "Grace listens to the same Environmental Motion Director as the level")
+	var ambient_wind: Vector3 = accessory.sample_environment_wind_for_test()
+	_expect(ambient_wind.length() > 0.05, "Grace accessories inherit the level's ambient visual wind")
+
+
 func _validate_systemic_airflow_bridge(
 	target: Node,
 	director: EnvironmentalMotionDirector3D
 ) -> void:
+	var accessory: PlayerAccessoryWindResponse = target.get_node_or_null(
+		"Player/AccessoryWindResponse"
+	) as PlayerAccessoryWindResponse
+	var ambient_accessory_speed: float = 0.0
+	if accessory != null:
+		ambient_accessory_speed = accessory.sample_environment_wind_for_test().length()
+
 	var manager: AirflowManager = AirflowManagerScript.new() as AirflowManager
 	manager.name = "MotionTestAirflowManager"
 	target.add_child(manager)
@@ -163,6 +192,10 @@ func _validate_systemic_airflow_bridge(
 	var data: Dictionary = director.get_debug_data()
 	_expect(int(data.get("systemic_sample_count", 0)) > 0, "Director samples real airflow for enrolled environment targets")
 	_expect(float(data.get("last_systemic_airflow_speed", 0.0)) > 4.5, "environment presentation receives strong local airflow")
+
+	if accessory != null:
+		var systemic_accessory_speed: float = accessory.sample_environment_wind_for_test().length()
+		_expect(systemic_accessory_speed > ambient_accessory_speed + 0.35, "real airflow increases Grace's sash/hair wind response too")
 
 
 func _first_motion_target_of_kind(

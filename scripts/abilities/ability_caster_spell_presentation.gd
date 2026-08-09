@@ -6,6 +6,7 @@ const SpellPresentation = preload(
 )
 
 var charged_presentation_prepared: bool = false
+var channel_presentation_prepared: bool = false
 var presentation_confirming_ground_target: bool = false
 
 
@@ -20,6 +21,7 @@ func cast_from_player(
 		and not is_ground_targeting()
 		and _is_channeled_delivery(ability.get_delivery_type())
 	):
+		channel_presentation_prepared = true
 		_present_ability_phase("prepare", ability, player)
 		var channel_result: bool = super.cast_from_player(
 			player,
@@ -28,6 +30,7 @@ func cast_from_player(
 		)
 		if not channel_result:
 			_present_ability_phase("cancel", ability, player)
+		channel_presentation_prepared = false
 		return channel_result
 	return super.cast_from_player(player, cast_lock_duration, allow_charge)
 
@@ -40,12 +43,19 @@ func execute_ability_from_player(
 	power_ratio: float = 0.0,
 	extra_mana_cost: int = 0
 ) -> bool:
+	var is_channel: bool = (
+		ability != null
+		and _is_channeled_delivery(ability.get_delivery_type())
+	)
 	var charge_prepare_owned: bool = (
 		charged_presentation_prepared
 		and ability != null
 		and ability.get_spell_id() == FIREBOLT_SPELL_ID
 	)
-	if not charge_prepare_owned:
+	var prepare_owned_elsewhere: bool = charge_prepare_owned or (
+		is_channel and channel_presentation_prepared
+	)
+	if not prepare_owned_elsewhere:
 		_present_ability_phase(
 			"prepare",
 			ability,
@@ -63,12 +73,15 @@ func execute_ability_from_player(
 		extra_mana_cost
 	)
 	if did_cast:
-		var origin: Vector3 = get_player_cast_origin(player)
-		_present_ability_phase("release", ability, player, origin, power_ratio)
-		if ability != null and _is_projectile_delivery(ability.get_delivery_type()):
-			_present_ability_phase("travel", ability, player, origin, power_ratio, {
-				"subtle": true,
-			})
+		# Channeled/tether actions own their release/latch/sustain language because
+		# those phases are coupled to whether the tether actually finds a target.
+		if not is_channel:
+			var origin: Vector3 = get_player_cast_origin(player)
+			_present_ability_phase("release", ability, player, origin, power_ratio)
+			if ability != null and _is_projectile_delivery(ability.get_delivery_type()):
+				_present_ability_phase("travel", ability, player, origin, power_ratio, {
+					"subtle": true,
+				})
 	else:
 		_present_ability_phase("cancel", ability, player)
 
@@ -179,10 +192,7 @@ func _present_ability_phase(
 
 func _is_projectile_delivery(delivery_type: String) -> bool:
 	var normalized: String = delivery_type.strip_edges().to_lower()
-	return (
-		"projectile" in normalized
-		or normalized in ["homing", "target_lock"]
-	)
+	return "projectile" in normalized or normalized in ["homing", "target_lock"]
 
 
 func _is_channeled_delivery(delivery_type: String) -> bool:
@@ -201,5 +211,6 @@ func get_debug_data() -> Dictionary:
 		"prepare", "release", "travel", "manifest", "latch", "sustain", "resolve", "cancel", "handoff",
 	]
 	data["charged_prepare_owned"] = charged_presentation_prepared
+	data["channel_prepare_owned"] = channel_presentation_prepared
 	data["ground_confirming"] = presentation_confirming_ground_target
 	return data

@@ -8,6 +8,12 @@ const PRESET_BASELINE: int = 0
 const PRESET_BALANCED: int = 1
 const PRESET_HERO: int = 2
 const ROLLING_SAMPLE_LIMIT: int = 180
+const ImageFidelityDirectorScript = preload(
+	"res://scripts/image_fidelity/image_fidelity_director.gd"
+)
+const GreenImageFidelityProfile = preload(
+	"res://data/image_fidelity/green_grotto_image_fidelity.tres"
+)
 
 @export var debug_hotkeys_enabled: bool = true
 @export var overlay_enabled: bool = true
@@ -26,6 +32,7 @@ var atmosphere: AtmosphericDetailDirector3D = null
 var character_materials: CharacterMaterialPresentationDirector3D = null
 var visual_lod: VisualLODDirector3D = null
 var surface_contact: SurfaceContactPresentationDirector3D = null
+var image_fidelity: ImageFidelityDirector = null
 var ambient_fauna: Array[GreenGrottoFaunaAmbientBehavior] = []
 
 var panel: PanelContainer = null
@@ -87,6 +94,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _initialize() -> void:
+	_ensure_image_fidelity_director()
 	_resolve_systems()
 	_build_overlay()
 	preset_index = _detect_matching_preset()
@@ -95,6 +103,18 @@ func _initialize() -> void:
 	initialized = _required_systems_ready()
 	set_meta("visual_benchmark_initialized", initialized)
 	_refresh_overlay()
+
+
+func _ensure_image_fidelity_director() -> void:
+	image_fidelity = get_node_or_null(
+		"ImageFidelityDirector"
+	) as ImageFidelityDirector
+	if image_fidelity != null:
+		return
+	image_fidelity = ImageFidelityDirectorScript.new() as ImageFidelityDirector
+	image_fidelity.name = "ImageFidelityDirector"
+	image_fidelity.profile = GreenImageFidelityProfile
+	add_child(image_fidelity)
 
 
 func _resolve_systems() -> void:
@@ -145,6 +165,11 @@ func _refresh_optional_systems() -> void:
 	surface_contact = get_tree().get_first_node_in_group(
 		"surface_contact_presentation_director"
 	) as SurfaceContactPresentationDirector3D
+	var image_candidate: Node = get_tree().get_first_node_in_group(
+		"image_fidelity_director"
+	)
+	if image_candidate is ImageFidelityDirector:
+		image_fidelity = image_candidate as ImageFidelityDirector
 	ambient_fauna.clear()
 	for candidate: Node in get_tree().get_nodes_in_group("ambient_fauna_behavior"):
 		if candidate is GreenGrottoFaunaAmbientBehavior:
@@ -193,6 +218,8 @@ func apply_preset(index: int) -> void:
 		shadows.synchronize_now()
 	if reflections != null:
 		reflections.synchronize_now()
+	if image_fidelity != null:
+		image_fidelity.synchronize_now()
 	benchmark_preset_changed.emit(_preset_name(preset_index))
 	_refresh_overlay()
 
@@ -355,7 +382,7 @@ func _build_overlay() -> void:
 	panel = PanelContainer.new()
 	panel.name = "BenchmarkStatusPanel"
 	panel.position = Vector2(14.0, 14.0)
-	panel.custom_minimum_size = Vector2(430.0, 0.0)
+	panel.custom_minimum_size = Vector2(470.0, 0.0)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.visible = overlay_enabled
 	add_child(panel)
@@ -383,7 +410,7 @@ func _refresh_overlay() -> void:
 		+ "FPS %.0f   %.2f ms   DC %d   Prim %s\n"
 		+ "F1 Veg %s   F2 Water %s   F3 Material %s\n"
 		+ "F4 Story %s   F5 Motion %s   F6 Camera %s\n"
-		+ "F7 %s   •   Refl %d   Atm %d   LOD %d\n"
+		+ "F7 %s   •   Refl %d   Atm %d   LOD %d   Img %s\n"
 		+ "Grace Q%d   Contact %d   Fauna %s   •   F9 Preset   F10 HUD   F11 Sample%s"
 	) % [
 		preset_label,
@@ -401,6 +428,7 @@ func _refresh_overlay() -> void:
 		_reflection_probe_count(),
 		_atmosphere_instance_count(),
 		_lod_target_count(),
+		_image_quality_label(),
 		_character_material_quality(),
 		_contact_footstep_count(),
 		_on_off(_all_ambient_fauna_enabled()),
@@ -432,6 +460,19 @@ func _character_material_quality() -> int:
 	if character_materials == null:
 		return -1
 	return int(character_materials.get_debug_data().get("quality", -1))
+
+
+func _image_quality_label() -> String:
+	if image_fidelity == null:
+		return "?"
+	var data: Dictionary = image_fidelity.get_debug_data()
+	var taa: bool = bool(data.get("taa", false))
+	var msaa: int = int(data.get("msaa_3d", 0))
+	if taa and msaa == Viewport.MSAA_2X:
+		return "TAA+2x"
+	if taa:
+		return "TAA"
+	return "RAW"
 
 
 func _contact_footstep_count() -> int:
@@ -518,6 +559,7 @@ func get_debug_data() -> Dictionary:
 		"linked_lod_targets": _lod_target_count(),
 		"linked_character_quality": _character_material_quality(),
 		"linked_contact_footstep_pieces": _contact_footstep_count(),
+		"linked_image_quality": _image_quality_label(),
 		"balanced_uses_lighting_balanced": true,
 		"hero_uses_lighting_cinematic": true,
 		"current_fps": current_fps,

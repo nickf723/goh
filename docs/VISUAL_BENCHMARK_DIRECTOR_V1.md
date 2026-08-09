@@ -4,7 +4,7 @@
 
 The Green Grotto contains multiple independent presentation systems. Visual Benchmark Director provides stable whole-stack comparison presets without replacing their individual debug controls.
 
-The benchmark now covers both the explicit F1-F6 switches and the systems that automatically follow the F7 renderer-quality tier.
+The benchmark covers both the explicit F1-F6 switches and the systems that automatically follow the F7 renderer-quality tier.
 
 ## Presets and controls
 
@@ -33,7 +33,8 @@ F7-linked systems also collapse to their Performance behavior:
 - Atmospheric Detail = zero visible motes;
 - Grace Character Material Presentation = exact original materials;
 - Visual LOD = Performance detail ranges;
-- Surface Contact Presentation = zero extra pieces.
+- Surface Contact Presentation = zero extra pieces;
+- Image Fidelity = raw viewport: no TAA, 3D MSAA, screen-space AA, or debanding.
 
 Ambient Green fauna acting is also disabled. Each creature hands presentation authority back to the original simple `GreenGrottoFaunaVisual` patrol animator so the baseline remains comparable to the earlier benchmark.
 
@@ -48,7 +49,8 @@ F7-linked systems follow Balanced automatically:
 - reduced-density entrance/canopy/waterfall atmosphere;
 - Balanced Grace material variants;
 - Balanced Visual LOD distances;
-- three contact pieces per footstep and seven per landing.
+- three contact pieces per footstep and seven per landing;
+- TAA + debanding + screen-space roughness limiting, with 3D MSAA disabled.
 
 ### HERO
 
@@ -61,7 +63,8 @@ F7-linked systems follow Cinematic automatically:
 - all 460 authored atmosphere instances;
 - Cinematic Grace material variants including restrained skin SSS/transmittance;
 - longest Green Visual LOD ranges;
-- five contact pieces per footstep and eleven per landing.
+- five contact pieces per footstep and eleven per landing;
+- TAA + 2x 3D MSAA + debanding + stronger screen-space roughness limiting.
 
 This is the benchmark's maximum-quality authored presentation state.
 
@@ -83,6 +86,7 @@ The benchmark creates a development-only `CanvasLayer` status panel. It reports:
 - active ReflectionProbe count;
 - visible atmospheric-detail instance count;
 - Visual LOD managed-target count;
+- final image mode (`RAW`, `TAA`, `TAA+2x`);
 - Grace material quality tier;
 - current footstep surface-contact piece budget;
 - ambient fauna acting ON/OFF;
@@ -116,7 +120,7 @@ fixed camera position
 
 Keep Grace and the camera still during each capture when the goal is renderer comparison. Movement/combat benchmarks can be run separately later.
 
-The short wait after changing presets gives shadow/reflection/environment state and engine performance monitors time to settle before measurement.
+The short wait after changing presets gives shadow/reflection/environment/image state and engine performance monitors time to settle before measurement.
 
 ## Validation
 
@@ -136,6 +140,12 @@ The regression verifies:
 - CUSTOM detection;
 - the benchmark-only overlay;
 - a deterministic short telemetry capture.
+
+Image Fidelity has an additional direct viewport regression at:
+
+```text
+res://scenes/tests/image_fidelity_director_smoke_test.tscn
+```
 
 For the broader scene-level testing contract, see:
 

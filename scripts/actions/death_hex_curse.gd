@@ -6,7 +6,6 @@ const ElementVisuals = preload("res://scripts/visuals/element_visuals.gd")
 @export_group("Curse")
 @export_range(1.0, 20.0, 0.1) var curse_duration: float = 6.6
 @export_range(0.2, 3.0, 0.05) var pulse_interval: float = 1.2
-@export_range(1, 10, 1) var maximum_pulses: int = 5
 @export var pulse_damage_curve: Array[int] = [1, 1, 2, 2, 3]
 
 @export_group("Presentation")
@@ -99,11 +98,11 @@ func _process(delta: float) -> void:
 	if visual_root != null:
 		_update_visual()
 
-	if pulse_timer <= 0.0 and pulse_index < maximum_pulses:
+	if pulse_timer <= 0.0:
 		pulse_timer += pulse_interval
 		_apply_decay_pulse()
 
-	if remaining <= 0.0 or pulse_index >= maximum_pulses:
+	if remaining <= 0.0:
 		release_hex(true)
 
 
@@ -138,7 +137,7 @@ func _apply_decay_pulse() -> void:
 
 func get_damage_for_pulse(index: int) -> int:
 	if pulse_damage_curve.is_empty():
-		return 1 + maxi(index, 0) / 2
+		return 1 + floori(float(maxi(index, 0)) / 2.0)
 	return maxi(
 		pulse_damage_curve[clampi(index, 0, pulse_damage_curve.size() - 1)],
 		1
@@ -293,8 +292,9 @@ func _build_visual() -> void:
 func _update_visual() -> void:
 	if visual_root == null:
 		return
+	var escalation_steps: int = maxi(pulse_damage_curve.size(), 1)
 	var depth_ratio: float = clampf(
-		float(pulse_index) / float(maxi(maximum_pulses, 1)),
+		float(pulse_index) / float(escalation_steps),
 		0.0,
 		1.0
 	)
@@ -324,7 +324,11 @@ func _pulse_visual(scale_multiplier: float) -> void:
 func _spawn_decay_motes() -> void:
 	if get_tree() == null or get_tree().current_scene == null:
 		return
-	var center: Vector3 = global_position
+	var center: Vector3 = (
+		visual_root.global_position
+		if visual_root != null and is_instance_valid(visual_root)
+		else global_position
+	)
 	for index: int in range(4):
 		var mote := MeshInstance3D.new()
 		mote.name = "DeathHexDecayMote"
@@ -393,9 +397,10 @@ func get_debug_data() -> Dictionary:
 		"remaining": snappedf(maxf(remaining, 0.0), 0.01),
 		"pulse_index": pulse_index,
 		"next_damage": get_damage_for_pulse(pulse_index),
-		"maximum_pulses": maximum_pulses,
+		"escalation_steps": pulse_damage_curve.size(),
 		"damage_curve": pulse_damage_curve.duplicate(),
 		"escalating": true,
 		"direct_health_decay": true,
 		"single_instance_per_target": true,
+		"refresh_preserves_decay_stage": true,
 	}

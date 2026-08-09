@@ -115,13 +115,15 @@ func _validate_quality_ladder(
 	_expect(light.visible, "Cinematic retains Grace rim light")
 	_expect(light.light_energy > balanced_energy, "Cinematic strengthens readability over Balanced")
 	_expect(absf(light.light_energy - director.profile.cinematic_energy) < 0.001, "Cinematic uses authored readability energy")
-	_expect(light.light_energy < lighting.fill_light.light_energy + 0.01 or light.light_energy < lighting.sun.light_energy, "readability remains a subordinate presentation light")
+	_expect(light.light_energy < lighting.sun.light_energy, "readability remains subordinate to main authored sun")
 
 
 func _validate_restore(director: HeroReadabilityLightDirector3D) -> void:
-	var grace_head: VisualInstance3D = director.grace_visual.get_node_or_null(
-		"VisualRoot/HeadRoot/Head"
-	) as VisualInstance3D if director.grace_visual != null else null
+	var grace_head: VisualInstance3D = null
+	if director.grace_visual != null:
+		grace_head = director.grace_visual.get_node_or_null(
+			"VisualRoot/HeadRoot/Head"
+		) as VisualInstance3D
 	_expect(grace_head != null, "restore test resolves Grace head")
 	if grace_head == null:
 		return

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="VisualLODProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/visual_lod/visual_lod_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_visual_lod"
+display_name = "Green Grotto Visual LOD"
+performance_foliage_distance = 24.0
+performance_canopy_detail_distance = 58.0
+performance_surface_detail_distance = 22.0
+performance_architecture_detail_distance = 32.0
+performance_margin = 2.5
+balanced_foliage_distance = 38.0
+balanced_canopy_detail_distance = 78.0
+balanced_surface_detail_distance = 36.0
+balanced_architecture_detail_distance = 52.0
+balanced_margin = 4.0
+cinematic_foliage_distance = 58.0
+cinematic_canopy_detail_distance = 115.0
+cinematic_surface_detail_distance = 60.0
+cinematic_architecture_detail_distance = 78.0
+cinematic_margin = 5.0

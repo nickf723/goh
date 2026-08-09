@@ -18,6 +18,7 @@ enum Quality {
 @export var sun_path: NodePath
 @export var fill_light_path: NodePath
 @export var enabled: bool = true
+@export var debug_hotkeys_enabled: bool = false
 
 var environment_node: WorldEnvironment = null
 var environment: Environment = null
@@ -53,6 +54,21 @@ func _process(delta: float) -> void:
 	current_state = _blend_state(current_state, target_state, clampf(alpha, 0.0, 1.0))
 	_apply_state(current_state)
 	_emit_signature_if_changed()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not debug_hotkeys_enabled or not initialized:
+		return
+	if not event is InputEventKey:
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	if key_event.keycode != KEY_F7:
+		return
+	set_quality((quality + 1) % 3)
+	print("Lighting Director quality: ", _quality_label())
+	get_viewport().set_input_as_handled()
 
 
 func _initialize() -> void:
@@ -428,12 +444,24 @@ func _emit_signature_if_changed() -> void:
 	lighting_state_changed.emit(profile_id, active_zone_ids.duplicate())
 
 
+func _quality_label() -> String:
+	match quality:
+		Quality.PERFORMANCE:
+			return "Performance"
+		Quality.BALANCED:
+			return "Balanced"
+		_:
+			return "Cinematic"
+
+
 func get_debug_data() -> Dictionary:
 	return {
 		"lighting_director": true,
 		"initialized": initialized,
 		"channel": channel,
 		"quality": quality,
+		"quality_label": _quality_label(),
+		"debug_hotkeys": debug_hotkeys_enabled,
 		"default_profile": default_profile.profile_id if default_profile != null else "",
 		"active_zones": active_zone_ids.duplicate(),
 		"target_actor": target_actor.name if target_actor != null and is_instance_valid(target_actor) else "",

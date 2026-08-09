@@ -1,0 +1,68 @@
+name: Environmental Interaction
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/environmental_motion/**"
+      - "data/environmental_motion/**"
+      - "scripts/levels/prototype_green_grotto_reflection_pass.gd"
+      - "scripts/tests/environmental_interaction_smoke_test.gd"
+      - "scenes/tests/environmental_interaction_smoke_test.tscn"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "docs/ENVIRONMENTAL_INTERACTION_V1.md"
+      - ".github/workflows/environmental-interaction-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: environmental-interaction-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-environmental-interaction:
+    name: Import, interaction contract, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee environmental-interaction-import.log
+
+      - name: Run environmental interaction regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/environmental_interaction_smoke_test.tscn 2>&1 | tee environmental-interaction-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee environmental-interaction-green-boot.log
+
+      - name: Upload interaction logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: environmental-interaction-logs
+          path: |
+            environmental-interaction-import.log
+            environmental-interaction-test.log
+            environmental-interaction-green-boot.log
+          if-no-files-found: ignore

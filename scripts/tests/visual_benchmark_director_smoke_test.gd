@@ -44,7 +44,7 @@ func _validate_contract(benchmark: VisualBenchmarkDirector) -> void:
 	_expect(not bool(data.get("overlay_enabled", true)), "development overlay starts hidden for presentation review")
 	_expect(bool(data.get("baseline_disables_f1_f6", false)), "baseline explicitly disables F1-F6 presentation layers")
 	_expect(int(data.get("ambient_fauna_count", 0)) == 4, "benchmark discovers all four ambient fauna behavior adapters")
-	_expect(benchmark.atmosphere != null, "benchmark resolves F7-linked atmospheric detail")
+	_expect(benchmark.atmosphere != null, "benchmark resolves atmospheric infrastructure")
 	_expect(benchmark.character_materials != null, "benchmark resolves F7-linked Grace material presentation")
 	_expect(benchmark.visual_lod != null, "benchmark resolves F7-linked visual LOD")
 	_expect(benchmark.surface_contact != null, "benchmark resolves F7-linked surface contact presentation")
@@ -70,7 +70,7 @@ func _validate_baseline(benchmark: VisualBenchmarkDirector) -> void:
 		benchmark.reflections.synchronize_now()
 		_expect(int(benchmark.reflections.get_debug_data().get("active_probes", -1)) == 0, "Baseline collapses local reflection probes")
 	if benchmark.atmosphere != null:
-		_expect(int(benchmark.atmosphere.get_debug_data().get("visible_instances", -1)) == 0, "Baseline removes micro-atmosphere instances")
+		_expect(int(benchmark.atmosphere.get_debug_data().get("visible_instances", -1)) == 0, "Baseline has no atmosphere instances")
 	if benchmark.character_materials != null:
 		_expect(int(benchmark.character_materials.get_debug_data().get("quality", -1)) == 0, "Baseline restores original Grace material tier")
 	if benchmark.surface_contact != null:
@@ -94,8 +94,10 @@ func _validate_balanced(benchmark: VisualBenchmarkDirector) -> void:
 		benchmark.reflections.synchronize_now()
 		_expect(int(benchmark.reflections.get_debug_data().get("active_probes", 0)) == 3, "Balanced includes three local reflection regions")
 	if benchmark.atmosphere != null:
-		var atmosphere_count: int = int(benchmark.atmosphere.get_debug_data().get("visible_instances", 0))
-		_expect(atmosphere_count >= 11 and atmosphere_count <= 13, "Balanced reports the background-accent atmosphere budget")
+		_expect(
+			int(benchmark.atmosphere.get_debug_data().get("visible_instances", -1)) == 0,
+			"Balanced suppresses decorative atmosphere during the art-direction study"
+		)
 	if benchmark.character_materials != null:
 		_expect(int(benchmark.character_materials.get_debug_data().get("quality", -1)) == 1, "Balanced reports Grace material quality 1")
 	_expect(benchmark.call("_contact_footstep_count") == 3, "Balanced reports three contact pieces per footstep")
@@ -118,8 +120,10 @@ func _validate_hero(benchmark: VisualBenchmarkDirector) -> void:
 		benchmark.shadows.synchronize_now()
 		_expect(str(benchmark.shadows.get_debug_data().get("tier", "")) == "Cinematic", "Hero synchronizes Cinematic shadow fidelity")
 	if benchmark.atmosphere != null:
-		var atmosphere_count: int = int(benchmark.atmosphere.get_debug_data().get("visible_instances", 0))
-		_expect(atmosphere_count >= 23 and atmosphere_count <= 26, "Hero keeps the full field set secondary to route readability")
+		_expect(
+			int(benchmark.atmosphere.get_debug_data().get("visible_instances", -1)) == 0,
+			"Hero also suppresses decorative atmosphere while structure is being judged"
+		)
 	if benchmark.character_materials != null:
 		_expect(int(benchmark.character_materials.get_debug_data().get("quality", -1)) == 2, "Hero reports Cinematic Grace material quality")
 	if benchmark.visual_lod != null:

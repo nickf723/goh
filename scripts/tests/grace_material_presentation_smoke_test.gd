@@ -121,7 +121,8 @@ func _validate_quality_ladder(
 		_expect(cinematic_skin.subsurf_scatter_enabled, "Cinematic enables restrained skin SSS")
 		_expect(cinematic_skin.subsurf_scatter_transmittance_enabled, "Cinematic enables skin transmittance")
 		_expect(cinematic_skin.subsurf_scatter_strength > 0.05, "Cinematic skin SSS strength is visibly nonzero")
-		_expect(cinematic_skin.roughness < balanced_skin.roughness, "Cinematic skin has richer highlight response than Balanced")
+		if balanced_skin != null:
+			_expect(cinematic_skin.roughness < balanced_skin.roughness, "Cinematic skin has richer highlight response than Balanced")
 	if cinematic_gold != null:
 		_expect(cinematic_gold.roughness < original_gold.roughness, "Cinematic gold sharpens specular response")
 		_expect(cinematic_gold.metallic >= original_gold.metallic, "Cinematic gold preserves or strengthens metallic response")

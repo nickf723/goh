@@ -1,6 +1,6 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=23 format=3]
 
-[ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_surface_story_pass.gd" id="1_target"]
+[ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_material_pass.gd" id="1_target"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
@@ -20,6 +20,8 @@
 [ext_resource type="Script" path="res://scripts/environmental_motion/environmental_motion_zone_3d.gd" id="18_motion_zone"]
 [ext_resource type="Resource" path="res://data/surface_story/green_grotto_surface_story.tres" id="19_surface_profile"]
 [ext_resource type="Script" path="res://scripts/surface_story/surface_story_director_3d.gd" id="20_surface_director"]
+[ext_resource type="Resource" path="res://data/material_fidelity/green_grotto_material_fidelity.tres" id="21_material_profile"]
+[ext_resource type="Script" path="res://scripts/material_fidelity/material_fidelity_director_3d.gd" id="22_material_director"]
 
 [node name="PrototypeGreenGrottoArtTargetV1" type="Node3D" groups=["green_grotto_art_target", "environment_art_target", "lab_resource_regeneration"]]
 script = ExtResource("1_target")
@@ -199,6 +201,11 @@ direction_influence = 0.12
 [node name="SurfaceStoryDirector" type="Node3D" parent="."]
 script = ExtResource("20_surface_director")
 profile = ExtResource("19_surface_profile")
+debug_hotkeys_enabled = true
+
+[node name="MaterialFidelityDirector" type="Node3D" parent="."]
+script = ExtResource("22_material_director")
+profile = ExtResource("21_material_profile")
 debug_hotkeys_enabled = true
 
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]

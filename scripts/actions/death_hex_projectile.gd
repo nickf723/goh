@@ -4,6 +4,9 @@ class_name DeathHexProjectile
 const DeathHexCurseScene: PackedScene = preload(
 	"res://scenes/actions/death_hex_curse.tscn"
 )
+const SpellPresentation = preload(
+	"res://scripts/presentation/spell_presentation_bridge.gd"
+)
 
 @export_group("Delivery")
 @export_range(6.0, 40.0, 0.5) var projectile_speed: float = 18.5
@@ -60,11 +63,7 @@ func configure_element_visual() -> void:
 		rune.mesh = mesh
 		rune.material_override = rune_material
 		var angle: float = TAU * float(index) / 4.0
-		rune.position = Vector3(
-			cos(angle) * 0.14,
-			sin(angle) * 0.14,
-			0.0
-		)
+		rune.position = Vector3(cos(angle) * 0.14, sin(angle) * 0.14, 0.0)
 		rune.rotation.z = angle
 		element_visual_root.add_child(rune)
 
@@ -111,12 +110,7 @@ func update_element_trail(delta: float) -> void:
 	var tween := mote.create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(mote, "scale", Vector3.ZERO, 0.28)
-	tween.tween_property(
-		mote,
-		"global_position",
-		mote.global_position + Vector3(0.0, -0.16, 0.0),
-		0.28
-	)
+	tween.tween_property(mote, "global_position", mote.global_position + Vector3(0.0, -0.16, 0.0), 0.28)
 	tween.set_parallel(false)
 	tween.tween_callback(Callable(mote, "queue_free"))
 
@@ -145,12 +139,8 @@ func _attach_or_refresh_hex(target_3d: Node3D) -> void:
 		return
 	var existing: Node = target_3d.get_node_or_null("DeathHexCurse")
 	if existing != null and is_instance_valid(existing) and existing.has_method("refresh_hex"):
-		existing.call(
-			"refresh_hex",
-			curse_duration,
-			source_actor,
-			get_payload()
-		)
+		existing.call("refresh_hex", curse_duration, source_actor, get_payload())
+		_present_hex_phase("resolve", target_3d, "curse_refreshed", 0.42)
 		return
 
 	var curse: DeathHexCurse = DeathHexCurseScene.instantiate() as DeathHexCurse
@@ -158,13 +148,33 @@ func _attach_or_refresh_hex(target_3d: Node3D) -> void:
 		return
 	curse.name = "DeathHexCurse"
 	target_3d.add_child(curse)
-	if not curse.bind_to_target(
-		target_3d,
-		source_actor,
-		get_payload(),
-		curse_duration
-	):
+	if not curse.bind_to_target(target_3d, source_actor, get_payload(), curse_duration):
 		curse.queue_free()
+		return
+	_present_hex_phase("manifest", target_3d, "curse_attached", 0.7)
+
+
+func _present_hex_phase(
+	phase: String,
+	target_3d: Node3D,
+	detail: String,
+	intensity: float
+) -> void:
+	var position: Vector3 = global_position
+	if target_3d != null and is_instance_valid(target_3d):
+		position = target_3d.global_position + Vector3.UP * 0.8
+	SpellPresentation.present(self, phase, {
+		"actor": source_actor,
+		"target": target_3d,
+		"position": position,
+		"spell_id": "death_hex",
+		"spell_name": "Death Hex",
+		"element": "death",
+		"delivery_type": "projectile_curse",
+		"targeting_style": "aimed",
+		"detail": detail,
+		"intensity": intensity,
+	})
 
 
 func _resolve_target_3d(start_node: Node) -> Node3D:
@@ -227,4 +237,5 @@ func get_debug_data() -> Dictionary:
 	data["direct_hit_damage"] = 0
 	data["curse_duration"] = curse_duration
 	data["attaches_escalating_hex"] = true
+	data["presentation_handoff"] = true
 	return data

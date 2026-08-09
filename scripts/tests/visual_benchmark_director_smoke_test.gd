@@ -23,10 +23,11 @@ func run_tests() -> void:
 	_expect(benchmark != null, "Green installs benchmark preset director")
 	if benchmark != null:
 		_validate_contract(benchmark)
-		_validate_baseline(benchmark)
-		_validate_balanced(benchmark)
-		_validate_hero(benchmark)
-		_validate_custom_detection(benchmark)
+		await _validate_baseline(benchmark)
+		await _validate_balanced(benchmark)
+		await _validate_hero(benchmark)
+		await _validate_custom_detection(benchmark)
+		await _validate_timed_capture(benchmark)
 
 	target.queue_free()
 	await get_tree().process_frame
@@ -39,6 +40,7 @@ func _validate_contract(benchmark: VisualBenchmarkDirector) -> void:
 	_expect(bool(data.get("initialized", false)), "benchmark resolves the visual stack")
 	_expect(bool(data.get("f9_preset_cycle", false)), "F9 preset cycle is part of the contract")
 	_expect(bool(data.get("f10_overlay_toggle", false)), "F10 overlay toggle is part of the contract")
+	_expect(bool(data.get("f11_timed_capture", false)), "F11 timed capture is part of the contract")
 	_expect(bool(data.get("baseline_disables_f1_f6", false)), "baseline explicitly disables F1-F6 presentation layers")
 	_expect(benchmark.panel != null and benchmark.status_label != null, "benchmark installs its development-only status readout")
 
@@ -89,6 +91,27 @@ func _validate_custom_detection(benchmark: VisualBenchmarkDirector) -> void:
 	await get_tree().process_frame
 	_expect(str(benchmark.get_debug_data().get("matched_preset", "")) == "CUSTOM", "manual F-key-style changes report CUSTOM")
 	benchmark.apply_preset(VisualBenchmarkDirector.PRESET_HERO)
+	await get_tree().process_frame
+
+
+func _validate_timed_capture(benchmark: VisualBenchmarkDirector) -> void:
+	benchmark.apply_preset(VisualBenchmarkDirector.PRESET_HERO)
+	benchmark.start_capture(0.05)
+	for _index: int in range(8):
+		benchmark.call("_record_capture_sample", 0.01, 420, 180000)
+		if not benchmark.capture_active:
+			break
+	var data: Dictionary = benchmark.get_debug_data()
+	var capture: Dictionary = data.get("last_capture", {}) as Dictionary
+	_expect(not benchmark.capture_active, "short benchmark capture completes")
+	_expect(not capture.is_empty(), "F11 capture produces a result object")
+	_expect(str(capture.get("preset", "")) == "HERO", "capture records active preset")
+	_expect(int(capture.get("samples", 0)) >= 5, "capture records multiple frame samples")
+	_expect(float(capture.get("average_fps", 0.0)) > 90.0, "capture derives average FPS from frame samples")
+	_expect(absf(float(capture.get("average_frame_ms", 0.0)) - 10.0) < 0.2, "capture derives average frame time")
+	_expect(float(capture.get("one_percent_low_fps", 0.0)) > 90.0, "capture derives a 1 percent low estimate")
+	_expect(absf(float(capture.get("average_draw_calls", 0.0)) - 420.0) < 0.1, "capture averages draw calls")
+	_expect(absf(float(capture.get("average_primitives", 0.0)) - 180000.0) < 0.1, "capture averages rendered primitives")
 
 
 func _all_presentation_enabled(benchmark: VisualBenchmarkDirector) -> bool:

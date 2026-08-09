@@ -32,7 +32,8 @@ F7 is the shared quality spine. It controls more than Lighting Director itself:
 - atmospheric mote density;
 - Grace material quality;
 - environment detail visibility ranges;
-- surface-contact density.
+- surface-contact density;
+- final-image TAA / MSAA / debanding / specular-aliasing policy.
 
 ## Whole-stack presets
 
@@ -51,6 +52,7 @@ F11 Five-second performance capture
 - Grace uses the exact original material resources;
 - Surface Contact emits no extra pieces;
 - Performance visual-LOD ranges remain active as the renderer-performance baseline;
+- raw final image: no TAA, 3D MSAA, extra screen AA, or debanding;
 - the new ambient fauna actor layer is disabled and the original simple `GreenGrottoFaunaVisual` patrol animator regains authority.
 
 ### BALANCED
@@ -62,7 +64,8 @@ F11 Five-second performance capture
 - reduced-density entrance/canopy/waterfall atmosphere;
 - Balanced Grace material variants;
 - Balanced detail visibility ranges;
-- three contact pieces per footstep and seven per landing.
+- three contact pieces per footstep and seven per landing;
+- TAA + debanding + screen-space roughness limiting, without extra 3D MSAA.
 
 ### HERO
 
@@ -73,7 +76,8 @@ F11 Five-second performance capture
 - all 460 authored atmosphere instances;
 - Cinematic Grace skin/hair/cloth/metal/leather presentation;
 - longest visual-LOD ranges;
-- five contact pieces per footstep and eleven per landing.
+- five contact pieces per footstep and eleven per landing;
+- TAA + 2x 3D MSAA + debanding + stronger screen-space roughness limiting.
 
 Manual F1-F7 changes are still supported. Once a named preset no longer matches, the benchmark HUD reports `CUSTOM`.
 
@@ -90,6 +94,7 @@ The Green scene installs a development-only `VisualBenchmarkDirector` overlay. I
 - active reflection-probe count;
 - visible atmosphere-instance count;
 - managed visual-LOD target count;
+- final image mode (`RAW`, `TAA`, or `TAA+2x`);
 - Grace material quality tier;
 - current footstep contact-piece budget;
 - ambient fauna actor state.
@@ -117,6 +122,7 @@ Watch for:
 - pollen revealing the air volume and visual wind;
 - shadow grounding on Grace, roots and paving;
 - material microdetail under grazing light;
+- reduced shimmer/crawling on thin leaves and railings in Balanced/HERO;
 - far detail disappearing only once it is no longer useful to the composition.
 
 ### Waterfall
@@ -127,6 +133,7 @@ Watch for:
 - refraction/depth tint/shoreline response on horizontal water;
 - cool local reflection capture;
 - localized mist and damp foot/landing presentation;
+- steadier specular water highlights in TAA-enabled tiers;
 - motion wind affecting mist and nearby vegetation without inventing gameplay force.
 
 ### Shrine court
@@ -137,6 +144,7 @@ Watch for:
 - local reflection and shadow response on roof/trim/Grace;
 - leaf-litter contact pieces;
 - subtle Cinematic-only warm motes;
+- stable thin roof/railing edges and Grace gold highlights;
 - tighter Camera Director framing.
 
 ## Performance comparison routine
@@ -170,7 +178,7 @@ The five-second capture records:
 - average draw calls;
 - average rendered primitives.
 
-The purpose is not to crown HERO automatically. A feature that costs substantial frame time but creates no meaningful visual gain should be tuned down or removed.
+The purpose is not to crown HERO automatically. A feature that costs substantial frame time but creates no meaningful visual gain should be tuned down or removed. In particular, HERO's additional 2x MSAA should survive only if the moving image looks meaningfully calmer than Balanced TAA alone.
 
 ## Ownership boundaries
 
@@ -183,7 +191,8 @@ Examples:
 - foliage interaction can bend presentation transforms but never collision;
 - reflection regions describe image-based lighting volumes, not gameplay rooms;
 - visual LOD can cull detail rendering but never collision or progression geometry;
-- ambient fauna acting does not create combat AI or navigation state.
+- ambient fauna acting does not create combat AI or navigation state;
+- Image Fidelity changes the benchmark viewport's final rendering policy but restores the pre-lab state when Green exits.
 
 ## Replaceability
 

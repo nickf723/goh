@@ -22,14 +22,22 @@ const CharacterMaterialDirectorScript = preload(
 const GraceMaterialProfile = preload(
 	"res://data/character_presentation/grace_material_presentation.tres"
 )
+const VisualLODDirectorScript = preload(
+	"res://scripts/visual_lod/visual_lod_director_3d.gd"
+)
+const GreenGrottoVisualLODProfile = preload(
+	"res://data/visual_lod/green_grotto_visual_lod.tres"
+)
 
 var reflection_fidelity_director: ReflectionFidelityDirector3D = null
 var visual_benchmark_director: VisualBenchmarkDirector = null
 var grace_motion_influencer: EnvironmentalMotionInfluencer3D = null
 var atmospheric_detail_director: AtmosphericDetailDirector3D = null
 var character_material_director: CharacterMaterialPresentationDirector3D = null
+var visual_lod_director: VisualLODDirector3D = null
 var fauna_ambient_behavior_count: int = 0
 var grace_material_target_count: int = 0
+var visual_lod_target_count: int = 0
 
 
 func _ready() -> void:
@@ -43,6 +51,7 @@ func _ready() -> void:
 	_ensure_fauna_ambient_behavior()
 	_ensure_atmospheric_detail_director()
 	_ensure_character_material_presentation()
+	_ensure_visual_lod()
 	_ensure_visual_benchmark_director()
 	set_meta("reflection_fidelity_pass", "reflection_fidelity_director_v1")
 	set_meta("reflection_fidelity_authority", "ReflectionFidelityDirector")
@@ -58,6 +67,8 @@ func _ready() -> void:
 	set_meta("fauna_ambient_behavior_count", fauna_ambient_behavior_count)
 	set_meta("grace_material_presentation", character_material_director != null)
 	set_meta("grace_material_target_count", grace_material_target_count)
+	set_meta("visual_lod", visual_lod_director != null)
+	set_meta("visual_lod_target_count", visual_lod_target_count)
 
 
 func _ensure_grace_motion_influencer() -> void:
@@ -253,6 +264,75 @@ func _register_character_material_nodes(
 		_register_character_material_nodes(child, roles)
 
 
+func _ensure_visual_lod() -> void:
+	if environment_root == null:
+		return
+	visual_lod_director = get_node_or_null(
+		"VisualLODDirector"
+	) as VisualLODDirector3D
+	if visual_lod_director == null:
+		visual_lod_director = VisualLODDirectorScript.new() as VisualLODDirector3D
+		visual_lod_director.name = "VisualLODDirector"
+		visual_lod_director.profile = GreenGrottoVisualLODProfile
+		add_child(visual_lod_director)
+	visual_lod_target_count = 0
+	_register_visual_lod_nodes(environment_root)
+
+
+func _register_visual_lod_nodes(node: Node) -> void:
+	if node is GeometryInstance3D:
+		var geometry: GeometryInstance3D = node as GeometryInstance3D
+		var category: String = _visual_lod_category(geometry)
+		if category != "":
+			if visual_lod_director.register_geometry(geometry, category):
+				visual_lod_target_count += 1
+	for child: Node in node.get_children():
+		_register_visual_lod_nodes(child)
+
+
+func _visual_lod_category(geometry: GeometryInstance3D) -> String:
+	if geometry == null:
+		return ""
+	var node_name: String = str(geometry.name)
+	var vegetation_role: String = str(
+		geometry.get_meta("vegetation_presentation_role", "")
+	)
+	if vegetation_role == "canopy":
+		return "canopy_detail"
+	if _has_foliage_cluster_ancestor(geometry):
+		return "foliage"
+	if node_name.begins_with("CanopyCrown") or node_name.begins_with("CanopyInner"):
+		return "canopy_detail"
+	if (
+		"Bracket" in node_name
+		or "RoofTile" in node_name
+		or "Finial" in node_name
+		or "Railing" in node_name
+	):
+		return "architecture_detail"
+	if (
+		"Moss" in node_name
+		or "Litter" in node_name
+		or node_name.begins_with("Crack")
+	):
+		return "surface_detail"
+	return ""
+
+
+func _has_foliage_cluster_ancestor(node: Node) -> bool:
+	var current: Node = node
+	while current != null and current != environment_root:
+		var current_name: String = str(current.name)
+		if (
+			current_name.begins_with("Fern")
+			or current_name.begins_with("Cycad")
+			or current_name.begins_with("GroundLeaf")
+		):
+			return true
+		current = current.get_parent()
+	return false
+
+
 func _ensure_visual_benchmark_director() -> void:
 	visual_benchmark_director = get_node_or_null(
 		"VisualBenchmarkDirector"
@@ -294,5 +374,10 @@ func get_debug_data() -> Dictionary:
 	data["grace_material_target_count"] = grace_material_target_count
 	data["grace_material_strategy"] = (
 		"F7-scaled shared skin, hair, cloth, metal, and leather variants"
+	)
+	data["visual_lod"] = visual_lod_director != null
+	data["visual_lod_target_count"] = visual_lod_target_count
+	data["visual_lod_strategy"] = (
+		"renderer visibility ranges on non-silhouette presentation detail only"
 	)
 	return data

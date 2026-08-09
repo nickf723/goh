@@ -1,4 +1,4 @@
-extends "res://scripts/levels/prototype_green_grotto_hero_surface_finish.gd"
+extends "res://scripts/levels/prototype_green_grotto_art_direction_study.gd"
 class_name PrototypeGreenGrottoLightingPass
 
 

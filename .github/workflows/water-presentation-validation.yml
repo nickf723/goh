@@ -1,0 +1,71 @@
+name: Water Presentation Director
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "shaders/water_surface_v1.gdshader"
+      - "shaders/waterfall_surface_v1.gdshader"
+      - "scripts/water/**"
+      - "data/water/**"
+      - "scripts/levels/prototype_green_grotto_water_pass.gd"
+      - "scripts/tests/water_presentation_director_smoke_test.gd"
+      - "scenes/tests/water_presentation_director_smoke_test.tscn"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "scripts/physics/fluid_force_volume.gd"
+      - "docs/WATER_PRESENTATION_DIRECTOR_V1.md"
+      - ".github/workflows/water-presentation-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: water-presentation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-water-presentation:
+    name: Import, water contract, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee water-presentation-import.log
+
+      - name: Run Water Presentation Director regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/water_presentation_director_smoke_test.tscn 2>&1 | tee water-presentation-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee water-presentation-green-boot.log
+
+      - name: Upload water presentation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: water-presentation-logs
+          path: |
+            water-presentation-import.log
+            water-presentation-test.log
+            water-presentation-green-boot.log
+          if-no-files-found: ignore

@@ -2,13 +2,16 @@ extends CanvasLayer
 class_name VisualBenchmarkDirector
 
 signal benchmark_preset_changed(preset_name: String)
+signal benchmark_capture_finished(result: Dictionary)
 
 const PRESET_BASELINE: int = 0
 const PRESET_BALANCED: int = 1
 const PRESET_HERO: int = 2
+const ROLLING_SAMPLE_LIMIT: int = 180
 
 @export var debug_hotkeys_enabled: bool = true
 @export var overlay_enabled: bool = true
+@export_range(1.0, 15.0, 0.5) var capture_seconds: float = 5.0
 
 var vegetation: VegetationPresentationDirector3D = null
 var water: WaterPresentationDirector3D = null
@@ -25,6 +28,18 @@ var status_label: Label = null
 var preset_index: int = PRESET_HERO
 var initialized: bool = false
 var refresh_timer: float = 0.0
+var rolling_frame_times: Array[float] = []
+var current_fps: float = 0.0
+var current_draw_calls: int = 0
+var current_primitives: int = 0
+var capture_active: bool = false
+var capture_remaining: float = 0.0
+var capture_label: String = ""
+var capture_frame_times: Array[float] = []
+var capture_draw_call_sum: float = 0.0
+var capture_primitive_sum: float = 0.0
+var capture_samples: int = 0
+var last_capture: Dictionary = {}
 
 
 func _ready() -> void:
@@ -37,6 +52,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not initialized:
 		return
+	_sample_performance(maxf(delta, 0.0))
 	refresh_timer -= maxf(delta, 0.0)
 	if refresh_timer <= 0.0:
 		refresh_timer = 0.18
@@ -58,6 +74,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		overlay_enabled = not overlay_enabled
 		if panel != null:
 			panel.visible = overlay_enabled
+		get_viewport().set_input_as_handled()
+	elif key_event.keycode == KEY_F11:
+		start_capture()
 		get_viewport().set_input_as_handled()
 
 
@@ -128,6 +147,110 @@ func apply_preset(index: int) -> void:
 	_refresh_overlay()
 
 
+func start_capture(duration_override: float = -1.0) -> void:
+	if not initialized:
+		return
+	capture_active = true
+	capture_remaining = (
+		maxf(duration_override, 0.05)
+		if duration_override > 0.0
+		else maxf(capture_seconds, 0.5)
+	)
+	var matched: int = _detect_matching_preset()
+	capture_label = _preset_name(matched) if matched >= 0 else "CUSTOM"
+	capture_frame_times.clear()
+	capture_draw_call_sum = 0.0
+	capture_primitive_sum = 0.0
+	capture_samples = 0
+	_refresh_overlay()
+
+
+func _sample_performance(delta: float) -> void:
+	if delta > 0.000001:
+		rolling_frame_times.append(delta)
+		while rolling_frame_times.size() > ROLLING_SAMPLE_LIMIT:
+			rolling_frame_times.pop_front()
+	current_fps = Performance.get_monitor(Performance.TIME_FPS)
+	current_draw_calls = int(Performance.get_monitor(
+		Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME
+	))
+	current_primitives = int(Performance.get_monitor(
+		Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME
+	))
+	if capture_active:
+		_record_capture_sample(
+			delta,
+			current_draw_calls,
+			current_primitives
+		)
+
+
+func _record_capture_sample(
+	delta: float,
+	draw_calls: int,
+	primitives: int
+) -> void:
+	if not capture_active:
+		return
+	if delta > 0.000001:
+		capture_frame_times.append(delta)
+	capture_draw_call_sum += maxf(float(draw_calls), 0.0)
+	capture_primitive_sum += maxf(float(primitives), 0.0)
+	capture_samples += 1
+	capture_remaining -= maxf(delta, 0.0)
+	if capture_remaining <= 0.0:
+		_finish_capture()
+
+
+func _finish_capture() -> void:
+	capture_active = false
+	var average_seconds: float = _average(capture_frame_times)
+	var average_ms: float = average_seconds * 1000.0
+	var average_fps: float = 0.0
+	if average_seconds > 0.000001:
+		average_fps = 1.0 / average_seconds
+	var one_percent_low_fps: float = _one_percent_low_fps(capture_frame_times)
+	var sample_divisor: float = maxf(float(capture_samples), 1.0)
+	last_capture = {
+		"preset": capture_label,
+		"samples": capture_samples,
+		"average_fps": average_fps,
+		"average_frame_ms": average_ms,
+		"one_percent_low_fps": one_percent_low_fps,
+		"average_draw_calls": capture_draw_call_sum / sample_divisor,
+		"average_primitives": capture_primitive_sum / sample_divisor,
+	}
+	benchmark_capture_finished.emit(last_capture.duplicate(true))
+	print("VISUAL_BENCHMARK_CAPTURE: ", last_capture)
+	_refresh_overlay()
+
+
+func _average(values: Array[float]) -> float:
+	if values.is_empty():
+		return 0.0
+	var total: float = 0.0
+	for value: float in values:
+		total += value
+	return total / float(values.size())
+
+
+func _one_percent_low_fps(values: Array[float]) -> float:
+	if values.is_empty():
+		return 0.0
+	var sorted: Array[float] = values.duplicate()
+	sorted.sort()
+	var worst_count: int = maxi(ceili(float(sorted.size()) * 0.01), 1)
+	var worst_total: float = 0.0
+	for index: int in range(worst_count):
+		worst_total += sorted[sorted.size() - 1 - index]
+	var worst_average: float = worst_total / float(worst_count)
+	return 1.0 / worst_average if worst_average > 0.000001 else 0.0
+
+
+func _rolling_frame_ms() -> float:
+	return _average(rolling_frame_times) * 1000.0
+
+
 func _detect_matching_preset() -> int:
 	if not _required_systems_ready():
 		return -1
@@ -162,7 +285,7 @@ func _build_overlay() -> void:
 	panel = PanelContainer.new()
 	panel.name = "BenchmarkStatusPanel"
 	panel.position = Vector2(14.0, 14.0)
-	panel.custom_minimum_size = Vector2(310.0, 0.0)
+	panel.custom_minimum_size = Vector2(350.0, 0.0)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.visible = overlay_enabled
 	add_child(panel)
@@ -181,13 +304,19 @@ func _refresh_overlay() -> void:
 		return
 	var matched: int = _detect_matching_preset()
 	var preset_label: String = _preset_name(matched) if matched >= 0 else "CUSTOM"
+	var capture_line: String = _capture_status_line()
 	status_label.text = (
 		"VISUAL LAB  •  %s\n"
+		+ "FPS %.0f   %.2f ms   DC %d   Prim %s\n"
 		+ "F1 Veg %s   F2 Water %s   F3 Material %s\n"
 		+ "F4 Story %s   F5 Motion %s   F6 Camera %s\n"
-		+ "F7 %s   •   F9 Preset   F10 HUD"
+		+ "F7 %s   •   F9 Preset   F10 HUD   F11 Sample%s"
 	) % [
 		preset_label,
+		current_fps,
+		_rolling_frame_ms(),
+		current_draw_calls,
+		_compact_number(current_primitives),
 		_on_off(vegetation != null and vegetation.enabled),
 		_on_off(water != null and water.enabled),
 		_on_off(material_fidelity != null and material_fidelity.enabled),
@@ -195,9 +324,36 @@ func _refresh_overlay() -> void:
 		_on_off(motion != null and motion.enabled),
 		_on_off(camera_director != null and camera_director.enabled),
 		_lighting_label(),
+		capture_line,
 	]
 	if panel != null:
 		panel.visible = overlay_enabled
+
+
+func _capture_status_line() -> String:
+	if capture_active:
+		return "\nCAPTURING %s  %.1fs" % [capture_label, maxf(capture_remaining, 0.0)]
+	if last_capture.is_empty():
+		return ""
+	return (
+		"\nLAST %s  %.1f fps  1%% %.1f  %.2f ms  DC %.0f"
+		% [
+			str(last_capture.get("preset", "?")),
+			float(last_capture.get("average_fps", 0.0)),
+			float(last_capture.get("one_percent_low_fps", 0.0)),
+			float(last_capture.get("average_frame_ms", 0.0)),
+			float(last_capture.get("average_draw_calls", 0.0)),
+		]
+	)
+
+
+func _compact_number(value: int) -> String:
+	var magnitude: float = float(maxi(value, 0))
+	if magnitude >= 1000000.0:
+		return "%.2fM" % (magnitude / 1000000.0)
+	if magnitude >= 1000.0:
+		return "%.1fk" % (magnitude / 1000.0)
+	return str(value)
 
 
 func _lighting_label() -> String:
@@ -237,7 +393,14 @@ func get_debug_data() -> Dictionary:
 		"overlay_enabled": overlay_enabled,
 		"f9_preset_cycle": true,
 		"f10_overlay_toggle": true,
+		"f11_timed_capture": true,
 		"baseline_disables_f1_f6": true,
 		"balanced_uses_lighting_balanced": true,
 		"hero_uses_lighting_cinematic": true,
+		"current_fps": current_fps,
+		"rolling_frame_ms": _rolling_frame_ms(),
+		"current_draw_calls": current_draw_calls,
+		"current_primitives": current_primitives,
+		"capture_active": capture_active,
+		"last_capture": last_capture.duplicate(true),
 	}

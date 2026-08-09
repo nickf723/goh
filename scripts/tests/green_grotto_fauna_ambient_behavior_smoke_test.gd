@@ -75,7 +75,7 @@ func _validate_raptor_reactivity(
 	if behavior == null:
 		return
 
-	player.global_position = raptor.global_position + Vector3(0.0, 0.0, 5.0)
+	player.global_position = raptor.global_position + Vector3(5.0, 0.0, 0.0)
 	behavior.call("_process", 0.08)
 	_expect(behavior.behavior_state == "curious", "raptor becomes curious at medium Grace distance")
 	var curious_yaw: float = raptor.rotation.y

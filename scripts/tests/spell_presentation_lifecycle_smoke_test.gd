@@ -54,7 +54,8 @@ func validate_director_contract(director: GamePresentationDirector) -> void:
 	_expect(director.has_method("present_spell"), "director exposes spell lifecycle presentation")
 	var data: Dictionary = director.get_debug_data()
 	_expect(bool(data.get("spell_lifecycle_presentation", false)), "director advertises spell lifecycle support")
-	var phases: Array = data.get("spell_phases", []) as Array
+	var phase_value: Variant = data.get("spell_phases", [])
+	var phases: Array = phase_value as Array if phase_value is Array else []
 	for phase: String in ["prepare", "release", "travel", "manifest", "latch", "sustain", "resolve", "handoff", "cancel"]:
 		_expect(phases.has(phase), "director publishes phase " + phase)
 
@@ -90,6 +91,7 @@ func validate_player_caster_contract() -> void:
 	if caster != null and caster.has_method("get_debug_data"):
 		var data: Dictionary = caster.call("get_debug_data")
 		_expect(bool(data.get("spell_presentation_lifecycle", false)), "production player caster routes through lifecycle presentation")
+		_expect(data.has("charge_presentation_bucket"), "charged casting exposes presentation-stage diagnostics")
 	player.queue_free()
 	await get_tree().process_frame
 
@@ -98,27 +100,43 @@ func validate_reference_runtime_contracts() -> void:
 	var vine: Node = VineScene.instantiate()
 	_expect(vine is LifeVineGrappleTargeted, "Vine Grapple keeps its targeted gameplay runtime")
 	if vine != null:
-		var vine_data: Dictionary = vine.call("get_debug_data") if vine.has_method("get_debug_data") else {}
+		var vine_data: Dictionary = {}
+		if vine.has_method("get_debug_data"):
+			var vine_value: Variant = vine.call("get_debug_data")
+			if vine_value is Dictionary:
+				vine_data = vine_value as Dictionary
 		_expect(vine_data.has("presentation_lifecycle"), "Vine Grapple declares latch/sustain presentation")
-		vine.queue_free()
+		vine.free()
 
 	var curse: Node = DeathHexCurseScene.instantiate()
 	_expect(curse is DeathHexCurse, "Death Hex presented curse remains a DeathHexCurse")
 	_expect(curse is DeathHexCursePresented, "Death Hex scene uses presented curse subclass")
 	if curse != null:
-		curse.queue_free()
+		var curse_data: Dictionary = {}
+		if curse.has_method("get_debug_data"):
+			var curse_value: Variant = curse.call("get_debug_data")
+			if curse_value is Dictionary:
+				curse_data = curse_value as Dictionary
+		_expect(bool(curse_data.get("manifest_precedes_sustain", false)), "Death Hex orders manifestation before sustain")
+		curse.free()
 
 	var wraith_projectile: Node = WraithProjectileScene.instantiate()
 	_expect(wraith_projectile is DeathWraithProjectile, "Wraith projectile preserves gameplay base class")
 	_expect(wraith_projectile is DeathWraithProjectilePresented, "Wraith projectile uses handoff presentation subclass")
 	if wraith_projectile != null:
-		wraith_projectile.queue_free()
+		wraith_projectile.free()
 
 	var spirit: Node = WraithSpiritScene.instantiate()
 	_expect(spirit is DeathPursuerSpirit, "Wraith spirit preserves gameplay base class")
 	_expect(spirit is DeathPursuerSpiritPresented, "Wraith spirit uses sustain/pass presentation subclass")
 	if spirit != null:
-		spirit.queue_free()
+		var spirit_data: Dictionary = {}
+		if spirit.has_method("get_debug_data"):
+			var spirit_value: Variant = spirit.call("get_debug_data")
+			if spirit_value is Dictionary:
+				spirit_data = spirit_value as Dictionary
+		_expect(bool(spirit_data.get("handoff_precedes_sustain", false)), "Wraith handoff precedes pursuit sustain")
+		spirit.free()
 
 
 func validate_reference_spell_events(director: GamePresentationDirector) -> void:
@@ -144,15 +162,20 @@ func validate_reference_spell_events(director: GamePresentationDirector) -> void
 		context["suppress_haptics"] = true
 		context["suppress_visual"] = true
 		var value: Variant = director.call("present_spell", context)
-		var event: Dictionary = value as Dictionary if value is Dictionary else {}
+		var event: Dictionary = {}
+		if value is Dictionary:
+			event = value as Dictionary
 		_expect(str(event.get("event_type", "")) == "spell", "reference preview records a spell event")
 		_expect(str(event.get("phase", "")) == str(row.get("phase", "")), "reference preview keeps lifecycle phase")
 		_expect(str(event.get("spell_id", "")) == str(row.get("spell_id", "")), "reference preview keeps spell identity")
 		_expect(not event.has("actor"), "spell telemetry does not retain live actor references")
 		_expect(str(event.get("actor_name", "")) == "PresentationGrace", "spell telemetry stores safe actor name")
 		var cues: Array[String] = _event_audio_cues(event)
-		for expected_cue: String in row.get("expected", []) as Array:
-			_expect(cues.has(expected_cue), str(row.get("spell_name", "Spell")) + " includes " + expected_cue)
+		var expected_value: Variant = row.get("expected", [])
+		if expected_value is Array:
+			for expected_raw: Variant in expected_value as Array:
+				var expected_cue: String = str(expected_raw)
+				_expect(cues.has(expected_cue), str(row.get("spell_name", "Spell")) + " includes " + expected_cue)
 
 	actor.queue_free()
 

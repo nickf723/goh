@@ -12,10 +12,23 @@ on:
       - "scripts/visuals/player_motion_feedback.gd"
       - "scripts/interaction/breakable_prop.gd"
       - "scripts/enemies/hit_reaction_test_target.gd"
+      - "scripts/abilities/ability_caster_spell_presentation.gd"
+      - "scripts/abilities/ability_caster_focus_library.gd"
+      - "scripts/actions/life_vine_grapple_targeted.gd"
+      - "scripts/actions/death_hex_projectile.gd"
+      - "scripts/actions/death_hex_curse_presented.gd"
+      - "scripts/actions/death_wraith_projectile_presented.gd"
+      - "scripts/actions/death_pursuer_spirit_presented.gd"
       - "scripts/levels/prototype_polish_studio.gd"
+      - "scripts/levels/prototype_polish_studio_spells.gd"
       - "scripts/tests/presentation_director_smoke_test.gd"
+      - "scripts/tests/spell_presentation_lifecycle_smoke_test.gd"
+      - "scenes/actions/death_hex_curse.tscn"
+      - "scenes/actions/death_wraith_projectile.tscn"
+      - "scenes/actions/death_pursuer_spirit.tscn"
       - "scenes/levels/prototypes/prototype_polish_studio_v1.tscn"
       - "scenes/tests/presentation_director_smoke_test.tscn"
+      - "scenes/tests/spell_presentation_lifecycle_smoke_test.tscn"
       - ".github/workflows/presentation-polish-validation.yml"
   workflow_dispatch:
 
@@ -28,7 +41,7 @@ concurrency:
 
 jobs:
   validate-presentation:
-    name: Import, presentation contract, studio boot, movement, and reactions
+    name: Import, spell lifecycle, studio boot, movement, and reactions
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -53,6 +66,12 @@ jobs:
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/presentation_director_smoke_test.tscn 2>&1 | tee presentation-director-test.log
+
+      - name: Run spell lifecycle regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/spell_presentation_lifecycle_smoke_test.tscn 2>&1 | tee spell-lifecycle-test.log
 
       - name: Boot Polish Studio
         shell: bash
@@ -80,6 +99,7 @@ jobs:
           path: |
             presentation-import.log
             presentation-director-test.log
+            spell-lifecycle-test.log
             polish-studio-boot.log
             hit-reaction-test.log
             grace-animation-test.log

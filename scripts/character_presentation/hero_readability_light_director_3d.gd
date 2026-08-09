@@ -23,8 +23,7 @@ func _ready() -> void:
 	_resolve_dependencies()
 	_build_light()
 	_register_character_layers()
-	initialized = profile != null and readability_light != null and target_mesh_count > 0
-	set_meta("hero_readability_light_initialized", initialized)
+	_refresh_initialized_state()
 	if initialized:
 		_apply_quality(_current_quality())
 
@@ -36,6 +35,15 @@ func _exit_tree() -> void:
 func _process(delta: float) -> void:
 	if not enabled or profile == null or readability_light == null:
 		return
+	if (
+		player == null
+		or not is_instance_valid(player)
+		or grace_visual == null
+		or target_mesh_count <= 0
+	):
+		_resolve_dependencies()
+		_register_character_layers()
+		_refresh_initialized_state()
 	if lighting_director == null or not is_instance_valid(lighting_director):
 		_resolve_lighting_director()
 	var quality: int = _current_quality()
@@ -53,17 +61,35 @@ func set_enabled(value: bool) -> void:
 			readability_light.visible = false
 			readability_light.light_energy = 0.0
 		_restore_character_layers()
+		_refresh_initialized_state()
 		return
+	_resolve_dependencies()
 	_register_character_layers()
+	_refresh_initialized_state()
 	active_quality = -1
 	_apply_quality(_current_quality())
 
 
 func synchronize_now() -> void:
+	if player == null or not is_instance_valid(player) or target_mesh_count <= 0:
+		_resolve_dependencies()
+		_register_character_layers()
+		_refresh_initialized_state()
 	if lighting_director == null or not is_instance_valid(lighting_director):
 		_resolve_lighting_director()
 	_apply_quality(_current_quality())
 	_update_light_direction(1.0)
+
+
+func _refresh_initialized_state() -> void:
+	initialized = (
+		profile != null
+		and readability_light != null
+		and player != null
+		and grace_visual != null
+		and target_mesh_count > 0
+	)
+	set_meta("hero_readability_light_initialized", initialized)
 
 
 func _resolve_dependencies() -> void:

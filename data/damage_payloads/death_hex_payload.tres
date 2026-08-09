@@ -4,12 +4,12 @@
 
 [resource]
 script = ExtResource("1_payload")
-amount = 0
+amount = 1
 stance_damage = 0
 element = "death"
 source_name = "Death Hex"
-hit_type = "projectile"
-status_effect = "poisoned"
-status_duration = 3.0
+hit_type = "death_hex_pulse"
+status_effect = ""
+status_duration = 0.0
 status_strength = 1.0
-tags = Array[String](["death", "decay", "curse", "poisoned", "magic", "projectile", "damage_over_time"])
+tags = Array[String](["death", "hexed", "decay", "curse", "magic", "persistent_damage", "health_decay"])

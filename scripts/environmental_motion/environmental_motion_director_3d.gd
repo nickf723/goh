@@ -17,12 +17,18 @@ var last_manager_name: String = ""
 var last_systemic_airflow_speed: float = 0.0
 var systemic_sample_count: int = 0
 var restored_target_count: int = 0
+var influencers: Array[EnvironmentalMotionInfluencer3D] = []
+var influencer_refresh_timer: float = 0.0
+var interaction_sample_count: int = 0
+var last_interaction_strength: float = 0.0
+var last_interaction_target: String = ""
 
 
 func _ready() -> void:
 	add_to_group("environmental_motion_director")
 	add_to_group("debuggable")
 	_resolve_airflow_manager()
+	_refresh_influencers()
 
 
 func _process(delta: float) -> void:
@@ -34,6 +40,10 @@ func _process(delta: float) -> void:
 	if airflow_manager_refresh_timer <= 0.0:
 		airflow_manager_refresh_timer = 0.45
 		_resolve_airflow_manager()
+	influencer_refresh_timer -= safe_delta
+	if influencer_refresh_timer <= 0.0:
+		influencer_refresh_timer = 0.35
+		_refresh_influencers()
 	if not enabled:
 		return
 	_animate_targets(safe_delta)
@@ -84,6 +94,7 @@ func register_target(
 		"base_scale": target.scale,
 		"cached_airflow": Vector3.ZERO,
 		"next_airflow_sample": elapsed + _stagger_delay(target_id),
+		"smoothed_interaction": Vector3.ZERO,
 	}
 	target.add_to_group("environmental_motion_target")
 	target.set_meta("environmental_motion_kind", motion_kind)
@@ -151,6 +162,13 @@ func sample_visual_wind_at(world_position: Vector3, phase: float = 0.0) -> Vecto
 	return _clamp_visual_wind(ambient)
 
 
+func sample_local_interaction_for_test(
+	world_position: Vector3,
+	motion_kind: String = "foliage"
+) -> Dictionary:
+	return _sample_local_interaction(world_position, motion_kind)
+
+
 func _animate_targets(delta: float) -> void:
 	var invalid_ids: Array[int] = []
 	var alpha: float = 1.0 - exp(-delta * profile.response_smoothing)
@@ -173,15 +191,20 @@ func _animate_targets(delta: float) -> void:
 		if elapsed >= float(record.get("next_airflow_sample", 0.0)):
 			record["cached_airflow"] = _sample_systemic_airflow(target.global_position)
 			record["next_airflow_sample"] = elapsed + profile.airflow_resample_interval
-			targets[target_id] = record
 
-		_apply_target_motion(target, record, alpha)
+		_apply_target_motion(target, record, alpha, delta)
+		targets[target_id] = record
 
 	for target_id: int in invalid_ids:
 		targets.erase(target_id)
 
 
-func _apply_target_motion(target: Node3D, record: Dictionary, alpha: float) -> void:
+func _apply_target_motion(
+	target: Node3D,
+	record: Dictionary,
+	alpha: float,
+	delta: float = 0.016
+) -> void:
 	var kind: String = str(record.get("kind", "foliage"))
 	var strength: float = float(record.get("strength", 1.0))
 	var phase: float = float(record.get("phase", 0.0))
@@ -204,6 +227,31 @@ func _apply_target_motion(target: Node3D, record: Dictionary, alpha: float) -> v
 		direction = Vector3.RIGHT
 	direction = direction.normalized()
 
+	var raw_interaction: Dictionary = _sample_local_interaction(
+		target.global_position,
+		kind
+	)
+	var raw_interaction_vector: Vector3 = (
+		raw_interaction.get("direction", Vector3.ZERO) as Vector3
+		* float(raw_interaction.get("strength", 0.0))
+	)
+	var smoothed_interaction: Vector3 = record.get(
+		"smoothed_interaction",
+		Vector3.ZERO
+	)
+	var interaction_alpha: float = 1.0 - exp(
+		-maxf(delta, 0.0) * profile.interaction_response_smoothing
+	)
+	smoothed_interaction = smoothed_interaction.lerp(
+		raw_interaction_vector,
+		clampf(interaction_alpha, 0.0, 1.0)
+	)
+	record["smoothed_interaction"] = smoothed_interaction
+	var interaction_strength: float = smoothed_interaction.length()
+	var interaction_direction: Vector3 = Vector3.ZERO
+	if interaction_strength > 0.000001:
+		interaction_direction = smoothed_interaction / interaction_strength
+
 	var time_value: float = elapsed * profile.base_frequency * frequency_scale + phase
 	var primary_wave: float = sin(time_value)
 	var secondary_wave: float = sin(time_value * 2.37 + phase * 0.73)
@@ -224,6 +272,15 @@ func _apply_target_motion(target: Node3D, record: Dictionary, alpha: float) -> v
 			var bend: float = amplitude * (0.48 + primary_wave * 0.39 + secondary_wave * 0.13)
 			target_rotation.x += direction.z * bend
 			target_rotation.z -= direction.x * bend
+			if interaction_strength > 0.0001:
+				var interaction_bend: float = deg_to_rad(
+					profile.interaction_vine_bend_degrees
+				) * interaction_strength
+				target_rotation.x += interaction_direction.z * interaction_bend
+				target_rotation.z -= interaction_direction.x * interaction_bend
+				target_position += interaction_direction * (
+					profile.interaction_vine_displacement * interaction_strength
+				)
 		"root":
 			var amplitude: float = deg_to_rad(profile.root_sway_degrees) * strength * wind_ratio
 			target_rotation.x += direction.z * amplitude * primary_wave
@@ -244,10 +301,74 @@ func _apply_target_motion(target: Node3D, record: Dictionary, alpha: float) -> v
 			var bend: float = amplitude * (0.58 + primary_wave * 0.30 + secondary_wave * 0.12)
 			target_rotation.x += direction.z * bend + secondary_wave * flutter * 0.35
 			target_rotation.z -= direction.x * bend + primary_wave * flutter * 0.28
+			if interaction_strength > 0.0001:
+				var interaction_bend: float = deg_to_rad(
+					profile.interaction_foliage_bend_degrees
+				) * interaction_strength
+				target_rotation.x += interaction_direction.z * interaction_bend
+				target_rotation.z -= interaction_direction.x * interaction_bend
+				target_position += interaction_direction * (
+					profile.interaction_foliage_displacement * interaction_strength
+				)
+				var compression: float = clampf(
+					profile.interaction_foliage_compression * interaction_strength,
+					0.0,
+					0.28
+				)
+				target_scale = Vector3(
+					base_scale.x * (1.0 + compression * 0.22),
+					base_scale.y * (1.0 - compression),
+					base_scale.z * (1.0 + compression * 0.22)
+				)
 
 	target.position = target.position.lerp(target_position, alpha)
 	target.rotation = target.rotation.lerp(target_rotation, alpha)
 	target.scale = target.scale.lerp(target_scale, alpha)
+
+
+func _sample_local_interaction(
+	world_position: Vector3,
+	motion_kind: String
+) -> Dictionary:
+	var empty := {
+		"direction": Vector3.ZERO,
+		"strength": 0.0,
+		"source_count": 0,
+	}
+	if profile == null or not profile.local_interaction_enabled:
+		return empty
+	var kind: String = motion_kind.strip_edges().to_lower()
+	if kind not in ["foliage", "vine"]:
+		return empty
+
+	var combined: Vector3 = Vector3.ZERO
+	var source_count: int = 0
+	for influencer: EnvironmentalMotionInfluencer3D in influencers:
+		if influencer == null or not is_instance_valid(influencer):
+			continue
+		if not influencer.active or influencer.channel != channel:
+			continue
+		var sample: Dictionary = influencer.sample_influence(world_position)
+		var sample_strength: float = float(sample.get("strength", 0.0))
+		if sample_strength <= 0.0001:
+			continue
+		var sample_direction: Vector3 = sample.get("direction", Vector3.ZERO)
+		combined += sample_direction * sample_strength
+		source_count += 1
+
+	var strength: float = combined.length() * profile.interaction_strength_scale
+	if strength <= 0.0001:
+		return empty
+	strength = clampf(strength, 0.0, 2.0)
+	var direction: Vector3 = combined.normalized()
+	interaction_sample_count += 1
+	last_interaction_strength = strength
+	last_interaction_target = kind
+	return {
+		"direction": direction,
+		"strength": strength,
+		"source_count": source_count,
+	}
 
 
 func _sample_systemic_airflow(world_position: Vector3) -> Vector3:
@@ -276,6 +397,23 @@ func _resolve_airflow_manager() -> void:
 		return
 	last_manager_name = manager_name
 	airflow_manager_changed.emit(manager_name)
+
+
+func _refresh_influencers() -> void:
+	var refreshed: Array[EnvironmentalMotionInfluencer3D] = []
+	if get_tree() == null:
+		influencers = refreshed
+		return
+	for candidate: Node in get_tree().get_nodes_in_group(
+		"environmental_motion_influencer"
+	):
+		if candidate is EnvironmentalMotionInfluencer3D:
+			var influencer: EnvironmentalMotionInfluencer3D = (
+				candidate as EnvironmentalMotionInfluencer3D
+			)
+			if influencer.channel == channel:
+				refreshed.append(influencer)
+	influencers = refreshed
 
 
 func _sample_zone_state(world_position: Vector3) -> Dictionary:
@@ -332,6 +470,7 @@ func _restore_all_targets() -> void:
 	restored_target_count = 0
 	for raw_id: Variant in targets.keys():
 		var record: Dictionary = targets[int(raw_id)] as Dictionary
+		record["smoothed_interaction"] = Vector3.ZERO
 		var weak_value: Variant = record.get("ref", null)
 		if not weak_value is WeakRef:
 			continue
@@ -389,4 +528,10 @@ func get_debug_data() -> Dictionary:
 		"restored_target_count": restored_target_count,
 		"visual_only_ambient_wind": true,
 		"systemic_airflow_aware": true,
+		"local_interaction_aware": profile != null and profile.local_interaction_enabled,
+		"influencer_count": influencers.size(),
+		"interaction_sample_count": interaction_sample_count,
+		"last_interaction_strength": snappedf(last_interaction_strength, 0.01),
+		"last_interaction_target": last_interaction_target,
+		"interaction_moves_colliders": false,
 	}

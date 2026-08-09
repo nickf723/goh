@@ -1,0 +1,69 @@
+name: Vegetation Presentation Director
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/vegetation/**"
+      - "data/vegetation/**"
+      - "scripts/levels/prototype_green_grotto_vegetation_pass.gd"
+      - "scripts/tests/vegetation_presentation_director_smoke_test.gd"
+      - "scenes/tests/vegetation_presentation_director_smoke_test.tscn"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "scripts/environment/green_grotto_material_library.gd"
+      - "docs/VEGETATION_PRESENTATION_DIRECTOR_V1.md"
+      - ".github/workflows/vegetation-presentation-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vegetation-presentation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-vegetation-presentation:
+    name: Import, vegetation contract, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee vegetation-presentation-import.log
+
+      - name: Run Vegetation Presentation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/vegetation_presentation_director_smoke_test.tscn 2>&1 | tee vegetation-presentation-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee vegetation-presentation-green-boot.log
+
+      - name: Upload vegetation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vegetation-presentation-logs
+          path: |
+            vegetation-presentation-import.log
+            vegetation-presentation-test.log
+            vegetation-presentation-green-boot.log
+          if-no-files-found: ignore

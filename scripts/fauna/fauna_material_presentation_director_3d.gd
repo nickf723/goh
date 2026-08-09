@@ -211,8 +211,8 @@ func _get_or_create_variant(
 	if material == null:
 		return null
 	material.resource_local_to_scene = true
-	material.diffuse_mode = BaseMaterial3D.DIFFUSE_LAMBERT_WRAP
 	if role != "eye":
+		material.diffuse_mode = BaseMaterial3D.DIFFUSE_LAMBERT_WRAP
 		material.normal_enabled = true
 		material.normal_texture = _get_normal_texture(role)
 		material.normal_scale = (

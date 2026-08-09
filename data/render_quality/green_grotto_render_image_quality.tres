@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="RenderImageQualityProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/render_quality/render_image_quality_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_render_image_quality"
+display_name = "Green Grotto Render Image Quality"
+performance_taa = false
+performance_screen_space_aa = 1
+performance_msaa_3d = 0
+performance_debanding = false
+balanced_taa = true
+balanced_screen_space_aa = 0
+balanced_msaa_3d = 0
+balanced_debanding = true
+cinematic_taa = true
+cinematic_screen_space_aa = 0
+cinematic_msaa_3d = 1
+cinematic_debanding = true

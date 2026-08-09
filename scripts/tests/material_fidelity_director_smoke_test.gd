@@ -155,7 +155,11 @@ func _validate_exclusions(
 	_expect(upper_stream != null, "upper stream exists for exclusion check")
 	if upper_stream != null:
 		_expect(not director.targets.has(upper_stream.get_instance_id()), "transparent water surfaces are excluded from material fidelity")
-		_expect(not upper_stream.material_override is StandardMaterial3D or not (upper_stream.material_override as StandardMaterial3D).uv1_world_triplanar, "water does not inherit rock triplanar settings")
+		var water_uses_world_triplanar: bool = false
+		var water_material: StandardMaterial3D = upper_stream.material_override as StandardMaterial3D
+		if water_material != null:
+			water_uses_world_triplanar = water_material.uv1_world_triplanar
+		_expect(not water_uses_world_triplanar, "water does not inherit rock triplanar settings")
 
 	var surface_story: SurfaceStoryDirector3D = target.get_node_or_null("SurfaceStoryDirector") as SurfaceStoryDirector3D
 	_expect(surface_story != null and surface_story.decals.size() >= 80, "surface-story decal layer survives material upgrade")

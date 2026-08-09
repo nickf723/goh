@@ -35,11 +35,13 @@ Balanced uses temporal antialiasing to reduce shader/specular/transparency shimm
 ```text
 TAA          ON
 Screen AA    OFF
-MSAA 3D      2x
+MSAA 3D      OFF
 Debanding    ON
 ```
 
-Cinematic adds 2x MSAA on top of TAA as an explicit benchmark experiment for thin ruin geometry and railings. F11 performance capture should be used to decide whether the extra edge quality earns its cost.
+The original Cinematic experiment stacked 2x MSAA on top of TAA. The Green visual-detox pass removed that stack after the benchmark became GPU-heavy. Cinematic now means the highest useful authored presentation, not every available antialiasing switch enabled simultaneously.
+
+If a future asset set exposes geometry-edge aliasing that TAA cannot handle, F11 measurements can justify reintroducing MSAA for that target specifically.
 
 ## Why these techniques
 
@@ -51,7 +53,7 @@ The Green benchmark contains several aliasing stressors:
 - small decals and surface detail;
 - high-contrast diagonal ruin silhouettes.
 
-Performance uses FXAA because it is the cheapest broad edge treatment in the Forward+ target. Balanced shifts to TAA because temporal accumulation is substantially better suited to moving/specular shader aliasing. Cinematic adds modest MSAA specifically for geometry-edge quality rather than jumping directly to a more expensive native-resolution temporal upscaler.
+Performance uses FXAA because it is the cheapest broad edge treatment in the Forward+ target. Balanced and Cinematic use TAA because temporal accumulation is better suited to moving/specular shader aliasing. Debanding remains useful for the grotto's fog and sunset gradients.
 
 ## Runtime ownership
 

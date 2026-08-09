@@ -6,10 +6,14 @@ const SpellPresentation = preload(
 )
 
 
-func _spawn_pursuer_spirit(target: Node3D) -> void:
+func _spawn_pursuer_spirit(target: Node3D) -> bool:
 	if target == null or not is_instance_valid(target):
-		return
-	super._spawn_pursuer_spirit(target)
+		return false
+
+	var spawned: bool = super._spawn_pursuer_spirit(target)
+	if not spawned:
+		return false
+
 	SpellPresentation.present(self, "handoff", {
 		"actor": source_actor,
 		"target": target,
@@ -22,6 +26,7 @@ func _spawn_pursuer_spirit(target: Node3D) -> void:
 		"detail": "projectile_to_spirit",
 		"intensity": 0.74,
 	})
+	return true
 
 
 func get_debug_data() -> Dictionary:

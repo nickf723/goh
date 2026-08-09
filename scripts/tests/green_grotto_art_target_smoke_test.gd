@@ -22,6 +22,7 @@ func run_tests() -> void:
 	_expect(target is PrototypeGreenGrottoHeroPass, "scene promotes to the V3 hero layer")
 	_expect(target is PrototypeGreenGrottoHeroSurfaceFinish, "scene installs the completed V3 visible-surface finish")
 	_expect(str(target.get_meta("hero_pass", "")) == "green_grotto_v3", "scene identifies the V3 hero pass")
+	_expect(str(target.get_meta("composition_pass", "")) == "v4_readability_corridor", "scene installs the V4 readability composition pass")
 	_expect(
 		str(target.get_meta("water_contract", ""))
 		== "localized_surface_meshes_no_global_plane",
@@ -44,6 +45,7 @@ func run_tests() -> void:
 	_expect(bool(data.get("green_grotto_hero_pass", false)), "debug contract identifies the hero pass")
 	_expect(bool(data.get("green_grotto_hero_surface_finish", false)), "debug contract identifies the visible-surface finish")
 	_expect(str(data.get("hero_pass", "")) == "v3_structural_hero_rewrite", "debug data names the structural rewrite")
+	_expect(str(data.get("composition_pass", "")) == "v4_readability_corridor", "debug data names the readability composition pass")
 	_expect(
 		str(data.get("expansion_strategy", ""))
 		== "hero_quality_gate_before_room_expansion",
@@ -54,6 +56,7 @@ func run_tests() -> void:
 	_validate_prototype_retirement(target)
 	_validate_hero_density(data)
 	_validate_surface_finish(target, data)
+	_validate_readability_composition(target, data)
 	_validate_material_contract(data)
 	_validate_preserved_gameplay_contract(target)
 
@@ -122,12 +125,12 @@ func _validate_prototype_retirement(target: Node) -> void:
 func _validate_hero_density(data: Dictionary) -> void:
 	var counts: Dictionary = _dictionary_value(data.get("build_counts", {}))
 	var hero_counts: Dictionary = _dictionary_value(data.get("hero_counts", {}))
-	_expect(int(counts.get("visual_meshes", 0)) >= 700, "V3 reaches a substantially denser environment tier")
-	_expect(int(counts.get("foliage_clusters", 0)) >= 55, "V3 deepens clustered prehistoric ecology")
+	_expect(int(counts.get("visual_meshes", 0)) >= 700, "V3 retains the authored environment system depth")
+	_expect(int(counts.get("foliage_clusters", 0)) >= 55, "V3 retains clustered prehistoric ecology")
 	_expect(int(hero_counts.get("retired_water_nodes", 0)) >= 10, "V3 retires the old water fixture instead of covering it")
 	_expect(int(hero_counts.get("hidden_prototype_surfaces", 0)) >= 15, "V3 hides broad prototype surfaces")
 	_expect(int(hero_counts.get("localized_water_surfaces", 0)) == 3, "V3 publishes exactly three localized horizontal water/bed surfaces")
-	_expect(int(hero_counts.get("rock_sculptures", 0)) >= 120, "V3 sculpts the chasm, banks and arrival edge with dense rock masses")
+	_expect(int(hero_counts.get("rock_sculptures", 0)) >= 120, "V3 keeps the sculpted chasm authoring pool available to the composition pass")
 	_expect(int(hero_counts.get("causeway_face_blocks", 0)) >= 45, "causeway gains authored masonry faces")
 	_expect(int(hero_counts.get("causeway_supports", 0)) >= 6, "causeway gains visible ruined supports")
 	_expect(int(hero_counts.get("shrine_masonry_blocks", 0)) >= 80, "shrine foundation is rebuilt from individual masonry")
@@ -142,13 +145,31 @@ func _validate_surface_finish(target: Node, data: Dictionary) -> void:
 	_expect(int(counts.get("terrace_tiles", 0)) >= 35, "side terraces receive individually fitted hero tiles")
 	_expect(int(counts.get("terrace_edge_blocks", 0)) >= 180, "terrace edges receive full masonry skirts")
 	_expect(int(counts.get("shrine_deck_tiles", 0)) >= 25, "shrine deck replaces the hidden broad foundation top")
-	_expect(int(counts.get("arrival_edge_rocks", 0)) == 16, "arrival shelf receives a sculpted rock perimeter")
+	_expect(int(counts.get("arrival_edge_rocks", 0)) == 16, "arrival shelf retains a sculpted perimeter authoring pool")
 	var hero_architecture: Node = target.get_node_or_null("GreenGrottoArt/HeroPassV3/HeroArchitecture")
 	_expect(hero_architecture != null, "HeroArchitecture root exists")
 	if hero_architecture != null:
 		_expect(hero_architecture.get_node_or_null("LeftHeroTerraceTile00") != null, "left terrace has a visible hero deck")
 		_expect(hero_architecture.get_node_or_null("RightHeroTerraceTile01") != null, "right terrace has a visible hero deck")
 		_expect(hero_architecture.get_node_or_null("HeroShrineDeck01") != null, "shrine foundation has a visible hero deck")
+
+
+func _validate_readability_composition(target: Node, data: Dictionary) -> void:
+	_expect(bool(data.get("protected_visual_corridor", false)), "V4 protects the Grace-to-shrine visual corridor")
+	_expect(str(data.get("route_surface_strategy", "")) == "few_broad_stones_over_collision_scaffolds", "V4 replaces tile noise with broad route stones")
+	var counts: Dictionary = _dictionary_value(data.get("composition_counts", {}))
+	_expect(int(counts.get("retired_micro_pavers", 0)) >= 35, "V4 retires the dense tiled-floor read")
+	_expect(int(counts.get("retired_rubble", 0)) >= 30, "V4 removes repeated edge rubble from the composition")
+	_expect(int(counts.get("retired_foreground_rocks", 0)) >= 20, "V4 thins the foreground rock wall")
+	_expect(int(counts.get("route_stones", 0)) >= 12, "V4 builds a small set of broad primary route stones")
+	_expect(int(counts.get("landmark_lights", 0)) == 1, "V4 adds one restrained shrine focus light")
+
+	var arrival: Node = target.get_node_or_null("GreenGrottoArt/Terrain/ArrivalShelf")
+	_expect(arrival != null and arrival.get_node_or_null("V4ArrivalRoute00") != null, "arrival shelf receives the simplified primary route")
+	var first_slab: Node = target.get_node_or_null("GreenGrottoArt/AncientRuins/CausewaySlab00")
+	_expect(first_slab != null and first_slab.get_node_or_null("V4CausewayRoute00") != null, "causeway receives the simplified primary route")
+	var old_arrival_paver: MeshInstance3D = target.get_node_or_null("GreenGrottoArt/Terrain/ArrivalShelf/ArrivalPaver00") as MeshInstance3D
+	_expect(old_arrival_paver != null and not old_arrival_paver.visible, "old arrival micro-pavers remain authored but are visually retired")
 
 
 func _validate_material_contract(data: Dictionary) -> void:

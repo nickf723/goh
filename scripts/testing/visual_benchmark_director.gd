@@ -16,7 +16,7 @@ const GreenImageFidelityProfile = preload(
 )
 
 @export var debug_hotkeys_enabled: bool = true
-@export var overlay_enabled: bool = true
+@export var overlay_enabled: bool = false
 @export_range(1.0, 15.0, 0.5) var capture_seconds: float = 5.0
 
 var vegetation: VegetationPresentationDirector3D = null
@@ -472,6 +472,8 @@ func _image_quality_label() -> String:
 		return "TAA+2x"
 	if taa:
 		return "TAA"
+	if msaa == Viewport.MSAA_2X:
+		return "2x MSAA"
 	return "RAW"
 
 

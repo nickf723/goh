@@ -109,8 +109,9 @@ func _apply_quality(quality: int) -> void:
 		if bool(tier.get("msaa_2x", false))
 		else Viewport.MSAA_DISABLED
 	)
-	# TAA is the temporal AA policy for Balanced/Hero. We deliberately avoid
-	# stacking a second full-screen SMAA/FXAA pass on top of it.
+	# The profile owns the final anti-aliasing policy. Green Grotto's Balanced and
+	# Hero tiers intentionally prefer non-temporal MSAA so camera motion stays crisp
+	# instead of accumulating the soft ghosting that TAA introduced in the lab.
 	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
 	RenderingServer.screen_space_roughness_limiter_set_active(
 		bool(tier.get("roughness_limiter", false)),
@@ -147,8 +148,9 @@ func get_debug_data() -> Dictionary:
 		"screen_space_aa": int(viewport.screen_space_aa) if viewport != null else -1,
 		"follows_lighting_quality": true,
 		"performance_is_raw": true,
-		"balanced_temporal_aa": true,
-		"cinematic_temporal_plus_msaa": true,
+		"balanced_temporal_aa": false,
+		"cinematic_temporal_plus_msaa": false,
+		"motion_clarity_non_temporal": true,
 		"restores_on_exit": true,
 		"gameplay_authority": false,
 	}

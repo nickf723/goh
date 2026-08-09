@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="MaterialFidelityProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/material_fidelity/material_fidelity_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "green_grotto_material_fidelity"
+display_name = "Green Grotto Material Fidelity"
+triplanar_sharpness = 3.6
+world_scale_multiplier = 0.66
+texture_resolution = 256
+normal_noise_frequency = 0.105
+roughness_noise_frequency = 0.041
+normal_bump_strength = 4.4
+normal_scale = 0.54
+roughness_variation = 0.15
+detail_seed = 38117
+maximum_shared_variants = 28

@@ -28,6 +28,12 @@ const VisualLODDirectorScript = preload(
 const GreenGrottoVisualLODProfile = preload(
 	"res://data/visual_lod/green_grotto_visual_lod.tres"
 )
+const SurfaceContactDirectorScript = preload(
+	"res://scripts/surface_contact/surface_contact_presentation_director_3d.gd"
+)
+const GreenGrottoSurfaceContactProfile = preload(
+	"res://data/surface_contact/green_grotto_surface_contact.tres"
+)
 
 var reflection_fidelity_director: ReflectionFidelityDirector3D = null
 var visual_benchmark_director: VisualBenchmarkDirector = null
@@ -35,6 +41,7 @@ var grace_motion_influencer: EnvironmentalMotionInfluencer3D = null
 var atmospheric_detail_director: AtmosphericDetailDirector3D = null
 var character_material_director: CharacterMaterialPresentationDirector3D = null
 var visual_lod_director: VisualLODDirector3D = null
+var surface_contact_director: SurfaceContactPresentationDirector3D = null
 var fauna_ambient_behavior_count: int = 0
 var grace_material_target_count: int = 0
 var visual_lod_target_count: int = 0
@@ -52,6 +59,7 @@ func _ready() -> void:
 	_ensure_atmospheric_detail_director()
 	_ensure_character_material_presentation()
 	_ensure_visual_lod()
+	_ensure_surface_contact_presentation()
 	_ensure_visual_benchmark_director()
 	set_meta("reflection_fidelity_pass", "reflection_fidelity_director_v1")
 	set_meta("reflection_fidelity_authority", "ReflectionFidelityDirector")
@@ -69,6 +77,7 @@ func _ready() -> void:
 	set_meta("grace_material_target_count", grace_material_target_count)
 	set_meta("visual_lod", visual_lod_director != null)
 	set_meta("visual_lod_target_count", visual_lod_target_count)
+	set_meta("surface_contact_presentation", surface_contact_director != null)
 
 
 func _ensure_grace_motion_influencer() -> void:
@@ -304,15 +313,15 @@ func _visual_lod_category(geometry: GeometryInstance3D) -> String:
 	if node_name.begins_with("CanopyCrown") or node_name.begins_with("CanopyInner"):
 		return "canopy_detail"
 	if (
-		"Bracket" in node_name
-		or "RoofTile" in node_name
-		or "Finial" in node_name
-		or "Railing" in node_name
+		node_name.contains("Bracket")
+		or node_name.contains("RoofTile")
+		or node_name.contains("Finial")
+		or node_name.contains("Railing")
 	):
 		return "architecture_detail"
 	if (
-		"Moss" in node_name
-		or "Litter" in node_name
+		node_name.contains("Moss")
+		or node_name.contains("Litter")
 		or node_name.begins_with("Crack")
 	):
 		return "surface_detail"
@@ -331,6 +340,49 @@ func _has_foliage_cluster_ancestor(node: Node) -> bool:
 			return true
 		current = current.get_parent()
 	return false
+
+
+func _ensure_surface_contact_presentation() -> void:
+	surface_contact_director = get_node_or_null(
+		"SurfaceContactPresentationDirector"
+	) as SurfaceContactPresentationDirector3D
+	if surface_contact_director == null:
+		surface_contact_director = (
+			SurfaceContactDirectorScript.new()
+			as SurfaceContactPresentationDirector3D
+		)
+		surface_contact_director.name = "SurfaceContactPresentationDirector"
+		surface_contact_director.profile = GreenGrottoSurfaceContactProfile
+		add_child(surface_contact_director)
+		surface_contact_director.add_region(
+			"arrival_dust",
+			Vector3(0.0, 0.5, 13.0),
+			Vector3(6.0, 3.0, 7.0),
+			"dust",
+			10
+		)
+		surface_contact_director.add_region(
+			"shrine_leaf_litter",
+			Vector3(0.0, 3.0, -15.0),
+			Vector3(7.0, 4.0, 6.0),
+			"leaf_litter",
+			20
+		)
+		surface_contact_director.add_region(
+			"waterfall_damp",
+			Vector3(5.8, -1.0, -9.2),
+			Vector3(5.0, 7.0, 6.0),
+			"damp",
+			30
+		)
+	var motion_feedback: PlayerMotionFeedback = get_node_or_null(
+		"Player/PlayerMotionFeedback"
+	) as PlayerMotionFeedback
+	if motion_feedback != null:
+		motion_feedback.visual_effect_scale = minf(
+			motion_feedback.visual_effect_scale,
+			0.14
+		)
 
 
 func _ensure_visual_benchmark_director() -> void:
@@ -379,5 +431,9 @@ func get_debug_data() -> Dictionary:
 	data["visual_lod_target_count"] = visual_lod_target_count
 	data["visual_lod_strategy"] = (
 		"renderer visibility ranges on non-silhouette presentation detail only"
+	)
+	data["surface_contact_presentation"] = surface_contact_director != null
+	data["surface_contact_strategy"] = (
+		"existing semantic footstep/landing events -> regional dry, damp, or litter cues"
 	)
 	return data

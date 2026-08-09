@@ -48,8 +48,9 @@ func _validate_contract(director: ImageFidelityDirector) -> void:
 	_expect(str(data.get("profile_id", "")) == "green_grotto_image_fidelity", "Green uses dedicated image fidelity profile")
 	_expect(bool(data.get("follows_lighting_quality", false)), "Image Fidelity follows F7")
 	_expect(bool(data.get("performance_is_raw", false)), "Performance remains the raw AA baseline")
-	_expect(bool(data.get("balanced_temporal_aa", false)), "Balanced contract enables temporal AA")
-	_expect(bool(data.get("cinematic_temporal_plus_msaa", false)), "Cinematic contract stacks TAA with 2x geometry MSAA")
+	_expect(not bool(data.get("balanced_temporal_aa", true)), "Balanced contract avoids temporal AA")
+	_expect(not bool(data.get("cinematic_temporal_plus_msaa", true)), "Cinematic no longer stacks TAA with MSAA")
+	_expect(bool(data.get("motion_clarity_non_temporal", false)), "Green image fidelity declares the non-temporal motion-clarity policy")
 	_expect(bool(data.get("restores_on_exit", false)), "Image Fidelity restores viewport state when the lab exits")
 	_expect(not bool(data.get("gameplay_authority", true)), "Image Fidelity owns no gameplay state")
 	_expect(director.viewport != null, "Image Fidelity resolves the active viewport")
@@ -74,20 +75,20 @@ func _validate_quality_ladder(
 	await get_tree().process_frame
 	var balanced: Dictionary = director.get_debug_data()
 	_expect(int(balanced.get("quality", -1)) == 1, "Balanced image tier follows F7")
-	_expect(bool(balanced.get("taa", false)), "Balanced enables TAA")
+	_expect(not bool(balanced.get("taa", true)), "Balanced disables TAA for crisp camera motion")
 	_expect(bool(balanced.get("debanding", false)), "Balanced enables debanding")
-	_expect(int(balanced.get("msaa_3d", -1)) == Viewport.MSAA_DISABLED, "Balanced avoids extra MSAA cost")
-	_expect(int(balanced.get("screen_space_aa", -1)) == Viewport.SCREEN_SPACE_AA_DISABLED, "Balanced does not stack FXAA/SMAA over TAA")
+	_expect(int(balanced.get("msaa_3d", -1)) == Viewport.MSAA_2X, "Balanced uses 2x geometry MSAA")
+	_expect(int(balanced.get("screen_space_aa", -1)) == Viewport.SCREEN_SPACE_AA_DISABLED, "Balanced avoids a second screen-space AA pass")
 
 	lighting.set_quality(LightingDirector3D.Quality.CINEMATIC)
 	director.synchronize_now()
 	await get_tree().process_frame
 	var cinematic: Dictionary = director.get_debug_data()
 	_expect(int(cinematic.get("quality", -1)) == 2, "Cinematic image tier follows F7")
-	_expect(bool(cinematic.get("taa", false)), "Cinematic keeps TAA")
+	_expect(not bool(cinematic.get("taa", true)), "Cinematic keeps the non-temporal clarity policy")
 	_expect(bool(cinematic.get("debanding", false)), "Cinematic keeps debanding")
-	_expect(int(cinematic.get("msaa_3d", -1)) == Viewport.MSAA_2X, "Cinematic adds 2x geometry MSAA")
-	_expect(int(cinematic.get("screen_space_aa", -1)) == Viewport.SCREEN_SPACE_AA_DISABLED, "Cinematic still avoids redundant screen-space AA")
+	_expect(int(cinematic.get("msaa_3d", -1)) == Viewport.MSAA_2X, "Cinematic uses 2x geometry MSAA")
+	_expect(int(cinematic.get("screen_space_aa", -1)) == Viewport.SCREEN_SPACE_AA_DISABLED, "Cinematic avoids redundant screen-space AA")
 
 
 func _validate_restore(director: ImageFidelityDirector) -> void:

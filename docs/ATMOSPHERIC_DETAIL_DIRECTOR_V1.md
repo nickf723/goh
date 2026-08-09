@@ -19,6 +19,8 @@ ShrineMoteField
 Lighting Director quality (F7)
           +
 Environmental Motion visual wind (F5, when enabled)
+          +
+Active gameplay camera
           ↓
 AtmosphericDetailDirector3D
           ↓
@@ -64,21 +66,34 @@ A small soft alpha texture is generated at runtime in Godot and shared as the sh
 
 ## F7 quality contract
 
-Atmospheric Detail has no independent benchmark key.
+Atmospheric Detail has no independent benchmark key. The authored pools stay intact, but the visible presentation budget is deliberately small:
 
 ```text
-Performance  0% density
-Balanced     48% density on Balanced-eligible fields
-Cinematic    100% authored density
+Performance   0% density
+Balanced      6% density on Balanced-eligible fields
+Cinematic    10% density on all four fields
 ```
 
 This means the existing F9 benchmark presets automatically include the correct atmosphere cost through their F7 tier:
 
 ```text
 BASELINE → no atmosphere
-BALANCED → reduced entrance/canopy/waterfall atmosphere
-HERO → all four fields at full density
+BALANCED → roughly 23 visible entrance/canopy/waterfall motes
+HERO → roughly 46 visible motes across all four fields
 ```
+
+## Camera readability bubble
+
+Green Grotto reserves a presentation-only clear zone around the active gameplay camera:
+
+```text
+clear radius   1.35 m
+fade distance  1.75 m
+```
+
+Motes inside the clear radius scale to zero. They ease back to authored size across the fade distance. This prevents a nearby billboard from becoming a giant soft bokeh blob while preserving atmosphere deeper in the composition.
+
+The fade changes presentation scale only. It does not alter collisions, gameplay visibility, detection, or weather state.
 
 ## Motion relationship
 
@@ -92,6 +107,7 @@ Atmospheric Detail may:
 
 - render batched dust, pollen, or mist-like presentation billboards;
 - scale visible density with Lighting Director quality;
+- fade presentation instances around the active camera;
 - sample Environmental Motion visual wind;
 - use deterministic procedural placement and drift;
 - generate its own tiny presentation texture at runtime.
@@ -105,7 +121,7 @@ Atmospheric Detail must not:
 - alter stealth/detection;
 - own final production particle art.
 
-The v1 fields are deliberately replaceable presentation infrastructure. Final art can swap meshes/textures/shaders while preserving the density, quality, and wind contracts.
+The v1 fields are deliberately replaceable presentation infrastructure. Final art can swap meshes/textures/shaders while preserving the density, quality, camera-readability, and wind contracts.
 
 ## Validation
 
@@ -118,9 +134,10 @@ The regression verifies:
 - exactly four Green fields and 460 authored instances;
 - MultiMesh batching;
 - runtime-generated soft texture;
+- camera-safe presentation fading;
 - Performance = 0 visible instances;
-- Balanced = reduced density and no shrine field;
-- Cinematic = all 460 instances;
+- Balanced = roughly 23 visible instances and no shrine field;
+- Cinematic = roughly 46 visible instances across all four fields;
 - atmospheric transforms drift over time;
 - Environmental Motion is available as the wind source;
 - no gameplay authority is introduced.

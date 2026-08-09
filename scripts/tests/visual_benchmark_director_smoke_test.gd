@@ -41,6 +41,7 @@ func _validate_contract(benchmark: VisualBenchmarkDirector) -> void:
 	_expect(bool(data.get("f9_preset_cycle", false)), "F9 preset cycle is part of the contract")
 	_expect(bool(data.get("f10_overlay_toggle", false)), "F10 overlay toggle is part of the contract")
 	_expect(bool(data.get("f11_timed_capture", false)), "F11 timed capture is part of the contract")
+	_expect(not bool(data.get("overlay_enabled", true)), "development overlay starts hidden for presentation review")
 	_expect(bool(data.get("baseline_disables_f1_f6", false)), "baseline explicitly disables F1-F6 presentation layers")
 	_expect(int(data.get("ambient_fauna_count", 0)) == 4, "benchmark discovers all four ambient fauna behavior adapters")
 	_expect(benchmark.atmosphere != null, "benchmark resolves F7-linked atmospheric detail")
@@ -48,6 +49,7 @@ func _validate_contract(benchmark: VisualBenchmarkDirector) -> void:
 	_expect(benchmark.visual_lod != null, "benchmark resolves F7-linked visual LOD")
 	_expect(benchmark.surface_contact != null, "benchmark resolves F7-linked surface contact presentation")
 	_expect(benchmark.panel != null and benchmark.status_label != null, "benchmark installs its development-only status readout")
+	_expect(benchmark.panel != null and not benchmark.panel.visible, "benchmark readout is hidden until F10 requests it")
 
 
 func _validate_baseline(benchmark: VisualBenchmarkDirector) -> void:
@@ -76,6 +78,7 @@ func _validate_baseline(benchmark: VisualBenchmarkDirector) -> void:
 	var data: Dictionary = benchmark.get_debug_data()
 	_expect(bool(data.get("baseline_restores_legacy_fauna", false)), "Baseline debug contract records legacy fauna restoration")
 	_expect(str(data.get("matched_preset", "")) == "BASELINE", "Baseline is detected exactly")
+	_expect(str(data.get("linked_image_quality", "")) == "RAW", "Baseline reports raw image fidelity")
 
 
 func _validate_balanced(benchmark: VisualBenchmarkDirector) -> void:
@@ -92,11 +95,13 @@ func _validate_balanced(benchmark: VisualBenchmarkDirector) -> void:
 		_expect(int(benchmark.reflections.get_debug_data().get("active_probes", 0)) == 3, "Balanced includes three local reflection regions")
 	if benchmark.atmosphere != null:
 		var atmosphere_count: int = int(benchmark.atmosphere.get_debug_data().get("visible_instances", 0))
-		_expect(atmosphere_count >= 180 and atmosphere_count <= 195, "Balanced reports reduced atmosphere density")
+		_expect(atmosphere_count >= 11 and atmosphere_count <= 13, "Balanced reports the background-accent atmosphere budget")
 	if benchmark.character_materials != null:
 		_expect(int(benchmark.character_materials.get_debug_data().get("quality", -1)) == 1, "Balanced reports Grace material quality 1")
 	_expect(benchmark.call("_contact_footstep_count") == 3, "Balanced reports three contact pieces per footstep")
-	_expect(str(benchmark.get_debug_data().get("matched_preset", "")) == "BALANCED", "Balanced is detected exactly")
+	var data: Dictionary = benchmark.get_debug_data()
+	_expect(str(data.get("matched_preset", "")) == "BALANCED", "Balanced is detected exactly")
+	_expect(str(data.get("linked_image_quality", "")) == "2x MSAA", "Balanced reports crisp non-temporal MSAA")
 
 
 func _validate_hero(benchmark: VisualBenchmarkDirector) -> void:
@@ -113,13 +118,16 @@ func _validate_hero(benchmark: VisualBenchmarkDirector) -> void:
 		benchmark.shadows.synchronize_now()
 		_expect(str(benchmark.shadows.get_debug_data().get("tier", "")) == "Cinematic", "Hero synchronizes Cinematic shadow fidelity")
 	if benchmark.atmosphere != null:
-		_expect(int(benchmark.atmosphere.get_debug_data().get("visible_instances", 0)) == 460, "Hero reports all 460 atmosphere instances")
+		var atmosphere_count: int = int(benchmark.atmosphere.get_debug_data().get("visible_instances", 0))
+		_expect(atmosphere_count >= 23 and atmosphere_count <= 26, "Hero keeps the full field set secondary to route readability")
 	if benchmark.character_materials != null:
 		_expect(int(benchmark.character_materials.get_debug_data().get("quality", -1)) == 2, "Hero reports Cinematic Grace material quality")
 	if benchmark.visual_lod != null:
 		_expect(int(benchmark.visual_lod.get_debug_data().get("quality", -1)) == 2, "Hero reports Cinematic visual LOD tier")
 	_expect(benchmark.call("_contact_footstep_count") == 5, "Hero reports five contact pieces per footstep")
-	_expect(str(benchmark.get_debug_data().get("matched_preset", "")) == "HERO", "Hero is detected exactly")
+	var data: Dictionary = benchmark.get_debug_data()
+	_expect(str(data.get("matched_preset", "")) == "HERO", "Hero is detected exactly")
+	_expect(str(data.get("linked_image_quality", "")) == "2x MSAA", "Hero preserves crisp non-temporal MSAA")
 
 
 func _validate_custom_detection(benchmark: VisualBenchmarkDirector) -> void:

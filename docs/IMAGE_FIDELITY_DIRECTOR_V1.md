@@ -2,7 +2,7 @@
 
 ## Goal
 
-Image Fidelity defines the final anti-aliasing and image-stability policy for the Green visual benchmark. It exists because improved lighting, thin foliage, specular materials, water and small architecture can still look inexpensive if the final image crawls, shimmers or bands in motion.
+Image Fidelity defines the final anti-aliasing and image-clarity policy for the Green visual benchmark. It exists because improved lighting, thin foliage, specular materials, water and small architecture can still look inexpensive if the final image crawls, shimmers, bands, or smears during camera motion.
 
 The system follows Lighting Director quality. It receives no additional benchmark hotkey.
 
@@ -23,26 +23,26 @@ Performance intentionally stays raw so the F9 BASELINE preset does not smuggle a
 ### Balanced
 
 ```text
-TAA             on
-3D MSAA         off
+TAA             off
+3D MSAA         2x
 screen-space AA off
 debanding       on
 roughness limit on
 ```
 
-Balanced uses TAA as the main general-purpose anti-aliasing solution, particularly for shader/specular aliasing and temporal shimmer. It avoids stacking another FXAA/SMAA screen pass over TAA.
+Balanced now favors non-temporal 2x MSAA. The Green Grotto camera exposed visible softness and ghost-like accumulation under TAA, so the exploration target prioritizes crisp motion and stable geometry edges instead of temporal reconstruction.
 
 ### Cinematic / HERO
 
 ```text
-TAA             on
+TAA             off
 3D MSAA         2x
 screen-space AA off
 debanding       on
 roughness limit on (slightly stronger)
 ```
 
-Cinematic deliberately adds 2x MSAA to the TAA policy. TAA handles temporal/shader aliasing while MSAA can further improve pure polygon-edge quality. This is intentionally an expensive benchmark choice and should be judged with F11 rather than automatically retained for production.
+Hero deliberately keeps the same non-temporal AA policy. Its additional image quality comes from the stronger roughness-limiter tier and the rest of the Cinematic renderer stack rather than reintroducing motion smear.
 
 ## Roughness limiter
 
@@ -69,11 +69,12 @@ This prevents Green's benchmark settings from leaking into unrelated scenes.
 
 ```text
 RAW
-TAA
-TAA+2x
+2x MSAA
 ```
 
 F9 therefore controls the final-image policy through the same BASELINE / BALANCED / HERO preset flow used by the rest of the renderer stack.
+
+The benchmark overlay starts hidden for normal presentation review. F10 still toggles it on whenever renderer telemetry is needed.
 
 ## Ownership boundary
 

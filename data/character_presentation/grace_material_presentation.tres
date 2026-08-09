@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CharacterMaterialPresentationProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/character_presentation/character_material_presentation_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+profile_id = "grace_material_presentation"
+display_name = "Grace Material Presentation"
+texture_resolution = 128
+detail_seed = 9417
+detail_frequency = 0.045
+maximum_shared_variants = 24
+balanced_normal_scale = 0.30
+balanced_skin_backlight = 0.09
+balanced_hair_backlight = 0.035
+cinematic_normal_scale = 0.50
+cinematic_skin_backlight = 0.16
+cinematic_hair_backlight = 0.065
+cinematic_skin_sss_strength = 0.11
+skin_transmittance_color = Color(0.82, 0.34, 0.22, 1)
+skin_transmittance_boost = 0.82
+skin_transmittance_depth = 0.18

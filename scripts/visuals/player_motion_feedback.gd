@@ -6,6 +6,10 @@ signal jump_emitted(kind: String)
 signal landing_emitted(strength: float)
 signal motion_state_changed(previous_state: String, next_state: String)
 
+const PresentationServiceScript = preload(
+	"res://scripts/presentation/presentation_service.gd"
+)
+
 @export var footstep_phase_interval: float = PI
 @export var climbing_grip_interval: float = 0.28
 @export var maximum_live_effects: int = 16
@@ -23,6 +27,7 @@ var last_jump_kind: String = "none"
 var last_landing_kind: String = "none"
 var last_landing_speed: float = 0.0
 var last_landing_strength: float = 0.0
+var last_presentation_camera_strength: float = 0.0
 
 @onready var actor: CharacterBody3D = get_parent() as CharacterBody3D
 @onready var visual: StylizedActorVisual = get_parent().get_node_or_null("GraceVisualV1") as StylizedActorVisual
@@ -41,6 +46,9 @@ func _ready() -> void:
 			vertical_motion.jump_started.connect(_on_jump_started)
 		if not vertical_motion.landed.is_connected(_on_vertical_landed):
 			vertical_motion.landed.connect(_on_vertical_landed)
+	# Installing the service here makes the director available in every scene that
+	# contains Grace, while still keeping it persistent across scene transitions.
+	PresentationServiceScript.get_or_create(get_tree())
 
 
 func _exit_tree() -> void:
@@ -78,7 +86,13 @@ func _update_footsteps() -> void:
 	previous_stride_bucket = bucket
 	footstep_side = not footstep_side
 	_spawn_footstep_pulse()
-	footstep_emitted.emit("right" if footstep_side else "left")
+	var side: String = "right" if footstep_side else "left"
+	footstep_emitted.emit(side)
+	_present_movement("footstep", {
+		"position": _get_feet_position(),
+		"side": side,
+		"strength": clampf(visual.movement_weight * 0.34, 0.12, 0.34),
+	})
 
 
 func _on_motion_state_changed(previous: String, next: String) -> void:
@@ -89,6 +103,11 @@ func _on_motion_state_changed(previous: String, next: String) -> void:
 		_spawn_landing_pulse(visual.landing_strength)
 		landing_emitted.emit(visual.landing_strength)
 		_apply_landing_camera_impulse(visual.landing_strength)
+		_present_movement("landing", {
+			"position": _get_feet_position(),
+			"strength": visual.landing_strength,
+			"kind": "visual_fallback",
+		})
 
 
 func _on_jump_started(kind: String, launch_velocity: float) -> void:
@@ -96,6 +115,11 @@ func _on_jump_started(kind: String, launch_velocity: float) -> void:
 	var strength: float = clampf(launch_velocity / 6.5, 0.35, 1.0)
 	_spawn_takeoff_pulse(strength)
 	jump_emitted.emit(kind)
+	_present_movement("jump", {
+		"position": _get_feet_position(),
+		"strength": strength,
+		"kind": kind,
+	})
 
 
 func _on_vertical_landed(kind: String, impact_speed: float, strength: float) -> void:
@@ -107,6 +131,23 @@ func _on_vertical_landed(kind: String, impact_speed: float, strength: float) -> 
 	_spawn_landing_pulse(strength)
 	landing_emitted.emit(strength)
 	_apply_landing_camera_impulse(strength)
+	_present_movement("landing", {
+		"position": _get_feet_position(),
+		"strength": strength,
+		"impact_speed": impact_speed,
+		"kind": kind,
+	})
+
+
+func _present_movement(kind: String, context: Dictionary) -> void:
+	var director: GamePresentationDirector = PresentationServiceScript.get_or_create(
+		get_tree()
+	)
+	if director == null:
+		return
+	var payload: Dictionary = context.duplicate(true)
+	payload["actor"] = actor
+	director.present_movement(kind, payload)
 
 
 func _spawn_footstep_pulse() -> void:
@@ -222,6 +263,38 @@ func _apply_landing_camera_impulse(strength: float) -> void:
 	tween.tween_property(camera, "v_offset", original_offset, 0.16)
 
 
+func apply_presentation_camera_impulse(
+	world_direction: Vector3,
+	strength: float
+) -> void:
+	var scaled_strength: float = clampf(strength, 0.0, 1.0) * clampf(
+		camera_impulse_scale,
+		0.0,
+		1.0
+	)
+	last_presentation_camera_strength = scaled_strength
+	if scaled_strength <= 0.001:
+		return
+	var camera: Camera3D = get_viewport().get_camera_3d()
+	if camera == null:
+		return
+	var direction: Vector3 = world_direction
+	if direction.length_squared() > 0.0001:
+		direction = direction.normalized()
+	var horizontal_sign: float = 0.0
+	if direction.length_squared() > 0.0001:
+		horizontal_sign = clampf(direction.dot(camera.global_basis.x), -1.0, 1.0)
+	var original_h: float = camera.h_offset
+	var original_v: float = camera.v_offset
+	camera.h_offset = original_h + horizontal_sign * 0.034 * scaled_strength
+	camera.v_offset = original_v - 0.028 * scaled_strength
+	var tween := camera.create_tween()
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(camera, "h_offset", original_h, 0.14)
+	tween.parallel().tween_property(camera, "v_offset", original_v, 0.14)
+
+
 func _get_feet_position() -> Vector3:
 	var anchor := actor.get_node_or_null("GraceVisualV1/FeetVFXAnchor") as Node3D
 	if anchor != null:
@@ -255,7 +328,9 @@ func get_debug_data() -> Dictionary:
 		"last_landing_kind": last_landing_kind,
 		"last_landing_speed": snappedf(last_landing_speed, 0.01),
 		"last_landing_strength": snappedf(last_landing_strength, 0.01),
+		"last_presentation_camera_strength": snappedf(last_presentation_camera_strength, 0.01),
 		"visual_effect_scale": snappedf(visual_effect_scale, 0.05),
 		"camera_impulse_scale": snappedf(camera_impulse_scale, 0.05),
 		"live_effects": live_effects.size(),
+		"presentation_directed": true,
 	}

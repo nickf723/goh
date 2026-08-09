@@ -68,6 +68,14 @@ Profiles currently own:
 
 Green Grotto currently uses Cinematic as its art-target tier.
 
+For art-target comparison, Green enables the Director's development hotkey:
+
+```text
+F7: Performance -> Balanced -> Cinematic
+```
+
+The hotkey changes only lighting quality. It does not alter gameplay or the authored lighting profiles, making it useful for judging which rendering layers produce visible value on the exact same composition.
+
 ## Spatial zones
 
 A `LightingZone3D` is an oriented box with a soft blend boundary. The Director samples Grace's world position each frame. Zones are processed by priority, allowing a specific shrine or waterfall profile to refine a broader grotto/canopy profile.
@@ -108,6 +116,15 @@ scripts/levels/prototype_green_grotto_lighting_pass.gd
 
 retires the two old hand-authored local bounce lights. The existing `GreenGrottoEnvironment`, `CanopySunset`, and `GrottoGreenFill` remain stable hierarchy seams, but their values are now driven by `LightingDirector3D`.
 
+The Green profiles are deliberately cinematic states rather than simple brightness presets:
+
+- **Entrance Shadow:** weaker direct sun, cooler fill, slower eye adaptation;
+- **Canopy Break:** stronger direct sunset, reduced exposure, higher forward scattering;
+- **Waterfall:** teal fill, localized mist, stronger reflection treatment;
+- **Shrine:** warm focal key with reduced ambient flattening.
+
+Their soft zone boundaries let the room change composition as Grace moves without hard trigger cuts.
+
 ## Ownership rules
 
 Lighting code may report and modify visual state only. It must not decide:
@@ -139,4 +156,4 @@ Good next additions after Green tuning:
 res://scenes/tests/lighting_director_smoke_test.tscn
 ```
 
-The regression verifies Director initialization, Green render-target ownership, Cinematic quality features, zone blend behavior, local fog/accent installation, and retirement of legacy manual bounce lights.
+The regression verifies Director initialization, Green render-target ownership, all three quality tiers, zone blend behavior, local fog/accent installation, camera exposure setup, and retirement of legacy manual bounce lights.

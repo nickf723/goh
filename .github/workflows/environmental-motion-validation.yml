@@ -7,6 +7,7 @@ on:
     paths:
       - "scripts/environmental_motion/**"
       - "data/environmental_motion/**"
+      - "scripts/visuals/player_accessory_wind_response.gd"
       - "scripts/levels/prototype_green_grotto_motion_pass.gd"
       - "scripts/tests/environmental_motion_director_smoke_test.gd"
       - "scenes/tests/environmental_motion_director_smoke_test.tscn"

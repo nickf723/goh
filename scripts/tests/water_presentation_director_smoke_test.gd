@@ -36,7 +36,7 @@ func run_tests() -> void:
 		_validate_ab_restore(target, director)
 		_validate_other_visual_layers(target)
 
-	_validate_legacy_fluid_defaults()
+	await _validate_legacy_fluid_defaults()
 
 	target.queue_free()
 	await get_tree().process_frame

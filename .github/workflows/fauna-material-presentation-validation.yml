@@ -1,0 +1,67 @@
+name: Fauna Material Presentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/fauna/fauna_material_presentation_*.gd"
+      - "data/fauna/green_grotto_fauna_material_presentation.tres"
+      - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+      - "scripts/tests/fauna_material_presentation_director_smoke_test.gd"
+      - "scenes/tests/fauna_material_presentation_director_smoke_test.tscn"
+      - "docs/FAUNA_MATERIAL_PRESENTATION_V1.md"
+      - ".github/workflows/fauna-material-presentation-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fauna-material-presentation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-fauna-materials:
+    name: Import, fauna materials, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee fauna-material-import.log
+
+      - name: Run fauna material regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/fauna_material_presentation_director_smoke_test.tscn 2>&1 | tee fauna-material-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee fauna-material-green-boot.log
+
+      - name: Upload fauna material logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fauna-material-presentation-logs
+          path: |
+            fauna-material-import.log
+            fauna-material-test.log
+            fauna-material-green-boot.log
+          if-no-files-found: ignore

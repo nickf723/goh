@@ -1,0 +1,69 @@
+name: Grace Material Presentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/character_presentation/**"
+      - "data/character_presentation/**"
+      - "scripts/levels/prototype_green_grotto_reflection_pass.gd"
+      - "scripts/tests/grace_material_presentation_smoke_test.gd"
+      - "scenes/tests/grace_material_presentation_smoke_test.tscn"
+      - "scenes/actors/player/grace_visual_v1.tscn"
+      - "art/materials/characters/grace_*"
+      - "docs/GRACE_MATERIAL_PRESENTATION_V1.md"
+      - ".github/workflows/grace-material-presentation-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: grace-material-presentation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-grace-material-presentation:
+    name: Import, Grace material contract, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee grace-material-presentation-import.log
+
+      - name: Run Grace material regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/grace_material_presentation_smoke_test.tscn 2>&1 | tee grace-material-presentation-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee grace-material-presentation-green-boot.log
+
+      - name: Upload Grace material logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: grace-material-presentation-logs
+          path: |
+            grace-material-presentation-import.log
+            grace-material-presentation-test.log
+            grace-material-presentation-green-boot.log
+          if-no-files-found: ignore

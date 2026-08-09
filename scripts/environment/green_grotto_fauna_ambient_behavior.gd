@@ -35,6 +35,19 @@ func _ready() -> void:
 	_resolve_target_actor()
 
 
+func set_enabled(value: bool) -> void:
+	enabled = value
+	if fauna == null or not is_instance_valid(fauna):
+		return
+	# The benchmark's baseline hands authority back to the exact simple animator
+	# that GreenGrottoFaunaVisual shipped with before this presentation layer.
+	fauna.animate_creature = not enabled
+	if enabled:
+		patrol_angle = fauna.idle_phase
+		startled_offset = Vector3.ZERO
+		previous_state = ""
+
+
 func _process(delta: float) -> void:
 	if not enabled or fauna == null or not is_instance_valid(fauna):
 		return
@@ -265,6 +278,8 @@ func get_debug_data() -> Dictionary:
 		"green_grotto_fauna_ambient_behavior": true,
 		"species": fauna.species if fauna != null else "",
 		"state": behavior_state,
+		"enabled": enabled,
+		"legacy_animator_active": fauna.animate_creature if fauna != null else false,
 		"state_changes": state_changes,
 		"curiosity_samples": curiosity_samples,
 		"actor_distance": closest_actor_distance,

@@ -1,6 +1,6 @@
-[gd_scene load_steps=29 format=3]
+[gd_scene load_steps=32 format=3]
 
-[ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_shadow_pass.gd" id="1_target"]
+[ext_resource type="Script" path="res://scripts/levels/prototype_green_grotto_reflection_pass.gd" id="1_target"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
@@ -28,6 +28,9 @@
 [ext_resource type="Script" path="res://scripts/vegetation/vegetation_presentation_director_3d.gd" id="26_vegetation_director"]
 [ext_resource type="Resource" path="res://data/shadows/green_grotto_shadow_fidelity.tres" id="27_shadow_profile"]
 [ext_resource type="Script" path="res://scripts/shadows/shadow_fidelity_director_3d.gd" id="28_shadow_director"]
+[ext_resource type="Resource" path="res://data/reflections/green_grotto_reflection_fidelity.tres" id="29_reflection_profile"]
+[ext_resource type="Script" path="res://scripts/reflections/reflection_fidelity_director_3d.gd" id="30_reflection_director"]
+[ext_resource type="Script" path="res://scripts/reflections/reflection_region_3d.gd" id="31_reflection_region"]
 
 [node name="PrototypeGreenGrottoArtTargetV1" type="Node3D" groups=["green_grotto_art_target", "environment_art_target", "lab_resource_regeneration"]]
 script = ExtResource("1_target")
@@ -228,6 +231,59 @@ debug_hotkeys_enabled = true
 script = ExtResource("28_shadow_director")
 profile = ExtResource("27_shadow_profile")
 lighting_director_path = NodePath("../LightingDirector")
+
+[node name="ReflectionFidelityDirector" type="Node3D" parent="."]
+script = ExtResource("30_reflection_director")
+profile = ExtResource("29_reflection_profile")
+lighting_director_path = NodePath("../LightingDirector")
+
+[node name="EntranceReflectionRegion" type="Node3D" parent="."]
+position = Vector3(0, 4.0, 12.5)
+script = ExtResource("31_reflection_region")
+region_id = "entrance_hollow"
+minimum_quality = 1
+size = Vector3(14.0, 9.0, 12.0)
+blend_distance = 2.2
+origin_offset = Vector3(0, 1.0, -1.0)
+intensity = 0.88
+max_distance = 42.0
+box_projection = true
+
+[node name="CanopyReflectionRegion" type="Node3D" parent="."]
+position = Vector3(0, 6.5, 0.5)
+script = ExtResource("31_reflection_region")
+region_id = "canopy_vista"
+minimum_quality = 2
+size = Vector3(17.0, 13.0, 17.0)
+blend_distance = 3.0
+origin_offset = Vector3(0, 0.5, 0)
+intensity = 0.80
+max_distance = 56.0
+box_projection = false
+
+[node name="WaterfallReflectionRegion" type="Node3D" parent="."]
+position = Vector3(5.8, -0.5, -9.2)
+script = ExtResource("31_reflection_region")
+region_id = "waterfall_bowl"
+minimum_quality = 1
+size = Vector3(11.0, 13.0, 11.5)
+blend_distance = 2.0
+origin_offset = Vector3(-0.8, 1.8, 0.8)
+intensity = 1.08
+max_distance = 48.0
+box_projection = false
+
+[node name="ShrineReflectionRegion" type="Node3D" parent="."]
+position = Vector3(0, 4.3, -15.0)
+script = ExtResource("31_reflection_region")
+region_id = "shrine_court"
+minimum_quality = 1
+size = Vector3(16.0, 10.0, 14.0)
+blend_distance = 2.5
+origin_offset = Vector3(0, 0.8, 1.0)
+intensity = 1.05
+max_distance = 54.0
+box_projection = true
 
 [node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
 position = Vector3(0, 1.2, 16)

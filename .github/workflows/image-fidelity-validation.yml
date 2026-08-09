@@ -1,0 +1,67 @@
+name: Image Fidelity
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/image_fidelity/**"
+      - "data/image_fidelity/**"
+      - "scripts/testing/visual_benchmark_director.gd"
+      - "scripts/tests/image_fidelity_director_smoke_test.gd"
+      - "scenes/tests/image_fidelity_director_smoke_test.tscn"
+      - "docs/IMAGE_FIDELITY_DIRECTOR_V1.md"
+      - ".github/workflows/image-fidelity-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: image-fidelity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-image-fidelity:
+    name: Import, image fidelity contract, and Green boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee image-fidelity-import.log
+
+      - name: Run image fidelity regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/image_fidelity_director_smoke_test.tscn 2>&1 | tee image-fidelity-test.log
+
+      - name: Boot Green Grotto benchmark
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee image-fidelity-green-boot.log
+
+      - name: Upload image fidelity logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-fidelity-logs
+          path: |
+            image-fidelity-import.log
+            image-fidelity-test.log
+            image-fidelity-green-boot.log
+          if-no-files-found: ignore

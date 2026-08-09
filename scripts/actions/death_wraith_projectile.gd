@@ -120,28 +120,31 @@ func try_hit(raw_target: Node) -> void:
 		return
 	hit_targets[target_id] = true
 	hit_count += 1
-	_spawn_pursuer_spirit(target_3d)
-	_spawn_attachment_flash()
+	if _spawn_pursuer_spirit(target_3d):
+		_spawn_attachment_flash()
 	queue_free()
 
 
-func _spawn_pursuer_spirit(target: Node3D) -> void:
+func _spawn_pursuer_spirit(target: Node3D) -> bool:
 	if target == null or not is_instance_valid(target):
-		return
+		return false
 	if get_tree() == null or get_tree().current_scene == null:
-		return
+		return false
 	var spirit: DeathPursuerSpirit = PursuerSpiritScene.instantiate() as DeathPursuerSpirit
 	if spirit == null:
-		return
+		return false
 	get_tree().current_scene.add_child(spirit)
 	spirit.global_position = global_position
 	var active_payload: DamagePayload = get_payload()
-	spirit.configure(
+	if not spirit.configure(
 		target,
 		source_actor,
 		active_payload,
 		direction
-	)
+	):
+		spirit.queue_free()
+		return false
+	return true
 
 
 func _resolve_target_3d(start_node: Node) -> Node3D:

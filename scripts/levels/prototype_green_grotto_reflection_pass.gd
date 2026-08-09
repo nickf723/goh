@@ -16,12 +16,20 @@ const GreenGrottoAtmosphereProfile = preload(
 const FaunaAmbientBehaviorScript = preload(
 	"res://scripts/environment/green_grotto_fauna_ambient_behavior.gd"
 )
+const CharacterMaterialDirectorScript = preload(
+	"res://scripts/character_presentation/character_material_presentation_director_3d.gd"
+)
+const GraceMaterialProfile = preload(
+	"res://data/character_presentation/grace_material_presentation.tres"
+)
 
 var reflection_fidelity_director: ReflectionFidelityDirector3D = null
 var visual_benchmark_director: VisualBenchmarkDirector = null
 var grace_motion_influencer: EnvironmentalMotionInfluencer3D = null
 var atmospheric_detail_director: AtmosphericDetailDirector3D = null
+var character_material_director: CharacterMaterialPresentationDirector3D = null
 var fauna_ambient_behavior_count: int = 0
+var grace_material_target_count: int = 0
 
 
 func _ready() -> void:
@@ -34,6 +42,7 @@ func _ready() -> void:
 	_ensure_grace_motion_influencer()
 	_ensure_fauna_ambient_behavior()
 	_ensure_atmospheric_detail_director()
+	_ensure_character_material_presentation()
 	_ensure_visual_benchmark_director()
 	set_meta("reflection_fidelity_pass", "reflection_fidelity_director_v1")
 	set_meta("reflection_fidelity_authority", "ReflectionFidelityDirector")
@@ -47,6 +56,8 @@ func _ready() -> void:
 	set_meta("grace_environment_interaction", grace_motion_influencer != null)
 	set_meta("atmospheric_detail", atmospheric_detail_director != null)
 	set_meta("fauna_ambient_behavior_count", fauna_ambient_behavior_count)
+	set_meta("grace_material_presentation", character_material_director != null)
+	set_meta("grace_material_target_count", grace_material_target_count)
 
 
 func _ensure_grace_motion_influencer() -> void:
@@ -176,6 +187,72 @@ func _ensure_atmospheric_detail_director() -> void:
 	)
 
 
+func _ensure_character_material_presentation() -> void:
+	var visual_root: Node = get_node_or_null("Player/GraceVisualV1")
+	if visual_root == null:
+		return
+	character_material_director = get_node_or_null(
+		"CharacterMaterialPresentationDirector"
+	) as CharacterMaterialPresentationDirector3D
+	if character_material_director == null:
+		character_material_director = (
+			CharacterMaterialDirectorScript.new()
+			as CharacterMaterialPresentationDirector3D
+		)
+		character_material_director.name = "CharacterMaterialPresentationDirector"
+		character_material_director.profile = GraceMaterialProfile
+		add_child(character_material_director)
+
+	var roles: Dictionary = {
+		"Head": "skin",
+		"LeftHand": "skin",
+		"RightHand": "skin",
+		"HairBack": "hair",
+		"LeftHairLock": "hair",
+		"RightHairLock": "hair",
+		"LeftBrow": "hair",
+		"RightBrow": "hair",
+		"LeftEye": "eye",
+		"RightEye": "eye",
+		"RobeSkirt": "robe",
+		"Torso": "robe",
+		"LeftArm": "robe",
+		"RightArm": "robe",
+		"WaistSash": "sash",
+		"SashTail": "sash",
+		"HairRibbon": "sash",
+		"Collar": "gold",
+		"Brooch": "gold",
+		"SashKnot": "gold",
+		"LeftCuff": "gold",
+		"RightCuff": "gold",
+		"LeftBoot": "leather",
+		"RightBoot": "leather",
+		"LeftSole": "leather",
+		"RightSole": "leather",
+		"Mouth": "mouth",
+	}
+	grace_material_target_count = 0
+	_register_character_material_nodes(visual_root, roles)
+
+
+func _register_character_material_nodes(
+	node: Node,
+	roles: Dictionary
+) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance: MeshInstance3D = node as MeshInstance3D
+		var node_name: String = str(mesh_instance.name)
+		if roles.has(node_name):
+			if character_material_director.register_mesh(
+				mesh_instance,
+				str(roles[node_name])
+			):
+				grace_material_target_count += 1
+	for child: Node in node.get_children():
+		_register_character_material_nodes(child, roles)
+
+
 func _ensure_visual_benchmark_director() -> void:
 	visual_benchmark_director = get_node_or_null(
 		"VisualBenchmarkDirector"
@@ -212,5 +289,10 @@ func get_debug_data() -> Dictionary:
 	data["fauna_ambient_behavior_count"] = fauna_ambient_behavior_count
 	data["fauna_behavior_strategy"] = (
 		"presentation-only roam, pause, forage, curiosity, and startle beats"
+	)
+	data["grace_material_presentation"] = character_material_director != null
+	data["grace_material_target_count"] = grace_material_target_count
+	data["grace_material_strategy"] = (
+		"F7-scaled shared skin, hair, cloth, metal, and leather variants"
 	)
 	return data

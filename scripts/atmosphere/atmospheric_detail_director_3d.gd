@@ -79,8 +79,6 @@ func add_field(
 	material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	material.albedo_texture = soft_texture
 	material.albedo_color = color
-	material.no_depth_test = false
-	material.distance_fade_mode = BaseMaterial3D.DISTANCE_FADE_DISABLED
 
 	var quad := QuadMesh.new()
 	quad.size = Vector2.ONE

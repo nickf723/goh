@@ -3,6 +3,8 @@ class_name HitReactionTestTarget
 
 signal impact_received(data: Dictionary)
 
+const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
+
 @export_enum("light", "armored", "unstoppable") var profile: String = "light"
 
 var display_name: String = "Light Gremlin"
@@ -28,6 +30,10 @@ func _ready() -> void:
 	reaction_controller.name = "HitReactionController"
 	add_child(reaction_controller)
 	_apply_profile()
+	set_meta(
+		"presentation_material",
+		"flesh" if profile == "light" else "metal"
+	)
 	_build_collision()
 	_build_visual()
 
@@ -58,10 +64,12 @@ func receive_damage_payload(payload: DamagePayload) -> Dictionary:
 	total_hits += 1
 	last_damage = maxi(payload.amount, 0)
 	flash_timer = 0.14
-	return {
+	var result: Dictionary = {
 		"message": display_name + " • " + str(last_damage) + " damage",
 		"objective": "",
 	}
+	CombatFeedback.present_payload_impact(self, payload, result)
+	return result
 
 
 func receive_weapon_impact(payload: DamagePayload, direction: Vector3, attack: WeaponAttackDefinition) -> void:
@@ -273,4 +281,5 @@ func get_debug_data() -> Dictionary:
 	data["hits"] = total_hits
 	data["damage"] = last_damage
 	data["offset"] = snappedf(global_position.distance_to(home_position), 0.01)
+	data["presentation_material"] = str(get_meta("presentation_material", "auto"))
 	return data

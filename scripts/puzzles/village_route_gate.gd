@@ -7,6 +7,7 @@ signal gate_opened(gate_id: String, method: String)
 @export var display_name: String = "Collapsed Debris"
 @export var accepts_fire: bool = true
 @export var accepts_ice_force_combo: bool = true
+@export var require_heavy_for_shatter: bool = false
 @export var starts_frozen: bool = false
 @export var frozen_duration: float = 30.0
 @export var completion_flag: String = ""
@@ -75,6 +76,10 @@ func receive_damage_payload(payload: DamagePayload) -> Dictionary:
 		or tags.has("blunt")
 		or payload.knockback_strength > 0.0
 	)
+	var meets_shatter_requirement: bool = (
+		is_force_hit
+		and (not require_heavy_for_shatter or tags.has("heavy"))
+	)
 
 	if accepts_fire and is_fire_hit:
 		open_gate("fire")
@@ -84,7 +89,7 @@ func receive_damage_payload(payload: DamagePayload) -> Dictionary:
 		freeze_gate()
 		return {"message": freeze_message, "objective": ""}
 
-	if accepts_ice_force_combo and is_frozen and is_force_hit:
+	if accepts_ice_force_combo and is_frozen and meets_shatter_requirement:
 		open_gate("shatter")
 		return {"message": shatter_message, "objective": objective_after}
 
@@ -186,5 +191,6 @@ func get_debug_data() -> Dictionary:
 		"gate": gate_id,
 		"open": is_open,
 		"frozen": is_frozen,
+		"require_heavy_for_shatter": require_heavy_for_shatter,
 		"timer": snapped(frozen_timer, 0.1),
 	}

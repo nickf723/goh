@@ -1,8 +1,21 @@
-# Ruined Village Approach v0.9 Manual Test
+# Ruined Village Approach — First Production Adventure Slice v1 Manual Test
 
 ## Purpose
 
-This is the first integrated outdoor level for **Grace of Humanity**. It should feel like a place in the game rather than a laboratory: exploration, environmental story, weapon combat, elemental problem-solving, optional Sound discovery, checkpointing, and the Church Trial all share one route.
+The Ruined Village Approach is now the **first production-adventure-slice entry point** for *Grace of Humanity*.
+
+The goal is no longer to showcase as many systems as possible. The level should play as one coherent 10–15 minute miniature of the game:
+
+```text
+investigate
+→ fight
+→ choose an elemental route
+→ optional discovery
+→ checkpoint
+→ enter the Church Trial
+```
+
+The scene still reuses the existing Ruined Village environment, combat encounter, Sound memory, elemental ravine routes, save point, Church Trial handoff, player, HUD, and world systems. `AdventureChunk` now provides the authored pacing spine instead of introducing another quest or level framework.
 
 ## Load the level
 
@@ -12,13 +25,65 @@ Run:
 res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn
 ```
 
-The expected first objective is:
+The production slice should settle on this opening objective after initialization:
 
 ```text
-Survey the impossible village and reach the church above the ruins.
+Inspect the impact crater, the severed foundation, and the abandoned hearth.
 ```
 
-## Controller expectations
+The old spell-showcase launch behavior is intentionally suppressed here:
+
+- Flight is **not** auto-unlocked;
+- Flight is **not** auto-selected;
+- Grace starts on the shared loadout's first spell;
+- the ravine therefore remains a meaningful authored obstacle;
+- large floating laboratory/solution labels are hidden from the canonical slice.
+
+The separate Field Progression derivative remains a development showcase and does not activate this production Adventure Chunk graph.
+
+---
+
+# Adventure Chunk spine
+
+The active graph is:
+
+```text
+Read the Vanished Village
+        ↓
+Clear the Village Square
+        ↓
+Cross the Collapsed Ravine
+        ↓
+Enter the Church of Angels
+```
+
+Beside the main route:
+
+```text
+Read the Vanished Village
+        ↓
+Recover the Buried Memory   (optional)
+```
+
+The five authored chunks are:
+
+1. `ruined_village_investigation`
+2. `ruined_village_square_combat`
+3. `ruined_village_ravine_choice`
+4. `ruined_village_sound_memory` — optional
+5. `ruined_village_church_threshold`
+
+The whole village leg persists through:
+
+```text
+first_production_adventure_slice_v1
+```
+
+The final threshold still changes directly into the existing Church Trial scene.
+
+---
+
+# Controller expectations
 
 Use the player's configured actions rather than fixed physical-button labels:
 
@@ -34,196 +99,224 @@ LOCK-ON
 RESET (editor test only)
 ```
 
-The level must not alter the user's L/R/ZL/ZR mappings.
+The level must not alter the user's controller mappings.
 
-## Route overview
+---
 
-```text
-Teleport Impact Hollow
-        ↓
-Abandoned Armory
-        ↓
-Outer Foundations and Clues
-        ↓
-Village Square + Optional Sound Memory
-        ↓
-Goblin / Gremlin Ambush
-        ↓
-Encounter Barricade Opens
-        ↓
-Collapsed Ravine
-   ↙                    ↘
-Water → Ice Bridge      Fire OR Ice + Heavy Debris Route
-   ↘                    ↙
-Church Hill Stairs
-        ↓
-Church Grounds Checkpoint
-        ↓
-Church Trial Entrance
-```
+# 1. Opening investigation
 
-## 1. Arrival hollow
+- Confirm Grace begins inside the teleport-impact hollow facing toward the village route.
+- Confirm the church remains visible as the distant destination.
+- Confirm Flight is not automatically enabled as a laboratory shortcut.
+- Inspect the **impact crater**.
+- Follow the road and inspect the **severed/lifted foundation**.
+- Inspect the **abandoned hearth**.
+- Confirm the clues can be found in any order.
+- Confirm each clue still gives its own environmental-story text.
+- After all three have been read, confirm the objective changes to reaching/clearing the village square.
 
-- Confirm Grace begins inside the teleport-impact hollow, facing toward the village.
-- Confirm the church towers and gold entrance are visible as a distant landmark.
-- Inspect the crater clue.
-- Confirm its message describes the fused ring and inward-bent grass.
-- Equip Sword, Hammer, or Spear from the optional abandoned armory.
-- Confirm the racks do not change controller bindings.
+The scene should communicate impossible absence rather than ordinary collapse before combat becomes the focus.
 
-## 2. Outer village exploration
+---
 
-- Follow the stepped road into the higher village layer.
-- Confirm the area contains foundations, partial houses, a dry well, hearth, cart, trees, and displaced soil edges.
-- Inspect the lifted-foundation clue.
-- Confirm it suggests that part of the village was removed intact rather than destroyed.
-- Inspect the empty-hearth clue.
-- Confirm it implies interrupted daily life without explaining the full history.
-- Walk the edges and confirm cliffs and terrain boundaries prevent accidental escape from the playable area.
+# 2. Optional Sound memory
 
-## 3. Optional Sound memory
+After the investigation chunk becomes complete:
 
-- Enter the village square without using Sound.
-- Find the faint interaction near the hidden relic.
-- Confirm interacting before reveal reports that the source remains hidden.
-- Select Sound Pulse and cast near the hidden relic.
-- Confirm the wooden bird becomes visible with Sound/reveal feedback.
-- Interact with it.
-- Confirm the optional message references a child's carved wooden bird and does not explain Cirianca outright.
-- Confirm the main route remains completable without finding the memory.
+- Enter the village square without using Sound first.
+- Find the faint buried-memory interaction.
+- Confirm interacting before reveal reports that the source is still hidden.
+- Select Sound Pulse and reveal the wooden bird.
+- Interact with the revealed memory.
+- Confirm the optional Adventure Chunk completes.
+- Confirm the main story objective does **not** get replaced by an optional objective.
+- Confirm the level remains fully completable without finding the memory.
 
-## 4. Village square combat
+This beat is the slice's curiosity reward, not a progression lock.
 
-- Enter the square and trigger the encounter.
-- Confirm two Goblins and one Gremlin spawn from the registered encounter definition.
-- Test Light/Heavy branches with the chosen weapon.
-- Use spells and at least one elemental reaction during combat.
-- Confirm lock-on sees the active enemies.
-- Defeat all three enemies.
-- Confirm two Mana are restored.
-- Confirm the objective updates to finding a route across the ravine.
-- Confirm the broad scavenger barricade lowers after completion.
+---
 
-## 5. Two-solution ravine gate
+# 3. Village square combat
 
-Test both methods, reloading or using editor RESET between them.
+- Enter the square and trigger the existing encounter.
+- Confirm two Goblins and one Gremlin spawn from the existing encounter definition.
+- Test Light/Heavy weapon branches.
+- Use at least one spell or elemental interaction during the fight.
+- Confirm lock-on sees active enemies.
+- Defeat all three.
+- Confirm the existing encounter reward still restores Mana.
+- Confirm the broad scavenger barricade releases.
+- Confirm the Adventure Chunk spine advances to the ravine objective.
 
-### Fire solution
+The Adventure Chunk layer must not spawn a second encounter or duplicate encounter rewards.
 
-- Approach the right stone bridge.
-- Cast Fire at the root-choked debris.
-- Confirm the debris opens immediately and the route becomes traversable.
+---
 
-### Ice and Heavy solution
+# 4. Ravine route choice
+
+Only **one** route is required.
+
+## Right route: Fire
+
+- Approach the root-choked stone bridge.
+- Cast Fire at the debris.
+- Confirm the debris clears immediately.
+- Confirm the ravine Adventure Chunk completes.
+
+## Right route: Ice + Heavy
+
+On a reset/reload:
 
 - Cast Ice at the debris.
-- Confirm it turns visibly icy and reports that a forceful strike could shatter it.
-- Use a Heavy or force-tagged weapon attack.
-- Confirm the debris shatters and the route opens.
+- Confirm it freezes instead of opening immediately.
+- Use a Heavy / force-tagged attack.
+- Confirm the frozen obstruction shatters.
+- Confirm the same ravine Adventure Chunk completes.
 
-The gate must not open from an unrelated light attack while unfrozen.
+## Left route: Water → Ice
 
-## 6. Water and Ice bridge
+On a reset/reload:
 
-Test this independently from the right route.
+- Approach the flooded crossing.
+- Apply Water / Wet to the crossing.
+- Apply Ice / Frozen.
+- Confirm the path becomes visibly and physically traversable.
+- Confirm the same ravine Adventure Chunk completes.
 
-- Approach the left side of the ravine.
-- Cast Water across the marked crossing.
-- Confirm the target receives the Wet state.
-- Cast Ice onto the same target.
-- Confirm the crossing changes from water to a visible crystalline bridge.
-- Walk across and confirm collision is stable.
-- Confirm the bridge remains available until the scene resets, prioritizing test reliability over a short expiration timer.
+The Adventure Chunk uses **ANY requirement**, so solving one route must not demand the other route afterward.
 
-## 7. Church approach
+---
 
-- Confirm both ravine routes converge beneath the church hill.
-- Climb the stairs to the third elevation layer.
-- Confirm the church facade, two towers, cypress trees, graves, and glowing entrance provide a clear destination.
-- Reach the camp/save point.
-- Interact and confirm Health, Mana, Stamina, and Stance restore.
-- Confirm the save scene path is the Ruined Village Approach.
+# 5. Church approach and checkpoint
 
-## 8. Death and checkpoint
+- Confirm either ravine solution converges below the church hill.
+- Climb the stairs rather than bypassing the route with automatically unlocked Flight.
+- Confirm the objective now asks Grace to enter the Church of Angels.
+- Reach the church-ground camp.
+- Rest and confirm Health, Mana, Stamina, and Stance restore.
+- Save if desired.
+- Confirm existing completed clues, combat, and route state survive a save/reload.
+
+---
+
+# 6. Death and recovery
 
 - Save at the church-ground camp.
 - Take lethal damage or use a controlled debug method.
-- Confirm the death retry reloads the current level.
-- Confirm Grace returns to the camp position with saved stats, flags, key items, and objective.
-- Confirm already completed permanent village flags restore their corresponding route state.
+- Confirm death retry reloads the current village scene.
+- Confirm Grace returns to the saved camp position.
+- Confirm existing world flags restore their corresponding physical state.
+- Confirm the Adventure Chunk graph catches up from restored source properties instead of requiring repeated actions.
 
-## 9. Church handoff
+---
 
-- Interact with the glowing church entrance.
+# 7. Church handoff
+
+- Interact deliberately with the church entrance.
+- Confirm `ruined_village_church_threshold` completes before the scene transition.
+- Confirm the sequence persistence flag is set:
+
+```text
+first_production_adventure_slice_v1
+```
+
 - Confirm the scene changes to:
 
 ```text
 res://scenes/levels/prototypes/prototype_boss_dungeon_chain_v1.tscn
 ```
 
-- Complete a brief Church Trial regression:
-  - movement and camera;
-  - Light/Heavy combat;
-  - spell casting;
-  - elemental locks;
-  - Sound reveal;
-  - save bed;
-  - boss startup.
+- Continue into the existing Church Trial and perform a short continuity check:
+  - movement and camera still feel identical;
+  - HUD state survives the transition cleanly;
+  - Light/Heavy combat works;
+  - spell selection/casting works;
+  - the Church Trial objective owns presentation after transition;
+  - save and boss startup still function.
 
-## 10. Development Control Center
+The village sequence ending should feel like escalation into the next adventure space, not like returning to a development menu.
 
-- Open the Development Control Center.
-- Confirm **Ruined Village Approach** appears before Church Trial.
-- Confirm its detail panel identifies it as an integrated story level, version v0.9.
-- Confirm dependencies, controls, state policy, manual test path, and limitations come from the registry.
-- Launch it directly from the Control Center.
+---
 
-## 11. Automated validation
+# 8. Pacing target
+
+For a first blind-ish playthrough, measure from player control at the crater to crossing the church threshold.
+
+Target:
+
+```text
+10–15 minutes
+```
+
+Do **not** tune toward the target by adding filler. Record where time is actually spent:
+
+- navigation / getting lost;
+- clue reading;
+- combat;
+- spell selection;
+- understanding the ravine;
+- optional memory;
+- checkpoint interaction.
+
+If the route is much shorter, the next question is whether one existing beat needs depth. If it is much longer, identify friction or confusion before adding/removing content.
+
+---
+
+# 9. Automated validation
 
 Run:
 
 ```powershell
 python scripts/ci/validate_feature_registry.py
+python scripts/ci/validate_capability_inventory.py
 python scripts/ci/run_feature_registry.py --godot godot
 ```
 
-Expected registered village targets:
+The existing registered smoke test remains:
 
 ```text
-res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn
 res://scenes/tests/ruined_village_approach_smoke_test.tscn
 ```
 
-The smoke test validates:
+It now also verifies:
 
-- procedural geometry density;
-- player and Game UI presence;
-- three environmental clues;
-- encounter definition integrity;
-- Fire route solution;
-- Ice + Heavy route solution;
-- Water + Ice bridge activation;
-- Sound memory reveal;
-- checkpoint presence;
-- deliberate Church Trial exit path.
+- the production Adventure Slice director activates only on the canonical village root;
+- five chunks form a valid graph;
+- investigation opens the graph;
+- combat depends on investigation;
+- ravine choice depends on combat;
+- Sound memory stays optional;
+- church threshold depends on the ravine;
+- clues, debris, ice bridge, and memory expose lifecycle signals for sequencing;
+- the production slice no longer auto-selects/unlocks Flight.
 
-## Creative review
+Existing regression coverage still verifies the environment, encounter definition, Fire route, Ice + Heavy route, Water + Ice bridge, Sound reveal, save-state restoration, checkpoint, and Church Trial transition path.
 
-Judge the level on these questions:
+---
 
-1. Does the church remain a readable destination without flattening exploration into a straight hallway?
-2. Does the village communicate impossible absence rather than ordinary destruction?
-3. Do the combat and puzzles feel situated in the environment rather than pasted beside it?
-4. Are the two ravine routes meaningfully different and easy to understand?
-5. Does the optional Sound memory reward curiosity without blocking progression?
-6. Does the 15–25 minute route feel dense rather than cramped or empty?
-7. Does reaching the Church Trial feel like a natural escalation?
+# Creative review
 
-## Known prototype limitations
+This playtest matters more than another subsystem checklist. Judge the slice on:
 
-- Terrain, ruins, vegetation, props, and church architecture are procedural replacement art.
-- The playable footprint is spatially compressed while implying a broader 250 × 350 meter village region.
-- Enemies use current Goblin and Gremlin behavior rather than village-specific archetypes.
-- The Water/Ice bridge remains latched until reset for dependable prototype testing.
-- No voice acting, authored audio, cinematics, imported foliage, navigation mesh, or final lighting pass is included.
-- The level deliberately withholds the full explanation of Cirianca and the village's removal.
+1. **Continuity:** Does each beat naturally create the reason to do the next one?
+2. **Clarity:** Can you understand the next goal without floating developer signage?
+3. **Agency:** Does the ravine feel like a choice rather than two chores?
+4. **Sandbox value:** Do combat and elemental tools invite experimentation without requiring a tutorial popup?
+5. **Optionality:** Does the Sound memory reward curiosity without hijacking the main objective?
+6. **Pacing:** Where does the 10–15 minute route drag or rush?
+7. **Escalation:** Does entering the Church Trial feel like the payoff to crossing the village?
+8. **Game identity:** Does this feel more like playing *Grace of Humanity* than testing a collection of mechanics?
+
+The result of this playtest should choose the next development target. Do not assume in advance that the answer is more content, more combat, more art, or more systems.
+
+---
+
+# Known limitations
+
+- Terrain, ruins, vegetation, props, church architecture, enemies, animation, and audio remain prototype/replacement-ready.
+- The playable footprint is compressed while implying a broader village region.
+- Goblin and Gremlin actors still stand in for future location-specific opponents.
+- The Water/Ice bridge remains latched until reset for dependable testing.
+- The shared development loadout still exposes a very broad spell library; this pass only removes the explicit Flight showcase shortcut.
+- The village Adventure Chunk spine currently ends at the Church threshold; the Church Trial retains its own existing progression logic.
+- This milestone deliberately adds no new combat, puzzle, quest, progression, HUD, or environment framework.

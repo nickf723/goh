@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="AdventureChunkDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/adventure/adventure_chunk_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+chunk_id = "ruined_village_ravine_choice"
+display_name = "Cross the Collapsed Ravine"
+category = 4
+summary = "Solve the ravine with either the root-choked stone bridge or the Water-to-Ice crossing."
+required_chunk_ids = Array[String](["ruined_village_square_combat"])
+optional = false
+auto_activate_when_available = true
+completion_policy = 2
+completion_flag = "adventure_chunk_ruined_village_ravine_choice"
+objective_on_activate = "Cross the ravine: clear the bridge debris, or freeze the flooded crossing."
+objective_on_complete = "Climb the church hill and approach the Church of Angels."
+activation_message = "Two broken routes survive the ravine. Grace only needs one of them."
+completion_message = "A route to the church hill is open."
+hide_content_when_locked = false
+disable_content_when_locked = false
+keep_content_after_complete = true

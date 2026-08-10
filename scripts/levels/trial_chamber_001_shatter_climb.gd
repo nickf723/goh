@@ -285,7 +285,7 @@ func _create_shatter_gate(position_value: Vector3) -> StaticBody3D:
 	return gate
 
 
-func _on_left_route_opened(_bridge_id: String, _method: String) -> void:
+func _on_left_route_opened(_bridge_id: String) -> void:
 	if left_route_ready:
 		return
 	left_route_ready = true

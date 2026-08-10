@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/environment_kit_module.gd" id="1_module"]
+
+[node name="GreenFernCluster" type="Node3D"]
+script = ExtResource("1_module")
+module_id = "green_fern_cluster"
+display_name = "Green Earth Fern Cluster"
+kit_id = "green_earth_calibration_v0_1"
+category = "ecology"
+target_dimensions_m = Vector3(1.8, 1.1, 1.8)
+pivot_policy = "ground_center"
+collision_policy = "none"
+placeholder_shape = "cross"
+placeholder_tint = Color(0.18, 0.38, 0.18, 1)
+authored_source_hint = "Blender GLB: art/models/environment/green_earth/green_fern_cluster.glb"

@@ -9,15 +9,27 @@ on:
       - "scripts/environment/green_grotto_detail_material_library.gd"
       - "scripts/environment/green_grotto_hero_material_library.gd"
       - "scripts/environment/green_grotto_fauna_visual.gd"
+      - "scripts/environment/environment_kit_definition.gd"
+      - "scripts/environment/environment_kit_module.gd"
       - "scripts/levels/prototype_green_grotto_art_target.gd"
       - "scripts/levels/prototype_green_grotto_detail_pass.gd"
       - "scripts/levels/prototype_green_grotto_hero_pass.gd"
       - "scripts/levels/prototype_green_grotto_hero_surface_finish.gd"
+      - "scripts/levels/prototype_green_grotto_art_direction_study.gd"
+      - "scripts/levels/prototype_green_grotto_calibration_kit_pass.gd"
+      - "scripts/levels/prototype_green_grotto_lighting_pass.gd"
       - "scripts/tests/green_grotto_art_target_smoke_test.gd"
+      - "scripts/tests/green_earth_calibration_kit_smoke_test.gd"
+      - "scenes/environment/kits/green_earth/**"
+      - "data/environment_kits/green_earth_calibration_kit.tres"
       - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
       - "scenes/tests/green_grotto_art_target_smoke_test.tscn"
+      - "scenes/tests/green_earth_calibration_kit_smoke_test.tscn"
       - "docs/GREEN_GROTTO_ART_TARGET_V1.md"
       - "docs/GREEN_GROTTO_HERO_PASS_V3.md"
+      - "docs/GLOBAL_ART_BIBLE_V0_1.md"
+      - "docs/ENVIRONMENT_ASSET_PRODUCTION_CONTRACT_V0_1.md"
+      - "docs/GREEN_EARTH_CALIBRATION_KIT_V0_1.md"
       - ".github/workflows/green-grotto-art-target-validation.yml"
   workflow_dispatch:
 
@@ -30,7 +42,7 @@ concurrency:
 
 jobs:
   validate-green-grotto:
-    name: Import, V3 hero contract, and scene boot
+    name: Import, Green art target, calibration kit, and scene boot
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -50,13 +62,19 @@ jobs:
           set -o pipefail
           godot --headless --path . --editor --quit 2>&1 | tee green-grotto-import.log
 
-      - name: Run Green Grotto V3 hero regression
+      - name: Run Green Grotto art regression
         shell: bash
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/green_grotto_art_target_smoke_test.tscn 2>&1 | tee green-grotto-test.log
 
-      - name: Boot Green Grotto V3 hero target
+      - name: Run Green Earth calibration kit regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/green_earth_calibration_kit_smoke_test.tscn 2>&1 | tee green-earth-kit-test.log
+
+      - name: Boot Green Grotto art target
         shell: bash
         run: |
           set -o pipefail
@@ -70,5 +88,6 @@ jobs:
           path: |
             green-grotto-import.log
             green-grotto-test.log
+            green-earth-kit-test.log
             green-grotto-boot.log
           if-no-files-found: ignore

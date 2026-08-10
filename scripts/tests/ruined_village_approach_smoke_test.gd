@@ -19,6 +19,7 @@ func _ready() -> void:
 
 	validate_level_structure()
 	validate_adventure_slice_graph()
+	await validate_adventure_slice_progression()
 	validate_outdoor_remaster()
 	validate_encounter_definition()
 	validate_two_solution_gate()
@@ -85,6 +86,8 @@ func validate_adventure_slice_graph() -> void:
 		failures.append("production slice director did not activate on the canonical village scene")
 	if str(village.get_meta("first_production_adventure_slice", "")) != "v1":
 		failures.append("village root does not publish the first production slice contract")
+	if not bool(village.get_meta("showcase_shortcuts_suppressed", false)):
+		failures.append("canonical village still ran laboratory showcase startup shortcuts")
 
 	var chunks_root: Node = village.get_node_or_null("AdventureChunks")
 	if chunks_root == null or chunks_root.get_child_count() != 5:
@@ -144,6 +147,104 @@ func validate_adventure_slice_graph() -> void:
 		var aerial: Node = player.get_node_or_null("AerialLocomotion")
 		if aerial != null and bool(aerial.get("flight_unlocked")):
 			failures.append("production slice must not auto-unlock Flight and bypass the ravine")
+
+
+func validate_adventure_slice_progression() -> void:
+	var sequence: Node = village.get_node_or_null("FirstProductionAdventureSequence")
+	if sequence == null or not sequence.has_method("get_graph_snapshot"):
+		return
+
+	for clue_id: String in ["arrival_crater", "lifted_foundation", "empty_hearth"]:
+		var clue: Node = find_clue_by_id(clue_id)
+		if clue == null:
+			failures.append("production progression could not resolve clue " + clue_id)
+			return
+		clue.call("interact")
+	await get_tree().process_frame
+
+	var snapshot: Dictionary = sequence.call("get_graph_snapshot") as Dictionary
+	var completed: Array = snapshot.get("completed_chunks", []) as Array
+	var active: Array = snapshot.get("active_chunks", []) as Array
+	if not completed.has("ruined_village_investigation"):
+		failures.append("three clue inspections did not complete the investigation chunk")
+	if not active.has("ruined_village_square_combat"):
+		failures.append("investigation completion did not activate village-square combat")
+	if not active.has("ruined_village_sound_memory"):
+		failures.append("investigation completion did not activate the optional Sound memory")
+
+	var objective_before_memory: String = GameState.current_objective
+	var memories: Array[Node] = get_tree().get_nodes_in_group("village_memory")
+	if not memories.is_empty():
+		var memory: Node = memories[0]
+		var revealable: Node = memory.get_node_or_null("RevealableReceiver")
+		if revealable != null and revealable.has_method("receive_detection"):
+			var detection := DetectionPayload.new()
+			detection.source_name = "Adventure Slice Progression Test"
+			detection.detection_type = "resonance"
+			detection.tags = ["sound", "reveal"]
+			detection.reveal_duration = 30.0
+			revealable.call("receive_detection", detection)
+			memory.call("interact")
+	await get_tree().process_frame
+
+	snapshot = sequence.call("get_graph_snapshot") as Dictionary
+	completed = snapshot.get("completed_chunks", []) as Array
+	if not completed.has("ruined_village_sound_memory"):
+		failures.append("revealed wooden-bird interaction did not complete the optional memory chunk")
+	if GameState.current_objective != objective_before_memory:
+		failures.append("optional Sound memory hijacked the active main-route objective")
+
+	var encounter: Node = village.get_node_or_null("VillageEncounters/VillageSquareEncounter")
+	if encounter == null:
+		failures.append("production progression could not resolve village encounter")
+		return
+	encounter.call("complete_encounter")
+	await get_tree().process_frame
+
+	snapshot = sequence.call("get_graph_snapshot") as Dictionary
+	completed = snapshot.get("completed_chunks", []) as Array
+	active = snapshot.get("active_chunks", []) as Array
+	if not completed.has("ruined_village_square_combat"):
+		failures.append("existing encounter lifecycle did not complete the combat chunk")
+	if not active.has("ruined_village_ravine_choice"):
+		failures.append("combat completion did not activate the ravine choice")
+
+	var debris_gate: Node = village.get_node_or_null("VillagePuzzles/RavineDebrisGate")
+	if debris_gate == null:
+		failures.append("production progression could not resolve ravine debris gate")
+		return
+	var fire_payload := DamagePayload.new()
+	fire_payload.element = "fire"
+	fire_payload.source_name = "Adventure Slice Progression Test"
+	fire_payload.tags = ["fire", "burning"]
+	debris_gate.call("receive_damage_payload", fire_payload)
+	await get_tree().process_frame
+
+	snapshot = sequence.call("get_graph_snapshot") as Dictionary
+	completed = snapshot.get("completed_chunks", []) as Array
+	active = snapshot.get("active_chunks", []) as Array
+	if not completed.has("ruined_village_ravine_choice"):
+		failures.append("one valid ravine solution did not complete the ANY-policy route chunk")
+	if not active.has("ruined_village_church_threshold"):
+		failures.append("ravine completion did not activate the church threshold")
+
+	var exit: Node = village.get_node_or_null("VillageInteractions/ChurchTrialEntrance")
+	if exit != null and exit.has_signal("exit_triggered"):
+		exit.emit_signal("exit_triggered", {"ok": true, "test_only": true})
+	await get_tree().process_frame
+	snapshot = sequence.call("get_graph_snapshot") as Dictionary
+	if not bool(snapshot.get("completed", false)):
+		failures.append("church threshold lifecycle did not complete the production sequence")
+	if not GameState.get_flag("first_production_adventure_slice_v1"):
+		failures.append("completed production sequence did not persist its completion flag")
+
+	# Return every authoritative source to its ordinary opening state before the
+	# older focused interaction regressions run below.
+	sequence.call("reset_sequence", true)
+	var square_gate: Node = village.get_node_or_null("VillagePuzzles/SquareEncounterBarrier")
+	if square_gate != null and square_gate.has_method("reset_gate"):
+		square_gate.call("reset_gate")
+	await get_tree().process_frame
 
 
 func validate_outdoor_remaster() -> void:

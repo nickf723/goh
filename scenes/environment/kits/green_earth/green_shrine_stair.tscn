@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/environment_kit_module.gd" id="1_module"]
+
+[node name="GreenShrineStair" type="Node3D"]
+script = ExtResource("1_module")
+module_id = "green_shrine_stair"
+display_name = "Green Earth Shrine Stair"
+kit_id = "green_earth_calibration_v0_1"
+category = "architecture"
+target_dimensions_m = Vector3(6.2, 1.5, 4.0)
+pivot_policy = "ground_center"
+collision_policy = "external_blockout"
+placeholder_shape = "box"
+placeholder_tint = Color(0.37, 0.33, 0.24, 1)
+authored_source_hint = "Blender GLB: art/models/environment/green_earth/green_shrine_stair.glb"

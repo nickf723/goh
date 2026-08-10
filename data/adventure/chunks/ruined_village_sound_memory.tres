@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AdventureChunkDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/adventure/adventure_chunk_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+chunk_id = "ruined_village_sound_memory"
+display_name = "Recover the Buried Memory"
+category = 6
+summary = "Optional Sound discovery in the village square that rewards curiosity without blocking the story route."
+required_chunk_ids = Array[String](["ruined_village_investigation"])
+optional = true
+auto_activate_when_available = true
+completion_policy = 1
+completion_flag = "adventure_chunk_ruined_village_sound_memory"
+objective_on_available = ""
+objective_on_activate = ""
+objective_on_complete = ""
+activation_message = ""
+completion_message = "The wooden bird leaves one quiet human trace inside the impossible ruins."
+hide_content_when_locked = false
+disable_content_when_locked = false
+keep_content_after_complete = true

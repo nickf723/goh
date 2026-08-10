@@ -26,7 +26,7 @@ Spell 1: Water Jet
 Spell 2: Ice Lance
 ```
 
-The trial disables automatic double jump, hover, and Flight so the room cannot be bypassed by development progression state.
+The trial disables automatic double jump, hover, and Flight so old development progression cannot trivially bypass the room.
 
 Mana and Stamina regenerate during the trial so experimentation is cheap.
 
@@ -34,15 +34,15 @@ Mana and Stamina regenerate during the trial so experimentation is cheap.
 
 Reach the glowing upper seal at the back of the chamber.
 
-Two intentionally supported routes exist. Only one is required.
+Two routes are deliberately authored, but the **upper seal is the actual completion rule**. If the supplied tools produce a third coherent way to reach it, the trial accepts that solution instead of demanding that Grace touch a designer-approved switch first.
 
 ## Left route: Water → Ice
 
 - Inspect the cyan lane on the left.
 - Confirm the gap contains a flooded crossing with no starting traversal collision.
-- Cast Water onto the crossing if needed to establish Wet state.
+- Cast Water onto the crossing to establish Wet state.
 - Cast Ice onto the same crossing.
-- Confirm it becomes a visible, solid ice bridge.
+- Confirm the existing Wet Freeze reaction converts it into a visible, solid ice bridge.
 - Cross it.
 - Climb the left stair run to the upper platform.
 - Reach the gold seal.
@@ -71,6 +71,14 @@ ordinary fractured wall = absorbs force
 frozen fractured wall = coherent brittle mass = shatterable
 ```
 
+## Emergent route policy
+
+Water Jet already contains recoil / self-propulsion behavior and Ice Lance can lodge as temporary solid geometry in compatible surfaces. Those properties are **not disabled** merely because the two authored routes are easier to explain.
+
+If you discover a way to reach the upper seal by creatively combining the supplied tools, record it. The goal trigger accepts an `emergent` solution even when neither authored route mechanism was completed.
+
+Only patch an emergent solution out when it destroys the usefulness of the whole trial family, not merely because it was unplanned.
+
 ## Reset behavior
 
 Use the existing `RESET` / `restart_scene` development action.
@@ -94,11 +102,11 @@ The first playtest should answer these questions:
 2. Do the cyan-water lane and fractured-stone lane suggest different experiments without spelling them out?
 3. Does Water → Ice feel physically understandable?
 4. Does Ice → Heavy feel like a satisfying compound interaction rather than an arbitrary combo lock?
-5. Is either route much easier, clearer, or more enjoyable than the other?
+5. Is either authored route much easier, clearer, or more enjoyable than the other?
 6. Does the fixed loadout make experimentation easier than carrying Grace's full spell library?
 7. Do the room dimensions give the camera enough breathing room?
 8. Are the stair runs comfortable with Grace's current movement controller?
-9. After solving one route, do you naturally want to reset and test the other?
+9. After solving one route, do you naturally want to reset and test another?
 10. What unintended solution do you try first?
 
 Unexpected solutions are valuable information. If a solution uses the supplied tools coherently and does not trivialize every future trial, treat it as evidence about the sandbox before treating it as a bug.
@@ -118,7 +126,7 @@ The regression checks:
 - Water + Ice activates the left crossing;
 - Ice alone primes but does not clear the masonry;
 - Heavy force clears frozen masonry;
-- either solved route can satisfy the upper goal;
+- the upper goal completes after a supported route;
 - reset restores both mechanisms and runtime completion state.
 
 ## Promotion status

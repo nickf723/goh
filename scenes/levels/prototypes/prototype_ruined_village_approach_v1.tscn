@@ -19,6 +19,7 @@
 [ext_resource type="Script" path="res://scripts/weather/storm_lightning_attractor.gd" id="17_storm_attractor"]
 [ext_resource type="Script" path="res://scripts/perception/perception_stimulus_manager.gd" id="18_stimulus_manager"]
 [ext_resource type="Script" path="res://scripts/levels/ruined_village_outdoor_remaster_pass.gd" id="19_outdoor_remaster"]
+[ext_resource type="Script" path="res://scripts/levels/ruined_village_adventure_slice_director.gd" id="20_slice"]
 
 [node name="PrototypeRuinedVillageApproach" type="Node3D"]
 script = ExtResource("1_director")
@@ -44,6 +45,9 @@ script = ExtResource("6_traversal")
 
 [node name="OutdoorRemasterPass" type="Node" parent="."]
 script = ExtResource("19_outdoor_remaster")
+
+[node name="AdventureSliceDirector" type="Node" parent="."]
+script = ExtResource("20_slice")
 
 [node name="SaveWorldSync" type="Node" parent="."]
 script = ExtResource("7_sync")

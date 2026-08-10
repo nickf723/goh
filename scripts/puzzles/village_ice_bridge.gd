@@ -1,6 +1,8 @@
 extends StaticBody3D
 class_name VillageIceBridge
 
+signal bridge_frozen(bridge_id: String)
+
 @export var bridge_id: String = "village_ice_bridge"
 @export var completion_flag: String = ""
 @export var objective_after: String = "Cross the frozen ravine."
@@ -101,6 +103,8 @@ func freeze_bridge(announce: bool = true, update_progress: bool = true) -> void:
 
 	if announce:
 		show_message(freeze_message)
+
+	bridge_frozen.emit(bridge_id)
 
 
 func set_bridge_state(frozen: bool) -> void:

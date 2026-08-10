@@ -17,6 +17,7 @@ on:
       - "scripts/levels/prototype_green_grotto_hero_surface_finish.gd"
       - "scripts/levels/prototype_green_grotto_art_direction_study.gd"
       - "scripts/levels/prototype_green_grotto_calibration_kit_pass.gd"
+      - "scripts/levels/prototype_green_grotto_foundation_shell_pass.gd"
       - "scripts/levels/prototype_green_grotto_lighting_pass.gd"
       - "scripts/tests/green_grotto_art_target_smoke_test.gd"
       - "scripts/tests/green_earth_calibration_kit_smoke_test.gd"
@@ -30,6 +31,7 @@ on:
       - "docs/GLOBAL_ART_BIBLE_V0_1.md"
       - "docs/ENVIRONMENT_ASSET_PRODUCTION_CONTRACT_V0_1.md"
       - "docs/GREEN_EARTH_CALIBRATION_KIT_V0_1.md"
+      - "docs/GREEN_EARTH_FOUNDATION_SHELL_V0_1.md"
       - ".github/workflows/green-grotto-art-target-validation.yml"
   workflow_dispatch:
 
@@ -42,7 +44,7 @@ concurrency:
 
 jobs:
   validate-green-grotto:
-    name: Import, Green art target, calibration kit, and scene boot
+    name: Import, Green art target, calibration kit, foundation shell, and scene boot
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -68,7 +70,7 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/green_grotto_art_target_smoke_test.tscn 2>&1 | tee green-grotto-test.log
 
-      - name: Run Green Earth calibration kit regression
+      - name: Run Green Earth calibration kit and foundation shell regression
         shell: bash
         run: |
           set -o pipefail

@@ -21,6 +21,9 @@ const StartingLoadout: AbilityLoadout = preload(
 )
 
 const PRODUCTION_ROOT_NAME: String = "PrototypeRuinedVillageApproach"
+const INVESTIGATION_OBJECTIVE: String = (
+	"Inspect the impact crater, the severed foundation, and the abandoned hearth."
+)
 const NON_PRODUCTION_LABEL_TOKENS: Array[String] = [
 	"THE VANISHED VILLAGE",
 	"CHURCH OF ANGELS",
@@ -59,6 +62,7 @@ func _initialize_slice() -> void:
 	scope_root.set_meta("first_production_adventure_slice", "v1")
 	scope_root.set_meta("slice_target_minutes", 15)
 	_configure_player_for_slice()
+	_configure_authored_objectives()
 	_hide_non_production_signage()
 	_build_adventure_graph()
 	set_meta("production_slice_active", true)
@@ -92,6 +96,27 @@ func _configure_player_for_slice() -> void:
 			aerial.set("flight_unlocked", false)
 
 	GameState.restore_rest_resources()
+
+
+func _configure_authored_objectives() -> void:
+	# Before Adventure Chunks, each clue advanced the objective independently.
+	# During the production slice all three clues form one investigation beat, so
+	# keep the same objective until the chunk itself completes. The optional Sound
+	# memory also stays narratively rewarding without hijacking the main route.
+	for path: NodePath in [
+		NodePath("VillageInteractions/ArrivalCraterClue"),
+		NodePath("VillageInteractions/LiftedFoundationClue"),
+		NodePath("VillageInteractions/EmptyHearthClue"),
+	]:
+		var clue: Node = scope_root.get_node_or_null(path)
+		if clue != null and "objective_after" in clue:
+			clue.set("objective_after", INVESTIGATION_OBJECTIVE)
+
+	var memory: Node = scope_root.get_node_or_null(
+		"VillageInteractions/HiddenWoodenBirdMemory"
+	)
+	if memory != null and "objective_after" in memory:
+		memory.set("objective_after", "")
 
 
 func _hide_non_production_signage() -> void:

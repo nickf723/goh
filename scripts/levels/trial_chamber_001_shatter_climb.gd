@@ -66,7 +66,7 @@ func _ready() -> void:
 	_set_objective("Reach the upper seal using only Water, Ice, and the Training Hammer.")
 	_show_message(
 		"Trial 001 • Shatter & Climb\n"
-		+ "Two routes reach the same upper seal. The chamber only gives you what you need."
+		+ "Two obvious routes reach the same upper seal. If you find another, the chamber will take it."
 	)
 	set_process(true)
 
@@ -304,10 +304,12 @@ func _on_right_route_opened(_gate_id: String, _method: String) -> void:
 func _on_goal_body_entered(body: Node3D) -> void:
 	if body == null or not body.is_in_group("player"):
 		return
-	if not left_route_ready and not right_route_ready:
-		_show_message("The upper seal stays dormant. Open one of the chamber's routes first.")
-		return
-	_complete_trial("water_ice" if left_route_ready else "ice_heavy")
+	var route_id: String = "emergent"
+	if left_route_ready:
+		route_id = "water_ice"
+	elif right_route_ready:
+		route_id = "ice_heavy"
+	_complete_trial(route_id)
 
 
 func _complete_trial(route_id: String) -> void:
@@ -315,7 +317,7 @@ func _complete_trial(route_id: String) -> void:
 		return
 	trial_complete = true
 	GameState.set_flag(COMPLETION_FLAG, true)
-	_set_objective("Trial 001 complete. Reset to try the other route.")
+	_set_objective("Trial 001 complete. Reset to try another solution.")
 	_show_message("Shatter & Climb complete. The chamber accepted your solution.")
 	if goal_beacon != null:
 		goal_beacon.scale = Vector3.ONE * 1.45

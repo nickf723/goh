@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="AdventureChunkDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/adventure/adventure_chunk_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+chunk_id = "ruined_village_church_threshold"
+display_name = "Enter the Church of Angels"
+category = 0
+summary = "Climb from the ravine to the church grounds, use the checkpoint if needed, and deliberately cross into the Church Trial."
+required_chunk_ids = Array[String](["ruined_village_ravine_choice"])
+optional = false
+auto_activate_when_available = true
+completion_policy = 1
+completion_flag = "adventure_chunk_ruined_village_church_threshold"
+objective_on_activate = "Climb to the Church of Angels and enter the trial."
+objective_on_complete = "Complete the Church Trial."
+activation_message = "The church finally stands within reach."
+completion_message = "Grace leaves the vanished village behind and crosses into the Church of Angels."
+hide_content_when_locked = false
+disable_content_when_locked = false
+keep_content_after_complete = true

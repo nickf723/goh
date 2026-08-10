@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/environment_kit_module.gd" id="1_module"]
+
+[node name="GreenCliffB" type="Node3D"]
+script = ExtResource("1_module")
+module_id = "green_cliff_b"
+display_name = "Green Earth Cliff B"
+kit_id = "green_earth_calibration_v0_1"
+category = "terrain"
+target_dimensions_m = Vector3(7.0, 12.0, 14.0)
+pivot_policy = "ground_center"
+collision_policy = "external_blockout"
+placeholder_shape = "box"
+placeholder_tint = Color(0.105, 0.155, 0.16, 1)
+authored_source_hint = "Blender GLB: art/models/environment/green_earth/green_cliff_b.glb"

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AdventureChunkDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/adventure/adventure_chunk_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+chunk_id = "ruined_village_square_combat"
+display_name = "Clear the Village Square"
+category = 2
+summary = "Push through the scavenger ambush in the village square using Grace's weapon and spell sandbox."
+required_chunk_ids = Array[String](["ruined_village_investigation"])
+optional = false
+auto_activate_when_available = true
+completion_policy = 1
+completion_flag = "adventure_chunk_ruined_village_square_combat"
+reward_mana = 0
+objective_on_activate = "Reach the village square and clear the scavenger ambush."
+objective_on_complete = "Find a route across the collapsed ravine."
+activation_message = "Movement ahead turns the square into a fight."
+completion_message = "The scavenger barricade releases. The ravine is the last obstacle before the church hill."
+hide_content_when_locked = false
+disable_content_when_locked = false
+keep_content_after_complete = true

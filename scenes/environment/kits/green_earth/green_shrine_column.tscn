@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/environment_kit_module.gd" id="1_module"]
+
+[node name="GreenShrineColumn" type="Node3D"]
+script = ExtResource("1_module")
+module_id = "green_shrine_column"
+display_name = "Green Earth Shrine Column"
+kit_id = "green_earth_calibration_v0_1"
+category = "architecture"
+target_dimensions_m = Vector3(0.9, 4.2, 0.9)
+pivot_policy = "ground_center"
+collision_policy = "external_blockout"
+placeholder_shape = "cylinder"
+placeholder_tint = Color(0.41, 0.36, 0.26, 1)
+authored_source_hint = "Blender GLB: art/models/environment/green_earth/green_shrine_column.glb"

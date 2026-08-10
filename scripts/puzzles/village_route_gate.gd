@@ -1,6 +1,8 @@
 extends StaticBody3D
 class_name VillageRouteGate
 
+signal gate_opened(gate_id: String, method: String)
+
 @export var gate_id: String = "village_gate"
 @export var display_name: String = "Collapsed Debris"
 @export var accepts_fire: bool = true
@@ -132,6 +134,8 @@ func open_gate(method: String = "unknown", update_progress: bool = true) -> void
 
 	if method == "encounter":
 		show_message(display_name + " unlocks after the encounter.")
+
+	gate_opened.emit(gate_id, method)
 
 
 func set_visual_tint(color: Color, emissive: bool) -> void:

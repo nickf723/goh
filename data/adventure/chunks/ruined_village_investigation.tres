@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="AdventureChunkDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/adventure/adventure_chunk_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+chunk_id = "ruined_village_investigation"
+display_name = "Read the Vanished Village"
+category = 1
+summary = "Follow the road through the impossible ruins and establish what happened from three environmental clues."
+required_chunk_ids = Array[String]([])
+optional = false
+auto_activate_when_available = true
+completion_policy = 1
+completion_flag = "adventure_chunk_ruined_village_investigation"
+objective_on_activate = "Inspect the impact crater, the severed foundation, and the abandoned hearth."
+objective_on_complete = "Continue into the village square."
+activation_message = "The church is visible above the ruins, but the road is full of evidence that the village did not simply collapse."
+completion_message = "The pattern is clear: the village was removed in pieces, not destroyed where it stood."
+hide_content_when_locked = false
+disable_content_when_locked = false
+keep_content_after_complete = true

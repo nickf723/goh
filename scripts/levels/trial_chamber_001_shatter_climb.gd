@@ -127,7 +127,6 @@ func _build_chamber() -> void:
 	environment_root.name = "TrialArchitecture"
 	add_child(environment_root)
 
-	# One continuous shell. No decorative maze, no staircase forest.
 	_create_static_box("LeftWall", Vector3(-10.0, 6.5, -3.0), Vector3(1.0, 14.0, 68.0), wall_material)
 	_create_static_box("RightWall", Vector3(10.0, 6.5, -3.0), Vector3(1.0, 14.0, 68.0), wall_material)
 	_create_static_box("Ceiling", Vector3(0.0, 13.5, -3.0), Vector3(20.0, 1.0, 68.0), wall_material)
@@ -155,7 +154,7 @@ func _build_freeze_crossing() -> void:
 		Vector3.ZERO,
 		"The flooded span hardens into a walkable sheet of ice."
 	)
-	crossing_bridge.bridge_frozen.connect(_on_crossing_frozen)
+	crossing_bridge.connect("bridge_frozen", _on_crossing_frozen)
 	_create_checkpoint(
 		"CrossingCheckpoint",
 		Vector3(0.0, 1.0, 8.2),
@@ -177,7 +176,7 @@ func _build_shatter_chamber() -> void:
 		"Ice binds the fractured masonry into one brittle mass.",
 		"The Heavy Hammer strike breaks the frozen seal apart."
 	)
-	main_gate.gate_opened.connect(_on_main_gate_opened)
+	main_gate.connect("gate_opened", _on_main_gate_opened)
 	_create_static_box("PostGateFloor", Vector3(0.0, -0.5, -10.0), Vector3(18.0, 1.0, 7.0), floor_material)
 	_create_checkpoint(
 		"ShatterCheckpoint",
@@ -188,9 +187,6 @@ func _build_shatter_chamber() -> void:
 
 
 func _build_optional_cache() -> void:
-	# The shelf is deliberately too high for an ordinary jump and does not own
-	# main-route progression. Ice Lance footholds and Water Jet recoil are both
-	# legitimate ways to reach it.
 	_create_static_box(
 		"OptionalCacheShelf",
 		Vector3(6.2, 3.2, -10.5),
@@ -232,7 +228,7 @@ func _build_synthesis_ascent() -> void:
 		Vector3(-30.0, 0.0, 0.0),
 		"The flooded chute freezes into a steep crystalline ramp."
 	)
-	ascent_bridge.bridge_frozen.connect(_on_ascent_frozen)
+	ascent_bridge.connect("bridge_frozen", _on_ascent_frozen)
 
 	_create_static_box("UpperLanding", Vector3(0.0, 5.75, -25.5), Vector3(18.0, 1.0, 5.0), platform_material)
 	_create_static_box("CrownWingLeft", Vector3(-7.0, 9.0, -28.0), Vector3(4.0, 7.0, 1.0), wall_material)
@@ -246,7 +242,7 @@ func _build_synthesis_ascent() -> void:
 		"Ice turns the crown seal brittle.",
 		"The Heavy Hammer strike opens the final passage."
 	)
-	crown_gate.gate_opened.connect(_on_crown_gate_opened)
+	crown_gate.connect("gate_opened", _on_crown_gate_opened)
 	_create_static_box("GoalFloor", Vector3(0.0, 5.75, -32.5), Vector3(18.0, 1.0, 8.0), platform_material)
 
 
@@ -460,6 +456,7 @@ func _on_shatter_checkpoint_body_entered(body: Node3D) -> void:
 func _on_optional_reward_chosen(item_id: String, quantity: int) -> void:
 	optional_reward_taken = true
 	optional_reward_claimed.emit(item_id, quantity)
+	_set_stage(stage, false)
 	_show_message("Optional cache claimed. The main trial remains unchanged.")
 
 

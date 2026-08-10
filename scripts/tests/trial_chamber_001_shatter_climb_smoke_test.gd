@@ -3,6 +3,12 @@ extends Node
 const TrialScene: PackedScene = preload(
 	"res://scenes/levels/prototypes/trial_chamber_001_shatter_climb_v1.tscn"
 )
+const WaterJetPayload: DamagePayload = preload(
+	"res://data/damage_payloads/water_jet_payload.tres"
+)
+const IceLancePayload: DamagePayload = preload(
+	"res://data/damage_payloads/ice_lance_payload.tres"
+)
 
 var failures: Array[String] = []
 var trial: Node
@@ -20,6 +26,7 @@ func _ready() -> void:
 	_validate_fixed_loadout()
 	await _validate_left_route()
 	await _validate_right_route_and_completion()
+	await _validate_emergent_goal_policy()
 
 	if trial != null and is_instance_valid(trial):
 		trial.queue_free()
@@ -91,15 +98,18 @@ func _validate_left_route() -> void:
 	_expect(bridge != null, "left Water/Ice route exists")
 	if bridge == null:
 		return
-	var status_receiver: Node = bridge.get_node_or_null("PayloadTarget/StatusReceiver")
-	_expect(status_receiver != null, "left route exposes the shared StatusReceiver target")
-	if status_receiver == null:
+	var payload_receiver: Node = bridge.get_node_or_null("PayloadTarget/PayloadReceiver")
+	_expect(payload_receiver != null, "left route exposes the shared PayloadReceiver target")
+	if payload_receiver == null:
 		return
-	status_receiver.call("apply_status", "wet", 10.0, 1.0, "Trial Smoke Water")
-	status_receiver.call("apply_status", "frozen", 10.0, 1.0, "Trial Smoke Ice")
+
+	payload_receiver.call("receive_payload", WaterJetPayload.duplicate(true))
+	await get_tree().process_frame
+	_expect(not bool(bridge.get("is_frozen_bridge")), "Water alone does not create the ice crossing")
+	payload_receiver.call("receive_payload", IceLancePayload.duplicate(true))
 	await get_tree().process_frame
 	await get_tree().physics_frame
-	_expect(bool(bridge.get("is_frozen_bridge")), "Water then Ice makes the crossing traversable")
+	_expect(bool(bridge.get("is_frozen_bridge")), "actual Water Jet then Ice Lance payloads freeze the crossing")
 	_expect(bool(trial.get("left_route_ready")), "trial recognizes the Water/Ice route")
 	var bridge_collision: CollisionShape3D = bridge.get_node_or_null("BridgeCollision") as CollisionShape3D
 	_expect(bridge_collision != null and not bridge_collision.disabled, "frozen route enables traversal collision")
@@ -117,12 +127,8 @@ func _validate_right_route_and_completion() -> void:
 	if gate == null:
 		return
 
-	var ice_payload := DamagePayload.new()
-	ice_payload.element = "ice"
-	ice_payload.source_name = "Trial Smoke Ice"
-	ice_payload.tags = ["ice", "freeze"]
-	gate.call("receive_damage_payload", ice_payload)
-	_expect(bool(gate.get("is_frozen")), "Ice primes the brittle masonry")
+	gate.call("receive_damage_payload", IceLancePayload.duplicate(true))
+	_expect(bool(gate.get("is_frozen")), "Ice Lance primes the brittle masonry")
 	_expect(not bool(gate.get("is_open")), "Ice alone does not solve the masonry route")
 
 	var heavy_payload := DamagePayload.new()
@@ -140,7 +146,7 @@ func _validate_right_route_and_completion() -> void:
 	if player != null:
 		trial.call("_on_goal_body_entered", player)
 	await get_tree().process_frame
-	_expect(bool(trial.get("trial_complete")), "upper seal completes after a valid route")
+	_expect(bool(trial.get("trial_complete")), "upper seal completes after a supported route")
 	_expect(GameState.get_flag("trial_chamber_001_shatter_climb_complete"), "trial completion flag is written")
 
 	trial.call("reset_trial")
@@ -150,6 +156,18 @@ func _validate_right_route_and_completion() -> void:
 	_expect(not GameState.get_flag("trial_chamber_001_shatter_climb_complete"), "reset clears the runtime completion flag")
 	if player != null:
 		_expect(player.global_position.distance_to(Vector3(0.0, 1.0, 16.0)) < 0.2, "reset returns Grace to the chamber entrance")
+
+
+func _validate_emergent_goal_policy() -> void:
+	var player: Node3D = trial.get_node_or_null("Player") as Node3D
+	if player == null:
+		return
+	_expect(not bool(trial.get("left_route_ready")) and not bool(trial.get("right_route_ready")), "emergent-policy check begins with both authored routes unsolved")
+	trial.call("_on_goal_body_entered", player)
+	await get_tree().process_frame
+	_expect(bool(trial.get("trial_complete")), "reaching the seal through an emergent solution is accepted")
+	trial.call("reset_trial")
+	await get_tree().process_frame
 
 
 func _expect(condition: bool, label: String) -> void:

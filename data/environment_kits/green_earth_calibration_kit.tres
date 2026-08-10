@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EnvironmentKitDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/environment_kit_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+kit_id = "green_earth_calibration_v0_1"
+display_name = "Green Earth Calibration Kit v0.1"
+dialect_id = "earth_green_china"
+global_art_bible_path = "res://docs/GLOBAL_ART_BIBLE_V0_1.md"
+dialect_doc_path = "res://docs/GREEN_EARTH_CALIBRATION_KIT_V0_1.md"
+calibration_scene_path = "res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
+module_scene_paths = Array[String](["res://scenes/environment/kits/green_earth/green_cliff_a.tscn", "res://scenes/environment/kits/green_earth/green_cliff_b.tscn", "res://scenes/environment/kits/green_earth/green_path_slab_a.tscn", "res://scenes/environment/kits/green_earth/green_path_slab_b.tscn", "res://scenes/environment/kits/green_earth/green_shrine_platform.tscn", "res://scenes/environment/kits/green_earth/green_shrine_stair.tscn", "res://scenes/environment/kits/green_earth/green_shrine_column.tscn", "res://scenes/environment/kits/green_earth/green_shrine_beam.tscn", "res://scenes/environment/kits/green_earth/green_shrine_roof.tscn", "res://scenes/environment/kits/green_earth/green_shrine_bracket.tscn", "res://scenes/environment/kits/green_earth/green_lantern.tscn", "res://scenes/environment/kits/green_earth/green_fern_cluster.tscn"])
+authoring_dcc = "Blender"
+unit_scale_meters = 1.0
+placeholder_only = true

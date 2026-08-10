@@ -1,6 +1,8 @@
 extends Area3D
 class_name VillageClue
 
+signal clue_inspected(clue_id: String)
+
 @export var prompt_text: String = "Inspect"
 @export var clue_id: String = "village_clue"
 @export_multiline var clue_message: String = "Something here does not belong."
@@ -36,6 +38,7 @@ func interact() -> Dictionary:
 	if objective_after != "":
 		GameState.set_objective(objective_after)
 
+	clue_inspected.emit(clue_id)
 	return {
 		"message": clue_message,
 		"objective": objective_after,

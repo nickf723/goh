@@ -18,6 +18,7 @@ func _ready() -> void:
 	await get_tree().physics_frame
 
 	validate_level_structure()
+	validate_adventure_slice_graph()
 	validate_outdoor_remaster()
 	validate_encounter_definition()
 	validate_two_solution_gate()
@@ -73,6 +74,76 @@ func validate_level_structure() -> void:
 	var player: Node3D = village.get_node_or_null("Player") as Node3D
 	if player != null and abs(player.rotation_degrees.y) > 0.01:
 		failures.append("Grace must face down the village route on entry")
+
+
+func validate_adventure_slice_graph() -> void:
+	var slice_director: Node = village.get_node_or_null("AdventureSliceDirector")
+	if slice_director == null:
+		failures.append("first production adventure slice director is missing")
+		return
+	if not bool(slice_director.get_meta("production_slice_active", false)):
+		failures.append("production slice director did not activate on the canonical village scene")
+	if str(village.get_meta("first_production_adventure_slice", "")) != "v1":
+		failures.append("village root does not publish the first production slice contract")
+
+	var chunks_root: Node = village.get_node_or_null("AdventureChunks")
+	if chunks_root == null or chunks_root.get_child_count() != 5:
+		failures.append("production slice must assemble five authored adventure chunks")
+
+	var sequence: Node = village.get_node_or_null("FirstProductionAdventureSequence")
+	if sequence == null or not sequence.has_method("get_graph_snapshot"):
+		failures.append("production slice adventure sequence is missing")
+		return
+	var snapshot: Dictionary = sequence.call("get_graph_snapshot") as Dictionary
+	if str(snapshot.get("sequence_id", "")) != "first_production_adventure_slice_v1":
+		failures.append("production sequence id changed unexpectedly")
+	if not (snapshot.get("validation_errors", []) as Array).is_empty():
+		failures.append("production slice adventure graph has validation errors")
+	var chunks: Dictionary = snapshot.get("chunks", {}) as Dictionary
+	if chunks.size() != 5:
+		failures.append("production slice graph must expose five chunk definitions")
+	var active_chunks: Array = snapshot.get("active_chunks", []) as Array
+	if not active_chunks.has("ruined_village_investigation"):
+		failures.append("investigation chunk should be the active opening beat")
+
+	var investigation: Dictionary = chunks.get("ruined_village_investigation", {}) as Dictionary
+	if int(investigation.get("required_count", 0)) != 3:
+		failures.append("investigation beat must require all three environmental clues")
+	var combat: Dictionary = chunks.get("ruined_village_square_combat", {}) as Dictionary
+	if not (combat.get("dependencies", []) as Array).has("ruined_village_investigation"):
+		failures.append("village combat must depend on investigation")
+	var ravine: Dictionary = chunks.get("ruined_village_ravine_choice", {}) as Dictionary
+	if not (ravine.get("dependencies", []) as Array).has("ruined_village_square_combat"):
+		failures.append("ravine choice must depend on square combat")
+	var memory: Dictionary = chunks.get("ruined_village_sound_memory", {}) as Dictionary
+	if not bool(memory.get("optional", false)):
+		failures.append("Sound memory must remain optional")
+	var threshold: Dictionary = chunks.get("ruined_village_church_threshold", {}) as Dictionary
+	if not (threshold.get("dependencies", []) as Array).has("ruined_village_ravine_choice"):
+		failures.append("church threshold must depend on a solved ravine route")
+
+	for clue: Node in get_tree().get_nodes_in_group("village_clue"):
+		if village.is_ancestor_of(clue) and not clue.has_signal("clue_inspected"):
+			failures.append("village clues must expose clue_inspected for authored sequencing")
+			break
+	var debris_gate: Node = village.get_node_or_null("VillagePuzzles/RavineDebrisGate")
+	if debris_gate != null and not debris_gate.has_signal("gate_opened"):
+		failures.append("ravine debris gate must expose gate_opened for authored sequencing")
+	var bridges: Array[Node] = get_tree().get_nodes_in_group("village_ice_bridge")
+	if not bridges.is_empty() and not bridges[0].has_signal("bridge_frozen"):
+		failures.append("ice bridge must expose bridge_frozen for authored sequencing")
+	var memories: Array[Node] = get_tree().get_nodes_in_group("village_memory")
+	if not memories.is_empty() and not memories[0].has_signal("memory_found"):
+		failures.append("Sound memory must expose memory_found for optional sequencing")
+
+	var player: Node = village.get_node_or_null("Player")
+	if player != null:
+		var caster: Node = player.get_node_or_null("AbilityCaster")
+		if caster != null and int(caster.get("current_ability_index")) != 0:
+			failures.append("production slice should start on the first shared spell instead of auto-selecting Flight")
+		var aerial: Node = player.get_node_or_null("AerialLocomotion")
+		if aerial != null and bool(aerial.get("flight_unlocked")):
+			failures.append("production slice must not auto-unlock Flight and bypass the ravine")
 
 
 func validate_outdoor_remaster() -> void:

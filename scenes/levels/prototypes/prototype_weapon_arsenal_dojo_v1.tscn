@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://scripts/levels/prototype_weapon_arsenal_dojo.gd" id="1_dojo"]
+[ext_resource type="Script" path="res://scripts/levels/prototype_weapon_arsenal_dojo_v2.gd" id="1_dojo"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player_combat_v2.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]

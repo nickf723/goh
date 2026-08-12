@@ -41,14 +41,17 @@ func _validate_rig_scenes() -> void:
 	for _index: int in range(2):
 		await get_tree().process_frame
 	if whip != null:
+		whip.call("_snap_idle")
 		_expect(whip.line != null, "whip owns deterministic rendered line")
 		_expect(whip.line.get_contact_samples(true).size() > whip.segment_count, "whip contact samples cover rendered body")
 		_expect(bool(whip.get_debug_data().get("controlled_line", false)), "whip reports controlled-line authority")
 	if chain != null:
+		chain.call("_snap_idle")
 		_expect(chain.line != null, "chain owns deterministic rendered line")
 		_expect(chain.line.get_contact_samples(true).size() > chain.segment_count, "chain contact samples cover rendered body")
 		_expect(bool(chain.get_debug_data().get("controlled_line", false)), "chain reports controlled-line authority")
 	if flail != null:
+		flail.call("_snap_idle")
 		_expect(flail.line != null, "flail owns deterministic short chain")
 		_expect(flail.segment_count == 7, "flail uses a small fixed segment count")
 		_expect(bool(flail.get_debug_data().get("simplified_physics", false)), "flail reports simplified physics")

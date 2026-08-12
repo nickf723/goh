@@ -1,0 +1,26 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_weapon_arsenal_dojo.gd" id="1_dojo"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator.gd" id="5_regen"]
+
+[node name="PrototypeWeaponArsenalDojo" type="Node3D"]
+script = ExtResource("1_dojo")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="LabResourceRegenerator" type="Node" parent="."]
+script = ExtResource("5_regen")
+mana_per_second = 3.0
+stamina_per_second = 4.0
+focus_per_second = 0.0
+refill_on_ready = true
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+position = Vector3(0, 1, -11)
+rotation_degrees = Vector3(0, 180, 0)

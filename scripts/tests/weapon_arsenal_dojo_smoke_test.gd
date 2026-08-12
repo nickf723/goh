@@ -9,6 +9,9 @@ const WeaponSandboxCatalogScript = preload(
 const WeaponClassMotionCatalogScript = preload(
 	"res://scripts/weapons/weapon_class_motion_catalog.gd"
 )
+const WeaponClassCombatIdentityScript = preload(
+	"res://scripts/weapons/weapon_class_combat_identity.gd"
+)
 const WeaponPoseCatalogRouterScript = preload(
 	"res://scripts/weapons/weapon_pose_catalog_router.gd"
 )
@@ -26,6 +29,7 @@ func _ready() -> void:
 	GameState.reset_run()
 	_validate_catalogs()
 	_validate_motion_fallback_contract()
+	_validate_combat_identity_contract()
 	dojo = DojoScene.instantiate()
 	add_child(dojo)
 	for _index: int in range(8):
@@ -33,6 +37,7 @@ func _ready() -> void:
 	await get_tree().physics_frame
 	_validate_dojo_runtime()
 	await _validate_player_integration()
+	await _validate_true_range_and_geometry_runtime()
 	if dojo != null and is_instance_valid(dojo):
 		dojo.queue_free()
 	await get_tree().process_frame
@@ -115,6 +120,65 @@ func _validate_motion_fallback_contract() -> void:
 	_expect(bool(sample.get("fallback_class_motion", false)), "hammer sample identifies fallback class motion")
 
 
+func _validate_combat_identity_contract() -> void:
+	var bow: WeaponDefinition = WeaponSandboxCatalogScript.get_weapon("bow")
+	var shuriken: WeaponDefinition = WeaponSandboxCatalogScript.get_weapon("shuriken")
+	var boomerang: WeaponDefinition = WeaponSandboxCatalogScript.get_weapon("boomerang")
+	var lance: WeaponDefinition = WeaponSandboxCatalogScript.get_weapon("lance")
+	var mace: WeaponDefinition = WeaponSandboxCatalogScript.get_weapon("mace")
+	var halberd: WeaponDefinition = WeaponSandboxCatalogScript.get_weapon("halberd")
+	_expect(bow != null and shuriken != null and boomerang != null and lance != null, "ranged/line identity weapons resolve")
+	_expect(mace != null and halberd != null, "impact identity weapons resolve")
+	if bow != null:
+		var attack: WeaponAttackDefinition = bow.get_moveset().get_entry_attack("light")
+		_expect(
+			WeaponClassCombatIdentityScript.get_geometry_mode("bow", attack)
+			== WeaponClassCombatIdentityScript.GEOMETRY_PRECISION_RAY,
+			"bow uses a precision ray instead of a melee sphere"
+		)
+	if shuriken != null:
+		var attack: WeaponAttackDefinition = shuriken.get_moveset().get_entry_attack("light")
+		_expect(
+			WeaponClassCombatIdentityScript.get_geometry_mode("shuriken", attack)
+			== WeaponClassCombatIdentityScript.GEOMETRY_FAN_RAYS,
+			"shuriken uses a multi-ray fan"
+		)
+		_expect(WeaponClassCombatIdentityScript.get_fan_angles(attack).size() == 3, "light shuriken throws a three-ray fan")
+	if boomerang != null:
+		var attack: WeaponAttackDefinition = boomerang.get_moveset().get_entry_attack("light")
+		_expect(
+			WeaponClassCombatIdentityScript.get_geometry_mode("boomerang", attack)
+			== WeaponClassCombatIdentityScript.GEOMETRY_RETURNING_RAY,
+			"boomerang owns a returning ranged path"
+		)
+	if lance != null:
+		var attack: WeaponAttackDefinition = lance.get_moveset().get_entry_attack("light")
+		_expect(
+			WeaponClassCombatIdentityScript.get_geometry_mode("lance", attack)
+			== WeaponClassCombatIdentityScript.GEOMETRY_LINE,
+			"lance thrust uses a narrow line geometry"
+		)
+	if mace != null:
+		var attack: WeaponAttackDefinition = mace.get_moveset().get_entry_attack("heavy")
+		var payload: DamagePayload = attack.build_payload(mace)
+		WeaponClassCombatIdentityScript.apply_payload_identity(
+			payload, "mace", attack, 1, null, Vector3(0.0, 0.0, 2.0)
+		)
+		_expect(payload.status_effect == "staggered", "mace heavy authors a dazing stagger")
+		_expect(payload.knockback_strength >= 2.6, "mace heavy has real impact force")
+	if halberd != null:
+		var attack: WeaponAttackDefinition = halberd.get_moveset().get_entry_attack("heavy")
+		var payload: DamagePayload = attack.build_payload(halberd)
+		var target_offset := Vector3(0.0, 0.0, 3.0)
+		WeaponClassCombatIdentityScript.apply_payload_identity(
+			payload, "halberd", attack, 1, null, target_offset
+		)
+		_expect(
+			payload.knockback_direction.dot(target_offset.normalized()) < -0.8,
+			"halberd heavy pulls inward instead of pushing away"
+		)
+
+
 func _validate_dojo_runtime() -> void:
 	_expect(dojo != null, "arsenal dojo instantiates")
 	if dojo == null:
@@ -156,6 +220,51 @@ func _validate_player_integration() -> void:
 			"SafeWeaponController applies valid fallback footwork before combat motion"
 		)
 	controller.cancel_current_attack("smoke_test")
+
+
+func _validate_true_range_and_geometry_runtime() -> void:
+	if dojo == null:
+		return
+	var player: CharacterBody3D = dojo.get_node_or_null("Player") as CharacterBody3D
+	var controller: SafeWeaponController = (
+		dojo.get_node_or_null("Player/WeaponController") as SafeWeaponController
+	)
+	var center_target: Node3D = dojo.get_node_or_null("TrainingTargets/CenterTarget") as Node3D
+	if player == null or controller == null or center_target == null:
+		failures.append("range regression resolves player/controller/center target")
+		return
+
+	var hammer: WeaponDefinition = WeaponSandboxCatalogScript.get_weapon("hammer")
+	controller.equip_weapon(hammer)
+	var hammer_attack: WeaponAttackDefinition = hammer.get_moveset().get_entry_attack("light")
+	player.global_position = Vector3(0.0, 1.0, -11.0)
+	player.rotation_degrees = Vector3(0.0, 180.0, 0.0)
+	await get_tree().physics_frame
+	var far_targets: Array[Node] = controller.find_targets(hammer_attack)
+	_expect(
+		far_targets.is_empty(),
+		"true range blocks Hammer from hitting dojo targets across the room"
+	)
+
+	player.global_position = Vector3(0.0, 1.0, 0.7)
+	player.rotation_degrees = Vector3(0.0, 180.0, 0.0)
+	await get_tree().physics_frame
+	var near_targets: Array[Node] = controller.find_targets(hammer_attack)
+	_expect(
+		near_targets.has(center_target),
+		"Hammer finds the center target once Grace is actually within reach"
+	)
+
+	var bow: WeaponDefinition = WeaponSandboxCatalogScript.get_weapon("bow")
+	controller.equip_weapon(bow)
+	var bow_attack: WeaponAttackDefinition = bow.get_moveset().get_entry_attack("light")
+	player.global_position = Vector3(0.0, 1.0, 0.7)
+	player.rotation_degrees = Vector3(0.0, 180.0, 0.0)
+	await get_tree().physics_frame
+	var bow_targets: Array[Node] = controller.find_targets(bow_attack)
+	_expect(bow_targets.size() <= 1, "Bow precision shot can only resolve the first ray contact")
+	if not bow_targets.is_empty():
+		_expect(bow_targets[0] == center_target, "Bow ray respects the nearer target instead of damaging through it")
 
 
 func _expect(condition: bool, label: String) -> void:

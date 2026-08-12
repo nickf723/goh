@@ -125,11 +125,17 @@ func send_payload_to_target(
 func start_attack(attack: WeaponAttackDefinition) -> bool:
 	_kill_attack_facing_tween()
 	var resolved_attack: WeaponAttackDefinition = attack
+	var weapon_class: String = equipped_weapon.weapon_class if equipped_weapon != null else "sword"
 	if equipped_weapon != null:
 		resolved_attack = WeaponClassMotionCatalogScript.prepare_attack(
 			attack,
-			equipped_weapon.weapon_class
+			weapon_class
 		)
+	resolved_attack = _prepare_class_control_attack(
+		resolved_attack,
+		attack,
+		weapon_class
+	)
 	var stamina_before: int = GameState.get_stat("stamina")
 	var started: bool = super.start_attack(resolved_attack)
 	if started:
@@ -140,6 +146,39 @@ func start_attack(attack: WeaponAttackDefinition) -> bool:
 		else 0
 	)
 	return started
+
+
+func _prepare_class_control_attack(
+	resolved_attack: WeaponAttackDefinition,
+	source_attack: WeaponAttackDefinition,
+	weapon_class: String
+) -> WeaponAttackDefinition:
+	if resolved_attack == null:
+		return source_attack
+	var needs_runtime_tuning: bool = weapon_class in [
+		"staff", "daggers", "gauntlets", "shuriken"
+	]
+	if not needs_runtime_tuning:
+		return resolved_attack
+	var tuned: WeaponAttackDefinition = resolved_attack
+	if tuned == source_attack:
+		tuned = source_attack.duplicate(true) as WeaponAttackDefinition
+		if tuned == null:
+			return resolved_attack
+	match weapon_class:
+		"staff":
+			tuned.allow_spell_cancel = true
+			tuned.cancel_window_start_normalized = minf(
+				tuned.cancel_window_start_normalized,
+				0.5
+			)
+		"daggers", "gauntlets", "shuriken":
+			tuned.allow_dodge_cancel = true
+			tuned.cancel_window_start_normalized = minf(
+				tuned.cancel_window_start_normalized,
+				0.58 if tuned.input_kind == "heavy" else 0.42
+			)
+	return tuned
 
 
 func find_targets(attack: WeaponAttackDefinition) -> Array[Node]:
@@ -276,7 +315,7 @@ func _find_ray_targets(
 	var actor: Node3D = get_actor()
 	if actor == null:
 		return []
-	var origin: Vector3 = get_attack_origin()
+	var origin: Vector3 = _get_ranged_origin(actor)
 	var base_forward: Vector3 = get_attack_forward()
 	base_forward.y = 0.0
 	if base_forward.length_squared() <= 0.0001:
@@ -311,6 +350,16 @@ func _find_ray_targets(
 		if targets.size() >= get_effective_max_targets(attack):
 			break
 	return targets
+
+
+func _get_ranged_origin(actor: Node3D = null) -> Vector3:
+	var resolved_actor: Node3D = actor if actor != null else get_actor()
+	if resolved_actor == null:
+		return get_attack_origin()
+	# Player root sits around the torso center. A modest lift tracks Grace's hand /
+	# chest band while avoiding the old melee origin that skimmed over human-sized
+	# targets when used as a horizontal projectile ray.
+	return resolved_actor.global_position + Vector3.UP * 0.42
 
 
 func _spawn_ranged_trace(
@@ -404,13 +453,13 @@ func _execute_boomerang_return(
 	)
 	if returned == null:
 		return
-	var return_origin: Vector3 = get_attack_origin()
-	var target_position: Vector3 = get_target_position(target)
+	var return_origin: Vector3 = _get_ranged_origin()
+	var target_position: Vector3 = get_target_position(target) + Vector3.UP * 0.85
 	var return_direction: Vector3 = return_origin - target_position
 	return_direction.y = 0.0
 	if return_direction.length_squared() > 0.0001:
 		returned.knockback_direction = return_direction.normalized()
-	_spawn_ranged_trace(target_position + Vector3.UP, return_origin, attack)
+	_spawn_ranged_trace(target_position, return_origin, attack)
 	super.send_payload_to_target(target, returned)
 	HitStop.request(maxf(attack.hit_stop_duration * 0.55, 0.025), 0.12)
 

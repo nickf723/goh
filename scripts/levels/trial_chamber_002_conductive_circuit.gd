@@ -23,9 +23,6 @@ const CopperProfile: PhysicalMaterialProfile = preload(
 const WaterProfile: PhysicalMaterialProfile = preload(
 	"res://data/materials/water_physical_profile.tres"
 )
-const CircuitExcitationPortScript: Script = preload(
-	"res://scripts/physics/circuit_excitation_port.gd"
-)
 const StatusReceiverScript: Script = preload(
 	"res://scripts/combat/status_receiver.gd"
 )
@@ -429,13 +426,9 @@ func _create_excitation_port(
 	position_value: Vector3,
 	terminal_z: float
 ) -> CircuitExcitationPort:
-	var target := Area3D.new()
-	target.name = component_id.capitalize() + "Input"
-	target.set_script(CircuitExcitationPortScript)
-	target.position = position_value
-	target.collision_layer = 1
-	target.collision_mask = 1
-	var port := target as CircuitExcitationPort
+	var port := CircuitExcitationPort.new()
+	port.name = component_id.capitalize() + "Input"
+	port.position = position_value
 	port.component_id = component_id
 	port.display_name = "Lightning Input"
 	port.default_voltage_volts = 36.0
@@ -446,13 +439,21 @@ func _create_excitation_port(
 	_create_terminal(port, "TerminalA", "positive", Vector3(0.0, 0.0, terminal_z), 0.42)
 	_create_terminal(port, "TerminalB", "negative", Vector3(0.0, 0.0, -terminal_z), 0.42)
 
+	# CircuitExcitationPort is a Node3D-based circuit component, not an Area3D.
+	# Give it a child hit area so Lightning can discover the collider and then
+	# resolve upward to the port's receive_damage_payload() implementation.
+	var hit_area := Area3D.new()
+	hit_area.name = "LightningTargetArea"
+	hit_area.collision_layer = 1
+	hit_area.collision_mask = 1
 	var collision := CollisionShape3D.new()
 	collision.name = "CollisionShape3D"
 	var shape := SphereShape3D.new()
 	shape.radius = 0.8
 	collision.shape = shape
 	collision.position = Vector3(0.0, 1.0, 0.0)
-	target.add_child(collision)
+	hit_area.add_child(collision)
+	port.add_child(hit_area)
 
 	var rod := MeshInstance3D.new()
 	rod.name = "LightningRod"
@@ -464,8 +465,8 @@ func _create_excitation_port(
 	rod.mesh = rod_mesh
 	rod.position = Vector3(0.0, 1.05, 0.0)
 	rod.material_override = lightning_material
-	target.add_child(rod)
-	parent.add_child(target)
+	port.add_child(rod)
+	parent.add_child(port)
 	return port
 
 

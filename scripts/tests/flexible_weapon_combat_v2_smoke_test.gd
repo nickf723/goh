@@ -98,7 +98,9 @@ func _validate_flexible_contacts() -> void:
 	if player == null or controller == null or center_target == null:
 		failures.append("flex contact test resolves player/controller/target")
 		return
-	player.global_position = Vector3(0.0, 1.0, 0.7)
+	# 2 m from the center target: inside legitimate reach for Whip, Chains, and
+	# the deliberately short 1.9 m Flail once target radius/contact radius count.
+	player.global_position = Vector3(0.0, 1.0, 1.6)
 	player.rotation_degrees = Vector3(0.0, 180.0, 0.0)
 	await get_tree().physics_frame
 

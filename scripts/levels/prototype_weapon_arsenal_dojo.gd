@@ -7,6 +7,9 @@ const WeaponSandboxCatalogScript = preload(
 const WeaponClassMotionCatalogScript = preload(
 	"res://scripts/weapons/weapon_class_motion_catalog.gd"
 )
+const WeaponMasteryCatalogScript = preload(
+	"res://scripts/weapons/weapon_mastery_catalog.gd"
+)
 const CombatArenaLoadoutScript = preload(
 	"res://scripts/systems/combat_arena_loadout.gd"
 )
@@ -102,60 +105,37 @@ func _build_environment() -> void:
 	light.light_energy = 1.35
 	light.shadow_enabled = true
 	add_child(light)
+	_add_fill_light("WarmFill", Vector3(-8.0, 4.2, 2.0), Color(1.0, 0.46, 0.2), 2.2)
+	_add_fill_light("CoolFill", Vector3(8.0, 4.2, 2.0), Color(0.24, 0.62, 1.0), 2.0)
 
-	var warm := OmniLight3D.new()
-	warm.name = "WarmFill"
-	warm.position = Vector3(-8.0, 4.2, 2.0)
-	warm.light_color = Color(1.0, 0.46, 0.2, 1.0)
-	warm.light_energy = 2.2
-	warm.omni_range = 15.0
-	add_child(warm)
-
-	var cool := OmniLight3D.new()
-	cool.name = "CoolFill"
-	cool.position = Vector3(8.0, 4.2, 2.0)
-	cool.light_color = Color(0.24, 0.62, 1.0, 1.0)
-	cool.light_energy = 2.0
-	cool.omni_range = 15.0
-	add_child(cool)
-
+	var wall_color := Color(0.07, 0.08, 0.115, 1.0)
 	_create_static_box("Floor", Vector3(0.0, -0.5, 0.0), Vector3(32.0, 1.0, 32.0), Color(0.055, 0.065, 0.09, 1.0))
-	_create_static_box("BackWall", Vector3(0.0, 2.5, 16.0), Vector3(32.0, 6.0, 1.0), Color(0.07, 0.08, 0.115, 1.0))
-	_create_static_box("FrontWall", Vector3(0.0, 2.5, -16.0), Vector3(32.0, 6.0, 1.0), Color(0.07, 0.08, 0.115, 1.0))
-	_create_static_box("LeftWall", Vector3(-16.0, 2.5, 0.0), Vector3(1.0, 6.0, 32.0), Color(0.07, 0.08, 0.115, 1.0))
-	_create_static_box("RightWall", Vector3(16.0, 2.5, 0.0), Vector3(1.0, 6.0, 32.0), Color(0.07, 0.08, 0.115, 1.0))
+	_create_static_box("BackWall", Vector3(0.0, 2.5, 16.0), Vector3(32.0, 6.0, 1.0), wall_color)
+	_create_static_box("FrontWall", Vector3(0.0, 2.5, -16.0), Vector3(32.0, 6.0, 1.0), wall_color)
+	_create_static_box("LeftWall", Vector3(-16.0, 2.5, 0.0), Vector3(1.0, 6.0, 32.0), wall_color)
+	_create_static_box("RightWall", Vector3(16.0, 2.5, 0.0), Vector3(1.0, 6.0, 32.0), wall_color)
 
-	var title := Label3D.new()
-	title.name = "DojoTitle"
-	title.position = Vector3(0.0, 4.0, 15.35)
-	title.text = "ARSENAL DOJO • 16 WEAPON CLASSES"
-	title.font_size = 48
-	title.pixel_size = 0.007
-	title.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	title.outline_size = 8
-	title.modulate = Color(0.86, 0.9, 1.0, 1.0)
-	add_child(title)
-
-	status_label = Label3D.new()
-	status_label.name = "CurrentWeaponStatus"
-	status_label.position = Vector3(0.0, 3.1, 15.2)
-	status_label.font_size = 26
-	status_label.pixel_size = 0.0065
-	status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	status_label.outline_size = 6
-	status_label.modulate = Color(1.0, 0.76, 0.3, 1.0)
-	add_child(status_label)
-
-	var instructions := Label3D.new()
-	instructions.name = "Instructions"
-	instructions.position = Vector3(0.0, 2.35, 15.05)
-	instructions.text = "SIDE PEDESTALS SWITCH CLASSES • F8 RESET • F9 LIVE ENEMIES"
-	instructions.font_size = 21
-	instructions.pixel_size = 0.006
-	instructions.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	instructions.outline_size = 5
-	instructions.modulate = Color(0.7, 0.8, 1.0, 1.0)
-	add_child(instructions)
+	_add_label(
+		"DojoTitle",
+		"ARSENAL DOJO • 16 WEAPON CLASSES",
+		Vector3(0.0, 4.0, 15.35),
+		48,
+		Color(0.86, 0.9, 1.0)
+	)
+	status_label = _add_label(
+		"CurrentWeaponStatus",
+		"INITIALIZING",
+		Vector3(0.0, 3.1, 15.2),
+		26,
+		Color(1.0, 0.76, 0.3)
+	)
+	_add_label(
+		"Instructions",
+		"SIDE PEDESTALS SWITCH CLASSES • F8 RESET • F9 LIVE ENEMIES",
+		Vector3(0.0, 2.35, 15.05),
+		21,
+		Color(0.7, 0.8, 1.0)
+	)
 
 	for x: float in [-6.0, -3.0, 0.0, 3.0, 6.0]:
 		var line := MeshInstance3D.new()
@@ -182,14 +162,14 @@ func _build_pedestals() -> void:
 			weapon,
 			WeaponSandboxCatalogScript.get_status_label(weapon_class)
 		)
-		var side: float = -1.0 if index < 8 else 1.0
-		var row_index: int = index if index < 8 else index - 8
+		var left_bank: bool = index < 8
+		var row_index: int = index if left_bank else index - 8
 		pedestal.position = Vector3(
-			side * 13.8,
+			-13.8 if left_bank else 13.8,
 			0.0,
 			-11.5 + float(row_index) * 3.25
 		)
-		pedestal.rotation_degrees.y = -90.0 if side < 0.0 else 90.0
+		pedestal.rotation_degrees.y = -90.0 if left_bank else 90.0
 		add_child(pedestal)
 
 
@@ -255,18 +235,17 @@ func _refresh_status() -> void:
 		status_label.text = "NO WEAPON"
 		return
 	var status: String = WeaponSandboxCatalogScript.get_status_label(weapon.weapon_class)
-	var mastery: Dictionary = WeaponMasteryCatalogScript.get_class_definition(weapon.weapon_class)
-	var identity: String = str(mastery.get("identity", weapon.weapon_class.capitalize()))
-	var motion_id: String = "authored attack motion"
+	var mastery_name: String = WeaponMasteryCatalogScript.get_display_name(weapon.weapon_class)
+	var motion_id: String = "AUTHORED ATTACK MOTION"
 	if weapon_controller.current_attack != null and WeaponClassMotionCatalogScript.has_profile(
 		weapon_controller.current_attack.character_pose_id
 	):
-		motion_id = "class-motion fallback"
+		motion_id = "CLASS-MOTION FALLBACK"
 	status_label.text = (
 		weapon.display_name.to_upper()
 		+ " • " + status
-		+ " • " + identity.to_upper()
-		+ " • " + motion_id.to_upper()
+		+ " • " + mastery_name.to_upper()
+		+ " • " + motion_id
 		+ (" • LIVE ENEMIES" if enemies_live else "")
 	)
 	status_label.modulate = weapon.visual_accent_color
@@ -316,6 +295,41 @@ func reset_dojo() -> void:
 	_refresh_enemies()
 	CombatArenaLoadoutScript.refill_combat_resources()
 	_show_message("Arsenal Dojo reset #" + str(reset_count) + ". Weapon class preserved.")
+
+
+func _add_fill_light(
+	node_name: String,
+	position_value: Vector3,
+	color: Color,
+	energy: float
+) -> void:
+	var light := OmniLight3D.new()
+	light.name = node_name
+	light.position = position_value
+	light.light_color = color
+	light.light_energy = energy
+	light.omni_range = 15.0
+	add_child(light)
+
+
+func _add_label(
+	node_name: String,
+	text_value: String,
+	position_value: Vector3,
+	font_size: int,
+	color: Color
+) -> Label3D:
+	var label := Label3D.new()
+	label.name = node_name
+	label.position = position_value
+	label.text = text_value
+	label.font_size = font_size
+	label.pixel_size = 0.0065
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.outline_size = 6
+	label.modulate = color
+	add_child(label)
+	return label
 
 
 func _create_static_box(

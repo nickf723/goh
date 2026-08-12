@@ -119,11 +119,9 @@ func _validate_flexible_contacts() -> void:
 			continue
 		var startup: float = active_attack.get_startup_duration(controller.get_attack_speed())
 		if rig.has_method("update_attack_pose"):
-			rig.call("update_attack_pose", active_attack, startup * 0.96, controller.get_attack_speed())
-		for _index: int in range(3):
-			await get_tree().physics_frame
+			rig.call("update_attack_pose", active_attack, startup + 0.001, controller.get_attack_speed())
 		var targets: Array[Node] = controller.find_targets(active_attack)
-		_expect(targets.has(center_target), weapon_class + " rendered line can contact nearby center target")
+		_expect(targets.has(center_target), weapon_class + " visible active line can contact nearby center target")
 		var debug_data: Dictionary = rig.call("get_debug_data") if rig.has_method("get_debug_data") else {}
 		if weapon_class == "flail":
 			_expect(bool(debug_data.get("simplified_physics", false)), "flail uses simplified head-lag physics")

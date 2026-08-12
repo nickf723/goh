@@ -7,19 +7,25 @@ const WeaponCharacterPoseCatalogScript = preload(
 const RuviaHalberdPoseCatalogScript = preload(
 	"res://scripts/weapons/ruvia_halberd_pose_catalog.gd"
 )
+const WeaponClassMotionCatalogScript = preload(
+	"res://scripts/weapons/weapon_class_motion_catalog.gd"
+)
 
 
 static func has_profile(profile_id: String) -> bool:
 	return (
 		RuviaHalberdPoseCatalogScript.has_profile(profile_id)
 		or WeaponCharacterPoseCatalogScript.has_profile(profile_id)
+		or WeaponClassMotionCatalogScript.has_profile(profile_id)
 	)
 
 
 static func get_profile(profile_id: String) -> Dictionary:
 	if RuviaHalberdPoseCatalogScript.has_profile(profile_id):
 		return RuviaHalberdPoseCatalogScript.get_profile(profile_id)
-	return WeaponCharacterPoseCatalogScript.get_profile(profile_id)
+	if WeaponCharacterPoseCatalogScript.has_profile(profile_id):
+		return WeaponCharacterPoseCatalogScript.get_profile(profile_id)
+	return WeaponClassMotionCatalogScript.get_profile(profile_id)
 
 
 static func sample_attack(
@@ -35,7 +41,13 @@ static func sample_attack(
 			elapsed,
 			attack_speed
 		)
-	return WeaponCharacterPoseCatalogScript.sample_attack(
+	if WeaponCharacterPoseCatalogScript.has_profile(attack.character_pose_id):
+		return WeaponCharacterPoseCatalogScript.sample_attack(
+			attack,
+			elapsed,
+			attack_speed
+		)
+	return WeaponClassMotionCatalogScript.sample_attack(
 		attack,
 		elapsed,
 		attack_speed
@@ -47,5 +59,7 @@ static func validate_profiles() -> Array[String]:
 	for failure: String in WeaponCharacterPoseCatalogScript.validate_profiles():
 		failures.append(failure)
 	for failure: String in RuviaHalberdPoseCatalogScript.validate_profiles():
+		failures.append(failure)
+	for failure: String in WeaponClassMotionCatalogScript.validate_profiles():
 		failures.append(failure)
 	return failures

@@ -9,14 +9,26 @@ on:
       - "scripts/weapons/weapon_class_combat_identity.gd"
       - "scripts/weapons/weapon_pose_catalog_router.gd"
       - "scripts/weapons/safe_weapon_controller.gd"
+      - "scripts/weapons/combat_weapon_controller_v2.gd"
       - "scripts/weapons/weapon_sandbox_catalog.gd"
       - "scripts/weapons/training_proxy_weapon_rig.gd"
+      - "scripts/weapons/flexible_weapon_contact_sampler.gd"
+      - "scripts/weapons/whip_weapon_rig_v2.gd"
+      - "scripts/weapons/chain_weapon_rig_v2.gd"
+      - "scripts/weapons/flail_weapon_rig_3d.gd"
       - "scripts/interaction/sandbox_weapon_pedestal.gd"
       - "scripts/levels/prototype_weapon_arsenal_dojo.gd"
+      - "scripts/levels/prototype_weapon_arsenal_dojo_v2.gd"
       - "scripts/tests/weapon_arsenal_dojo_smoke_test.gd"
+      - "scripts/tests/flexible_weapon_combat_v2_smoke_test.gd"
+      - "scenes/actors/player/player_combat_v2.tscn"
+      - "scenes/weapons/whip_weapon_rig.tscn"
+      - "scenes/weapons/chain_weapon_rig.tscn"
+      - "scenes/weapons/flail_weapon_rig.tscn"
       - "scenes/weapons/training_proxy_weapon_rig.tscn"
       - "scenes/levels/prototypes/prototype_weapon_arsenal_dojo_v1.tscn"
       - "scenes/tests/weapon_arsenal_dojo_smoke_test.tscn"
+      - "scenes/tests/flexible_weapon_combat_v2_smoke_test.tscn"
       - "docs/WEAPON_ARSENAL_DOJO_V0_1.md"
       - "docs/WEAPON_COMBAT_IDENTITY_V0_2.md"
       - ".github/workflows/weapon-arsenal-dojo-validation.yml"
@@ -24,11 +36,14 @@ on:
     paths:
       - "scripts/weapons/**"
       - "scripts/interaction/sandbox_weapon_pedestal.gd"
-      - "scripts/levels/prototype_weapon_arsenal_dojo.gd"
+      - "scripts/levels/prototype_weapon_arsenal_dojo*.gd"
       - "scripts/tests/weapon_arsenal_dojo_smoke_test.gd"
-      - "scenes/weapons/training_proxy_weapon_rig.tscn"
+      - "scripts/tests/flexible_weapon_combat_v2_smoke_test.gd"
+      - "scenes/actors/player/player_combat_v2.tscn"
+      - "scenes/weapons/**"
       - "scenes/levels/prototypes/prototype_weapon_arsenal_dojo_v1.tscn"
       - "scenes/tests/weapon_arsenal_dojo_smoke_test.tscn"
+      - "scenes/tests/flexible_weapon_combat_v2_smoke_test.tscn"
       - "docs/WEAPON_ARSENAL_DOJO_V0_1.md"
       - "docs/WEAPON_COMBAT_IDENTITY_V0_2.md"
       - ".github/workflows/weapon-arsenal-dojo-validation.yml"
@@ -43,7 +58,7 @@ concurrency:
 
 jobs:
   validate-arsenal-dojo:
-    name: Import, combat identity regression, and dojo boot
+    name: Import, combat identity, flexible weapons, and dojo boot
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -69,6 +84,12 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/weapon_arsenal_dojo_smoke_test.tscn 2>&1 | tee arsenal-dojo-test.log
 
+      - name: Run flexible weapon combat v2 regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/flexible_weapon_combat_v2_smoke_test.tscn 2>&1 | tee flexible-weapon-v2-test.log
+
       - name: Boot arsenal dojo
         shell: bash
         run: |
@@ -83,5 +104,6 @@ jobs:
           path: |
             arsenal-dojo-import.log
             arsenal-dojo-test.log
+            flexible-weapon-v2-test.log
             arsenal-dojo-boot.log
           if-no-files-found: ignore

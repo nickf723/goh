@@ -2,7 +2,7 @@ extends Node3D
 class_name WhipWeaponRigV3
 
 @export_range(2.5, 7.0, 0.05) var whip_length: float = 4.55
-@export_range(0.08, 0.6, 0.01) var contact_radius: float = 0.24
+@export_range(0.08, 0.6, 0.01) var contact_radius: float = 0.3
 @export_range(6, 24, 1) var segment_count: int = 14
 @export_range(4.0, 80.0, 1.0) var tip_max_speed: float = 38.0
 @export_range(2.0, 40.0, 1.0) var tip_response: float = 20.0
@@ -84,7 +84,7 @@ func update_attack_pose(
 	var reverse: bool = attack.extra_tags.has("reverse")
 	var side_sign: float = -1.0 if reverse else 1.0
 
-	if elapsed <= startup:
+	if elapsed < startup:
 		var p: float = smoothstep(0.0, 1.0, clampf(elapsed / maxf(startup, 0.01), 0.0, 1.0))
 		if attack.extra_tags.has("precision"):
 			_desired_tip = handle + forward * lerpf(0.9, minf(attack.attack_range, whip_length), p)
@@ -96,20 +96,25 @@ func update_attack_pose(
 			_curve_side = side_sign * sin(p * PI) * 0.1
 			_curve_lift = lerpf(0.75, -0.08, p)
 		else:
-			var start_angle: float = deg_to_rad(-78.0 * side_sign)
-			var end_angle: float = deg_to_rad(78.0 * side_sign)
-			if attack.extra_tags.has("wrap"):
-				start_angle *= 0.7
-				end_angle *= 0.42
-			var angle: float = lerpf(start_angle, end_angle, p)
+			var start_angle: float = deg_to_rad(-82.0 * side_sign)
+			var angle: float = lerpf(start_angle, 0.0, p)
 			var radius: float = lerpf(0.9, minf(attack.attack_range, whip_length), p)
 			_desired_tip = handle + forward * cos(angle) * radius + right * sin(angle) * radius
 			_desired_tip.y += sin(p * PI) * 0.2
-			_curve_side = side_sign * sin(p * PI) * lerpf(0.65, 0.12, p)
+			_curve_side = side_sign * sin(p * PI) * lerpf(0.62, 0.08, p)
 			_curve_lift = sin(p * PI) * 0.16
 	elif elapsed <= active_end:
-		_curve_side *= 0.72
-		_curve_lift *= 0.72
+		# Combat authority wins at the actual hit frame. The rendered line is placed
+		# directly in the contact lane used by hit detection instead of asking a rope
+		# simulation whether it happened to arrive in time.
+		_desired_tip = handle + forward * minf(attack.attack_range, whip_length)
+		if attack.extra_tags.has("overhead"):
+			_desired_tip.y -= 0.28
+		_visual_tip = _desired_tip
+		_curve_side = 0.0
+		_curve_lift = 0.0
+		_update_line_points()
+		_update_tip_visual()
 	else:
 		var recovery: float = smoothstep(
 			0.0,

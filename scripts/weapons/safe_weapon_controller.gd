@@ -4,6 +4,9 @@ class_name SafeWeaponController
 const GameplayEffectAccessBodyFormScript = preload(
 	"res://scripts/effects/gameplay_effect_access.gd"
 )
+const WeaponClassMotionCatalogScript = preload(
+	"res://scripts/weapons/weapon_class_motion_catalog.gd"
+)
 
 @export_group("Camera-Decoupled Attack Facing")
 @export_range(0.0, 1.0, 0.05) var visual_facing_blend: float = 0.78
@@ -87,8 +90,14 @@ func send_payload_to_target(
 
 func start_attack(attack: WeaponAttackDefinition) -> bool:
 	_kill_attack_facing_tween()
+	var resolved_attack: WeaponAttackDefinition = attack
+	if equipped_weapon != null:
+		resolved_attack = WeaponClassMotionCatalogScript.prepare_attack(
+			attack,
+			equipped_weapon.weapon_class
+		)
 	var stamina_before: int = GameState.get_stat("stamina")
-	var started: bool = super.start_attack(attack)
+	var started: bool = super.start_attack(resolved_attack)
 	_gesture_attack_stamina_spent = (
 		maxi(stamina_before - GameState.get_stat("stamina"), 0)
 		if started
@@ -195,6 +204,10 @@ func get_attack_facing_debug_data() -> Dictionary:
 			else "normal"
 		),
 		"body_form_attack_speed": get_attack_speed(),
+		"class_motion_fallback": (
+			current_attack != null
+			and WeaponClassMotionCatalogScript.has_profile(current_attack.character_pose_id)
+		),
 	}
 
 

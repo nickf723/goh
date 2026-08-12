@@ -22,14 +22,14 @@ var dojo: Node
 
 func _ready() -> void:
 	GameState.reset_run()
-	_validate_rig_scenes()
+	await _validate_rig_scenes()
 	dojo = DojoScene.instantiate()
 	add_child(dojo)
 	for _index: int in range(8):
 		await get_tree().process_frame
 	for _index: int in range(3):
 		await get_tree().physics_frame
-	await _validate_dojo_controller()
+	_validate_dojo_controller()
 	await _validate_flexible_runtime_rigs()
 	if dojo != null and is_instance_valid(dojo):
 		dojo.queue_free()

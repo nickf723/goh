@@ -1,6 +1,8 @@
 extends Area3D
 class_name SandboxWeaponPedestal
 
+const FlailRigScene: PackedScene = preload("res://scenes/weapons/flail_weapon_rig.tscn")
+
 var weapon: WeaponDefinition
 var prompt_text: String = "Equip sandbox weapon"
 var status_label: String = "PROXY"
@@ -9,6 +11,8 @@ var status_label: String = "PROXY"
 func configure(new_weapon: WeaponDefinition, new_status_label: String) -> void:
 	weapon = new_weapon
 	status_label = new_status_label
+	if weapon != null and weapon.weapon_class == "flail":
+		weapon.runtime_rig_scene = FlailRigScene
 	prompt_text = "Equip " + (weapon.display_name if weapon != null else "weapon")
 	if is_inside_tree():
 		_refresh_visuals()
@@ -118,4 +122,9 @@ func get_debug_data() -> Dictionary:
 		"class": weapon.weapon_class if weapon != null else "none",
 		"status": status_label,
 		"weapon": weapon.display_name if weapon != null else "empty",
+		"simplified_flail_rig": (
+			weapon != null
+			and weapon.weapon_class == "flail"
+			and weapon.runtime_rig_scene == FlailRigScene
+		),
 	}

@@ -9,7 +9,7 @@ Light bonk
 Heavy bonk
 ```
 
-v0.2 changes the combat contract so classes differ by **how they occupy space and what contact means**, not only by damage, speed, and reach numbers.
+v0.2 changes the combat contract so classes differ by **how they occupy space, how they can cancel, and what contact means**, not only by damage, speed, and reach numbers.
 
 ## Range bug fixed
 
@@ -82,16 +82,26 @@ Current class intentions:
 | Bow | first-contact ray, precision-heavy critical pressure |
 | Hammer | planted force, very high heavy knockback, heavy-impact tag |
 | Mace | heavy stagger / daze |
-| Daggers | low displacement, later-Light flurry damage/critical pressure |
+| Daggers | low displacement, later-Light flurry damage/critical pressure, quick dodge exits |
 | Whip | restrained force; physical whip rig remains targeting authority |
 | Chains | strong force; mastery pull tags reverse force toward Grace |
-| Gauntlets | close pressure, later-combo stance pressure, Heavy launcher behavior |
+| Gauntlets | close pressure, later-combo stance pressure, Heavy launcher behavior, quick dodge exits |
 | Flail | broad momentum and strong Heavy displacement |
 | Halberd | Heavy hooks pull targets toward Grace instead of pushing them away |
 | Boomerang | outbound hit plus reduced delayed return hit |
 | Scythe | Heavy attacks gain an execution bonus against targets at 35% health or lower |
-| Staff | low-force spellweave identity; fuller spell-cancel integration remains a later authoring pass |
-| Shuriken | Light applies `marked`; Heavy consumes `marked` for bonus damage/critical force |
+| Staff | low-force spellweave identity with early spell-cancel access, including Heavy attacks |
+| Shuriken | Light applies `marked`; Heavy consumes `marked` for bonus damage/critical force; quick dodge exits |
+
+## Runtime cancel rhythm
+
+Class identity now also affects how quickly selected weapons can leave an attack without changing the shared action-state architecture.
+
+- Staff attacks may cancel into spells from an earlier window, reinforcing spellweave.
+- Daggers, Gauntlets, and Shuriken receive earlier dodge-cancel windows, including Heavy attacks.
+- committed weapons such as Hammer keep their authored late or disabled Heavy cancels.
+
+The attack Resource itself is not mutated. SafeWeaponController works on the same runtime duplicates used by the class-motion fallback.
 
 ## Authored systems still win
 
@@ -129,6 +139,7 @@ Focus on contrasts rather than balance numbers:
 - Do Daggers/Gauntlets reward staying close and continuing pressure?
 - Does Halberd pulling a target inward create useful follow-ups?
 - Does Scythe's low-health execution window create a recognizable finishing role?
+- Does Staff naturally invite weapon → spell → weapon flow?
 - Does Shuriken Light → Heavy create a readable mark/cash-out rhythm?
 - Does Bow stop cleanly on the first target or wall?
 - Does Boomerang's return beat feel promising enough to justify a real projectile later?

@@ -52,7 +52,7 @@ func _physics_process(delta: float) -> void:
 	if not is_attacking:
 		_desired_tip = _idle_tip()
 		_side_bend = lerpf(_side_bend, 0.0, clampf(delta * 6.0, 0.0, 1.0))
-		_lift_bend = lerpf(_lift_bend, -line_sag, clampf(delta * 6.0, 0.0, 1.0))
+		_lift_bend = lerpf(_lift_bend, 0.0, clampf(delta * 6.0, 0.0, 1.0))
 	_drive_head(delta)
 	_update_line_points()
 	_update_tip_speed(delta)
@@ -113,7 +113,7 @@ func update_attack_pose(
 		)
 		_desired_tip = _desired_tip.lerp(_idle_tip(), recovery)
 		_side_bend = lerpf(_side_bend, 0.0, recovery)
-		_lift_bend = lerpf(_lift_bend, -line_sag, recovery)
+		_lift_bend = lerpf(_lift_bend, 0.0, recovery)
 
 
 func end_attack() -> void:
@@ -314,13 +314,14 @@ func _update_line_points() -> void:
 	var handle: Vector3 = handle_anchor.global_position
 	var forward: Vector3 = _forward()
 	var right: Vector3 = Vector3.UP.cross(forward).normalized()
+	var sag_amount: float = line_sag * (0.2 if is_attacking else 1.0)
 	var points: Array[Vector3] = []
 	for index: int in range(segment_count + 1):
 		var t: float = float(index) / float(segment_count)
 		var point: Vector3 = handle.lerp(_visual_tip, t)
 		var envelope: float = sin(t * PI)
 		point += right * _side_bend * envelope
-		point += Vector3.UP * (_lift_bend - line_sag * (1.0 - (1.0 if is_attacking else 0.0))) * envelope
+		point += Vector3.UP * (_lift_bend - sag_amount) * envelope
 		points.append(point)
 	line.set_points(points)
 

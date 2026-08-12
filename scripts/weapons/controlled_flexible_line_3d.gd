@@ -55,7 +55,9 @@ func set_points(new_points: Array[Vector3]) -> void:
 
 
 func get_points() -> Array[Vector3]:
-	return points.duplicate()
+	var copied_points: Array[Vector3] = []
+	copied_points.assign(points)
+	return copied_points
 
 
 func get_contact_samples(include_midpoints: bool = true) -> Array[Dictionary]:

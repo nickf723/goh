@@ -5,10 +5,10 @@ class_name FlailWeaponRigV2
 func _ready() -> void:
 	chain_length = 1.9
 	tip_mass = 2.9
-	contact_radius = 0.38
+	contact_radius = 0.45
 	segment_count = 7
 	head_max_speed = 16.0
-	head_response = 7.0
+	head_response = 9.5
 	line_sag = 0.28
 	super._ready()
 	remove_from_group("chain_weapon_rigs")
@@ -29,16 +29,19 @@ func update_attack_pose(
 	var handle: Vector3 = handle_anchor.global_position
 	var forward: Vector3 = _forward()
 	var right: Vector3 = Vector3.UP.cross(forward).normalized()
-	if elapsed <= active_end:
+	var heavy: bool = attack.input_kind == "heavy"
+	var rotations: float = 1.25 if heavy else 0.72
+
+	if elapsed < startup:
 		var p: float = smoothstep(
 			0.0,
 			1.0,
-			clampf(elapsed / maxf(active_end, 0.01), 0.0, 1.0)
+			clampf(elapsed / maxf(startup, 0.01), 0.0, 1.0)
 		)
-		var heavy: bool = attack.input_kind == "heavy"
-		var rotations: float = 1.35 if heavy else 0.82
-		var start_angle: float = deg_to_rad(-125.0)
-		var angle: float = start_angle + TAU * rotations * p
+		# Complete the visible wind-up orbit exactly at the forward contact lane.
+		# The head still lags this request, but the active frame below is authoritative.
+		var start_angle: float = -TAU * rotations
+		var angle: float = lerpf(start_angle, 0.0, p)
 		var radius: float = chain_length * lerpf(0.58, 0.98, minf(p * 1.5, 1.0))
 		_desired_tip = (
 			handle
@@ -48,6 +51,14 @@ func update_attack_pose(
 		)
 		_side_bend = sin(angle) * 0.08
 		_lift_bend = 0.04
+	elif elapsed <= active_end:
+		_desired_tip = handle + forward * chain_length * 0.96 + Vector3.UP * 0.08
+		_visual_tip = _desired_tip
+		_tip_velocity *= 0.35
+		_side_bend = 0.0
+		_lift_bend = 0.0
+		_update_line_points()
+		_update_tip_visual()
 	else:
 		var recovery: float = smoothstep(
 			0.0,
@@ -56,7 +67,7 @@ func update_attack_pose(
 		)
 		_desired_tip = _desired_tip.lerp(_idle_tip(), recovery)
 		_side_bend = lerpf(_side_bend, 0.0, recovery)
-		_lift_bend = lerpf(_lift_bend, -line_sag, recovery)
+		_lift_bend = lerpf(_lift_bend, 0.0, recovery)
 
 
 func modify_attack_payload(payload: DamagePayload, attack: WeaponAttackDefinition) -> void:

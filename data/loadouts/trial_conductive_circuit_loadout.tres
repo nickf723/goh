@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AbilityLoadout" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_loadout.gd" id="1_loadout"]
+[ext_resource type="Resource" path="res://data/abilities/metal_tether_ability.tres" id="2_metal"]
+[ext_resource type="Resource" path="res://data/abilities/water_jet_ability.tres" id="3_water"]
+[ext_resource type="Resource" path="res://data/abilities/lightning_spark_ability.tres" id="4_lightning"]
+
+[resource]
+script = ExtResource("1_loadout")
+learned_abilities = Array[AbilityDefinition]([ExtResource("2_metal"), ExtResource("3_water"), ExtResource("4_lightning")])
+equipped_abilities = Array[AbilityDefinition]([ExtResource("2_metal"), ExtResource("3_water"), ExtResource("4_lightning")])
+quick_slot_count = 10

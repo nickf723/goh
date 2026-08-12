@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://scripts/levels/trial_chamber_001_shatter_climb.gd" id="1_trial"]
+[ext_resource type="Script" path="res://scripts/levels/trial_chamber_001_shatter_climb_v2.gd" id="1_trial"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]

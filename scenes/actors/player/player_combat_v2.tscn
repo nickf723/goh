@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
+[ext_resource type="Script" path="res://scripts/weapons/combat_weapon_controller_v2.gd" id="2_weapon"]
+
+[node name="Player" instance=ExtResource("1_player")]
+
+[node name="WeaponController" parent="." index="21"]
+script = ExtResource("2_weapon")

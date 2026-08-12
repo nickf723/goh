@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/tests/flexible_weapon_combat_v2_smoke_test.gd" id="1_test"]
+
+[node name="FlexibleWeaponCombatV2SmokeTest" type="Node"]
+script = ExtResource("1_test")

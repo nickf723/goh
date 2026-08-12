@@ -3,7 +3,7 @@ class_name ChainWeaponRigV3
 
 @export_range(1.5, 5.0, 0.05) var chain_length: float = 3.25
 @export_range(0.1, 5.0, 0.05) var tip_mass: float = 1.8
-@export_range(0.1, 1.0, 0.02) var contact_radius: float = 0.34
+@export_range(0.1, 1.0, 0.02) var contact_radius: float = 0.42
 @export_range(5, 20, 1) var segment_count: int = 11
 @export_range(4.0, 40.0, 1.0) var head_max_speed: float = 22.0
 @export_range(2.0, 30.0, 1.0) var head_response: float = 11.0
@@ -85,26 +85,34 @@ func update_attack_pose(
 	var right: Vector3 = Vector3.UP.cross(forward).normalized()
 	var reverse: bool = attack.extra_tags.has("reverse")
 	var side_sign: float = -1.0 if reverse else 1.0
+	var is_slam: bool = attack.extra_tags.has("slam") or attack.extra_tags.has("ground_slam")
 
-	if elapsed <= startup:
+	if elapsed < startup:
 		var p: float = smoothstep(0.0, 1.0, clampf(elapsed / maxf(startup, 0.01), 0.0, 1.0))
-		if attack.extra_tags.has("slam") or attack.extra_tags.has("ground_slam"):
+		if is_slam:
 			_desired_tip = handle + forward * lerpf(0.65, minf(chain_length, attack.attack_range), p)
 			_desired_tip.y += lerpf(1.35, -0.45, p)
 			_side_bend = side_sign * sin(p * PI) * 0.12
 			_lift_bend = lerpf(0.45, -0.12, p)
 		else:
-			var start_angle: float = deg_to_rad(-108.0 * side_sign)
-			var end_angle: float = deg_to_rad(108.0 * side_sign)
-			var angle: float = lerpf(start_angle, end_angle, p)
+			# The anticipation describes an orbit, but the orbit converges on the
+			# forward contact lane by the frame damage becomes active.
+			var start_angle: float = deg_to_rad(-112.0 * side_sign)
+			var angle: float = lerpf(start_angle, 0.0, p)
 			var radius: float = minf(chain_length, attack.attack_range) * lerpf(0.62, 1.0, p)
 			_desired_tip = handle + forward * cos(angle) * radius + right * sin(angle) * radius
 			_desired_tip.y += sin(p * PI) * 0.18
 			_side_bend = side_sign * sin(p * PI) * 0.22
 			_lift_bend = sin(p * PI) * 0.1
 	elif elapsed <= active_end:
-		_side_bend *= 0.84
-		_lift_bend *= 0.84
+		if not is_slam:
+			_desired_tip = handle + forward * minf(chain_length, attack.attack_range)
+		_visual_tip = _desired_tip
+		_tip_velocity *= 0.25
+		_side_bend = 0.0
+		_lift_bend = 0.0
+		_update_line_points()
+		_update_tip_visual()
 	else:
 		var recovery: float = smoothstep(
 			0.0,

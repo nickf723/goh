@@ -17,6 +17,7 @@ func _ready() -> void:
 	for _index: int in range(2):
 		await get_tree().physics_frame
 	_validate_agility_calibration()
+	await _validate_skeletal_proxy()
 	await _validate_continuity_player()
 	await _validate_target_engagement()
 	_validate_grounded_target_response()
@@ -31,7 +32,9 @@ func _validate_agility_calibration() -> void:
 	var calibration: GraceAgilityCalibration = dojo.get_node_or_null(
 		"Player/GraceAgilityCalibration"
 	) as GraceAgilityCalibration
-	var visual: Node3D = dojo.get_node_or_null("Player/GraceVisualV1") as Node3D
+	var visual: GraceHumanoidSkeletalProxyV1 = dojo.get_node_or_null(
+		"Player/GraceSkeletalVisualV1"
+	) as GraceHumanoidSkeletalProxyV1
 	var ground_motor: PlayerGroundMotionMotor = dojo.get_node_or_null(
 		"Player/GroundMotionMotor"
 	) as PlayerGroundMotionMotor
@@ -39,14 +42,15 @@ func _validate_agility_calibration() -> void:
 		"Player/PlayerDodgeController"
 	) as PlayerDodgeController
 	_expect(calibration != null, "combat player owns Grace agility calibration")
-	_expect(visual != null, "agility calibration resolves Grace visual")
+	_expect(visual != null, "agility calibration resolves skeletal Grace visual")
 	_expect(ground_motor != null and ground_motor.profile != null, "agility calibration resolves ground profile")
 	_expect(dodge != null and dodge.profile != null, "agility calibration resolves dodge profile")
 	if calibration == null or visual == null or ground_motor == null or dodge == null:
 		return
 	var data: Dictionary = calibration.get_debug_data()
 	_expect(bool(data.get("agile_grace", false)), "Grace reports agile calibration")
-	_expect(absf(visual.scale.x - 0.93) < 0.015, "Grace visual is slightly smaller")
+	_expect(bool(data.get("skeletal_visual_active", false)), "agility calibration targets skeletal Grace")
+	_expect(absf(visual.scale.x - 0.93) < 0.015, "skeletal Grace visual is slightly smaller")
 	_expect(
 		ground_motor.get_configured_maximum_speed() > 5.3,
 		"agile Grace has modestly higher top speed"
@@ -69,6 +73,38 @@ func _validate_agility_calibration() -> void:
 	)
 
 
+func _validate_skeletal_proxy() -> void:
+	var skeletal: GraceHumanoidSkeletalProxyV1 = dojo.get_node_or_null(
+		"Player/GraceSkeletalVisualV1"
+	) as GraceHumanoidSkeletalProxyV1
+	var legacy_visual: Node3D = dojo.get_node_or_null("Player/GraceVisualV1") as Node3D
+	var hand_anchor: Node3D = dojo.get_node_or_null(
+		"Player/WeaponController/HandAnchor"
+	) as Node3D
+	_expect(skeletal != null, "combat player instantiates real Skeleton3D Grace proxy")
+	_expect(legacy_visual != null and not legacy_visual.visible, "procedural mannequin is hidden during skeletal calibration")
+	_expect(hand_anchor != null, "skeletal calibration resolves existing weapon hand anchor")
+	if skeletal == null:
+		return
+	await get_tree().process_frame
+	var data: Dictionary = skeletal.get_debug_data()
+	_expect(bool(data.get("skeletal_proxy", false)), "Grace reports skeletal proxy presentation")
+	_expect(str(data.get("skeleton_type", "")) == "Skeleton3D", "Grace proxy uses Godot Skeleton3D")
+	_expect(int(data.get("bone_count", 0)) >= 23, "Grace skeleton exposes full articulated humanoid chain")
+	_expect(bool(data.get("has_pelvis", false)), "Grace skeleton has pelvis articulation")
+	_expect(bool(data.get("has_spine_chain", false)), "Grace skeleton has multi-bone spine")
+	_expect(bool(data.get("has_elbows", false)), "Grace skeleton has elbow articulation")
+	_expect(bool(data.get("has_knees", false)), "Grace skeleton has knee articulation")
+	_expect(bool(data.get("has_weapon_hand", false)), "Grace skeleton exposes weapon hand")
+	_expect(bool(data.get("weapon_socket_driven", false)), "skeletal hand drives existing WeaponController socket")
+	if hand_anchor != null:
+		var socket_position: Vector3 = skeletal.get_weapon_socket_transform().origin
+		_expect(
+			hand_anchor.global_position.distance_to(socket_position) < 0.06,
+			"weapon hand anchor follows skeletal right hand"
+		)
+
+
 func _validate_continuity_player() -> void:
 	var player: CharacterBody3D = dojo.get_node_or_null("Player") as CharacterBody3D
 	var controller: CombatWeaponControllerV2 = dojo.get_node_or_null(
@@ -79,7 +115,7 @@ func _validate_continuity_player() -> void:
 	) as GraceWireMotionVisualCombatV2
 	_expect(player != null, "combat feel dojo resolves player")
 	_expect(controller != null, "combat feel dojo keeps CombatWeaponControllerV2")
-	_expect(visual != null, "combat feel dojo uses continuous Grace visual")
+	_expect(visual != null, "legacy continuity controller remains available as hidden reference")
 	if player == null or controller == null or visual == null:
 		return
 
@@ -105,7 +141,7 @@ func _validate_continuity_player() -> void:
 	await get_tree().process_frame
 	visual.sample_animation_pose(1.0 / 60.0)
 	var active_debug: Dictionary = visual.get_animation_debug_data()
-	_expect(bool(active_debug.get("combat_continuity", false)), "Grace reports combat continuity layer")
+	_expect(bool(active_debug.get("combat_continuity", false)), "legacy continuity layer remains intact during migration")
 	_expect(str(active_debug.get("continuity_attack", "none")) != "none", "continuity layer tracks active attack")
 
 	var speed: float = controller.get_attack_speed()
@@ -138,6 +174,9 @@ func _validate_target_engagement() -> void:
 	var presenter: CombatEngagementPresenter = dojo.get_node_or_null(
 		"Player/CombatEngagementPresenter"
 	) as CombatEngagementPresenter
+	var skeletal: GraceHumanoidSkeletalProxyV1 = dojo.get_node_or_null(
+		"Player/GraceSkeletalVisualV1"
+	) as GraceHumanoidSkeletalProxyV1
 	var targeting: CombatTargetingAssist = dojo.get_node_or_null(
 		"Player/CombatTargetingAssist"
 	) as CombatTargetingAssist
@@ -146,9 +185,10 @@ func _validate_target_engagement() -> void:
 	) as CombatTrainingTargetEngaged
 	_expect(player != null and controller != null, "engagement check resolves player and controller")
 	_expect(presenter != null, "combat player owns target engagement presenter")
+	_expect(skeletal != null, "combat engagement resolves skeletal Grace")
 	_expect(targeting != null, "combat player owns targeting assist")
 	_expect(target != null, "dojo center target uses engaged reaction actor")
-	if player == null or controller == null or presenter == null or targeting == null or target == null:
+	if player == null or controller == null or skeletal == null or presenter == null or targeting == null or target == null:
 		return
 
 	var sword_pedestal: SandboxWeaponPedestal = dojo.get_node_or_null(
@@ -187,8 +227,11 @@ func _validate_target_engagement() -> void:
 	var presenter_debug: Dictionary = presenter.get_debug_data()
 	_expect(
 		str(presenter_debug.get("target", "none")) == "CenterTarget",
-		"Grace presentation commits toward the same target"
+		"legacy Grace presentation reads the committed target"
 	)
+	var skeletal_debug: Dictionary = skeletal.get_debug_data()
+	_expect(str(skeletal_debug.get("animation_state", "")) == "attack", "skeletal Grace enters attack animation state")
+	_expect(str(skeletal_debug.get("attack", "none")) == attack.attack_id, "skeletal Grace samples the authored Sword attack")
 	controller.cancel_current_attack("engagement_smoke")
 	targeting.clear_hard_target()
 

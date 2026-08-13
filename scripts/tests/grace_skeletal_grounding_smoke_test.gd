@@ -150,7 +150,8 @@ func _validate_animation_library_contract() -> void:
 	var library := AnimationLibrary.new()
 	var clip_names: Array[String] = [
 		"Armature|Idle", "Run_Loop", "Jump", "Fall", "Landing", "Combat_Roll", "Hit_Reaction",
-		"Sword_Light_1", "Sword_Light_2", "Sword_Light_3", "Sword_Light_4", "Sword_Heavy",
+		"Sword_Light_1", "Sword_Light_2", "Sword_Light_3", "Sword_Light_4", "Reprise_Thrust",
+		"Sword_Heavy", "Sword_H1", "Sword_H2", "Sword_H3", "Sword_H4",
 		"Passing_Cut", "Rush_Break", "Comet_Slash", "Falling_Edge",
 	]
 	for clip_name: String in clip_names:
@@ -161,9 +162,12 @@ func _validate_animation_library_contract() -> void:
 
 	var validation: Dictionary = AnimationLibraryContractScript.validate_player(player)
 	_expect(bool(validation.get("compatible_core", false)), "imported animation library satisfies Grace core clip contract")
-	_expect(bool(validation.get("sword_calibration_ready", false)), "imported animation library satisfies Sword calibration clip contract")
+	_expect(bool(validation.get("sword_calibration_ready", false)), "imported animation library satisfies complete Sword calibration clip contract")
+	_expect((validation.get("missing_sword", []) as Array).is_empty(), "complete Sword import library has no missing calibration roles")
 	_expect(AnimationLibraryContractScript.get_animation_name(player, "idle") == StringName("Armature|Idle"), "wrapper animation name resolves to idle semantic")
 	_expect(AnimationLibraryContractScript.get_animation_name(player, "dodge") == StringName("Combat_Roll"), "combat roll resolves to dodge semantic")
+	_expect(AnimationLibraryContractScript.get_animation_name(player, "sword_reprise") == StringName("Reprise_Thrust"), "Reprise Thrust resolves to Sword reprise semantic")
+	_expect(AnimationLibraryContractScript.get_animation_name(player, "sword_heavy_3") == StringName("Sword_H3"), "Sword H3 resolves to depth-three Heavy semantic")
 	_expect(AnimationLibraryContractScript.get_animation_name(player, "sword_dash_light") == StringName("Passing_Cut"), "Passing Cut resolves to Sword Dash Light semantic")
 	_expect(AnimationLibraryContractScript.get_animation_name(player, "sword_aerial_heavy") == StringName("Falling_Edge"), "Falling Edge resolves to Sword Aerial Heavy semantic")
 
@@ -174,7 +178,7 @@ func _validate_animation_library_contract() -> void:
 	_expect(resolved, "runtime imported animation adapter accepts core library")
 	var adapter_data: Dictionary = adapter.call("get_debug_data") as Dictionary
 	_expect(bool(adapter_data.get("core_ready", false)), "runtime animation adapter reports core readiness")
-	_expect(bool(adapter_data.get("sword_calibration_ready", false)), "runtime animation adapter reports Sword calibration readiness")
+	_expect(bool(adapter_data.get("sword_calibration_ready", false)), "runtime animation adapter reports complete Sword calibration readiness")
 	var sword_animation: Animation = adapter.call("get_animation", "sword_light_1") as Animation
 	_expect(sword_animation != null, "runtime animation adapter returns semantic Sword clip")
 	adapter.queue_free()

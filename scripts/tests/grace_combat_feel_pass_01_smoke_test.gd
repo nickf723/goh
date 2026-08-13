@@ -16,6 +16,7 @@ func _ready() -> void:
 		await get_tree().process_frame
 	for _index: int in range(2):
 		await get_tree().physics_frame
+	_validate_agility_calibration()
 	await _validate_continuity_player()
 	await _validate_target_engagement()
 	_validate_grounded_target_response()
@@ -24,6 +25,48 @@ func _ready() -> void:
 		dojo.queue_free()
 	await get_tree().process_frame
 	_finish()
+
+
+func _validate_agility_calibration() -> void:
+	var calibration: GraceAgilityCalibration = dojo.get_node_or_null(
+		"Player/GraceAgilityCalibration"
+	) as GraceAgilityCalibration
+	var visual: Node3D = dojo.get_node_or_null("Player/GraceVisualV1") as Node3D
+	var ground_motor: PlayerGroundMotionMotor = dojo.get_node_or_null(
+		"Player/GroundMotionMotor"
+	) as PlayerGroundMotionMotor
+	var dodge: PlayerDodgeController = dojo.get_node_or_null(
+		"Player/PlayerDodgeController"
+	) as PlayerDodgeController
+	_expect(calibration != null, "combat player owns Grace agility calibration")
+	_expect(visual != null, "agility calibration resolves Grace visual")
+	_expect(ground_motor != null and ground_motor.profile != null, "agility calibration resolves ground profile")
+	_expect(dodge != null and dodge.profile != null, "agility calibration resolves dodge profile")
+	if calibration == null or visual == null or ground_motor == null or dodge == null:
+		return
+	var data: Dictionary = calibration.get_debug_data()
+	_expect(bool(data.get("agile_grace", false)), "Grace reports agile calibration")
+	_expect(absf(visual.scale.x - 0.93) < 0.015, "Grace visual is slightly smaller")
+	_expect(
+		ground_motor.get_configured_maximum_speed() > 5.3,
+		"agile Grace has modestly higher top speed"
+	)
+	_expect(
+		ground_motor.profile.acceleration >= 35.0,
+		"agile Grace accelerates more quickly"
+	)
+	_expect(
+		ground_motor.profile.turn_acceleration >= 47.0,
+		"agile Grace redirects more quickly"
+	)
+	_expect(
+		dodge.profile.duration < 0.26,
+		"agile Grace dodge has a quicker cadence"
+	)
+	_expect(
+		dodge.profile.distance < 1.7,
+		"agile dodge is quick rather than longer-range"
+	)
 
 
 func _validate_continuity_player() -> void:

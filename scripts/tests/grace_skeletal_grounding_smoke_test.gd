@@ -6,6 +6,9 @@ const SkeletalGraceScene: PackedScene = preload(
 const HumanoidRigContractScript = preload(
 	"res://scripts/visuals/grace_humanoid_rig_contract.gd"
 )
+const ImportedHumanoidAdapterScript = preload(
+	"res://scripts/visuals/grace_imported_humanoid_adapter.gd"
+)
 
 const EXPECTED_WEAPON_LANGUAGES: Array[String] = [
 	"sword", "lance", "axe", "bow", "hammer", "mace", "daggers", "whip",
@@ -69,6 +72,19 @@ func _validate_current_rig_contract(rig: Node) -> void:
 	_expect(semantic_map.has("head"), "rig contract resolves head semantic")
 	_expect(semantic_map.has("foot_l") and semantic_map.has("foot_r"), "rig contract resolves both foot semantics")
 	_expect((contract.get("hierarchy_errors", []) as Array).is_empty(), "current Grace semantic chains preserve hierarchy")
+
+	var adapter: Node = ImportedHumanoidAdapterScript.new()
+	adapter.set("skeleton_path", NodePath("../Skeleton3D"))
+	rig.add_child(adapter)
+	var resolved: bool = bool(adapter.call("resolve_rig"))
+	_expect(resolved, "runtime humanoid adapter accepts current Grace skeleton")
+	var adapter_data: Dictionary = adapter.call("get_debug_data") as Dictionary
+	_expect(bool(adapter_data.get("weapon_hand_mapped", false)), "runtime adapter exposes primary weapon hand")
+	_expect(bool(adapter_data.get("support_hand_mapped", false)), "runtime adapter exposes support hand")
+	_expect(bool(adapter_data.get("feet_mapped", false)), "runtime adapter exposes both feet")
+	var weapon_hand_transform: Transform3D = adapter.call("get_semantic_world_transform", "hand_r") as Transform3D
+	_expect(weapon_hand_transform.origin.length() > 0.01, "runtime adapter returns a real weapon-hand transform")
+	adapter.queue_free()
 
 
 func _validate_godot_humanoid_profile_aliases() -> void:

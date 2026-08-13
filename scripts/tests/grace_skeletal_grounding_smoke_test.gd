@@ -51,6 +51,7 @@ func _ready() -> void:
 
 	_validate_current_rig_contract(rig)
 	_validate_godot_humanoid_profile_aliases()
+	_validate_mixamo_aliases()
 
 	if rig != null and is_instance_valid(rig):
 		rig.queue_free()
@@ -88,46 +89,19 @@ func _validate_current_rig_contract(rig: Node) -> void:
 
 
 func _validate_godot_humanoid_profile_aliases() -> void:
-	var skeleton: Skeleton3D = Skeleton3D.new()
-	skeleton.name = "GodotHumanoidProfileSkeleton"
-	add_child(skeleton)
-
-	var parents: Dictionary = {
-		"Root": "",
-		"Hips": "Root",
-		"Spine": "Hips",
-		"Chest": "Spine",
-		"UpperChest": "Chest",
-		"Neck": "UpperChest",
-		"Head": "Neck",
-		"LeftShoulder": "UpperChest",
-		"LeftUpperArm": "LeftShoulder",
-		"LeftLowerArm": "LeftUpperArm",
-		"LeftHand": "LeftLowerArm",
-		"RightShoulder": "UpperChest",
-		"RightUpperArm": "RightShoulder",
-		"RightLowerArm": "RightUpperArm",
-		"RightHand": "RightLowerArm",
-		"LeftUpperLeg": "Hips",
-		"LeftLowerLeg": "LeftUpperLeg",
-		"LeftFoot": "LeftLowerLeg",
-		"LeftToes": "LeftFoot",
-		"RightUpperLeg": "Hips",
-		"RightLowerLeg": "RightUpperLeg",
-		"RightFoot": "RightLowerLeg",
-		"RightToes": "RightFoot",
-	}
-	var indices: Dictionary = {}
-	for bone_name_variant: Variant in parents.keys():
-		var bone_name: String = str(bone_name_variant)
-		skeleton.add_bone(bone_name)
-		var index: int = skeleton.find_bone(bone_name)
-		indices[bone_name] = index
-		var parent_name: String = str(parents[bone_name])
-		if parent_name != "" and indices.has(parent_name):
-			skeleton.set_bone_parent(index, int(indices[parent_name]))
-		skeleton.set_bone_rest(index, Transform3D(Basis.IDENTITY, Vector3(0.0, 0.1, 0.0)))
-
+	var specs: Array = [
+		["Root", ""], ["Hips", "Root"], ["Spine", "Hips"], ["Chest", "Spine"],
+		["UpperChest", "Chest"], ["Neck", "UpperChest"], ["Head", "Neck"],
+		["LeftShoulder", "UpperChest"], ["LeftUpperArm", "LeftShoulder"],
+		["LeftLowerArm", "LeftUpperArm"], ["LeftHand", "LeftLowerArm"],
+		["RightShoulder", "UpperChest"], ["RightUpperArm", "RightShoulder"],
+		["RightLowerArm", "RightUpperArm"], ["RightHand", "RightLowerArm"],
+		["LeftUpperLeg", "Hips"], ["LeftLowerLeg", "LeftUpperLeg"],
+		["LeftFoot", "LeftLowerLeg"], ["LeftToes", "LeftFoot"],
+		["RightUpperLeg", "Hips"], ["RightLowerLeg", "RightUpperLeg"],
+		["RightFoot", "RightLowerLeg"], ["RightToes", "RightFoot"],
+	]
+	var skeleton: Skeleton3D = _build_named_skeleton("GodotHumanoidProfileSkeleton", specs)
 	var contract: Dictionary = HumanoidRigContractScript.validate_skeleton(skeleton)
 	_expect(bool(contract.get("compatible", false)), "Godot humanoid-profile bone names satisfy Grace semantic contract")
 	var semantic_map: Dictionary = contract.get("semantic_map", {}) as Dictionary
@@ -135,8 +109,51 @@ func _validate_godot_humanoid_profile_aliases() -> void:
 	_expect(int(semantic_map.get("hand_r", -1)) == skeleton.find_bone("RightHand"), "RightHand maps to weapon hand semantic")
 	_expect(int(semantic_map.get("forearm_l", -1)) == skeleton.find_bone("LeftLowerArm"), "LeftLowerArm maps to support forearm semantic")
 	_expect(int(semantic_map.get("foot_r", -1)) == skeleton.find_bone("RightFoot"), "RightFoot maps to Grace foot semantic")
-
 	skeleton.queue_free()
+
+
+func _validate_mixamo_aliases() -> void:
+	var specs: Array = [
+		["mixamorig:Hips", ""], ["mixamorig:Spine", "mixamorig:Hips"],
+		["mixamorig:Spine1", "mixamorig:Spine"], ["mixamorig:Spine2", "mixamorig:Spine1"],
+		["mixamorig:Neck", "mixamorig:Spine2"], ["mixamorig:Head", "mixamorig:Neck"],
+		["mixamorig:LeftShoulder", "mixamorig:Spine2"], ["mixamorig:LeftArm", "mixamorig:LeftShoulder"],
+		["mixamorig:LeftForeArm", "mixamorig:LeftArm"], ["mixamorig:LeftHand", "mixamorig:LeftForeArm"],
+		["mixamorig:RightShoulder", "mixamorig:Spine2"], ["mixamorig:RightArm", "mixamorig:RightShoulder"],
+		["mixamorig:RightForeArm", "mixamorig:RightArm"], ["mixamorig:RightHand", "mixamorig:RightForeArm"],
+		["mixamorig:LeftUpLeg", "mixamorig:Hips"], ["mixamorig:LeftLeg", "mixamorig:LeftUpLeg"],
+		["mixamorig:LeftFoot", "mixamorig:LeftLeg"], ["mixamorig:LeftToeBase", "mixamorig:LeftFoot"],
+		["mixamorig:RightUpLeg", "mixamorig:Hips"], ["mixamorig:RightLeg", "mixamorig:RightUpLeg"],
+		["mixamorig:RightFoot", "mixamorig:RightLeg"], ["mixamorig:RightToeBase", "mixamorig:RightFoot"],
+	]
+	var skeleton: Skeleton3D = _build_named_skeleton("MixamoSkeleton", specs)
+	var contract: Dictionary = HumanoidRigContractScript.validate_skeleton(skeleton)
+	_expect(bool(contract.get("compatible", false)), "Mixamo humanoid bone names satisfy Grace semantic contract")
+	var semantic_map: Dictionary = contract.get("semantic_map", {}) as Dictionary
+	_expect(int(semantic_map.get("upper_arm_l", -1)) == skeleton.find_bone("mixamorig:LeftArm"), "Mixamo LeftArm maps to Grace upper-arm semantic")
+	_expect(int(semantic_map.get("forearm_r", -1)) == skeleton.find_bone("mixamorig:RightForeArm"), "Mixamo RightForeArm maps to Grace forearm semantic")
+	_expect(int(semantic_map.get("thigh_l", -1)) == skeleton.find_bone("mixamorig:LeftUpLeg"), "Mixamo LeftUpLeg maps to Grace thigh semantic")
+	skeleton.queue_free()
+
+
+func _build_named_skeleton(skeleton_name: String, specs: Array) -> Skeleton3D:
+	var skeleton := Skeleton3D.new()
+	skeleton.name = skeleton_name
+	add_child(skeleton)
+	var indices: Dictionary = {}
+	for spec_variant: Variant in specs:
+		var spec: Array = spec_variant as Array
+		var bone_name: String = str(spec[0])
+		var parent_name: String = str(spec[1])
+		skeleton.add_bone(bone_name)
+		var index: int = skeleton.find_bone(bone_name)
+		indices[bone_name] = index
+		if parent_name != "":
+			_expect(indices.has(parent_name), skeleton_name + " builds parent before child: " + bone_name)
+			if indices.has(parent_name):
+				skeleton.set_bone_parent(index, int(indices[parent_name]))
+		skeleton.set_bone_rest(index, Transform3D(Basis.IDENTITY, Vector3(0.0, 0.1, 0.0)))
+	return skeleton
 
 
 func _expect(condition: bool, label: String) -> void:

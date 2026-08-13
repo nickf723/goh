@@ -3,6 +3,9 @@ extends Node
 const SkeletalGraceScene: PackedScene = preload(
 	"res://scenes/actors/player/grace_humanoid_skeletal_proxy_v1.tscn"
 )
+const HumanoidRigContractScript = preload(
+	"res://scripts/visuals/grace_humanoid_rig_contract.gd"
+)
 
 const EXPECTED_WEAPON_LANGUAGES: Array[String] = [
 	"sword", "lance", "axe", "bow", "hammer", "mace", "daggers", "whip",
@@ -43,10 +46,81 @@ func _ready() -> void:
 	_expect(hand_span > 0.55, "left and right hands remain separated by articulated arms")
 	_expect(leg_span > 0.6, "thigh-to-foot chain preserves articulated leg length")
 
+	_validate_current_rig_contract(rig)
+	_validate_godot_humanoid_profile_aliases()
+
 	if rig != null and is_instance_valid(rig):
 		rig.queue_free()
 	await get_tree().process_frame
 	_finish()
+
+
+func _validate_current_rig_contract(rig: Node) -> void:
+	var skeleton: Skeleton3D = rig.get_node_or_null("Skeleton3D") as Skeleton3D if rig != null else null
+	_expect(skeleton != null, "current Grace exposes Skeleton3D for import contract validation")
+	if skeleton == null:
+		return
+	var contract: Dictionary = HumanoidRigContractScript.validate_skeleton(skeleton)
+	_expect(bool(contract.get("compatible", false)), "current Grace satisfies humanoid rig semantic contract")
+	_expect(int(contract.get("mapped_count", 0)) >= 17, "current Grace maps all required humanoid semantics")
+	var semantic_map: Dictionary = contract.get("semantic_map", {}) as Dictionary
+	_expect(semantic_map.has("hand_r"), "rig contract resolves weapon hand semantic")
+	_expect(semantic_map.has("hand_l"), "rig contract resolves support hand semantic")
+	_expect(semantic_map.has("head"), "rig contract resolves head semantic")
+	_expect(semantic_map.has("foot_l") and semantic_map.has("foot_r"), "rig contract resolves both foot semantics")
+	_expect((contract.get("hierarchy_errors", []) as Array).is_empty(), "current Grace semantic chains preserve hierarchy")
+
+
+func _validate_godot_humanoid_profile_aliases() -> void:
+	var skeleton: Skeleton3D = Skeleton3D.new()
+	skeleton.name = "GodotHumanoidProfileSkeleton"
+	add_child(skeleton)
+
+	var parents: Dictionary = {
+		"Root": "",
+		"Hips": "Root",
+		"Spine": "Hips",
+		"Chest": "Spine",
+		"UpperChest": "Chest",
+		"Neck": "UpperChest",
+		"Head": "Neck",
+		"LeftShoulder": "UpperChest",
+		"LeftUpperArm": "LeftShoulder",
+		"LeftLowerArm": "LeftUpperArm",
+		"LeftHand": "LeftLowerArm",
+		"RightShoulder": "UpperChest",
+		"RightUpperArm": "RightShoulder",
+		"RightLowerArm": "RightUpperArm",
+		"RightHand": "RightLowerArm",
+		"LeftUpperLeg": "Hips",
+		"LeftLowerLeg": "LeftUpperLeg",
+		"LeftFoot": "LeftLowerLeg",
+		"LeftToes": "LeftFoot",
+		"RightUpperLeg": "Hips",
+		"RightLowerLeg": "RightUpperLeg",
+		"RightFoot": "RightLowerLeg",
+		"RightToes": "RightFoot",
+	}
+	var indices: Dictionary = {}
+	for bone_name_variant: Variant in parents.keys():
+		var bone_name: String = str(bone_name_variant)
+		skeleton.add_bone(bone_name)
+		var index: int = skeleton.find_bone(bone_name)
+		indices[bone_name] = index
+		var parent_name: String = str(parents[bone_name])
+		if parent_name != "" and indices.has(parent_name):
+			skeleton.set_bone_parent(index, int(indices[parent_name]))
+		skeleton.set_bone_rest(index, Transform3D(Basis.IDENTITY, Vector3(0.0, 0.1, 0.0)))
+
+	var contract: Dictionary = HumanoidRigContractScript.validate_skeleton(skeleton)
+	_expect(bool(contract.get("compatible", false)), "Godot humanoid-profile bone names satisfy Grace semantic contract")
+	var semantic_map: Dictionary = contract.get("semantic_map", {}) as Dictionary
+	_expect(int(semantic_map.get("pelvis", -1)) == skeleton.find_bone("Hips"), "Hips maps to Grace pelvis semantic")
+	_expect(int(semantic_map.get("hand_r", -1)) == skeleton.find_bone("RightHand"), "RightHand maps to weapon hand semantic")
+	_expect(int(semantic_map.get("forearm_l", -1)) == skeleton.find_bone("LeftLowerArm"), "LeftLowerArm maps to support forearm semantic")
+	_expect(int(semantic_map.get("foot_r", -1)) == skeleton.find_bone("RightFoot"), "RightFoot maps to Grace foot semantic")
+
+	skeleton.queue_free()
 
 
 func _expect(condition: bool, label: String) -> void:

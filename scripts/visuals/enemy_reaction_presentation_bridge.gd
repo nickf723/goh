@@ -217,6 +217,17 @@ func _apply_directional_recoil(local_direction: Vector3, stagger: bool) -> void:
 	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
 
 
+func cancel_presentation() -> void:
+	if directional_tween != null and directional_tween.is_valid():
+		directional_tween.kill()
+	directional_tween = null
+	_clear_pending()
+	flush_queued = false
+	if visual_root != null and is_instance_valid(visual_root):
+		visual_root.rotation = base_visual_rotation
+	last_reaction_kind = "cancelled"
+
+
 func _clear_pending() -> void:
 	pending_health_severity = 0.0
 	pending_stance_severity = 0.0
@@ -236,5 +247,6 @@ func get_debug_data() -> Dictionary:
 		"airborne_suppressed": last_airborne_suppressed,
 		"coalesces_health_and_stance": true,
 		"airborne_authority_preserved": true,
+		"defeat_cancellable": true,
 		"gameplay_authority": false,
 	}

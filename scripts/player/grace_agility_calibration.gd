@@ -2,8 +2,8 @@ extends Node
 class_name GraceAgilityCalibration
 
 # Dojo-only calibration for Grace's intended physical rhythm before the skeletal
-# animation pipeline replaces the current procedural mannequin. Gameplay remains
-# authoritative; this node swaps data profiles and adjusts presentation scale.
+# animation pipeline is promoted to the canonical player. Gameplay remains
+# authoritative; this node swaps data profiles and adjusts active presentation.
 
 @export var ground_profile: GroundMotionProfile
 @export var dodge_profile: DodgeMotionProfile
@@ -31,7 +31,11 @@ func _ready() -> void:
 		return
 	ground_motion_motor = actor.get_node_or_null("GroundMotionMotor") as PlayerGroundMotionMotor
 	dodge_controller = actor.get_node_or_null("PlayerDodgeController") as PlayerDodgeController
-	grace_visual = actor.get_node_or_null("GraceVisualV1") as Node3D
+	# Prefer the real Skeleton3D proxy when present; fall back to the procedural
+	# visual so this calibration remains usable outside the animation experiment.
+	grace_visual = actor.get_node_or_null("GraceSkeletalVisualV1") as Node3D
+	if grace_visual == null:
+		grace_visual = actor.get_node_or_null("GraceVisualV1") as Node3D
 	weapon_controller = actor.get_node_or_null("WeaponController")
 
 	if ground_motion_motor != null and ground_profile != null:
@@ -48,6 +52,8 @@ func _apply_visual_calibration() -> void:
 	if grace_visual == null:
 		return
 	grace_visual.scale = Vector3.ONE * visual_scale
+	if "presentation_scale" in grace_visual:
+		grace_visual.set("presentation_scale", visual_scale)
 	if "locomotion_speed_reference" in grace_visual:
 		grace_visual.set("locomotion_speed_reference", visual_speed_reference)
 	if "locomotion_blend_response" in grace_visual:
@@ -56,8 +62,12 @@ func _apply_visual_calibration() -> void:
 		grace_visual.set("movement_bob_speed", movement_bob_speed)
 	if "stride_radians" in grace_visual:
 		grace_visual.set("stride_radians", stride_radians)
+	if "stride_strength" in grace_visual:
+		grace_visual.set("stride_strength", stride_radians)
 	if "arm_swing_radians" in grace_visual:
 		grace_visual.set("arm_swing_radians", arm_swing_radians)
+	if "arm_swing_strength" in grace_visual:
+		grace_visual.set("arm_swing_strength", arm_swing_radians)
 	if "maximum_lean_radians" in grace_visual:
 		grace_visual.set("maximum_lean_radians", maximum_lean_radians)
 
@@ -66,6 +76,11 @@ func get_debug_data() -> Dictionary:
 	return {
 		"agile_grace": true,
 		"visual_scale": visual_scale,
+		"visual_node": grace_visual.name if grace_visual != null else "none",
+		"skeletal_visual_active": (
+			grace_visual != null
+			and grace_visual.name == "GraceSkeletalVisualV1"
+		),
 		"maximum_speed": (
 			ground_motion_motor.get_configured_maximum_speed()
 			if ground_motion_motor != null

@@ -122,6 +122,49 @@ func request_combat_motion(attack: WeaponAttackDefinition) -> void:
 	super.request_combat_motion(attack)
 
 
+# Explicit aerial Light / Heavy contexts keep the input grammar predictable:
+# Light carries Grace through the target while preserving jump arc; Heavy turns
+# into a committed descending strike and arms the existing landing impact.
+func apply_aerial_technique_motion(context_id: String) -> void:
+	if context_id not in [
+		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_LIGHT,
+		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_HEAVY,
+	]:
+		super.apply_aerial_technique_motion(context_id)
+		return
+	var actor: Node3D = get_actor()
+	if not (actor is CharacterBody3D):
+		return
+	var body: CharacterBody3D = actor as CharacterBody3D
+	if context_id == WeaponTechniqueCatalogScript.CONTEXT_AERIAL_LIGHT:
+		body.velocity.y = maxf(body.velocity.y, -1.2)
+		return
+	body.velocity.y = minf(body.velocity.y, -6.8)
+	plunge_landing_armed = true
+	plunge_max_fall_speed = absf(minf(body.velocity.y, 0.0))
+
+
+func apply_aerial_hit_followthrough(targets: Array[Node]) -> void:
+	if active_technique_id != WeaponTechniqueCatalogScript.CONTEXT_AERIAL_LIGHT:
+		super.apply_aerial_hit_followthrough(targets)
+		return
+	if targets.is_empty():
+		return
+	var actor: Node3D = get_actor()
+	if not (actor is CharacterBody3D):
+		return
+	var body: CharacterBody3D = actor as CharacterBody3D
+	body.velocity.y = maxf(body.velocity.y, 0.4)
+	var target_position: Vector3 = get_target_position(targets[0])
+	var pursuit_direction: Vector3 = target_position - body.global_position
+	pursuit_direction.y = 0.0
+	if pursuit_direction.length_squared() <= 0.0001:
+		return
+	pursuit_direction = pursuit_direction.normalized()
+	body.velocity.x = lerpf(body.velocity.x, pursuit_direction.x * 4.8, 0.62)
+	body.velocity.z = lerpf(body.velocity.z, pursuit_direction.z * 4.8, 0.62)
+
+
 # Payload targets are resolved only through the collider's ancestry. The old
 # shared resolver also recursively searched children at every ancestor level;
 # once it reached a scene root, a floor or wall could accidentally nominate an
@@ -311,6 +354,8 @@ func get_combat_v2_debug_data() -> Dictionary:
 		"ranged_forward": _get_live_ranged_forward() if _uses_live_ranged_aim() else Vector3.ZERO,
 		"safe_ancestry_target_resolution": true,
 		"per_contact_payload_hook": true,
+		"explicit_dash_light_heavy": true,
+		"explicit_aerial_light_heavy": true,
 		"engagement_target": engagement_target.name if _engagement_is_valid() else "none",
 		"engagement_source": engagement_source,
 		"engagement_start_distance": snappedf(engagement_start_distance, 0.01),

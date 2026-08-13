@@ -19,12 +19,17 @@ func _ready() -> void:
 		failures.append("skeletal Grace exposes debug data")
 
 	_expect(bool(data.get("grounding_fix", false)), "grounding correction is active")
+	_expect(bool(data.get("rest_pose_initialized", false)), "child bone pose translations initialize from rest")
 	_expect(bool(data.get("pelvis_rest_preserved", false)), "pelvis animation preserves authored rest height")
 
 	var foot_height: float = float(data.get("foot_height", 999.0))
 	var span: float = float(data.get("head_to_foot_span", 0.0))
+	var hand_span: float = float(data.get("hand_span", 0.0))
+	var leg_span: float = float(data.get("leg_span", 0.0))
 	_expect(absf(foot_height) < 0.16, "feet remain near the skeletal ground plane")
 	_expect(span > 1.45, "head remains a full humanoid height above the feet")
+	_expect(hand_span > 0.55, "left and right hands remain separated by articulated arms")
+	_expect(leg_span > 0.6, "thigh-to-foot chain preserves articulated leg length")
 
 	if rig != null and is_instance_valid(rig):
 		rig.queue_free()

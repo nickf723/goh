@@ -2,9 +2,9 @@
 
 ## Goal
 
-This pass responds to the first recorded Arsenal Dojo gameplay clip rather than expanding combat breadth.
+This pass responds to recorded Arsenal Dojo gameplay rather than expanding combat breadth.
 
-The clip showed that individual actions were increasingly readable, but their boundaries still felt synthetic:
+The first clip showed that individual actions were increasingly readable, but their boundaries still felt synthetic:
 
 ```text
 locomotion → attack
@@ -14,7 +14,9 @@ recovery → locomotion / next attack
 weapon hit → target response → target recovery
 ```
 
-The pass therefore improves connective tissue instead of adding mechanics.
+A follow-up playtest exposed a second issue: Grace looked like she was swinging a sword **near** an enemy rather than attacking that enemy as a participant in one shared event.
+
+The pass therefore improves connective tissue and target engagement instead of adding mechanics.
 
 Primary scene:
 
@@ -24,7 +26,7 @@ res://scenes/levels/prototypes/prototype_weapon_arsenal_dojo_v1.tscn
 
 ## Grace continuity layer
 
-The dojo player now uses:
+The dojo player uses:
 
 ```text
 res://scripts/visuals/grace_wire_motion_visual_combat_v2.gd
@@ -41,9 +43,68 @@ The continuity layer adds only four presentation accents:
 
 The extra accents use the existing `motion_accent_*` bookkeeping so they are removed cleanly before the canonical rig samples the next frame.
 
-## Grounded defender response
+`WeaponRecoveryPresenter` also captures the final ordinary weapon-pivot pose before the controller resets it and eases the prop home when no buffered follow-up has already begun. Runtime flexible rigs keep ownership of their own recovery.
 
-`CombatTrainingTarget` now owns a grounded hit-presentation envelope.
+## Target-coupled Sword engagement
+
+The dojo `CombatWeaponControllerV2` now assigns one **engagement target** when a grounded Sword attack begins.
+
+It reuses existing targeting sources in this order:
+
+```text
+hard lock
+→ targeting-assist hard target
+→ soft aim target
+→ existing facing-assist candidate
+```
+
+No new target is selected after the attack commits.
+
+The engagement target is shared by three existing layers:
+
+### Heading
+
+Sword attack heading is biased toward the committed target only when the target begins within the existing turn allowance. This keeps attack geometry, visual facing, and footwork on the same line without unrestricted homing.
+
+### Spacing
+
+Instead of always applying the attack resource's full forward lunge, the dojo computes how much distance Grace actually needs to close to a useful Sword pocket.
+
+```text
+already close → tiny weight shift / plant
+slightly outside pocket → bounded catch-up step
+too far away → ordinary attack, no magnetic teleport
+```
+
+This is still the existing combat-motion / footwork pipeline. The change only supplies a target-aware requested distance.
+
+### Body commitment
+
+`CombatEngagementPresenter` reads the same engagement target and adds a small chest/weight bias through Grace's existing motion-accent bookkeeping.
+
+It does not introduce a second skeletal animator and does not permanently modify the canonical pose.
+
+The intent is that Grace's body communicates **who she is attacking**, while the Sword remains the endpoint of that action.
+
+## Paired defender response
+
+The Arsenal Dojo uses a testing-only target variant:
+
+```text
+res://scenes/actors/testing/combat_training_target_engaged.tscn
+```
+
+The base `CombatTrainingTarget` still owns grounded flinch, damped world displacement, airborne handoff, and recovery.
+
+The engaged variant adds attacker-defender coupling:
+
+- broad Sword cuts twist/recoil the target with the lateral direction of the cut;
+- thrust-like attacks remain mostly axial;
+- launchers still hand visual authority to the existing airborne presentation stack.
+
+This gives one contact a shared visual cause-and-effect relationship instead of playing an attacker animation and defender animation independently.
+
+## Grounded defender response
 
 A normal grounded weapon hit reads as:
 
@@ -82,6 +143,16 @@ run toward center target
 → run away
 ```
 
+Also deliberately try the first Light from three spacings:
+
+```text
+very close
+normal striking distance
+just outside striking distance
+```
+
+The useful comparison is whether Grace looks like she is entering the enemy's space intentionally rather than replaying the same lunge at all three distances.
+
 Then test one or two contrasting weapons only after the Sword sequence is readable.
 
 ## Manual questions
@@ -94,12 +165,17 @@ Then test one or two contrasting weapons only after the Sword sequence is readab
 - Does attack → locomotion feel less like a pose reset?
 - Do buffered combo hits flow without an obvious neutral frame between them?
 - Do the feet and hips better explain the root movement?
+- Does Grace visibly commit toward a target instead of merely swinging in its neighborhood?
+- Does close-range Sword footwork stop sliding her through the target?
+- Does a slightly distant target produce a believable bounded approach rather than a teleport/homing lunge?
 
 ### Target
 
 - Does contact read before the target starts sliding?
 - Are Light hits visibly different from Heavy hits?
 - Does ordinary knockback feel controlled rather than ragdoll-like?
+- Does a lateral Sword cut rotate/recoil the target in the direction of the cut?
+- Do thrusts remain centerline/axial?
 - Do launchers still feel allowed to break the grounded response envelope?
 
 ### Readability
@@ -115,12 +191,23 @@ This pass deliberately does not add:
 - new attacks or techniques;
 - new spell mechanics;
 - new enemy AI;
+- unrestricted melee magnetism or homing;
 - a replacement animation framework;
 - final character models or production animation assets;
 - broad balance changes.
 
+## Automated regression
+
+```text
+res://scenes/tests/grace_combat_feel_pass_01_smoke_test.tscn
+```
+
+The test checks continuity/settle presentation, target engagement acquisition, target-aware approach calculation, the engagement presenter, the paired training-target reaction, and the reduced dojo trail settings.
+
+GitHub Actions may not execute while the repository Actions budget is exhausted. A workflow failure with no job steps and an Actions-budget annotation is infrastructure-only, not a Godot test result.
+
 ## Next decision
 
-If the calibration sequence feels clearly better, promote the continuity principles into the canonical player presentation and repeat the same footage comparison for Dodge, casting, and target recovery.
+If the calibration sequence now feels like **Grace attacking a target**, promote these target-engagement principles into the canonical player presentation and then repeat the same footage comparison with a real enemy.
 
-If it still feels clunky, diagnose the remaining roughness from the same fixed sequence before changing another subsystem.
+If it still feels like a weapon animation playing near an enemy, the next likely limitation is the prototype character rig itself: shoulder/hand reach, grip alignment, and lack of true contact-aware skeletal animation or IK.

@@ -65,7 +65,9 @@ func _build_staff_attack_pose(attack: WeaponAttackDefinition, stage: String) -> 
 		return pose
 	var index: int = _proxy_attack_index(attack.attack_id)
 	var heavy: bool = attack.input_kind == "heavy"
-	if attack.extra_tags.has("aerial_heavy") or heavy and index == 0:
+	if attack.extra_tags.has("staff_pole_vault"):
+		_build_staff_pole_vault_pose(pose, stage)
+	elif attack.extra_tags.has("aerial_heavy") or heavy and index == 0:
 		_build_hammer_slam_pose(pose, stage, false)
 		_soften_staff_drop(pose, stage)
 	elif attack.extra_tags.has("dash_heavy") or index == 2:
@@ -77,6 +79,58 @@ func _build_staff_attack_pose(attack: WeaponAttackDefinition, stage: String) -> 
 		_build_lance_sweep_pose(pose, stage, _attack_side(attack), heavy, index >= 1)
 		_apply_staff_flow_bias(pose, stage, _attack_side(attack))
 	return pose
+
+
+func _build_staff_pole_vault_pose(pose: Dictionary, stage: String) -> void:
+	match stage:
+		"windup":
+			# Compress behind the staff instead of raising it into another overhead hit.
+			_set_pose_deg(pose, "pelvis", Vector3(12.0, -4.0, 0.0))
+			_set_pose_deg(pose, "spine_01", Vector3(10.0, -3.0, 0.0))
+			_set_pose_deg(pose, "chest", Vector3(7.0, -2.0, 0.0))
+			_set_pose_deg(pose, "upper_arm_r", Vector3(74.0, -8.0, 12.0))
+			_set_pose_deg(pose, "forearm_r", Vector3(-38.0, 2.0, -3.0))
+			_set_pose_deg(pose, "upper_arm_l", Vector3(70.0, 8.0, -12.0))
+			_set_pose_deg(pose, "forearm_l", Vector3(-42.0, -2.0, 3.0))
+			_set_pose_deg(pose, "thigh_l", Vector3(-22.0, 0.0, -5.0))
+			_set_pose_deg(pose, "thigh_r", Vector3(-18.0, 0.0, 5.0))
+			_set_pose_deg(pose, "shin_l", Vector3(34.0, 0.0, 0.0))
+			_set_pose_deg(pose, "shin_r", Vector3(30.0, 0.0, 0.0))
+			pose["__pelvis_offset"] = Vector3(0.0, -0.1, 0.025)
+		"contact":
+			# Plant the far end in front of Grace and fold over the pole.
+			_set_pose_deg(pose, "pelvis", Vector3(-13.0, 2.0, 0.0))
+			_set_pose_deg(pose, "spine_01", Vector3(-17.0, 2.0, 0.0))
+			_set_pose_deg(pose, "chest", Vector3(-23.0, 1.0, 0.0))
+			_set_pose_deg(pose, "upper_arm_r", Vector3(91.0, 5.0, 10.0))
+			_set_pose_deg(pose, "forearm_r", Vector3(-14.0, 0.0, 0.0))
+			_set_pose_deg(pose, "upper_arm_l", Vector3(86.0, -5.0, -10.0))
+			_set_pose_deg(pose, "forearm_l", Vector3(-18.0, 0.0, 0.0))
+			_set_pose_deg(pose, "thigh_l", Vector3(9.0, 0.0, -4.0))
+			_set_pose_deg(pose, "thigh_r", Vector3(12.0, 0.0, 4.0))
+			pose["__pelvis_offset"] = Vector3(0.0, -0.115, -0.105)
+		"follow":
+			# The controller fires the traversal impulse here, so the legs trail through.
+			_set_pose_deg(pose, "pelvis", Vector3(-18.0, 0.0, 0.0))
+			_set_pose_deg(pose, "spine_01", Vector3(-9.0, 0.0, 0.0))
+			_set_pose_deg(pose, "chest", Vector3(8.0, 0.0, 0.0))
+			_set_pose_deg(pose, "upper_arm_r", Vector3(84.0, 4.0, 8.0))
+			_set_pose_deg(pose, "forearm_r", Vector3(-5.0, 0.0, 0.0))
+			_set_pose_deg(pose, "upper_arm_l", Vector3(80.0, -4.0, -8.0))
+			_set_pose_deg(pose, "forearm_l", Vector3(-8.0, 0.0, 0.0))
+			_set_pose_deg(pose, "thigh_l", Vector3(30.0, 0.0, -7.0))
+			_set_pose_deg(pose, "thigh_r", Vector3(24.0, 0.0, 7.0))
+			_set_pose_deg(pose, "shin_l", Vector3(24.0, 0.0, 0.0))
+			_set_pose_deg(pose, "shin_r", Vector3(32.0, 0.0, 0.0))
+			pose["__pelvis_offset"] = Vector3(0.0, -0.025, -0.17)
+		_:
+			_set_pose_deg(pose, "pelvis", Vector3(2.0, 0.0, 0.0))
+			_set_pose_deg(pose, "chest", Vector3(3.0, 0.0, 0.0))
+			_set_pose_deg(pose, "upper_arm_r", Vector3(34.0, 2.0, 9.0))
+			_set_pose_deg(pose, "forearm_r", Vector3(-26.0, 0.0, 0.0))
+			_set_pose_deg(pose, "upper_arm_l", Vector3(30.0, -2.0, -9.0))
+			_set_pose_deg(pose, "forearm_l", Vector3(-28.0, 0.0, 0.0))
+			pose["__pelvis_offset"] = Vector3(0.0, -0.025, -0.015)
 
 
 func _apply_staff_flow_bias(pose: Dictionary, stage: String, side: float) -> void:
@@ -128,4 +182,5 @@ func get_debug_data() -> Dictionary:
 	data["authored_language_classes"] = classes
 	data["halberd_language"] = true
 	data["staff_language"] = true
+	data["staff_pole_vault_pose"] = true
 	return data

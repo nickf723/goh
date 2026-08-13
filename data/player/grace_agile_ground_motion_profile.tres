@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="GroundMotionProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/player/ground_motion_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+maximum_speed = 5.45
+analog_exponent = 1.12
+input_deadzone = 0.07
+initial_response_speed = 1.15
+lock_on_strafe_multiplier = 0.98
+lock_on_backward_multiplier = 0.94
+acceleration = 36.0
+braking = 54.0
+reversal_acceleration = 72.0
+turn_acceleration = 48.0
+overspeed_braking = 66.0
+sharp_turn_dot = 0.7
+reversal_dot = -0.52
+cruise_speed_tolerance = 0.12
+stop_speed = 0.05
+air_acceleration = 10.5
+air_drag = 1.7
+attack_momentum_retention = 0.24
+dodge_exit_momentum_retention = 0.76
+feedback_response = 17.0

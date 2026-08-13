@@ -29,6 +29,7 @@ func run_tests() -> void:
 		_validate_contract(target, director)
 		await _validate_quality_ladder(director, lighting)
 		_validate_geometry_integrity(director)
+		await _validate_imported_surface_enrollment(target, director.profile, lighting)
 
 	target.queue_free()
 	await get_tree().process_frame
@@ -130,6 +131,88 @@ func _validate_quality_ladder(
 	var data: Dictionary = director.get_debug_data()
 	_expect(int(data.get("shared_variants", 99)) <= director.profile.maximum_shared_variants, "Grace material variants remain inside shared resource budget")
 	_expect(int(data.get("normal_textures", 99)) <= 6, "Grace shares procedural detail textures by semantic material role")
+
+
+func _validate_imported_surface_enrollment(
+	target: Node,
+	profile: CharacterMaterialPresentationProfile,
+	lighting: LightingDirector3D
+) -> void:
+	var imported_root := Node3D.new()
+	imported_root.name = "ImportedGraceMaterialFixture"
+	target.add_child(imported_root)
+
+	var imported_mesh := MeshInstance3D.new()
+	imported_mesh.name = "ImportedGraceBody"
+	var array_mesh := ArrayMesh.new()
+	var materials: Array[StandardMaterial3D] = []
+	for material_name: String in ["Skin", "Robe", "MysterySurface"]:
+		var material := StandardMaterial3D.new()
+		material.resource_name = material_name
+		material.albedo_color = Color(0.55, 0.48, 0.42, 1.0)
+		material.roughness = 0.95
+		materials.append(material)
+		var arrays: Array = []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([
+			Vector3(-0.1, 0.0, 0.0),
+			Vector3(0.1, 0.0, 0.0),
+			Vector3(0.0, 0.2, 0.0),
+		])
+		arrays[Mesh.ARRAY_NORMAL] = PackedVector3Array([
+			Vector3.FORWARD,
+			Vector3.FORWARD,
+			Vector3.FORWARD,
+		])
+		array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		array_mesh.surface_set_material(array_mesh.get_surface_count() - 1, material)
+	imported_mesh.mesh = array_mesh
+	imported_root.add_child(imported_mesh)
+
+	var surface_director := CharacterMaterialSurfacePresentationDirector3D.new()
+	surface_director.name = "ImportedSurfaceMaterialDirector"
+	surface_director.profile = profile
+	target.add_child(surface_director)
+
+	var enroller := GraceImportedMaterialEnroller.new()
+	enroller.name = "ImportedMaterialEnroller"
+	enroller.director_path = NodePath("../ImportedSurfaceMaterialDirector")
+	enroller.character_root_path = NodePath("../ImportedGraceMaterialFixture")
+	target.add_child(enroller)
+	await get_tree().process_frame
+
+	var enroll_data: Dictionary = enroller.get_debug_data()
+	_expect(int(enroll_data.get("enrolled_surfaces", 0)) == 2, "imported Grace enrolls known Skin and Robe surfaces")
+	_expect(int(enroll_data.get("unresolved_surface_count", 0)) == 1, "imported Grace reports unknown material surface instead of guessing")
+	var surface_data: Dictionary = surface_director.get_debug_data()
+	_expect(bool(surface_data.get("surface_presentation", false)), "imported material director reports surface presentation")
+	_expect(int(surface_data.get("surface_target_count", 0)) == 2, "imported material director owns two semantic surfaces")
+	_expect(imported_mesh.mesh == array_mesh, "surface presentation preserves exact imported mesh resource")
+
+	lighting.set_quality(LightingDirector3D.Quality.PERFORMANCE)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_expect(imported_mesh.get_surface_override_material(0) == null, "Performance restores imported Skin to original surface material arrangement")
+	_expect(imported_mesh.get_surface_override_material(1) == null, "Performance restores imported Robe to original surface material arrangement")
+
+	lighting.set_quality(LightingDirector3D.Quality.BALANCED)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var balanced_skin: StandardMaterial3D = imported_mesh.get_surface_override_material(0) as StandardMaterial3D
+	var balanced_robe: StandardMaterial3D = imported_mesh.get_surface_override_material(1) as StandardMaterial3D
+	_expect(balanced_skin != null and balanced_skin != materials[0], "Balanced enhances imported Skin surface without replacing mesh")
+	_expect(balanced_robe != null and balanced_robe != materials[1], "Balanced enhances imported Robe surface independently")
+	if balanced_skin != null:
+		_expect(balanced_skin.backlight_enabled, "imported Skin reuses existing Grace skin presentation language")
+	if balanced_robe != null:
+		_expect(balanced_robe.normal_enabled, "imported Robe reuses existing Grace cloth microdetail")
+
+	lighting.set_quality(LightingDirector3D.Quality.CINEMATIC)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	imported_root.queue_free()
+	surface_director.queue_free()
+	enroller.queue_free()
 
 
 func _validate_geometry_integrity(

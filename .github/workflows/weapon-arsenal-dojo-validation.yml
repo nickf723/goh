@@ -18,12 +18,15 @@ on:
       - "scripts/weapons/chain_weapon_rig_v3.gd"
       - "scripts/weapons/flail_weapon_rig_v2.gd"
       - "data/weapon_movesets/practice_sword_moveset.tres"
+      - "data/weapon_movesets/training_hammer_moveset.tres"
+      - "data/weapon_movesets/training_spear_moveset.tres"
       - "scripts/player/grace_agility_calibration.gd"
       - "data/player/grace_agile_ground_motion_profile.tres"
       - "data/player/grace_agile_dodge_motion_profile.tres"
       - "scripts/visuals/grace_wire_motion_visual_combat_v2.gd"
       - "scripts/visuals/grace_humanoid_skeletal_proxy_v1.gd"
       - "scripts/visuals/grace_humanoid_skeletal_proxy_grounded.gd"
+      - "scripts/visuals/grace_humanoid_skeletal_proxy_weapon_languages_v2.gd"
       - "scripts/visuals/weapon_recovery_presenter.gd"
       - "scripts/visuals/combat_engagement_presenter.gd"
       - "scripts/testing/combat_training_target.gd"
@@ -57,17 +60,21 @@ on:
       - "docs/GRACE_COMBAT_FEEL_PASS_01.md"
       - "docs/GRACE_SKELETAL_ANIMATION_PIPELINE_V1.md"
       - "docs/SWORD_COMBAT_LANGUAGE_V0_3.md"
+      - "docs/WEAPON_LANGUAGE_DIVERSIFICATION_V0_4.md"
       - ".github/workflows/weapon-arsenal-dojo-validation.yml"
   pull_request:
     paths:
       - "scripts/weapons/**"
       - "data/weapon_movesets/practice_sword_moveset.tres"
+      - "data/weapon_movesets/training_hammer_moveset.tres"
+      - "data/weapon_movesets/training_spear_moveset.tres"
       - "scripts/player/grace_agility_calibration.gd"
       - "data/player/grace_agile_ground_motion_profile.tres"
       - "data/player/grace_agile_dodge_motion_profile.tres"
       - "scripts/visuals/grace_wire_motion_visual_combat_v2.gd"
       - "scripts/visuals/grace_humanoid_skeletal_proxy_v1.gd"
       - "scripts/visuals/grace_humanoid_skeletal_proxy_grounded.gd"
+      - "scripts/visuals/grace_humanoid_skeletal_proxy_weapon_languages_v2.gd"
       - "scripts/visuals/weapon_recovery_presenter.gd"
       - "scripts/visuals/combat_engagement_presenter.gd"
       - "scripts/testing/combat_training_target.gd"
@@ -97,6 +104,7 @@ on:
       - "docs/GRACE_COMBAT_FEEL_PASS_01.md"
       - "docs/GRACE_SKELETAL_ANIMATION_PIPELINE_V1.md"
       - "docs/SWORD_COMBAT_LANGUAGE_V0_3.md"
+      - "docs/WEAPON_LANGUAGE_DIVERSIFICATION_V0_4.md"
       - ".github/workflows/weapon-arsenal-dojo-validation.yml"
   workflow_dispatch:
 
@@ -109,7 +117,7 @@ concurrency:
 
 jobs:
   validate-arsenal-dojo:
-    name: Import, combat language, skeletal animation, flexible weapons, and dojo boot
+    name: Import, diversified weapon language, skeletal animation, and dojo boot
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -135,13 +143,13 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/context_weapon_technique_smoke_test.tscn --quit-after 8 2>&1 | tee context-technique-test.log
 
-      - name: Run canonical weapon moveset and Sword language regression
+      - name: Run canonical weapon moveset and language regression
         shell: bash
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/weapon_moveset_smoke_test.tscn 2>&1 | tee weapon-moveset-test.log
 
-      - name: Run skeletal Grace grounding regression
+      - name: Run skeletal Grace grounding and weapon-language regression
         shell: bash
         run: |
           set -o pipefail

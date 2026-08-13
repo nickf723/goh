@@ -4,6 +4,7 @@ const Sword: WeaponDefinition = preload("res://data/weapons/practice_sword.tres"
 const Hammer: WeaponDefinition = preload("res://data/weapons/training_hammer.tres")
 const Spear: WeaponDefinition = preload("res://data/weapons/training_spear.tres")
 const HitReceiverScript: Script = preload("res://scripts/combat/hit_receiver.gd")
+const WeaponTechniqueCatalogScript = preload("res://scripts/weapons/weapon_technique_catalog.gd")
 
 var failures: Array[String] = []
 
@@ -27,6 +28,8 @@ func run_tests() -> void:
 	validate_weapon(Hammer, "hammer", 7)
 	validate_weapon(Spear, "lance", 7)
 	validate_sword_branch_tree()
+	validate_sword_arc_discipline()
+	validate_sword_context_vocabulary()
 	validate_hammer_identity()
 	validate_spear_identity()
 	validate_payload_contracts()
@@ -74,11 +77,14 @@ func validate_sword_branch_tree() -> void:
 	var moveset: WeaponMovesetDefinition = Sword.moveset
 	assert_attack_id(moveset.get_entry_attack("light"), "sword_l1", "Sword light entry")
 	assert_attack_id(moveset.get_entry_attack("heavy"), "sword_h0", "Sword heavy entry")
-	assert_follow_up(moveset, "sword_l1", "light", "sword_reprise")
+
+	# Warriors-style grammar: consecutive Lights deepen the string; Heavy at each
+	# depth exits through a distinct committed branch.
+	assert_follow_up(moveset, "sword_l1", "light", "sword_l2")
 	assert_follow_up(moveset, "sword_l1", "heavy", "sword_h1")
-	assert_follow_up(moveset, "sword_l2", "light", "sword_reprise")
+	assert_follow_up(moveset, "sword_l2", "light", "sword_l3")
 	assert_follow_up(moveset, "sword_l2", "heavy", "sword_h2")
-	assert_follow_up(moveset, "sword_l3", "light", "sword_reprise")
+	assert_follow_up(moveset, "sword_l3", "light", "sword_l4")
 	assert_follow_up(moveset, "sword_l3", "heavy", "sword_h3")
 	assert_follow_up(moveset, "sword_l4", "light", "sword_reprise")
 	assert_follow_up(moveset, "sword_l4", "heavy", "sword_h4")
@@ -92,8 +98,108 @@ func validate_sword_branch_tree() -> void:
 	if light_one == null or not light_one.allow_spell_cancel or not light_one.allow_dodge_cancel:
 		failures.append("Sword opening light must support both late spell and dodge cancel")
 
-	if heavy_four == null or heavy_four.damage_multiplier <= light_one.damage_multiplier:
+	if heavy_four == null or light_one == null or heavy_four.damage_multiplier <= light_one.damage_multiplier:
 		failures.append("Sword final heavy must out-damage the opening light")
+
+
+func validate_sword_arc_discipline() -> void:
+	var moveset: WeaponMovesetDefinition = Sword.moveset
+	for attack_id: String in ["sword_l1", "sword_l2", "sword_l3"]:
+		var attack: WeaponAttackDefinition = moveset.get_attack(attack_id)
+		if attack == null:
+			continue
+		if absf(attack.windup_rotation_degrees.y) > 60.0:
+			failures.append(attack_id + " windup leaves the intended front working envelope")
+		if absf(attack.strike_rotation_degrees.y) > 60.0:
+			failures.append(attack_id + " strike leaves the intended front working envelope")
+		if absf(attack.windup_rotation_degrees.x) > 18.0:
+			failures.append(attack_id + " windup elevates the blade too aggressively")
+		if absf(attack.strike_rotation_degrees.x) > 18.0:
+			failures.append(attack_id + " contact elevates the blade too aggressively")
+
+	var circular: WeaponAttackDefinition = moveset.get_attack("sword_l4")
+	if circular != null:
+		if absf(circular.windup_rotation_degrees.y) > 85.0:
+			failures.append("Circular Cut windup reaches too far behind Grace")
+		if absf(circular.strike_rotation_degrees.y) > 105.0:
+			failures.append("Circular Cut strike exceeds the intended readable exaggeration")
+		if circular.cone_angle_degrees > 180.0:
+			failures.append("Circular Cut must remain a broad front-space attack")
+
+	var orbit: WeaponAttackDefinition = moveset.get_attack("sword_h4")
+	if orbit != null:
+		if absf(orbit.windup_rotation_degrees.y) > 100.0:
+			failures.append("Orbit Finisher windup reaches too far behind Grace")
+		if absf(orbit.strike_rotation_degrees.y) > 125.0:
+			failures.append("Orbit Finisher strike exceeds its bounded exaggeration")
+		if orbit.cone_angle_degrees > 250.0:
+			failures.append("Orbit Finisher must not silently return to a full-circle sweep")
+
+	var driving_thrust: WeaponAttackDefinition = moveset.get_attack("sword_h3")
+	if driving_thrust != null:
+		if absf(driving_thrust.windup_rotation_degrees.x) > 8.0:
+			failures.append("Driving Thrust windup must keep the blade near level")
+		if absf(driving_thrust.strike_rotation_degrees.x) > 8.0:
+			failures.append("Driving Thrust contact must keep the blade near level")
+
+
+func validate_sword_context_vocabulary() -> void:
+	var moveset: WeaponMovesetDefinition = Sword.moveset
+	var base_light: WeaponAttackDefinition = moveset.get_entry_attack("light")
+	var base_heavy: WeaponAttackDefinition = moveset.get_entry_attack("heavy")
+	if base_light == null or base_heavy == null:
+		failures.append("Sword context vocabulary requires both entry attacks")
+		return
+
+	var dash_light: WeaponAttackDefinition = WeaponTechniqueCatalogScript.build_dash_attack(
+		base_light,
+		"sword",
+		WeaponTechniqueCatalogScript.CONTEXT_DASH_LIGHT
+	)
+	var dash_heavy: WeaponAttackDefinition = WeaponTechniqueCatalogScript.build_dash_attack(
+		base_heavy,
+		"sword",
+		WeaponTechniqueCatalogScript.CONTEXT_DASH_HEAVY
+	)
+	if dash_light == null or dash_heavy == null:
+		failures.append("Sword must resolve both Dash Light and Dash Heavy")
+	else:
+		if dash_light.attack_id == dash_heavy.attack_id:
+			failures.append("Dash Light and Heavy must have distinct attack ids")
+		if dash_light.display_name != "Passing Cut":
+			failures.append("Sword Dash Light must resolve Passing Cut")
+		if dash_heavy.display_name != "Rush Break":
+			failures.append("Sword Dash Heavy must resolve Rush Break")
+		if dash_light.character_pose_id != "sword_dash_light":
+			failures.append("Dash Light must own an authored skeletal pose id")
+		if dash_heavy.character_pose_id != "sword_dash_heavy":
+			failures.append("Dash Heavy must own an authored skeletal pose id")
+
+	var aerial_light: WeaponAttackDefinition = WeaponTechniqueCatalogScript.build_aerial_attack(
+		base_light,
+		"sword",
+		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_LIGHT
+	)
+	var aerial_heavy: WeaponAttackDefinition = WeaponTechniqueCatalogScript.build_aerial_attack(
+		base_heavy,
+		"sword",
+		WeaponTechniqueCatalogScript.CONTEXT_AERIAL_HEAVY
+	)
+	if aerial_light == null or aerial_heavy == null:
+		failures.append("Sword must resolve both Aerial Light and Aerial Heavy")
+	else:
+		if aerial_light.attack_id == aerial_heavy.attack_id:
+			failures.append("Aerial Light and Heavy must have distinct attack ids")
+		if aerial_light.display_name != "Comet Slash":
+			failures.append("Sword Aerial Light must resolve Comet Slash")
+		if aerial_heavy.display_name != "Falling Edge":
+			failures.append("Sword Aerial Heavy must resolve Falling Edge")
+		if aerial_light.character_pose_id != "sword_aerial_light":
+			failures.append("Aerial Light must own an authored skeletal pose id")
+		if aerial_heavy.character_pose_id != "sword_aerial_heavy":
+			failures.append("Aerial Heavy must own an authored skeletal pose id")
+		if not aerial_heavy.extra_tags.has("plunging"):
+			failures.append("Aerial Heavy must preserve descending-impact semantics")
 
 
 func validate_hammer_identity() -> void:

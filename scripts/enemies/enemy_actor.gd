@@ -3,6 +3,9 @@ class_name EnemyActor
 
 const AirborneReactionControllerScript = preload("res://scripts/combat/airborne_reaction_controller.gd")
 const AirbornePresentationControllerScript = preload("res://scripts/visuals/airborne_presentation_controller.gd")
+const EnemyReactionPresentationBridgeScript = preload(
+	"res://scripts/visuals/enemy_reaction_presentation_bridge.gd"
+)
 const CreatureObservationAccess = preload(
 	"res://scripts/animals/creature_observation_access.gd"
 )
@@ -22,6 +25,7 @@ const CreatureObservationAccess = preload(
 var defeat_cleanup_started: bool = false
 var airborne_reaction_controller: Node
 var airborne_presentation_controller: Node
+var reaction_presentation_bridge: Node
 
 
 func _ready() -> void:
@@ -29,6 +33,7 @@ func _ready() -> void:
 	_register_creature_observation()
 	ensure_airborne_reaction_controller()
 	ensure_airborne_presentation_controller()
+	ensure_reaction_presentation_bridge()
 
 
 func _register_creature_observation() -> void:
@@ -63,6 +68,15 @@ func ensure_airborne_presentation_controller() -> void:
 	airborne_presentation_controller.name = "AirbornePresentationController"
 	airborne_presentation_controller.set("profile", airborne_presentation_profile)
 	add_child(airborne_presentation_controller)
+
+
+func ensure_reaction_presentation_bridge() -> void:
+	reaction_presentation_bridge = get_node_or_null("EnemyReactionPresentationBridge")
+	if reaction_presentation_bridge != null:
+		return
+	reaction_presentation_bridge = EnemyReactionPresentationBridgeScript.new()
+	reaction_presentation_bridge.name = "EnemyReactionPresentationBridge"
+	add_child(reaction_presentation_bridge)
 
 
 func receive_damage_payload(payload: DamagePayload) -> Dictionary:
@@ -120,6 +134,7 @@ func begin_defeat_cleanup() -> void:
 			"ForceReceiver",
 			"AirborneReactionController",
 			"AirbornePresentationController",
+			"EnemyReactionPresentationBridge",
 			"EnemyBrain",
 			"EnemyThreatSensor",
 			"EnemyActionRunner",

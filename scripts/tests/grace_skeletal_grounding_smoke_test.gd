@@ -4,6 +4,11 @@ const SkeletalGraceScene: PackedScene = preload(
 	"res://scenes/actors/player/grace_humanoid_skeletal_proxy_v1.tscn"
 )
 
+const EXPECTED_WEAPON_LANGUAGES: Array[String] = [
+	"sword", "lance", "axe", "bow", "hammer", "mace", "daggers", "whip",
+	"chains", "gauntlets", "flail", "halberd", "boomerang", "scythe", "staff", "shuriken",
+]
+
 var failures: Array[String] = []
 
 
@@ -22,9 +27,12 @@ func _ready() -> void:
 	_expect(bool(data.get("rest_pose_initialized", false)), "child bone pose translations initialize from rest")
 	_expect(bool(data.get("pelvis_rest_preserved", false)), "pelvis animation preserves authored rest height")
 	_expect(bool(data.get("weapon_language_v2", false)), "skeletal Grace owns diversified weapon language layer")
+	_expect(bool(data.get("all_weapon_languages_candidate", false)), "active rig reports complete sixteen-class candidate coverage")
+
 	var language_classes: Array = data.get("authored_language_classes", []) as Array
-	for weapon_class: String in ["sword", "hammer", "lance", "daggers"]:
-		_expect(language_classes.has(weapon_class), weapon_class + " has authored skeletal combat language")
+	_expect(language_classes.size() >= EXPECTED_WEAPON_LANGUAGES.size(), "active rig reports at least sixteen weapon languages")
+	for weapon_class: String in EXPECTED_WEAPON_LANGUAGES:
+		_expect(language_classes.has(weapon_class), weapon_class + " has intentional skeletal combat language")
 
 	var foot_height: float = float(data.get("foot_height", 999.0))
 	var span: float = float(data.get("head_to_foot_span", 0.0))

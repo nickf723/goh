@@ -15,6 +15,12 @@ const AnimationLibraryContractScript = preload(
 const ImportedAnimationAdapterScript = preload(
 	"res://scripts/visuals/grace_imported_animation_adapter.gd"
 )
+const AnimationSemanticResolverScript = preload(
+	"res://scripts/visuals/grace_animation_semantic_resolver.gd"
+)
+const PresentationAssetAuditorScript = preload(
+	"res://scripts/visuals/grace_presentation_asset_auditor.gd"
+)
 
 const EXPECTED_WEAPON_LANGUAGES: Array[String] = [
 	"sword", "lance", "axe", "bow", "hammer", "mace", "daggers", "whip",
@@ -181,6 +187,38 @@ func _validate_animation_library_contract() -> void:
 	_expect(bool(adapter_data.get("sword_calibration_ready", false)), "runtime animation adapter reports complete Sword calibration readiness")
 	var sword_animation: Animation = adapter.call("get_animation", "sword_light_1") as Animation
 	_expect(sword_animation != null, "runtime animation adapter returns semantic Sword clip")
+
+	var sword_l3 := WeaponAttackDefinition.new()
+	sword_l3.attack_id = "sword_l3"
+	_expect(
+		str(adapter.call("get_requested_semantic", "attack", "sword", sword_l3)) == "sword_light_3",
+		"gameplay Sword L3 resolves to imported Sword Light 3 semantic"
+	)
+	_expect(
+		StringName(adapter.call("get_requested_animation_name", "attack", "sword", sword_l3)) == StringName("Sword_Light_3"),
+		"gameplay Sword L3 resolves through semantic adapter to imported clip"
+	)
+
+	var dash_heavy := WeaponAttackDefinition.new()
+	dash_heavy.extra_tags.append("dash_heavy")
+	_expect(
+		AnimationSemanticResolverScript.resolve_attack_semantic("hammer", dash_heavy) == "hammer_dash_heavy",
+		"universal Dash Heavy produces class-qualified imported semantic"
+	)
+
+	var unapproved_axe_ground := WeaponAttackDefinition.new()
+	unapproved_axe_ground.attack_id = "axe_l1"
+	_expect(
+		AnimationSemanticResolverScript.resolve_attack_semantic("axe", unapproved_axe_ground) == "",
+		"unapproved non-Sword ground combo keeps procedural fallback"
+	)
+
+	var audit: Dictionary = PresentationAssetAuditorScript.audit(self)
+	_expect(str(audit.get("migration_stage", "")) == "sword_candidate", "complete synthetic package reaches Sword migration candidate stage")
+	_expect(bool(audit.get("skeleton_ready", false)), "presentation auditor sees compatible humanoid skeleton")
+	_expect(bool(audit.get("core_animation_ready", false)), "presentation auditor sees core imported animation readiness")
+	_expect(bool(audit.get("sword_animation_ready", false)), "presentation auditor sees full Sword imported animation readiness")
+
 	adapter.queue_free()
 	player.queue_free()
 

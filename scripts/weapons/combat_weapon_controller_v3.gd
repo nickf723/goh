@@ -5,7 +5,7 @@ const MechanicalIdentityScript = preload(
 	"res://scripts/weapons/weapon_mechanical_identity_v1.gd"
 )
 const BoomerangPathScript = preload(
-	"res://scripts/weapons/boomerang_path_solver.gd"
+	"res://scripts/weapons/boomerang_path_solver_v2.gd"
 )
 
 

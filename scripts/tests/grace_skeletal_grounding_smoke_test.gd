@@ -9,6 +9,12 @@ const HumanoidRigContractScript = preload(
 const ImportedHumanoidAdapterScript = preload(
 	"res://scripts/visuals/grace_imported_humanoid_adapter.gd"
 )
+const AnimationLibraryContractScript = preload(
+	"res://scripts/visuals/grace_animation_library_contract.gd"
+)
+const ImportedAnimationAdapterScript = preload(
+	"res://scripts/visuals/grace_imported_animation_adapter.gd"
+)
 
 const EXPECTED_WEAPON_LANGUAGES: Array[String] = [
 	"sword", "lance", "axe", "bow", "hammer", "mace", "daggers", "whip",
@@ -52,6 +58,7 @@ func _ready() -> void:
 	_validate_current_rig_contract(rig)
 	_validate_godot_humanoid_profile_aliases()
 	_validate_mixamo_aliases()
+	_validate_animation_library_contract()
 
 	if rig != null and is_instance_valid(rig):
 		rig.queue_free()
@@ -134,6 +141,44 @@ func _validate_mixamo_aliases() -> void:
 	_expect(int(semantic_map.get("forearm_r", -1)) == skeleton.find_bone("mixamorig:RightForeArm"), "Mixamo RightForeArm maps to Grace forearm semantic")
 	_expect(int(semantic_map.get("thigh_l", -1)) == skeleton.find_bone("mixamorig:LeftUpLeg"), "Mixamo LeftUpLeg maps to Grace thigh semantic")
 	skeleton.queue_free()
+
+
+func _validate_animation_library_contract() -> void:
+	var player := AnimationPlayer.new()
+	player.name = "ImportedAnimationPlayer"
+	add_child(player)
+	var library := AnimationLibrary.new()
+	var clip_names: Array[String] = [
+		"Armature|Idle", "Run_Loop", "Jump", "Fall", "Landing", "Combat_Roll", "Hit_Reaction",
+		"Sword_Light_1", "Sword_Light_2", "Sword_Light_3", "Sword_Light_4", "Sword_Heavy",
+		"Passing_Cut", "Rush_Break", "Comet_Slash", "Falling_Edge",
+	]
+	for clip_name: String in clip_names:
+		var animation := Animation.new()
+		animation.length = 0.5
+		library.add_animation(StringName(clip_name), animation)
+	player.add_animation_library(StringName(), library)
+
+	var validation: Dictionary = AnimationLibraryContractScript.validate_player(player)
+	_expect(bool(validation.get("compatible_core", false)), "imported animation library satisfies Grace core clip contract")
+	_expect(bool(validation.get("sword_calibration_ready", false)), "imported animation library satisfies Sword calibration clip contract")
+	_expect(AnimationLibraryContractScript.get_animation_name(player, "idle") == StringName("Armature|Idle"), "wrapper animation name resolves to idle semantic")
+	_expect(AnimationLibraryContractScript.get_animation_name(player, "dodge") == StringName("Combat_Roll"), "combat roll resolves to dodge semantic")
+	_expect(AnimationLibraryContractScript.get_animation_name(player, "sword_dash_light") == StringName("Passing_Cut"), "Passing Cut resolves to Sword Dash Light semantic")
+	_expect(AnimationLibraryContractScript.get_animation_name(player, "sword_aerial_heavy") == StringName("Falling_Edge"), "Falling Edge resolves to Sword Aerial Heavy semantic")
+
+	var adapter: Node = ImportedAnimationAdapterScript.new()
+	adapter.set("animation_player_path", NodePath("../ImportedAnimationPlayer"))
+	add_child(adapter)
+	var resolved: bool = bool(adapter.call("resolve_library"))
+	_expect(resolved, "runtime imported animation adapter accepts core library")
+	var adapter_data: Dictionary = adapter.call("get_debug_data") as Dictionary
+	_expect(bool(adapter_data.get("core_ready", false)), "runtime animation adapter reports core readiness")
+	_expect(bool(adapter_data.get("sword_calibration_ready", false)), "runtime animation adapter reports Sword calibration readiness")
+	var sword_animation: Animation = adapter.call("get_animation", "sword_light_1") as Animation
+	_expect(sword_animation != null, "runtime animation adapter returns semantic Sword clip")
+	adapter.queue_free()
+	player.queue_free()
 
 
 func _build_named_skeleton(skeleton_name: String, specs: Array) -> Skeleton3D:

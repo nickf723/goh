@@ -32,7 +32,7 @@ on:
       - "scripts/levels/prototype_weapon_arsenal_dojo.gd"
       - "scripts/levels/prototype_weapon_arsenal_dojo_v2.gd"
       - "scripts/tests/context_weapon_technique_smoke_test.gd"
-      - "scripts/tests/sword_combat_language_smoke_test.gd"
+      - "scripts/tests/weapon_moveset_smoke_test.gd"
       - "scripts/tests/weapon_arsenal_dojo_smoke_test.gd"
       - "scripts/tests/flexible_weapon_combat_v2_smoke_test.gd"
       - "scripts/tests/grace_combat_feel_pass_01_smoke_test.gd"
@@ -46,7 +46,7 @@ on:
       - "scenes/weapons/training_proxy_weapon_rig.tscn"
       - "scenes/levels/prototypes/prototype_weapon_arsenal_dojo_v1.tscn"
       - "scenes/tests/context_weapon_technique_smoke_test.tscn"
-      - "scenes/tests/sword_combat_language_smoke_test.tscn"
+      - "scenes/tests/weapon_moveset_smoke_test.tscn"
       - "scenes/tests/weapon_arsenal_dojo_smoke_test.tscn"
       - "scenes/tests/flexible_weapon_combat_v2_smoke_test.tscn"
       - "scenes/tests/grace_combat_feel_pass_01_smoke_test.tscn"
@@ -75,7 +75,7 @@ on:
       - "scripts/interaction/sandbox_weapon_pedestal.gd"
       - "scripts/levels/prototype_weapon_arsenal_dojo*.gd"
       - "scripts/tests/context_weapon_technique_smoke_test.gd"
-      - "scripts/tests/sword_combat_language_smoke_test.gd"
+      - "scripts/tests/weapon_moveset_smoke_test.gd"
       - "scripts/tests/weapon_arsenal_dojo_smoke_test.gd"
       - "scripts/tests/flexible_weapon_combat_v2_smoke_test.gd"
       - "scripts/tests/grace_combat_feel_pass_01_smoke_test.gd"
@@ -86,7 +86,7 @@ on:
       - "scenes/weapons/**"
       - "scenes/levels/prototypes/prototype_weapon_arsenal_dojo_v1.tscn"
       - "scenes/tests/context_weapon_technique_smoke_test.tscn"
-      - "scenes/tests/sword_combat_language_smoke_test.tscn"
+      - "scenes/tests/weapon_moveset_smoke_test.tscn"
       - "scenes/tests/weapon_arsenal_dojo_smoke_test.tscn"
       - "scenes/tests/flexible_weapon_combat_v2_smoke_test.tscn"
       - "scenes/tests/grace_combat_feel_pass_01_smoke_test.tscn"
@@ -135,11 +135,11 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/context_weapon_technique_smoke_test.tscn --quit-after 8 2>&1 | tee context-technique-test.log
 
-      - name: Run Sword combat language regression
+      - name: Run canonical weapon moveset and Sword language regression
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/sword_combat_language_smoke_test.tscn 2>&1 | tee sword-combat-language-test.log
+          godot --headless --path . res://scenes/tests/weapon_moveset_smoke_test.tscn 2>&1 | tee weapon-moveset-test.log
 
       - name: Run skeletal Grace grounding regression
         shell: bash
@@ -179,7 +179,7 @@ jobs:
           path: |
             arsenal-dojo-import.log
             context-technique-test.log
-            sword-combat-language-test.log
+            weapon-moveset-test.log
             grace-skeletal-grounding-test.log
             arsenal-dojo-test.log
             flexible-weapon-v2-test.log

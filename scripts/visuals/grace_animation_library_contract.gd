@@ -104,7 +104,7 @@ static func validate_player(player: AnimationPlayer) -> Dictionary:
 
 
 static func get_animation_name(player: AnimationPlayer, semantic: String) -> StringName:
-	return build_semantic_map(player).get(semantic, StringName()) as StringName
+	return StringName(build_semantic_map(player).get(semantic, ""))
 
 
 static func has_semantic(player: AnimationPlayer, semantic: String) -> bool:

@@ -1,6 +1,7 @@
 extends Node
 
 const TargetScene: PackedScene = preload("res://scenes/actors/enemies/hit_reaction_test_target.tscn")
+const GoblinScene: PackedScene = preload("res://scenes/actors/enemies/goblin_drone.tscn")
 const SwordMoveset: WeaponMovesetDefinition = preload("res://data/weapon_movesets/practice_sword_moveset.tres")
 const ForceReceiverScript = preload("res://scripts/combat/force_receiver.gd")
 const StatusReceiverScript = preload("res://scripts/combat/status_receiver.gd")
@@ -49,6 +50,7 @@ func _ready() -> void:
 	assert(light.reaction_controller.reaction_resistance >= 0.86)
 
 	await _test_enemy_airborne_loop()
+	await _test_enemy_presentation_bridge()
 
 	print("HitReactionSmokeTest: PASS")
 	get_tree().quit()
@@ -114,6 +116,62 @@ func _test_enemy_airborne_loop() -> void:
 	assert(airborne_controller.air_state_timer >= airborne_controller.landing_recovery_duration)
 
 	actor.queue_free()
+
+
+func _test_enemy_presentation_bridge() -> void:
+	var goblin: EnemyActor = GoblinScene.instantiate() as EnemyActor
+	goblin.name = "ReactionPresentationGoblin"
+	add_child(goblin)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var hit_receiver: Node = goblin.get_node_or_null("HitReceiver")
+	var visual: Node = goblin.get_node_or_null("VisualRoot")
+	var bridge: Node = goblin.get_node_or_null("EnemyReactionPresentationBridge")
+	var airborne_presentation: Node = goblin.get_node_or_null("AirbornePresentationController")
+	assert(hit_receiver != null)
+	assert(visual != null)
+	assert(bridge != null)
+	assert(airborne_presentation != null)
+	var initial_data: Dictionary = bridge.call("get_debug_data") as Dictionary
+	assert(bool(initial_data.get("bound", false)))
+	assert(not hit_receiver.is_connected("health_changed", Callable(visual, "_on_health_changed")))
+	assert(hit_receiver.is_connected("health_changed", Callable(bridge, "_on_health_changed")))
+
+	# One impact can touch multiple receiver dimensions. Presentation should wait
+	# until the call stack settles and author one defender beat.
+	hit_receiver.emit_signal("health_changed", 8, 10)
+	hit_receiver.emit_signal("stance_changed", 2, 3)
+	await get_tree().process_frame
+	var hit_data: Dictionary = bridge.call("get_debug_data") as Dictionary
+	assert(int(hit_data.get("reaction_count", 0)) == 1)
+	assert(str(hit_data.get("last_reaction", "")) == "hit")
+	var hit_sources: Array = hit_data.get("last_sources", []) as Array
+	assert(hit_sources.has("health"))
+	assert(hit_sources.has("stance"))
+	assert(bool(hit_data.get("coalesces_health_and_stance", false)))
+
+	# Stance break is a stronger semantic than an ordinary stance-damage flinch.
+	hit_receiver.emit_signal("stance_changed", 0, 3)
+	hit_receiver.emit_signal("stance_broken")
+	await get_tree().process_frame
+	var stagger_data: Dictionary = bridge.call("get_debug_data") as Dictionary
+	assert(int(stagger_data.get("reaction_count", 0)) == 2)
+	assert(str(stagger_data.get("last_reaction", "")) == "stagger")
+
+	# The dedicated airborne presenter owns VisualRoot while the target is in air.
+	# Grounded hit presentation must not fight it.
+	airborne_presentation.set("presentation_state", "airborne")
+	hit_receiver.emit_signal("health_changed", 7, 10)
+	await get_tree().process_frame
+	var airborne_data: Dictionary = bridge.call("get_debug_data") as Dictionary
+	assert(int(airborne_data.get("reaction_count", 0)) == 2)
+	assert(str(airborne_data.get("last_reaction", "")) == "airborne_owned")
+	assert(bool(airborne_data.get("airborne_suppressed", false)))
+	assert(bool(airborne_data.get("airborne_authority_preserved", false)))
+
+	goblin.queue_free()
+	await get_tree().process_frame
 
 
 func _spawn_target(profile_name: String) -> HitReactionTestTarget:

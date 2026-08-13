@@ -1,10 +1,13 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/weapons/combat_weapon_controller_v2.gd" id="2_weapon"]
 [ext_resource type="Script" path="res://scripts/visuals/grace_wire_motion_visual_combat_v2.gd" id="3_visual"]
 [ext_resource type="Script" path="res://scripts/visuals/weapon_recovery_presenter.gd" id="4_recovery"]
 [ext_resource type="Script" path="res://scripts/visuals/combat_engagement_presenter.gd" id="5_engagement"]
+[ext_resource type="Script" path="res://scripts/player/grace_agility_calibration.gd" id="6_agility"]
+[ext_resource type="Resource" path="res://data/player/grace_agile_ground_motion_profile.tres" id="7_ground"]
+[ext_resource type="Resource" path="res://data/player/grace_agile_dodge_motion_profile.tres" id="8_dodge"]
 
 [node name="Player" instance=ExtResource("1_player")]
 
@@ -19,3 +22,8 @@ script = ExtResource("4_recovery")
 
 [node name="CombatEngagementPresenter" type="Node" parent="."]
 script = ExtResource("5_engagement")
+
+[node name="GraceAgilityCalibration" type="Node" parent="."]
+script = ExtResource("6_agility")
+ground_profile = ExtResource("7_ground")
+dodge_profile = ExtResource("8_dodge")

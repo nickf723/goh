@@ -119,6 +119,17 @@ func receive_weapon_impact(
 		or payload.tags.has("launcher")
 		or payload.tags.has("ground_launcher")
 	)
+	last_impact_kind = "launcher" if launcher else ("heavy" if heavy else "light")
+	impact_count += 1
+
+	# Launchers already have a dedicated airborne presentation stack. Do not let
+	# the grounded flinch layer fight it for VisualRoot authority.
+	if launcher or _airborne_presentation_is_active():
+		impact_visual_position = Vector3.ZERO
+		impact_visual_rotation = Vector3.ZERO
+		impact_visual_scale = Vector3.ONE
+		return
+
 	var impact_weight: float = clampf(
 		0.72
 		+ float(maxi(payload.amount, 0)) * 0.08
@@ -128,8 +139,6 @@ func receive_weapon_impact(
 	) * recoil_visual_strength
 	if heavy:
 		impact_weight *= 1.22
-	if launcher:
-		impact_weight *= 1.12
 
 	# A hit reads first as a local body response. World-space knockback remains a
 	# separate system, so force can be tuned without erasing contact readability.
@@ -148,15 +157,16 @@ func receive_weapon_impact(
 		if heavy
 		else Vector3(1.035, 0.955, 1.035)
 	)
-	if launcher:
-		impact_visual_rotation.x -= deg_to_rad(4.0)
-	last_impact_kind = "launcher" if launcher else ("heavy" if heavy else "light")
-	impact_count += 1
 	_apply_impact_visual_now()
 
 
 func _update_grounded_impact_presentation(delta: float) -> void:
 	if visual_root == null:
+		return
+	if _airborne_presentation_is_active():
+		impact_visual_position = Vector3.ZERO
+		impact_visual_rotation = Vector3.ZERO
+		impact_visual_scale = Vector3.ONE
 		return
 	var blend: float = 1.0 - exp(-recoil_recovery_response * maxf(delta, 0.0))
 	impact_visual_position = impact_visual_position.lerp(
@@ -174,8 +184,17 @@ func _update_grounded_impact_presentation(delta: float) -> void:
 	_apply_impact_visual_now()
 
 
+func _airborne_presentation_is_active() -> bool:
+	if airborne_presentation_controller == null:
+		return false
+	var state: String = str(
+		airborne_presentation_controller.get("presentation_state")
+	).to_lower()
+	return state != "" and state != "grounded"
+
+
 func _apply_impact_visual_now() -> void:
-	if visual_root == null:
+	if visual_root == null or _airborne_presentation_is_active():
 		return
 	visual_root.position = impact_visual_position
 	visual_root.rotation = impact_visual_rotation

@@ -1,10 +1,9 @@
 extends Node3D
 class_name WeaponSupportGripContract
 
-# Presentation-only support target for two-handed combat prototypes.
-# The right hand and combat controller still own the held item. Imported/runtime
-# rigs can provide a child named SupportGrip; prototype items use a calibrated
-# fallback point under WeaponModelRoot.
+const WeaponPresentationAssetContractScript = preload(
+	"res://scripts/weapons/weapon_presentation_asset_contract.gd"
+)
 
 const SUPPORTED_CLASSES: Array[String] = ["hammer", "lance", "halberd", "staff", "scythe"]
 const FALLBACK_LOCAL_POSITIONS: Dictionary = {
@@ -60,13 +59,11 @@ func _update_target() -> void:
 	current_weapon_class = weapon_controller.equipped_weapon.weapon_class
 	if not SUPPORTED_CLASSES.has(current_weapon_class):
 		return
-
 	var authored: Node3D = _find_authored_support_grip()
 	if authored != null:
 		support_grip_target.global_transform = authored.global_transform
 		source_kind = "authored_marker"
 		return
-
 	var model_root: Node3D = weapon_controller.weapon_model_root
 	if model_root == null:
 		return
@@ -79,6 +76,9 @@ func _find_authored_support_grip() -> Node3D:
 	if weapon_controller == null or weapon_controller.runtime_weapon_rig == null:
 		return null
 	var rig: Node3D = weapon_controller.runtime_weapon_rig
+	var marker: Node3D = WeaponPresentationAssetContractScript.find_marker(rig, "support_grip")
+	if marker != null:
+		return marker
 	var direct: Node3D = rig.get_node_or_null(NodePath(str(authored_marker_name))) as Node3D
 	if direct != null:
 		return direct
@@ -93,4 +93,5 @@ func get_debug_data() -> Dictionary:
 		"source": source_kind,
 		"target_position": support_grip_target.global_position if support_grip_target != null else Vector3.ZERO,
 		"influence": get_support_influence(),
+		"asset_marker_contract": true,
 	}

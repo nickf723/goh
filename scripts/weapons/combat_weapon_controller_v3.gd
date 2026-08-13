@@ -30,3 +30,9 @@ func find_targets(attack: WeaponAttackDefinition) -> Array[Node]:
 	):
 		return BoomerangPathScript.find_targets(self, attack)
 	return super.find_targets(attack)
+
+
+func _uses_live_ranged_aim() -> bool:
+	if equipped_weapon != null and equipped_weapon.weapon_class == "boomerang":
+		return current_attack != null and current_attack.extra_tags.has("boomerang_throw")
+	return super._uses_live_ranged_aim()

@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/weapons/combat_weapon_controller_v2.gd" id="2_weapon"]
@@ -9,6 +9,7 @@
 [ext_resource type="Resource" path="res://data/player/grace_agile_ground_motion_profile.tres" id="7_ground"]
 [ext_resource type="Resource" path="res://data/player/grace_agile_dodge_motion_profile.tres" id="8_dodge"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/grace_humanoid_skeletal_proxy_v1.tscn" id="9_skeletal"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon_support_grip_contract.gd" id="10_support"]
 
 [node name="Player" instance=ExtResource("1_player")]
 
@@ -21,6 +22,9 @@ position = Vector3(0, -0.92, 0)
 
 [node name="WeaponController" parent="." index="21"]
 script = ExtResource("2_weapon")
+
+[node name="WeaponSupportGripContract" type="Node3D" parent="WeaponController"]
+script = ExtResource("10_support")
 
 [node name="WeaponRecoveryPresenter" type="Node" parent="."]
 script = ExtResource("4_recovery")

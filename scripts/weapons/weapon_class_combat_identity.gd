@@ -23,7 +23,7 @@ static func get_geometry_mode(
 		"shuriken":
 			return GEOMETRY_FAN_RAYS
 		"boomerang":
-			return GEOMETRY_RETURNING_RAY
+			return GEOMETRY_RETURNING_RAY if attack.extra_tags.has("boomerang_throw") else GEOMETRY_ARC
 		"lance":
 			if attack.extra_tags.has("thrust") or attack.cone_angle_degrees <= 54.0:
 				return GEOMETRY_LINE
@@ -45,12 +45,9 @@ static func get_line_half_width(
 ) -> float:
 	var heavy: bool = attack != null and attack.input_kind == "heavy"
 	match weapon_class:
-		"lance":
-			return 0.7 if heavy else 0.52
-		"staff":
-			return 0.82 if heavy else 0.62
-		_:
-			return 0.68 if heavy else 0.5
+		"lance": return 0.7 if heavy else 0.52
+		"staff": return 0.82 if heavy else 0.62
+		_: return 0.68 if heavy else 0.5
 
 
 static func get_fan_angles(attack: WeaponAttackDefinition) -> Array[float]:
@@ -60,9 +57,6 @@ static func get_fan_angles(attack: WeaponAttackDefinition) -> Array[float]:
 
 
 static func get_true_range_padding(weapon_class: String) -> float:
-	# Target positions generally sit at the feet while attack origins are chest
-	# height. This small planar allowance represents the target's body radius, not
-	# extra weapon reach.
 	if weapon_class in ["bow", "shuriken", "boomerang"]:
 		return 0.25
 	return 0.7
@@ -129,20 +123,36 @@ static func apply_payload_identity(
 		"whip":
 			payload.knockback_strength = maxf(payload.knockback_strength, 1.05 if heavy else 0.42)
 		"chains":
-			payload.knockback_strength = maxf(payload.knockback_strength, 2.45 if heavy else 0.8)
+			payload.knockback_strength = maxf(payload.knockback_strength, 3.15 if heavy else 1.05)
+			if attack.extra_tags.has("colossal_chain"):
+				payload.stance_damage += 1 if not heavy else 2
+				_append_tag(payload, "colossal_impact")
 			if payload.tags.has("pull") and toward_target.length_squared() > 0.0001:
 				payload.knockback_direction = -toward_target
 		"gauntlets":
 			payload.knockback_strength = maxf(payload.knockback_strength, 2.15 if heavy else 0.75)
+			if attack.extra_tags.has("boxing_jab"):
+				payload.knockback_strength = minf(payload.knockback_strength, 0.45)
+			elif attack.extra_tags.has("boxing_cross"):
+				payload.knockback_strength = maxf(payload.knockback_strength, 1.05)
+			elif attack.extra_tags.has("boxing_hook"):
+				payload.stance_damage += 1
+			elif attack.extra_tags.has("boxing_overhand"):
+				payload.knockback_strength = maxf(payload.knockback_strength, 2.55)
+				payload.critical_multiplier += 0.18
+			elif attack.extra_tags.has("boxing_body_hook"):
+				payload.knockback_strength = minf(payload.knockback_strength, 1.0)
+				payload.stance_damage += 2
+				payload.status_effect = "staggered"
+				payload.status_duration = maxf(payload.status_duration, 0.24)
+				payload.status_strength = maxf(payload.status_strength, 1.0)
+			elif attack.extra_tags.has("boxing_uppercut"):
+				payload.knockback_up_strength = maxf(payload.knockback_up_strength, 3.7 if attack.extra_tags.has("boxing_finisher") else 2.9)
 			if combo_depth >= 3:
 				payload.stance_damage += 1
-			if heavy and combo_depth >= 2:
-				payload.knockback_up_strength += 1.15
-				_append_tag(payload, "pressure_launcher")
 		"flail":
 			payload.knockback_strength = maxf(payload.knockback_strength, 3.35 if heavy else 1.35)
-			if heavy:
-				_append_tag(payload, "stored_momentum")
+			if heavy: _append_tag(payload, "stored_momentum")
 		"halberd":
 			payload.knockback_strength = maxf(payload.knockback_strength, 2.35 if heavy else 0.9)
 			if heavy and toward_target.length_squared() > 0.0001:
@@ -150,9 +160,16 @@ static func apply_payload_identity(
 				payload.knockback_up_strength = minf(payload.knockback_up_strength, 0.35)
 				_append_tag(payload, "hook_pull")
 		"boomerang":
-			payload.hit_type = "projectile"
-			payload.knockback_strength = maxf(payload.knockback_strength, 0.85 if heavy else 0.38)
-			_append_tag(payload, "returning_weapon")
+			if attack.extra_tags.has("boomerang_throw"):
+				payload.hit_type = "projectile"
+				payload.knockback_strength = maxf(payload.knockback_strength, 0.95)
+				_append_tag(payload, "returning_weapon")
+			else:
+				payload.hit_type = "melee"
+				payload.knockback_strength = maxf(payload.knockback_strength, 0.62)
+				_append_tag(payload, "boomerang_melee")
+				# SafeWeaponController uses this existing sentinel to avoid scheduling a return pass.
+				_append_tag(payload, "boomerang_return_scheduled")
 		"scythe":
 			payload.knockback_strength = maxf(payload.knockback_strength, 1.85 if heavy else 0.72)
 			if heavy and _target_health_ratio(target) <= 0.35:
@@ -166,11 +183,7 @@ static func apply_payload_identity(
 			payload.hit_type = "projectile"
 			payload.knockback_strength = maxf(payload.knockback_strength, 0.45 if heavy else 0.18)
 			var status_receiver: Node = target.get_node_or_null("StatusReceiver") if target != null else null
-			var marked: bool = (
-				status_receiver != null
-				and status_receiver.has_method("has_status")
-				and bool(status_receiver.call("has_status", "marked"))
-			)
+			var marked: bool = status_receiver != null and status_receiver.has_method("has_status") and bool(status_receiver.call("has_status", "marked"))
 			if heavy and marked:
 				payload.amount += maxi(roundi(float(payload.amount) * 0.45), 1)
 				payload.critical_multiplier += 0.4
@@ -184,11 +197,7 @@ static func apply_payload_identity(
 		payload.knockback_direction = toward_target
 
 
-static func apply_post_hit_identity(
-	target: Node,
-	payload: DamagePayload,
-	weapon_class: String
-) -> void:
+static func apply_post_hit_identity(target: Node, payload: DamagePayload, weapon_class: String) -> void:
 	if target == null or payload == null:
 		return
 	if weapon_class == "shuriken" and payload.tags.has("consume_mark"):

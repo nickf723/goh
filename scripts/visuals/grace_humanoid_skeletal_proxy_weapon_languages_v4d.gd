@@ -3,8 +3,10 @@ extends "res://scripts/visuals/grace_humanoid_skeletal_proxy_weapon_languages_v4
 # Weapon Language V4D: Flail + Chains candidates and two-handed grip integrity.
 # Flexible runtime rigs remain authoritative for their paths. Two-handed rigid
 # classes use a final left-arm IK layer against WeaponSupportGripContract.
+# The final pose layer also keeps ordinary attacks near a forward contact plane.
 
 const SUPPORT_HAND_CLASSES: Array[String] = ["hammer", "lance", "halberd", "staff", "scythe"]
+const FORWARD_PLANE_EXEMPT_CLASSES: Array[String] = ["bow", "boomerang", "shuriken"]
 
 var support_grip_contract: Node
 var support_hand_ik: TwoBoneIK3D
@@ -27,11 +29,82 @@ func _process(delta: float) -> void:
 
 func _build_attack_stage_pose(attack: WeaponAttackDefinition, stage: String) -> Dictionary:
 	var weapon_class: String = _get_equipped_weapon_class()
+	var pose: Dictionary
 	if weapon_class == "flail":
-		return _build_flail_attack_pose(attack, stage)
-	if weapon_class == "chains":
-		return _build_chain_attack_pose(attack, stage)
-	return super._build_attack_stage_pose(attack, stage)
+		pose = _build_flail_attack_pose(attack, stage)
+	elif weapon_class == "chains":
+		pose = _build_chain_attack_pose(attack, stage)
+	else:
+		pose = super._build_attack_stage_pose(attack, stage)
+	_apply_forward_contact_plane_pose(pose, attack, stage, weapon_class)
+	return pose
+
+
+func _apply_forward_contact_plane_pose(
+	pose: Dictionary,
+	attack: WeaponAttackDefinition,
+	stage: String,
+	weapon_class: String
+) -> void:
+	if attack == null or pose.is_empty() or FORWARD_PLANE_EXEMPT_CLASSES.has(weapon_class):
+		return
+	if not attack.extra_tags.has("forward_contact_plane"):
+		return
+	if (
+		attack.extra_tags.has("plunging")
+		or attack.extra_tags.has("launcher")
+		or attack.extra_tags.has("ground_slam")
+		or attack.extra_tags.has("pole_vault")
+	):
+		return
+
+	# The procedural body's local +X arm rotation moves from hanging at the side
+	# toward overhead. Generic cuts could drift well past horizontal, making the
+	# weapon look skyward even while the gameplay query remained level. Cap only
+	# ordinary forward strikes, and leave deliberate vertical techniques alone.
+	match stage:
+		"windup":
+			_cap_pose_bone_x(pose, "upper_arm_r", 112.0)
+			_cap_pose_bone_x(pose, "hand_r", 20.0)
+		"contact":
+			_cap_pose_bone_x(pose, "upper_arm_r", 98.0)
+			_clamp_pose_bone_x(pose, "hand_r", -14.0, 14.0)
+			_add_pose_deg(pose, "chest", Vector3(-4.0, 0.0, 0.0))
+			var contact_offset: Vector3 = pose.get("__pelvis_offset", Vector3.ZERO) as Vector3
+			contact_offset.z = minf(contact_offset.z, -0.055)
+			pose["__pelvis_offset"] = contact_offset
+		"follow":
+			_cap_pose_bone_x(pose, "upper_arm_r", 104.0)
+			_clamp_pose_bone_x(pose, "hand_r", -18.0, 18.0)
+			_add_pose_deg(pose, "chest", Vector3(-3.0, 0.0, 0.0))
+			var follow_offset: Vector3 = pose.get("__pelvis_offset", Vector3.ZERO) as Vector3
+			follow_offset.z = minf(follow_offset.z, -0.07)
+			pose["__pelvis_offset"] = follow_offset
+
+
+func _cap_pose_bone_x(pose: Dictionary, bone_name: String, maximum_degrees: float) -> void:
+	if not pose.has(bone_name):
+		return
+	var rotation: Vector3 = pose.get(bone_name, Vector3.ZERO) as Vector3
+	rotation.x = minf(rotation.x, deg_to_rad(maximum_degrees))
+	pose[bone_name] = rotation
+
+
+func _clamp_pose_bone_x(
+	pose: Dictionary,
+	bone_name: String,
+	minimum_degrees: float,
+	maximum_degrees: float
+) -> void:
+	if not pose.has(bone_name):
+		return
+	var rotation: Vector3 = pose.get(bone_name, Vector3.ZERO) as Vector3
+	rotation.x = clampf(
+		rotation.x,
+		deg_to_rad(minimum_degrees),
+		deg_to_rad(maximum_degrees)
+	)
+	pose[bone_name] = rotation
 
 
 func _build_flail_attack_pose(attack: WeaponAttackDefinition, stage: String) -> Dictionary:
@@ -173,4 +246,5 @@ func get_debug_data() -> Dictionary:
 	data["support_hand_ik"] = support_hand_ik_ready
 	data["support_hand_ik_active"] = support_hand_ik != null and support_hand_ik.influence > 0.001
 	data["support_hand_error"] = snappedf(support_hand_error, 0.001)
+	data["forward_contact_plane_pose"] = true
 	return data

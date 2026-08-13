@@ -50,7 +50,6 @@ func _exit_tree() -> void:
 			weapon_controller.disconnect("attack_started", started)
 		if weapon_controller.is_connected("attack_finished", finished):
 			weapon_controller.disconnect("attack_finished", finished)
-	super._exit_tree()
 
 
 func sample_animation_pose(delta: float) -> void:

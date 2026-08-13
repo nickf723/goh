@@ -120,6 +120,9 @@ func begin_defeat_cleanup() -> void:
 	if telegraph != null and telegraph.has_method("reset"):
 		telegraph.call("reset")
 
+	if reaction_presentation_bridge != null and reaction_presentation_bridge.has_method("cancel_presentation"):
+		reaction_presentation_bridge.call("cancel_presentation")
+
 	var visual: Node = get_node_or_null("VisualRoot")
 	if visual != null and visual.has_method("start_defeat"):
 		visual.call("start_defeat")

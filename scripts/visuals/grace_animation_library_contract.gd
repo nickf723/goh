@@ -13,9 +13,9 @@ const CORE_OPTIONAL: Array[String] = [
 ]
 
 const SWORD_CALIBRATION_ROLES: Array[String] = [
-	"sword_light_1", "sword_light_2", "sword_light_3", "sword_light_4",
-	"sword_heavy_neutral", "sword_dash_light", "sword_dash_heavy",
-	"sword_aerial_light", "sword_aerial_heavy",
+	"sword_light_1", "sword_light_2", "sword_light_3", "sword_light_4", "sword_reprise",
+	"sword_heavy_neutral", "sword_heavy_1", "sword_heavy_2", "sword_heavy_3", "sword_heavy_4",
+	"sword_dash_light", "sword_dash_heavy", "sword_aerial_light", "sword_aerial_heavy",
 ]
 
 const SEMANTIC_ALIASES: Dictionary = {
@@ -36,7 +36,12 @@ const SEMANTIC_ALIASES: Dictionary = {
 	"sword_light_2": ["sword_light_2", "sword_l2", "light_attack_2", "sword_attack_2"],
 	"sword_light_3": ["sword_light_3", "sword_l3", "light_attack_3", "sword_attack_3"],
 	"sword_light_4": ["sword_light_4", "sword_l4", "light_attack_4", "sword_attack_4"],
-	"sword_heavy_neutral": ["sword_heavy", "sword_h0", "heavy_attack", "sword_heavy_neutral"],
+	"sword_reprise": ["sword_reprise", "reprise_thrust", "sword_reprise_thrust"],
+	"sword_heavy_neutral": ["sword_heavy", "sword_h0", "sword_heavy_neutral"],
+	"sword_heavy_1": ["sword_heavy_1", "sword_h1", "sword_rising_break"],
+	"sword_heavy_2": ["sword_heavy_2", "sword_h2", "sword_crowd_cleave"],
+	"sword_heavy_3": ["sword_heavy_3", "sword_h3", "sword_driving_thrust"],
+	"sword_heavy_4": ["sword_heavy_4", "sword_h4", "sword_orbit_finisher"],
 	"sword_dash_light": ["sword_dash_light", "passing_cut", "dash_light_sword"],
 	"sword_dash_heavy": ["sword_dash_heavy", "rush_break", "dash_heavy_sword"],
 	"sword_aerial_light": ["sword_aerial_light", "comet_slash", "aerial_light_sword"],

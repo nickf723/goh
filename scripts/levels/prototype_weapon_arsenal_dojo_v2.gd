@@ -4,6 +4,9 @@ class_name PrototypeWeaponArsenalDojoV2
 const FlailRigScene: PackedScene = preload(
 	"res://scenes/weapons/flail_weapon_rig.tscn"
 )
+const EngagedTrainingTargetScene: PackedScene = preload(
+	"res://scenes/actors/testing/combat_training_target_engaged.tscn"
+)
 
 
 func _build_pedestals() -> void:
@@ -22,6 +25,22 @@ func _build_pedestals() -> void:
 			flail,
 			WeaponSandboxCatalogScript.get_status_label("flail") + " • CONTROLLED"
 		)
+
+
+func _spawn_training_target(
+	node_name: String,
+	label_text: String,
+	position_value: Vector3
+) -> void:
+	var target: Node = EngagedTrainingTargetScene.instantiate()
+	if not target is Node3D:
+		target.queue_free()
+		return
+	target.name = node_name
+	(target as Node3D).position = position_value
+	if "target_label" in target:
+		target.set("target_label", label_text)
+	target_root.add_child(target)
 
 
 func _connect_weapon_controller() -> void:
@@ -73,6 +92,7 @@ func get_debug_data() -> Dictionary:
 		and flail.runtime_rig_scene == FlailRigScene
 	)
 	data["combat_feel_pass_01"] = true
+	data["engaged_training_targets"] = true
 	data["trail_alpha"] = (
 		weapon_controller.sweep_start_alpha if weapon_controller != null else -1.0
 	)

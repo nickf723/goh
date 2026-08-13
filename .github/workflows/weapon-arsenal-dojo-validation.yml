@@ -16,6 +16,9 @@ on:
       - "scripts/weapons/whip_weapon_rig_v3.gd"
       - "scripts/weapons/chain_weapon_rig_v3.gd"
       - "scripts/weapons/flail_weapon_rig_v2.gd"
+      - "scripts/player/grace_agility_calibration.gd"
+      - "data/player/grace_agile_ground_motion_profile.tres"
+      - "data/player/grace_agile_dodge_motion_profile.tres"
       - "scripts/visuals/grace_wire_motion_visual_combat_v2.gd"
       - "scripts/visuals/weapon_recovery_presenter.gd"
       - "scripts/visuals/combat_engagement_presenter.gd"
@@ -45,6 +48,9 @@ on:
   pull_request:
     paths:
       - "scripts/weapons/**"
+      - "scripts/player/grace_agility_calibration.gd"
+      - "data/player/grace_agile_ground_motion_profile.tres"
+      - "data/player/grace_agile_dodge_motion_profile.tres"
       - "scripts/visuals/grace_wire_motion_visual_combat_v2.gd"
       - "scripts/visuals/weapon_recovery_presenter.gd"
       - "scripts/visuals/combat_engagement_presenter.gd"

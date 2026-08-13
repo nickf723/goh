@@ -2,6 +2,7 @@ extends Node
 class_name GraceImportedAnimationAdapter
 
 const AnimationContractScript = preload("res://scripts/visuals/grace_animation_library_contract.gd")
+const SemanticResolverScript = preload("res://scripts/visuals/grace_animation_semantic_resolver.gd")
 
 @export var animation_player_path: NodePath
 @export var require_core_library: bool = true
@@ -51,6 +52,34 @@ func get_animation(semantic: String) -> Animation:
 	return animation_player.get_animation(animation_name)
 
 
+func get_requested_semantic(
+	animation_state: String,
+	weapon_class: String = "",
+	attack: WeaponAttackDefinition = null
+) -> String:
+	return SemanticResolverScript.resolve_requested_semantic(
+		animation_state,
+		weapon_class,
+		attack
+	)
+
+
+func get_requested_animation_name(
+	animation_state: String,
+	weapon_class: String = "",
+	attack: WeaponAttackDefinition = null
+) -> StringName:
+	return get_animation_name(get_requested_semantic(animation_state, weapon_class, attack))
+
+
+func get_requested_animation(
+	animation_state: String,
+	weapon_class: String = "",
+	attack: WeaponAttackDefinition = null
+) -> Animation:
+	return get_animation(get_requested_semantic(animation_state, weapon_class, attack))
+
+
 func get_debug_data() -> Dictionary:
 	return {
 		"imported_animation_adapter": true,
@@ -61,4 +90,5 @@ func get_debug_data() -> Dictionary:
 		"sword_calibration_ready": bool(validation.get("sword_calibration_ready", false)),
 		"missing_core": validation.get("missing_core", []),
 		"missing_sword": validation.get("missing_sword", []),
+		"gameplay_semantic_resolver": true,
 	}

@@ -18,6 +18,9 @@ const WeaponPoseCatalogRouterScript = preload(
 const CombatFootworkCatalogScript = preload(
 	"res://scripts/weapons/combat_footwork_catalog.gd"
 )
+const WeaponPresentationAssetContractScript = preload(
+	"res://scripts/weapons/weapon_presentation_asset_contract.gd"
+)
 const PracticeSword: WeaponDefinition = preload("res://data/weapons/practice_sword.tres")
 const TrainingHammer: WeaponDefinition = preload("res://data/weapons/training_hammer.tres")
 
@@ -30,6 +33,7 @@ func _ready() -> void:
 	_validate_catalogs()
 	_validate_motion_fallback_contract()
 	_validate_combat_identity_contract()
+	_validate_presentation_asset_contract()
 	dojo = DojoScene.instantiate()
 	add_child(dojo)
 	for _index: int in range(8):
@@ -177,6 +181,41 @@ func _validate_combat_identity_contract() -> void:
 			payload.knockback_direction.dot(target_offset.normalized()) < -0.8,
 			"halberd heavy pulls inward instead of pushing away"
 		)
+
+
+func _validate_presentation_asset_contract() -> void:
+	var imported_weapon := Node3D.new()
+	imported_weapon.name = "ImportedHammerPresentation"
+	add_child(imported_weapon)
+	var sockets := Node3D.new()
+	sockets.name = "Sockets"
+	imported_weapon.add_child(sockets)
+	for marker_name: String in ["SupportGrip", "TrailBase", "TrailTip", "ProjectileOrigin"]:
+		var marker := Marker3D.new()
+		marker.name = marker_name
+		sockets.add_child(marker)
+
+	var validation: Dictionary = WeaponPresentationAssetContractScript.validate_asset(imported_weapon, "hammer")
+	_expect(bool(validation.get("valid_root", false)), "imported weapon presentation has valid Node3D root")
+	_expect(bool(validation.get("support_grip_present", false)), "imported two-handed asset exposes support grip")
+	_expect(bool(validation.get("two_handed_quality_ready", false)), "two-handed imported asset is quality-ready with support grip")
+	_expect(bool(validation.get("trail_pair_present", false)), "imported asset exposes trail base and tip pair")
+	_expect(bool(validation.get("projectile_origin_present", false)), "imported asset marker contract can expose projectile origin")
+	_expect(
+		WeaponPresentationAssetContractScript.find_marker(imported_weapon, "support_grip") != null,
+		"presentation marker discovery searches nested imported nodes"
+	)
+
+	var incomplete := Node3D.new()
+	incomplete.name = "ImportedHammerWithoutSupportGrip"
+	add_child(incomplete)
+	var incomplete_validation: Dictionary = WeaponPresentationAssetContractScript.validate_asset(incomplete, "hammer")
+	_expect(
+		not bool(incomplete_validation.get("two_handed_quality_ready", true)),
+		"two-handed production asset without support grip reports incomplete quality contract"
+	)
+	incomplete.queue_free()
+	imported_weapon.queue_free()
 
 
 func _validate_dojo_runtime() -> void:

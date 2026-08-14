@@ -5,23 +5,8 @@ on:
     branches:
       - main
     paths:
-      - "scripts/weapons/weapon_class_motion_catalog.gd"
-      - "scripts/weapons/weapon_class_combat_identity.gd"
-      - "scripts/weapons/weapon_pose_catalog_router.gd"
-      - "scripts/weapons/weapon_technique_catalog.gd"
-      - "scripts/weapons/safe_weapon_controller.gd"
-      - "scripts/weapons/combat_weapon_controller_v2.gd"
-      - "scripts/weapons/weapon_support_grip_contract.gd"
-      - "scripts/weapons/weapon_presentation_asset_contract.gd"
-      - "scripts/weapons/weapon_sandbox_catalog.gd"
-      - "scripts/weapons/training_proxy_weapon_rig.gd"
-      - "scripts/weapons/controlled_flexible_line_3d.gd"
-      - "scripts/weapons/whip_weapon_rig_v3.gd"
-      - "scripts/weapons/chain_weapon_rig_v3.gd"
-      - "scripts/weapons/flail_weapon_rig_v2.gd"
-      - "data/weapon_movesets/practice_sword_moveset.tres"
-      - "data/weapon_movesets/training_hammer_moveset.tres"
-      - "data/weapon_movesets/training_spear_moveset.tres"
+      - "scripts/weapons/**"
+      - "data/weapon_movesets/**"
       - "scripts/player/grace_agility_calibration.gd"
       - "data/player/grace_agile_ground_motion_profile.tres"
       - "data/player/grace_agile_dodge_motion_profile.tres"
@@ -37,29 +22,18 @@ on:
       - "scripts/visuals/grace_presentation_asset_auditor.gd"
       - "scripts/visuals/weapon_recovery_presenter.gd"
       - "scripts/visuals/combat_engagement_presenter.gd"
-      - "scripts/testing/combat_training_target.gd"
-      - "scripts/testing/combat_training_target_engaged.gd"
+      - "scripts/testing/combat_training_target*.gd"
       - "scripts/interaction/sandbox_weapon_pedestal.gd"
-      - "scripts/levels/prototype_weapon_arsenal_dojo.gd"
-      - "scripts/levels/prototype_weapon_arsenal_dojo_v2.gd"
-      - "scripts/tests/context_weapon_technique_smoke_test.gd"
-      - "scripts/tests/weapon_moveset_smoke_test.gd"
-      - "scripts/tests/weapon_arsenal_dojo_smoke_test.gd"
-      - "scripts/tests/flexible_weapon_combat_v2_smoke_test.gd"
+      - "scripts/levels/prototype_weapon_arsenal_dojo*.gd"
+      - "scripts/tests/*weapon*.gd"
       - "scripts/tests/grace_combat_feel_pass_01_smoke_test.gd"
       - "scripts/tests/grace_skeletal_grounding_smoke_test.gd"
       - "scenes/actors/player/player_combat_v2.tscn"
-      - "scenes/actors/player/grace_humanoid_skeletal_proxy_v1.tscn"
+      - "scenes/actors/player/grace_humanoid_skeletal_proxy_v*.tscn"
       - "scenes/actors/testing/combat_training_target_engaged.tscn"
-      - "scenes/weapons/whip_weapon_rig.tscn"
-      - "scenes/weapons/chain_weapon_rig.tscn"
-      - "scenes/weapons/flail_weapon_rig.tscn"
-      - "scenes/weapons/training_proxy_weapon_rig.tscn"
+      - "scenes/weapons/**"
       - "scenes/levels/prototypes/prototype_weapon_arsenal_dojo_v1.tscn"
-      - "scenes/tests/context_weapon_technique_smoke_test.tscn"
-      - "scenes/tests/weapon_moveset_smoke_test.tscn"
-      - "scenes/tests/weapon_arsenal_dojo_smoke_test.tscn"
-      - "scenes/tests/flexible_weapon_combat_v2_smoke_test.tscn"
+      - "scenes/tests/*weapon*.tscn"
       - "scenes/tests/grace_combat_feel_pass_01_smoke_test.tscn"
       - "scenes/tests/grace_skeletal_grounding_smoke_test.tscn"
       - "docs/WEAPON_ARSENAL_DOJO_V0_1.md"
@@ -74,9 +48,7 @@ on:
   pull_request:
     paths:
       - "scripts/weapons/**"
-      - "data/weapon_movesets/practice_sword_moveset.tres"
-      - "data/weapon_movesets/training_hammer_moveset.tres"
-      - "data/weapon_movesets/training_spear_moveset.tres"
+      - "data/weapon_movesets/**"
       - "scripts/player/grace_agility_calibration.gd"
       - "data/player/grace_agile_ground_motion_profile.tres"
       - "data/player/grace_agile_dodge_motion_profile.tres"
@@ -92,25 +64,18 @@ on:
       - "scripts/visuals/grace_presentation_asset_auditor.gd"
       - "scripts/visuals/weapon_recovery_presenter.gd"
       - "scripts/visuals/combat_engagement_presenter.gd"
-      - "scripts/testing/combat_training_target.gd"
-      - "scripts/testing/combat_training_target_engaged.gd"
+      - "scripts/testing/combat_training_target*.gd"
       - "scripts/interaction/sandbox_weapon_pedestal.gd"
       - "scripts/levels/prototype_weapon_arsenal_dojo*.gd"
-      - "scripts/tests/context_weapon_technique_smoke_test.gd"
-      - "scripts/tests/weapon_moveset_smoke_test.gd"
-      - "scripts/tests/weapon_arsenal_dojo_smoke_test.gd"
-      - "scripts/tests/flexible_weapon_combat_v2_smoke_test.gd"
+      - "scripts/tests/*weapon*.gd"
       - "scripts/tests/grace_combat_feel_pass_01_smoke_test.gd"
       - "scripts/tests/grace_skeletal_grounding_smoke_test.gd"
       - "scenes/actors/player/player_combat_v2.tscn"
-      - "scenes/actors/player/grace_humanoid_skeletal_proxy_v1.tscn"
+      - "scenes/actors/player/grace_humanoid_skeletal_proxy_v*.tscn"
       - "scenes/actors/testing/combat_training_target_engaged.tscn"
       - "scenes/weapons/**"
       - "scenes/levels/prototypes/prototype_weapon_arsenal_dojo_v1.tscn"
-      - "scenes/tests/context_weapon_technique_smoke_test.tscn"
-      - "scenes/tests/weapon_moveset_smoke_test.tscn"
-      - "scenes/tests/weapon_arsenal_dojo_smoke_test.tscn"
-      - "scenes/tests/flexible_weapon_combat_v2_smoke_test.tscn"
+      - "scenes/tests/*weapon*.tscn"
       - "scenes/tests/grace_combat_feel_pass_01_smoke_test.tscn"
       - "scenes/tests/grace_skeletal_grounding_smoke_test.tscn"
       - "docs/WEAPON_ARSENAL_DOJO_V0_1.md"
@@ -133,7 +98,7 @@ concurrency:
 
 jobs:
   validate-arsenal-dojo:
-    name: Import, diversified weapon language, skeletal animation, and dojo boot
+    name: Import, diversified weapon language, charge grammar, skeletal animation, and dojo boot
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -164,6 +129,12 @@ jobs:
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/weapon_moveset_smoke_test.tscn 2>&1 | tee weapon-moveset-test.log
+
+      - name: Run weapon charge grammar regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/weapon_charge_grammar_smoke_test.tscn 2>&1 | tee weapon-charge-test.log
 
       - name: Run skeletal Grace grounding and weapon-language regression
         shell: bash
@@ -204,6 +175,7 @@ jobs:
             arsenal-dojo-import.log
             context-technique-test.log
             weapon-moveset-test.log
+            weapon-charge-test.log
             grace-skeletal-grounding-test.log
             arsenal-dojo-test.log
             flexible-weapon-v2-test.log

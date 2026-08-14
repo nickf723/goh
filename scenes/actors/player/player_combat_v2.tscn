@@ -1,7 +1,7 @@
 [gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
-[ext_resource type="Script" path="res://scripts/weapons/combat_weapon_controller_v4.gd" id="2_weapon"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon_style_charge_v3.gd" id="2_weapon"]
 [ext_resource type="Script" path="res://scripts/visuals/grace_wire_motion_visual_combat_v2.gd" id="3_visual"]
 [ext_resource type="Script" path="res://scripts/visuals/weapon_recovery_presenter.gd" id="4_recovery"]
 [ext_resource type="Script" path="res://scripts/visuals/combat_engagement_presenter.gd" id="5_engagement"]

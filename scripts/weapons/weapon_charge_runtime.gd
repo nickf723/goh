@@ -1,7 +1,7 @@
 extends "res://scripts/weapons/combat_weapon_controller_v4.gd"
 class_name WeaponChargeRuntime
 
-const ChargeCatalogScript = preload("res://scripts/weapons/weapon_charge_attack_catalog_v1.gd")
+const ChargeCatalogScript = preload("res://scripts/weapons/weapon_charge_attack_catalog_v2.gd")
 const ChargeMasteryCatalogScript = preload("res://scripts/weapons/weapon_mastery_catalog.gd")
 const ChargeInfusionCatalogScript = preload("res://scripts/weapons/weapon_infusion_catalog.gd")
 const CHARGE_LIGHT_ACTION: StringName = &"weapon_light_attack"

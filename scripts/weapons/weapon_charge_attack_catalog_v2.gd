@@ -7,9 +7,18 @@ const BaseCatalogScript = preload(
 
 const MODE_SUSTAIN: String = "sustain"
 const MODE_RELEASE: String = "release"
+const MODE_COUNTER: String = "counter"
 
 
 static func get_profile(weapon_class: String, input_kind: String) -> Dictionary:
+	if weapon_class == "axe" and input_kind == "light":
+		return {
+			"id": "axe_counter_guard",
+			"mode": MODE_COUNTER,
+			"threshold": 0.16,
+			"full_charge": 0.55,
+			"movement_multiplier": 0.0,
+		}
 	var profile: Dictionary = BaseCatalogScript.get_profile(
 		weapon_class,
 		input_kind
@@ -28,7 +37,43 @@ static func build_hold_attack(
 	weapon_class: String,
 	input_kind: String
 ) -> WeaponAttackDefinition:
-	var attack: WeaponAttackDefinition = BaseCatalogScript.build_hold_attack(
+	if base_attack == null:
+		return null
+	var attack: WeaponAttackDefinition
+	if weapon_class == "axe" and input_kind == "light":
+		attack = base_attack.duplicate(true) as WeaponAttackDefinition
+		if attack == null:
+			return null
+		attack.attack_id = "charge_hold_axe_counter_guard"
+		attack.display_name = "Breakwater Catch"
+		attack.input_kind = "light"
+		attack.startup_time = 0.08
+		attack.active_time = 60.0
+		attack.recovery_time = 0.01
+		attack.combo_timeout = 0.0
+		attack.cancel_window_start_normalized = 0.0
+		attack.movement_distance = 0.0
+		attack.movement_duration = 0.0
+		attack.footwork_profile_id = ""
+		attack.allow_spell_cancel = false
+		attack.allow_dodge_cancel = true
+		var guard_rotation: Vector3 = Vector3(-8.0, -72.0, 88.0)
+		var guard_offset: Vector3 = Vector3(0.0, 0.03, -0.18)
+		attack.windup_rotation_degrees = guard_rotation
+		attack.strike_rotation_degrees = guard_rotation
+		attack.recovery_rotation_degrees = guard_rotation
+		attack.windup_offset = guard_offset
+		attack.strike_offset = guard_offset
+		attack.recovery_offset = guard_offset
+		_add_tag(attack, "weapon_charge_hold")
+		_add_tag(attack, "charge_axe_counter_guard")
+		_add_tag(attack, "axe_counter_guard")
+		_add_tag(attack, "weapon_counter_guard")
+		_add_tag(attack, "axe_edge_aligned")
+		_add_tag(attack, "counter")
+		return attack
+
+	attack = BaseCatalogScript.build_hold_attack(
 		base_attack,
 		weapon_class,
 		input_kind

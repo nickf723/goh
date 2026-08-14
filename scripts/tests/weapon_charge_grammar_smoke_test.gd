@@ -1,6 +1,6 @@
 extends Node
 
-const ChargeCatalogScript = preload("res://scripts/weapons/weapon_charge_attack_catalog_v1.gd")
+const ChargeCatalogScript = preload("res://scripts/weapons/weapon_charge_attack_catalog_v2.gd")
 const SandboxScript = preload("res://scripts/weapons/weapon_sandbox_catalog.gd")
 const TrainingChain: WeaponDefinition = preload("res://data/weapons/training_chain.tres")
 
@@ -18,6 +18,17 @@ func _ready() -> void:
 	for failure: String in failures:
 		push_error("WEAPON_CHARGE_GRAMMAR_SMOKE_TEST: " + failure)
 	get_tree().quit(1)
+
+
+func _validate_hold_timing(hold: WeaponAttackDefinition, label: String) -> void:
+	if hold == null:
+		return
+	if hold.startup_time > 0.22:
+		failures.append(label + " held pose must settle quickly")
+	if hold.active_time < 30.0:
+		failures.append(label + " must remain held while the input stays down")
+	if hold.footwork_profile_id != "":
+		failures.append(label + " must not inherit ordinary attack footwork")
 
 
 func _validate_chain_sustain() -> void:
@@ -42,6 +53,7 @@ func _validate_chain_sustain() -> void:
 		"chains",
 		1.0
 	)
+	_validate_hold_timing(hold, "Iron Orbit")
 	if hold == null or not hold.extra_tags.has("chain_charge_orbit"):
 		failures.append("Chain Light hold must enter Iron Orbit")
 	if pulse == null or not pulse.extra_tags.has("chain_head_authoritative"):
@@ -80,6 +92,7 @@ func _validate_axe_release() -> void:
 		base,
 		1.0
 	)
+	_validate_hold_timing(hold, "Guillotine Ready")
 	if hold == null or not hold.extra_tags.has("axe_charge_ready"):
 		failures.append("Axe charge must hold the axe overhead before release")
 	if release == null:
@@ -130,6 +143,7 @@ func _validate_staff_map_vault() -> void:
 		"heavy",
 		1.0
 	)
+	_validate_hold_timing(hold, "Sky-Pole Perch")
 	if hold == null or not hold.extra_tags.has("staff_charge_mount"):
 		failures.append("Staff Heavy hold must mount Grace on the planted staff")
 	if release == null:

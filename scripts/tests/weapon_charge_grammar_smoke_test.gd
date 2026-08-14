@@ -89,14 +89,19 @@ func _validate_axe_release() -> void:
 		"axe_first_plant",
 		"axe_lever_vault",
 		"axe_diagonal_twist",
-		"ground_slam",
+		"forward_ground_slam",
+		"ground_impact",
 	]:
 		if not release.extra_tags.has(required_tag):
 			failures.append("Levering Guillotine is missing " + required_tag)
+	if release.extra_tags.has("ground_slam"):
+		failures.append("Levering Guillotine must not collapse into a radial slam hitbox")
 	if release.movement_distance > 0.01:
 		failures.append("Axe release travel must be owned by its staged motion controller")
 	if plant == null or plant.damage_multiplier >= release.damage_multiplier:
 		failures.append("The first axe plant must be a smaller setup impact")
+	if plant != null and not plant.extra_tags.has("forward_ground_slam"):
+		failures.append("The first axe plant must land ahead of Grace")
 
 
 func _validate_staff_map_vault() -> void:

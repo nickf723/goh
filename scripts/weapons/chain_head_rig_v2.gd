@@ -4,6 +4,13 @@ class_name ChainHeadRigV2
 const ChainContactSolverV2Script = preload("res://scripts/weapons/chain_contact_solver_v2.gd")
 
 
+func _ready() -> void:
+	super._ready()
+	# V3's inherited default resets this to twelve during its _ready chain. Restore
+	# the longer trail after the rig is fully built so fast arcs do not lose links.
+	trail_sample_count = 16
+
+
 func find_weapon_targets(
 	weapon_controller: WeaponController,
 	attack: WeaponAttackDefinition,
@@ -69,4 +76,5 @@ func get_debug_data() -> Dictionary:
 	data["links_deal_damage"] = true
 	data["head_full_strength"] = true
 	data["contact_targets"] = _contact_strengths.size()
+	data["trail_sample_count"] = trail_sample_count
 	return data

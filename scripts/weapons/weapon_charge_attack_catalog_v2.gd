@@ -5,8 +5,8 @@ const BaseCatalogScript = preload(
 	"res://scripts/weapons/weapon_charge_attack_catalog_v1.gd"
 )
 
-const MODE_SUSTAIN: String = BaseCatalogScript.MODE_SUSTAIN
-const MODE_RELEASE: String = BaseCatalogScript.MODE_RELEASE
+const MODE_SUSTAIN: String = "sustain"
+const MODE_RELEASE: String = "release"
 
 
 static func get_profile(weapon_class: String, input_kind: String) -> Dictionary:

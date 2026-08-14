@@ -44,6 +44,7 @@ on:
       - "docs/GRACE_HUMANOID_IMPORT_CONTRACT_V1.md"
       - "docs/SWORD_COMBAT_LANGUAGE_V0_3.md"
       - "docs/WEAPON_LANGUAGE_DIVERSIFICATION_V0_4.md"
+      - "docs/WEAPON_MOVESET_COMPLETION_CONTRACT_V1.md"
       - ".github/workflows/weapon-arsenal-dojo-validation.yml"
   pull_request:
     paths:
@@ -86,6 +87,7 @@ on:
       - "docs/GRACE_HUMANOID_IMPORT_CONTRACT_V1.md"
       - "docs/SWORD_COMBAT_LANGUAGE_V0_3.md"
       - "docs/WEAPON_LANGUAGE_DIVERSIFICATION_V0_4.md"
+      - "docs/WEAPON_MOVESET_COMPLETION_CONTRACT_V1.md"
       - ".github/workflows/weapon-arsenal-dojo-validation.yml"
   workflow_dispatch:
 
@@ -98,7 +100,7 @@ concurrency:
 
 jobs:
   validate-arsenal-dojo:
-    name: Import, diversified weapon language, charge grammar, skeletal animation, and dojo boot
+    name: Import, complete weapon coverage, charge grammar, skeletal animation, and dojo boot
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -135,6 +137,12 @@ jobs:
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/weapon_charge_grammar_smoke_test.tscn 2>&1 | tee weapon-charge-test.log
+
+      - name: Run complete axe moveset regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/axe_weapon_focus_smoke_test.tscn 2>&1 | tee axe-weapon-focus-test.log
 
       - name: Run skeletal Grace grounding and weapon-language regression
         shell: bash
@@ -176,6 +184,7 @@ jobs:
             context-technique-test.log
             weapon-moveset-test.log
             weapon-charge-test.log
+            axe-weapon-focus-test.log
             grace-skeletal-grounding-test.log
             arsenal-dojo-test.log
             flexible-weapon-v2-test.log

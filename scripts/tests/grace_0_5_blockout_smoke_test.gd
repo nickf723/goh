@@ -17,7 +17,7 @@ var failures: Array[String] = []
 
 
 func _ready() -> void:
-	_validate_blockout()
+	await _validate_blockout()
 	_finish()
 
 
@@ -31,6 +31,8 @@ func _validate_blockout() -> void:
 		failures.append("Grace 0.5 scene does not instantiate as Node3D")
 		return
 	add_child(model)
+	await get_tree().process_frame
+
 	var skeleton: Skeleton3D = HumanoidContractScript.find_skeleton(model)
 	var validation: Dictionary = (
 		ProductionContractScript.validate_production_skeleton(skeleton)
@@ -54,6 +56,18 @@ func _validate_blockout() -> void:
 			"Grace 0.5 identifies itself as the active blockout"
 		)
 		_expect(
+			bool(data.get("attachments_bound_after_parenting", false)),
+			"Grace 0.5 binds BoneAttachment3D nodes after they enter the skeleton"
+		)
+		_expect(
+			(data.get("invalid_attachment_bindings", []) as Array).is_empty(),
+			"every Grace 0.5 modular part resolves a valid target bone"
+		)
+		_expect(
+			float(data.get("attachment_span", 0.0)) > 1.35,
+			"Grace 0.5 attachments occupy a humanoid head-to-foot span"
+		)
+		_expect(
 			int(data.get("visible_meshes", 0)) >= 45,
 			"Grace 0.5 contains a complete modular silhouette"
 		)
@@ -61,6 +75,54 @@ func _validate_blockout() -> void:
 			int(data.get("material_families", 0)) >= 10,
 			"Grace 0.5 contains the authored material family"
 		)
+
+	var head_attachment: BoneAttachment3D = model.get_node_or_null(
+		"Skeleton3D/HeadAttachment"
+	) as BoneAttachment3D
+	var left_foot_attachment: BoneAttachment3D = model.get_node_or_null(
+		"Skeleton3D/LeftFootAttachment"
+	) as BoneAttachment3D
+	var right_foot_attachment: BoneAttachment3D = model.get_node_or_null(
+		"Skeleton3D/RightFootAttachment"
+	) as BoneAttachment3D
+	var left_arm_attachment: BoneAttachment3D = model.get_node_or_null(
+		"Skeleton3D/LeftUpperArmAttachment"
+	) as BoneAttachment3D
+	var right_arm_attachment: BoneAttachment3D = model.get_node_or_null(
+		"Skeleton3D/RightUpperArmAttachment"
+	) as BoneAttachment3D
+	for attachment: BoneAttachment3D in [
+		head_attachment,
+		left_foot_attachment,
+		right_foot_attachment,
+		left_arm_attachment,
+		right_arm_attachment,
+	]:
+		_expect(
+			attachment != null and attachment.bone_idx >= 0,
+			"major Grace 0.5 attachment resolves a valid bone index"
+		)
+	if (
+		head_attachment != null
+		and left_foot_attachment != null
+		and right_foot_attachment != null
+	):
+		var feet_midpoint: Vector3 = left_foot_attachment.global_position.lerp(
+			right_foot_attachment.global_position,
+			0.5
+		)
+		_expect(
+			head_attachment.global_position.y - feet_midpoint.y > 1.35,
+			"Grace 0.5 head and feet do not collapse around the skeleton origin"
+		)
+	if left_arm_attachment != null and right_arm_attachment != null:
+		_expect(
+			left_arm_attachment.global_position.distance_to(
+				right_arm_attachment.global_position
+			) > 0.35,
+			"Grace 0.5 shoulders remain separated"
+		)
+
 	_expect(
 		model.get_node_or_null("Skeleton3D/HeadAttachment/HeadShape") != null,
 		"Grace 0.5 includes a modeled head"

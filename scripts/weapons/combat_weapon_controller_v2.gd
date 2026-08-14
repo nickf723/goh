@@ -342,13 +342,13 @@ func _configure_proxy_ground_flair(
 			elif heavy and index == 3:
 				attack.attack_range += 2.2
 				attack.cone_angle_degrees = minf(attack.cone_angle_degrees, 10.0)
-			"mace":
+		"mace":
 			if heavy and index >= 2:
 				attack.cone_angle_degrees = maxf(attack.cone_angle_degrees, 185.0)
 				attack.stance_multiplier *= 1.16
 			elif not heavy and index == 1:
 				attack.movement_distance = maxf(attack.movement_distance, 0.5)
-			"daggers":
+		"daggers":
 			if not heavy:
 				attack.movement_distance = maxf(attack.movement_distance, 0.68 + float(index) * 0.08)
 				attack.recovery_time *= 0.84
@@ -365,7 +365,7 @@ func _configure_proxy_ground_flair(
 			elif index == 3:
 				attack.movement_distance = maxf(attack.movement_distance, 1.05)
 				attack.attack_range += 0.28
-			"gauntlets":
+		"gauntlets":
 			if not heavy and index == 1:
 				attack.display_name = "One-Two"
 				attack.damage_multiplier *= 0.78
@@ -376,7 +376,7 @@ func _configure_proxy_ground_flair(
 				_append_attack_tag(attack, "launcher")
 			elif heavy and index == 3:
 				attack.movement_distance = maxf(attack.movement_distance, 1.0)
-			"flail":
+		"flail":
 			if not heavy and index == 2:
 				attack.display_name = "Double Orbit"
 				attack.damage_multiplier *= 0.76
@@ -387,18 +387,18 @@ func _configure_proxy_ground_flair(
 				attack.cone_angle_degrees = 360.0
 				attack.attack_center_forward_offset = 0.0
 				attack.max_targets += 3
-			"halberd":
+		"halberd":
 			if heavy and index == 1:
 				attack.cone_angle_degrees = maxf(attack.cone_angle_degrees, 210.0)
 				attack.attack_range += 0.45
 			elif heavy and index == 3:
 				attack.display_name = "Guillotine Line"
 				attack.stance_multiplier *= 1.2
-			"boomerang":
+		"boomerang":
 			attack.movement_distance = minf(attack.movement_distance, 0.18)
 			if heavy and index == 3:
 				attack.attack_range += 1.3
-			"scythe":
+		"scythe":
 			if not heavy and index == 2:
 				attack.cone_angle_degrees = maxf(attack.cone_angle_degrees, 300.0)
 				attack.max_targets += 2
@@ -406,7 +406,7 @@ func _configure_proxy_ground_flair(
 				attack.cone_angle_degrees = 360.0
 				attack.attack_center_forward_offset = 0.0
 				attack.max_targets += 3
-			"staff":
+		"staff":
 			if not heavy and index == 2:
 				attack.attack_range += 0.5
 				attack.cone_angle_degrees = minf(attack.cone_angle_degrees, 58.0)
@@ -419,7 +419,7 @@ func _configure_proxy_ground_flair(
 				attack.attack_center_forward_offset = 0.15
 				attack.max_targets += 2
 				_append_attack_tag(attack, "multi_hit_2")
-			"shuriken":
+		"shuriken":
 			attack.movement_distance = minf(attack.movement_distance, 0.12)
 			if not heavy and index == 2:
 				attack.display_name = "Six-Star Volley"

@@ -53,3 +53,44 @@ func _update_chain_momentum(_delta: float) -> void:
 	chain_momentum_stacks = 0
 	chain_momentum_timer = 0.0
 	chain_attack_momentum_spent = 0
+
+func start_attack(attack: WeaponAttackDefinition) -> bool:
+	var started: bool = super.start_attack(attack)
+	if started and current_attack != null and current_attack.extra_tags.has("axe_vault_slam"):
+		_schedule_axe_vault_motion()
+	return started
+
+func _schedule_axe_vault_motion() -> void:
+	if current_attack == null or not is_inside_tree():
+		return
+	var serial: int = flair_attack_serial
+	var attack_id: String = current_attack.attack_id
+	var startup: float = current_attack.get_startup_duration(get_attack_speed())
+	var lift_timer: SceneTreeTimer = get_tree().create_timer(maxf(startup * 0.24, 0.05))
+	var lift_callback := func():
+		_apply_axe_vault_motion(serial, attack_id, 1)
+	lift_timer.timeout.connect(lift_callback, CONNECT_ONE_SHOT)
+	var slam_timer: SceneTreeTimer = get_tree().create_timer(maxf(startup * 0.58, 0.12))
+	var slam_callback := func():
+		_apply_axe_vault_motion(serial, attack_id, 2)
+	slam_timer.timeout.connect(slam_callback, CONNECT_ONE_SHOT)
+
+func _apply_axe_vault_motion(serial: int, attack_id: String, phase: int) -> void:
+	if serial != flair_attack_serial or current_attack == null or current_attack.attack_id != attack_id:
+		return
+	var actor: Node3D = get_actor()
+	if not (actor is CharacterBody3D):
+		return
+	var body: CharacterBody3D = actor as CharacterBody3D
+	var forward: Vector3 = get_attack_forward()
+	forward.y = 0.0
+	forward = forward.normalized() if forward.length_squared() > 0.0001 else Vector3.FORWARD
+	var charge: float = clampf(released_charge_ratio, 0.0, 1.0)
+	if phase == 1:
+		body.velocity.x = forward.x * lerpf(3.8, 4.8, charge)
+		body.velocity.z = forward.z * lerpf(3.8, 4.8, charge)
+		body.velocity.y = maxf(body.velocity.y, lerpf(5.8, 7.0, charge))
+	else:
+		body.velocity.x = forward.x * lerpf(4.4, 5.5, charge)
+		body.velocity.z = forward.z * lerpf(4.4, 5.5, charge)
+		body.velocity.y = minf(body.velocity.y, -lerpf(8.8, 11.0, charge))

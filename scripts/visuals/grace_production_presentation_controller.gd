@@ -7,9 +7,6 @@ const ProductionContractScript = preload(
 const HumanoidContractScript = preload(
 	"res://scripts/visuals/grace_humanoid_rig_contract.gd"
 )
-const AnimationContractScript = preload(
-	"res://scripts/visuals/grace_animation_library_contract.gd"
-)
 const PresentationAuditorScript = preload(
 	"res://scripts/visuals/grace_presentation_asset_auditor.gd"
 )
@@ -94,7 +91,7 @@ func install_imported_scene(scene: PackedScene) -> bool:
 		return false
 	var raw_instance: Node = scene.instantiate()
 	if not raw_instance is Node3D:
-		raw_instance.queue_free()
+		raw_instance.free()
 		activate_procedural()
 		return false
 	imported_instance = raw_instance as Node3D
@@ -218,7 +215,9 @@ func _configure_pose_mirror() -> void:
 		add_child(pose_mirror)
 	pose_mirror.copy_root_position = copy_root_position
 	pose_mirror.copy_pelvis_position = copy_pelvis_position
-	pose_mirror.require_production_target = require_production_contract_for_auto
+	# Promotion strictness belongs to this controller. Preview models still need
+	# the pose bridge even when they are missing a production-preferred semantic.
+	pose_mirror.require_production_target = false
 	pose_mirror.configure(source_skeleton, imported_skeleton)
 	pose_mirror.mirror_enabled = false
 

@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/grace_solid_runtime_visual_v1.tscn" id="1_solid"]
-[ext_resource type="Script" path="res://scripts/visuals/grace_wire_skeleton_renderer.gd" id="2_wire"]
+[ext_resource type="Script" path="res://scripts/visuals/avatar_wire_skeleton_renderer.gd" id="2_wire"]
 
 [node name="GraceVisualV1" instance=ExtResource("1_solid")]
 

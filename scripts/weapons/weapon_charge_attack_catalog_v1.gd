@@ -107,23 +107,25 @@ static func build_release_attack(
 		return null
 	if weapon_class == "axe" and input_kind == "heavy":
 		attack.attack_id = "axe_charge_vault_slam"
-		attack.display_name = "Vaulting Guillotine"
+		attack.display_name = "Marching Guillotine"
 		attack.startup_time = lerpf(0.72, 0.92, charge)
 		attack.active_time = 0.14
-		attack.recovery_time = lerpf(0.46, 0.58, charge)
+		attack.recovery_time = lerpf(0.42, 0.54, charge)
 		attack.damage_multiplier *= lerpf(1.35, 2.0, charge)
 		attack.stance_multiplier *= lerpf(1.28, 1.85, charge)
 		attack.knockback_multiplier *= lerpf(1.08, 1.4, charge)
-		attack.knockback_up_add = maxf(attack.knockback_up_add, lerpf(0.8, 1.8, charge))
+		attack.knockback_up_add = maxf(attack.knockback_up_add, lerpf(0.65, 1.45, charge))
 		attack.attack_range = maxf(attack.attack_range, lerpf(3.0, 3.8, charge))
-		attack.cone_angle_degrees = 360.0
-		attack.attack_center_forward_offset = 0.0
+		attack.cone_angle_degrees = 170.0
+		attack.attack_center_forward_offset = lerpf(1.0, 1.45, charge)
 		attack.max_targets = maxi(attack.max_targets, 8)
-		attack.movement_distance = 0.0
+		attack.movement_distance = lerpf(3.8, 5.2, charge)
+		attack.movement_duration = lerpf(0.78, 0.96, charge)
 		attack.hit_stop_duration = maxf(attack.hit_stop_duration, lerpf(0.12, 0.18, charge))
 		attack.hit_stop_time_scale = minf(attack.hit_stop_time_scale, 0.03)
 		_add_tag(attack, "weapon_charge_release")
 		_add_tag(attack, "axe_vault_slam")
+		_add_tag(attack, "axe_forward_drive")
 		_add_tag(attack, "ground_slam")
 		_add_tag(attack, "guard_break")
 	return attack

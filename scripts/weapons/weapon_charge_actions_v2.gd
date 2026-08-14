@@ -15,9 +15,6 @@ func _should_use_generic_bow_combo_heavy(event: InputEvent) -> bool:
 		return false
 	if not event.is_action_pressed(BOW_HEAVY_ACTION):
 		return false
-	# Neutral Heavy owns the free-aim draw. Any Heavy entered during a Bow string
-	# stays inside the normal combo graph and fires immediately instead of opening
-	# the shoulder-aim state.
 	if current_attack != null:
 		return true
 	return combo_timeout_timer > 0.0 and last_completed_attack_id != ""
@@ -68,20 +65,19 @@ func _apply_axe_vault_motion(serial: int, attack_id: String, phase: int) -> void
 	var body: CharacterBody3D = actor as CharacterBody3D
 	var forward: Vector3 = get_attack_forward()
 	forward.y = 0.0
-	forward = forward.normalized() if forward.length_squared() > 0.0001 else Vector3.FORWARD
+	if forward.length_squared() <= 0.0001:
+		forward = Vector3.FORWARD
+	else:
+		forward = forward.normalized()
 	var charge: float = clampf(released_charge_ratio, 0.0, 1.0)
 	match phase:
 		1:
-			# Low forward vault off the planted axe. The horizontal combat-motion
-			# contract supplies the march; this impulse gives the body its hop.
 			body.velocity.y = maxf(body.velocity.y, lerpf(3.7, 4.7, charge))
 		2:
-			# Carry forward through the rotation instead of hanging above the plant.
-			body.velocity.x = maxf(absf(body.velocity.x), 0.01) * signf(body.velocity.x) if absf(body.velocity.x) > 0.01 else forward.x * lerpf(6.0, 7.4, charge)
-			body.velocity.z = maxf(absf(body.velocity.z), 0.01) * signf(body.velocity.z) if absf(body.velocity.z) > 0.01 else forward.z * lerpf(6.0, 7.4, charge)
+			# Horizontal travel is owned by begin_combat_motion for the full move.
+			# This beat only keeps the vault low instead of floating at its apex.
 			body.velocity.y = minf(maxf(body.velocity.y, 0.8), lerpf(2.2, 2.8, charge))
 		3:
-			# The axe and Grace arrive together: still advancing, now aggressively down.
 			body.velocity.x = forward.x * lerpf(7.6, 9.2, charge)
 			body.velocity.z = forward.z * lerpf(7.6, 9.2, charge)
 			body.velocity.y = minf(body.velocity.y, -lerpf(7.6, 9.4, charge))

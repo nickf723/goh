@@ -43,6 +43,12 @@ func resolve_incoming_attack(
 		emit_defense_state()
 		return hearth_result
 	if payload == null or elemental_authority_controller == null:
+		var direct_counter: Dictionary = _resolve_weapon_counter_contract(
+			payload,
+			attacker
+		)
+		if not direct_counter.is_empty():
+			return direct_counter
 		return super.resolve_incoming_attack(payload, attacker)
 
 	last_authority_result = elemental_authority_controller.resolve_incoming_payload(
@@ -78,11 +84,102 @@ func resolve_incoming_attack(
 
 	var resolved_value: Variant = last_authority_result.get("payload", payload)
 	if resolved_value is DamagePayload:
-		return super.resolve_incoming_attack(
-			resolved_value as DamagePayload,
+		var resolved_payload: DamagePayload = resolved_value as DamagePayload
+		var transformed_counter: Dictionary = _resolve_weapon_counter_contract(
+			resolved_payload,
 			attacker
 		)
+		if not transformed_counter.is_empty():
+			return transformed_counter
+		return super.resolve_incoming_attack(
+			resolved_payload,
+			attacker
+		)
+	var fallback_counter: Dictionary = _resolve_weapon_counter_contract(
+		payload,
+		attacker
+	)
+	if not fallback_counter.is_empty():
+		return fallback_counter
 	return super.resolve_incoming_attack(payload, attacker)
+
+
+# Weapon counters sit inside elemental authority and Bubble, but outside the
+# ordinary F/Y guard. The weapon controller owns stance-specific timing and hit
+# eligibility; defense remains the sole authority that negates the incoming hit
+# and emits the shared blocked-attack result.
+func _resolve_weapon_counter_contract(
+	payload: DamagePayload,
+	attacker: Node3D
+) -> Dictionary:
+	if payload == null or actor == null or GameState.is_player_invulnerable():
+		return {}
+	if (
+		bubble_shield_controller != null
+		and is_instance_valid(bubble_shield_controller)
+		and bubble_shield_controller.has_method("is_bubble_active")
+		and bool(bubble_shield_controller.call("is_bubble_active"))
+	):
+		# Bubble remains the outermost ordinary defense layer.
+		return {}
+	var weapon_controller: Node = actor.get_node_or_null("WeaponController")
+	if (
+		weapon_controller == null
+		or not weapon_controller.has_method("resolve_incoming_weapon_counter")
+	):
+		return {}
+	var raw_value: Variant = weapon_controller.call(
+		"resolve_incoming_weapon_counter",
+		payload,
+		attacker,
+		get_incoming_direction(attacker)
+	)
+	if not raw_value is Dictionary:
+		return {}
+	var weapon_result: Dictionary = raw_value as Dictionary
+	if not bool(weapon_result.get("handled", false)):
+		return {}
+
+	last_outcome = str(
+		weapon_result.get("outcome", "weapon_counter_block")
+	)
+	var incoming_direction: Vector3 = get_incoming_direction(attacker)
+	start_hit_reaction(
+		-incoming_direction,
+		maxf(float(weapon_result.get("recoil_seconds", 0.08)), 0.01),
+		maxf(float(weapon_result.get("recoil_speed", 0.5)), 0.0)
+	)
+	var feedback_value: Variant = weapon_result.get(
+		"feedback_color",
+		Color(0.18, 0.7, 1.0, 0.96)
+	)
+	var feedback_color: Color = (
+		feedback_value as Color
+		if feedback_value is Color
+		else Color(0.18, 0.7, 1.0, 0.96)
+	)
+	flash_feedback(
+		feedback_color,
+		maxf(float(weapon_result.get("feedback_duration", 0.2)), 0.01)
+	)
+
+	var result: Dictionary = make_result(
+		last_outcome,
+		payload,
+		str(weapon_result.get("message", "Weapon counter!"))
+	)
+	for key: Variant in weapon_result.keys():
+		if str(key) != "handled":
+			result[key] = weapon_result[key]
+	result["damage"] = int(result.get("damage", 0))
+	result["stance_damage"] = int(result.get("stance_damage", 0))
+	result["health_damage"] = int(result.get("health_damage", 0))
+	result["stamina_cost"] = int(result.get("stamina_cost", 0))
+	result["stance_cost"] = int(result.get("stance_cost", 0))
+	show_message(str(result.get("message", "")))
+	attack_blocked.emit(result)
+	emit_defense_state()
+	return result
 
 
 func _surf_negates_surface_hazard(payload: DamagePayload) -> bool:
@@ -164,4 +261,5 @@ func get_debug_data() -> Dictionary:
 		actor != null
 		and bool(actor.get_meta("surf_surface_hazard_immunity", false))
 	)
+	data["weapon_counter_contract"] = true
 	return data

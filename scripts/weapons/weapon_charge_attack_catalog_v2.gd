@@ -36,6 +36,24 @@ static func build_hold_attack(
 	attack.movement_distance = 0.0
 	attack.movement_duration = 0.0
 	attack.footwork_profile_id = ""
+
+	if weapon_class == "axe":
+		# Keep the proxy axe in its authored windup instead of allowing the visual
+		# tween to finish at the ordinary downward contact pose while charging.
+		attack.strike_rotation_degrees = attack.windup_rotation_degrees
+		attack.recovery_rotation_degrees = attack.windup_rotation_degrees
+		attack.strike_offset = attack.windup_offset
+		attack.recovery_offset = attack.windup_offset
+	elif weapon_class == "staff":
+		# A vertical, low-set shaft makes the held body pose read as a real perch.
+		var mount_rotation := Vector3(14.0, 0.0, 90.0)
+		var mount_offset := Vector3(0.0, -0.42, -0.18)
+		attack.windup_rotation_degrees = mount_rotation
+		attack.strike_rotation_degrees = mount_rotation
+		attack.recovery_rotation_degrees = mount_rotation
+		attack.windup_offset = mount_offset
+		attack.strike_offset = mount_offset
+		attack.recovery_offset = mount_offset
 	return attack
 
 

@@ -68,6 +68,16 @@ func _validate_blockout() -> void:
 		"Grace 0.5 uses explicit bone-pose following"
 	)
 	_expect(
+		bool(data.get("grace_0_5_silhouette_v4", false)),
+		"Grace 0.5 uses the corrected adolescent silhouette"
+	)
+	_expect(
+		bool(data.get("adolescent_head_ratio", false))
+		and bool(data.get("visible_leg_contrast", false))
+		and bool(data.get("shortened_robe_panels", false)),
+		"Grace 0.5 preserves the anti-hamster silhouette contract"
+	)
+	_expect(
 		int(data.get("bone_attachment_count", -1)) == 0,
 		"Grace 0.5 no longer depends on BoneAttachment3D"
 	)
@@ -111,12 +121,16 @@ func _validate_blockout() -> void:
 	var right_shoulder: MeshInstance3D = model.get_node_or_null(
 		"RightShoulderSleeve"
 	) as MeshInstance3D
+	var left_panel: MeshInstance3D = model.get_node_or_null(
+		"FrontPanelLeft"
+	) as MeshInstance3D
 	for part: MeshInstance3D in [
 		head,
 		left_foot,
 		right_foot,
 		left_shoulder,
 		right_shoulder,
+		left_panel,
 	]:
 		_expect(part != null, "major Grace 0.5 follower part exists")
 
@@ -129,10 +143,19 @@ func _validate_blockout() -> void:
 			head.position.y - feet_midpoint.y > 1.35,
 			"Grace 0.5 head and feet do not collapse around model origin"
 		)
+		_expect(
+			head.scale.x < 0.86 and head.scale.y < 0.94,
+			"Grace 0.5 head is reduced from mascot proportions"
+		)
 	if left_shoulder != null and right_shoulder != null:
 		_expect(
 			left_shoulder.position.distance_to(right_shoulder.position) > 0.35,
 			"Grace 0.5 shoulder geometry does not collapse"
+		)
+	if left_panel != null:
+		_expect(
+			left_panel.scale.y < 0.75,
+			"Grace 0.5 robe panels stop above the lower-leg silhouette"
 		)
 
 	_expect(

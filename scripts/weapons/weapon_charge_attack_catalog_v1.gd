@@ -139,7 +139,6 @@ static func build_release_attack(
 		attack.cone_angle_degrees = 150.0
 		attack.attack_center_forward_offset = lerpf(1.05, 1.4, charge)
 		attack.max_targets = maxi(attack.max_targets, 7)
-		# The controller owns the step, plant, leverage, corkscrew, and final drop.
 		attack.movement_distance = 0.0
 		attack.movement_duration = 0.0
 		attack.hit_stop_duration = maxf(attack.hit_stop_duration, lerpf(0.12, 0.18, charge))
@@ -149,7 +148,8 @@ static func build_release_attack(
 		_add_tag(attack, "axe_first_plant")
 		_add_tag(attack, "axe_lever_vault")
 		_add_tag(attack, "axe_diagonal_twist")
-		_add_tag(attack, "ground_slam")
+		_add_tag(attack, "forward_ground_slam")
+		_add_tag(attack, "ground_impact")
 		_add_tag(attack, "guard_break")
 		return attack
 
@@ -204,7 +204,8 @@ static func build_axe_plant_pulse(
 	attack.movement_distance = 0.0
 	_add_tag(attack, "weapon_charge_pulse")
 	_add_tag(attack, "axe_first_plant")
-	_add_tag(attack, "ground_slam")
+	_add_tag(attack, "forward_ground_slam")
+	_add_tag(attack, "ground_impact")
 	return attack
 
 

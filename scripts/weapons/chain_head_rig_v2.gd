@@ -1,4 +1,4 @@
-extends "res://scripts/weapons/chain_head_motion_v2.gd"
+extends "res://scripts/weapons/chain_head_motion_v3.gd"
 class_name ChainHeadRigV2
 
 const ChainContactSolverV2Script = preload("res://scripts/weapons/chain_contact_solver_v2.gd")

@@ -44,16 +44,26 @@ static func build_hold_attack(
 		attack.recovery_rotation_degrees = attack.windup_rotation_degrees
 		attack.strike_offset = attack.windup_offset
 		attack.recovery_offset = attack.windup_offset
-	elif weapon_class == "staff":
-		# A vertical, low-set shaft makes the held body pose read as a real perch.
-		var mount_rotation := Vector3(14.0, 0.0, 90.0)
-		var mount_offset := Vector3(0.0, -0.42, -0.18)
-		attack.windup_rotation_degrees = mount_rotation
-		attack.strike_rotation_degrees = mount_rotation
-		attack.recovery_rotation_degrees = mount_rotation
-		attack.windup_offset = mount_offset
-		attack.strike_offset = mount_offset
-		attack.recovery_offset = mount_offset
+	elif weapon_class == "staff" and input_kind == "light":
+		# Low, almost horizontal preparation for the returning toss.
+		var throw_rotation: Vector3 = Vector3(-4.0, -22.0, 88.0)
+		var throw_offset: Vector3 = Vector3(0.0, -0.04, -0.12)
+		attack.windup_rotation_degrees = throw_rotation
+		attack.strike_rotation_degrees = throw_rotation
+		attack.recovery_rotation_degrees = throw_rotation
+		attack.windup_offset = throw_offset
+		attack.strike_offset = throw_offset
+		attack.recovery_offset = throw_offset
+	elif weapon_class == "staff" and input_kind == "heavy":
+		# The grounded Heavy charge is a front-facing spinning guard, not a perch.
+		var guard_rotation: Vector3 = Vector3(-88.0, 0.0, 0.0)
+		var guard_offset: Vector3 = Vector3(0.0, -0.12, -0.42)
+		attack.windup_rotation_degrees = guard_rotation
+		attack.strike_rotation_degrees = guard_rotation
+		attack.recovery_rotation_degrees = guard_rotation
+		attack.windup_offset = guard_offset
+		attack.strike_offset = guard_offset
+		attack.recovery_offset = guard_offset
 	return attack
 
 

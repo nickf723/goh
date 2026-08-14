@@ -193,3 +193,9 @@ func get_weapon_charge_elapsed() -> float:
 
 func is_chain_orbit_charging() -> bool:
 	return charge_active and str(charge_profile.get("id", "")) == "chain_orbit"
+
+func _execute_sustain_charge_pulse() -> void:
+	pass
+
+func _apply_chain_charge_tug() -> void:
+	pass

@@ -1,4 +1,4 @@
-extends "res://scripts/weapons/chain_head_motion_v3.gd"
+extends "res://scripts/weapons/chain_head_motion_v4.gd"
 class_name ChainHeadRigV2
 
 const ChainContactSolverV2Script = preload("res://scripts/weapons/chain_contact_solver_v2.gd")
@@ -49,7 +49,11 @@ func modify_payload_for_target(
 ) -> void:
 	if payload == null or target == null:
 		return
-	var strength: float = clampf(float(_contact_strengths.get(target.get_instance_id(), 0.72)), 0.5, 1.0)
+	var strength: float = clampf(
+		float(_contact_strengths.get(target.get_instance_id(), 0.72)),
+		0.5,
+		1.0
+	)
 	payload.amount = maxi(1, roundi(float(payload.amount) * lerpf(0.58, 1.0, strength)))
 	payload.stance_damage = maxi(1, roundi(float(payload.stance_damage) * lerpf(0.55, 1.0, strength)))
 	payload.knockback_strength *= lerpf(0.45, 1.0, strength)

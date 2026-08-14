@@ -6,6 +6,13 @@ class_name AxeWeaponRigV2
 
 
 func _process(_delta: float) -> void:
+	# The attack-pose update owns the blue timing flare after a catch. Do not let
+	# the passive momentum refresh immediately paint over that signal.
+	if active_attack != null and (
+		active_attack.extra_tags.has("axe_counter_guard")
+		or active_attack.extra_tags.has("axe_counter_reversal")
+	):
+		return
 	_update_momentum_glow()
 
 
@@ -101,6 +108,7 @@ func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
 	data["axe_weapon_rig_v2"] = true
 	data["live_momentum_glow"] = true
+	data["counter_timing_glow"] = true
 	data["counter_guard_pose"] = true
 	data["counter_reversal_pose"] = true
 	data["authored_aerial_pose_routing"] = true

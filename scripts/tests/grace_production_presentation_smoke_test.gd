@@ -19,7 +19,7 @@ var failures: Array[String] = []
 func _ready() -> void:
 	_validate_production_contract()
 	_validate_pose_mirror()
-	await _validate_fallback_controller()
+	await _validate_presentation_controller()
 	_finish()
 
 
@@ -110,7 +110,7 @@ func _validate_pose_mirror() -> void:
 	target.queue_free()
 
 
-func _validate_fallback_controller() -> void:
+func _validate_presentation_controller() -> void:
 	_expect(
 		CombatPlayerScene != null,
 		"combat player preloads with production presentation bridge"
@@ -147,7 +147,64 @@ func _validate_fallback_controller() -> void:
 		and controller.has_method("get_socket_world_transform"),
 		"presentation controller exposes the production promotion API"
 	)
+
+	var candidate_scene: PackedScene = _build_imported_candidate_scene()
+	_expect(candidate_scene != null, "synthetic imported Grace candidate packs")
+	if candidate_scene != null:
+		controller.call("set_activation_mode", 2)
+		var installed: bool = bool(
+			controller.call("install_imported_scene", candidate_scene)
+		)
+		await get_tree().process_frame
+		await get_tree().process_frame
+		data = controller.call("get_debug_data") as Dictionary
+		_expect(installed, "mirror-compatible imported Grace activates in preview mode")
+		_expect(
+			str(data.get("active_presentation", "")) == "imported",
+			"imported Grace becomes the visible presentation"
+		)
+		_expect(
+			bool(data.get("production_ready", false)),
+			"complete imported candidate passes the frozen production contract"
+		)
+		_expect(
+			bool(data.get("pose_mirror_active", false)),
+			"imported Grace inherits the procedural combat pose stream"
+		)
+		_expect(
+			not procedural_visual.visible,
+			"procedural geometry hides while its skeleton remains the motion source"
+		)
+		_expect(
+			hand_anchor.global_position.length() > 0.1,
+			"visible imported hand drives the live weapon socket"
+		)
+		controller.call("activate_procedural")
+		_expect(
+			procedural_visual.visible,
+			"procedural fallback can be restored immediately"
+		)
 	actor.queue_free()
+
+
+func _build_imported_candidate_scene() -> PackedScene:
+	var root: Node3D = Node3D.new()
+	root.name = "SyntheticGraceImported"
+	var skeleton: Skeleton3D = _build_reference_skeleton(true)
+	root.add_child(skeleton)
+	skeleton.owner = root
+	var mesh_instance: MeshInstance3D = MeshInstance3D.new()
+	mesh_instance.name = "SyntheticGraceMesh"
+	var mesh: CapsuleMesh = CapsuleMesh.new()
+	mesh.radius = 0.25
+	mesh.height = 1.65
+	mesh_instance.mesh = mesh
+	root.add_child(mesh_instance)
+	mesh_instance.owner = root
+	var packed: PackedScene = PackedScene.new()
+	var result: Error = packed.pack(root)
+	root.free()
+	return packed if result == OK else null
 
 
 func _build_reference_skeleton(use_humanoid_aliases: bool) -> Skeleton3D:

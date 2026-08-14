@@ -9,7 +9,7 @@
 [ext_resource type="Resource" path="res://data/player/grace_agile_ground_motion_profile.tres" id="7_ground"]
 [ext_resource type="Resource" path="res://data/player/grace_agile_dodge_motion_profile.tres" id="8_dodge"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/grace_humanoid_skeletal_proxy_v2.tscn" id="9_skeletal"]
-[ext_resource type="Script" path="res://scripts/weapons/weapon_support_grip_contract.gd" id="10_support"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon_support_grip_contract_v2.gd" id="10_support"]
 [ext_resource type="Script" path="res://scripts/player/player_controller_weapon_charge.gd" id="11_player_script"]
 
 [node name="Player" instance=ExtResource("1_player")]

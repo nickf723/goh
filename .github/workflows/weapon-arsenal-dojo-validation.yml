@@ -20,6 +20,8 @@ on:
       - "scripts/visuals/grace_imported_animation_adapter.gd"
       - "scripts/visuals/grace_animation_semantic_resolver.gd"
       - "scripts/visuals/grace_presentation_asset_auditor.gd"
+      - "scripts/visuals/grace_production_*.gd"
+      - "scripts/visuals/grace_skeleton_pose_mirror.gd"
       - "scripts/visuals/weapon_recovery_presenter.gd"
       - "scripts/visuals/combat_engagement_presenter.gd"
       - "scripts/testing/combat_training_target*.gd"
@@ -28,20 +30,25 @@ on:
       - "scripts/tests/*weapon*.gd"
       - "scripts/tests/grace_combat_feel_pass_01_smoke_test.gd"
       - "scripts/tests/grace_skeletal_grounding_smoke_test.gd"
+      - "scripts/tests/grace_production_presentation_smoke_test.gd"
       - "scenes/actors/player/player_combat_v2.tscn"
       - "scenes/actors/player/grace_humanoid_skeletal_proxy_v*.tscn"
+      - "scenes/actors/player/grace_production_presentation_controller.tscn"
       - "scenes/actors/testing/combat_training_target_engaged.tscn"
       - "scenes/weapons/**"
       - "scenes/levels/prototypes/prototype_weapon_arsenal_dojo_v1.tscn"
       - "scenes/tests/*weapon*.tscn"
       - "scenes/tests/grace_combat_feel_pass_01_smoke_test.tscn"
       - "scenes/tests/grace_skeletal_grounding_smoke_test.tscn"
+      - "scenes/tests/grace_production_presentation_smoke_test.tscn"
       - "docs/WEAPON_ARSENAL_DOJO_V0_1.md"
       - "docs/WEAPON_COMBAT_IDENTITY_V0_2.md"
       - "docs/FLEXIBLE_WEAPON_COMBAT_V0_3.md"
       - "docs/GRACE_COMBAT_FEEL_PASS_01.md"
       - "docs/GRACE_SKELETAL_ANIMATION_PIPELINE_V1.md"
       - "docs/GRACE_HUMANOID_IMPORT_CONTRACT_V1.md"
+      - "docs/GRACE_PRODUCTION_PRESENTATION_PIPELINE_V1.md"
+      - "docs/GRACE_0_5_MODEL_BRIEF_V1.md"
       - "docs/SWORD_COMBAT_LANGUAGE_V0_3.md"
       - "docs/WEAPON_LANGUAGE_DIVERSIFICATION_V0_4.md"
       - "docs/WEAPON_MOVESET_COMPLETION_CONTRACT_V1.md"
@@ -63,6 +70,8 @@ on:
       - "scripts/visuals/grace_imported_animation_adapter.gd"
       - "scripts/visuals/grace_animation_semantic_resolver.gd"
       - "scripts/visuals/grace_presentation_asset_auditor.gd"
+      - "scripts/visuals/grace_production_*.gd"
+      - "scripts/visuals/grace_skeleton_pose_mirror.gd"
       - "scripts/visuals/weapon_recovery_presenter.gd"
       - "scripts/visuals/combat_engagement_presenter.gd"
       - "scripts/testing/combat_training_target*.gd"
@@ -71,20 +80,25 @@ on:
       - "scripts/tests/*weapon*.gd"
       - "scripts/tests/grace_combat_feel_pass_01_smoke_test.gd"
       - "scripts/tests/grace_skeletal_grounding_smoke_test.gd"
+      - "scripts/tests/grace_production_presentation_smoke_test.gd"
       - "scenes/actors/player/player_combat_v2.tscn"
       - "scenes/actors/player/grace_humanoid_skeletal_proxy_v*.tscn"
+      - "scenes/actors/player/grace_production_presentation_controller.tscn"
       - "scenes/actors/testing/combat_training_target_engaged.tscn"
       - "scenes/weapons/**"
       - "scenes/levels/prototypes/prototype_weapon_arsenal_dojo_v1.tscn"
       - "scenes/tests/*weapon*.tscn"
       - "scenes/tests/grace_combat_feel_pass_01_smoke_test.tscn"
       - "scenes/tests/grace_skeletal_grounding_smoke_test.tscn"
+      - "scenes/tests/grace_production_presentation_smoke_test.tscn"
       - "docs/WEAPON_ARSENAL_DOJO_V0_1.md"
       - "docs/WEAPON_COMBAT_IDENTITY_V0_2.md"
       - "docs/FLEXIBLE_WEAPON_COMBAT_V0_3.md"
       - "docs/GRACE_COMBAT_FEEL_PASS_01.md"
       - "docs/GRACE_SKELETAL_ANIMATION_PIPELINE_V1.md"
       - "docs/GRACE_HUMANOID_IMPORT_CONTRACT_V1.md"
+      - "docs/GRACE_PRODUCTION_PRESENTATION_PIPELINE_V1.md"
+      - "docs/GRACE_0_5_MODEL_BRIEF_V1.md"
       - "docs/SWORD_COMBAT_LANGUAGE_V0_3.md"
       - "docs/WEAPON_LANGUAGE_DIVERSIFICATION_V0_4.md"
       - "docs/WEAPON_MOVESET_COMPLETION_CONTRACT_V1.md"
@@ -100,7 +114,7 @@ concurrency:
 
 jobs:
   validate-arsenal-dojo:
-    name: Import, complete weapon coverage, charge grammar, skeletal animation, and dojo boot
+    name: Import, complete weapon coverage, production presentation, and dojo boot
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -150,6 +164,12 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/grace_skeletal_grounding_smoke_test.tscn 2>&1 | tee grace-skeletal-grounding-test.log
 
+      - name: Run Grace production presentation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/grace_production_presentation_smoke_test.tscn 2>&1 | tee grace-production-presentation-test.log
+
       - name: Run arsenal dojo regression
         shell: bash
         run: |
@@ -186,6 +206,7 @@ jobs:
             weapon-charge-test.log
             axe-weapon-focus-test.log
             grace-skeletal-grounding-test.log
+            grace-production-presentation-test.log
             arsenal-dojo-test.log
             flexible-weapon-v2-test.log
             grace-combat-feel-test.log

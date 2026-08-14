@@ -1,37 +1,15 @@
-extends "res://scripts/weapons/weapon_charge_controller_v1.gd"
-class_name WeaponChargeControllerV2
-
-const ChargeMasteryCatalogScript = preload("res://scripts/weapons/weapon_mastery_catalog.gd")
-const ChargeInfusionCatalogScript = preload("res://scripts/weapons/weapon_infusion_catalog.gd")
-
-
-func _update_charge_state(delta: float) -> void:
-	if (charge_pending or charge_active) and action_state != null:
-		if action_state.is_defeated or action_state.is_casting or action_state.is_dodging or action_state.is_staggered:
-			_cancel_weapon_charge()
-			return
-	super._update_charge_state(delta)
-
+extends "res://scripts/weapons/weapon_charge_runtime.gd"
+class_name WeaponChargeActions
 
 func _execute_sustain_charge_pulse() -> void:
 	if not is_chain_orbit_charging() or charge_base_attack == null or equipped_weapon == null:
 		return
-	var pulse: WeaponAttackDefinition = ChargeCatalogScript.build_sustain_pulse(
-		charge_base_attack,
-		equipped_weapon.weapon_class,
-		get_weapon_charge_ratio()
-	)
+	var pulse: WeaponAttackDefinition = ChargeCatalogScript.build_sustain_pulse(charge_base_attack, equipped_weapon.weapon_class, get_weapon_charge_ratio())
 	if pulse == null:
 		return
 	var payload: DamagePayload = pulse.build_payload(equipped_weapon)
 	var mastery_rank: int = GameState.get_weapon_mastery_rank(equipped_weapon.weapon_class)
-	ChargeMasteryCatalogScript.apply_payload_upgrades(
-		payload,
-		equipped_weapon.weapon_class,
-		mastery_rank,
-		pulse,
-		combo_history.size()
-	)
+	ChargeMasteryCatalogScript.apply_payload_upgrades(payload, equipped_weapon.weapon_class, mastery_rank, pulse, combo_history.size())
 	ChargeInfusionCatalogScript.apply_to_payload(payload, GameState.get_weapon_infusion())
 	if runtime_weapon_rig != null and runtime_weapon_rig.has_method("modify_attack_payload"):
 		runtime_weapon_rig.call("modify_attack_payload", payload, pulse)
@@ -42,11 +20,9 @@ func _execute_sustain_charge_pulse() -> void:
 			target.call("receive_weapon_impact", payload, get_attack_forward(), pulse)
 		elif target.has_method("receive_hit_reaction"):
 			target.call("receive_hit_reaction", get_attack_forward(), payload.knockback_strength)
-	if targets.is_empty():
-		return
-	last_attack_connected = true
-	HitStop.request(pulse.hit_stop_duration, 0.055)
-
+	if not targets.is_empty():
+		last_attack_connected = true
+		HitStop.request(pulse.hit_stop_duration, 0.055)
 
 func _apply_chain_charge_tug() -> void:
 	if not is_chain_orbit_charging():
@@ -70,13 +46,19 @@ func _apply_chain_charge_tug() -> void:
 	body.velocity.x = lerpf(body.velocity.x, body.velocity.x * 0.82 + tug.x, blend)
 	body.velocity.z = lerpf(body.velocity.z, body.velocity.z * 0.82 + tug.z, blend)
 
+func _apply_chain_momentum_to_attack(_attack: WeaponAttackDefinition) -> void:
+	pass
+
+func _update_chain_momentum(_delta: float) -> void:
+	chain_momentum_stacks = 0
+	chain_momentum_timer = 0.0
+	chain_attack_momentum_spent = 0
 
 func start_attack(attack: WeaponAttackDefinition) -> bool:
 	var started: bool = super.start_attack(attack)
 	if started and current_attack != null and current_attack.extra_tags.has("axe_vault_slam"):
 		_schedule_axe_vault_motion()
 	return started
-
 
 func _schedule_axe_vault_motion() -> void:
 	if current_attack == null or not is_inside_tree():
@@ -93,11 +75,8 @@ func _schedule_axe_vault_motion() -> void:
 		_apply_axe_vault_motion(serial, attack_id, 2)
 	slam_timer.timeout.connect(slam_callback, CONNECT_ONE_SHOT)
 
-
 func _apply_axe_vault_motion(serial: int, attack_id: String, phase: int) -> void:
 	if serial != flair_attack_serial or current_attack == null or current_attack.attack_id != attack_id:
-		return
-	if not current_attack.extra_tags.has("axe_vault_slam"):
 		return
 	var actor: Node3D = get_actor()
 	if not (actor is CharacterBody3D):
@@ -116,27 +95,22 @@ func _apply_axe_vault_motion(serial: int, attack_id: String, phase: int) -> void
 		body.velocity.z = forward.z * lerpf(4.4, 5.5, charge)
 		body.velocity.y = minf(body.velocity.y, -lerpf(8.8, 11.0, charge))
 
-
 func _begin_bow_aim() -> bool:
 	var started: bool = super._begin_bow_aim()
 	if started:
 		_enter_bow_aim_camera()
 	return started
 
-
 func _release_bow_aim() -> void:
 	super._release_bow_aim()
 	_exit_bow_aim_camera()
-
 
 func _cancel_bow_aim() -> void:
 	super._cancel_bow_aim()
 	_exit_bow_aim_camera()
 
-
 func get_bow_aim_screen_uv() -> Vector2:
 	return Vector2(0.5, 0.5)
-
 
 func _enter_bow_aim_camera() -> void:
 	var actor: Node3D = get_actor()
@@ -157,7 +131,6 @@ func _enter_bow_aim_camera() -> void:
 	bow_camera_tween.parallel().tween_property(bow_aim_spring, "position", shoulder_position, bow_camera_transition)
 	bow_camera_tween.parallel().tween_property(bow_aim_camera, "fov", bow_aim_fov, bow_camera_transition)
 
-
 func _exit_bow_aim_camera() -> void:
 	if bow_aim_camera == null or bow_aim_spring == null:
 		return
@@ -168,22 +141,7 @@ func _exit_bow_aim_camera() -> void:
 	bow_camera_tween.parallel().tween_property(bow_aim_spring, "position", bow_original_spring_position, bow_camera_transition)
 	bow_camera_tween.parallel().tween_property(bow_aim_camera, "fov", bow_original_fov, bow_camera_transition)
 
-
 func _kill_bow_camera_tween() -> void:
 	if bow_camera_tween != null and bow_camera_tween.is_valid():
 		bow_camera_tween.kill()
 	bow_camera_tween = null
-
-
-func get_charge_v2_debug_data() -> Dictionary:
-	return {
-		"charge_attack_grammar": true,
-		"charge_pending": charge_pending,
-		"charge_active": charge_active,
-		"charge_id": str(charge_profile.get("id", "none")),
-		"charge_ratio": snappedf(get_weapon_charge_ratio(), 0.01),
-		"chain_sustained_orbit": is_chain_orbit_charging(),
-		"axe_vault_slam": current_attack != null and current_attack.extra_tags.has("axe_vault_slam"),
-		"bow_reticle_convergence": true,
-		"bow_shoulder_camera": bow_aim_active,
-	}

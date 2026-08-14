@@ -48,7 +48,16 @@ func get_support_grip_target() -> Node3D:
 
 
 func get_support_influence() -> float:
-	return default_influence if supports_current_weapon() else 0.0
+	if not supports_current_weapon():
+		return 0.0
+	var rig: Node3D = weapon_controller.runtime_weapon_rig
+	if rig != null and rig.has_method("get_support_grip_influence"):
+		return default_influence * clampf(
+			float(rig.call("get_support_grip_influence")),
+			0.0,
+			1.0
+		)
+	return default_influence
 
 
 func _update_target() -> void:
@@ -94,4 +103,5 @@ func get_debug_data() -> Dictionary:
 		"target_position": support_grip_target.global_position if support_grip_target != null else Vector3.ZERO,
 		"influence": get_support_influence(),
 		"asset_marker_contract": true,
+		"runtime_influence_hook": true,
 	}

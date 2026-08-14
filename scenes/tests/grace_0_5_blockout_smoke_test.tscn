@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/tests/grace_0_5_blockout_smoke_test.gd" id="1_test"]
+
+[node name="Grace05BlockoutSmokeTest" type="Node"]
+script = ExtResource("1_test")

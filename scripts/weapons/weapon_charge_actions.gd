@@ -94,3 +94,54 @@ func _apply_axe_vault_motion(serial: int, attack_id: String, phase: int) -> void
 		body.velocity.x = forward.x * lerpf(4.4, 5.5, charge)
 		body.velocity.z = forward.z * lerpf(4.4, 5.5, charge)
 		body.velocity.y = minf(body.velocity.y, -lerpf(8.8, 11.0, charge))
+
+func _begin_bow_aim() -> bool:
+	var started: bool = super._begin_bow_aim()
+	if started:
+		_enter_bow_aim_camera()
+	return started
+
+func _release_bow_aim() -> void:
+	super._release_bow_aim()
+	_exit_bow_aim_camera()
+
+func _cancel_bow_aim() -> void:
+	super._cancel_bow_aim()
+	_exit_bow_aim_camera()
+
+func get_bow_aim_screen_uv() -> Vector2:
+	return Vector2(0.5, 0.5)
+
+func _enter_bow_aim_camera() -> void:
+	var actor: Node3D = get_actor()
+	if actor == null:
+		return
+	bow_aim_camera = get_viewport().get_camera_3d() if is_inside_tree() else null
+	bow_aim_spring = actor.get_node_or_null("CameraPivot/SpringArm3D") as SpringArm3D
+	if bow_aim_camera == null or bow_aim_spring == null:
+		return
+	bow_original_fov = bow_aim_camera.fov
+	bow_original_spring_position = bow_aim_spring.position
+	_kill_bow_camera_tween()
+	bow_camera_tween = create_tween()
+	bow_camera_tween.set_trans(Tween.TRANS_QUAD)
+	bow_camera_tween.set_ease(Tween.EASE_OUT)
+	var shoulder_position: Vector3 = bow_original_spring_position
+	shoulder_position.x += bow_shoulder_offset
+	bow_camera_tween.parallel().tween_property(bow_aim_spring, "position", shoulder_position, bow_camera_transition)
+	bow_camera_tween.parallel().tween_property(bow_aim_camera, "fov", bow_aim_fov, bow_camera_transition)
+
+func _exit_bow_aim_camera() -> void:
+	if bow_aim_camera == null or bow_aim_spring == null:
+		return
+	_kill_bow_camera_tween()
+	bow_camera_tween = create_tween()
+	bow_camera_tween.set_trans(Tween.TRANS_QUAD)
+	bow_camera_tween.set_ease(Tween.EASE_OUT)
+	bow_camera_tween.parallel().tween_property(bow_aim_spring, "position", bow_original_spring_position, bow_camera_transition)
+	bow_camera_tween.parallel().tween_property(bow_aim_camera, "fov", bow_original_fov, bow_camera_transition)
+
+func _kill_bow_camera_tween() -> void:
+	if bow_camera_tween != null and bow_camera_tween.is_valid():
+		bow_camera_tween.kill()
+	bow_camera_tween = null

@@ -23,12 +23,21 @@ static func get_profile(weapon_class: String, input_kind: String) -> Dictionary:
 			"full_charge": 1.5,
 			"movement_multiplier": 0.28,
 		}
+	if weapon_class == "staff" and input_kind == "light":
+		return {
+			"id": "staff_returning_throw",
+			"mode": MODE_RELEASE,
+			"threshold": 0.2,
+			"full_charge": 1.05,
+			"movement_multiplier": 0.42,
+		}
 	if weapon_class == "staff" and input_kind == "heavy":
 		return {
-			"id": "staff_map_vault",
-			"mode": MODE_RELEASE,
-			"threshold": 0.24,
-			"full_charge": 1.8,
+			"id": "staff_angel_ring",
+			"mode": MODE_SUSTAIN,
+			"threshold": 0.18,
+			"full_charge": 0.9,
+			"pulse_interval": 0.14,
 			"movement_multiplier": 0.0,
 		}
 	return {}
@@ -72,11 +81,20 @@ static func build_hold_attack(
 			_add_tag(attack, "axe_charge_ready")
 			_add_tag(attack, "overhead_charge")
 		"staff":
-			attack.display_name = "Sky-Pole Perch"
-			attack.attack_range = maxf(attack.attack_range, 2.1)
-			_add_tag(attack, "staff_charge_mount")
-			_add_tag(attack, "staff_pole_mount")
-			_add_tag(attack, "pole_vault")
+			if input_kind == "light":
+				attack.display_name = "Returning Comet Ready"
+				attack.attack_range = maxf(attack.attack_range, 3.0)
+				_add_tag(attack, "staff_throw_charge")
+				_add_tag(attack, "staff_returning_throw_charge")
+			else:
+				attack.display_name = "Whirling Bastion"
+				attack.attack_range = maxf(attack.attack_range, 3.2)
+				attack.cone_angle_degrees = maxf(attack.cone_angle_degrees, 118.0)
+				attack.attack_center_forward_offset = 1.0
+				attack.max_targets = maxi(attack.max_targets, 6)
+				_add_tag(attack, "staff_angel_ring")
+				_add_tag(attack, "staff_front_spin")
+				_add_tag(attack, "staff_planted_guard")
 	return attack
 
 
@@ -85,28 +103,53 @@ static func build_sustain_pulse(
 	weapon_class: String,
 	charge_ratio: float
 ) -> WeaponAttackDefinition:
-	if base_attack == null or weapon_class != "chains":
+	if base_attack == null:
 		return null
 	var charge: float = clampf(charge_ratio, 0.0, 1.0)
 	var attack: WeaponAttackDefinition = base_attack.duplicate(true) as WeaponAttackDefinition
 	if attack == null:
 		return null
-	attack.attack_id = "chain_charge_orbit_pulse"
-	attack.display_name = "Iron Orbit"
-	attack.input_kind = "light"
-	attack.damage_multiplier = lerpf(0.82, 1.22, charge)
-	attack.stance_multiplier = lerpf(1.05, 1.65, charge)
-	attack.knockback_multiplier = lerpf(0.72, 1.08, charge)
-	attack.attack_range = lerpf(3.25, 4.05, charge)
-	attack.cone_angle_degrees = 360.0
-	attack.attack_center_forward_offset = 0.0
-	attack.max_targets = 8
-	attack.hit_stop_duration = lerpf(0.045, 0.075, charge)
-	attack.movement_distance = 0.0
-	_add_tag(attack, "weapon_charge_pulse")
-	_add_tag(attack, "chain_charge_orbit")
-	_add_tag(attack, "chain_head_authoritative")
-	return attack
+
+	if weapon_class == "chains":
+		attack.attack_id = "chain_charge_orbit_pulse"
+		attack.display_name = "Iron Orbit"
+		attack.input_kind = "light"
+		attack.damage_multiplier = lerpf(0.82, 1.22, charge)
+		attack.stance_multiplier = lerpf(1.05, 1.65, charge)
+		attack.knockback_multiplier = lerpf(0.72, 1.08, charge)
+		attack.attack_range = lerpf(3.25, 4.05, charge)
+		attack.cone_angle_degrees = 360.0
+		attack.attack_center_forward_offset = 0.0
+		attack.max_targets = 8
+		attack.hit_stop_duration = lerpf(0.045, 0.075, charge)
+		attack.movement_distance = 0.0
+		_add_tag(attack, "weapon_charge_pulse")
+		_add_tag(attack, "chain_charge_orbit")
+		_add_tag(attack, "chain_head_authoritative")
+		return attack
+
+	if weapon_class == "staff":
+		attack.attack_id = "staff_angel_ring_pulse"
+		attack.display_name = "Whirling Bastion"
+		# The sustained guard is activated with Heavy, but each rapid contact uses
+		# Light-class knockback so it pressures instead of repeatedly launching.
+		attack.input_kind = "light"
+		attack.damage_multiplier = lerpf(0.34, 0.5, charge)
+		attack.stance_multiplier = lerpf(0.42, 0.72, charge)
+		attack.knockback_multiplier = lerpf(0.28, 0.44, charge)
+		attack.attack_range = lerpf(2.75, 3.35, charge)
+		attack.cone_angle_degrees = lerpf(108.0, 132.0, charge)
+		attack.attack_center_forward_offset = lerpf(0.9, 1.08, charge)
+		attack.max_targets = 6
+		attack.hit_stop_duration = 0.025
+		attack.movement_distance = 0.0
+		_add_tag(attack, "weapon_charge_pulse")
+		_add_tag(attack, "staff_angel_ring")
+		_add_tag(attack, "staff_front_spin")
+		_add_tag(attack, "multi_contact")
+		return attack
+
+	return null
 
 
 static func build_release_attack(
@@ -153,28 +196,32 @@ static func build_release_attack(
 		_add_tag(attack, "guard_break")
 		return attack
 
-	if weapon_class == "staff" and input_kind == "heavy":
-		attack.attack_id = "staff_charge_map_vault"
-		attack.display_name = "Skybound Pole Vault"
-		attack.startup_time = lerpf(0.38, 0.5, charge)
-		attack.active_time = 0.1
-		attack.recovery_time = lerpf(0.28, 0.38, charge)
-		attack.damage_multiplier *= lerpf(0.9, 1.2, charge)
-		attack.stance_multiplier *= lerpf(1.0, 1.35, charge)
-		attack.knockback_multiplier *= lerpf(0.85, 1.1, charge)
-		attack.attack_range = maxf(attack.attack_range, 2.25)
-		attack.cone_angle_degrees = 105.0
-		attack.attack_center_forward_offset = 0.8
-		attack.max_targets = maxi(attack.max_targets, 4)
+	if weapon_class == "staff" and input_kind == "light":
+		attack.attack_id = "staff_charge_returning_throw"
+		attack.display_name = "Returning Comet"
+		attack.input_kind = "light"
+		attack.startup_time = 0.12
+		attack.active_time = lerpf(0.92, 1.08, charge)
+		attack.recovery_time = lerpf(0.14, 0.2, charge)
+		attack.combo_timeout = 0.28
+		attack.cancel_window_start_normalized = 0.72
+		attack.allow_dodge_cancel = true
+		attack.damage_multiplier *= lerpf(1.0, 1.42, charge)
+		attack.stance_multiplier *= lerpf(0.9, 1.25, charge)
+		attack.knockback_multiplier *= lerpf(0.78, 1.05, charge)
+		attack.attack_range = lerpf(6.5, 10.0, charge)
+		attack.cone_angle_degrees = 18.0
+		attack.attack_center_forward_offset = 2.5
+		attack.max_targets = maxi(attack.max_targets, 5)
 		attack.movement_distance = 0.0
 		attack.movement_duration = 0.0
-		attack.allow_dodge_cancel = false
+		attack.hit_stop_duration = 0.045
 		_add_tag(attack, "weapon_charge_release")
-		_add_tag(attack, "staff_charge_vault")
-		_add_tag(attack, "staff_pole_vault")
-		_add_tag(attack, "pole_vault")
-		_add_tag(attack, "traversal")
-		_add_tag(attack, "airborne")
+		_add_tag(attack, "staff_returning_throw")
+		_add_tag(attack, "returning")
+		_add_tag(attack, "projectile")
+		_add_tag(attack, "ranged")
+		_add_tag(attack, "spinning_staff")
 		return attack
 
 	return attack

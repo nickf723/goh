@@ -136,7 +136,7 @@ static func build_moveset() -> WeaponMovesetDefinition:
 	l3.movement_distance = 0.56
 	l3.movement_duration = 0.16
 	l3.next_heavy_attack_id = "axe_h3"
-	l3.footwork_profile_id = "sword_cleave_right"
+	l3.footwork_profile_id = "sword_cleave_left"
 	_set_tags(l3, [
 		"slash", "cleave", "axe", "axe_broad_hew",
 		"axe_momentum_builder", "axe_opener", "opening_pressure",

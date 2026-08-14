@@ -1,70 +1,117 @@
 extends "res://scripts/visuals/grace_0_5_blockout_model.gd"
 class_name Grace05BlockoutModelV2
 
-# V1 assigned bone_name before the BoneAttachment3D had a Skeleton3D parent.
-# At runtime those attachments could remain on bone index -1, collapsing every
-# modular body piece around the model origin and turning Grace into a tiny orb.
-# Parent first, then bind by both stable index and readable name.
+# Grace 0.5 deliberately stops using BoneAttachment3D. The attachment path was
+# still collapsing modular pieces at runtime on the live imported presentation.
+# Every visible form now remains a direct child of the model and samples its
+# target bone's accumulated Skeleton3D pose explicitly each frame. This is the
+# same dependable presentation pattern used by the original full-height proxy.
 
-
-func _get_attachment(bone_name: String) -> BoneAttachment3D:
-	if attachments.has(bone_name):
-		return attachments[bone_name] as BoneAttachment3D
-
-	var attachment: BoneAttachment3D = BoneAttachment3D.new()
-	attachment.name = bone_name + "Attachment"
-	skeleton.add_child(attachment)
-
-	var bone_index: int = skeleton.find_bone(bone_name)
-	attachment.bone_idx = bone_index
-	attachment.bone_name = bone_name
-	attachment.override_pose = false
-	attachments[bone_name] = attachment
-
-	if bone_index < 0:
-		push_error(
-			"Grace 0.5 could not bind "
-			+ attachment.name
-			+ " to missing bone "
-			+ bone_name
-		)
-	return attachment
+var bone_followers: Array[Dictionary] = []
+var invalid_follower_bones: Array[String] = []
+var last_follower_span: float = 0.0
+var last_shoulder_span: float = 0.0
 
 
 func _enter_tree() -> void:
+	# super builds the skeleton and character. Calls to _add_mesh dispatch to this
+	# override, so no BoneAttachment3D nodes are created during construction.
 	super._enter_tree()
-	if skeleton != null:
-		skeleton.force_update_all_bone_transforms()
-	for attachment_value: Variant in attachments.values():
-		if attachment_value is BoneAttachment3D:
-			(attachment_value as BoneAttachment3D).on_skeleton_update()
-	set_meta("grace_0_5_attachment_fix", true)
+	process_priority = 230
+	set_process(true)
+	_refresh_bone_followers()
+	set_meta("grace_0_5_direct_bone_follow", true)
 
 
-func get_attachment_span() -> float:
-	var head: BoneAttachment3D = attachments.get("Head") as BoneAttachment3D
-	var left_foot: BoneAttachment3D = attachments.get("LeftFoot") as BoneAttachment3D
-	var right_foot: BoneAttachment3D = attachments.get("RightFoot") as BoneAttachment3D
-	if head == null or left_foot == null or right_foot == null:
-		return 0.0
-	var feet_midpoint: Vector3 = left_foot.global_position.lerp(
-		right_foot.global_position,
-		0.5
+func _process(_delta: float) -> void:
+	_refresh_bone_followers()
+
+
+func _add_mesh(
+	part_name: String,
+	bone_name: String,
+	mesh: Mesh,
+	material: Material,
+	local_position: Vector3,
+	local_rotation_degrees: Vector3 = Vector3.ZERO,
+	local_scale: Vector3 = Vector3.ONE
+) -> MeshInstance3D:
+	var instance: MeshInstance3D = MeshInstance3D.new()
+	instance.name = part_name
+	instance.mesh = mesh
+	instance.material_override = material
+	instance.position = local_position
+	instance.rotation_degrees = local_rotation_degrees
+	instance.scale = local_scale
+	add_child(instance)
+
+	bone_followers.append({
+		"node": instance,
+		"part_name": part_name,
+		"bone_name": bone_name,
+		"local_transform": instance.transform,
+	})
+	visible_mesh_count += 1
+	return instance
+
+
+func _refresh_bone_followers() -> void:
+	if skeleton == null:
+		return
+	skeleton.force_update_all_bone_transforms()
+	invalid_follower_bones.clear()
+	var minimum_y: float = INF
+	var maximum_y: float = -INF
+	for spec: Dictionary in bone_followers:
+		var node: MeshInstance3D = spec.get("node") as MeshInstance3D
+		var bone_name: String = str(spec.get("bone_name", ""))
+		if node == null or not is_instance_valid(node):
+			continue
+		var bone_index: int = skeleton.find_bone(bone_name)
+		if bone_index < 0:
+			if not invalid_follower_bones.has(bone_name):
+				invalid_follower_bones.append(bone_name)
+			node.visible = false
+			continue
+		node.visible = true
+		var bone_pose: Transform3D = skeleton.get_bone_global_pose(bone_index)
+		var local_transform: Transform3D = spec.get(
+			"local_transform",
+			Transform3D.IDENTITY
+		) as Transform3D
+		node.transform = bone_pose * local_transform
+		minimum_y = minf(minimum_y, node.position.y)
+		maximum_y = maxf(maximum_y, node.position.y)
+
+	last_follower_span = (
+		maximum_y - minimum_y
+		if minimum_y < INF and maximum_y > -INF
+		else 0.0
 	)
-	return absf(head.global_position.y - feet_midpoint.y)
+	var left_shoulder: MeshInstance3D = get_node_or_null(
+		"LeftShoulderSleeve"
+	) as MeshInstance3D
+	var right_shoulder: MeshInstance3D = get_node_or_null(
+		"RightShoulderSleeve"
+	) as MeshInstance3D
+	last_shoulder_span = (
+		left_shoulder.position.distance_to(right_shoulder.position)
+		if left_shoulder != null and right_shoulder != null
+		else 0.0
+	)
+
+
+func get_follower_part(part_name: String) -> MeshInstance3D:
+	return get_node_or_null(part_name) as MeshInstance3D
 
 
 func get_debug_data() -> Dictionary:
 	var data: Dictionary = super.get_debug_data()
-	var invalid_bindings: Array[String] = []
-	for bone_name_variant: Variant in attachments.keys():
-		var bone_name: String = str(bone_name_variant)
-		var attachment: BoneAttachment3D = attachments[bone_name] as BoneAttachment3D
-		if attachment == null or attachment.bone_idx < 0:
-			invalid_bindings.append(bone_name)
 	data["grace_0_5_blockout_v2"] = true
-	data["attachments_bound_after_parenting"] = true
-	data["attachment_count"] = attachments.size()
-	data["invalid_attachment_bindings"] = invalid_bindings
-	data["attachment_span"] = snappedf(get_attachment_span(), 0.001)
+	data["direct_bone_follow"] = true
+	data["bone_attachment_count"] = attachments.size()
+	data["follower_count"] = bone_followers.size()
+	data["invalid_follower_bones"] = invalid_follower_bones.duplicate()
+	data["follower_span"] = snappedf(last_follower_span, 0.001)
+	data["shoulder_span"] = snappedf(last_shoulder_span, 0.001)
 	return data

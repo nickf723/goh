@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/weapons/weapon_staff_axe_focus_controller_v2.gd" id="2_weapon"]
@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://scenes/actors/player/grace_humanoid_skeletal_proxy_v2.tscn" id="9_skeletal"]
 [ext_resource type="Script" path="res://scripts/weapons/weapon_support_grip_contract_v2.gd" id="10_support"]
 [ext_resource type="Script" path="res://scripts/player/player_controller_weapon_charge.gd" id="11_player_script"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/grace_production_presentation_controller.tscn" id="12_production_presentation"]
 
 [node name="Player" instance=ExtResource("1_player")]
 script = ExtResource("11_player_script")
@@ -21,6 +22,8 @@ script = ExtResource("3_visual")
 
 [node name="GraceSkeletalVisualV1" parent="." instance=ExtResource("9_skeletal")]
 position = Vector3(0, -0.92, 0)
+
+[node name="GraceProductionPresentation" parent="." instance=ExtResource("12_production_presentation")]
 
 [node name="WeaponController" parent="." index="21"]
 script = ExtResource("2_weapon")

@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/quick_item_belt_ui.gd" id="1_ui"]
+[ext_resource type="Script" path="res://scripts/ui/quick_item_belt_ui_deferred.gd" id="1_ui"]
 
 [sub_resource type="StyleBoxFlat" id="PanelStyle"]
 bg_color = Color(0.018, 0.024, 0.038, 0.72)

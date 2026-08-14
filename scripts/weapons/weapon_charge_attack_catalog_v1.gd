@@ -50,7 +50,7 @@ static func build_hold_attack(
 	_add_tag(attack, "charge_" + str(profile.get("id", "generic")))
 	if weapon_class == "chains":
 		attack.display_name = "Iron Orbit"
-		attack.attack_range = maxf(attack.attack_range, 3.1)
+		attack.attack_range = maxf(attack.attack_range, 4.05)
 		attack.cone_angle_degrees = 360.0
 		attack.attack_center_forward_offset = 0.0
 		_add_tag(attack, "chain_charge_orbit")
@@ -78,7 +78,7 @@ static func build_sustain_pulse(
 	attack.damage_multiplier = lerpf(0.82, 1.22, charge)
 	attack.stance_multiplier = lerpf(1.05, 1.65, charge)
 	attack.knockback_multiplier = lerpf(0.72, 1.08, charge)
-	attack.attack_range = lerpf(2.7, 3.65, charge)
+	attack.attack_range = lerpf(3.25, 4.05, charge)
 	attack.cone_angle_degrees = 360.0
 	attack.attack_center_forward_offset = 0.0
 	attack.max_targets = 8

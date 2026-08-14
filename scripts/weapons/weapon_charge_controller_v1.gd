@@ -40,3 +40,78 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	super._unhandled_input(event)
+
+
+func _handle_charge_input(event: InputEvent) -> bool:
+	var input_kind: String = ""
+	var pressed: bool = false
+	var released: bool = false
+	if event.is_action_pressed(CHARGE_LIGHT_ACTION):
+		input_kind = INPUT_LIGHT
+		pressed = true
+	elif event.is_action_released(CHARGE_LIGHT_ACTION):
+		input_kind = INPUT_LIGHT
+		released = true
+	elif event.is_action_pressed(CHARGE_HEAVY_ACTION):
+		input_kind = INPUT_HEAVY
+		pressed = true
+	elif event.is_action_released(CHARGE_HEAVY_ACTION):
+		input_kind = INPUT_HEAVY
+		released = true
+	else:
+		return false
+
+	if charge_active:
+		if released and input_kind == charge_input_kind:
+			_release_active_charge()
+			return true
+		return input_kind == charge_input_kind
+
+	if charge_pending:
+		if released and input_kind == charge_input_kind:
+			_fire_pending_as_tap()
+			return true
+		return input_kind == charge_input_kind
+
+	if not pressed or current_attack != null or equipped_weapon == null:
+		return false
+	var profile: Dictionary = ChargeCatalogScript.get_profile(
+		equipped_weapon.weapon_class,
+		input_kind
+	)
+	if profile.is_empty() or not _can_begin_weapon_charge():
+		return false
+	return _begin_charge_pending(input_kind, profile)
+
+
+func _begin_charge_pending(input_kind: String, profile: Dictionary) -> bool:
+	var base_attack: WeaponAttackDefinition = resolve_idle_attack(input_kind)
+	if base_attack == null:
+		return false
+	charge_pending = true
+	charge_active = false
+	charge_input_kind = input_kind
+	charge_profile = profile.duplicate(true)
+	charge_base_attack = base_attack.duplicate(true) as WeaponAttackDefinition
+	charge_elapsed = 0.0
+	charge_pulse_elapsed = 0.0
+	released_charge_ratio = 0.0
+	return charge_base_attack != null
+
+
+func _fire_pending_as_tap() -> void:
+	var attack: WeaponAttackDefinition = charge_base_attack
+	_clear_charge_state(false)
+	if attack != null:
+		start_attack(attack)
+
+
+func _can_begin_weapon_charge() -> bool:
+	if current_attack != null:
+		return false
+	if action_state != null and not action_state.can_attack():
+		return false
+	if dodge_controller != null and dodge_controller.is_dodge_active():
+		return false
+	var actor: Node3D = get_actor()
+	return actor is CharacterBody3D and (actor as CharacterBody3D).is_on_floor()

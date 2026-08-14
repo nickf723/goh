@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/weapons/weapon_charge_actions_v2.gd" id="2_weapon"]
@@ -10,8 +10,10 @@
 [ext_resource type="Resource" path="res://data/player/grace_agile_dodge_motion_profile.tres" id="8_dodge"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/grace_humanoid_skeletal_proxy_v2.tscn" id="9_skeletal"]
 [ext_resource type="Script" path="res://scripts/weapons/weapon_support_grip_contract.gd" id="10_support"]
+[ext_resource type="Script" path="res://scripts/player/player_controller_weapon_charge.gd" id="11_player_script"]
 
 [node name="Player" instance=ExtResource("1_player")]
+script = ExtResource("11_player_script")
 
 [node name="GraceVisualV1" parent="." index="2"]
 visible = false

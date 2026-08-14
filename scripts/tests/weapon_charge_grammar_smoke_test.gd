@@ -43,7 +43,15 @@ func _validate_axe_release() -> void:
 	if release == null:
 		failures.append("Axe Heavy charge must build a release attack")
 		return
-	if release.display_name != "Vaulting Guillotine":
-		failures.append("Axe Heavy charge must resolve Vaulting Guillotine")
+	if release.display_name != "Marching Guillotine":
+		failures.append("Axe Heavy charge must resolve Marching Guillotine")
 	if not release.extra_tags.has("axe_vault_slam") or not release.extra_tags.has("ground_slam"):
-		failures.append("Vaulting Guillotine must carry vault and ground-slam semantics")
+		failures.append("Marching Guillotine must carry vault and ground-slam semantics")
+	if not release.extra_tags.has("axe_forward_drive"):
+		failures.append("Marching Guillotine must own a forward-drive contract")
+	if release.movement_distance < 4.5:
+		failures.append("Full-charge Marching Guillotine must advance substantially")
+	if release.attack_center_forward_offset < 1.2:
+		failures.append("Marching Guillotine impact must land ahead of Grace")
+	if release.cone_angle_degrees >= 300.0:
+		failures.append("Marching Guillotine must remain a forward-biased impact")

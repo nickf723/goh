@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/visuals/grace_0_5_blockout_model_v5.gd" id="1_model"]
+[ext_resource type="Script" path="res://scripts/visuals/grace_0_5_blockout_model_v7.gd" id="1_model"]
 
 [node name="Grace05Blockout" type="Node3D"]
 script = ExtResource("1_model")

@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - "scripts/visuals/grace_locomotion_polish.gd"
-      - "scripts/visuals/grace_humanoid_skeletal_proxy_locomotion_v2*.gd"
+      - "scripts/visuals/grace_humanoid_skeletal_proxy_locomotion_v*.gd"
       - "scenes/actors/player/grace_humanoid_skeletal_proxy_v2.tscn"
       - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
       - "scripts/tests/grace_locomotion_polish_smoke_test.gd"
@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   validate-grace-locomotion-polish:
-    name: Import, skeletal locomotion v2, and Green boot
+    name: Import, skeletal locomotion v3, and Green boot
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -52,7 +52,7 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/grace_locomotion_polish_smoke_test.tscn 2>&1 | tee grace-locomotion-test.log
 
-      - name: Run skeletal Grace locomotion V2 regression
+      - name: Run skeletal Grace locomotion regression
         shell: bash
         run: |
           set -o pipefail

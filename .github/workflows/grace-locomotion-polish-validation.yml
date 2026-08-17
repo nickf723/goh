@@ -6,9 +6,13 @@ on:
       - main
     paths:
       - "scripts/visuals/grace_locomotion_polish.gd"
+      - "scripts/visuals/grace_humanoid_skeletal_proxy_locomotion_v2*.gd"
+      - "scenes/actors/player/grace_humanoid_skeletal_proxy_v2.tscn"
       - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
       - "scripts/tests/grace_locomotion_polish_smoke_test.gd"
+      - "scripts/tests/grace_locomotion_v2_smoke_test.gd"
       - "scenes/tests/grace_locomotion_polish_smoke_test.tscn"
+      - "scenes/tests/grace_locomotion_v2_smoke_test.tscn"
       - "docs/GRACE_LOCOMOTION_POLISH_V1.md"
       - ".github/workflows/grace-locomotion-polish-validation.yml"
   workflow_dispatch:
@@ -22,7 +26,7 @@ concurrency:
 
 jobs:
   validate-grace-locomotion-polish:
-    name: Import, locomotion polish, and Green boot
+    name: Import, skeletal locomotion v2, and Green boot
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -42,11 +46,17 @@ jobs:
           set -o pipefail
           godot --headless --path . --editor --quit 2>&1 | tee grace-locomotion-import.log
 
-      - name: Run Grace locomotion polish regression
+      - name: Run legacy Grace locomotion polish regression
         shell: bash
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/grace_locomotion_polish_smoke_test.tscn 2>&1 | tee grace-locomotion-test.log
+
+      - name: Run skeletal Grace locomotion V2 regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/grace_locomotion_v2_smoke_test.tscn 2>&1 | tee grace-locomotion-v2-test.log
 
       - name: Boot Green Grotto benchmark
         shell: bash
@@ -62,5 +72,6 @@ jobs:
           path: |
             grace-locomotion-import.log
             grace-locomotion-test.log
+            grace-locomotion-v2-test.log
             grace-locomotion-green-boot.log
           if-no-files-found: ignore

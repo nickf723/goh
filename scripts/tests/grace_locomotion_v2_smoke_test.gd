@@ -80,6 +80,7 @@ func _validate_locomotion_rig() -> void:
 	_expect(bool(data.get("animation_v28", false)), "defeat presentation layer is live")
 	_expect(bool(data.get("animation_v29", false)), "walk-run blend layer is live")
 	_expect(bool(data.get("animation_v30", false)), "metal tether animation layer is live")
+	_expect(bool(data.get("animation_v31", false)), "footage redirect-cleanup layer is live")
 
 	# Force a left-support portion of the gait and make sure the visible pose knows
 	# which leg is loaded instead of treating both feet identically.
@@ -118,7 +119,8 @@ func _validate_locomotion_rig() -> void:
 	data = rig.call("get_debug_data") as Dictionary
 	_expect(float(data.get("backward_weight", 0.0)) > 0.4, "backward travel activates guarded backward gait")
 
-	# A sharp turn should produce a planted pivot rather than only rotating the torso.
+	# A sharp turn should produce a planted pivot rather than only rotating the torso,
+	# while the footage cleanup suppresses stacked sidestep/stride exaggeration.
 	ground.turning_weight = 1.0
 	ground.reversal_weight = 0.0
 	ground.turn_angle_degrees = 92.0
@@ -133,6 +135,8 @@ func _validate_locomotion_rig() -> void:
 	) as Vector3
 	data = rig.call("get_debug_data") as Dictionary
 	_expect(float(data.get("pivot_weight", 0.0)) > 0.05, "sharp turn resolves a planted pivot step")
+	_expect(float(data.get("redirect_cleanup_weight", 0.0)) > 0.5, "sharp redirect activates footage-driven stride cleanup")
+	_expect(float(data.get("redirect_strafe_scale", 1.0)) < 1.0, "sharp redirect suppresses overlapping strafe spread")
 	_expect(pivot_targets.has("foot_l") and pivot_targets.has("foot_r"), "pivot keeps foot articulation authored")
 	_expect(pivot_offset.y < 0.0, "pivot lowers Grace's center of mass")
 

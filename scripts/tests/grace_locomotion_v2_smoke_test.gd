@@ -68,6 +68,18 @@ func _validate_locomotion_rig() -> void:
 	_expect(bool(data.get("animation_v16", false)), "climb/swim traversal layer is live")
 	_expect(bool(data.get("animation_v17", false)), "riding animation layer is live")
 	_expect(bool(data.get("animation_v18", false)), "special aerial animation layer is live")
+	_expect(bool(data.get("animation_v19", false)), "neutral combat gaze layer is live")
+	_expect(bool(data.get("animation_v20", false)), "stealth crouch layer is live")
+	_expect(bool(data.get("animation_v21", false)), "exertion presentation layer is live")
+	_expect(bool(data.get("animation_v22", false)), "combo handoff layer is live")
+	_expect(bool(data.get("animation_v23", false)), "airborne weapon carry layer is live")
+	_expect(bool(data.get("animation_v24", false)), "dodge weapon-control layer is live")
+	_expect(bool(data.get("animation_v25", false)), "step-up animation layer is live")
+	_expect(bool(data.get("animation_v26", false)), "slippery-surface layer is live")
+	_expect(bool(data.get("animation_v27", false)), "airflow body-response layer is live")
+	_expect(bool(data.get("animation_v28", false)), "defeat presentation layer is live")
+	_expect(bool(data.get("animation_v29", false)), "walk-run blend layer is live")
+	_expect(bool(data.get("animation_v30", false)), "metal tether animation layer is live")
 
 	# Force a left-support portion of the gait and make sure the visible pose knows
 	# which leg is loaded instead of treating both feet identically.
@@ -88,6 +100,15 @@ func _validate_locomotion_rig() -> void:
 	_expect(float(data.get("left_support", 0.0)) > float(data.get("right_support", 1.0)), "gait resolves a dominant support foot")
 	_expect(absf(run_offset.x) > 0.001, "support foot shifts Grace's center of mass laterally")
 	_expect(run_offset.is_finite(), "run center-of-mass offset remains finite")
+
+	# Slow analog travel must read as walking rather than a slowed run cycle.
+	rig.set("previous_pose_state", "locomotion")
+	actor.velocity = Vector3(0.0, 0.0, -1.2)
+	var walk_targets: Dictionary = {}
+	rig.call("_pose_locomotion", walk_targets, 1.0 / 60.0)
+	data = rig.call("get_debug_data") as Dictionary
+	_expect(float(data.get("walk_weight", 0.0)) > 0.5, "slow travel resolves the walk-scaled gait")
+	_expect(walk_targets.has("thigh_l") and walk_targets.has("upper_arm_l"), "walk blend keeps full-body gait authored")
 
 	# Backward locomotion should not be a forward run played in reverse.
 	rig.set("previous_pose_state", "locomotion")

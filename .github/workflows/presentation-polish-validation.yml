@@ -12,6 +12,7 @@ on:
       - "scripts/combat/force_receiver.gd"
       - "scripts/combat/payload_receiver.gd"
       - "scripts/visuals/player_motion_feedback.gd"
+      - "scripts/visuals/weapon_motion_audio_presenter.gd"
       - "scripts/visuals/enemy_visual_shell.gd"
       - "scripts/visuals/enemy_reaction_presentation_bridge.gd"
       - "scripts/interaction/breakable_prop.gd"
@@ -27,8 +28,10 @@ on:
       - "scripts/levels/prototype_polish_studio.gd"
       - "scripts/levels/prototype_polish_studio_spells.gd"
       - "scripts/tests/presentation_director_smoke_test.gd"
+      - "scripts/tests/presentation_audio_fidelity_v2_smoke_test.gd"
       - "scripts/tests/spell_presentation_lifecycle_smoke_test.gd"
       - "scripts/tests/hit_reaction_smoke_test.gd"
+      - "scenes/actors/player/player_combat_v2.tscn"
       - "scenes/actors/enemies/goblin_drone.tscn"
       - "scenes/actors/enemies/goblin_visual_v1.tscn"
       - "scenes/actors/enemies/gremlin_visual_v1.tscn"
@@ -37,9 +40,11 @@ on:
       - "scenes/actions/death_pursuer_spirit.tscn"
       - "scenes/levels/prototypes/prototype_polish_studio_v1.tscn"
       - "scenes/tests/presentation_director_smoke_test.tscn"
+      - "scenes/tests/presentation_audio_fidelity_v2_smoke_test.tscn"
       - "scenes/tests/spell_presentation_lifecycle_smoke_test.tscn"
       - "scenes/tests/hit_reaction_smoke_test.tscn"
       - "docs/HIT_REACTIONS_V1.md"
+      - "docs/PRESENTATION_AUDIO_FIDELITY_V2.md"
       - ".github/workflows/presentation-polish-validation.yml"
   workflow_dispatch:
 
@@ -52,7 +57,7 @@ concurrency:
 
 jobs:
   validate-presentation:
-    name: Import, spell lifecycle, studio boot, movement, and reactions
+    name: Import, audio fidelity, spell lifecycle, studio boot, movement, and reactions
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -77,6 +82,12 @@ jobs:
         run: |
           set -o pipefail
           godot --headless --path . res://scenes/tests/presentation_director_smoke_test.tscn 2>&1 | tee presentation-director-test.log
+
+      - name: Run presentation audio fidelity regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/presentation_audio_fidelity_v2_smoke_test.tscn 2>&1 | tee presentation-audio-fidelity-test.log
 
       - name: Run spell lifecycle regression
         shell: bash
@@ -110,6 +121,7 @@ jobs:
           path: |
             presentation-import.log
             presentation-director-test.log
+            presentation-audio-fidelity-test.log
             spell-lifecycle-test.log
             polish-studio-boot.log
             hit-reaction-test.log

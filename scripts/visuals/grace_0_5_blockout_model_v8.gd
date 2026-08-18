@@ -28,34 +28,36 @@ func _update_eye_gaze(delta: float) -> void:
 		return
 	var target_horizontal: float = 0.0
 	var target_vertical: float = 0.0
-	var target_value: Variant = secondary_actor.get("lock_on_target")
-	eye_gaze_has_target = (
-		target_value is Node3D
-		and is_instance_valid(target_value)
-	)
+	var target_value: Variant = null
+	if "lock_on_target" in secondary_actor:
+		target_value = secondary_actor.get("lock_on_target")
+	eye_gaze_has_target = target_value is Node3D
 	if eye_gaze_has_target:
 		var target: Node3D = target_value as Node3D
-		var offset: Vector3 = target.global_position - (
-			secondary_actor.global_position + Vector3.UP * 1.35
-		)
-		if offset.length_squared() > 0.0001:
-			var local: Vector3 = (
-				secondary_actor.global_transform.basis.orthonormalized().inverse()
-				* offset.normalized()
+		if not is_instance_valid(target):
+			eye_gaze_has_target = false
+		else:
+			var offset: Vector3 = target.global_position - (
+				secondary_actor.global_position + Vector3.UP * 1.35
 			)
-			var yaw_degrees: float = rad_to_deg(atan2(-local.x, -local.z))
-			var pitch_degrees: float = rad_to_deg(asin(clampf(local.y, -1.0, 1.0)))
-			target_horizontal = clampf(
-				-yaw_degrees / maxf(full_eye_yaw_degrees, 1.0),
-				-1.0,
-				1.0
-			)
-			target_vertical = clampf(
-				pitch_degrees / maxf(full_eye_pitch_degrees, 1.0),
-				-1.0,
-				1.0
-			)
-	else:
+			if offset.length_squared() > 0.0001:
+				var local: Vector3 = (
+					secondary_actor.global_transform.basis.orthonormalized().inverse()
+					* offset.normalized()
+				)
+				var yaw_degrees: float = rad_to_deg(atan2(-local.x, -local.z))
+				var pitch_degrees: float = rad_to_deg(asin(clampf(local.y, -1.0, 1.0)))
+				target_horizontal = clampf(
+					-yaw_degrees / maxf(full_eye_yaw_degrees, 1.0),
+					-1.0,
+					1.0
+				)
+				target_vertical = clampf(
+					pitch_degrees / maxf(full_eye_pitch_degrees, 1.0),
+					-1.0,
+					1.0
+				)
+	if not eye_gaze_has_target:
 		# Neutral drift is low-frequency and asymmetric. It is not intended to read
 		# as deliberate looking around, only to prevent perfectly static pupils.
 		target_horizontal = sin(secondary_phase * 0.47 + 0.8) * 0.18

@@ -41,6 +41,27 @@ func _process(delta: float) -> void:
 	_update_adaptive_prominence(step)
 
 
+# The budgeted parent periodically refreshes zone visibility and restores its own
+# mode alpha values. Preserve the adaptive exploration alpha across that refresh
+# so quiet mode does not pulse bright every shell tick.
+func _update_zone_visibility() -> void:
+	var stats_alpha: float = stats_panel.modulate.a if stats_panel != null else 1.0
+	var action_alpha: float = action_bar_zone.modulate.a if action_bar_zone != null else 1.0
+	var support_alpha: float = support_zone.modulate.a if support_zone != null else 1.0
+	var activity_alpha: float = activity_zone.modulate.a if activity_zone != null else 1.0
+	super._update_zone_visibility()
+	if current_mode_id != "exploration":
+		return
+	if stats_panel != null and stats_panel.visible:
+		stats_panel.modulate.a = stats_alpha
+	if action_bar_zone != null and action_bar_zone.visible:
+		action_bar_zone.modulate.a = action_alpha
+	if support_zone != null and support_zone.visible:
+		support_zone.modulate.a = support_alpha
+	if activity_zone != null and activity_zone.visible:
+		activity_zone.modulate.a = activity_alpha
+
+
 func _capture_attention_inputs() -> void:
 	for action_name: StringName in [
 		&"weapon_light_attack",
@@ -117,8 +138,9 @@ func _needs_full_attention() -> bool:
 
 
 func _support_needs_attention() -> bool:
-	if not active_ability_entries.is_empty():
-		return true
+	for entry: Dictionary in active_ability_entries:
+		if bool(entry.get("attention", false)) or bool(entry.get("highlighted", false)):
+			return true
 	if support_status_label != null:
 		var status_text: String = support_status_label.text.strip_edges().to_upper()
 		if status_text not in ["", "READY", "NO PERSISTENT ABILITIES ACTIVE"]:
@@ -175,4 +197,6 @@ func get_debug_data() -> Dictionary:
 	data["adaptive_updates"] = adaptive_updates
 	data["information_removed"] = false
 	data["gameplay_authority"] = false
+	data["shell_refresh_preserves_alpha"] = true
+	data["passive_abilities_can_recede"] = true
 	return data

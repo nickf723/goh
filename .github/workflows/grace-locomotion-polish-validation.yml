@@ -14,8 +14,10 @@ on:
       - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
       - "scripts/tests/grace_locomotion_polish_smoke_test.gd"
       - "scripts/tests/grace_locomotion_v2_smoke_test.gd"
+      - "scripts/tests/grace_0_5_blockout_smoke_test.gd"
       - "scenes/tests/grace_locomotion_polish_smoke_test.tscn"
       - "scenes/tests/grace_locomotion_v2_smoke_test.tscn"
+      - "scenes/tests/grace_0_5_blockout_smoke_test.tscn"
       - "docs/GRACE_LOCOMOTION_POLISH_V1.md"
       - ".github/workflows/grace-locomotion-polish-validation.yml"
   workflow_dispatch:
@@ -29,7 +31,7 @@ concurrency:
 
 jobs:
   validate-grace-animation-presentation:
-    name: Import, complete Grace animation stack, and Green boot
+    name: Import, Grace animation and visible presentation, and Green boot
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -61,6 +63,12 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/grace_locomotion_v2_smoke_test.tscn 2>&1 | tee grace-animation-stack-test.log
 
+      - name: Run Grace visible presentation regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/grace_0_5_blockout_smoke_test.tscn 2>&1 | tee grace-visible-presentation-test.log
+
       - name: Boot Green Grotto benchmark
         shell: bash
         run: |
@@ -76,5 +84,6 @@ jobs:
             grace-animation-import.log
             grace-locomotion-test.log
             grace-animation-stack-test.log
+            grace-visible-presentation-test.log
             grace-animation-green-boot.log
           if-no-files-found: ignore

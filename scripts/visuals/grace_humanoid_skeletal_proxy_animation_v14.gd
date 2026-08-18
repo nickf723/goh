@@ -73,13 +73,11 @@ func _blend_skeleton_pose(
 		pelvis_blend
 	)
 	if bones.has("pelvis"):
-		var pelvis_index: int = int(bones["pelvis"])
-		var pelvis_rest_position: Vector3 = skeleton.get_bone_rest(
-			pelvis_index
-		).origin
+		# Skeleton3D pose positions are offsets relative to the bone rest pose. The
+		# canonical rig writes the pelvis offset directly, so do the same here.
 		skeleton.set_bone_pose_position(
-			pelvis_index,
-			pelvis_rest_position + current_pelvis_offset
+			int(bones["pelvis"]),
+			current_pelvis_offset
 		)
 
 

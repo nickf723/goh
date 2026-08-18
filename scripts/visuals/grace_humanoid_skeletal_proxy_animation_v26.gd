@@ -46,8 +46,12 @@ func _apply_slippery_balance(
 	var braking: float = clampf(ground_motion_motor.braking_weight, 0.0, 1.0)
 	var reversal: float = clampf(ground_motion_motor.reversal_weight, 0.0, 1.0)
 	var turning: float = clampf(ground_motion_motor.turning_weight, 0.0, 1.0)
+	var instability_source: float = maxf(
+		maxf(speed_weight * 0.48, braking * 0.9),
+		maxf(reversal, turning * 0.72)
+	)
 	var instability: float = clampf(
-		maxf(speed_weight * 0.48, braking * 0.9, reversal, turning * 0.72),
+		instability_source,
 		0.18,
 		1.0
 	)
@@ -72,8 +76,6 @@ func _apply_slippery_balance(
 	_add_deg(targets, "chest", Vector3(2.0 * weight, side * 2.5 * weight, side * 5.0 * weight))
 	_add_deg(targets, "head", Vector3(-2.0 * weight, -side * 1.5 * weight, -side * 2.0 * weight))
 
-	# Open the free arm strongly and the weapon arm only modestly so balance reads
-	# without sacrificing weapon control.
 	var weapon_class: String = _get_equipped_weapon_class()
 	var weapon_arm_scale: float = 0.42 if weapon_class in ["staff", "axe"] else 0.82
 	_add_deg(targets, "upper_arm_l", Vector3(3.0 * weight, 0.0, -balance))

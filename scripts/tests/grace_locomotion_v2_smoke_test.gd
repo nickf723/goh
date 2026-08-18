@@ -20,7 +20,7 @@ func _ready() -> void:
 
 func _validate_locomotion_rig() -> void:
 	var actor := CharacterBody3D.new()
-	actor.name = "LocomotionV3TestActor"
+	actor.name = "GraceAnimationStackTestActor"
 	add_child(actor)
 
 	var ground: PlayerGroundMotionMotor = (
@@ -36,7 +36,7 @@ func _validate_locomotion_rig() -> void:
 	actor.add_child(vertical)
 
 	var rig: Node3D = RigScene.instantiate() as Node3D
-	_expect(rig != null, "locomotion V3 skeletal scene instantiates")
+	_expect(rig != null, "complete Grace animation skeletal scene instantiates")
 	if rig == null:
 		actor.queue_free()
 		return
@@ -45,7 +45,7 @@ func _validate_locomotion_rig() -> void:
 
 	_expect(
 		rig.has_method("get_debug_data"),
-		"locomotion V3 rig exposes debug data"
+		"Grace animation rig exposes debug data"
 	)
 	var data: Dictionary = rig.call("get_debug_data") as Dictionary
 	_expect(bool(data.get("locomotion_v2", false)), "locomotion V2 foundation is live")
@@ -53,6 +53,21 @@ func _validate_locomotion_rig() -> void:
 	_expect(bool(data.get("locomotion_v2c", false)), "foot-contact layer is live")
 	_expect(bool(data.get("locomotion_v2d", false)), "support center-of-mass layer is live")
 	_expect(bool(data.get("locomotion_v3", false)), "transition-continuity layer is live")
+	_expect(bool(data.get("animation_v4", false)), "phase-authored dodge layer is live")
+	_expect(bool(data.get("animation_v5", false)), "directional hit-reaction layer is live")
+	_expect(bool(data.get("animation_v6", false)), "weapon-aware locomotion layer is live")
+	_expect(bool(data.get("animation_v7", false)), "attack-exit continuity layer is live")
+	_expect(bool(data.get("animation_v8", false)), "turn-intention layer is live")
+	_expect(bool(data.get("animation_v9", false)), "context-action overlay layer is live")
+	_expect(bool(data.get("animation_v10", false)), "directional-gait layer is live")
+	_expect(bool(data.get("animation_v11", false)), "start-step and turn-in-place layer is live")
+	_expect(bool(data.get("animation_v12", false)), "dodge-exit continuity layer is live")
+	_expect(bool(data.get("animation_v13", false)), "attack-entry continuity layer is live")
+	_expect(bool(data.get("animation_v14", false)), "regional response layer is live")
+	_expect(bool(data.get("animation_v15", false)), "terrain-posture layer is live")
+	_expect(bool(data.get("animation_v16", false)), "climb/swim traversal layer is live")
+	_expect(bool(data.get("animation_v17", false)), "riding animation layer is live")
+	_expect(bool(data.get("animation_v18", false)), "special aerial animation layer is live")
 
 	# Force a left-support portion of the gait and make sure the visible pose knows
 	# which leg is loaded instead of treating both feet identically.
@@ -73,6 +88,14 @@ func _validate_locomotion_rig() -> void:
 	_expect(float(data.get("left_support", 0.0)) > float(data.get("right_support", 1.0)), "gait resolves a dominant support foot")
 	_expect(absf(run_offset.x) > 0.001, "support foot shifts Grace's center of mass laterally")
 	_expect(run_offset.is_finite(), "run center-of-mass offset remains finite")
+
+	# Backward locomotion should not be a forward run played in reverse.
+	rig.set("previous_pose_state", "locomotion")
+	actor.velocity = Vector3(0.0, 0.0, 4.5)
+	var backward_targets: Dictionary = {}
+	rig.call("_pose_locomotion", backward_targets, 1.0 / 60.0)
+	data = rig.call("get_debug_data") as Dictionary
+	_expect(float(data.get("backward_weight", 0.0)) > 0.4, "backward travel activates guarded backward gait")
 
 	# A sharp turn should produce a planted pivot rather than only rotating the torso.
 	ground.turning_weight = 1.0
@@ -150,9 +173,9 @@ func _expect(condition: bool, label: String) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("GRACE_LOCOMOTION_V2_SMOKE_TEST: PASS")
+		print("GRACE_ANIMATION_STACK_SMOKE_TEST: PASS")
 		get_tree().quit(0)
 		return
 	for failure: String in failures:
-		push_error("GRACE_LOCOMOTION_V2_SMOKE_TEST: " + failure)
+		push_error("GRACE_ANIMATION_STACK_SMOKE_TEST: " + failure)
 	get_tree().quit(1)

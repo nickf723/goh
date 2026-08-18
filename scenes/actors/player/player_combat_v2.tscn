@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/weapons/weapon_staff_axe_focus_controller_v2.gd" id="2_weapon"]
@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" path="res://scenes/actors/player/grace_0_5_blockout.tscn" id="13_grace_0_5"]
 [ext_resource type="Script" path="res://scripts/player/player_avatar_manager_production_bridge.gd" id="14_avatar_manager"]
 [ext_resource type="Script" path="res://scripts/visuals/weapon_motion_audio_presenter.gd" id="15_weapon_audio"]
+[ext_resource type="Script" path="res://scripts/ui/player_hud_adaptive_quiet.gd" id="16_quiet_hud"]
 
 [node name="Player" instance=ExtResource("1_player")]
 script = ExtResource("11_player_script")
@@ -31,6 +32,9 @@ imported_character_scene = ExtResource("13_grace_0_5")
 
 [node name="AvatarManager" parent="."]
 script = ExtResource("14_avatar_manager")
+
+[node name="PlayerHUDV2" parent="."]
+script = ExtResource("16_quiet_hud")
 
 [node name="WeaponController" parent="." index="21"]
 script = ExtResource("2_weapon")

@@ -25,8 +25,9 @@ func _pose_hit(targets: Dictionary) -> Vector3:
 		return super._pose_hit(targets)
 
 	var outcome: String = defense_controller.last_outcome
+	var guard_broken: bool = outcome in ["guard_broken", "guard_break"]
 	var duration: float = defense_controller.hit_reaction_seconds
-	if outcome.contains("guard_break"):
+	if guard_broken:
 		duration = defense_controller.guard_break_seconds
 	elif outcome in ["perfect_guard", "blocked", "block"]:
 		duration = defense_controller.guard_recoil_seconds
@@ -46,7 +47,7 @@ func _pose_hit(targets: Dictionary) -> Vector3:
 	last_reaction_side = side
 	last_reaction_forward = forward
 
-	if outcome.contains("guard_break"):
+	if guard_broken:
 		return _pose_guard_break(targets, progress, side, forward)
 	if outcome in ["perfect_guard", "blocked", "block"]:
 		return _pose_guard_recoil(targets, progress, side, forward, outcome == "perfect_guard")
@@ -75,8 +76,6 @@ func _pose_direct_hit(
 	_set_deg(targets, "neck", Vector3(-back_recoil * 0.34 - 5.0 * snap, -twist * 0.3, -side * 3.0 * weight))
 	_set_deg(targets, "head", Vector3(-back_recoil * 0.48 - 8.0 * snap, -twist * 0.42, -side * 4.0 * weight))
 
-	# Arms react on different timing so the silhouette does not become a symmetric
-	# starburst. The near-side arm opens more while the far arm guards the torso.
 	var near_left: bool = side_sign < 0.0
 	_set_deg(targets, "upper_arm_l", Vector3(22.0 * weight, -side * 6.0, (-32.0 if near_left else -18.0) * weight))
 	_set_deg(targets, "upper_arm_r", Vector3(26.0 * weight, -side * 6.0, (18.0 if near_left else 34.0) * weight))

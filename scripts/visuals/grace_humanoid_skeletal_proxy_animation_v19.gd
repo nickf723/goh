@@ -29,7 +29,7 @@ func _pose_locomotion(targets: Dictionary, delta: float) -> Vector3:
 func _apply_lock_on_gaze(targets: Dictionary, strength: float) -> void:
 	last_lock_on_gaze_yaw = 0.0
 	last_lock_on_gaze_weight = 0.0
-	if actor == null:
+	if actor == null or not ("lock_on_target" in actor):
 		return
 	if action_state != null and (
 		action_state.is_attacking
@@ -39,11 +39,11 @@ func _apply_lock_on_gaze(targets: Dictionary, strength: float) -> void:
 	):
 		return
 	var target_value: Variant = actor.get("lock_on_target")
-	if target_value == null or not is_instance_valid(target_value):
-		return
 	if not target_value is Node3D:
 		return
 	var target: Node3D = target_value as Node3D
+	if not is_instance_valid(target):
+		return
 	var offset: Vector3 = target.global_position - actor.global_position
 	var planar: Vector3 = offset
 	planar.y = 0.0

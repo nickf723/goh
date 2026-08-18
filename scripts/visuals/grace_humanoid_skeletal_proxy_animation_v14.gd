@@ -73,11 +73,16 @@ func _blend_skeleton_pose(
 		pelvis_blend
 	)
 	if bones.has("pelvis"):
-		# Skeleton3D pose positions are offsets relative to the bone rest pose. The
-		# canonical rig writes the pelvis offset directly, so do the same here.
+		# The active weapon-language chain inherits the grounded proxy, whose pose
+		# position includes the pelvis rest translation. Preserve that calibrated
+		# convention while changing only regional response speed.
+		var pelvis_index: int = int(bones["pelvis"])
+		var pelvis_rest_position: Vector3 = skeleton.get_bone_rest(
+			pelvis_index
+		).origin
 		skeleton.set_bone_pose_position(
-			int(bones["pelvis"]),
-			current_pelvis_offset
+			pelvis_index,
+			pelvis_rest_position + current_pelvis_offset
 		)
 
 

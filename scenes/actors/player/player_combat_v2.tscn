@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/weapons/weapon_staff_axe_focus_controller_v2.gd" id="2_weapon"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://scenes/actors/player/grace_production_presentation_controller.tscn" id="12_production_presentation"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player/grace_0_5_blockout.tscn" id="13_grace_0_5"]
 [ext_resource type="Script" path="res://scripts/player/player_avatar_manager_production_bridge.gd" id="14_avatar_manager"]
+[ext_resource type="Script" path="res://scripts/visuals/weapon_motion_audio_presenter.gd" id="15_weapon_audio"]
 
 [node name="Player" instance=ExtResource("1_player")]
 script = ExtResource("11_player_script")
@@ -42,6 +43,9 @@ script = ExtResource("4_recovery")
 
 [node name="CombatEngagementPresenter" type="Node" parent="."]
 script = ExtResource("5_engagement")
+
+[node name="WeaponMotionAudioPresenter" type="Node" parent="."]
+script = ExtResource("15_weapon_audio")
 
 [node name="GraceAgilityCalibration" type="Node" parent="."]
 script = ExtResource("6_agility")

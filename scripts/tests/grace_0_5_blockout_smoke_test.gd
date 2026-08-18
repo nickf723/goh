@@ -72,6 +72,26 @@ func _validate_blockout() -> void:
 		"Grace 0.5 uses the corrected adolescent silhouette"
 	)
 	_expect(
+		bool(data.get("grace_0_5_secondary_motion_v5", false)),
+		"Grace 0.5 secondary hair and cloth motion layer is live"
+	)
+	_expect(
+		bool(data.get("grace_0_5_blink_v6", false)),
+		"Grace 0.5 irregular blink layer is live"
+	)
+	_expect(
+		bool(data.get("grace_0_5_secondary_turn_v7", false)),
+		"Grace 0.5 rotational secondary inertia layer is live"
+	)
+	_expect(
+		bool(data.get("grace_0_5_eye_gaze_v8", false)),
+		"Grace 0.5 eye gaze layer is live"
+	)
+	_expect(
+		bool(data.get("grace_0_5_context_clothing_v9", false)),
+		"Grace 0.5 contextual robe correction layer is live"
+	)
+	_expect(
 		bool(data.get("adolescent_head_ratio", false))
 		and bool(data.get("visible_leg_contrast", false))
 		and bool(data.get("shortened_robe_panels", false)),
@@ -166,6 +186,11 @@ func _validate_blockout() -> void:
 		model.get_node_or_null("FrontPanelLeft") != null
 		and model.get_node_or_null("FrontPanelRight") != null,
 		"Grace 0.5 uses split robe panels"
+	)
+	_expect(
+		model.get_node_or_null("EyeLeft") != null
+		and model.get_node_or_null("EyeRight") != null,
+		"Grace 0.5 retains independent eye geometry for blink and gaze"
 	)
 
 	# Verify that geometry follows a changed bone pose rather than remaining in a

@@ -14,11 +14,13 @@ static func get_or_create(tree: SceneTree) -> GamePresentationDirector:
 	var root: Window = tree.root
 	var existing: Node = root.get_node_or_null(DIRECTOR_NODE_NAME)
 	if existing is GamePresentationDirector:
-		if existing.has_method("present_spell"):
+		if (
+			existing.has_method("present_spell")
+			and existing.has_method("present_weapon_motion")
+		):
 			return existing as GamePresentationDirector
-		# Hot-reload/dev sessions can retain the older Director at the scene-tree
-		# root. Retire it without competing for the canonical name while the new
-		# service waits for the root to finish constructing its current children.
+		# Hot-reload/dev sessions can retain an older Director at the scene-tree
+		# root. Retire it unless it supports the complete current semantic contract.
 		existing.name = DIRECTOR_NODE_NAME + "Retired"
 		existing.queue_free()
 

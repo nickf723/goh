@@ -2,7 +2,7 @@ extends RefCounted
 class_name PresentationService
 
 const DirectorScript = preload(
-	"res://scripts/presentation/presentation_director_spell_audio.gd"
+	"res://scripts/presentation/presentation_director_audio_fidelity_v2.gd"
 )
 const DIRECTOR_NODE_NAME: String = "PresentationDirector"
 const PENDING_DIRECTOR_META: StringName = &"_goh_pending_presentation_director"

@@ -2,7 +2,7 @@ extends "res://scripts/presentation/presentation_director_spells.gd"
 class_name SpellPresentationDirectorAudio
 
 const SpellAudioScript = preload(
-	"res://scripts/presentation/presentation_audio_spells.gd"
+	"res://scripts/presentation/presentation_audio_fidelity_v2.gd"
 )
 
 

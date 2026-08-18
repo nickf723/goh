@@ -31,7 +31,7 @@ func _pose_hit(targets: Dictionary) -> Vector3:
 		duration = defense_controller.guard_break_seconds
 	elif outcome in ["perfect_guard", "blocked", "block"]:
 		duration = defense_controller.guard_recoil_seconds
-	duration = maxf(duration, remaining, 0.01)
+	duration = maxf(maxf(duration, remaining), 0.01)
 	var progress: float = clampf(1.0 - remaining / duration, 0.0, 1.0)
 	var world_recoil: Vector3 = defense_controller.hit_reaction_velocity
 	var local_recoil: Vector3 = (

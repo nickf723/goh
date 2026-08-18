@@ -1,4 +1,4 @@
-name: Grace Locomotion Polish
+name: Grace Animation Presentation
 
 on:
   push:
@@ -7,7 +7,10 @@ on:
     paths:
       - "scripts/visuals/grace_locomotion_polish.gd"
       - "scripts/visuals/grace_humanoid_skeletal_proxy_locomotion_v*.gd"
+      - "scripts/visuals/grace_humanoid_skeletal_proxy_animation_v*.gd"
+      - "scripts/visuals/grace_0_5_blockout_model_v*.gd"
       - "scenes/actors/player/grace_humanoid_skeletal_proxy_v2.tscn"
+      - "scenes/actors/player/grace_0_5_blockout.tscn"
       - "scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn"
       - "scripts/tests/grace_locomotion_polish_smoke_test.gd"
       - "scripts/tests/grace_locomotion_v2_smoke_test.gd"
@@ -21,12 +24,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: grace-locomotion-polish-${{ github.ref }}
+  group: grace-animation-presentation-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  validate-grace-locomotion-polish:
-    name: Import, skeletal locomotion v3, and Green boot
+  validate-grace-animation-presentation:
+    name: Import, complete Grace animation stack, and Green boot
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -44,7 +47,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . --editor --quit 2>&1 | tee grace-locomotion-import.log
+          godot --headless --path . --editor --quit 2>&1 | tee grace-animation-import.log
 
       - name: Run legacy Grace locomotion polish regression
         shell: bash
@@ -52,26 +55,26 @@ jobs:
           set -o pipefail
           godot --headless --path . res://scenes/tests/grace_locomotion_polish_smoke_test.tscn 2>&1 | tee grace-locomotion-test.log
 
-      - name: Run skeletal Grace locomotion regression
+      - name: Run complete Grace skeletal animation regression
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/grace_locomotion_v2_smoke_test.tscn 2>&1 | tee grace-locomotion-v2-test.log
+          godot --headless --path . res://scenes/tests/grace_locomotion_v2_smoke_test.tscn 2>&1 | tee grace-animation-stack-test.log
 
       - name: Boot Green Grotto benchmark
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee grace-locomotion-green-boot.log
+          godot --headless --path . --quit-after 8 res://scenes/levels/prototypes/prototype_green_grotto_art_target_v1.tscn 2>&1 | tee grace-animation-green-boot.log
 
-      - name: Upload Grace locomotion logs
+      - name: Upload Grace animation logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: grace-locomotion-polish-logs
+          name: grace-animation-presentation-logs
           path: |
-            grace-locomotion-import.log
+            grace-animation-import.log
             grace-locomotion-test.log
-            grace-locomotion-v2-test.log
-            grace-locomotion-green-boot.log
+            grace-animation-stack-test.log
+            grace-animation-green-boot.log
           if-no-files-found: ignore

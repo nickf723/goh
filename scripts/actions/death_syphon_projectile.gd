@@ -90,6 +90,7 @@ func get_debug_data() -> Dictionary:
 	data["spell"] = "syphon"
 	data["life_drain_contract"] = true
 	data["heals_from_resolved_damage"] = true
+	data["direct_damage"] = true
 	data["heal_ratio"] = heal_ratio
 	data["last_damage_dealt"] = last_damage_dealt
 	data["last_heal_granted"] = last_heal_granted

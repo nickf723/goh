@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/poison_infection_projectile.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Infection"
+description = "Launch a carrier projectile that copies your current transferable debuffs onto the target, spreading the chemistry affecting Grace instead of inventing a fixed poison effect."
+element = "poison"
+category = 4
+mana_cost = 2
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "infection"
+short_label = "Infection"
+icon_text = "IN"
+roles = Array[String](["debuff", "setup", "status_transfer", "utility", "projectile", "chemistry", "control"])
+targeting_style = "aimed"
+delivery_type = "projectile_status_transfer"
+combo_tags = Array[String](["poison", "infection", "status_transfer", "debuff", "chemistry", "setup", "spread"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["debuff", "status_transfer", "projectile", "non_damage"])
+debug_tags = Array[String](["matrix_spell", "status_transfer_contract", "source_status_snapshot", "fabricates_nothing_when_clean"])
+scaling_stats = Array[String](["arcana", "poison", "skill"])
+scaling_note = "Arcana and Poison can preserve more duration/strength during transfer; Skill is reserved for additional copied statuses or ricochet delivery."
+design_notes = "Matrix contract: Burst / Projectile / Kinetics. Infection snapshots Grace's transferable negative/setup states when cast, then applies scaled copies to the first valid status receiver hit. It deliberately does no direct damage and does not fabricate Poisoned when Grace has no debuffs, making self-state management and deliberate chemistry setup the spell's actual gameplay."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

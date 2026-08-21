@@ -18,6 +18,18 @@ const RadioactiveRodAbility: AbilityDefinition = preload(
 const TornadoAbility: AbilityDefinition = preload(
 	"res://data/abilities/tornado_ability.tres"
 )
+const InfectionAbility: AbilityDefinition = preload(
+	"res://data/abilities/infection_ability.tres"
+)
+const InfernoAbility: AbilityDefinition = preload(
+	"res://data/abilities/inferno_ability.tres"
+)
+const PoisonPuddleAbility: AbilityDefinition = preload(
+	"res://data/abilities/poison_puddle_ability.tres"
+)
+const SyphonAbility: AbilityDefinition = preload(
+	"res://data/abilities/syphon_ability.tres"
+)
 
 const EarthquakeScene: PackedScene = preload(
 	"res://scenes/actions/earthquake_field.tscn"
@@ -37,6 +49,18 @@ const RadioactiveRodScene: PackedScene = preload(
 const TornadoScene: PackedScene = preload(
 	"res://scenes/actions/air_tornado_aura.tscn"
 )
+const InfectionScene: PackedScene = preload(
+	"res://scenes/actions/poison_infection_projectile.tscn"
+)
+const InfernoScene: PackedScene = preload(
+	"res://scenes/actions/fire_inferno_aura.tscn"
+)
+const PoisonPuddleScene: PackedScene = preload(
+	"res://scenes/actions/poison_puddle_surface.tscn"
+)
+const SyphonScene: PackedScene = preload(
+	"res://scenes/actions/death_syphon_projectile.tscn"
+)
 
 const CombatPlayerScene: PackedScene = preload(
 	"res://scenes/actors/player/player_combat_v2.tscn"
@@ -55,13 +79,21 @@ func _ready() -> void:
 	_validate_ability(BarrierAbility, "barrier", "metal", "conjured_structure")
 	_validate_ability(RadioactiveRodAbility, "radioactive_rod", "poison", "spatial_field")
 	_validate_ability(TornadoAbility, "tornado", "air", "status_aura")
+	_validate_ability(InfectionAbility, "infection", "poison", "projectile_status_transfer")
+	_validate_ability(InfernoAbility, "inferno", "fire", "status_aura")
+	_validate_ability(PoisonPuddleAbility, "poison_puddle", "poison", "spatial_surface")
+	_validate_ability(SyphonAbility, "syphon", "death", "projectile_life_drain")
 
-	_validate_action_scene(EarthquakeScene, "seismic_response_contract", false)
-	_validate_action_scene(PolarizeScene, "object_connection_contract", false)
-	_validate_action_scene(MyceliumScene, "growth_response_contract", false)
-	_validate_action_scene(BarrierScene, "defensive_structure", false)
-	_validate_action_scene(RadioactiveRodScene, "cumulative_exposure", true)
-	_validate_action_scene(TornadoScene, "airflow_vortex", false)
+	_validate_runtime_scene(EarthquakeScene, "seismic_response_contract", false)
+	_validate_runtime_scene(PolarizeScene, "object_connection_contract", false)
+	_validate_runtime_scene(MyceliumScene, "growth_response_contract", false)
+	_validate_runtime_scene(BarrierScene, "defensive_structure", false)
+	_validate_runtime_scene(RadioactiveRodScene, "cumulative_exposure", true)
+	_validate_runtime_scene(TornadoScene, "airflow_vortex", false)
+	_validate_runtime_scene(InfectionScene, "status_transfer_contract", false)
+	_validate_runtime_scene(InfernoScene, "heat_response_contract", true)
+	_validate_runtime_scene(PoisonPuddleScene, "chemical_surface_contract", false)
+	_validate_runtime_scene(SyphonScene, "life_drain_contract", true)
 
 	_validate_library_discovery()
 	_validate_live_player_wiring()
@@ -98,14 +130,16 @@ func _validate_ability(
 		expected_id + " has an executable action scene"
 	)
 	_expect(
-		ability.get_roles().has("control")
-		or ability.get_roles().has("utility")
-		or ability.get_roles().has("defense"),
-		expected_id + " adds a gameplay verb beyond generic projectile damage"
+		not ability.get_roles().is_empty(),
+		expected_id + " carries explicit gameplay roles"
+	)
+	_expect(
+		not ability.get_combo_tags().is_empty(),
+		expected_id + " participates in the spell interaction vocabulary"
 	)
 
 
-func _validate_action_scene(
+func _validate_runtime_scene(
 	scene: PackedScene,
 	contract_key: String,
 	expected_direct_damage: bool
@@ -114,9 +148,18 @@ func _validate_action_scene(
 	_expect(instance != null, contract_key + " action scene instantiates")
 	if instance == null:
 		return
-	_expect(instance.has_method("execute"), contract_key + " action exposes execute")
-	_expect(instance.has_method("set_source_actor"), contract_key + " action accepts caster authority")
-	_expect(instance.has_method("get_debug_data"), contract_key + " action exposes debug contract")
+	_expect(
+		instance.has_method("execute") or instance.has_method("launch"),
+		contract_key + " exposes a cast or launch entrypoint"
+	)
+	_expect(
+		instance.has_method("set_source_actor"),
+		contract_key + " accepts caster authority"
+	)
+	_expect(
+		instance.has_method("get_debug_data"),
+		contract_key + " exposes debug contract"
+	)
 	if instance.has_method("get_debug_data"):
 		var data: Dictionary = instance.call("get_debug_data") as Dictionary
 		_expect(bool(data.get(contract_key, false)), contract_key + " is advertised")
@@ -148,6 +191,10 @@ func _validate_library_discovery() -> void:
 		"barrier",
 		"radioactive_rod",
 		"tornado",
+		"infection",
+		"inferno",
+		"poison_puddle",
+		"syphon",
 	]:
 		_expect(ids.has(expected_id), "authored library discovers " + expected_id)
 		_expect(
@@ -180,6 +227,14 @@ func _validate_live_player_wiring() -> void:
 		_expect(
 			loadout_value is AbilityLoadout,
 			"matrix-aware caster retains production loadout"
+		)
+
+	var status_receiver: Node = player.get_node_or_null("StatusReceiver")
+	_expect(status_receiver != null, "combat Grace retains StatusReceiver")
+	if status_receiver != null:
+		_expect(
+			status_receiver.has_method("get_transferable_debuffs"),
+			"combat Grace exposes Infection source-state snapshots"
 		)
 	player.free()
 

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/earthquake_field.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Earthquake"
+description = "Destabilize the ground around Grace with a sequence of expanding seismic pulses that throw creatures, mechanisms, and loose objects off balance."
+element = "earth"
+category = 4
+mana_cost = 4
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "earthquake"
+short_label = "Quake"
+icon_text = "EQ"
+roles = Array[String](["control", "terrain", "environmental", "force", "displacement", "setup", "object_interaction", "puzzle"])
+targeting_style = "self_centered"
+delivery_type = "spatial_channel"
+combo_tags = Array[String](["earth", "seismic", "terrain", "force", "grounded", "break_setup", "object_motion"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["environmental", "area_control", "terrain", "non_damage"])
+debug_tags = Array[String](["matrix_spell", "seismic_response_contract", "persistent_pulses", "channel_candidate"])
+scaling_stats = Array[String](["power", "earth", "arcana"])
+scaling_note = "Earth and Power govern seismic impulse; Arcana is reserved for future channel duration and radius scaling."
+design_notes = "Matrix contract: Channel / Spatial / Environmental. The first integrated pass owns the quake as a short persistent field after cast and exposes receive_earthquake_pulse / receive_seismic_pulse hooks so terrain, props, mechanisms, enemies, and future destruction systems can author their own response without coupling to this spell. A later channel-input pass can drive this same field continuously."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

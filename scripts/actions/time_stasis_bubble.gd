@@ -212,7 +212,7 @@ func _apply_stasis_to_target(target: Node, current_rigid_ids: Dictionary) -> voi
 	if status_receiver != null:
 		if status_receiver.has_method("sustain_status"):
 			status_receiver.call(
-				" sustain_status".strip_edges(),
+				"sustain_status",
 				"stasis",
 				stasis_refresh_duration,
 				1.0,

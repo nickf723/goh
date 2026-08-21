@@ -27,6 +27,7 @@ const STATUS_ELEMENTS: Dictionary = {
 	"leaf_pelted": "life",
 	"rooted": "life",
 	"hexed": "death",
+	"stasis": "time",
 	"oily": "neutral",
 	"obscured": "neutral",
 	"revealed": "sound",

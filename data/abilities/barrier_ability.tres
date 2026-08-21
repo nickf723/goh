@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/metal_barrier_cast.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Barrier"
+description = "Conjure a broad metal wall that physically blocks movement and projectiles and can serve as a magnetic anchor for other Metal and Lightning interactions."
+element = "metal"
+category = 2
+mana_cost = 3
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "barrier"
+short_label = "Barrier"
+icon_text = "▰"
+roles = Array[String](["defense", "summon", "terrain", "structure", "setup", "utility", "object_interaction", "cover"])
+targeting_style = "ground_forward"
+delivery_type = "conjured_structure"
+combo_tags = Array[String](["metal", "structure", "cover", "polarizable", "conductive", "terrain", "engineering"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["defensive", "summon", "terrain", "non_damage"])
+debug_tags = Array[String](["matrix_spell", "physical_barrier", "polarize_anchor", "persistent_structure"])
+scaling_stats = Array[String](["arcana", "metal", "defense"])
+scaling_note = "Metal and Defense are reserved for durability/size; Arcana can extend the conjured lifetime."
+design_notes = "Matrix contract: Concentrate / Conjuration / Defensive. First integrated pass creates real StaticBody3D collision and cover. It opts into presentation_material_metal and Polarize as an immovable magnetic anchor, so future engineering spells can use player-created structures as part of physical assemblies."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/life_mycelium_mesh.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Mycelium Mesh"
+description = "Grow a rapidly spreading network of mushrooms and mycelial strands that lightly impedes enemies and gives nearby terrain, plants, and mechanisms a shared Life-growth field to react to."
+element = "life"
+category = 4
+mana_cost = 3
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "mycelium_mesh"
+short_label = "Mycelium"
+icon_text = "MY"
+roles = Array[String](["control", "terrain", "field", "growth", "setup", "utility", "environmental", "network"])
+targeting_style = "ground_forward"
+delivery_type = "spatial_field"
+combo_tags = Array[String](["life", "plant", "fungus", "mycelium", "growth", "terrain", "field_state", "network", "ecology_setup"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["field_state", "terrain", "control", "non_damage"])
+debug_tags = Array[String](["matrix_spell", "mycelium_growth_contract", "spreading_network", "persistent_field"])
+scaling_stats = Array[String](["arcana", "life", "skill"])
+scaling_note = "Life and Arcana can expand network growth and duration; Skill is reserved for denser branching and more authored environmental responses."
+design_notes = "Matrix contract: Burst / Spatial / Field State. The matrix currently spells the name 'Mycellium Mesh'; the canonical game-facing spelling is Mycelium Mesh. This spell owns growth and network influence, not direct damage. Nearby authored systems can react through receive_mycelium_growth or receive_mycelium_field, allowing future Fire, Poison, vegetation, decomposition, and ecology interactions without hard-coding them into the spell."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

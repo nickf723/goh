@@ -1,16 +1,18 @@
-[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actions/space_gravity_well.tscn" id="1_scene"]
 [ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
-[ext_resource type="Resource" path="res://data/ability_trait_profiles/control_field_profile.tres" id="3_profile"]
 
 [resource]
 script = ExtResource("2_definition")
 display_name = "Gravity Well"
 description = "Collapse local space into a temporary gravity pocket. Nearby creatures and movable objects spiral inward without taking direct damage, bunching the battlefield for follow-up attacks and physics interactions."
 element = "space"
+category = 4
 mana_cost = 2
-trait_profile = ExtResource("3_profile")
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
 spell_id = "gravity_well"
 short_label = "Gravity"
 icon_text = "GW"
@@ -21,5 +23,8 @@ combo_tags = Array[String](["space", "gravity", "pull", "cluster", "physics", "f
 status_tags = Array[String]([])
 ui_tags = Array[String](["control", "field", "physics", "crowd_control"])
 debug_tags = Array[String](["matrix_spell", "gravity_field", "continuous_force", "non_damage", "orbit_pull"])
+scaling_stats = Array[String](["space", "power", "arcana"])
+scaling_note = "Space and Power govern pull force; Arcana is reserved for duration, radius, and orbital-control upgrades."
 design_notes = "Gravity Well is a persistent force-control spell. It uses ForceReceiver continuous forces when available, applies native forces to rigid bodies, and has conservative CharacterBody and receive_gravity_pull fallbacks. The caster is excluded by default and all continuous force sources are explicitly cleared when targets leave or the well expires."
 ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

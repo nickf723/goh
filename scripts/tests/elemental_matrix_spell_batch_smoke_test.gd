@@ -36,6 +36,12 @@ const GravityWellAbility: AbilityDefinition = preload(
 const StasisBubbleAbility: AbilityDefinition = preload(
 	"res://data/abilities/stasis_bubble_ability.tres"
 )
+const LifeGroveAbility: AbilityDefinition = preload(
+	"res://data/abilities/life_grove_ability.tres"
+)
+const IcePillarAbility: AbilityDefinition = preload(
+	"res://data/abilities/ice_pillar_ability.tres"
+)
 
 const EarthquakeScene: PackedScene = preload(
 	"res://scenes/actions/earthquake_field.tscn"
@@ -73,6 +79,12 @@ const GravityWellScene: PackedScene = preload(
 const StasisBubbleScene: PackedScene = preload(
 	"res://scenes/actions/time_stasis_bubble.tscn"
 )
+const LifeGroveScene: PackedScene = preload(
+	"res://scenes/actions/life_grove.tscn"
+)
+const IcePillarScene: PackedScene = preload(
+	"res://scenes/actions/ice_pillar_cast.tscn"
+)
 
 const CombatPlayerScene: PackedScene = preload(
 	"res://scenes/actors/player/player_combat_v2.tscn"
@@ -103,6 +115,8 @@ func _ready() -> void:
 	_validate_ability(SyphonAbility, "syphon", "death", "projectile_life_drain")
 	_validate_ability(GravityWellAbility, "gravity_well", "space", "spatial_force_field")
 	_validate_ability(StasisBubbleAbility, "stasis_bubble", "time", "spatial_status_field")
+	_validate_ability(LifeGroveAbility, "life_grove", "life", "spatial_restoration_field")
+	_validate_ability(IcePillarAbility, "ice_pillar", "ice", "conjured_vertical_structure")
 
 	_validate_runtime_scene(EarthquakeScene, "seismic_response_contract", false)
 	_validate_runtime_scene(PolarizeScene, "object_connection_contract", false)
@@ -116,8 +130,11 @@ func _ready() -> void:
 	_validate_runtime_scene(SyphonScene, "life_drain_contract", true)
 	_validate_runtime_scene(GravityWellScene, "gravity_field_contract", false)
 	_validate_runtime_scene(StasisBubbleScene, "time_stasis_contract", false)
+	_validate_runtime_scene(LifeGroveScene, "restorative_growth_contract", false)
+	_validate_runtime_scene(IcePillarScene, "temporary_architecture_contract", false)
 
 	_validate_stasis_policy()
+	_validate_specialized_contracts()
 	_validate_library_discovery()
 	_validate_live_player_wiring()
 	_finish()
@@ -211,6 +228,26 @@ func _validate_stasis_policy() -> void:
 	receiver.free()
 
 
+func _validate_specialized_contracts() -> void:
+	var grove: Node = LifeGroveScene.instantiate()
+	_expect(grove.has_method("execute"), "Life Grove exposes cast entrypoint")
+	if grove.has_method("get_debug_data"):
+		var grove_data: Dictionary = grove.call("get_debug_data") as Dictionary
+		_expect(
+			bool(grove_data.get("restorative_growth_contract", false)),
+			"Life Grove advertises restorative growth contract"
+		)
+	grove.free()
+
+	var pillar: Node = IcePillarScene.instantiate()
+	_expect(pillar.has_method("receive_damage_payload"), "Ice Pillar can receive Fire payloads")
+	if pillar.has_method("get_debug_data"):
+		var pillar_data: Dictionary = pillar.call("get_debug_data") as Dictionary
+		_expect(bool(pillar_data.get("fire_meltable", false)), "Ice Pillar advertises Fire melt behavior")
+		_expect(bool(pillar_data.get("traversal_geometry", false)), "Ice Pillar advertises traversal geometry")
+	pillar.free()
+
+
 func _validate_library_discovery() -> void:
 	var loadout := AbilityLoadout.new()
 	_expect(
@@ -238,6 +275,8 @@ func _validate_library_discovery() -> void:
 		"syphon",
 		"gravity_well",
 		"stasis_bubble",
+		"life_grove",
+		"ice_pillar",
 	]:
 		_expect(ids.has(expected_id), "authored library discovers " + expected_id)
 		_expect(

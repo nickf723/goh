@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/actions/poison_radioactive_rod.gd" id="1_rod"]
+
+[node name="PoisonRadioactiveRod" type="Node3D"]
+script = ExtResource("1_rod")

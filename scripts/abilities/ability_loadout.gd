@@ -32,6 +32,16 @@ const DEFAULT_ELEMENT_ORDER: Array[String] = [
 # may remain much larger, while controller input cycles this same ten-slot belt.
 @export var quick_slot_count: int = 10
 
+@export_group("Authored Spell Library")
+# Keep this opt-in so focused labs and tests can continue using tiny deterministic
+# loadouts. The production Grace caster enables it before reading the Focus library.
+@export var auto_discover_authored_abilities: bool = false
+@export_dir var authored_ability_root: String = "res://data/abilities"
+
+var _authored_library_cache: Array[AbilityDefinition] = []
+var _authored_library_scanned: bool = false
+var _authored_library_scan_count: int = 0
+
 
 func get_equipped_ability(index: int) -> AbilityDefinition:
 	if index < 0 or index >= equipped_abilities.size():
@@ -82,12 +92,65 @@ func get_learned_abilities() -> Array[AbilityDefinition]:
 	for ability: AbilityDefinition in learned_abilities:
 		append_unique_ability(abilities, ability)
 
+	if auto_discover_authored_abilities:
+		for ability: AbilityDefinition in get_auto_discovered_abilities():
+			append_unique_ability(abilities, ability)
+
 	# Safety fallback for older resources or testing files that only filled equipped.
 	if abilities.size() <= 0:
 		for ability: AbilityDefinition in equipped_abilities:
 			append_unique_ability(abilities, ability)
 
 	return abilities
+
+
+func get_auto_discovered_abilities() -> Array[AbilityDefinition]:
+	if _authored_library_scanned:
+		return _authored_library_cache.duplicate()
+
+	_authored_library_scanned = true
+	_authored_library_scan_count += 1
+	_authored_library_cache.clear()
+	var root: String = authored_ability_root.strip_edges()
+	if root == "":
+		return []
+
+	var resource_paths: Array[String] = []
+	_collect_ability_resource_paths(root, resource_paths)
+	resource_paths.sort()
+	for resource_path: String in resource_paths:
+		var resource: Resource = ResourceLoader.load(resource_path)
+		if resource is AbilityDefinition:
+			append_unique_ability(
+				_authored_library_cache,
+				resource as AbilityDefinition
+			)
+	return _authored_library_cache.duplicate()
+
+
+func invalidate_authored_library_cache() -> void:
+	_authored_library_scanned = false
+	_authored_library_cache.clear()
+
+
+func _collect_ability_resource_paths(
+	root_path: String,
+	result: Array[String]
+) -> void:
+	var directory := DirAccess.open(root_path)
+	if directory == null:
+		return
+	directory.list_dir_begin()
+	var entry: String = directory.get_next()
+	while entry != "":
+		if entry != "." and entry != "..":
+			var child_path: String = root_path.path_join(entry)
+			if directory.current_is_dir():
+				_collect_ability_resource_paths(child_path, result)
+			elif entry.get_extension().to_lower() in ["tres", "res"]:
+				result.append(child_path)
+		entry = directory.get_next()
+	directory.list_dir_end()
 
 
 func get_learned_spell_sections() -> Array[Dictionary]:
@@ -115,12 +178,16 @@ func get_learned_spell_sections() -> Array[Dictionary]:
 
 func get_unassigned_learned_abilities() -> Array[AbilityDefinition]:
 	var unassigned: Array[AbilityDefinition] = []
+	var equipped_ids: Dictionary = {}
+	for ability: AbilityDefinition in equipped_abilities:
+		if ability != null:
+			equipped_ids[ability.get_spell_id()] = true
 
 	for ability: AbilityDefinition in get_learned_abilities():
 		if ability == null:
 			continue
 
-		if not equipped_abilities.has(ability):
+		if not equipped_ids.has(ability.get_spell_id()):
 			unassigned.append(ability)
 
 	return unassigned
@@ -173,7 +240,7 @@ func learn_ability(ability: AbilityDefinition) -> void:
 	if ability == null:
 		return
 
-	if learned_abilities.has(ability):
+	if knows_ability(ability):
 		return
 
 	learned_abilities.append(ability)
@@ -182,15 +249,37 @@ func learn_ability(ability: AbilityDefinition) -> void:
 func knows_ability(ability: AbilityDefinition) -> bool:
 	if ability == null:
 		return false
-
-	return learned_abilities.has(ability)
+	var spell_id: String = ability.get_spell_id()
+	for known: AbilityDefinition in get_learned_abilities():
+		if known != null and known.get_spell_id() == spell_id:
+			return true
+	return false
 
 
 func append_unique_ability(target: Array[AbilityDefinition], ability: AbilityDefinition) -> void:
 	if ability == null:
 		return
-
-	if target.has(ability):
-		return
+	var incoming_id: String = ability.get_spell_id()
+	for existing: AbilityDefinition in target:
+		if existing == ability:
+			return
+		if (
+			existing != null
+			and incoming_id != ""
+			and existing.get_spell_id() == incoming_id
+		):
+			return
 
 	target.append(ability)
+
+
+func get_library_debug_data() -> Dictionary:
+	return {
+		"auto_discover": auto_discover_authored_abilities,
+		"root": authored_ability_root,
+		"scanned": _authored_library_scanned,
+		"scan_count": _authored_library_scan_count,
+		"discovered_count": _authored_library_cache.size(),
+		"learned_count": get_learned_abilities().size(),
+		"equipped_count": equipped_abilities.size(),
+	}

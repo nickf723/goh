@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/fire_inferno_aura.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Inferno"
+description = "Surround yourself in a roaming inferno that moves with you, igniting nearby targets and heating reactive objects as you push through a fight."
+element = "fire"
+category = 4
+mana_cost = 4
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "inferno"
+short_label = "Inferno"
+icon_text = "IF"
+roles = Array[String](["damage", "control", "field", "aura", "area_denial", "setup", "heat", "environmental"])
+targeting_style = "self_centered"
+delivery_type = "status_aura"
+combo_tags = Array[String](["fire", "heat", "burning", "aura", "roaming_field", "ignition", "aggro_zone_control"])
+status_tags = Array[String](["burning"])
+ui_tags = Array[String](["concentration", "aura", "area_control", "damage"])
+debug_tags = Array[String](["matrix_spell", "roaming_fire_zone", "heat_response_contract", "burning_status", "concentration_candidate"])
+scaling_stats = Array[String](["power", "fire", "arcana"])
+scaling_note = "Fire and Power govern heat and burn pressure; Arcana is reserved for a larger radius and longer concentration."
+design_notes = "Matrix contract: Concentration / Status / Kinetics. Inferno is intentionally a mobile aggro-zone spell rather than another stationary Fire Field. The first integrated pass follows Grace for a fixed duration, deals light repeated heat damage, applies Burning, and exposes receive_inferno_heat / receive_heat hooks for objects and environmental systems. A later channel-input pass can sustain this same runtime directly from the Cast button."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

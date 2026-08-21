@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/actions/poison_puddle_surface.gd" id="1_puddle"]
+
+[node name="PoisonPuddleSurface" type="Area3D"]
+script = ExtResource("1_puddle")
+collision_layer = 0
+collision_mask = 1

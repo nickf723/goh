@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/weapons/weapon_staff_axe_focus_controller_v2.gd" id="2_weapon"]
@@ -16,6 +16,7 @@
 [ext_resource type="Script" path="res://scripts/player/player_avatar_manager_production_bridge.gd" id="14_avatar_manager"]
 [ext_resource type="Script" path="res://scripts/visuals/weapon_motion_audio_presenter.gd" id="15_weapon_audio"]
 [ext_resource type="Script" path="res://scripts/ui/player_hud_adaptive_quiet.gd" id="16_quiet_hud"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_caster_matrix_library.gd" id="17_matrix_caster"]
 
 [node name="Player" instance=ExtResource("1_player")]
 script = ExtResource("11_player_script")
@@ -35,6 +36,9 @@ script = ExtResource("14_avatar_manager")
 
 [node name="PlayerHUDV2" parent="."]
 script = ExtResource("16_quiet_hud")
+
+[node name="AbilityCaster" parent="."]
+script = ExtResource("17_matrix_caster")
 
 [node name="WeaponController" parent="." index="21"]
 script = ExtResource("2_weapon")

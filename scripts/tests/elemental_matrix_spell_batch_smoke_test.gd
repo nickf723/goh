@@ -1,0 +1,174 @@
+extends Node
+
+const EarthquakeAbility: AbilityDefinition = preload(
+	"res://data/abilities/earthquake_ability.tres"
+)
+const PolarizeAbility: AbilityDefinition = preload(
+	"res://data/abilities/polarize_ability.tres"
+)
+const MyceliumAbility: AbilityDefinition = preload(
+	"res://data/abilities/mycelium_mesh_ability.tres"
+)
+const EarthquakeScene: PackedScene = preload(
+	"res://scenes/actions/earthquake_field.tscn"
+)
+const PolarizeScene: PackedScene = preload(
+	"res://scenes/actions/metal_polarize_cast.tscn"
+)
+const MyceliumScene: PackedScene = preload(
+	"res://scenes/actions/life_mycelium_mesh.tscn"
+)
+const CombatPlayerScene: PackedScene = preload(
+	"res://scenes/actors/player/player_combat_v2.tscn"
+)
+const MatrixCasterScript: Script = preload(
+	"res://scripts/abilities/ability_caster_matrix_library.gd"
+)
+
+var failures: Array[String] = []
+
+
+func _ready() -> void:
+	_validate_ability(
+		EarthquakeAbility,
+		"earthquake",
+		"earth",
+		"spatial_channel"
+	)
+	_validate_ability(
+		PolarizeAbility,
+		"polarize",
+		"lightning",
+		"target_bond"
+	)
+	_validate_ability(
+		MyceliumAbility,
+		"mycelium_mesh",
+		"life",
+		"spatial_field"
+	)
+	_validate_action_scene(EarthquakeScene, "seismic_response_contract")
+	_validate_action_scene(PolarizeScene, "object_connection_contract")
+	_validate_action_scene(MyceliumScene, "growth_response_contract")
+	_validate_library_discovery()
+	_validate_live_player_wiring()
+	_finish()
+
+
+func _validate_ability(
+	ability: AbilityDefinition,
+	expected_id: String,
+	expected_element: String,
+	expected_delivery: String
+) -> void:
+	_expect(ability != null, expected_id + " ability loads")
+	if ability == null:
+		return
+	_expect(
+		ability.get_spell_id() == expected_id,
+		expected_id + " has canonical spell ID"
+	)
+	_expect(
+		ability.element == expected_element,
+		expected_id + " matches matrix element"
+	)
+	_expect(
+		ability.get_delivery_type() == expected_delivery,
+		expected_id + " carries authored delivery contract"
+	)
+	_expect(
+		ability.get_debug_tags().has("matrix_spell"),
+		expected_id + " identifies matrix-source design"
+	)
+	_expect(
+		ability.ability_scene != null,
+		expected_id + " has an executable action scene"
+	)
+	_expect(
+		ability.get_roles().has("control") or ability.get_roles().has("utility"),
+		expected_id + " adds a non-projectile gameplay verb"
+	)
+
+
+func _validate_action_scene(scene: PackedScene, contract_key: String) -> void:
+	var instance: Node = scene.instantiate()
+	_expect(instance != null, contract_key + " action scene instantiates")
+	if instance == null:
+		return
+	_expect(instance.has_method("execute"), contract_key + " action exposes execute")
+	_expect(instance.has_method("set_source_actor"), contract_key + " action accepts caster authority")
+	_expect(instance.has_method("get_debug_data"), contract_key + " action exposes debug contract")
+	if instance.has_method("get_debug_data"):
+		var data: Dictionary = instance.call("get_debug_data") as Dictionary
+		_expect(bool(data.get(contract_key, false)), contract_key + " is advertised")
+		_expect(not bool(data.get("direct_damage", true)), contract_key + " is not direct-damage filler")
+	instance.free()
+
+
+func _validate_library_discovery() -> void:
+	var loadout := AbilityLoadout.new()
+	_expect(
+		loadout.get_learned_abilities().is_empty(),
+		"authored discovery remains opt-in for focused loadouts"
+	)
+	loadout.auto_discover_authored_abilities = true
+	loadout.authored_ability_root = "res://data/abilities"
+	var discovered: Array[AbilityDefinition] = loadout.get_learned_abilities()
+	var ids: Array[String] = []
+	for ability: AbilityDefinition in discovered:
+		if ability != null:
+			ids.append(ability.get_spell_id())
+	_expect(ids.has("earthquake"), "authored library discovers Earthquake")
+	_expect(ids.has("polarize"), "authored library discovers Polarize")
+	_expect(ids.has("mycelium_mesh"), "authored library discovers Mycelium Mesh")
+	_expect(_count_id(ids, "earthquake") == 1, "spell-ID discovery deduplicates Earthquake")
+	var first_debug: Dictionary = loadout.get_library_debug_data()
+	loadout.get_learned_abilities()
+	var second_debug: Dictionary = loadout.get_library_debug_data()
+	_expect(
+		int(first_debug.get("scan_count", 0)) == int(second_debug.get("scan_count", -1)),
+		"authored spell scan is cached after first discovery"
+	)
+
+
+func _validate_live_player_wiring() -> void:
+	var player: Node = CombatPlayerScene.instantiate()
+	_expect(player != null, "combat Grace scene instantiates with matrix spell integration")
+	if player == null:
+		return
+	var caster: Node = player.get_node_or_null("AbilityCaster")
+	_expect(caster != null, "combat Grace retains AbilityCaster")
+	if caster != null:
+		_expect(
+			caster.get_script() == MatrixCasterScript,
+			"combat Grace uses matrix-aware Focus caster"
+		)
+		var loadout_value: Variant = caster.get("loadout")
+		_expect(
+			loadout_value is AbilityLoadout,
+			"matrix-aware caster retains production loadout"
+		)
+	player.free()
+
+
+func _count_id(ids: Array[String], target: String) -> int:
+	var count: int = 0
+	for value: String in ids:
+		if value == target:
+			count += 1
+	return count
+
+
+func _expect(condition: bool, label: String) -> void:
+	if not condition:
+		failures.append(label)
+
+
+func _finish() -> void:
+	if failures.is_empty():
+		print("ELEMENTAL_MATRIX_SPELL_BATCH_SMOKE_TEST: PASS")
+		get_tree().quit(0)
+		return
+	for failure: String in failures:
+		push_error("ELEMENTAL_MATRIX_SPELL_BATCH_SMOKE_TEST: " + failure)
+	get_tree().quit(1)

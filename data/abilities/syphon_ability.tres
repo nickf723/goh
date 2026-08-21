@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/death_syphon_projectile.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+[ext_resource type="Script" path="res://scripts/combat/damage_payload.gd" id="3_payload_script"]
+[ext_resource type="Resource" path="res://data/ability_trait_profiles/damage_projectile_profile.tres" id="4_profile"]
+
+[sub_resource type="Resource" id="DamagePayload_syphon"]
+script = ExtResource("3_payload_script")
+amount = 3
+stance_damage = 0
+element = "death"
+source_name = "Syphon"
+hit_type = "projectile"
+tags = Array[String](["death", "magic", "projectile", "damage", "life_drain", "syphon"])
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Syphon"
+description = "Fire a death bolt that converts the health it actually steals into healing for Grace. Immunity, resistance, stance-only targets, and overkill reduce or prevent the return."
+element = "death"
+mana_cost = 1
+trait_profile = ExtResource("4_profile")
+spell_id = "syphon"
+short_label = "Syphon"
+icon_text = "SY"
+roles = Array[String](["damage", "sustain", "life_drain", "projectile", "payoff"])
+targeting_style = "aimed"
+delivery_type = "projectile_life_drain"
+combo_tags = Array[String](["death", "life_drain", "sustain", "payoff"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["damage", "heal", "single_target"])
+debug_tags = Array[String](["matrix_spell", "resolved_damage_heal", "actual_health_loss"])
+design_notes = "Syphon heals only from resolved health loss. The projectile reads target health before and after the normal payload transaction and falls back to receiver damage metadata when direct health state is unavailable."
+ability_scene = ExtResource("1_scene")
+action_payload = SubResource("DamagePayload_syphon")

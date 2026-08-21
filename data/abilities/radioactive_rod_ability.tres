@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/poison_radioactive_rod.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Radioactive Rod"
+description = "Conjure a radioactive source that irradiates the surrounding area. Exposure accumulates the longer a target remains nearby, causing progressively stronger radiation damage."
+element = "poison"
+category = 4
+mana_cost = 4
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "radioactive_rod"
+short_label = "Rad Rod"
+icon_text = "☢"
+roles = Array[String](["damage", "control", "terrain", "field", "hazard", "setup", "ramping", "area_denial"])
+targeting_style = "ground_forward"
+delivery_type = "spatial_field"
+combo_tags = Array[String](["poison", "radiation", "chemical", "hazard", "field_state", "exposure", "ramping_damage"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["field_state", "hazard", "area_denial", "ramping"])
+debug_tags = Array[String](["matrix_spell", "cumulative_exposure", "radiation_response_contract", "not_poison_cloud"])
+scaling_stats = Array[String](["arcana", "poison", "power"])
+scaling_note = "Poison and Power are reserved for radiation dose/damage; Arcana can extend field duration and radius."
+design_notes = "Matrix contract: Burst / Spatial / Field State. Radioactive Rod is intentionally differentiated from Poison Bloom, Poison Puddle, and Contagion Cloud by cumulative exposure. Brief contact is mild; remaining in the field ramps the dose and damage. Authored targets can react through receive_radiation_exposure without introducing a hard dependency on one status-effect implementation."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

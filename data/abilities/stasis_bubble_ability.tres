@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/time_stasis_bubble.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Stasis Bubble"
+description = "Suspend a pocket of time ahead of Grace. Creatures inside cannot move or act, while loose physics objects pause and resume their saved momentum when the bubble releases them."
+element = "time"
+category = 4
+mana_cost = 3
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "stasis_bubble"
+short_label = "Stasis"
+icon_text = "ST"
+roles = Array[String](["control", "field", "hard_control", "physics", "setup", "utility", "time"])
+targeting_style = "ground_forward"
+delivery_type = "spatial_status_field"
+combo_tags = Array[String](["time", "stasis", "suspend", "immobilize", "field", "physics", "setup"])
+status_tags = Array[String](["stasis"])
+ui_tags = Array[String](["control", "field", "hard_control", "non_damage"])
+debug_tags = Array[String](["matrix_spell", "native_time_status", "momentum_preservation", "non_damage", "hard_control"])
+scaling_stats = Array[String](["time", "arcana", "focus"])
+scaling_note = "Time governs field authority; Arcana and Focus are reserved for duration, radius, and boss-resistance upgrades."
+design_notes = "Stasis Bubble introduces a canonical Time-native stasis state through the shared status policy. Status-aware actors stop movement and actions while stasis is sustained. Rigid bodies are frozen with linear and angular velocity snapshots, then restored on release. Bosses are immune by default unless explicitly marked stasis_vulnerable."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

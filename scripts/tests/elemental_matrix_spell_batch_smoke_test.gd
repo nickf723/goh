@@ -9,6 +9,16 @@ const PolarizeAbility: AbilityDefinition = preload(
 const MyceliumAbility: AbilityDefinition = preload(
 	"res://data/abilities/mycelium_mesh_ability.tres"
 )
+const BarrierAbility: AbilityDefinition = preload(
+	"res://data/abilities/barrier_ability.tres"
+)
+const RadioactiveRodAbility: AbilityDefinition = preload(
+	"res://data/abilities/radioactive_rod_ability.tres"
+)
+const TornadoAbility: AbilityDefinition = preload(
+	"res://data/abilities/tornado_ability.tres"
+)
+
 const EarthquakeScene: PackedScene = preload(
 	"res://scenes/actions/earthquake_field.tscn"
 )
@@ -18,6 +28,16 @@ const PolarizeScene: PackedScene = preload(
 const MyceliumScene: PackedScene = preload(
 	"res://scenes/actions/life_mycelium_mesh.tscn"
 )
+const BarrierScene: PackedScene = preload(
+	"res://scenes/actions/metal_barrier_cast.tscn"
+)
+const RadioactiveRodScene: PackedScene = preload(
+	"res://scenes/actions/poison_radioactive_rod.tscn"
+)
+const TornadoScene: PackedScene = preload(
+	"res://scenes/actions/air_tornado_aura.tscn"
+)
+
 const CombatPlayerScene: PackedScene = preload(
 	"res://scenes/actors/player/player_combat_v2.tscn"
 )
@@ -29,27 +49,20 @@ var failures: Array[String] = []
 
 
 func _ready() -> void:
-	_validate_ability(
-		EarthquakeAbility,
-		"earthquake",
-		"earth",
-		"spatial_channel"
-	)
-	_validate_ability(
-		PolarizeAbility,
-		"polarize",
-		"lightning",
-		"target_bond"
-	)
-	_validate_ability(
-		MyceliumAbility,
-		"mycelium_mesh",
-		"life",
-		"spatial_field"
-	)
-	_validate_action_scene(EarthquakeScene, "seismic_response_contract")
-	_validate_action_scene(PolarizeScene, "object_connection_contract")
-	_validate_action_scene(MyceliumScene, "growth_response_contract")
+	_validate_ability(EarthquakeAbility, "earthquake", "earth", "spatial_channel")
+	_validate_ability(PolarizeAbility, "polarize", "lightning", "target_bond")
+	_validate_ability(MyceliumAbility, "mycelium_mesh", "life", "spatial_field")
+	_validate_ability(BarrierAbility, "barrier", "metal", "conjured_structure")
+	_validate_ability(RadioactiveRodAbility, "radioactive_rod", "poison", "spatial_field")
+	_validate_ability(TornadoAbility, "tornado", "air", "status_aura")
+
+	_validate_action_scene(EarthquakeScene, "seismic_response_contract", false)
+	_validate_action_scene(PolarizeScene, "object_connection_contract", false)
+	_validate_action_scene(MyceliumScene, "growth_response_contract", false)
+	_validate_action_scene(BarrierScene, "defensive_structure", false)
+	_validate_action_scene(RadioactiveRodScene, "cumulative_exposure", true)
+	_validate_action_scene(TornadoScene, "airflow_vortex", false)
+
 	_validate_library_discovery()
 	_validate_live_player_wiring()
 	_finish()
@@ -85,12 +98,18 @@ func _validate_ability(
 		expected_id + " has an executable action scene"
 	)
 	_expect(
-		ability.get_roles().has("control") or ability.get_roles().has("utility"),
-		expected_id + " adds a non-projectile gameplay verb"
+		ability.get_roles().has("control")
+		or ability.get_roles().has("utility")
+		or ability.get_roles().has("defense"),
+		expected_id + " adds a gameplay verb beyond generic projectile damage"
 	)
 
 
-func _validate_action_scene(scene: PackedScene, contract_key: String) -> void:
+func _validate_action_scene(
+	scene: PackedScene,
+	contract_key: String,
+	expected_direct_damage: bool
+) -> void:
 	var instance: Node = scene.instantiate()
 	_expect(instance != null, contract_key + " action scene instantiates")
 	if instance == null:
@@ -101,7 +120,10 @@ func _validate_action_scene(scene: PackedScene, contract_key: String) -> void:
 	if instance.has_method("get_debug_data"):
 		var data: Dictionary = instance.call("get_debug_data") as Dictionary
 		_expect(bool(data.get(contract_key, false)), contract_key + " is advertised")
-		_expect(not bool(data.get("direct_damage", true)), contract_key + " is not direct-damage filler")
+		_expect(
+			bool(data.get("direct_damage", false)) == expected_direct_damage,
+			contract_key + " reports intended direct-damage ownership"
+		)
 	instance.free()
 
 
@@ -118,10 +140,21 @@ func _validate_library_discovery() -> void:
 	for ability: AbilityDefinition in discovered:
 		if ability != null:
 			ids.append(ability.get_spell_id())
-	_expect(ids.has("earthquake"), "authored library discovers Earthquake")
-	_expect(ids.has("polarize"), "authored library discovers Polarize")
-	_expect(ids.has("mycelium_mesh"), "authored library discovers Mycelium Mesh")
-	_expect(_count_id(ids, "earthquake") == 1, "spell-ID discovery deduplicates Earthquake")
+
+	for expected_id: String in [
+		"earthquake",
+		"polarize",
+		"mycelium_mesh",
+		"barrier",
+		"radioactive_rod",
+		"tornado",
+	]:
+		_expect(ids.has(expected_id), "authored library discovers " + expected_id)
+		_expect(
+			_count_id(ids, expected_id) == 1,
+			"spell-ID discovery deduplicates " + expected_id
+		)
+
 	var first_debug: Dictionary = loadout.get_library_debug_data()
 	loadout.get_learned_abilities()
 	var second_debug: Dictionary = loadout.get_library_debug_data()

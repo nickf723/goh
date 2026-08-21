@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/air_tornado_aura.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Tornado"
+description = "Surround yourself in a moving vortex of air with a calm eye at its center, pulling nearby objects inward while lifting and spinning them through the shared airflow system."
+element = "air"
+category = 4
+mana_cost = 4
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "tornado"
+short_label = "Tornado"
+icon_text = "↻"
+roles = Array[String](["control", "movement", "defense", "setup", "airflow", "environmental", "object_interaction", "area_control"])
+targeting_style = "self_centered"
+delivery_type = "status_aura"
+combo_tags = Array[String](["air", "vortex", "airflow", "lift", "pull", "projectile_deflection", "cloud_interaction", "environmental_motion"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["concentration", "aura", "control", "non_damage"])
+debug_tags = Array[String](["matrix_spell", "airflow_vortex", "shared_airflow_contract", "calm_eye", "concentration_candidate"])
+scaling_stats = Array[String](["arcana", "air", "focus"])
+scaling_note = "Air controls vortex velocity, Arcana can expand radius, and Focus is reserved for longer sustained concentration."
+design_notes = "Matrix contract: Concentration / Status / Kinetics. The first integrated pass persists for a fixed duration and follows Grace. It is implemented as an AirflowField3D VORTEX, so any existing or future system sampling the shared AirflowManager automatically inherits Tornado behavior. A calm eye prevents the self-centered field from pushing the caster."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

@@ -61,8 +61,9 @@ func _exit_tree() -> void:
 func _process(delta: float) -> void:
 	if not active:
 		return
-	elapsed += maxf(delta, 0.0)
-	_update_visuals()
+	var safe_delta: float = maxf(delta, 0.0)
+	elapsed += safe_delta
+	_update_visuals(safe_delta)
 
 
 func _physics_process(delta: float) -> void:
@@ -115,7 +116,7 @@ func execute(player: Node3D, requested_direction: Vector3) -> void:
 	active = true
 	if visual_root != null:
 		visual_root.visible = true
-	_update_visuals()
+	_update_visuals(0.0)
 	set_process(true)
 	set_physics_process(true)
 
@@ -398,7 +399,7 @@ func _build_visuals() -> void:
 	visual_root.visible = false
 
 
-func _update_visuals() -> void:
+func _update_visuals(delta: float) -> void:
 	if visual_root == null:
 		return
 	if core_mesh != null:
@@ -407,8 +408,8 @@ func _update_visuals() -> void:
 	for index: int in range(gravity_rings.size()):
 		var ring: MeshInstance3D = gravity_rings[index]
 		var direction_sign: float = 1.0 if index % 2 == 0 else -1.0
-		ring.rotation.y += visual_rotation_speed * direction_sign * 0.012
-		ring.rotation.z += visual_rotation_speed * 0.006
+		ring.rotation.y += visual_rotation_speed * direction_sign * delta
+		ring.rotation.z += visual_rotation_speed * 0.5 * delta
 	for index: int in range(orbit_motes.size()):
 		var mote: MeshInstance3D = orbit_motes[index]
 		var phase: float = TAU * float(index) / maxf(float(orbit_motes.size()), 1.0)

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/metal_polarize_cast.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Polarize"
+description = "Generate a concentrated magnetic bond between a targeted object and a nearby second object, pulling them together and maintaining tension between them."
+element = "lightning"
+category = 4
+mana_cost = 3
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "polarize"
+short_label = "Polarize"
+icon_text = "±"
+roles = Array[String](["control", "object_interaction", "physics", "connection", "setup", "utility", "puzzle", "engineering"])
+targeting_style = "aimed_object"
+delivery_type = "target_bond"
+combo_tags = Array[String](["lightning", "magnetic", "polarized", "connect", "object_manipulation", "conductive_setup", "engineering"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["object_manipulation", "physics", "targeted", "non_damage"])
+debug_tags = Array[String](["matrix_spell", "polarize_bond", "spring_force", "two_object_connection"])
+scaling_stats = Array[String](["arcana", "lightning", "skill"])
+scaling_note = "Lightning governs magnetic strength, Arcana can extend duration, and Skill is reserved for target acquisition and larger engineering assemblies."
+design_notes = "Matrix contract: Burst / Targetted / Object Manipulation. Polarize intentionally does not become another lightning damage spell. It establishes a reusable physical connection contract through receive_polarize_force, receive_polarize_link, and release_polarize_link hooks. Ordinary RigidBody3D props work immediately; authored mechanisms can opt in through the polarizable group or hooks."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/poison_puddle_surface.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Poison Puddle"
+description = "Create a persistent chemical puddle that poisons anything standing in it and acts as a reactive surface for elemental chemistry."
+element = "poison"
+category = 4
+mana_cost = 2
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "poison_puddle"
+short_label = "Puddle"
+icon_text = "PP"
+roles = Array[String](["control", "terrain", "field", "setup", "chemical", "surface", "area_denial", "utility"])
+targeting_style = "ground_forward"
+delivery_type = "spatial_surface"
+combo_tags = Array[String](["poison", "chemical", "liquid", "surface", "poisoned", "reaction_setup", "terrain"])
+status_tags = Array[String](["poisoned"])
+ui_tags = Array[String](["field_state", "surface", "area_control", "non_damage"])
+debug_tags = Array[String](["matrix_spell", "chemical_surface_contract", "reactive_status_surface", "persistent_puddle"])
+scaling_stats = Array[String](["arcana", "poison", "skill"])
+scaling_note = "Poison governs status strength, Arcana can extend radius/lifetime, and Skill is reserved for richer surface-reaction behavior."
+design_notes = "Matrix contract: Burst / Spatial / Field State. Poison Puddle specializes the shared StatusSurface system rather than creating its own overlap/status engine. It continuously sustains Poisoned and carries poison/chemical/liquid/surface hazard tags, so the existing reaction resolver can transform it when struck by compatible elements. It does no direct damage by itself."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

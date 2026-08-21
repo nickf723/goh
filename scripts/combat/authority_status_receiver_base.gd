@@ -183,7 +183,12 @@ func get_status_strength(status_name: String) -> float:
 
 
 func get_movement_multiplier() -> float:
-	if has_status("stunned") or has_status("frozen") or has_status("staggered"):
+	if (
+		has_status("stunned")
+		or has_status("frozen")
+		or has_status("staggered")
+		or has_status("stasis")
+	):
 		return 0.0
 	if has_status("chill"):
 		return clampf(get_status_strength("chill"), 0.0, 1.0)
@@ -191,7 +196,12 @@ func get_movement_multiplier() -> float:
 
 
 func blocks_actions() -> bool:
-	return has_status("stunned") or has_status("frozen") or has_status("staggered")
+	return (
+		has_status("stunned")
+		or has_status("frozen")
+		or has_status("staggered")
+		or has_status("stasis")
+	)
 
 
 func _apply_status_tick(status_name: String, status: Dictionary) -> void:

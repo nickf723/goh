@@ -1,0 +1,77 @@
+name: Elemental Matrix Spells
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/actions/earthquake_field.gd"
+      - "scripts/actions/metal_polarize_cast.gd"
+      - "scripts/actions/life_mycelium_mesh.gd"
+      - "scripts/actions/metal_barrier_cast.gd"
+      - "scripts/actions/poison_radioactive_rod.gd"
+      - "scripts/actions/air_tornado_aura.gd"
+      - "scripts/abilities/ability_loadout.gd"
+      - "scripts/abilities/ability_caster_matrix_library.gd"
+      - "data/abilities/earthquake_ability.tres"
+      - "data/abilities/polarize_ability.tres"
+      - "data/abilities/mycelium_mesh_ability.tres"
+      - "data/abilities/barrier_ability.tres"
+      - "data/abilities/radioactive_rod_ability.tres"
+      - "data/abilities/tornado_ability.tres"
+      - "scenes/actions/earthquake_field.tscn"
+      - "scenes/actions/metal_polarize_cast.tscn"
+      - "scenes/actions/life_mycelium_mesh.tscn"
+      - "scenes/actions/metal_barrier_cast.tscn"
+      - "scenes/actions/poison_radioactive_rod.tscn"
+      - "scenes/actions/air_tornado_aura.tscn"
+      - "scripts/tests/elemental_matrix_spell_batch_smoke_test.gd"
+      - "scenes/tests/elemental_matrix_spell_batch_smoke_test.tscn"
+      - "scenes/actors/player/player_combat_v2.tscn"
+      - ".github/workflows/elemental-matrix-spell-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: elemental-matrix-spells-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-matrix-spells:
+    name: Import and validate Elemental Matrix spell batch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.0
+          use-dotnet: false
+
+      - name: Import project headlessly
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --editor --quit 2>&1 | tee elemental-matrix-import.log
+
+      - name: Run Elemental Matrix spell regression
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/elemental_matrix_spell_batch_smoke_test.tscn 2>&1 | tee elemental-matrix-spells.log
+
+      - name: Upload validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: elemental-matrix-spell-logs
+          path: |
+            elemental-matrix-import.log
+            elemental-matrix-spells.log
+          if-no-files-found: ignore

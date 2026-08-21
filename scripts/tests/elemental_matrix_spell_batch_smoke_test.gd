@@ -30,6 +30,12 @@ const PoisonPuddleAbility: AbilityDefinition = preload(
 const SyphonAbility: AbilityDefinition = preload(
 	"res://data/abilities/syphon_ability.tres"
 )
+const GravityWellAbility: AbilityDefinition = preload(
+	"res://data/abilities/gravity_well_ability.tres"
+)
+const StasisBubbleAbility: AbilityDefinition = preload(
+	"res://data/abilities/stasis_bubble_ability.tres"
+)
 
 const EarthquakeScene: PackedScene = preload(
 	"res://scenes/actions/earthquake_field.tscn"
@@ -61,12 +67,24 @@ const PoisonPuddleScene: PackedScene = preload(
 const SyphonScene: PackedScene = preload(
 	"res://scenes/actions/death_syphon_projectile.tscn"
 )
+const GravityWellScene: PackedScene = preload(
+	"res://scenes/actions/space_gravity_well.tscn"
+)
+const StasisBubbleScene: PackedScene = preload(
+	"res://scenes/actions/time_stasis_bubble.tscn"
+)
 
 const CombatPlayerScene: PackedScene = preload(
 	"res://scenes/actors/player/player_combat_v2.tscn"
 )
 const MatrixCasterScript: Script = preload(
 	"res://scripts/abilities/ability_caster_matrix_library.gd"
+)
+const StatePolicyScript: Script = preload(
+	"res://scripts/systems/reaction_state_policy.gd"
+)
+const StatusReceiverScript: Script = preload(
+	"res://scripts/combat/authority_status_receiver_base.gd"
 )
 
 var failures: Array[String] = []
@@ -83,6 +101,8 @@ func _ready() -> void:
 	_validate_ability(InfernoAbility, "inferno", "fire", "status_aura")
 	_validate_ability(PoisonPuddleAbility, "poison_puddle", "poison", "spatial_surface")
 	_validate_ability(SyphonAbility, "syphon", "death", "projectile_life_drain")
+	_validate_ability(GravityWellAbility, "gravity_well", "space", "spatial_force_field")
+	_validate_ability(StasisBubbleAbility, "stasis_bubble", "time", "spatial_status_field")
 
 	_validate_runtime_scene(EarthquakeScene, "seismic_response_contract", false)
 	_validate_runtime_scene(PolarizeScene, "object_connection_contract", false)
@@ -94,7 +114,10 @@ func _ready() -> void:
 	_validate_runtime_scene(InfernoScene, "heat_response_contract", true)
 	_validate_runtime_scene(PoisonPuddleScene, "chemical_surface_contract", false)
 	_validate_runtime_scene(SyphonScene, "life_drain_contract", true)
+	_validate_runtime_scene(GravityWellScene, "gravity_field_contract", false)
+	_validate_runtime_scene(StasisBubbleScene, "time_stasis_contract", false)
 
+	_validate_stasis_policy()
 	_validate_library_discovery()
 	_validate_live_player_wiring()
 	_finish()
@@ -170,6 +193,24 @@ func _validate_runtime_scene(
 	instance.free()
 
 
+func _validate_stasis_policy() -> void:
+	_expect(
+		str(StatePolicyScript.get_state_element("stasis")) == "time",
+		"stasis resolves to the Time element"
+	)
+	var receiver: Node = StatusReceiverScript.new()
+	_expect(receiver != null, "shared status receiver can be constructed for stasis validation")
+	if receiver == null:
+		return
+	receiver.call("apply_status", "stasis", 1.0, 1.0, "matrix_test")
+	_expect(
+		is_equal_approx(float(receiver.call("get_movement_multiplier")), 0.0),
+		"stasis fully blocks movement"
+	)
+	_expect(bool(receiver.call("blocks_actions")), "stasis blocks actions")
+	receiver.free()
+
+
 func _validate_library_discovery() -> void:
 	var loadout := AbilityLoadout.new()
 	_expect(
@@ -195,6 +236,8 @@ func _validate_library_discovery() -> void:
 		"inferno",
 		"poison_puddle",
 		"syphon",
+		"gravity_well",
+		"stasis_bubble",
 	]:
 		_expect(ids.has(expected_id), "authored library discovers " + expected_id)
 		_expect(

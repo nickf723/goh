@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/life_grove.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Life Grove"
+description = "Grow a temporary restorative grove. Grace and friendly heal-capable actors recover health in pulses while plants and environmental systems can respond to the same life-energy through growth hooks."
+element = "life"
+category = 4
+mana_cost = 2
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "life_grove"
+short_label = "Grove"
+icon_text = "LG"
+roles = Array[String](["heal", "support", "field", "growth", "ecology", "sustain", "utility"])
+targeting_style = "ground_forward"
+delivery_type = "spatial_restoration_field"
+combo_tags = Array[String](["life", "heal", "growth", "grove", "field", "sustain", "ecology"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["heal", "support", "field", "growth"])
+debug_tags = Array[String](["matrix_spell", "restorative_growth", "growth_hook", "friendly_heal", "non_damage"])
+scaling_stats = Array[String](["life", "arcana", "focus"])
+scaling_note = "Life governs restoration strength; Arcana and Focus are reserved for pulse frequency, duration, radius, and richer growth responses."
+design_notes = "Life Grove is a persistent restorative ecology field. The player heals through GameState, friendly actors can expose receive_heal, enemies are excluded from healing, and plants/environment objects can opt into receive_growth_pulse or receive_life_grove_pulse without coupling the spell to a specific vegetation implementation."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AbilityDefinition" load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/actions/ice_pillar_cast.tscn" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="2_definition"]
+
+[resource]
+script = ExtResource("2_definition")
+display_name = "Ice Pillar"
+description = "Raise a narrow pillar of ice from the ground. The temporary structure creates standable height, cover, traversal routes, and puzzle geometry, and melts rapidly when struck by Fire."
+element = "ice"
+category = 4
+mana_cost = 2
+stamina_cost = 0
+focus_cost = 0
+use_trait_profile = false
+spell_id = "ice_pillar"
+short_label = "Pillar"
+icon_text = "IP"
+roles = Array[String](["utility", "terrain", "structure", "traversal", "cover", "setup", "ice"])
+targeting_style = "ground_forward"
+delivery_type = "conjured_vertical_structure"
+combo_tags = Array[String](["ice", "pillar", "structure", "traversal", "height", "cover", "melt"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["utility", "terrain", "traversal", "structure"])
+debug_tags = Array[String](["matrix_spell", "temporary_architecture", "physical_collision", "fire_meltable", "non_damage"])
+scaling_stats = Array[String](["ice", "arcana", "power"])
+scaling_note = "Ice governs structural durability and height; Arcana and Power are reserved for lifetime, dimensions, and more forceful emergence upgrades."
+design_notes = "Ice Pillar is world geometry rather than a damage spell. It creates a StaticBody with standable collision, raises from the ground with a short deployment tween, responds visually to Earthquake, and exposes receive_damage_payload so Fire can melt it quickly."
+ability_scene = ExtResource("1_scene")
+metadata/_custom_type_script = "res://scripts/abilities/ability_definition.gd"

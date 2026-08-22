@@ -1272,6 +1272,85 @@
       "timeout_seconds": 8
     },
     {
+      "id": "animal_behavior_lab",
+      "order": 54,
+      "display_name": "Animal Behavior Laboratory",
+      "category": "AI Laboratory",
+      "version": "v1.1",
+      "status": "development_tool",
+      "description": "Playable Mob Engine laboratory comparing species movesets, continuous personality, drives, committed intentions, action phases, perception, relationships, bonding, persistence, and pack alerts across sheep, capybara, and wolves.",
+      "scene": "res://scenes/levels/prototypes/animal_behavior_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/animal_behavior_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/mob_engine_foundation_smoke_test.tscn",
+        "res://scenes/tests/mob_drives_and_intentions_smoke_test.tscn",
+        "res://scenes/tests/animal_behavior_lab_smoke_test.tscn",
+        "res://scenes/tests/animal_perception_relationship_smoke_test.tscn",
+        "res://scenes/tests/animal_bonding_persistence_smoke_test.tscn"
+      ],
+      "dependencies": [],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "INTERACT",
+        "LAB CONTROLS",
+        "RESET"
+      ],
+      "manual_test": "docs/ANIMAL_BEHAVIOR_LAB_TEST.md",
+      "temporary_state": "persistent",
+      "story_integrated": false,
+      "limitations": [
+        "Procedural animal silhouettes and movement are prototype presentation rather than final models or animation.",
+        "The live generic actor currently presents ground quadrupeds; flying, deep-swimming, climbing, and burrowing executors remain to be proven.",
+        "Shared move effects are authored, but universal active-phase payload dispatch is the next runtime integration."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 10
+    },
+    {
+      "id": "wildlife_navigation_rescue_lab",
+      "order": 55,
+      "display_name": "Wildlife Navigation and Rescue Laboratory",
+      "category": "Animal Systems Laboratory",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Named-animal field course for injury, rescue, healing, feeding, persistent bonding, navigation-aware following, authoritative companion commands, dynamic rebaking, stuck detection, and separation recovery.",
+      "scene": "res://scenes/levels/prototypes/wildlife_navigation_rescue_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/wildlife_navigation_rescue_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/wildlife_navigation_rescue_lab_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "animal_behavior_lab"
+      ],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "INTERACT",
+        "LIGHT",
+        "ANIMAL COMMANDS",
+        "RESET"
+      ],
+      "manual_test": "docs/WILDLIFE_NAVIGATION_RESCUE_LAB_V1.md",
+      "temporary_state": "persistent",
+      "story_integrated": false,
+      "limitations": [
+        "The rescue course is an artificial validation space rather than an authored world encounter.",
+        "Runtime navigation baking and conservative separation recovery are prototype-safe, not final large-world streaming solutions.",
+        "Moving-obstacle avoidance and authored traversal links remain deferred."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 10
+    },
+    {
       "id": "development_control_center",
       "order": 100,
       "display_name": "Development Control Center",
@@ -1315,7 +1394,9 @@
         "airborne_presentation_lab",
         "systems_integration_hub",
         "wilds_expedition",
-        "regional_expedition_map"
+        "regional_expedition_map",
+        "animal_behavior_lab",
+        "wildlife_navigation_rescue_lab"
       ],
       "controls": [
         "NAVIGATE",

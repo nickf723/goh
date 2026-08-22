@@ -719,7 +719,8 @@
         "scripts/summons/bonded_familiar_roster.gd",
         "scripts/combat/status_receiver.gd",
         "scripts/mobs/mob_locomotion_executor.gd",
-        "scripts/mobs/mob_traversal_medium.gd"
+        "scripts/mobs/mob_traversal_medium.gd",
+        "scripts/expedition/wilds_animal_habitat_encounter.gd"
       ],
       "canonical_scene": "scenes/levels/prototypes/animal_behavior_lab_v1.tscn",
       "aliases": [
@@ -766,7 +767,10 @@
         "animal surface adhesion",
         "animal traversal routes",
         "animal burrow routes",
-        "animal habitat volumes"
+        "animal habitat volumes",
+        "field wildlife habitats",
+        "authored animal habitats",
+        "wilds animal populations"
       ],
       "implemented": true,
       "do_not_resuggest": true,
@@ -792,14 +796,16 @@
         "reusable procedural quadruped, waterfowl, fish, low-reptile, and digging-mammal prototype bodies driven by the same generic actor",
         "canonical shared water habitat with a live water-only Trout, a ground/swimming/flying Goose, amphibious transfer controls, and reset coverage",
         "generic traversal-medium adapter supplying compatible modes, environmental tags, surface normals, adhesion, route guidance, entry/exit transitions, reset, and debug data",
-        "canonical climb wall with a live ground/climbing Gecko and a three-dimensional soil route with a live ground/burrowing Mole"
+        "canonical climb wall with a live ground/climbing Gecko and a three-dimensional soil route with a live ground/burrowing Mole",
+        "authored Wilds Expedition integration with a current-bearing cypress water habitat, woodland climbing snag, ridge burrow mound, Grace perception provider, quiet field presentation, route-slice population, and rebuild cleanup"
       ],
-      "next_use": "Playtest the canonical Gecko and Mole traversal for structural clarity, then reuse the same traversal-medium contract in existing exploration content before adding ceiling/corner climbing, terrain-occluded burrows, or broader ecology.",
+      "next_use": "Playtest the Wilds field population for visibility, pacing, and natural placement; the next extension should add a player-facing observation, feeding, rescue, or ecological interaction to an authored route before adding more habitat types or species.",
       "limitations": [
         "Goose and Trout now prove authored flight, swimming, direct air-water transitions, and a real pond; the focused habitat and procedural bodies are test presentation rather than finished ecology.",
         "Mica and Loam now prove wall adhesion and routed volumetric burrowing; ceiling/corner orientation, terrain occlusion, natural entrances/exits, and digging deformation remain authored environment and presentation work.",
         "Generic contact effects use active-phase range confirmation; animation-owned hit volumes remain an optional precision layer for authored creatures.",
-        "Pack, herd, predator/prey, summon, and faction ownership remain actor-provider policy rather than a hard-coded universal faction table."
+        "Pack, herd, predator/prey, summon, and faction ownership remain actor-provider policy rather than a hard-coded universal faction table.",
+        "The Wilds field population is ambient and route-local; predator/prey simulation, ecological population persistence, field feeding/bonding UI, and weather-driven behavior are not yet authored."
       ]
     }
   ]

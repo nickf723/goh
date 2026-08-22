@@ -12,6 +12,9 @@ const LocomotionCatalog = preload("res://scripts/mobs/mob_locomotion_catalog.gd"
 const LocomotionExecutorScript = preload(
 	"res://scripts/mobs/mob_locomotion_executor.gd"
 )
+const TraversalMediumScript = preload(
+	"res://scripts/mobs/mob_traversal_medium.gd"
+)
 const EffectRequest = preload("res://scripts/mobs/mob_move_effect_request.gd")
 const PayloadBridge = preload("res://scripts/mobs/mob_payload_bridge.gd")
 const EffectExecutorScript = preload(
@@ -110,7 +113,7 @@ func _test_catalogs_and_shared_moves() -> void:
 	_expect(MoveCatalog.validate_catalog().is_empty(), "move catalog validates")
 	_expect(SpeciesCatalog.validate_catalog().is_empty(), "species catalog validates")
 	_expect(LocomotionCatalog.validate_catalog().is_empty(), "locomotion catalog validates")
-	_expect(SpeciesCatalog.get_species_ids().size() >= 7, "foundation seeds seven contrasting species")
+	_expect(SpeciesCatalog.get_species_ids().size() >= 9, "foundation seeds nine contrasting species")
 	var bite: MobMoveDefinition = MoveCatalog.get_definition("bite")
 	_expect(bite != null, "shared Bite move resolves")
 	var peck: MobMoveDefinition = MoveCatalog.get_definition("peck")
@@ -133,6 +136,32 @@ func _test_catalogs_and_shared_moves() -> void:
 		and trout_definition.supports_locomotion("swimmer")
 		and not trout_definition.supports_locomotion("ground"),
 		"Trout remains a water-only animal without species runtime code"
+	)
+	var climb: MobMoveDefinition = MoveCatalog.get_definition("climb")
+	var burrow: MobMoveDefinition = MoveCatalog.get_definition("burrow")
+	_expect(
+		climb != null
+		and climb.required_locomotion_tags.has("climber"),
+		"shared Climb action is gated by validated surface locomotion"
+	)
+	_expect(
+		burrow != null
+		and burrow.required_locomotion_tags.has("burrower"),
+		"shared Burrow action is gated by validated volumetric locomotion"
+	)
+	var gecko_definition: MobSpeciesDefinition = SpeciesCatalog.get_definition("gecko")
+	var mole_definition: MobSpeciesDefinition = SpeciesCatalog.get_definition("mole")
+	_expect(
+		gecko_definition != null
+		and gecko_definition.supports_locomotion("ground")
+		and gecko_definition.supports_locomotion("climber"),
+		"Gecko composes ground and surface climbing from one species definition"
+	)
+	_expect(
+		mole_definition != null
+		and mole_definition.supports_locomotion("ground")
+		and mole_definition.supports_locomotion("burrower"),
+		"Mole composes ground and routed burrowing from one species definition"
 	)
 	for species_id: String in ["wolf", "sheep", "capybara", "gorgon", "gremlin"]:
 		var species_bite: MobMoveDefinition = AbilityCatalog.get_move_definition(species_id, "bite")
@@ -428,9 +457,127 @@ func _test_locomotion_executor() -> void:
 		"animal reset restores the authored initial locomotion mode"
 	)
 
+	var climb_medium := TraversalMediumScript.new() as MobTraversalMedium
+	climb_medium.configure(
+		"climber",
+		["vertical_surface"],
+		Vector3.RIGHT,
+		PackedVector3Array([
+			Vector3.ZERO,
+			Vector3(0.0, 2.0, 0.0),
+		]),
+		"Climb Probe"
+	)
+	add_child(climb_medium)
+	var climber_actor := CharacterBody3D.new()
+	climber_actor.name = "ClimbingLocomotionProbe"
+	add_child(climber_actor)
+	var climb_executor := (
+		LocomotionExecutorScript.new() as MobLocomotionExecutor
+	)
+	climb_executor.name = "SwimmingController"
+	climber_actor.add_child(climb_executor)
+	var climb_configuration: Dictionary = climb_executor.configure(
+		["legs", "adhesive_pads", "tail"],
+		["ground", "climber"],
+		"ground"
+	)
+	var climb_entry: Dictionary = climb_medium.place_actor(climber_actor)
+	var climb_guidance: Dictionary = climb_executor.get_guidance_target()
+	var climb_solution: Dictionary = climb_executor.resolve_velocity(
+		Vector3.UP,
+		Vector3.ZERO,
+		3.0,
+		12.0,
+		0.25
+	)
+	var climb_velocity: Vector3 = climb_solution.get(
+		"velocity",
+		Vector3.ZERO
+	) as Vector3
+	_expect(
+		bool(climb_configuration.get("ok", false))
+		and bool(climb_entry.get("ok", false))
+		and climb_executor.active_mode == "climber",
+		"shared traversal medium places compatible animals into Climber mode"
+	)
+	_expect(
+		bool(climb_guidance.get("found", false))
+		and climb_velocity.y > 0.0
+		and climb_velocity.x < 0.0
+		and not bool(climb_solution.get("uses_gravity", true)),
+		"surface runtime combines route guidance, vertical steering, adhesion, and gravity suppression"
+	)
+	climb_executor.exit_traversal_medium(climb_medium)
+	_expect(
+		climb_executor.active_mode == "ground",
+		"leaving the climb medium restores Ground mode"
+	)
+
+	var burrow_medium := TraversalMediumScript.new() as MobTraversalMedium
+	burrow_medium.configure(
+		"burrower",
+		["soil"],
+		Vector3.ZERO,
+		PackedVector3Array([
+			Vector3.ZERO,
+			Vector3(1.0, 1.0, 1.0),
+		]),
+		"Burrow Probe"
+	)
+	add_child(burrow_medium)
+	var burrow_actor := CharacterBody3D.new()
+	burrow_actor.name = "BurrowingLocomotionProbe"
+	add_child(burrow_actor)
+	var burrow_executor := (
+		LocomotionExecutorScript.new() as MobLocomotionExecutor
+	)
+	burrow_executor.name = "SwimmingController"
+	burrow_actor.add_child(burrow_executor)
+	var burrow_configuration: Dictionary = burrow_executor.configure(
+		["legs", "claws", "digging_limbs"],
+		["ground", "burrower"],
+		"ground"
+	)
+	var burrow_entry: Dictionary = burrow_medium.place_actor(
+		burrow_actor
+	)
+	var burrow_guidance: Dictionary = burrow_executor.get_guidance_target()
+	var burrow_target: Vector3 = burrow_guidance.get(
+		"target",
+		Vector3.ZERO
+	) as Vector3
+	var burrow_solution: Dictionary = burrow_executor.resolve_velocity(
+		burrow_target - burrow_actor.global_position,
+		Vector3.ZERO,
+		3.0,
+		12.0,
+		0.25
+	)
+	var burrow_velocity: Vector3 = burrow_solution.get(
+		"velocity",
+		Vector3.ZERO
+	) as Vector3
+	_expect(
+		bool(burrow_configuration.get("ok", false))
+		and bool(burrow_entry.get("ok", false))
+		and str(burrow_solution.get("dimension", "")) == "volumetric"
+		and burrow_velocity.y > 0.0,
+		"shared traversal medium drives a Burrower through a three-dimensional authored route"
+	)
+	burrow_executor.exit_traversal_medium(burrow_medium)
+	_expect(
+		burrow_executor.active_mode == "ground",
+		"leaving the burrow medium restores Ground mode"
+	)
+
 	capybara.queue_free()
 	swimmer.queue_free()
 	waterfowl_actor.queue_free()
+	climber_actor.queue_free()
+	burrow_actor.queue_free()
+	climb_medium.queue_free()
+	burrow_medium.queue_free()
 	flyer.queue_free()
 	water.queue_free()
 

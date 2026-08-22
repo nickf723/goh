@@ -77,17 +77,20 @@ The existing canonical combat `StatusReceiver` is composed into animals rather t
 
 ## Authoring examples
 
-A flying bird can author:
+The canonical proving species now include Juniper the Goose:
 
-- `body_tags: ["legs", "wings", "beak", "voice"]`
-- `locomotion_tags: ["ground", "flight"]`
-- Shared moves requiring mouth, voice, or flight-compatible executor behavior
+- `body_tags: ["bird", "mouth", "beak", "head", "legs", "wings", "voice", "swimmer", "tail"]`
+- `locomotion_tags: ["ground", "swimmer", "flight", "hover"]`
+- Shared Wade, Graze, Flee, Peck, and Idle moves selected by ordinary species policy
+- Direct Flight ↔ Swimmer transitions through the same executor when an air or water medium is supplied
 
-A fish can author:
+Ripple the Trout proves the water-only body plan:
 
-- `body_tags: ["fins", "gills", "mouth", "tail"]`
+- `body_tags: ["fish", "mouth", "jaw", "head", "fins", "gills", "tail", "swimmer"]`
 - `locomotion_tags: ["swimmer"]`
-- Bite, flee, school call, or custom water-current moves
+- Shared Flee, Bite, and Idle moves without a ground fallback or fish-specific brain
+
+Both actors use reusable procedural prototype bodies and live together in the canonical Animal Behavior Lab's real `SwimmingWaterVolume`. Bramble the Capybara proves the same habitat hook with a ground/swimmer amphibious profile.
 
 A mole can author:
 

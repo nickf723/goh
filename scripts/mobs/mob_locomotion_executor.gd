@@ -663,7 +663,6 @@ func get_debug_data() -> Dictionary:
 		"water_volume_count": active_water_volumes.size(),
 		"traversal_medium_count": active_traversal_media.size(),
 		"environment_context": get_environment_context(),
-		"guidance_target": get_guidance_target(),
 		"transition_count": transition_count,
 		"rejection_count": rejection_count,
 		"last_solution": last_solution.duplicate(true),

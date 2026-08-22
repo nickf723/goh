@@ -867,11 +867,13 @@ func _register_initial_traversal_medium(
 	match animal.get_active_locomotion_mode():
 		"climber":
 			if climb_habitat != null:
+				climb_habitat.reset_actor_route(animal)
 				animal.locomotion.enter_traversal_medium(
 					climb_habitat
 				)
 		"burrower":
 			if burrow_habitat != null:
+				burrow_habitat.reset_actor_route(animal)
 				animal.locomotion.enter_traversal_medium(
 					burrow_habitat
 				)

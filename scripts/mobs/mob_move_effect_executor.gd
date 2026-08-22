@@ -238,19 +238,11 @@ func _spawn_projectile(
 			raw_projectile.queue_free()
 		return {"ok": false, "error": "projectile scene root is not Node3D"}
 	var projectile: Node3D = raw_projectile as Node3D
-	var parent: Node = get_tree().current_scene
-	if parent == null:
-		parent = source_actor.get_parent()
-	if parent == null:
-		projectile.queue_free()
-		return {"ok": false, "error": "projectile has no world parent"}
-	parent.add_child(projectile)
 	var direction: Vector3 = _projectile_direction(
 		projectile,
 		targets[0] if not targets.is_empty() else null,
 		execution
 	)
-	projectile.global_position = _projectile_origin(direction, request)
 	if projectile.has_method("set_payload"):
 		projectile.call("set_payload", payload)
 	if projectile.has_method("set_source_actor"):
@@ -265,6 +257,14 @@ func _spawn_projectile(
 			"max_lifetime",
 			maxf(maximum_range / projectile_speed + 0.25, 0.35)
 		)
+	var parent: Node = get_tree().current_scene
+	if parent == null:
+		parent = source_actor.get_parent()
+	if parent == null:
+		projectile.queue_free()
+		return {"ok": false, "error": "projectile has no world parent"}
+	parent.add_child(projectile)
+	projectile.global_position = _projectile_origin(direction, request)
 	if projectile.has_method("launch"):
 		projectile.call("launch", direction)
 	else:

@@ -136,6 +136,10 @@ func get_status_movement_multiplier() -> float:
 func force_decision(refresh_perception: bool = true) -> Dictionary:
 	if brain == null:
 		return {}
+	if vitals != null and vitals.incapacitated:
+		return {"blocked": true, "reason": "incapacitated"}
+	if is_action_blocked_by_status():
+		return {"blocked": true, "reason": "status"}
 	if refresh_perception:
 		_update_perception_and_relationship(0.0)
 	decision_time_remaining = decision_interval

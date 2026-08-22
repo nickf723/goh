@@ -189,6 +189,14 @@ func begin_move(move_id: String, execution_context: Dictionary = {}) -> Dictiona
 	var move_data: Dictionary = get_resolved_move(move_id)
 	if move_data.is_empty():
 		return {"ok": false, "error": "unknown move", "move_id": move_id}
+	var cooldown_remaining: float = maxf(float(cooldowns.get(move_id, 0.0)), 0.0)
+	if cooldown_remaining > 0.0:
+		return {
+			"ok": false,
+			"error": "move is on cooldown",
+			"move_id": move_id,
+			"cooldown_remaining": cooldown_remaining,
+		}
 	var committed: Dictionary = commit_move(move_id)
 	if not bool(committed.get("ok", false)):
 		return committed

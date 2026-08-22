@@ -17,6 +17,12 @@ const EffectExecutorScript = preload(
 const VitalsScript = preload(
 	"res://scripts/mobs/mob_vitals_component.gd"
 )
+const ConditionScript = preload(
+	"res://scripts/mobs/mob_condition_component.gd"
+)
+const GenericAnimalScript = preload(
+	"res://scripts/animals/generic_animal_actor.gd"
+)
 const AbilityCatalog = preload("res://scripts/summons/creature_ability_catalog.gd")
 
 class PayloadProbe:
@@ -82,6 +88,7 @@ func run_tests() -> void:
 	_test_catalogs_and_shared_moves()
 	_test_locomotion_profiles()
 	_test_mob_vitals()
+	_test_mob_conditions()
 	_test_effect_request_payload_bridge()
 	_test_physical_effect_executor()
 	_test_wolf_policy()
@@ -216,6 +223,76 @@ func _test_mob_vitals() -> void:
 		"vitals reset restores both resources"
 	)
 	vitals.queue_free()
+
+
+func _test_mob_conditions() -> void:
+	var conditions := ConditionScript.new() as MobConditionComponent
+	conditions.automatic_ticking = false
+	conditions.name = "StatusReceiver"
+	add_child(conditions)
+	var applied: Dictionary = conditions.apply_status(
+		"pack_focus",
+		1.0,
+		1.0,
+		"Howl"
+	)
+	_expect(bool(applied.get("ok", false)), "mob conditions accept support buffs")
+	conditions.sustain_status("pack_focus", 0.5, 2.0, "Howl")
+	_expect(
+		is_equal_approx(conditions.get_status_strength("pack_focus"), 2.0),
+		"condition refresh preserves the strongest authored application"
+	)
+	conditions.advance_conditions(1.1)
+	_expect(
+		not conditions.has_status("pack_focus"),
+		"timed mob conditions expire deterministically"
+	)
+
+	var status_target := EffectTargetProbe.new()
+	status_target.name = "StatusTarget"
+	add_child(status_target)
+	status_target.add_child(conditions)
+	var status_request: Dictionary = _effect_request_for("bite", 25)
+	var payload_data: Dictionary = status_request.get("payload", {}).duplicate(true)
+	payload_data["statuses"] = [{
+		"id": "poisoned",
+		"duration": 4.0,
+		"strength": 0.75,
+	}]
+	status_request["payload"] = payload_data
+	var status_result: Dictionary = PayloadBridge.deliver_to_target(
+		status_request,
+		status_target
+	)
+	_expect(
+		bool(status_result.get("ok", false))
+		and conditions.has_status("poisoned"),
+		"additional payload statuses reach the shared StatusReceiver seam"
+	)
+	status_target.remove_child(conditions)
+	conditions.queue_free()
+	status_target.queue_free()
+
+	var animal := GenericAnimalScript.new() as GenericAnimalActor
+	animal.species_id = "wolf"
+	animal.animal_name = "Condition Probe"
+	add_child(animal)
+	var mire_request: Dictionary = _effect_request_for("mire_spit", 26)
+	var mire_payload: DamagePayload = PayloadBridge.create_damage_payload(
+		mire_request
+	)
+	animal.receive_damage_payload(mire_payload)
+	_expect(
+		animal.condition_state != null
+		and animal.condition_state.has_status("wet"),
+		"generic animals retain a payload's primary status"
+	)
+	var animal_context: Dictionary = animal.get_mob_decision_context()
+	_expect(
+		(animal_context.get("self_tags", []) as Array).has("status:wet"),
+		"active conditions are available to move policy evaluation"
+	)
+	animal.queue_free()
 
 
 func _test_effect_request_payload_bridge() -> void:

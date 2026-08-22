@@ -146,7 +146,7 @@ func _spawn_animals() -> void:
 		"Bramble": Vector3(4.3, 0.4, -3.0),
 		"Ash": Vector3(-1.2, 0.4, -8.7),
 		"Cinder": Vector3(1.2, 0.4, -8.7),
-		"Juniper": Vector3(8.0, 4.0, -8.0),
+		"Juniper": Vector3(10.5, 4.0, 6.5),
 		"Ripple": Vector3(6.0, 0.72, -6.5),
 	}
 	_spawn_animal("Mallow", "sheep", animal_start_positions["Mallow"] as Vector3, "cautious", 2.1)

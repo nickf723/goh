@@ -1031,8 +1031,7 @@ func _resolve_locomotion_velocity(
 			* action_speed_multiplier
 			* get_status_movement_multiplier(),
 		move_speed * 4.0,
-		delta,
-		locomotion.get_environment_context()
+		delta
 	)
 	var solved_velocity: Variant = last_locomotion_solution.get(
 		"velocity",

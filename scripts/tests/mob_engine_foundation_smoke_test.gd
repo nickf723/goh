@@ -275,6 +275,12 @@ func _test_locomotion_executor() -> void:
 		and flight_executor.active_mode == "ground",
 		"runtime rejects modes absent from the animal's validated profile"
 	)
+	var missing_air: Dictionary = flight_executor.request_mode("flight")
+	_expect(
+		not bool(missing_air.get("ok", true))
+		and flight_executor.active_mode == "ground",
+		"runtime transitions require an explicit compatible medium"
+	)
 
 	var water := SwimmingWaterVolume.new()
 	water.name = "AnimalWaterProbe"

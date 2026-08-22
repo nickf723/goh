@@ -81,8 +81,18 @@ func run_tests() -> void:
 		if goose != null:
 			_expect(goose.get_active_locomotion_mode() == "flight", "Goose begins in live flight")
 			_expect(not goose.wing_roots.is_empty(), "Goose uses the reusable winged prototype presentation")
+			if lab_instance.pond_volume != null:
+				_expect(
+					not lab_instance.pond_volume.contains_horizontal_position(goose.global_position),
+					"Goose begins over dry landing space rather than the pond"
+				)
+			var airborne_height: float = goose.global_position.y
 			lab_instance._toggle_goose_flight()
 			_expect(goose.get_active_locomotion_mode() == "ground", "lab control lands the Goose through the shared executor")
+			for _landing_frame: int in range(36):
+				await get_tree().physics_frame
+			_expect(goose.global_position.y < airborne_height - 1.0, "landed Goose physically descends under shared gravity")
+			_expect(goose.get_active_locomotion_mode() == "ground", "dry landing remains in Ground mode")
 			lab_instance._toggle_goose_flight()
 			_expect(goose.get_active_locomotion_mode() == "flight", "lab control relaunches the same Goose actor")
 		if trout != null:

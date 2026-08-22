@@ -35,7 +35,8 @@ func _ready() -> void:
 	var nearby_interactables: Array[Area3D] = [stale_marker]
 	route.player.set("nearby_interactables", nearby_interactables)
 
-	var stale_habitat: Node = route.get_wildlife_habitats()[0]
+	var stale_habitats: Array = route.call("get_wildlife_habitats") as Array
+	var stale_habitat: Node = stale_habitats[0] as Node
 	route.assemble_full_expedition()
 	await get_tree().process_frame
 	assert(route.route_valid)

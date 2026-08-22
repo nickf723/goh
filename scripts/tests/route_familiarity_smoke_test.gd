@@ -160,6 +160,51 @@ func assert_assembled_slice(
 		var definition: ExpeditionSegmentDefinition = definition_value as ExpeditionSegmentDefinition
 		assert(definition.segment_id == expected_segment_ids[index])
 
+	var expected_habitat_ids: Array[String] = []
+	var expected_animal_count: int = 0
+	for segment_id: String in expected_segment_ids:
+		if segment_id in [
+			"cypress_basin",
+			"wet_woodland",
+			"pine_ridge",
+		]:
+			expected_habitat_ids.append(segment_id)
+			expected_animal_count += 2 if segment_id == "cypress_basin" else 1
+	var habitats_value: Variant = route.get("wildlife_habitats")
+	assert(habitats_value is Array)
+	var habitats: Array = habitats_value as Array
+	assert(habitats.size() == expected_habitat_ids.size())
+	assert(int(route.call("get_wildlife_animal_count")) == expected_animal_count)
+	for habitat_value: Variant in habitats:
+		assert(habitat_value is Node)
+		var habitat: Node = habitat_value as Node
+		var habitat_id_value: String = str(habitat.get("habitat_id"))
+		assert(expected_habitat_ids.has(habitat_id_value))
+		var animals_value: Variant = habitat.call("get_animals")
+		assert(animals_value is Array)
+		assert(not (animals_value as Array).is_empty())
+		for animal_value: Variant in animals_value as Array:
+			assert(animal_value is GenericAnimalActor)
+			var animal: GenericAnimalActor = (
+				animal_value as GenericAnimalActor
+			)
+			match habitat_id_value:
+				"cypress_basin":
+					assert(
+						animal.get_active_locomotion_mode()
+						== "swimmer"
+					)
+				"wet_woodland":
+					assert(
+						animal.get_active_locomotion_mode()
+						== "climber"
+					)
+				"pine_ridge":
+					assert(
+						animal.get_active_locomotion_mode()
+						== "burrower"
+					)
+
 	route.queue_free()
 	await get_tree().process_frame
 	get_tree().root.remove_meta("regional_expedition_launch")

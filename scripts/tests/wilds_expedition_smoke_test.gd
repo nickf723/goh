@@ -100,6 +100,13 @@ func assert_wildlife_habitats(
 			)
 			assert(animal.state_label != null)
 			assert(not animal.state_label.visible)
+			assert(
+				habitat.call(
+					"get_animal_grace_target",
+					animal
+				)
+				== route.player
+			)
 
 	assert(habitats_by_id.has("cypress_basin"))
 	assert(habitats_by_id.has("wet_woodland"))

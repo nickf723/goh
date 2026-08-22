@@ -68,7 +68,7 @@ func _reset_lab() -> void:
 
 
 func _update_objective() -> void:
-	var objective: String = "Compare ground, swimming, and flight animals in the shared habitat; then build trust, test follow behavior, and save a named bond."
+	var objective: String = "Compare ground, swimming, flight, climbing, and burrowing animals in shared habitats; then build trust, test follow behavior, and save a named bond."
 	GameState.set_objective(objective)
 	var game_ui: Node = get_tree().get_first_node_in_group("game_ui")
 	if game_ui != null and game_ui.has_method("set_objective"):

@@ -134,6 +134,21 @@ func validate(move_catalog: Variant = null) -> Array[String]:
 		if move_catalog != null and move_catalog.has_method("has_move"):
 			if not bool(move_catalog.call("has_move", policy.move_id)):
 				failures.append(species_id + " references missing move " + policy.move_id)
+			elif move_catalog.has_method("get_definition"):
+				var move_value: Variant = move_catalog.call(
+					"get_definition",
+					policy.move_id
+				)
+				if move_value is MobMoveDefinition:
+					var move: MobMoveDefinition = move_value as MobMoveDefinition
+					if not move.supports_body(body_tags):
+						failures.append(
+							species_id + " lacks anatomy for " + policy.move_id
+						)
+					if not move.supports_locomotion(body_tags, locomotion_tags):
+						failures.append(
+							species_id + " lacks locomotion for " + policy.move_id
+						)
 	return failures
 
 

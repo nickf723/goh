@@ -2,11 +2,13 @@ extends Node
 class_name MobBrainComponent
 
 const MoveExecutionState = preload("res://scripts/mobs/mob_move_execution_state.gd")
+const EffectRequest = preload("res://scripts/mobs/mob_move_effect_request.gd")
 
 signal move_selected(move_id: String, decision: Dictionary)
 signal evaluation_completed(rows: Array[Dictionary])
 signal move_committed(move_id: String, cooldown: float)
 signal move_started(move_id: String, execution: Dictionary)
+signal move_effect_requested(move_id: String, request: Dictionary, execution: Dictionary)
 signal move_phase_changed(move_id: String, previous_phase: String, phase: String, execution: Dictionary)
 signal move_completed(move_id: String, outcome: Dictionary, execution: Dictionary)
 signal move_interrupted(move_id: String, reason: String, execution: Dictionary)
@@ -38,6 +40,7 @@ var drive_state: MobDriveState
 var current_intention_id: String = ""
 var intention_time_remaining: float = 0.0
 var active_execution: Variant = null
+var execution_serial: int = 0
 
 
 func _ready() -> void:
@@ -200,13 +203,22 @@ func begin_move(move_id: String, execution_context: Dictionary = {}) -> Dictiona
 	var committed: Dictionary = commit_move(move_id)
 	if not bool(committed.get("ok", false)):
 		return committed
-	active_execution = MoveExecutionState.create(move_data, execution_context)
+	execution_serial += 1
+	var resolved_context: Dictionary = execution_context.duplicate(true)
+	resolved_context["execution_serial"] = execution_serial
+	resolved_context["species_id"] = species_id
+	active_execution = MoveExecutionState.create(move_data, resolved_context)
 	var snapshot: Dictionary = get_active_execution()
 	move_started.emit(move_id, snapshot)
+	var effect_request: Dictionary = _request_active_effect_if_ready()
+	snapshot = get_active_execution()
+	if not effect_request.is_empty():
+		snapshot["effect_request"] = effect_request
 	return {
 		"ok": true,
 		"move_id": move_id,
 		"execution": snapshot,
+		"effect_request": effect_request,
 		"commit": committed,
 	}
 
@@ -223,6 +235,11 @@ func advance_active_move(delta: float) -> Dictionary:
 			str(snapshot.get("phase", "")),
 			snapshot
 		)
+	var effect_request: Dictionary = _request_active_effect_if_ready()
+	if not effect_request.is_empty():
+		snapshot["effect_request"] = effect_request
+		snapshot["effect_request_ready"] = false
+		snapshot["effect_request_claimed"] = true
 	if bool(snapshot.get("completed", false)):
 		var outcome: Dictionary = snapshot.get("result", {}) as Dictionary
 		move_completed.emit(move_id, outcome, snapshot)
@@ -429,6 +446,21 @@ func _ensure_drive_state() -> void:
 func _base_move_dictionary(move_id: String) -> Dictionary:
 	var move: MobMoveDefinition = CreatureAbilityCatalog.get_move_definition(species_id, move_id)
 	return move.to_dictionary() if move != null else {}
+
+
+func _request_active_effect_if_ready() -> Dictionary:
+	if active_execution == null or not active_execution.claim_active_effect():
+		return {}
+	var execution: Dictionary = active_execution.to_dictionary()
+	var request: Dictionary = EffectRequest.build(execution, {
+		"species_id": species_id,
+	})
+	move_effect_requested.emit(
+		str(execution.get("move_id", "")),
+		request,
+		execution
+	)
+	return request
 
 
 func _first_eligible(rows: Array[Dictionary]) -> Dictionary:

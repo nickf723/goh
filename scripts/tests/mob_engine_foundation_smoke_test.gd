@@ -11,6 +11,9 @@ const ExecutionState = preload("res://scripts/mobs/mob_move_execution_state.gd")
 const LocomotionCatalog = preload("res://scripts/mobs/mob_locomotion_catalog.gd")
 const EffectRequest = preload("res://scripts/mobs/mob_move_effect_request.gd")
 const PayloadBridge = preload("res://scripts/mobs/mob_payload_bridge.gd")
+const EffectExecutorScript = preload(
+	"res://scripts/mobs/mob_move_effect_executor.gd"
+)
 const AbilityCatalog = preload("res://scripts/summons/creature_ability_catalog.gd")
 
 class PayloadProbe:
@@ -25,9 +28,46 @@ class PayloadProbe:
 		return {"message": "probe received " + payload.source_name}
 
 
+class EffectSourceProbe:
+	extends Node3D
+	var targets: Array[Node] = []
+	var recovery_count: int = 0
+	var last_recovery_effect: Dictionary = {}
+
+
+	func get_mob_effect_targets(_request: Dictionary) -> Array[Node]:
+		return targets.duplicate()
+
+
+	func get_mob_effect_origin(_request: Dictionary) -> Vector3:
+		return global_position + Vector3.UP * 0.5
+
+
+	func receive_mob_recovery(
+		effect: Dictionary,
+		_request: Dictionary
+	) -> Dictionary:
+		recovery_count += 1
+		last_recovery_effect = effect.duplicate(true)
+		return {"ok": true, "recovered": true}
+
+
+class EffectTargetProbe:
+	extends Node3D
+	var receive_count: int = 0
+	var last_payload: DamagePayload
+
+
+	func receive_damage_payload(payload: DamagePayload) -> Dictionary:
+		receive_count += 1
+		last_payload = payload
+		return {"message": "physical target received " + payload.source_name}
+
+
 var failures: Array[String] = []
 var original_profiles: Dictionary = {}
 var effect_requests: Array[Dictionary] = []
+var spawned_projectiles: Array[Node] = []
 
 
 func _ready() -> void:
@@ -39,6 +79,7 @@ func run_tests() -> void:
 	_test_catalogs_and_shared_moves()
 	_test_locomotion_profiles()
 	_test_effect_request_payload_bridge()
+	_test_physical_effect_executor()
 	_test_wolf_policy()
 	_test_sheep_policy()
 	_test_capybara_policy()
@@ -190,6 +231,82 @@ func _test_effect_request_payload_bridge() -> void:
 	)
 	_expect(bool(impact_delivery.get("ok", false)), "confirmed projectile impact delivers its payload")
 	probe.queue_free()
+
+
+func _test_physical_effect_executor() -> void:
+	spawned_projectiles.clear()
+	var source := EffectSourceProbe.new()
+	source.name = "EffectSource"
+	add_child(source)
+	var near_target := EffectTargetProbe.new()
+	near_target.name = "NearTarget"
+	near_target.global_position = Vector3(1.0, 0.0, 0.0)
+	add_child(near_target)
+	var far_target := EffectTargetProbe.new()
+	far_target.name = "FarTarget"
+	far_target.global_position = Vector3(4.0, 0.0, 0.0)
+	add_child(far_target)
+	var executor := EffectExecutorScript.new() as MobMoveEffectExecutor
+	executor.name = "MobMoveEffectExecutor"
+	executor.automatic_execution = false
+	executor.fallback_enemy_groups = []
+	executor.fallback_ally_groups = []
+	executor.projectile_spawned.connect(_capture_spawned_projectile)
+	source.add_child(executor)
+
+	source.targets = [near_target]
+	var bite_request: Dictionary = _effect_request_for("bite", 31)
+	var contact_result: Dictionary = executor.execute_request(bite_request)
+	_expect(bool(contact_result.get("ok", false)), "contact executor delivers to an in-range target")
+	_expect(near_target.receive_count == 1, "contact executor sends one shared payload")
+	var duplicate_result: Dictionary = executor.execute_request(bite_request)
+	_expect(bool(duplicate_result.get("duplicate", false)), "executor rejects a repeated request id")
+	_expect(near_target.receive_count == 1, "duplicate execution cannot deal damage twice")
+
+	source.targets = [far_target]
+	var distant_bite: Dictionary = _effect_request_for("bite", 32)
+	var distant_result: Dictionary = executor.execute_request(distant_bite)
+	_expect(
+		bool(distant_result.get("requires_target", false)),
+		"contact targets outside authored range are rejected"
+	)
+	_expect(far_target.receive_count == 0, "out-of-range contact delivers no payload")
+
+	source.targets = [near_target, near_target, far_target]
+	var sweep_request: Dictionary = _effect_request_for("tail_sweep", 33)
+	var sweep_result: Dictionary = executor.execute_request(sweep_request)
+	_expect(int(sweep_result.get("delivered_count", 0)) == 1, "area executor filters range and duplicate targets")
+	_expect(near_target.receive_count == 2, "area payload reaches each valid target once")
+	_expect(far_target.receive_count == 0, "area payload excludes distant targets")
+
+	source.targets.clear()
+	var graze_request: Dictionary = _effect_request_for("graze", 34)
+	var recovery_result: Dictionary = executor.execute_request(graze_request)
+	_expect(bool(recovery_result.get("ok", false)), "recovery executor falls back to the acting animal")
+	_expect(source.recovery_count == 1, "recovery request reaches the animal recovery contract")
+	_expect(
+		int(source.last_recovery_effect.get("health", 0)) == 1,
+		"recovery receiver preserves authored Graze healing"
+	)
+
+	near_target.global_position = Vector3(4.0, 0.0, 0.0)
+	source.targets = [near_target]
+	var projectile_request: Dictionary = _effect_request_for("mire_spit", 35)
+	var projectile_result: Dictionary = executor.execute_request(projectile_request)
+	_expect(bool(projectile_result.get("ok", false)), "projectile executor spawns a physical projectile")
+	_expect(executor.projectile_count == 1, "projectile spawn is counted once")
+	_expect(spawned_projectiles.size() == 1, "projectile spawn signal exposes the physical action")
+	for projectile: Node in spawned_projectiles:
+		if is_instance_valid(projectile):
+			projectile.queue_free()
+	executor.clear_request_memory()
+	_expect(
+		int(executor.get_debug_data().get("remembered_request_count", -1)) == 0,
+		"executor request memory can be cleared on reset"
+	)
+	source.queue_free()
+	near_target.queue_free()
+	far_target.queue_free()
 
 
 func _test_wolf_policy() -> void:
@@ -388,6 +505,32 @@ func _test_brain_component() -> void:
 	_expect(not bool(brain.begin_move("missing_move").get("ok", true)), "unknown moves cannot enter execution")
 	brain.queue_free()
 	await get_tree().process_frame
+
+
+func _effect_request_for(
+	move_id: String,
+	execution_serial: int
+) -> Dictionary:
+	var move: MobMoveDefinition = MoveCatalog.get_definition(move_id)
+	var execution: Variant = ExecutionState.create(move.to_dictionary(), {
+		"execution_serial": execution_serial,
+		"actor_instance_id": 700,
+		"species_id": "smoke_animal",
+		"animal_name": "Smoke Animal",
+	})
+	execution.advance(10.0)
+	execution.claim_active_effect()
+	return EffectRequest.build(execution.to_dictionary(), {
+		"species_id": "smoke_animal",
+		"animal_name": "Smoke Animal",
+	})
+
+
+func _capture_spawned_projectile(
+	_request: Dictionary,
+	projectile: Node
+) -> void:
+	spawned_projectiles.append(projectile)
 
 
 func _capture_effect_request(

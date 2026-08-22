@@ -291,6 +291,30 @@ func _test_mob_conditions() -> void:
 		(animal_context.get("self_tags", []) as Array).has("status:wet"),
 		"active conditions are available to move policy evaluation"
 	)
+	animal.condition_state.call("apply_status", "stunned", 1.0, 1.0, "smoke")
+	_expect(
+		animal.is_action_blocked_by_status()
+		and is_zero_approx(animal.get_status_movement_multiplier()),
+		"canonical control statuses block animal actions and movement"
+	)
+	var blocked_decision: Dictionary = animal.force_decision(false)
+	_expect(
+		str(blocked_decision.get("reason", "")) == "status",
+		"controlled animals cannot be forced into a new move"
+	)
+	animal.condition_state.call("remove_status", "stunned")
+	animal.condition_state.call("apply_status", "chill", 2.0, 0.6, "smoke")
+	_expect(
+		is_equal_approx(animal.get_status_movement_multiplier(), 0.6),
+		"animal locomotion consumes the canonical status multiplier"
+	)
+	var health_before_poison: float = animal.vitals.health
+	animal.condition_state.call("apply_status", "poisoned", 2.0, 1.0, "smoke")
+	animal.condition_state.call("advance_statuses", 1.1)
+	_expect(
+		animal.vitals.health < health_before_poison,
+		"status damage falls back to the animal's shared payload receiver"
+	)
 	animal.queue_free()
 
 

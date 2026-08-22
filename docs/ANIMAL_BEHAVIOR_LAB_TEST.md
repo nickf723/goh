@@ -18,6 +18,14 @@ The lab controls live in two on-screen panels. They are mouse-clickable and cont
 8. Select Ash or Cinder, switch Grace to **Threatening posture**, and approach one wolf from the front. Confirm the other wolf receives a **Social Alert** and gains territorial pressure even when it did not see Grace directly.
 9. Return Grace to **Peaceful posture** and remain at a respectful distance. Confirm trust and familiarity rise slowly over time.
 
+## Committed move lifecycle pass
+
+1. Select Mallow, clear her drives, then raise Hunger until she chooses **Graze**.
+2. Confirm Graze remains the active action through a visible preparation, feeding, and recovery beat instead of changing every decision tick.
+3. Use **Startle** while she is grazing. Confirm the current action ends immediately and the next decision becomes a fear-driven retreat.
+4. Threaten Ash or Cinder at close range. Confirm contact moves commit for their authored beat and do not flicker between Bite, Pounce, and Howl every brain interval.
+5. Return to Peaceful posture and confirm the animal resumes ambient decisions only after the active action completes.
+
 ## Bonding and persistence pass
 
 1. Select Mallow and stand near her in Peaceful posture.

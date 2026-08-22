@@ -280,11 +280,13 @@ func _attach_wildlife_habitats() -> void:
 		):
 			continue
 		var habitat_id_value: String = segment.definition.segment_id
-		if not habitat_id_value in [
-			"cypress_basin",
-			"wet_woodland",
-			"pine_ridge",
-		]:
+		if not (
+			habitat_id_value in [
+				"cypress_basin",
+				"wet_woodland",
+				"pine_ridge",
+			]
+		):
 			continue
 		var habitat := (
 			WildsAnimalHabitatScript.new()
@@ -296,7 +298,9 @@ func _attach_wildlife_habitats() -> void:
 
 
 func get_wildlife_habitats() -> Array[WildsAnimalHabitatEncounter]:
-	return wildlife_habitats.duplicate()
+	var result: Array[WildsAnimalHabitatEncounter] = []
+	result.assign(wildlife_habitats)
+	return result
 
 
 func get_wildlife_animal_count() -> int:

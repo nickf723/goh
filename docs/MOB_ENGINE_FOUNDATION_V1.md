@@ -386,15 +386,16 @@ Expected output:
 The regression verifies:
 
 - Shared move identity across species, including reusable Beak-gated Peck
-- Seven seed species including a multi-modal Goose and water-only Trout
+- Nine seed species including a multi-modal Goose, water-only Trout, climbing Gecko, and burrowing Mole
 - Body-plan validation
 - Ground, swimming, flight, climbing, and burrowing capability resolution
 - Anatomy rejection and locomotion alias normalization
-- Runtime ground/swimming/flight mode transitions, direct air-water transitions, and medium rejection
-- Planar and volumetric steering, current sampling, buoyancy, and gravity handoff
+- Runtime ground/swimming/flight/climbing/burrowing mode transitions, direct air-water transitions, and medium rejection
+- Planar, surface, and volumetric steering; current sampling; buoyancy; adhesion; waypoint guidance; and gravity handoff
 - Opt-in modifier dependencies and transition cleanup
-- Generic-animal integration through the established water-volume hook
-- Authored Goose and Trout definitions without species-specific brain or locomotion classes
+- Generic-animal integration through established water volumes and generic traversal media
+- Authored Goose, Trout, Gecko, and Mole definitions without species-specific brain or locomotion classes
+- Compatible and incompatible traversal placement, route progress, medium exit, and reset behavior
 - Exactly-once active-phase effect claims
 - Startup interruption without an effect
 - DamagePayload conversion and confirmed projectile delivery
@@ -429,13 +430,15 @@ A reusable watchdog guarantees the smoke test exits with a readable failure when
 
 The foundation provides shared data, policies, anatomy and locomotion capability profiles, evaluation, personality bridging, familiar progression, augmentation, committed move lifecycles, normalized effect requests, target resolution, physical effect dispatch, payload conversion, vitals, canonical timed statuses, debugging, and compatibility adapters.
 
-Runtime layers already build perception, relationships, bonding, navigation-aware following, rescue, and a reusable live animal actor on top of it. That actor now consumes shared ground, swimming, and flight steering, automatically participates in established water volumes, and reports active locomotion state to move policy. Current limitations are tracked in [`MOB_ENGINE.md`](MOB_ENGINE.md).
+Runtime layers already build perception, relationships, bonding, navigation-aware following, rescue, and a reusable live animal actor on top of it. That actor consumes shared ground, swimming, flight, climbing, and burrowing steering; automatically participates in established water and traversal media; follows authored habitat guidance; and reports active locomotion state to move policy. Current limitations are tracked in [`MOB_ENGINE.md`](MOB_ENGINE.md).
 
 The remaining foundation-to-content work is deliberately physical and authored:
 
 - Animation-owned contact volumes for actors that need greater precision than active-phase reach
-- Climbing surface adhesion and burrowing-route adapters driven by the first authored climbing and burrowing animals
-- Finished exploration habitats and encounters that reuse the canonical Goose, Trout, and amphibious contracts
+- An authored exploration-space application of the canonical water and traversal-medium contracts
+- Ceiling and corner orientation only when a real climbing route requires them
+- Terrain-occluded tunnels, natural entrances/exits, and deformation only when a real burrow encounter requires them
+- Finished exploration habitats and encounters that reuse Goose, Trout, Gecko, Mole, and amphibious contracts
 - Species-specific models, animation sets, habitats, and encounters
 - Provider-specific faction, predator/prey, herd, pack, and summon relation rules
 - Broader ecology such as nesting, migration, territory, aging, and life cycles

@@ -251,6 +251,7 @@ func _test_mob_conditions() -> void:
 	var status_target := EffectTargetProbe.new()
 	status_target.name = "StatusTarget"
 	add_child(status_target)
+	remove_child(conditions)
 	status_target.add_child(conditions)
 	var status_request: Dictionary = _effect_request_for("bite", 25)
 	var payload_data: Dictionary = status_request.get("payload", {}).duplicate(true)
@@ -269,8 +270,6 @@ func _test_mob_conditions() -> void:
 		and conditions.has_status("poisoned"),
 		"additional payload statuses reach the shared StatusReceiver seam"
 	)
-	status_target.remove_child(conditions)
-	conditions.queue_free()
 	status_target.queue_free()
 
 	var animal := GenericAnimalScript.new() as GenericAnimalActor

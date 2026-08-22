@@ -652,7 +652,7 @@ func _build_traversal_habitats() -> void:
 	)
 	climb_habitat = TraversalMediumScript.new() as MobTraversalMedium
 	climb_habitat.name = "SharedClimbHabitat"
-	climb_habitat.position = Vector3(-11.48, 0.0, 5.2)
+	climb_habitat.position = Vector3(-11.32, 0.0, 5.2)
 	climb_habitat.adhesion_strength = 1.65
 	climb_habitat.waypoint_radius = 0.38
 	climb_habitat.configure(

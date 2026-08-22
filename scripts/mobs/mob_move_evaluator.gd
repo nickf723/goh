@@ -99,6 +99,14 @@ static func _evaluate_policy(
 		reasons.append(
 			"body plan lacks " + ", ".join(move.required_body_tags)
 		)
+	if not move.supports_locomotion(
+		species.body_tags,
+		species.locomotion_tags
+	):
+		reasons.append(
+			"locomotion profile lacks "
+			+ ", ".join(move.required_locomotion_tags)
+		)
 	if context.self_health_ratio < policy.minimum_health_ratio:
 		reasons.append("health below policy minimum")
 	if context.self_health_ratio > policy.maximum_health_ratio:

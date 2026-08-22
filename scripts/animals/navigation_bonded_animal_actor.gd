@@ -653,6 +653,7 @@ func _update_command_suspension(force_emit: bool) -> void:
 	command_suspended = next_suspended
 	command_suspend_reason = next_reason
 	if command_suspended:
+		_interrupt_current_action("command_suspended_" + command_suspend_reason, true)
 		current_action_id = "idle"
 		current_move_id = "idle"
 		if brain != null:
@@ -695,6 +696,7 @@ func _apply_command_authority(force_repath: bool) -> void:
 
 
 func _halt_horizontal_motion(action_id: String) -> void:
+	_interrupt_current_action("authoritative_" + action_id, true)
 	velocity.x = 0.0
 	velocity.z = 0.0
 	current_action_id = action_id

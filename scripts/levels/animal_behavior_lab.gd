@@ -169,6 +169,8 @@ func _spawn_animals() -> void:
 		1.9,
 		"swimmer"
 	)
+	for animal: GenericAnimalActor in animals:
+		_register_initial_water_medium(animal)
 
 
 func _spawn_animal(

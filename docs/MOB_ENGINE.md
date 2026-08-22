@@ -26,7 +26,7 @@ Adds validated ground, swimming, flight, climbing, burrowing, runner, jumper, se
 
 `MobMoveEffectRequest` separates effect timing from physical targeting. `MobEffectTargetResolver` provides authoritative actor-owned targeting with optional generic fallbacks and relation filters. `MobMoveEffectExecutor` handles exactly-once contact, area, projectile, recovery, and custom/executor dispatch. Projectile actions reuse the physical `GenericProjectile`; `MobPayloadBridge` keeps consequences inside the existing `DamagePayload → PayloadReceiver` grammar.
 
-`MobVitalsComponent` derives health from species base stats and supplies shared health, stamina, recovery, reset, and incapacitation behavior.
+`MobVitalsComponent` derives health from species base stats and supplies shared health, stamina, recovery, reset, and incapacitation behavior. `MobConditionComponent` retains timed buffs and harmful statuses, exposes them to policy evaluation, and plugs into the established `StatusReceiver` seam.
 
 ### Drives and intentions
 
@@ -47,6 +47,7 @@ The first executor supports:
 - Pack howling
 - Contact, area, projectile, and recovery effect execution
 - Species-derived health, stamina, injury-aware decisions, and incapacitation
+- Timed buffs and harmful conditions available to move policies
 - Procedural sheep, capybara, and wolf silhouettes
 - Overhead intention, move, health, and drive readouts
 
@@ -132,7 +133,7 @@ Clear the debris, heal and feed Juniper, bond her, then lead her through the cou
 - `res://scenes/tests/animal_bonding_persistence_smoke_test.tscn`
 - `res://scenes/tests/wildlife_navigation_rescue_lab_smoke_test.tscn`
 
-The live regressions verify locomotion capability validation, species-derived vitals, damage and recovery, incapacitation, exactly-once contact and area delivery, authoritative target ownership, physical projectile spawning, physical Graze and Flee execution, visual and auditory perception, timed memory, trust-building interactions, wolf pack alert sharing, inventory-backed feeding, bonding, disk persistence, navigation-aware following, dynamic navmesh rebaking, rescue and healing consequences, real damage payloads, obstacle routing, and separation recovery.
+The live regressions verify locomotion capability validation, species-derived vitals, damage and recovery, incapacitation, timed status refresh and expiry, policy-visible condition tags, exactly-once contact and area delivery, authoritative target ownership, physical projectile spawning, physical Graze and Flee execution, visual and auditory perception, timed memory, trust-building interactions, wolf pack alert sharing, inventory-backed feeding, bonding, disk persistence, navigation-aware following, dynamic navmesh rebaking, rescue and healing consequences, real damage payloads, obstacle routing, and separation recovery.
 
 ## Next runtime milestone
 

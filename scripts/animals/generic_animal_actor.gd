@@ -80,12 +80,11 @@ func _physics_process(delta: float) -> void:
 	wander_time_remaining -= delta
 	alert_broadcast_cooldown = maxf(alert_broadcast_cooldown - delta, 0.0)
 	if vitals != null and vitals.incapacitated:
-		velocity.x = move_toward(velocity.x, 0.0, move_speed * 4.0 * delta)
-		velocity.z = move_toward(velocity.z, 0.0, move_speed * 4.0 * delta)
-		_apply_gravity(delta)
-		move_and_slide()
-		_keep_inside_lab()
-		_update_visual(delta)
+		_halt_for_inactive_state(delta)
+		return
+	if is_action_blocked_by_status():
+		_interrupt_current_action("status_blocked", true)
+		_halt_for_inactive_state(delta)
 		return
 	_update_perception_and_relationship(delta)
 	if brain != null and brain.has_active_move():
@@ -102,6 +101,36 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_keep_inside_lab()
 	_update_visual(delta)
+
+
+func _halt_for_inactive_state(delta: float) -> void:
+	velocity.x = move_toward(velocity.x, 0.0, move_speed * 4.0 * delta)
+	velocity.z = move_toward(velocity.z, 0.0, move_speed * 4.0 * delta)
+	_apply_gravity(delta)
+	move_and_slide()
+	_keep_inside_lab()
+	_update_visual(delta)
+
+
+func is_action_blocked_by_status() -> bool:
+	return (
+		condition_state != null
+		and condition_state.has_method("blocks_actions")
+		and bool(condition_state.call("blocks_actions"))
+	)
+
+
+func get_status_movement_multiplier() -> float:
+	if (
+		condition_state == null
+		or not condition_state.has_method("get_movement_multiplier")
+	):
+		return 1.0
+	return clampf(
+		float(condition_state.call("get_movement_multiplier")),
+		0.0,
+		1.0
+	)
 
 
 func force_decision(refresh_perception: bool = true) -> Dictionary:
@@ -755,7 +784,12 @@ func _execute_current_action(delta: float) -> void:
 		speed_multiplier = 0.82
 	elif current_action_id in ["graze", "wade", "idle"]:
 		speed_multiplier = 0.72
-	var target_velocity: Vector3 = direction * move_speed * speed_multiplier
+	var target_velocity: Vector3 = (
+		direction
+		* move_speed
+		* speed_multiplier
+		* get_status_movement_multiplier()
+	)
 	velocity.x = move_toward(velocity.x, target_velocity.x, move_speed * 4.0 * delta)
 	velocity.z = move_toward(velocity.z, target_velocity.z, move_speed * 4.0 * delta)
 	if direction.length_squared() > 0.001:

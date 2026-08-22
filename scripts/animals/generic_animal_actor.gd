@@ -443,14 +443,20 @@ func _broadcast_alert(position: Vector3, severity: float) -> void:
 func _on_move_selected(move_id: String, decision: Dictionary) -> void:
 	if move_id == "" or brain == null:
 		return
-	var started: Dictionary = brain.begin_move(move_id, {
+	var execution_action: String = _resolve_execution_action(move_id)
+	var execution_context: Dictionary = {
 		"actor_instance_id": get_instance_id(),
 		"decision": decision.duplicate(true),
-	})
+	}
+	if execution_action != move_id:
+		var move_data: Dictionary = decision.get("move", {}) as Dictionary
+		var effect: Dictionary = move_data.get("effect", {}) as Dictionary
+		execution_context["duration_override"] = _action_duration(execution_action, effect)
+	var started: Dictionary = brain.begin_move(move_id, execution_context)
 	if not bool(started.get("ok", false)):
 		return
 	current_move_id = move_id
-	current_action_id = _resolve_execution_action(move_id)
+	current_action_id = execution_action
 	current_intention_id = str(
 		decision.get("intention_id", MobIntentionResolver.get_intention_id(decision))
 	)

@@ -345,6 +345,7 @@ static func get_move_ids(species_id: String) -> Array[String]:
 
 static func validate_catalog() -> Array[String]:
 	var failures: Array[String] = MobMoveCatalog.validate_catalog()
+	failures.append_array(MobLocomotionCatalog.validate_catalog())
 	for definition: MobSpeciesDefinition in get_definitions():
 		for failure: String in definition.validate(MobMoveCatalog):
 			failures.append(failure)
@@ -358,5 +359,6 @@ static func get_debug_data() -> Dictionary:
 	return {
 		"species_count": rows.size(),
 		"species": rows,
+		"locomotion_capability_count": MobLocomotionCatalog.get_capability_ids().size(),
 		"failures": validate_catalog(),
 	}

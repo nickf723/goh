@@ -139,11 +139,10 @@ func assert_wildlife_habitats(
 		(climb_medium as MobTraversalMedium).get_locomotion_mode()
 		== "climber"
 	)
-	assert(bool(
-		(climb_medium as MobTraversalMedium)
-			.get_guidance_target(gecko)
-			.get("found", false)
-	))
+	var climb_guidance: Dictionary = (
+		climb_medium as MobTraversalMedium
+	).get_guidance_target(gecko)
+	assert(bool(climb_guidance.get("found", false)))
 
 	var ridge: Node = habitats_by_id["pine_ridge"] as Node
 	assert(_string_array(ridge.call("get_species_ids")) == ["mole"])
@@ -158,11 +157,10 @@ func assert_wildlife_habitats(
 		(burrow_medium as MobTraversalMedium).get_locomotion_mode()
 		== "burrower"
 	)
-	assert(bool(
-		(burrow_medium as MobTraversalMedium)
-			.get_guidance_target(mole)
-			.get("found", false)
-	))
+	var burrow_guidance: Dictionary = (
+		burrow_medium as MobTraversalMedium
+	).get_guidance_target(mole)
+	assert(bool(burrow_guidance.get("found", false)))
 
 	var route_debug: Dictionary = route.get_debug_data()
 	assert(int(route_debug.get("wildlife_habitats", 0)) == 3)

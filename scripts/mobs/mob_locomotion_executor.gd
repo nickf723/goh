@@ -25,6 +25,7 @@ var profile: Dictionary = {}
 var active_mode: String = ""
 var initial_mode: String = ""
 var active_medium_tags: Array[String] = []
+var active_modifiers: Array[String] = []
 var medium_available: bool = false
 var active_water_volumes: Array[Node] = []
 var last_solution: Dictionary = {}
@@ -59,6 +60,7 @@ func configure(
 	active_mode = ""
 	initial_mode = ""
 	active_medium_tags.clear()
+	active_modifiers.clear()
 	medium_available = false
 	last_solution.clear()
 	transition_count = 0
@@ -156,6 +158,7 @@ func request_mode(
 
 	var previous_mode: String = active_mode
 	active_mode = normalized_mode
+	_prune_active_modifiers()
 	active_medium_tags = (
 		medium_tags
 		if not medium_tags.is_empty()
@@ -386,6 +389,51 @@ func get_turn_multiplier() -> float:
 	return float(_get_active_multipliers().get("turn", 1.0))
 
 
+func set_modifier_active(
+	modifier_id: String,
+	active: bool
+) -> Dictionary:
+	var normalized_id: String = LocomotionCatalog.normalize_id(modifier_id)
+	var supported_modifiers: Array[String] = _string_array(
+		profile.get("modifiers", [])
+	)
+	if not supported_modifiers.has(normalized_id):
+		return {
+			"ok": false,
+			"error": "unsupported locomotion modifier " + normalized_id,
+		}
+	var definition: MobLocomotionDefinition = LocomotionCatalog.get_definition(
+		normalized_id
+	)
+	if definition == null or definition.capability_kind != "modifier":
+		return {
+			"ok": false,
+			"error": "locomotion modifier definition unavailable",
+		}
+	if (
+		active
+		and not definition.requires_capabilities.is_empty()
+		and not definition.requires_capabilities.has(active_mode)
+	):
+		return {
+			"ok": false,
+			"error": (
+				normalized_id
+				+ " is incompatible with active mode "
+				+ active_mode
+			),
+		}
+	if active and not active_modifiers.has(normalized_id):
+		active_modifiers.append(normalized_id)
+	elif not active:
+		active_modifiers.erase(normalized_id)
+	return {
+		"ok": true,
+		"modifier": normalized_id,
+		"active": active_modifiers.has(normalized_id),
+	}
+
+
 func get_context_tags() -> Array[String]:
 	var tags: Array[String] = []
 	if active_mode != "":
@@ -396,6 +444,8 @@ func get_context_tags() -> Array[String]:
 		tags.append("locomotion_dimension:" + definition.dimension)
 	for medium_tag: String in active_medium_tags:
 		tags.append("medium:" + medium_tag)
+	for modifier_id: String in active_modifiers:
+		tags.append("locomotion_modifier:" + modifier_id)
 	if not medium_available:
 		tags.append("locomotion_medium_unavailable")
 	return tags
@@ -428,6 +478,7 @@ func sample_total_current() -> Vector3:
 func reset_executor() -> void:
 	active_water_volumes.clear()
 	last_solution.clear()
+	active_modifiers.clear()
 	transition_count = 0
 	rejection_count = 0
 	if initial_mode == "":
@@ -455,7 +506,10 @@ func get_debug_data() -> Dictionary:
 		"medium_available": medium_available,
 		"medium_tags": active_medium_tags.duplicate(),
 		"supported_modes": _string_array(profile.get("modes", [])),
-		"modifiers": _string_array(profile.get("modifiers", [])),
+		"supported_modifiers": _string_array(
+			profile.get("modifiers", [])
+		),
+		"active_modifiers": active_modifiers.duplicate(),
 		"transitions": _string_array(profile.get("transitions", [])),
 		"water_volume_count": active_water_volumes.size(),
 		"transition_count": transition_count,
@@ -473,7 +527,7 @@ func _get_active_multipliers() -> Dictionary:
 		speed *= definition.speed_multiplier
 		acceleration *= definition.acceleration_multiplier
 		turn *= definition.turn_multiplier
-	for modifier_id: String in _string_array(profile.get("modifiers", [])):
+	for modifier_id: String in active_modifiers:
 		var modifier: MobLocomotionDefinition = LocomotionCatalog.get_definition(
 			modifier_id
 		)
@@ -492,6 +546,21 @@ func _get_active_multipliers() -> Dictionary:
 		"acceleration": acceleration,
 		"turn": turn,
 	}
+
+
+func _prune_active_modifiers() -> void:
+	for modifier_id: String in active_modifiers.duplicate():
+		var definition: MobLocomotionDefinition = (
+			LocomotionCatalog.get_definition(modifier_id)
+		)
+		if (
+			definition == null
+			or (
+				not definition.requires_capabilities.is_empty()
+				and not definition.requires_capabilities.has(active_mode)
+			)
+		):
+			active_modifiers.erase(modifier_id)
 
 
 func _actor_position() -> Vector3:
@@ -515,6 +584,7 @@ func _configuration_failure(reason: String) -> Dictionary:
 	active_mode = ""
 	initial_mode = ""
 	active_medium_tags.clear()
+	active_modifiers.clear()
 	medium_available = false
 	return {
 		"ok": false,

@@ -71,7 +71,7 @@ Locomotion is now resolved as a second capability layer. Ground, swimming, fligh
 
 A committed execution claims one normalized effect request when it first crosses into the active phase. The request preserves targeting, range, radius, effect data, source lineage, and delivery class. `MobMoveEffectExecutor` remembers request identities, asks an authoritative actor provider for targets, filters range and duplicates, resolves contact and area payloads, spawns physical projectiles, routes recovery, and exposes movement or custom effects to specialized executors.
 
-Confirmed contact, area, projectile, status, and buff effects convert into the existing `DamagePayload` contract. `MobVitalsComponent` supplies the corresponding species-derived health, stamina, recovery, and incapacitation receiver for reusable animal actors. `MobConditionComponent` retains timed primary statuses and augment riders and exposes them as self tags for later policy decisions.
+Confirmed contact, area, projectile, status, and buff effects convert into the existing `DamagePayload` contract. `MobVitalsComponent` supplies the corresponding species-derived health, stamina, recovery, and incapacitation receiver for reusable animal actors. The canonical combat `StatusReceiver` retains timed primary statuses and augment riders and exposes them as self tags for later policy decisions.
 
 This keeps move choice, animation timing, target confirmation, and world consequence separate while preserving the project's Actor → Action → Payload → Target → Receiver → Reaction → Consequence grammar.
 
@@ -420,7 +420,7 @@ A reusable watchdog guarantees the smoke test exits with a readable failure when
 
 ## Foundation boundaries
 
-The foundation provides shared data, policies, anatomy and locomotion capability profiles, evaluation, personality bridging, familiar progression, augmentation, committed move lifecycles, normalized effect requests, target resolution, physical effect dispatch, payload conversion, vitals, timed conditions, debugging, and compatibility adapters.
+The foundation provides shared data, policies, anatomy and locomotion capability profiles, evaluation, personality bridging, familiar progression, augmentation, committed move lifecycles, normalized effect requests, target resolution, physical effect dispatch, payload conversion, vitals, canonical timed statuses, debugging, and compatibility adapters.
 
 Runtime layers already build perception, relationships, bonding, navigation-aware following, rescue, and a reusable live ground actor on top of it. Their current limitations are tracked in [`MOB_ENGINE.md`](MOB_ENGINE.md).
 

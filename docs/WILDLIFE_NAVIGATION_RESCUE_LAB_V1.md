@@ -120,6 +120,17 @@ The lab checks:
 
 A detected chase reports the existing `chase` relationship event.
 
+## Command and harm interruption
+
+Animal moves now have a shared startup, active, and recovery lifecycle. Issuing Follow, Stay, Come Here, or Go There is authoritative: it interrupts Juniper's current ambient move before applying the command. A weapon hit, Test Attack, or detected chase also interrupts the current action so fear and escape behavior can respond immediately.
+
+Manual check:
+
+1. Wait until Juniper begins an ambient or grazing action.
+2. Issue a companion command and confirm the named command replaces that action immediately.
+3. While she is moving under a command, use **Test Attack** and confirm the command suspends and the active move gives way to the fear response.
+4. Lower fear and confirm the stored command resumes through the existing command-authority rules.
+
 ## Recovery
 
 The companion attempts an ordinary repath before teleport recovery.

@@ -4,6 +4,8 @@ signal status_applied(status_name: String, status_data: Dictionary)
 signal status_removed(status_name: String)
 signal statuses_cleared
 
+@export_range(1, 64, 1) var maximum_statuses: int = 24
+
 const CombatFeedback = preload("res://scripts/combat/combat_feedback.gd")
 const StatusVisualControllerScript = preload(
 	"res://scripts/visuals/status_visual_controller.gd"
@@ -44,6 +46,11 @@ func apply_status(
 ) -> void:
 	var normalized: String = StatePolicy.normalize_state(status_name)
 	if normalized == "" or duration <= 0.0:
+		return
+	if (
+		not active_statuses.has(normalized)
+		and active_statuses.size() >= maximum_statuses
+	):
 		return
 	StatePolicy.resolve_conflicts(self, normalized)
 	active_statuses[normalized] = {
@@ -90,8 +97,14 @@ func sustain_status(
 
 
 func _process(delta: float) -> void:
+	advance_statuses(delta)
+
+
+func advance_statuses(delta: float) -> Array[String]:
 	var expired_statuses: Array[String] = []
 	var step: float = maxf(delta, 0.0)
+	if step <= 0.0:
+		return expired_statuses
 	for status_value: Variant in active_statuses.keys():
 		var status_name: String = str(status_value)
 		if not active_statuses.has(status_name):
@@ -108,6 +121,7 @@ func _process(delta: float) -> void:
 			expired_statuses.append(status_name)
 	for status_name: String in expired_statuses:
 		remove_status(status_name)
+	return expired_statuses
 
 
 func _process_damage_status(
@@ -135,8 +149,19 @@ func apply_status_payload(
 	payload: DamagePayload,
 	force_health_damage: bool = false
 ) -> void:
-	var hit_receiver: Node = get_parent().get_node_or_null("HitReceiver")
+	var target: Node = get_parent()
+	var hit_receiver: Node = target.get_node_or_null("HitReceiver")
 	if hit_receiver == null or not hit_receiver.has_method("receive_payload"):
+		if target.has_method("receive_damage_payload"):
+			var raw_result: Variant = target.call(
+				"receive_damage_payload",
+				payload
+			)
+			show_status_result(
+				raw_result as Dictionary
+				if raw_result is Dictionary
+				else {}
+			)
 		return
 	if force_health_damage:
 		var original_hit_mode: Variant = hit_receiver.get("hit_mode")
@@ -190,6 +215,14 @@ func get_active_status_names() -> Array[String]:
 	for status_value: Variant in active_statuses.keys():
 		names.append(str(status_value))
 	return names
+
+
+func get_context_tags() -> Array[String]:
+	var tags: Array[String] = []
+	for status_name: String in get_active_status_names():
+		tags.append(status_name)
+		tags.append("status:" + status_name)
+	return tags
 
 
 func get_status_strength(status_name: String) -> float:
@@ -250,6 +283,7 @@ func get_debug_data() -> Dictionary:
 		)
 	return {
 		"statuses": "none" if status_summary.is_empty() else ", ".join(status_summary),
+		"maximum_statuses": maximum_statuses,
 		"status_names": get_active_status_names(),
 		"move": get_movement_multiplier(),
 		"blocks_actions": blocks_actions(),

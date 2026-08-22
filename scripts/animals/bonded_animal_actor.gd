@@ -103,6 +103,7 @@ func report_grace_event(event_id: String, intensity: float = 1.0) -> Dictionary:
 		"attack", "damage":
 			interaction_id = "attack"
 			harm_events += 1
+			_interrupt_current_action("grace_attack", true)
 			set_drive("fear", 1.0)
 			set_drive("territorial_pressure", 1.0)
 			var grace: Node3D = _get_grace_target()
@@ -111,6 +112,7 @@ func report_grace_event(event_id: String, intensity: float = 1.0) -> Dictionary:
 		"chase", "threaten":
 			interaction_id = "startle"
 			harm_events += 1
+			_interrupt_current_action("grace_threat", true)
 			set_drive("fear", maxf(get_drive("fear"), 0.82))
 		_:
 			return {"ok": false, "error": "unknown event"}

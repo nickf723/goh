@@ -13,6 +13,7 @@ class_name MobMoveDefinition
 @export var cooldown: float = 0.0
 @export var base_utility: float = 1.0
 @export var effect: Dictionary = {}
+@export var timing: Dictionary = {}
 @export var scaling: Dictionary = {}
 @export var augment_slots: Array[String] = []
 
@@ -37,6 +38,7 @@ static func from_dictionary(data: Dictionary) -> MobMoveDefinition:
 	definition.cooldown = maxf(float(data.get("cooldown", 0.0)), 0.0)
 	definition.base_utility = maxf(float(data.get("base_utility", 1.0)), 0.0)
 	definition.effect = _dictionary(data.get("effect", {}))
+	definition.timing = _dictionary(data.get("timing", {}))
 	definition.scaling = _dictionary(data.get("scaling", {}))
 	definition.augment_slots = _string_array(data.get("augment_slots", []))
 	return definition
@@ -60,6 +62,7 @@ func to_dictionary() -> Dictionary:
 		"cooldown": cooldown,
 		"base_utility": base_utility,
 		"effect": effect.duplicate(true),
+		"timing": timing.duplicate(true),
 		"scaling": scaling.duplicate(true),
 		"augment_slots": augment_slots.duplicate(),
 	}
@@ -88,6 +91,9 @@ func validate() -> Array[String]:
 		failures.append(move_id + " has negative utility")
 	if action_kind == "attack" and effect.is_empty():
 		failures.append(move_id + " attack has no effect payload")
+	for phase_id: String in ["startup", "active", "recovery"]:
+		if timing.has(phase_id) and float(timing[phase_id]) < 0.0:
+			failures.append(move_id + " has negative " + phase_id + " timing")
 	return failures
 
 

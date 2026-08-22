@@ -296,6 +296,9 @@ func reset_actor() -> void:
 		brain.clear_cooldowns()
 		brain.clear_memory()
 		brain.reset_drives()
+	if effect_executor != null:
+		effect_executor.reset_executor()
+	last_effect_result.clear()
 	_build_social_state()
 
 

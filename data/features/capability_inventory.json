@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-07-28",
+  "updated": "2026-08-22",
   "purpose": "Canonical capability memory for planning. Search this before proposing new mechanics.",
   "lifecycle_values": [
     "canonical",
@@ -703,6 +703,55 @@
       "limitations": [
         "The hub intentionally does not contain every implemented system yet."
       ]
+    },
+    {
+      "id": "mob_engine",
+      "display_name": "Mob Engine, Animal Behavior, and Familiar Movesets",
+      "lifecycle": [
+        "canonical",
+        "experimental"
+      ],
+      "owner_files": [
+        "scripts/mobs/",
+        "scripts/animals/generic_animal_actor.gd",
+        "scripts/animals/bonded_animal_actor.gd",
+        "scripts/animals/navigation_bonded_animal_actor.gd",
+        "scripts/summons/bonded_familiar_roster.gd"
+      ],
+      "canonical_scene": "scenes/levels/prototypes/animal_behavior_lab_v1.tscn",
+      "aliases": [
+        "animal engine",
+        "mob actions",
+        "animal actions",
+        "animal moves",
+        "animal movesets",
+        "pokemon-like movesets",
+        "species behavior",
+        "creature behavior",
+        "animal personality",
+        "animal drives",
+        "animal intentions",
+        "animal bonding",
+        "animal companions",
+        "familiars",
+        "wildlife navigation",
+        "move lifecycle",
+        "action interruption"
+      ],
+      "implemented": true,
+      "do_not_resuggest": true,
+      "implemented_scope": [
+        "shared move definitions and species policies",
+        "body-plan eligibility",
+        "continuous personality traits",
+        "utility scoring, drives, and committed intentions",
+        "startup, active, recovery, completion, and interruption lifecycle",
+        "perception, memory, same-species alerts, and Grace relationships",
+        "persistent named-animal bonding and familiar roster integration",
+        "navigation-aware following, commands, rescue, and stuck recovery",
+        "seed species: wolf, sheep, capybara, gorgon, and gremlin"
+      ],
+      "next_use": "Dispatch shared payloads during active move phases and prove the executor across ground, swimming, flying, and burrowing body plans in authored content."
     }
   ]
 }

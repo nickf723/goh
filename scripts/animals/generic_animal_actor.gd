@@ -7,6 +7,9 @@ const EffectExecutorScript = preload(
 const VitalsScript = preload(
 	"res://scripts/mobs/mob_vitals_component.gd"
 )
+const ConditionScript = preload(
+	"res://scripts/mobs/mob_condition_component.gd"
+)
 
 signal action_changed(move_id: String, intention_id: String)
 signal selected_changed(selected: bool)
@@ -26,6 +29,7 @@ signal action_effect_resolved(move_id: String, result: Dictionary)
 var brain: MobBrainComponent
 var effect_executor: MobMoveEffectExecutor
 var vitals: MobVitalsComponent
+var condition_state: MobConditionComponent
 var perception: AnimalPerceptionMemory
 var relationship: AnimalRelationshipState
 var perception_snapshot: Dictionary = {}
@@ -63,6 +67,7 @@ func _ready() -> void:
 	_build_collision()
 	_build_visual()
 	_build_vitals()
+	_build_conditions()
 	_build_brain()
 	_build_social_state()
 	decision_time_remaining = randf_range(0.1, decision_interval)
@@ -196,6 +201,11 @@ func get_mob_decision_context() -> Dictionary:
 		"ally_count": _same_species_ally_count(),
 		"enemy_count": enemy_count,
 		"context_tags": context_tags,
+		"self_tags": (
+			condition_state.get_context_tags()
+			if condition_state != null
+			else []
+		),
 		"scalar_values": {
 			"forage_distance": forage_distance,
 			"water_distance": water_distance,
@@ -253,6 +263,7 @@ func receive_damage_payload(payload: Variant) -> Dictionary:
 	if vitals == null:
 		return {"ok": false, "error": "animal vitals unavailable"}
 	var result: Dictionary = vitals.receive_damage_payload(payload)
+	_apply_payload_condition(payload)
 	if float(result.get("damage_dealt", 0.0)) > 0.0:
 		_interrupt_current_action("damage_received", true)
 		if species_id in ["wolf", "gorgon"]:
@@ -261,6 +272,42 @@ func receive_damage_payload(payload: Variant) -> Dictionary:
 			set_drive("fear", 1.0)
 		decision_time_remaining = 0.0
 	return result
+
+
+func _apply_payload_condition(payload: Variant) -> void:
+	if condition_state == null:
+		return
+	var status_id: String = str(_payload_property(
+		payload,
+		"status_effect",
+		""
+	)).to_lower().strip_edges()
+	var duration: float = maxf(float(_payload_property(
+		payload,
+		"status_duration",
+		0.0
+	)), 0.0)
+	if status_id == "" or duration <= 0.0:
+		return
+	condition_state.sustain_status(
+		status_id,
+		duration,
+		maxf(float(_payload_property(payload, "status_strength", 1.0)), 0.0),
+		str(_payload_property(payload, "source_name", "Mob Move"))
+	)
+
+
+func _payload_property(
+	payload: Variant,
+	property_name: String,
+	fallback: Variant
+) -> Variant:
+	if payload is Dictionary:
+		return (payload as Dictionary).get(property_name, fallback)
+	if payload is Object:
+		var raw_value: Variant = (payload as Object).get(property_name)
+		return fallback if raw_value == null else raw_value
+	return fallback
 
 
 func receive_mob_recovery(
@@ -350,6 +397,8 @@ func reset_actor() -> void:
 		effect_executor.reset_executor()
 	if vitals != null:
 		vitals.reset_to_full()
+	if condition_state != null:
+		condition_state.clear_statuses("reset")
 	last_effect_result.clear()
 	_build_social_state()
 
@@ -368,6 +417,11 @@ func get_debug_data() -> Dictionary:
 		"perception": get_perception_data(),
 		"brain": brain.get_debug_data() if brain != null else {},
 		"vitals": get_vitals_data(),
+		"conditions": (
+			condition_state.to_dictionary()
+			if condition_state != null
+			else {}
+		),
 		"effect_executor": (
 			effect_executor.get_debug_data()
 			if effect_executor != null
@@ -382,6 +436,12 @@ func _build_vitals() -> void:
 	vitals.name = "MobVitalsComponent"
 	vitals.configure(species_id)
 	add_child(vitals)
+
+
+func _build_conditions() -> void:
+	condition_state = ConditionScript.new() as MobConditionComponent
+	condition_state.name = "StatusReceiver"
+	add_child(condition_state)
 
 
 func _build_brain() -> void:
@@ -948,6 +1008,16 @@ func _update_visual(delta: float) -> void:
 		body_material.emission_energy_multiplier = 2.4
 	if state_label != null:
 		var stimulus: String = str(perception_snapshot.get("stimulus_kind", "none"))
+		var condition_ids: Array[String] = (
+			condition_state.get_condition_ids()
+			if condition_state != null
+			else []
+		)
+		var condition_line: String = (
+			"\nStatus " + ", ".join(condition_ids)
+			if not condition_ids.is_empty()
+			else ""
+		)
 		state_label.text = (
 			animal_name + " • " + relationship_label.capitalize()
 			+ "\n" + current_intention_id.capitalize()
@@ -960,6 +1030,7 @@ func _update_visual(delta: float) -> void:
 			+ "  H " + _percent(get_drive("hunger"))
 			+ "  F " + _percent(get_drive("fear"))
 			+ "  S " + _percent(get_drive("social_need"))
+			+ condition_line
 		)
 		state_label.modulate = Color(1.0, 0.82, 0.28) if selected else _relationship_color()
 

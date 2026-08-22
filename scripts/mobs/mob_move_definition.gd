@@ -8,6 +8,7 @@ class_name MobMoveDefinition
 @export var target_mode: String = "self"
 @export var tags: Array[String] = []
 @export var required_body_tags: Array[String] = []
+@export var required_locomotion_tags: Array[String] = []
 @export var minimum_range: float = 0.0
 @export var maximum_range: float = 0.0
 @export var cooldown: float = 0.0
@@ -30,6 +31,7 @@ static func from_dictionary(data: Dictionary) -> MobMoveDefinition:
 	definition.target_mode = str(data.get("target_mode", "self"))
 	definition.tags = _string_array(data.get("tags", []))
 	definition.required_body_tags = _string_array(data.get("required_body_tags", []))
+	definition.required_locomotion_tags = _string_array(data.get("required_locomotion_tags", []))
 	definition.minimum_range = maxf(float(data.get("minimum_range", 0.0)), 0.0)
 	definition.maximum_range = maxf(
 		float(data.get("maximum_range", definition.minimum_range)),
@@ -57,6 +59,7 @@ func to_dictionary() -> Dictionary:
 		"target_mode": target_mode,
 		"tags": tags.duplicate(),
 		"required_body_tags": required_body_tags.duplicate(),
+		"required_locomotion_tags": required_locomotion_tags.duplicate(),
 		"minimum_range": minimum_range,
 		"maximum_range": maximum_range,
 		"cooldown": cooldown,
@@ -79,6 +82,20 @@ func supports_body(body_tags: Array[String]) -> bool:
 	return true
 
 
+func supports_locomotion(
+	body_tags: Array[String],
+	locomotion_tags: Array[String]
+) -> bool:
+	for required_tag: String in required_locomotion_tags:
+		if not MobLocomotionCatalog.supports(
+			body_tags,
+			locomotion_tags,
+			required_tag
+		):
+			return false
+	return true
+
+
 func validate() -> Array[String]:
 	var failures: Array[String] = []
 	if move_id == "":
@@ -91,6 +108,11 @@ func validate() -> Array[String]:
 		failures.append(move_id + " has negative utility")
 	if action_kind == "attack" and effect.is_empty():
 		failures.append(move_id + " attack has no effect payload")
+	for capability_id: String in required_locomotion_tags:
+		if not MobLocomotionCatalog.has_capability(capability_id):
+			failures.append(
+				move_id + " requires unknown locomotion " + capability_id
+			)
 	for phase_id: String in ["startup", "active", "recovery"]:
 		if timing.has(phase_id) and float(timing[phase_id]) < 0.0:
 			failures.append(move_id + " has negative " + phase_id + " timing")

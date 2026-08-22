@@ -75,7 +75,7 @@ The lab starts with at least six treats. **Add 6 Treats** replenishes the testin
 
 ## Reset behavior
 
-**Reset Lab** and the configured restart input reset positions, drives, vitals, effect-request memory, locomotion mode and modifiers, perception memory, selection, noise, and Grace's posture. Saved named-animal relationships remain intact.
+**Reset Lab** and the configured restart input reset positions, drives, vitals, effect-request memory, locomotion mode and modifiers, water/traversal medium registration, traversal route progress, perception memory, selection, noise, and Grace's posture. Saved named-animal relationships remain intact.
 
 Use **Clear This Bond** to reset one animal's relationship deliberately.
 

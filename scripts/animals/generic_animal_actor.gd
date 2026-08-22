@@ -8,7 +8,7 @@ const VitalsScript = preload(
 	"res://scripts/mobs/mob_vitals_component.gd"
 )
 const ConditionScript = preload(
-	"res://scripts/mobs/mob_condition_component.gd"
+	"res://scripts/combat/status_receiver.gd"
 )
 
 signal action_changed(move_id: String, intention_id: String)
@@ -29,7 +29,7 @@ signal action_effect_resolved(move_id: String, result: Dictionary)
 var brain: MobBrainComponent
 var effect_executor: MobMoveEffectExecutor
 var vitals: MobVitalsComponent
-var condition_state: MobConditionComponent
+var condition_state: Node
 var perception: AnimalPerceptionMemory
 var relationship: AnimalRelationshipState
 var perception_snapshot: Dictionary = {}
@@ -201,11 +201,7 @@ func get_mob_decision_context() -> Dictionary:
 		"ally_count": _same_species_ally_count(),
 		"enemy_count": enemy_count,
 		"context_tags": context_tags,
-		"self_tags": (
-			condition_state.get_context_tags()
-			if condition_state != null
-			else []
-		),
+		"self_tags": _get_condition_context_tags(),
 		"scalar_values": {
 			"forage_distance": forage_distance,
 			"water_distance": water_distance,
@@ -289,7 +285,8 @@ func _apply_payload_condition(payload: Variant) -> void:
 	)), 0.0)
 	if status_id == "" or duration <= 0.0:
 		return
-	condition_state.sustain_status(
+	condition_state.call(
+		"sustain_status",
 		status_id,
 		duration,
 		maxf(float(_payload_property(payload, "status_strength", 1.0)), 0.0),
@@ -307,6 +304,41 @@ func _payload_property(
 	if payload is Object:
 		var raw_value: Variant = (payload as Object).get(property_name)
 		return fallback if raw_value == null else raw_value
+	return fallback
+
+
+func _get_condition_ids() -> Array[String]:
+	var ids: Array[String] = []
+	if (
+		condition_state == null
+		or not condition_state.has_method("get_active_status_names")
+	):
+		return ids
+	var raw_ids: Variant = condition_state.call("get_active_status_names")
+	if raw_ids is Array:
+		for raw_id: Variant in raw_ids as Array:
+			var condition_id: String = str(raw_id).to_lower().strip_edges()
+			if condition_id != "" and not ids.has(condition_id):
+				ids.append(condition_id)
+	ids.sort()
+	return ids
+
+
+func _get_condition_context_tags() -> Array[String]:
+	if (
+		condition_state != null
+		and condition_state.has_method("get_context_tags")
+	):
+		var raw_tags: Variant = condition_state.call("get_context_tags")
+		var tags: Array[String] = []
+		if raw_tags is Array:
+			for raw_tag: Variant in raw_tags as Array:
+				tags.append(str(raw_tag))
+		return tags
+	var fallback: Array[String] = []
+	for condition_id: String in _get_condition_ids():
+		fallback.append(condition_id)
+		fallback.append("status:" + condition_id)
 	return fallback
 
 
@@ -398,7 +430,7 @@ func reset_actor() -> void:
 	if vitals != null:
 		vitals.reset_to_full()
 	if condition_state != null:
-		condition_state.clear_statuses("reset")
+		condition_state.call("clear_all_statuses")
 	last_effect_result.clear()
 	_build_social_state()
 
@@ -418,8 +450,11 @@ func get_debug_data() -> Dictionary:
 		"brain": brain.get_debug_data() if brain != null else {},
 		"vitals": get_vitals_data(),
 		"conditions": (
-			condition_state.to_dictionary()
-			if condition_state != null
+			condition_state.call("get_debug_data")
+			if (
+				condition_state != null
+				and condition_state.has_method("get_debug_data")
+			)
 			else {}
 		),
 		"effect_executor": (
@@ -439,7 +474,7 @@ func _build_vitals() -> void:
 
 
 func _build_conditions() -> void:
-	condition_state = ConditionScript.new() as MobConditionComponent
+	condition_state = ConditionScript.new()
 	condition_state.name = "StatusReceiver"
 	add_child(condition_state)
 
@@ -1008,11 +1043,7 @@ func _update_visual(delta: float) -> void:
 		body_material.emission_energy_multiplier = 2.4
 	if state_label != null:
 		var stimulus: String = str(perception_snapshot.get("stimulus_kind", "none"))
-		var condition_ids: Array[String] = (
-			condition_state.get_condition_ids()
-			if condition_state != null
-			else []
-		)
+		var condition_ids: Array[String] = _get_condition_ids()
 		var condition_line: String = (
 			"\nStatus " + ", ".join(condition_ids)
 			if not condition_ids.is_empty()

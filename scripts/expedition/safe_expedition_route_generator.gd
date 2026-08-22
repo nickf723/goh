@@ -292,14 +292,16 @@ func _attach_wildlife_habitats() -> void:
 			WildsAnimalHabitatScript.new()
 			as WildsAnimalHabitatEncounter
 		)
-		if (
-			habitat_id_value == "wet_woodland"
-			and (
-				not segment.has_method("uses_authored_layout")
-				or not bool(segment.call("uses_authored_layout"))
-			)
-		):
-			habitat.position.y = segment.elevation_at(15.5)
+		var uses_authored_layout: bool = (
+			segment.has_method("uses_authored_layout")
+			and bool(segment.call("uses_authored_layout"))
+		)
+		if not uses_authored_layout:
+			match habitat_id_value:
+				"cypress_basin":
+					habitat.position.y = 0.65
+				"wet_woodland":
+					habitat.position.y = segment.elevation_at(15.5)
 		segment.add_child(habitat)
 		habitat.configure(habitat_id_value)
 		wildlife_habitats.append(habitat)

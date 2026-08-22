@@ -221,6 +221,8 @@ func _test_brain_component() -> void:
 	var interrupted: Dictionary = brain.interrupt_active_move("new_threat")
 	_expect(bool(interrupted.get("interrupted", false)), "interruptible movement responds to a new threat")
 	_expect(not brain.has_active_move(), "interrupted move releases the brain for another decision")
+	var cooldown_rejected: Dictionary = brain.begin_move("flee")
+	_expect(str(cooldown_rejected.get("error", "")) == "move is on cooldown", "interrupted moves retain their authored cooldown")
 	brain.clear_cooldowns()
 	var idle_started: Dictionary = brain.begin_move("idle")
 	_expect(bool(idle_started.get("ok", false)), "brain can start a follow-up move")

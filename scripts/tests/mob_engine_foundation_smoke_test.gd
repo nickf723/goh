@@ -8,10 +8,26 @@ const Augments = preload("res://scripts/mobs/mob_move_augment_catalog.gd")
 const PersonalityAdapter = preload("res://scripts/mobs/mob_personality_adapter.gd")
 const BrainScript = preload("res://scripts/mobs/mob_brain_component.gd")
 const ExecutionState = preload("res://scripts/mobs/mob_move_execution_state.gd")
+const LocomotionCatalog = preload("res://scripts/mobs/mob_locomotion_catalog.gd")
+const EffectRequest = preload("res://scripts/mobs/mob_move_effect_request.gd")
+const PayloadBridge = preload("res://scripts/mobs/mob_payload_bridge.gd")
 const AbilityCatalog = preload("res://scripts/summons/creature_ability_catalog.gd")
+
+class PayloadProbe:
+	extends Node
+	var received_payload: DamagePayload
+	var receive_count: int = 0
+
+
+	func receive_damage_payload(payload: DamagePayload) -> Dictionary:
+		received_payload = payload
+		receive_count += 1
+		return {"message": "probe received " + payload.source_name}
+
 
 var failures: Array[String] = []
 var original_profiles: Dictionary = {}
+var effect_requests: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -21,6 +37,8 @@ func _ready() -> void:
 func run_tests() -> void:
 	_capture_profiles()
 	_test_catalogs_and_shared_moves()
+	_test_locomotion_profiles()
+	_test_effect_request_payload_bridge()
 	_test_wolf_policy()
 	_test_sheep_policy()
 	_test_capybara_policy()
@@ -35,6 +53,7 @@ func run_tests() -> void:
 func _test_catalogs_and_shared_moves() -> void:
 	_expect(MoveCatalog.validate_catalog().is_empty(), "move catalog validates")
 	_expect(SpeciesCatalog.validate_catalog().is_empty(), "species catalog validates")
+	_expect(LocomotionCatalog.validate_catalog().is_empty(), "locomotion catalog validates")
 	_expect(SpeciesCatalog.get_species_ids().size() >= 5, "foundation seeds five contrasting species")
 	var bite: MobMoveDefinition = MoveCatalog.get_definition("bite")
 	_expect(bite != null, "shared Bite move resolves")
@@ -53,6 +72,108 @@ func _test_catalogs_and_shared_moves() -> void:
 	_expect(not bite_execution.can_interrupt(), "authored Bite impact window resists ordinary interruption")
 	_expect(Augments.is_compatible(bite, "ferocious"), "Bite accepts attack augments")
 	_expect(not Augments.is_compatible(bite, "wetting"), "Bite rejects projectile-only Wetting augment")
+
+
+func _test_locomotion_profiles() -> void:
+	var bird: Dictionary = LocomotionCatalog.resolve_profile(
+		["legs", "wings", "beak"],
+		["ground", "flight"]
+	)
+	_expect(
+		(bird.get("failures", []) as Array).is_empty(),
+		"winged body resolves ground and flight without species code"
+	)
+	_expect(
+		(bird.get("modes", []) as Array).has("flight"),
+		"flight is exposed as a volumetric movement mode"
+	)
+	var fish: Dictionary = LocomotionCatalog.resolve_profile(
+		["fins", "gills", "mouth"],
+		["swimming"]
+	)
+	_expect(
+		(fish.get("modes", []) as Array).has("swimmer"),
+		"swimming aliases normalize into the shared water mode"
+	)
+	var mole: Dictionary = LocomotionCatalog.resolve_profile(
+		["legs", "claws", "digging_limbs"],
+		["ground", "burrow"]
+	)
+	_expect(
+		(mole.get("modes", []) as Array).has("burrower"),
+		"digging anatomy unlocks volumetric burrowing"
+	)
+	var invalid_flyer: Dictionary = LocomotionCatalog.resolve_profile(
+		["legs", "mouth"],
+		["ground", "flight"]
+	)
+	_expect(
+		not (invalid_flyer.get("failures", []) as Array).is_empty(),
+		"flight is rejected when the body has no flight anatomy"
+	)
+
+
+func _test_effect_request_payload_bridge() -> void:
+	var bite: MobMoveDefinition = MoveCatalog.get_definition("bite")
+	var execution: Variant = ExecutionState.create(bite.to_dictionary(), {
+		"execution_serial": 17,
+		"actor_instance_id": 42,
+		"species_id": "wolf",
+	})
+	execution.advance(0.17)
+	_expect(execution.claim_active_effect(), "active Bite claims one effect request")
+	_expect(not execution.claim_active_effect(), "one execution cannot claim its effect twice")
+	var request: Dictionary = EffectRequest.build(execution.to_dictionary(), {
+		"species_id": "wolf",
+		"animal_name": "Smoke Wolf",
+	})
+	_expect(
+		EffectRequest.validate_request(request).is_empty(),
+		"normalized Bite effect request validates"
+	)
+	_expect(
+		str(request.get("delivery", "")) == "contact_payload",
+		"Bite resolves to shared contact payload delivery"
+	)
+	var payload: DamagePayload = PayloadBridge.create_damage_payload(request)
+	_expect(payload != null, "Bite request creates a DamagePayload")
+	if payload != null:
+		_expect(payload.amount == 3, "Bite payload preserves authored damage")
+		_expect(payload.stance_damage == 2, "Bite payload preserves authored stance damage")
+		_expect(payload.tags.has("mob_move"), "animal payloads retain shared gameplay lineage")
+		_expect(payload.tags.has("species:wolf"), "animal payloads record their species source")
+	var probe := PayloadProbe.new()
+	add_child(probe)
+	var delivery: Dictionary = PayloadBridge.deliver_to_target(request, probe)
+	_expect(bool(delivery.get("ok", false)), "animal payload reaches an existing receiver contract")
+	_expect(probe.receive_count == 1, "payload bridge delivers exactly once per requested target")
+	var mire: MobMoveDefinition = MoveCatalog.get_definition("mire_spit")
+	var projectile_execution: Variant = ExecutionState.create(mire.to_dictionary(), {
+		"execution_serial": 18,
+		"species_id": "gremlin",
+	})
+	projectile_execution.advance(0.3)
+	projectile_execution.claim_active_effect()
+	var projectile_request: Dictionary = EffectRequest.build(
+		projectile_execution.to_dictionary(),
+		{"species_id": "gremlin"}
+	)
+	var premature_delivery: Dictionary = PayloadBridge.deliver_to_target(
+		projectile_request,
+		probe
+	)
+	_expect(
+		bool(premature_delivery.get("requires_executor", false)),
+		"projectiles require a physical impact before payload delivery"
+	)
+	var impact_delivery: Dictionary = PayloadBridge.deliver_to_target(
+		projectile_request,
+		probe,
+		null,
+		{"impact_confirmed": true}
+	)
+	_expect(bool(impact_delivery.get("ok", false)), "confirmed projectile impact delivers its payload")
+	probe.queue_free()
 
 
 func _test_wolf_policy() -> void:
@@ -197,8 +318,10 @@ func _test_familiar_progression() -> void:
 
 
 func _test_brain_component() -> void:
+	effect_requests.clear()
 	var brain := BrainScript.new() as MobBrainComponent
 	add_child(brain)
+	brain.move_effect_requested.connect(_capture_effect_request)
 	brain.configure("sheep", "cautious")
 	brain.set_context({
 		"target_distance": 1.0,
@@ -218,6 +341,13 @@ func _test_brain_component() -> void:
 	_expect(bool(blocked.has("blocked_by_active_move")), "active move prevents roulette-style redecision")
 	var active_step: Dictionary = brain.advance_active_move(0.08)
 	_expect(str(active_step.get("phase", "")) == "active", "movement move enters active execution")
+	_expect(effect_requests.size() == 1, "brain emits one effect request on active entry")
+	_expect(
+		str(effect_requests[0].get("effect_kind", "")) == "movement",
+		"effect request preserves the selected move effect"
+	)
+	brain.advance_active_move(0.05)
+	_expect(effect_requests.size() == 1, "remaining in the active phase does not duplicate effects")
 	var interrupted: Dictionary = brain.interrupt_active_move("new_threat")
 	_expect(bool(interrupted.get("interrupted", false)), "interruptible movement responds to a new threat")
 	_expect(not brain.has_active_move(), "interrupted move releases the brain for another decision")
@@ -229,9 +359,27 @@ func _test_brain_component() -> void:
 	var completed: Dictionary = brain.advance_active_move(5.0)
 	_expect(bool(completed.get("completed", false)), "move lifecycle reports natural completion")
 	_expect(not brain.has_active_move(), "completed move releases the action slot")
+	brain.clear_cooldowns()
+	var request_count_before_interrupt: int = effect_requests.size()
+	var bite_started: Dictionary = brain.begin_move("bite")
+	_expect(bool(bite_started.get("ok", false)), "brain begins an interruptible Bite startup")
+	var bite_interrupted: Dictionary = brain.interrupt_active_move("target_escaped")
+	_expect(bool(bite_interrupted.get("interrupted", false)), "Bite can be cancelled before its impact window")
+	_expect(
+		effect_requests.size() == request_count_before_interrupt,
+		"startup interruption prevents an unearned effect request"
+	)
 	_expect(not bool(brain.begin_move("missing_move").get("ok", true)), "unknown moves cannot enter execution")
 	brain.queue_free()
 	await get_tree().process_frame
+
+
+func _capture_effect_request(
+	_move_id: String,
+	request: Dictionary,
+	_execution: Dictionary
+) -> void:
+	effect_requests.append(request.duplicate(true))
 
 
 func _capture_profiles() -> void:

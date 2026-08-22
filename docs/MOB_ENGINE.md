@@ -16,6 +16,16 @@ Defines shared moves, species body plans, move policies, continuous personality 
 
 Live animal actors advance that shared lifecycle instead of replacing their current move every decision tick. Species-specific execution aliases such as Investigate, Follow Grace, Watch Grace, and companion commands may preserve their own duration without creating a second decision system.
 
+The first crossing into the active phase now claims exactly one normalized effect request. Startup interruption prevents the request, staying in the active phase cannot duplicate it, and coarse frames still preserve the crossing before completion.
+
+### Body, locomotion, and effect delivery
+
+[`ANIMAL_BODY_LOCOMOTION_AND_EFFECTS_V1.md`](ANIMAL_BODY_LOCOMOTION_AND_EFFECTS_V1.md)
+
+Adds validated ground, swimming, flight, climbing, burrowing, runner, jumper, serpentine, and hover capabilities. Species body tags determine which modes resolve, while aliases let authored data migrate toward the canonical vocabulary.
+
+`MobMoveEffectRequest` separates effect timing from physical targeting. `MobPayloadBridge` converts confirmed contact, area, projectile, status, and buff requests into the existing `DamagePayload → PayloadReceiver` grammar; movement, recovery, and custom effects remain explicit executor seams.
+
 ### Drives and intentions
 
 [`MOB_DRIVES_AND_INTENTIONS_V1.md`](MOB_DRIVES_AND_INTENTIONS_V1.md)
@@ -123,4 +133,4 @@ The live regressions verify physical Graze and Flee execution, visual and audito
 
 ## Next runtime milestone
 
-Use the active phase to dispatch shared gameplay payloads for contact, area, projectile, support, and recovery moves; then prove the same executor across ground, swimming, flying, and burrowing body plans in an authored exploration encounter.
+Add physical target resolvers for contact volumes, areas, projectile impacts, and recovery receivers, then prove the catalogued ground, swimming, flight, climbing, and burrowing modes with contrasting animals in an authored exploration encounter.

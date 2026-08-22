@@ -1276,9 +1276,9 @@
       "order": 54,
       "display_name": "Animal Behavior Laboratory",
       "category": "AI Laboratory",
-      "version": "v1.3",
+      "version": "v1.4",
       "status": "development_tool",
-      "description": "Playable Mob Engine laboratory comparing species movesets, continuous personality, drives, committed intentions, action phases, physical effect execution, species-derived vitals, timed conditions, perception, relationships, bonding, persistence, and pack alerts across sheep, capybara, and wolves.",
+      "description": "Playable Mob Engine laboratory comparing species movesets, continuous personality, drives, committed intentions, action phases, physical effect execution, species-derived vitals, timed conditions, shared ground/swimming/flight runtime, perception, relationships, bonding, persistence, and pack alerts across sheep, capybara, and wolves.",
       "scene": "res://scenes/levels/prototypes/animal_behavior_lab_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/animal_behavior_lab_v1.tscn"
@@ -1303,7 +1303,8 @@
       "story_integrated": false,
       "limitations": [
         "Procedural animal silhouettes and movement are prototype presentation rather than final models or animation.",
-        "The live generic actor currently presents ground quadrupeds; flying, deep-swimming, climbing, and burrowing executors remain to be proven.",
+        "The generic actor now consumes shared ground, swimming, and flight steering, but this lab still presents ground quadrupeds and a decorative shallow pond rather than an authored swimming or flying habitat.",
+        "Climbing adhesion/contact acquisition and burrowing route topology remain to be proven with authored environment adapters.",
         "Generic contact effects use active-phase reach rather than animation-authored hit volumes; projectile effects reuse the established GenericProjectile.",
         "Pack, herd, predator/prey, summon, and faction ownership remain actor-provider policy."
       ],

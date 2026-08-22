@@ -14,6 +14,9 @@ const PayloadBridge = preload("res://scripts/mobs/mob_payload_bridge.gd")
 const EffectExecutorScript = preload(
 	"res://scripts/mobs/mob_move_effect_executor.gd"
 )
+const VitalsScript = preload(
+	"res://scripts/mobs/mob_vitals_component.gd"
+)
 const AbilityCatalog = preload("res://scripts/summons/creature_ability_catalog.gd")
 
 class PayloadProbe:
@@ -78,6 +81,7 @@ func run_tests() -> void:
 	_capture_profiles()
 	_test_catalogs_and_shared_moves()
 	_test_locomotion_profiles()
+	_test_mob_vitals()
 	_test_effect_request_payload_bridge()
 	_test_physical_effect_executor()
 	_test_wolf_policy()
@@ -162,6 +166,56 @@ func _test_locomotion_profiles() -> void:
 		not (invalid_flyer.get("failures", []) as Array).is_empty(),
 		"flight is rejected when the body has no flight anatomy"
 	)
+
+
+func _test_mob_vitals() -> void:
+	var vitals := VitalsScript.new() as MobVitalsComponent
+	vitals.configure("wolf")
+	add_child(vitals)
+	_expect(
+		is_equal_approx(vitals.maximum_health, 18.0),
+		"vitals derive maximum health from the species catalog"
+	)
+	var bite_request: Dictionary = _effect_request_for("bite", 24)
+	var payload: DamagePayload = PayloadBridge.create_damage_payload(
+		bite_request
+	)
+	var damage_result: Dictionary = vitals.receive_damage_payload(payload)
+	_expect(
+		is_equal_approx(float(damage_result.get("damage_dealt", 0.0)), 3.0),
+		"vitals accept the shared DamagePayload contract"
+	)
+	_expect(
+		is_equal_approx(vitals.health, 15.0),
+		"damage updates species-scaled health"
+	)
+	vitals.spend_stamina(4.0)
+	var recovery_result: Dictionary = vitals.receive_mob_recovery(
+		{"health": 1.0, "stamina": 2.0},
+		{"request_id": "vitals:recovery", "move_id": "graze"}
+	)
+	_expect(
+		is_equal_approx(float(recovery_result.get("health_recovered", 0.0)), 1.0)
+		and is_equal_approx(
+			float(recovery_result.get("stamina_recovered", 0.0)),
+			2.0
+		),
+		"vitals recovery applies health and stamina through one contract"
+	)
+	vitals.apply_damage(999.0, "smoke")
+	_expect(vitals.incapacitated, "zero health incapacitates an animal")
+	vitals.apply_recovery(1.0)
+	_expect(
+		not vitals.incapacitated,
+		"positive health recovery revives an incapacitated animal"
+	)
+	vitals.reset_to_full()
+	_expect(
+		is_equal_approx(vitals.health, vitals.maximum_health)
+		and is_equal_approx(vitals.stamina, vitals.maximum_stamina),
+		"vitals reset restores both resources"
+	)
+	vitals.queue_free()
 
 
 func _test_effect_request_payload_bridge() -> void:

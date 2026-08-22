@@ -157,15 +157,20 @@ func place_actor(actor: Node3D) -> Dictionary:
 			"ok": false,
 			"error": "actor has no traversal-aware locomotion executor",
 		}
+	var result: Variant = controller.call(
+		"enter_traversal_medium",
+		self
+	)
+	if (
+		result is Dictionary
+		and not bool((result as Dictionary).get("ok", false))
+	):
+		return result as Dictionary
 	actor.global_position = get_entry_position()
 	if actor is CharacterBody3D:
 		(actor as CharacterBody3D).velocity = Vector3.ZERO
 	route_indices[int(actor.get_instance_id())] = (
 		1 if route_points.size() > 1 else 0
-	)
-	var result: Variant = controller.call(
-		"enter_traversal_medium",
-		self
 	)
 	if result is Dictionary:
 		return result as Dictionary

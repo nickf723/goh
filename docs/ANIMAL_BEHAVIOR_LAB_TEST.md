@@ -32,8 +32,8 @@ The lab controls live in two on-screen panels. They are mouse-clickable and cont
 2. Confirm the wolf commits one active move and Grace receives at most one consequence for that move; the active window must not repeat the hit every frame.
 3. Step outside Bite reach. Confirm a committed contact effect does not damage Grace at a distance.
 4. Confirm every animal now displays an **HP** percentage alongside its drives.
-5. With both wolves present, confirm pack-support behavior remains focused on wolves rather than sheep or capybara.
-6. Use **Reset Lab** and confirm the animals return to full HP without a stale move effect firing after reset.
+5. With both wolves present, confirm pack-support behavior remains focused on wolves rather than sheep or capybara; an active Pack Focus condition appears in the overhead status line.
+6. Use **Reset Lab** and confirm the animals return to full HP, timed conditions clear, and no stale move effect fires after reset.
 
 The foundation smoke test owns the non-visual edge cases: species-scaled damage, health and stamina recovery, incapacitation and revival, duplicate request rejection, range filtering, authoritative empty target providers, area deduplication, and physical projectile spawning.
 
@@ -74,6 +74,7 @@ Each animal's overhead label shows:
 - Current action
 - Trust
 - Health
+- Active timed conditions
 - Hunger
 - Fear
 - Social need

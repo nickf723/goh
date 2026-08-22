@@ -59,12 +59,18 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	elapsed += delta
 	flash_time_remaining = maxf(flash_time_remaining - delta, 0.0)
-	action_time_remaining = maxf(action_time_remaining - delta, 0.0)
 	decision_time_remaining -= delta
 	wander_time_remaining -= delta
 	alert_broadcast_cooldown = maxf(alert_broadcast_cooldown - delta, 0.0)
 	_update_perception_and_relationship(delta)
-	if decision_time_remaining <= 0.0:
+	if brain != null and brain.has_active_move():
+		var execution: Dictionary = brain.advance_active_move(delta)
+		action_time_remaining = float(execution.get("remaining", 0.0))
+		if bool(execution.get("completed", false)):
+			_finish_current_action()
+	else:
+		action_time_remaining = 0.0
+	if decision_time_remaining <= 0.0 and (brain == null or not brain.has_active_move()):
 		force_decision(false)
 	_execute_current_action(delta)
 	_apply_gravity(delta)
@@ -230,6 +236,8 @@ func interact_with_grace(interaction_id: String) -> Dictionary:
 	var result: Dictionary = relationship.apply_interaction(normalized_id)
 	if not bool(result.get("ok", false)):
 		return result
+	if ["startle", "attack"].has(normalized_id):
+		_interrupt_current_action("relationship_" + normalized_id, true)
 	match normalized_id:
 		"feed":
 			set_drive("hunger", 0.0)
@@ -265,6 +273,7 @@ func receive_social_alert(position: Vector3, severity: float = 0.65) -> void:
 
 
 func reset_actor() -> void:
+	_interrupt_current_action("reset", true)
 	global_position = initial_position
 	velocity = Vector3.ZERO
 	home_position = initial_position
@@ -432,7 +441,13 @@ func _broadcast_alert(position: Vector3, severity: float) -> void:
 
 
 func _on_move_selected(move_id: String, decision: Dictionary) -> void:
-	if move_id == "":
+	if move_id == "" or brain == null:
+		return
+	var started: Dictionary = brain.begin_move(move_id, {
+		"actor_instance_id": get_instance_id(),
+		"decision": decision.duplicate(true),
+	})
+	if not bool(started.get("ok", false)):
 		return
 	current_move_id = move_id
 	current_action_id = _resolve_execution_action(move_id)
@@ -441,10 +456,8 @@ func _on_move_selected(move_id: String, decision: Dictionary) -> void:
 	)
 	if current_action_id == "investigate":
 		current_intention_id = "investigate"
-	var move_data: Dictionary = decision.get("move", {}) as Dictionary
-	var effect: Dictionary = move_data.get("effect", {}) as Dictionary
-	action_time_remaining = _action_duration(current_action_id, effect)
-	brain.commit_move(move_id)
+	var execution: Dictionary = started.get("execution", {}) as Dictionary
+	action_time_remaining = float(execution.get("total_duration", 0.0))
 	if ["bite", "headbutt", "pounce", "tail_sweep"].has(current_action_id):
 		flash_time_remaining = 0.22
 	action_changed.emit(current_action_id, current_intention_id)
@@ -498,9 +511,27 @@ func _execute_current_action(delta: float) -> void:
 	if direction.length_squared() > 0.001:
 		var target_yaw: float = atan2(-direction.x, -direction.z)
 		rotation.y = lerp_angle(rotation.y, target_yaw, clampf(delta * turn_speed, 0.0, 1.0))
-	if action_time_remaining <= 0.0:
+
+
+func _finish_current_action() -> void:
+	current_action_id = "idle"
+	current_move_id = "idle"
+	action_time_remaining = 0.0
+	action_changed.emit(current_action_id, current_intention_id)
+
+
+func _interrupt_current_action(reason: String, force: bool = false) -> Dictionary:
+	if brain == null or not brain.has_active_move():
+		return {"ok": false, "error": "no active move"}
+	var interrupted: Dictionary = brain.interrupt_active_move(reason, force)
+	if bool(interrupted.get("interrupted", false)):
 		current_action_id = "idle"
 		current_move_id = "idle"
+		action_time_remaining = 0.0
+		velocity.x = 0.0
+		velocity.z = 0.0
+		action_changed.emit(current_action_id, current_intention_id)
+	return interrupted
 
 
 func _investigate_direction() -> Vector3:

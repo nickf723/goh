@@ -69,7 +69,9 @@ Locomotion is now resolved as a second capability layer. Ground, swimming, fligh
 
 ## Active-phase effects
 
-A committed execution claims one normalized effect request when it first crosses into the active phase. The request preserves targeting, range, radius, effect data, source lineage, and delivery class. Confirmed contact, area, projectile, status, and buff effects convert into the existing `DamagePayload` contract; movement, recovery, and custom effects remain explicit physical-executor seams.
+A committed execution claims one normalized effect request when it first crosses into the active phase. The request preserves targeting, range, radius, effect data, source lineage, and delivery class. `MobMoveEffectExecutor` remembers request identities, asks an authoritative actor provider for targets, filters range and duplicates, resolves contact and area payloads, spawns physical projectiles, routes recovery, and exposes movement or custom effects to specialized executors.
+
+Confirmed contact, area, projectile, status, and buff effects convert into the existing `DamagePayload` contract. `MobVitalsComponent` supplies the corresponding species-derived health, stamina, recovery, and incapacitation receiver for reusable animal actors.
 
 This keeps move choice, animation timing, target confirmation, and world consequence separate while preserving the project's Actor → Action → Payload → Target → Receiver → Reaction → Consequence grammar.
 
@@ -282,7 +284,7 @@ A selected move may be executed by:
 
 The existing Gremlin Bite, Backstep, Pounce, and Mire Spit resources remain available through `CreatureAbilityCatalog` as compatibility adapters.
 
-Wolf, sheep, capybara, and gorgon currently have valid species definitions and decision policies but do not yet have complete live actor/execution adapters.
+Wolf, sheep, and capybara run through the reusable `GenericAnimalActor`, including committed movement, physical move-effect dispatch, vitals, perception, relationships, and bonding. Gorgon and Gremlin definitions remain valid inputs for specialized or future generic actor presentation.
 
 ## Familiar progression
 
@@ -390,6 +392,11 @@ The regression verifies:
 - Exactly-once active-phase effect claims
 - Startup interruption without an effect
 - DamagePayload conversion and confirmed projectile delivery
+- Species-derived health, stamina, recovery, and incapacitation
+- Authoritative target providers and range filtering
+- Exactly-once contact and area payload delivery
+- Physical projectile spawning through `GenericProjectile`
+- Executor memory and reset behavior
 - Wolf standard Bite behavior
 - Sheep Flee and conditional Bite behavior
 - Capybara habitat behavior and defensive Bite
@@ -417,11 +424,10 @@ Runtime layers already build perception, relationships, bonding, navigation-awar
 
 The remaining foundation-to-content work is deliberately physical and authored:
 
-- Contact volumes and area target collection
-- Projectile spawning and impact confirmation
-- Health, stamina, and drive recovery receivers
+- Animation-owned contact volumes for actors that need greater precision than active-phase reach
 - Swimming, flight, climbing, and burrowing motion executors
 - Species-specific models, animation sets, habitats, and encounters
+- Provider-specific faction, predator/prey, herd, pack, and summon relation rules
 - Broader ecology such as nesting, migration, territory, aging, and life cycles
 
 Those systems consume the shared contracts; they should not replace the brain, moveset, locomotion catalog, or payload pipeline.

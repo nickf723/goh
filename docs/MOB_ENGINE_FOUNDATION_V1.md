@@ -393,7 +393,7 @@ The regression verifies:
 - Startup interruption without an effect
 - DamagePayload conversion and confirmed projectile delivery
 - Species-derived health, stamina, recovery, and incapacitation
-- Timed condition application, refresh, expiry, and policy tags
+- Timed condition application, refresh, expiry, policy tags, control states, movement modifiers, and damage-over-time fallback
 - Primary and additional payload-status retention
 - Authoritative target providers and range filtering
 - Exactly-once contact and area payload delivery

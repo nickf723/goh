@@ -848,6 +848,8 @@ func _execute_current_action(delta: float) -> void:
 			direction = _direction_to(_get_lab_position("get_animal_forage_position", home_position))
 		"wade":
 			direction = _direction_to(_get_lab_position("get_animal_water_position", home_position))
+		"climb", "burrow":
+			direction = _traversal_direction()
 		"investigate":
 			direction = _investigate_direction()
 		"flee", "backstep":
@@ -869,6 +871,8 @@ func _execute_current_action(delta: float) -> void:
 		speed_multiplier = 0.82
 	elif current_action_id in ["graze", "wade", "idle"]:
 		speed_multiplier = 0.72
+	elif current_action_id in ["climb", "burrow"]:
+		speed_multiplier = 0.86
 	_resolve_locomotion_velocity(direction, delta, speed_multiplier)
 	if Vector2(direction.x, direction.z).length_squared() > 0.001:
 		var target_yaw: float = atan2(-direction.x, -direction.z)
@@ -926,6 +930,9 @@ func _remembered_grace_position() -> Vector3:
 
 
 func _wander_direction() -> Vector3:
+	var traversal_direction: Vector3 = _traversal_direction()
+	if not traversal_direction.is_zero_approx():
+		return traversal_direction
 	if wander_time_remaining <= 0.0 or global_position.distance_to(wander_target) < 0.35:
 		wander_time_remaining = randf_range(1.4, 3.2)
 		var angle: float = randf() * TAU
@@ -934,13 +941,30 @@ func _wander_direction() -> Vector3:
 	return _direction_to(wander_target)
 
 
+func _traversal_direction() -> Vector3:
+	if locomotion == null:
+		return Vector3.ZERO
+	var guidance: Dictionary = locomotion.get_guidance_target()
+	if not bool(guidance.get("found", false)):
+		return Vector3.ZERO
+	var raw_target: Variant = guidance.get("target")
+	if not raw_target is Vector3:
+		return Vector3.ZERO
+	return _movement_direction(
+		(raw_target as Vector3) - global_position
+	)
+
+
 func _direction_to(target_position: Vector3) -> Vector3:
 	return _movement_direction(target_position - global_position)
 
 
 func _movement_direction(offset: Vector3) -> Vector3:
 	if locomotion != null:
-		return locomotion.project_direction(offset)
+		return locomotion.project_direction(
+			offset,
+			locomotion.get_environment_context()
+		)
 	return _flat_direction(offset)
 
 
@@ -970,6 +994,7 @@ func _action_duration(move_id: String, effect: Dictionary) -> float:
 	match move_id:
 		"graze": return 1.8
 		"wade": return 2.2
+		"climb", "burrow": return 2.4
 		"investigate": return 1.35
 		"howl": return 1.4
 		"bite", "peck", "headbutt", "pounce", "tail_sweep": return 0.8
@@ -1006,7 +1031,8 @@ func _resolve_locomotion_velocity(
 			* action_speed_multiplier
 			* get_status_movement_multiplier(),
 		move_speed * 4.0,
-		delta
+		delta,
+		locomotion.get_environment_context()
 	)
 	var solved_velocity: Variant = last_locomotion_solution.get(
 		"velocity",

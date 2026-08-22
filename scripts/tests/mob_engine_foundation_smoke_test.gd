@@ -123,6 +123,12 @@ func _test_effect_request_payload_bridge() -> void:
 	execution.advance(0.17)
 	_expect(execution.claim_active_effect(), "active Bite claims one effect request")
 	_expect(not execution.claim_active_effect(), "one execution cannot claim its effect twice")
+	var coarse_execution: Variant = ExecutionState.create(bite.to_dictionary())
+	coarse_execution.advance(5.0)
+	_expect(
+		coarse_execution.claim_active_effect(),
+		"coarse frames preserve an effect when they cross the whole active window"
+	)
 	var request: Dictionary = EffectRequest.build(execution.to_dictionary(), {
 		"species_id": "wolf",
 		"animal_name": "Smoke Wolf",

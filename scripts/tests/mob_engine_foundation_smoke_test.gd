@@ -272,6 +272,24 @@ func _test_physical_effect_executor() -> void:
 	)
 	_expect(far_target.receive_count == 0, "out-of-range contact delivers no payload")
 
+	near_target.add_to_group("mob_effect_fallback_probe")
+	executor.fallback_enemy_groups = ["mob_effect_fallback_probe"]
+	source.targets.clear()
+	var authoritative_request: Dictionary = _effect_request_for("bite", 36)
+	var authoritative_result: Dictionary = executor.execute_request(
+		authoritative_request
+	)
+	_expect(
+		bool(authoritative_result.get("requires_target", false)),
+		"an authoritative provider may intentionally return no targets"
+	)
+	_expect(
+		near_target.receive_count == 1,
+		"fallback groups cannot override species-specific target ownership"
+	)
+	executor.fallback_enemy_groups = []
+	near_target.remove_from_group("mob_effect_fallback_probe")
+
 	source.targets = [near_target, near_target, far_target]
 	var sweep_request: Dictionary = _effect_request_for("tail_sweep", 33)
 	var sweep_result: Dictionary = executor.execute_request(sweep_request)
@@ -299,10 +317,16 @@ func _test_physical_effect_executor() -> void:
 	for projectile: Node in spawned_projectiles:
 		if is_instance_valid(projectile):
 			projectile.queue_free()
-	executor.clear_request_memory()
+	executor.reset_executor()
+	var reset_debug: Dictionary = executor.get_debug_data()
 	_expect(
-		int(executor.get_debug_data().get("remembered_request_count", -1)) == 0,
+		int(reset_debug.get("remembered_request_count", -1)) == 0,
 		"executor request memory can be cleared on reset"
+	)
+	_expect(
+		int(reset_debug.get("execution_count", -1)) == 0
+		and int(reset_debug.get("projectile_count", -1)) == 0,
+		"executor reset clears diagnostic counters"
 	)
 	source.queue_free()
 	near_target.queue_free()

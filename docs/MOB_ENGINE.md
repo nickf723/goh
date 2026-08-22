@@ -10,6 +10,12 @@ The Mob Engine is the shared behavioral foundation for animals, monsters, enemie
 
 Defines shared moves, species body plans, move policies, continuous personality traits, utility evaluation, familiar progression, move ranks, augments, execution adapters, and the attachable brain component.
 
+### Action lifecycle
+
+`MobMoveExecutionState` gives every shared move a data-driven startup, active, and recovery phase. `MobBrainComponent` now begins one committed move at a time, blocks roulette-style redecision while it is active, exposes the impact window, and reports phase changes, completion, or interruption.
+
+Live animal actors advance that shared lifecycle instead of replacing their current move every decision tick. Species-specific execution aliases such as Investigate, Follow Grace, Watch Grace, and companion commands may preserve their own duration without creating a second decision system.
+
 ### Drives and intentions
 
 [`MOB_DRIVES_AND_INTENTIONS_V1.md`](MOB_DRIVES_AND_INTENTIONS_V1.md)
@@ -117,4 +123,4 @@ The live regressions verify physical Graze and Flee execution, visual and audito
 
 ## Next runtime milestone
 
-Connect the dedicated lab's rescue, healing, damage, chase, pickup, and navigation contracts to a production exploration scene, then add authored traversal links, moving-obstacle avoidance, and action completion or interruption callbacks.
+Use the active phase to dispatch shared gameplay payloads for contact, area, projectile, support, and recovery moves; then prove the same executor across ground, swimming, flying, and burrowing body plans in an authored exploration encounter.

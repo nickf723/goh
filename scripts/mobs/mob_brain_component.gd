@@ -34,6 +34,7 @@ var cooldowns: Dictionary = {}
 var recent_move_ids: Array[String] = []
 var last_evaluation: Array[Dictionary] = []
 var last_decision: Dictionary = {}
+var last_effect_request: Dictionary = {}
 var decision_timer: float = 0.0
 var drive_tick_accumulator: float = 0.0
 var drive_state: MobDriveState
@@ -301,6 +302,7 @@ func clear_memory() -> void:
 	recent_move_ids.clear()
 	last_evaluation.clear()
 	last_decision.clear()
+	last_effect_request.clear()
 	current_intention_id = ""
 	intention_time_remaining = 0.0
 
@@ -364,6 +366,7 @@ func get_debug_data() -> Dictionary:
 		"intention_time_remaining": intention_time_remaining,
 		"active_execution": get_active_execution(),
 		"last_decision": last_decision.duplicate(true),
+		"last_effect_request": last_effect_request.duplicate(true),
 		"ranked_moves": last_evaluation.duplicate(true),
 	}
 
@@ -455,6 +458,7 @@ func _request_active_effect_if_ready() -> Dictionary:
 	var request: Dictionary = EffectRequest.build(execution, {
 		"species_id": species_id,
 	})
+	last_effect_request = request.duplicate(true)
 	move_effect_requested.emit(
 		str(execution.get("move_id", "")),
 		request,

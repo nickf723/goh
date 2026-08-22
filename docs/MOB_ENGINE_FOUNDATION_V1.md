@@ -25,6 +25,8 @@ A `MobMoveDefinition` describes reusable action identity and mechanics:
 - Minimum and maximum range
 - Cooldown
 - Base utility
+- Startup, active, and recovery timing
+- Phase-specific interruption policy
 - Generic effect data
 - Rank-scaling properties
 - Available augment slots
@@ -237,13 +239,24 @@ It can:
 
 - Request a ranked decision
 - Emit the selected move
-- Commit a move and start cooldown
+- Begin one committed move and start its cooldown
+- Advance startup, active, and recovery phases
+- Report impact windows, completion, and interruption
+- Block new selection while an action is active
 - Penalize immediate repetition
 - Resolve trained familiar move data
 - Return an existing execution adapter when one is available
 - Expose detailed debug state
 
 A context-provider node may implement `get_mob_decision_context()` to translate perception, ecology, combat, or familiar orders into generic context data.
+
+## Move execution lifecycle
+
+`MobMoveExecutionState` turns authored timing into a reusable runtime contract. It tracks startup, active, recovery, completion, and interruption without owning animation, navigation, or payload delivery.
+
+`MobBrainComponent` owns at most one active execution. Callers can begin, advance, complete, or interrupt a move and receive signals for phase changes and outcomes. Ordinary interruption respects the move's authored phase policy; forced interruption remains available for death, despawn, reset, or other authoritative state changes.
+
+The live `GenericAnimalActor` uses this lifecycle, so a slow Graze or committed Pounce is no longer replaced by a fresh utility decision every brain tick. Execution aliases such as Investigate or Follow Grace remain adaptations of the selected shared move, not parallel movesets.
 
 ## Execution adapters
 
@@ -384,7 +397,7 @@ A reusable watchdog guarantees the smoke test exits with a readable failure when
 
 ## Foundation boundaries
 
-Mob Engine Foundation v1 provides data, policies, evaluation, personality bridging, familiar progression, augmentation, debugging, and compatibility adapters.
+Mob Engine Foundation v1 provides data, policies, evaluation, personality bridging, familiar progression, augmentation, committed move lifecycles, debugging, and compatibility adapters.
 
 It does not yet provide:
 

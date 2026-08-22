@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="AbilityDefinition" format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/actions/generic_projectile.tscn" id="1_scene"]
+[ext_resource type="PackedScene" path="res://scenes/actions/soul_thread_projectile.tscn" id="1_scene"]
 [ext_resource type="Resource" path="res://data/damage_payloads/soul_thread_payload.tres" id="2_payload"]
 [ext_resource type="Script" path="res://scripts/abilities/ability_definition.gd" id="3_definition"]
 [ext_resource type="Resource" path="res://data/ability_trait_profiles/control_projectile_profile.tres" id="4_profile"]
@@ -8,18 +8,20 @@
 [resource]
 script = ExtResource("3_definition")
 display_name = "Soul Thread"
-description = "Soul projectile that briefly interrupts an enemy's actions."
+description = "Fire a Soul dart that binds Grace to one actor with a persistent visible thread. The link has slack, builds tension as the target retreats, softly pulls movable targets back toward Grace, and snaps if stretched too far. Recasting refreshes the same link."
 element = "soul"
 mana_cost = 1
 trait_profile = ExtResource("4_profile")
 spell_id = "soul_thread"
 short_label = "Thread"
 icon_text = "S"
-roles = Array[String](["interrupt", "control", "spirit"])
-combo_tags = Array[String](["soul", "spirit", "interrupt", "stun"])
-status_tags = Array[String](["stunned"])
-ui_tags = Array[String](["interrupt", "control"])
-debug_tags = Array[String](["prototype", "soul_projectile"])
-design_notes = "Tiny interrupt window. Soul can later become charm, spirit binding, memory, or possession logic."
+roles = Array[String](["control", "utility", "tether", "persistent_link", "spirit"])
+targeting_style = "aimed"
+delivery_type = "projectile_actor_link"
+combo_tags = Array[String](["soul", "spirit", "thread", "link", "tether", "setup"])
+status_tags = Array[String]([])
+ui_tags = Array[String](["control", "persistent", "single_target", "setup"])
+debug_tags = Array[String](["matrix_spell", "persistent_actor_link", "refresh_on_recast", "soft_leash", "boss_scaled"])
+design_notes = "Soul Thread no longer owns stun or stance damage. Its projectile is delivery only. On contact it creates one SoulThreadLink between Grace and the target. The link exposes soul_threaded metadata/group state for future Soul follow-ups, applies a soft physics/velocity leash beyond its slack radius, refreshes instead of stacking, and breaks cleanly on expiry, invalid actors, or excessive range."
 ability_scene = ExtResource("1_scene")
 action_payload = ExtResource("2_payload")

@@ -64,6 +64,14 @@ Examples:
 
 The evaluator rejects a move when the species body plan lacks its required tags. Future body plans can include wings, hands, horns, shells, tentacles, burrowing limbs, multiple heads, incorporeal bodies, or machine components without changing the evaluator.
 
+Locomotion is now resolved as a second capability layer. Ground, swimming, flight, climbing, and burrowing are movement modes; runner, serpentine, hover, and jumper are modifiers or transitions. The shared catalog validates anatomy and dependencies, so species can combine modes without introducing species-specific brain code. See [`ANIMAL_BODY_LOCOMOTION_AND_EFFECTS_V1.md`](ANIMAL_BODY_LOCOMOTION_AND_EFFECTS_V1.md).
+
+## Active-phase effects
+
+A committed execution claims one normalized effect request when it first crosses into the active phase. The request preserves targeting, range, radius, effect data, source lineage, and delivery class. Confirmed contact, area, projectile, status, and buff effects convert into the existing `DamagePayload` contract; movement, recovery, and custom effects remain explicit physical-executor seams.
+
+This keeps move choice, animation timing, target confirmation, and world consequence separate while preserving the project's Actor → Action → Payload → Target → Receiver → Reaction → Consequence grammar.
+
 ## Move policies
 
 A `MobMovePolicy` attaches a shared move to one species or individual with contextual rules.
@@ -376,6 +384,11 @@ The regression verifies:
 
 - Shared move identity across species
 - Body-plan validation
+- Ground, swimming, flight, climbing, and burrowing capability resolution
+- Anatomy rejection and locomotion alias normalization
+- Exactly-once active-phase effect claims
+- Startup interruption without an effect
+- DamagePayload conversion and confirmed projectile delivery
 - Wolf standard Bite behavior
 - Sheep Flee and conditional Bite behavior
 - Capybara habitat behavior and defensive Bite
@@ -397,19 +410,17 @@ A reusable watchdog guarantees the smoke test exits with a readable failure when
 
 ## Foundation boundaries
 
-Mob Engine Foundation v1 provides data, policies, evaluation, personality bridging, familiar progression, augmentation, committed move lifecycles, debugging, and compatibility adapters.
+The foundation provides shared data, policies, anatomy and locomotion capability profiles, evaluation, personality bridging, familiar progression, augmentation, committed move lifecycles, normalized effect requests, payload conversion, debugging, and compatibility adapters.
 
-It does not yet provide:
+Runtime layers already build perception, relationships, bonding, navigation-aware following, rescue, and a reusable live ground actor on top of it. Their current limitations are tracked in [`MOB_ENGINE.md`](MOB_ENGINE.md).
 
-- A universal animal body scene
-- Species-specific models or animations
-- Generic perception-to-context conversion
-- Herd, pack, predator-prey, nesting, migration, or territory simulation
-- Food, sleep, mating, aging, or life-cycle simulation
-- Live wolf, sheep, capybara, or gorgon executors
-- Familiar progression menus
-- Species Knowledge unlock integration
-- Capture, bonding, breeding, or genetics
-- Procedural move animation
+The remaining foundation-to-content work is deliberately physical and authored:
 
-Those belong to later runtime, ecology, presentation, and progression layers built on this foundation.
+- Contact volumes and area target collection
+- Projectile spawning and impact confirmation
+- Health, stamina, and drive recovery receivers
+- Swimming, flight, climbing, and burrowing motion executors
+- Species-specific models, animation sets, habitats, and encounters
+- Broader ecology such as nesting, migration, territory, aging, and life cycles
+
+Those systems consume the shared contracts; they should not replace the brain, moveset, locomotion catalog, or payload pipeline.

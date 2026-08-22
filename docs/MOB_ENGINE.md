@@ -22,7 +22,7 @@ The first crossing into the active phase now claims exactly one normalized effec
 
 [`ANIMAL_BODY_LOCOMOTION_AND_EFFECTS_V1.md`](ANIMAL_BODY_LOCOMOTION_AND_EFFECTS_V1.md)
 
-Adds validated ground, swimming, flight, climbing, burrowing, runner, jumper, serpentine, and hover capabilities. Species body tags determine which modes resolve, while aliases let authored data migrate toward the canonical vocabulary. The shared runtime now executes legal mode transitions, environmental-medium checks, planar and volumetric steering, water currents, surface buoyancy, gravity policy, and opt-in gait modifiers. `GenericAnimalActor` exposes its active mode to move policy and uses the existing `SwimmingWaterVolume` hook.
+Adds validated ground, swimming, flight, climbing, burrowing, runner, jumper, serpentine, and hover capabilities. Species body tags determine which modes resolve, while aliases let authored data migrate toward the canonical vocabulary. The shared runtime now executes legal mode transitions, environmental-medium checks, planar and volumetric steering, water currents, surface buoyancy, gravity policy, and opt-in gait modifiers. `GenericAnimalActor` exposes its active mode to move policy and uses the existing `SwimmingWaterVolume` hook. The canonical lab now proves the same actor with a water-only Trout and a Goose that transitions among ground, swimming, flight, and hover capability.
 
 `MobMoveEffectRequest` separates effect timing from physical targeting. `MobEffectTargetResolver` provides authoritative actor-owned targeting with optional generic fallbacks and relation filters. `MobMoveEffectExecutor` handles exactly-once contact, area, projectile, recovery, and custom/executor dispatch. Projectile actions reuse the physical `GenericProjectile`; `MobPayloadBridge` keeps consequences inside the existing `DamagePayload → PayloadReceiver` grammar.
 
@@ -48,7 +48,7 @@ The first executor supports:
 - Contact, area, projectile, and recovery effect execution
 - Species-derived health, stamina, injury-aware decisions, and incapacitation
 - Timed buffs, damage-over-time, control states, and movement modifiers available to move policies
-- Procedural sheep, capybara, and wolf silhouettes
+- Reusable procedural quadruped, waterfowl, and fish prototype bodies
 - Overhead intention, move, health, and drive readouts
 
 ### Perception, memory, and relationships
@@ -69,17 +69,20 @@ Adds stable named-animal identities, durable disk records, inventory-backed Fiel
 
 Adds navigation-aware bonded movement, runtime collision-based navigation baking, dynamic rebaking after debris removal, stuck detection, conservative separation recovery, an injured rescue state, a physical Field Treat pickup, chase detection, and the real weapon damage-payload bridge.
 
-## Relationship laboratory
+## Animal behavior and relationship laboratory
 
 Run:
 
 `res://scenes/levels/prototypes/animal_behavior_lab_v1.tscn`
 
-The relationship lab contains Grace, a sheep, a capybara, and a two-wolf pack.
+The lab contains Grace, Mallow the Sheep, Bramble the Capybara, the Ash/Cinder wolf pack, Juniper the Goose, Ripple the Trout, and one real shared water habitat.
 
 The left on-screen panel provides mouse-clickable and controller-focusable controls for:
 
 - Previous and next animal selection
+- Place compatible selected animals in the pond
+- Launch or land the Goose through the shared locomotion executor
+- Return the selected animal to its authored start
 - Peaceful or threatening Grace posture
 - Feed
 - Soothe
@@ -102,7 +105,7 @@ The right bonding panel provides:
 
 The normal restart input also resets the lab. Raw number and letter shortcuts are not required.
 
-The selected animal is marked with a gold disc. Every animal displays its relationship, current stimulus, intention, move, trust, hunger, fear, and social need overhead.
+The selected animal is marked with a gold disc. Every animal displays its relationship, current stimulus, intention, move, locomotion mode, trust, hunger, fear, and social need overhead. The selected-animal panel also reports height for flight and water testing.
 
 See [`ANIMAL_BEHAVIOR_LAB_TEST.md`](ANIMAL_BEHAVIOR_LAB_TEST.md) for a guided manual test pass.
 
@@ -133,8 +136,8 @@ Clear the debris, heal and feed Juniper, bond her, then lead her through the cou
 - `res://scenes/tests/animal_bonding_persistence_smoke_test.tscn`
 - `res://scenes/tests/wildlife_navigation_rescue_lab_smoke_test.tscn`
 
-The live regressions verify locomotion capability validation, runtime ground/swimming/flight transitions, medium rejection, planar and volumetric steering, water-current sampling, surface buoyancy, gravity handoff, opt-in modifier dependencies, generic-animal water-volume integration, species-derived vitals, damage and recovery, incapacitation, timed status refresh and expiry, policy-visible condition tags, exactly-once contact and area delivery, authoritative target ownership, physical projectile spawning and reset cleanup, physical Graze and Flee execution, visual and auditory perception, timed memory, trust-building interactions, wolf pack alert sharing, inventory-backed feeding, bonding, disk persistence, navigation-aware following, dynamic navmesh rebaking, rescue and healing consequences, real damage payloads, obstacle routing, and separation recovery.
+The live regressions verify locomotion capability validation, runtime ground/swimming/flight transitions including direct air-water transitions, medium rejection, planar and volumetric steering, water-current sampling, surface buoyancy, gravity handoff, opt-in modifier dependencies, generic-animal water-volume integration, authored Goose and Trout bodies, the canonical pond controls and reset modes, species-derived vitals, damage and recovery, incapacitation, timed status refresh and expiry, policy-visible condition tags, exactly-once contact and area delivery, authoritative target ownership, physical projectile spawning and reset cleanup, physical Graze and Flee execution, visual and auditory perception, timed memory, trust-building interactions, wolf pack alert sharing, inventory-backed feeding, bonding, disk persistence, navigation-aware following, dynamic navmesh rebaking, rescue and healing consequences, real damage payloads, obstacle routing, and separation recovery.
 
 ## Next runtime milestone
 
-The shared runtime and generic actor now execute ground, swimming, and flight steering without a species-specific brain; the foundation smoke test proves a winged flyer, a water-only swimmer, and an amphibious capybara against the same contract. Next, author a contrasting flying animal and a true swim habitat inside existing exploration content, then add climbing surface adhesion and burrowing-route adapters when their first authored animals require them. Habitat, relationships, vitals, and physical move effects should be exercised together rather than in another isolated laboratory.
+The shared runtime and generic actor now execute ground, swimming, and flight steering without a species-specific brain. Juniper and Ripple make those contracts playable in the canonical lab alongside amphibious Bramble, with the same moves, drives, vitals, relationships, and reset path. Next, use real climbing and burrowing species in existing exploration content to drive adhesion and route-topology adapters; then expand authored habitats, encounters, and ecology without creating another generic animal framework or isolated laboratory.

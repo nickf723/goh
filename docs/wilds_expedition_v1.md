@@ -1,4 +1,4 @@
-# Wilds Expedition v1
+# Wilds Expedition v1.1
 
 Run:
 

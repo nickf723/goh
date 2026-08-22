@@ -42,7 +42,9 @@ func configure(habitat_id_value: String) -> void:
 
 
 func get_animals() -> Array[GenericAnimalActor]:
-	return animals.duplicate()
+	var result: Array[GenericAnimalActor] = []
+	result.assign(animals)
+	return result
 
 
 func get_species_ids() -> Array[String]:

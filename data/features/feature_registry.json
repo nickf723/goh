@@ -1276,9 +1276,9 @@
       "order": 54,
       "display_name": "Animal Behavior Laboratory",
       "category": "AI Laboratory",
-      "version": "v1.4",
+      "version": "v1.5",
       "status": "development_tool",
-      "description": "Playable Mob Engine laboratory comparing species movesets, continuous personality, drives, committed intentions, action phases, physical effect execution, species-derived vitals, timed conditions, shared ground/swimming/flight runtime, perception, relationships, bonding, persistence, and pack alerts across sheep, capybara, and wolves.",
+      "description": "Playable Mob Engine laboratory comparing data-driven movesets, continuous personality, drives, committed intentions, physical effects, vitals, conditions, perception, relationships, bonding, persistence, and shared ground/swimming/flight locomotion across sheep, capybara, wolves, a Goose, and a Trout in one real water habitat.",
       "scene": "res://scenes/levels/prototypes/animal_behavior_lab_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/animal_behavior_lab_v1.tscn"
@@ -1296,6 +1296,7 @@
         "CAMERA",
         "INTERACT",
         "LAB CONTROLS",
+        "LOCOMOTION HABITAT CONTROLS",
         "RESET"
       ],
       "manual_test": "docs/ANIMAL_BEHAVIOR_LAB_TEST.md",
@@ -1303,7 +1304,7 @@
       "story_integrated": false,
       "limitations": [
         "Procedural animal silhouettes and movement are prototype presentation rather than final models or animation.",
-        "The generic actor now consumes shared ground, swimming, and flight steering, but this lab still presents ground quadrupeds and a decorative shallow pond rather than an authored swimming or flying habitat.",
+        "The shared pond, Goose launch control, and Trout provide a focused locomotion test habitat rather than finished exploration ecology or final encounter space.",
         "Climbing adhesion/contact acquisition and burrowing route topology remain to be proven with authored environment adapters.",
         "Generic contact effects use active-phase reach rather than animation-authored hit volumes; projectile effects reuse the established GenericProjectile.",
         "Pack, herd, predator/prey, summon, and faction ownership remain actor-provider policy."

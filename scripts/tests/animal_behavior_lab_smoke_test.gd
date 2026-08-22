@@ -124,6 +124,7 @@ func run_tests() -> void:
 				mole.global_position.distance_to(mole_start) > 0.2,
 				"Mole physically advances through the authored three-dimensional burrow route"
 			)
+		if goose != null:
 			lab_instance._toggle_goose_flight()
 			_expect(goose.get_active_locomotion_mode() == "flight", "lab control relaunches the same Goose actor")
 			lab_instance._place_selected_in_pond()

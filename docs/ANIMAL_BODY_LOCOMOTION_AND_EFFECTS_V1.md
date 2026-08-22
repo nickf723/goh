@@ -22,6 +22,8 @@ Aliases such as `swimming`, `surface_swim`, `fly`, `climb`, and `burrow` normali
 
 The catalog describes capability, not navigation implementation. Ground navigation, water steering, aerial steering, surface adhesion, and subterranean traversal remain physical executors that consume the same resolved profile.
 
+Moves may require locomotion capabilities independently from anatomy. Pounce requires `jumper`, while Wade requires `swimmer`. This prevents anatomy-only mistakes such as granting aerial moves to a winged animal that cannot fly or tunneling moves to every creature with claws. Species catalog validation checks every moveset against both contracts.
+
 ## Move effect contract
 
 Every committed move owns one execution state with startup, active, and recovery. The first supported trigger is `active_start`. Crossing that boundary claims exactly one effect request, even when a coarse frame advances across the entire active window.
@@ -82,7 +84,7 @@ No new brain class is required for any of these. New locomotion physics plugs in
 ## Invariants
 
 - Species policy chooses a move; executors do not re-roll behavior.
-- Anatomy and locomotion eligibility are validated before runtime.
+- Anatomy, locomotion profiles, and move locomotion requirements are validated before runtime.
 - One execution claims an `active_start` effect at most once.
 - Interruption before the active phase produces no effect request.
 - Contact, area, and projectile delivery require physical target confirmation.

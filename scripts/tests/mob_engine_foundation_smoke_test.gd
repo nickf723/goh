@@ -247,6 +247,15 @@ func _test_mob_conditions() -> void:
 		not bool(conditions.call("has_status", "pack_focus")),
 		"timed mob conditions expire deterministically"
 	)
+	conditions.set("maximum_statuses", 1)
+	conditions.call("apply_status", "pack_focus", 2.0, 1.0, "Howl")
+	conditions.call("apply_status", "wet", 2.0, 1.0, "smoke")
+	_expect(
+		not bool(conditions.call("has_status", "wet")),
+		"canonical status storage remains bounded"
+	)
+	conditions.call("clear_all_statuses")
+	conditions.set("maximum_statuses", 24)
 
 	var status_target := EffectTargetProbe.new()
 	status_target.name = "StatusTarget"

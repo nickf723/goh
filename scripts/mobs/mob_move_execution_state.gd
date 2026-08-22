@@ -162,6 +162,9 @@ func is_impact_window() -> bool:
 func is_effect_request_ready() -> bool:
 	if effect_request_claimed or interrupted:
 		return false
+	var raw_effect: Variant = move_data.get("effect", {})
+	if not raw_effect is Dictionary or (raw_effect as Dictionary).is_empty():
+		return false
 	if str(timing.get("effect_trigger", "active_start")) != "active_start":
 		return false
 	if float(timing.get("active", 0.0)) <= 0.0:

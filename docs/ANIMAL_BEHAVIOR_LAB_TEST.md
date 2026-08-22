@@ -29,11 +29,13 @@ The lab controls live in two on-screen panels. They are mouse-clickable and cont
 ## Effect execution and vitals pass
 
 1. Select Ash or Cinder, switch Grace to **Threatening posture**, and enter the wolf's authored attack reach.
-2. Confirm the wolf commits one active move and Grace receives at most one consequence for that move's request ID; the active window must not repeat the hit every frame.
-3. Step outside Bite reach. Confirm a committed contact effect reports no valid target instead of damaging at a distance.
-4. Watch the overhead **HP** value while a generic animal receives a shared damage payload. Confirm injury changes the decision context and zero health stops new actions.
-5. Use a recovery effect or **Reset Lab**. Confirm positive health can clear incapacitation and Reset restores health, stamina, request memory, and effect counters.
-6. With the two wolves present, confirm pack-support targeting remains same-species. An empty ally result must not fall back to sheep or capybara.
+2. Confirm the wolf commits one active move and Grace receives at most one consequence for that move; the active window must not repeat the hit every frame.
+3. Step outside Bite reach. Confirm a committed contact effect does not damage Grace at a distance.
+4. Confirm every animal now displays an **HP** percentage alongside its drives.
+5. With both wolves present, confirm pack-support behavior remains focused on wolves rather than sheep or capybara.
+6. Use **Reset Lab** and confirm the animals return to full HP without a stale move effect firing after reset.
+
+The foundation smoke test owns the non-visual edge cases: species-scaled damage, health and stamina recovery, incapacitation and revival, duplicate request rejection, range filtering, authoritative empty target providers, area deduplication, and physical projectile spawning.
 
 ## Bonding and persistence pass
 

@@ -20,13 +20,13 @@ A species continues to author simple `body_tags` and `locomotion_tags`. `MobLoco
 
 Aliases such as `swimming`, `surface_swim`, `fly`, `climb`, and `burrow` normalize to canonical capabilities. An authored species must resolve at least one valid mode. Invalid combinations such as flight without wings or levitation fail catalog validation.
 
-The catalog describes capability. `MobLocomotionExecutor` now consumes the resolved profile at runtime. It owns active mode, catalog-legal transitions, environmental medium validation, planar/surface/volumetric direction projection, acceleration and gravity policy, standard water-current sampling, surface buoyancy, explicit gait modifiers, reset, and debug state. It composes under `GenericAnimalActor` as `SwimmingController`, so the established `SwimmingWaterVolume` automatically recognizes compatible animals without creating a water-specific brain.
+The catalog describes capability. `MobLocomotionExecutor` consumes the resolved profile at runtime. It owns active mode, catalog-legal transitions, medium validation, planar/surface/volumetric projection, acceleration and gravity policy, water-current sampling, buoyancy, surface adhesion, route guidance, explicit gait modifiers, reset, and debug state. It composes under `GenericAnimalActor` as `SwimmingController`, so the established `SwimmingWaterVolume` and generic `MobTraversalMedium` automatically recognize compatible animals without creating habitat-specific brains.
 
 Modifiers such as Runner and Hover are supported capabilities, not permanent bonuses. A move or authored state must activate them explicitly, and a mode transition retires modifiers whose dependencies no longer hold. This preserves existing ground movement while leaving gait changes data-driven.
 
-The runtime is a physical steering contract, not a pathfinder or habitat author. Flight accepts true three-dimensional intent; swimming combines three-dimensional intent with water current and surface support; ground stays planar and gravity-driven. Surface normals for climbing, navigable air/water volumes, and subterranean route topology remain authored environment inputs to the same executor.
+The runtime is a physical steering contract, not a habitat author. Flight accepts true three-dimensional intent; swimming combines three-dimensional intent with current and surface support; ground stays planar and gravity-driven. `MobTraversalMedium` is the authored-environment adapter for the remaining cases: it provides a compatible mode and medium tags, optional surface normal and adhesion, and a loopable waypoint route. The same adapter drives a wall-climbing Gecko and a volumetric Mole burrow without knowing either species. Finished airspace, water, climb surfaces, and tunnel layouts remain authored environment inputs rather than universal AI guesses.
 
-Moves may require locomotion capabilities independently from anatomy. Pounce requires `jumper`, while Wade requires `swimmer`. This prevents anatomy-only mistakes such as granting aerial moves to a winged animal that cannot fly or tunneling moves to every creature with claws. Species catalog validation checks every moveset against both contracts. The active runtime mode also enters decision context as `locomotion_mode:<id>`, allowing a Pokémon-like policy to require that a capable creature is currently swimming, flying, climbing, or burrowing.
+Moves may require locomotion capabilities independently from anatomy. Pounce requires `jumper`, Wade requires `swimmer`, Climb requires `climber`, and Burrow requires `burrower`. This prevents anatomy-only mistakes such as granting aerial moves to a winged animal that cannot fly or tunneling moves to every creature with claws. Species catalog validation checks every moveset against both contracts. The active runtime mode also enters decision context as `locomotion_mode:<id>`, allowing a Pokémon-like policy to require that a capable creature is currently swimming, flying, climbing, or burrowing.
 
 ## Move effect contract
 
@@ -92,19 +92,29 @@ Ripple the Trout proves the water-only body plan:
 
 Both actors use reusable procedural prototype bodies and live together in the canonical Animal Behavior Lab's real `SwimmingWaterVolume`. Bramble the Capybara proves the same habitat hook with a ground/swimmer amphibious profile.
 
-A mole can author:
+Mica the Gecko proves surface traversal:
 
-- `body_tags: ["legs", "claws", "digging_limbs", "mouth"]`
+- `body_tags: ["reptile", "mouth", "jaw", "head", "legs", "claws", "adhesive_pads", "tail"]`
+- `locomotion_tags: ["ground", "climber"]`
+- Shared Climb, Flee, Bite, and Idle policies
+- A real collision wall whose traversal medium supplies `vertical_surface`, a world-space normal, adhesion, and a four-waypoint loop
+
+Loam the Mole proves routed volumetric traversal:
+
+- `body_tags: ["mammal", "mouth", "jaw", "head", "legs", "claws", "digging_limbs", "tail"]`
 - `locomotion_tags: ["ground", "burrower"]`
-- Graze, bite, flee, tunnel, or surface-transition policies
+- Shared Burrow, Flee, Bite, and Idle policies
+- A six-waypoint three-dimensional `soil` route inside a visible lab volume
 
-No new brain class is required for any of these. New locomotion physics plugs into the catalogued mode; new moves plug into the shared move/effect contract.
+No new brain class is required for any of these. New species author data; new environments author compatible media and routes; new moves plug into the shared move/effect contract.
 
 ## Invariants
 
 - Species policy chooses a move; executors do not re-roll behavior.
 - Anatomy, locomotion profiles, and move locomotion requirements are validated before runtime.
 - Runtime mode changes must be supported by the profile, legal from the current mode, and compatible with the supplied environmental medium.
+- Traversal placement validates the mode before teleporting; incompatible animals retain both position and active mode.
+- Traversal route state belongs to the medium and restarts with an authored animal reset.
 - Supported modifiers are opt-in and cannot survive a mode that violates their dependencies.
 - One execution claims an `active_start` effect at most once.
 - Interruption before the active phase produces no effect request.

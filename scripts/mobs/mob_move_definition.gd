@@ -94,6 +94,13 @@ func validate() -> Array[String]:
 	for phase_id: String in ["startup", "active", "recovery"]:
 		if timing.has(phase_id) and float(timing[phase_id]) < 0.0:
 			failures.append(move_id + " has negative " + phase_id + " timing")
+	var effect_trigger: String = str(
+		timing.get("effect_trigger", "active_start")
+	).to_lower().strip_edges()
+	if effect_trigger != "active_start":
+		failures.append(move_id + " has unsupported effect trigger " + effect_trigger)
+	if not effect.is_empty() and float(timing.get("active", 0.0)) <= 0.0:
+		failures.append(move_id + " has an effect but no active phase")
 	return failures
 
 

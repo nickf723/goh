@@ -26,6 +26,15 @@ The lab controls live in two on-screen panels. They are mouse-clickable and cont
 4. Threaten Ash or Cinder at close range. Confirm contact moves commit for their authored beat and do not flicker between Bite, Pounce, and Howl every brain interval.
 5. Return to Peaceful posture and confirm the animal resumes ambient decisions only after the active action completes.
 
+## Effect execution and vitals pass
+
+1. Select Ash or Cinder, switch Grace to **Threatening posture**, and enter the wolf's authored attack reach.
+2. Confirm the wolf commits one active move and Grace receives at most one consequence for that move's request ID; the active window must not repeat the hit every frame.
+3. Step outside Bite reach. Confirm a committed contact effect reports no valid target instead of damaging at a distance.
+4. Watch the overhead **HP** value while a generic animal receives a shared damage payload. Confirm injury changes the decision context and zero health stops new actions.
+5. Use a recovery effect or **Reset Lab**. Confirm positive health can clear incapacitation and Reset restores health, stamina, request memory, and effect counters.
+6. With the two wolves present, confirm pack-support targeting remains same-species. An empty ally result must not fall back to sheep or capybara.
+
 ## Bonding and persistence pass
 
 1. Select Mallow and stand near her in Peaceful posture.
@@ -49,7 +58,7 @@ The lab starts with at least six treats. **Add 6 Treats** replenishes the testin
 
 ## Reset behavior
 
-**Reset Lab** and the configured restart input reset positions, drives, perception memory, selection, noise, and Grace's posture. Saved named-animal relationships remain intact.
+**Reset Lab** and the configured restart input reset positions, drives, vitals, effect-request memory, perception memory, selection, noise, and Grace's posture. Saved named-animal relationships remain intact.
 
 Use **Clear This Bond** to reset one animal's relationship deliberately.
 
@@ -62,6 +71,7 @@ Each animal's overhead label shows:
 - Current intention
 - Current action
 - Trust
+- Health
 - Hunger
 - Fear
 - Social need

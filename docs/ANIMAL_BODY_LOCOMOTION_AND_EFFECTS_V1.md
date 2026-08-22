@@ -20,9 +20,13 @@ A species continues to author simple `body_tags` and `locomotion_tags`. `MobLoco
 
 Aliases such as `swimming`, `surface_swim`, `fly`, `climb`, and `burrow` normalize to canonical capabilities. An authored species must resolve at least one valid mode. Invalid combinations such as flight without wings or levitation fail catalog validation.
 
-The catalog describes capability, not navigation implementation. Ground navigation, water steering, aerial steering, surface adhesion, and subterranean traversal remain physical executors that consume the same resolved profile.
+The catalog describes capability. `MobLocomotionExecutor` now consumes the resolved profile at runtime. It owns active mode, catalog-legal transitions, environmental medium validation, planar/surface/volumetric direction projection, acceleration and gravity policy, standard water-current sampling, surface buoyancy, explicit gait modifiers, reset, and debug state. It composes under `GenericAnimalActor` as `SwimmingController`, so the established `SwimmingWaterVolume` automatically recognizes compatible animals without creating a water-specific brain.
 
-Moves may require locomotion capabilities independently from anatomy. Pounce requires `jumper`, while Wade requires `swimmer`. This prevents anatomy-only mistakes such as granting aerial moves to a winged animal that cannot fly or tunneling moves to every creature with claws. Species catalog validation checks every moveset against both contracts.
+Modifiers such as Runner and Hover are supported capabilities, not permanent bonuses. A move or authored state must activate them explicitly, and a mode transition retires modifiers whose dependencies no longer hold. This preserves existing ground movement while leaving gait changes data-driven.
+
+The runtime is a physical steering contract, not a pathfinder or habitat author. Flight accepts true three-dimensional intent; swimming combines three-dimensional intent with water current and surface support; ground stays planar and gravity-driven. Surface normals for climbing, navigable air/water volumes, and subterranean route topology remain authored environment inputs to the same executor.
+
+Moves may require locomotion capabilities independently from anatomy. Pounce requires `jumper`, while Wade requires `swimmer`. This prevents anatomy-only mistakes such as granting aerial moves to a winged animal that cannot fly or tunneling moves to every creature with claws. Species catalog validation checks every moveset against both contracts. The active runtime mode also enters decision context as `locomotion_mode:<id>`, allowing a Pokémon-like policy to require that a capable creature is currently swimming, flying, climbing, or burrowing.
 
 ## Move effect contract
 
@@ -97,6 +101,8 @@ No new brain class is required for any of these. New locomotion physics plugs in
 
 - Species policy chooses a move; executors do not re-roll behavior.
 - Anatomy, locomotion profiles, and move locomotion requirements are validated before runtime.
+- Runtime mode changes must be supported by the profile, legal from the current mode, and compatible with the supplied environmental medium.
+- Supported modifiers are opt-in and cannot survive a mode that violates their dependencies.
 - One execution claims an `active_start` effect at most once.
 - Interruption before the active phase produces no effect request.
 - Contact and area delivery require an eligible in-range target; projectiles require a physical collision impact.

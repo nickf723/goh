@@ -153,6 +153,7 @@ func attempt_bond() -> Dictionary:
 		}
 	bonded = true
 	follow_enabled = true
+	_interrupt_current_action("bonded", true)
 	relationship.trust = maxf(relationship.trust, 0.72)
 	relationship.familiarity = maxf(relationship.familiarity, 0.65)
 	relationship.fear_association = minf(relationship.fear_association, 0.12)
@@ -175,6 +176,7 @@ func toggle_follow() -> Dictionary:
 	if not bonded:
 		return {"ok": false, "error": "animal is not bonded"}
 	follow_enabled = not follow_enabled
+	_interrupt_current_action("follow_mode_changed", true)
 	brain.clear_memory()
 	force_decision(true)
 	persist_named_state(true)

@@ -101,6 +101,8 @@ func run_tests() -> void:
 	_test_wolf_policy()
 	_test_sheep_policy()
 	_test_capybara_policy()
+	_test_gecko_policy()
+	_test_mole_policy()
 	_test_gorgon_policy()
 	_test_personality_adaptation()
 	_test_familiar_progression()
@@ -975,6 +977,84 @@ func _test_capybara_policy() -> void:
 		"context_tags": ["cornered", "threatened"],
 	})
 	_expect(bool(_find_move(cornered_rows, "bite").get("eligible", false)), "cornered capybara may defend itself with Bite")
+
+
+func _test_gecko_policy() -> void:
+	var climbing_rows: Array[Dictionary] = Evaluator.evaluate_species(
+		"gecko",
+		{
+			"target_distance": 0.0,
+			"context_tags": ["safe"],
+			"self_tags": ["locomotion_mode:climber"],
+		}
+	)
+	_expect(
+		bool(_find_move(climbing_rows, "climb").get("eligible", false)),
+		"Gecko unlocks shared Climb while attached to a compatible surface"
+	)
+	var ground_rows: Array[Dictionary] = Evaluator.evaluate_species(
+		"gecko",
+		{
+			"target_distance": 0.0,
+			"context_tags": ["safe"],
+			"self_tags": ["locomotion_mode:ground"],
+		}
+	)
+	_expect(
+		not bool(_find_move(ground_rows, "climb").get("eligible", true)),
+		"Gecko does not select Climb while merely standing on ground"
+	)
+	var threatened_rows: Array[Dictionary] = Evaluator.evaluate_species(
+		"gecko",
+		{
+			"target_distance": 1.0,
+			"context_tags": ["threatened", "predator_near"],
+			"self_tags": ["locomotion_mode:climber"],
+		}
+	)
+	_expect(
+		bool(_find_move(threatened_rows, "flee").get("eligible", false)),
+		"Gecko retains defensive behavior while climbing"
+	)
+
+
+func _test_mole_policy() -> void:
+	var burrowing_rows: Array[Dictionary] = Evaluator.evaluate_species(
+		"mole",
+		{
+			"target_distance": 0.0,
+			"context_tags": ["safe"],
+			"self_tags": ["locomotion_mode:burrower"],
+		}
+	)
+	_expect(
+		bool(_find_move(burrowing_rows, "burrow").get("eligible", false)),
+		"Mole unlocks shared Burrow inside a compatible route"
+	)
+	var ground_rows: Array[Dictionary] = Evaluator.evaluate_species(
+		"mole",
+		{
+			"target_distance": 0.0,
+			"context_tags": ["safe"],
+			"self_tags": ["locomotion_mode:ground"],
+		}
+	)
+	_expect(
+		not bool(_find_move(ground_rows, "burrow").get("eligible", true)),
+		"Mole does not select Burrow without an active burrowing medium"
+	)
+	var threatened_rows: Array[Dictionary] = Evaluator.evaluate_species(
+		"mole",
+		{
+			"target_distance": 1.0,
+			"context_tags": ["threatened", "predator_near"],
+			"self_tags": ["locomotion_mode:burrower"],
+		}
+	)
+	_expect(
+		bool(_find_move(threatened_rows, "flee").get("eligible", false)),
+		"Mole retains defensive behavior while burrowing"
+	)
 
 
 func _test_gorgon_policy() -> void:

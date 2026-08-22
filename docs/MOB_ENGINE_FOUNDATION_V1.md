@@ -398,6 +398,7 @@ The regression verifies:
 - Authoritative target providers and range filtering
 - Exactly-once contact and area payload delivery
 - Physical projectile spawning through `GenericProjectile`
+- In-flight projectile ownership and reset cleanup
 - Executor memory and reset behavior
 - Wolf standard Bite behavior
 - Sheep Flee and conditional Bite behavior

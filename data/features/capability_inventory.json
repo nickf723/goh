@@ -774,7 +774,7 @@
         "contact, area, physical projectile, recovery, executor, and custom effect dispatch",
         "shared DamagePayload and PayloadReceiver bridge for confirmed animal effects",
         "species-derived health, stamina, recovery, incapacitation, revival, and reset",
-        "bounded timed buffs and harmful conditions with policy-visible self tags",
+        "canonical timed buffs, harmful conditions, control states, movement modifiers, damage-over-time, and policy-visible self tags",
         "move eligibility gated independently by anatomy and locomotion capability"
       ],
       "next_use": "Implement live swimming and flight executors for contrasting animals, then prove their habitats, relationships, vitals, and physical moves together in authored exploration content.",

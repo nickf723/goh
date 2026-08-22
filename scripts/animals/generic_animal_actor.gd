@@ -1,10 +1,15 @@
 extends CharacterBody3D
 class_name GenericAnimalActor
 
+const EffectExecutorScript = preload(
+	"res://scripts/mobs/mob_move_effect_executor.gd"
+)
+
 signal action_changed(move_id: String, intention_id: String)
 signal selected_changed(selected: bool)
 signal relationship_changed(label: String, trust: float)
 signal perception_changed(stimulus_kind: String, awareness: float)
+signal action_effect_resolved(move_id: String, result: Dictionary)
 
 @export var species_id: String = "sheep"
 @export var animal_name: String = "Animal"
@@ -16,6 +21,7 @@ signal perception_changed(stimulus_kind: String, awareness: float)
 @export var decision_interval: float = 0.65
 
 var brain: MobBrainComponent
+var effect_executor: MobMoveEffectExecutor
 var perception: AnimalPerceptionMemory
 var relationship: AnimalRelationshipState
 var perception_snapshot: Dictionary = {}
@@ -41,6 +47,7 @@ var flash_time_remaining: float = 0.0
 var alert_broadcast_cooldown: float = 0.0
 var previous_relationship_label: String = ""
 var previous_stimulus_kind: String = ""
+var last_effect_result: Dictionary = {}
 
 
 func _ready() -> void:
@@ -305,11 +312,18 @@ func get_debug_data() -> Dictionary:
 		"relationship": get_relationship_data(),
 		"perception": get_perception_data(),
 		"brain": brain.get_debug_data() if brain != null else {},
+		"effect_executor": (
+			effect_executor.get_debug_data()
+			if effect_executor != null
+			else {}
+		),
+		"last_effect_result": last_effect_result.duplicate(true),
 	}
 
 
 func _build_brain() -> void:
 	brain = MobBrainComponent.new()
+	brain.name = "MobBrainComponent"
 	brain.species_id = species_id
 	brain.personality_profile_id = personality_profile_id
 	brain.automatic_decisions = false
@@ -319,6 +333,55 @@ func _build_brain() -> void:
 	brain.context_provider_path = NodePath("..")
 	brain.move_selected.connect(_on_move_selected)
 	add_child(brain)
+
+	effect_executor = EffectExecutorScript.new() as MobMoveEffectExecutor
+	effect_executor.name = "MobMoveEffectExecutor"
+	effect_executor.target_provider_path = NodePath("..")
+	effect_executor.bind_brain(brain)
+	effect_executor.effect_execution_completed.connect(
+		_on_effect_execution_completed
+	)
+	add_child(effect_executor)
+
+
+func get_mob_effect_targets(request: Dictionary) -> Array[Node]:
+	var targets: Array[Node] = []
+	var target_mode: String = str(
+		request.get("target_mode", "")
+	).to_lower().strip_edges()
+	match target_mode:
+		"self":
+			targets.append(self)
+		"enemy", "area":
+			var grace: Node3D = _get_grace_target()
+			if grace != null:
+				targets.append(grace)
+		"allies":
+			for candidate: Node in get_tree().get_nodes_in_group(
+				"generic_animals"
+			):
+				if candidate == self:
+					continue
+				if str(candidate.get("species_id")) == species_id:
+					targets.append(candidate)
+	return targets
+
+
+func get_mob_effect_origin(_request: Dictionary) -> Vector3:
+	if head_root != null:
+		return head_root.global_position
+	return global_position + Vector3.UP * 0.72
+
+
+func _on_effect_execution_completed(
+	request: Dictionary,
+	result: Dictionary
+) -> void:
+	last_effect_result = result.duplicate(true)
+	action_effect_resolved.emit(
+		str(request.get("move_id", "")),
+		last_effect_result
+	)
 
 
 func _build_social_state() -> void:
@@ -465,6 +528,10 @@ func _on_move_selected(move_id: String, decision: Dictionary) -> void:
 	var execution_action: String = _resolve_execution_action(move_id)
 	var execution_context: Dictionary = {
 		"actor_instance_id": get_instance_id(),
+		"animal_name": animal_name,
+		"source_name": animal_name + " • " + str(
+			decision.get("display_name", move_id)
+		),
 		"decision": decision.duplicate(true),
 	}
 	if execution_action != move_id:

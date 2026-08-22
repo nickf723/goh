@@ -6,6 +6,18 @@ Run:
 
 The lab controls live in two on-screen panels. They are mouse-clickable and controller-focusable, so the test does not depend on raw letter or number shortcuts.
 
+## Locomotion habitat pass
+
+1. Cycle to **Juniper the Goose**. Confirm she begins above the lab in **Flight** mode, steers in three dimensions, and visibly flaps her reusable wing rig.
+2. Press **Launch / Land Goose**. Confirm Juniper switches to **Ground**, falls under gravity, and can resume ground behavior. Press it again and confirm the same actor returns to **Flight**.
+3. Cycle to **Ripple the Trout**. Confirm Ripple begins inside the shared pond in **Swimmer** mode, remains buoyant near the authored surface, responds to the pond current, and animates its reusable tail rig.
+4. Select **Bramble the Capybara** and press **Place in Pond**. Confirm the shared actor changes from **Ground** to **Swimmer** without replacing its brain, moveset, drives, vitals, or relationship. Press **Return Selected** and confirm Ground is restored at Bramble's authored start.
+5. Select Juniper and press **Place in Pond**. Confirm the catalog-legal transition changes her directly from Flight to Swimmer. Press **Launch / Land Goose** to take off from the water.
+6. Select **Mallow the Sheep** and press **Place in Pond**. Confirm the lab rejects the request with a readable “no validated swimming mode” message.
+7. Press **Reset Lab**. Confirm Juniper returns to Flight, Ripple returns to Swimmer inside the pond, all ground animals return to Ground, and the selected-animal readout reports each mode and height.
+
+Movement speeds, acceleration, buoyancy, current strength, and animation cadence are first-pass test values. Record what feels wrong during play; tuning remains a playtest decision rather than a structural test assertion.
+
 ## Perception and relationship pass
 
 1. Select Mallow with **Previous** or **Next** and approach her peacefully from the front.
@@ -35,7 +47,7 @@ The lab controls live in two on-screen panels. They are mouse-clickable and cont
 5. With both wolves present, confirm pack-support behavior remains focused on wolves rather than sheep or capybara; an active Pack Focus condition appears in the overhead status line.
 6. Use **Reset Lab** and confirm the animals return to full HP, timed conditions clear, and no stale move effect fires after reset.
 
-The foundation smoke test owns the non-visual edge cases: species-scaled damage, health and stamina recovery, incapacitation and revival, duplicate request rejection, range filtering, authoritative empty target providers, area deduplication, physical projectile spawning, legal ground/swimming/flight transitions, medium rejection, three-dimensional steering, water-current sampling, surface buoyancy, gravity handoff, and opt-in gait modifiers. It also proves that the generic capybara actor is recognized by the established `SwimmingWaterVolume` hook. The lab pond remains a decorative shallow landmark; a true swimming habitat is deliberately deferred to authored exploration content.
+The foundation smoke test owns the non-visual edge cases: species-scaled damage, health and stamina recovery, incapacitation and revival, duplicate request rejection, range filtering, authoritative empty target providers, area deduplication, physical projectile spawning, legal ground/swimming/flight transitions, direct flight-to-swimming and swimming-to-flight transitions, medium rejection, three-dimensional steering, water-current sampling, surface buoyancy, gravity handoff, and opt-in gait modifiers. The scene smoke test additionally instantiates this canonical lab and verifies all six animals, the real `SwimmingWaterVolume`, Goose and Trout prototype rigs, habitat controls, and reset modes.
 
 ## Bonding and persistence pass
 
@@ -72,6 +84,7 @@ Each animal's overhead label shows:
 - Current stimulus
 - Current intention
 - Current action
+- Active locomotion mode
 - Trust
 - Health
 - Active timed conditions
@@ -84,6 +97,7 @@ The left selected-animal panel additionally shows:
 - Familiarity
 - Awareness
 - Remaining memory duration
+- Active locomotion mode and height
 - Fatigue
 - Curiosity
 - Territorial pressure

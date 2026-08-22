@@ -1276,9 +1276,9 @@
       "order": 54,
       "display_name": "Animal Behavior Laboratory",
       "category": "AI Laboratory",
-      "version": "v1.2",
+      "version": "v1.3",
       "status": "development_tool",
-      "description": "Playable Mob Engine laboratory comparing species movesets, continuous personality, drives, committed intentions, action phases and effect requests, perception, relationships, bonding, persistence, and pack alerts across sheep, capybara, and wolves.",
+      "description": "Playable Mob Engine laboratory comparing species movesets, continuous personality, drives, committed intentions, action phases, physical effect execution, species-derived vitals, perception, relationships, bonding, persistence, and pack alerts across sheep, capybara, and wolves.",
       "scene": "res://scenes/levels/prototypes/animal_behavior_lab_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/animal_behavior_lab_v1.tscn"
@@ -1304,7 +1304,8 @@
       "limitations": [
         "Procedural animal silhouettes and movement are prototype presentation rather than final models or animation.",
         "The live generic actor currently presents ground quadrupeds; flying, deep-swimming, climbing, and burrowing executors remain to be proven.",
-        "Shared active-phase effect requests and DamagePayload conversion are implemented; physical contact, area, projectile, and recovery target executors remain to be added to authored animals."
+        "Generic contact effects use active-phase reach rather than animation-authored hit volumes; projectile effects reuse the established GenericProjectile.",
+        "Pack, herd, predator/prey, summon, and faction ownership remain actor-provider policy."
       ],
       "launchable": true,
       "visible_in_launcher": true,

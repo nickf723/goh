@@ -7,6 +7,7 @@ class_name DeathSyphonProjectile
 @export_range(1, 50, 1) var maximum_heal: int = 8
 
 var last_damage_dealt: int = 0
+var last_heal_requested: int = 0
 var last_heal_granted: int = 0
 var total_health_stolen: int = 0
 
@@ -31,6 +32,7 @@ func send_payload_to_target(
 	if last_heal_granted > 0:
 		total_health_stolen += last_heal_granted
 		result["syphon_heal"] = last_heal_granted
+		result["syphon_heal_requested"] = last_heal_requested
 		var message: String = str(result.get("message", ""))
 		var suffix: String = "Grace siphons " + str(last_heal_granted) + " health."
 		result["message"] = suffix if message == "" else message + " " + suffix
@@ -63,25 +65,31 @@ func _resolve_actual_damage(
 
 
 func _grant_syphon_heal(actual_damage: int) -> int:
+	last_heal_requested = 0
 	if actual_damage <= 0 or source_actor == null or not is_instance_valid(source_actor):
 		return 0
 	var raw_heal: int = roundi(float(actual_damage) * maxf(heal_ratio, 0.0))
-	var heal_amount: int = clampi(
+	last_heal_requested = clampi(
 		maxi(raw_heal, minimum_heal),
 		0,
 		maxi(maximum_heal, 1)
 	)
-	if heal_amount <= 0:
+	if last_heal_requested <= 0:
 		return 0
 	if source_actor.is_in_group("player"):
-		GameState.heal(heal_amount)
-		return heal_amount
+		var health_before: int = GameState.get_stat("health")
+		GameState.heal(last_heal_requested)
+		return maxi(GameState.get_stat("health") - health_before, 0)
 	if source_actor.has_method("receive_heal"):
-		source_actor.call("receive_heal", heal_amount, self)
-		return heal_amount
+		var heal_result: Variant = source_actor.call("receive_heal", last_heal_requested, self)
+		if heal_result is int or heal_result is float:
+			return clampi(roundi(float(heal_result)), 0, last_heal_requested)
+		return last_heal_requested
 	if source_actor.has_method("heal"):
-		source_actor.call("heal", heal_amount)
-		return heal_amount
+		var heal_result: Variant = source_actor.call("heal", last_heal_requested)
+		if heal_result is int or heal_result is float:
+			return clampi(roundi(float(heal_result)), 0, last_heal_requested)
+		return last_heal_requested
 	return 0
 
 
@@ -90,9 +98,11 @@ func get_debug_data() -> Dictionary:
 	data["spell"] = "syphon"
 	data["life_drain_contract"] = true
 	data["heals_from_resolved_damage"] = true
+	data["reports_actual_healing"] = true
 	data["direct_damage"] = true
 	data["heal_ratio"] = heal_ratio
 	data["last_damage_dealt"] = last_damage_dealt
+	data["last_heal_requested"] = last_heal_requested
 	data["last_heal_granted"] = last_heal_granted
 	data["total_health_stolen"] = total_health_stolen
 	return data

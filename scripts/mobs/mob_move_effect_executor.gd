@@ -155,6 +155,12 @@ func clear_request_memory() -> void:
 	last_result.clear()
 
 
+func reset_executor() -> void:
+	clear_request_memory()
+	execution_count = 0
+	projectile_count = 0
+
+
 func get_debug_data() -> Dictionary:
 	return {
 		"automatic_execution": automatic_execution,

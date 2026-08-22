@@ -125,7 +125,7 @@
       "launchable": true,
       "visible_in_launcher": true,
       "ci_validate": true,
-      "timeout_seconds": 12
+      "timeout_seconds": 10
     },
     {
       "id": "drowned_bell",
@@ -1313,7 +1313,7 @@
       "launchable": true,
       "visible_in_launcher": true,
       "ci_validate": true,
-      "timeout_seconds": 10
+      "timeout_seconds": 12
     },
     {
       "id": "wildlife_navigation_rescue_lab",

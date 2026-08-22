@@ -16,6 +16,7 @@ var elapsed: float = 0.0
 var total_duration: float = 0.0
 var completed: bool = false
 var interrupted: bool = false
+var effect_request_claimed: bool = false
 var result: Dictionary = {}
 
 
@@ -84,6 +85,8 @@ static func normalize_timing(move: Dictionary) -> Dictionary:
 			PHASE_ACTIVE,
 			PHASE_RECOVERY,
 		]
+	if not authored.has("effect_trigger"):
+		authored["effect_trigger"] = "active_start"
 	return authored
 
 
@@ -156,6 +159,23 @@ func is_impact_window() -> bool:
 	return is_active() and phase == PHASE_ACTIVE
 
 
+func is_effect_request_ready() -> bool:
+	if effect_request_claimed or interrupted:
+		return false
+	if str(timing.get("effect_trigger", "active_start")) != "active_start":
+		return false
+	if float(timing.get("active", 0.0)) <= 0.0:
+		return false
+	return elapsed >= float(timing.get("startup", 0.0))
+
+
+func claim_active_effect() -> bool:
+	if not is_effect_request_ready():
+		return false
+	effect_request_claimed = true
+	return true
+
+
 func get_remaining() -> float:
 	return maxf(total_duration - elapsed, 0.0)
 
@@ -172,6 +192,8 @@ func to_dictionary() -> Dictionary:
 		"total_duration": total_duration,
 		"active": is_active(),
 		"impact_window": is_impact_window(),
+		"effect_request_ready": is_effect_request_ready(),
+		"effect_request_claimed": effect_request_claimed,
 		"completed": completed,
 		"interrupted": interrupted,
 		"result": result.duplicate(true),

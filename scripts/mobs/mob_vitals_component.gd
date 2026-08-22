@@ -104,9 +104,13 @@ func apply_damage(amount: float, source_name: String = "") -> Dictionary:
 	var result: Dictionary = {
 		"ok": true,
 		"message": (
-			(source_name + " deals " if source_name != "" else "")
-			+ str(int(round(applied)))
-			+ " damage."
+			(
+				(source_name + " deals " if source_name != "" else "")
+				+ str(int(round(applied)))
+				+ " damage."
+			)
+			if applied > 0.0
+			else ""
 		),
 		"damage_dealt": applied,
 		"health_before": health_before,

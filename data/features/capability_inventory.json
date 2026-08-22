@@ -717,7 +717,8 @@
         "scripts/animals/bonded_animal_actor.gd",
         "scripts/animals/navigation_bonded_animal_actor.gd",
         "scripts/summons/bonded_familiar_roster.gd",
-        "scripts/combat/status_receiver.gd"
+        "scripts/combat/status_receiver.gd",
+        "scripts/mobs/mob_locomotion_executor.gd"
       ],
       "canonical_scene": "scenes/levels/prototypes/animal_behavior_lab_v1.tscn",
       "aliases": [
@@ -776,11 +777,13 @@
         "shared DamagePayload and PayloadReceiver bridge for confirmed animal effects",
         "species-derived health, stamina, recovery, incapacitation, revival, and reset",
         "canonical timed buffs, harmful conditions, control states, movement modifiers, damage-over-time, and policy-visible self tags",
-        "move eligibility gated independently by anatomy and locomotion capability"
+        "move eligibility gated independently by anatomy and locomotion capability",
+        "runtime mode transitions, medium validation, planar, surface, and volumetric steering, water-current sampling, surface buoyancy, gravity policy, and opt-in gait modifiers"
       ],
-      "next_use": "Implement live swimming and flight executors for contrasting animals, then prove their habitats, relationships, vitals, and physical moves together in authored exploration content.",
+      "next_use": "Author a contrasting flying animal and a true swim habitat inside existing exploration content, then add climbing adhesion and burrowing-route adapters when their first authored animals require them.",
       "limitations": [
-        "The generic animal actor still uses a planar ground executor; swimming, flight, climbing, and burrowing physics are catalogued but not yet rendered in authored gameplay.",
+        "The shared runtime executes ground, swimming, and flight steering, but the canonical lab still presents ground quadrupeds; an authored flying animal and true swim habitat remain.",
+        "Surface projection is available, while climbing adhesion/contact acquisition and burrowing route topology still require authored environment adapters.",
         "Generic contact effects use active-phase range confirmation; animation-owned hit volumes remain an optional precision layer for authored creatures.",
         "Pack, herd, predator/prey, summon, and faction ownership remain actor-provider policy rather than a hard-coded universal faction table."
       ]

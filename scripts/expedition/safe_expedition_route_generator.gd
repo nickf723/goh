@@ -3,6 +3,9 @@ extends "res://scripts/expedition/expedition_route_generator.gd"
 const RegionalStoreScript = preload("res://scripts/expedition/regional_expedition_store.gd")
 const PlannerScript = preload("res://scripts/expedition/route_familiarity_planner.gd")
 const FamiliaritySegmentScript = preload("res://scripts/expedition/familiarity_expedition_segment_3d.gd")
+const WildsAnimalHabitatScript = preload(
+	"res://scripts/expedition/wilds_animal_habitat_encounter.gd"
+)
 
 @export var regional_network_record_path: String = RegionalStoreScript.DEFAULT_RECORD_PATH
 @export var regional_map_scene_path: String = "res://scenes/levels/prototypes/prototype_regional_expedition_map_v1.tscn"
@@ -13,6 +16,7 @@ var regional_arrival_pending: bool = false
 var active_familiarity_plan: Dictionary = {}
 var active_route_state: String = RegionalStoreScript.STATE_DISCOVERED
 var active_route_seed: int = 18890417
+var wildlife_habitats: Array[WildsAnimalHabitatEncounter] = []
 
 
 func _ready() -> void:
@@ -70,6 +74,7 @@ func read_regional_launch_context() -> void:
 func assemble_full_expedition() -> void:
 	if not launched_from_regional_map:
 		super.assemble_full_expedition()
+		_attach_wildlife_habitats()
 		return
 	assemble_regional_route_slice()
 
@@ -121,6 +126,7 @@ func assemble_regional_route_slice() -> void:
 			build_familiarity_optional_branch(segment, modifiers)
 
 	build_regional_east_endpoint(next_socket_transform)
+	_attach_wildlife_habitats()
 	route_valid = validate_regional_route_chain()
 	RecordStoreScript.save_record(route_record, record_path)
 	refresh_status_hud()
@@ -264,7 +270,45 @@ func validate_regional_route_chain() -> bool:
 			return start_marker != null and destination_marker != null
 
 
+func _attach_wildlife_habitats() -> void:
+	wildlife_habitats.clear()
+	for segment: ExpeditionSegment3D in main_segments:
+		if (
+			segment == null
+			or not is_instance_valid(segment)
+			or segment.definition == null
+		):
+			continue
+		var habitat_id_value: String = segment.definition.segment_id
+		if not habitat_id_value in [
+			"cypress_basin",
+			"wet_woodland",
+			"pine_ridge",
+		]:
+			continue
+		var habitat := (
+			WildsAnimalHabitatScript.new()
+			as WildsAnimalHabitatEncounter
+		)
+		segment.add_child(habitat)
+		habitat.configure(habitat_id_value)
+		wildlife_habitats.append(habitat)
+
+
+func get_wildlife_habitats() -> Array[WildsAnimalHabitatEncounter]:
+	return wildlife_habitats.duplicate()
+
+
+func get_wildlife_animal_count() -> int:
+	var result: int = 0
+	for habitat: WildsAnimalHabitatEncounter in wildlife_habitats:
+		if habitat != null and is_instance_valid(habitat):
+			result += habitat.animals.size()
+	return result
+
+
 func clear_generated_route() -> void:
+	wildlife_habitats.clear()
 	clear_player_generated_references()
 	super.clear_generated_route()
 
@@ -456,7 +500,10 @@ func get_regional_node_display_name(node_id: String) -> String:
 
 func get_debug_data() -> Dictionary:
 	if not launched_from_regional_map:
-		return super.get_debug_data()
+		var base_data: Dictionary = super.get_debug_data()
+		base_data["wildlife_habitats"] = wildlife_habitats.size()
+		base_data["wildlife_animals"] = get_wildlife_animal_count()
+		return base_data
 	return {
 		"route": get_selected_regional_route_id(),
 		"state": active_route_state,
@@ -466,4 +513,6 @@ func get_debug_data() -> Dictionary:
 		"signature": str(active_familiarity_plan.get("signature", "")),
 		"origin": str(regional_launch_context.get("origin_node_id", "")),
 		"destination": str(regional_launch_context.get("destination_node_id", "")),
+		"wildlife_habitats": wildlife_habitats.size(),
+		"wildlife_animals": get_wildlife_animal_count(),
 	}

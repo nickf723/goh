@@ -716,7 +716,8 @@
         "scripts/animals/generic_animal_actor.gd",
         "scripts/animals/bonded_animal_actor.gd",
         "scripts/animals/navigation_bonded_animal_actor.gd",
-        "scripts/summons/bonded_familiar_roster.gd"
+        "scripts/summons/bonded_familiar_roster.gd",
+        "scripts/combat/status_receiver.gd"
       ],
       "canonical_scene": "scenes/levels/prototypes/animal_behavior_lab_v1.tscn",
       "aliases": [
@@ -771,7 +772,7 @@
         "validated ground, swimming, flight, climbing, burrowing, and gait capabilities",
         "exactly-once active-phase effect requests",
         "authoritative actor-owned target acquisition with range, radius, line-of-sight, deduplication, and relation-filter seams",
-        "contact, area, physical projectile, recovery, executor, and custom effect dispatch",
+        "contact, area, owned physical projectile, recovery, executor, and custom effect dispatch with reset cleanup",
         "shared DamagePayload and PayloadReceiver bridge for confirmed animal effects",
         "species-derived health, stamina, recovery, incapacitation, revival, and reset",
         "canonical timed buffs, harmful conditions, control states, movement modifiers, damage-over-time, and policy-visible self tags",

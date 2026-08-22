@@ -5,11 +5,11 @@
 [resource]
 script = ExtResource("1_payload")
 amount = 0
-stance_damage = 2
+stance_damage = 0
 element = "soul"
 source_name = "Soul Thread"
-hit_type = "projectile"
-status_effect = "stunned"
-status_duration = 0.35
+hit_type = "actor_link"
+status_effect = ""
+status_duration = 0.0
 status_strength = 1.0
-tags = Array[String](["soul", "spirit", "stun", "interrupt", "magic", "projectile", "control"])
+tags = Array[String](["soul", "spirit", "thread", "link", "tether", "magic", "projectile", "control"])

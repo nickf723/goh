@@ -95,6 +95,11 @@ func run_tests() -> void:
 			_expect(goose.get_active_locomotion_mode() == "ground", "dry landing remains in Ground mode")
 			lab_instance._toggle_goose_flight()
 			_expect(goose.get_active_locomotion_mode() == "flight", "lab control relaunches the same Goose actor")
+			lab_instance._place_selected_in_pond()
+			_expect(goose.get_active_locomotion_mode() == "swimmer", "pond control transitions the live Goose from Flight to Swimmer")
+			_expect(goose.locomotion.medium_available, "swimming Goose receives the authored pond medium")
+			lab_instance._toggle_goose_flight()
+			_expect(goose.get_active_locomotion_mode() == "flight", "live Goose takes off directly from swimming")
 		if trout != null:
 			_expect(trout.get_active_locomotion_mode() == "swimmer", "Trout begins in live swimming mode")
 			_expect(trout.locomotion.medium_available, "Trout is registered inside the real pond medium")

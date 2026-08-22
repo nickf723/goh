@@ -4,6 +4,9 @@ class_name GenericAnimalActor
 const EffectExecutorScript = preload(
 	"res://scripts/mobs/mob_move_effect_executor.gd"
 )
+const VitalsScript = preload(
+	"res://scripts/mobs/mob_vitals_component.gd"
+)
 
 signal action_changed(move_id: String, intention_id: String)
 signal selected_changed(selected: bool)
@@ -22,6 +25,7 @@ signal action_effect_resolved(move_id: String, result: Dictionary)
 
 var brain: MobBrainComponent
 var effect_executor: MobMoveEffectExecutor
+var vitals: MobVitalsComponent
 var perception: AnimalPerceptionMemory
 var relationship: AnimalRelationshipState
 var perception_snapshot: Dictionary = {}
@@ -58,6 +62,7 @@ func _ready() -> void:
 	add_to_group("debuggable")
 	_build_collision()
 	_build_visual()
+	_build_vitals()
 	_build_brain()
 	_build_social_state()
 	decision_time_remaining = randf_range(0.1, decision_interval)
@@ -69,6 +74,14 @@ func _physics_process(delta: float) -> void:
 	decision_time_remaining -= delta
 	wander_time_remaining -= delta
 	alert_broadcast_cooldown = maxf(alert_broadcast_cooldown - delta, 0.0)
+	if vitals != null and vitals.incapacitated:
+		velocity.x = move_toward(velocity.x, 0.0, move_speed * 4.0 * delta)
+		velocity.z = move_toward(velocity.z, 0.0, move_speed * 4.0 * delta)
+		_apply_gravity(delta)
+		move_and_slide()
+		_keep_inside_lab()
+		_update_visual(delta)
+		return
 	_update_perception_and_relationship(delta)
 	if brain != null and brain.has_active_move():
 		var execution: Dictionary = brain.advance_active_move(delta)
@@ -130,6 +143,12 @@ func get_mob_decision_context() -> Dictionary:
 			context_tags.append("alert")
 
 	context_tags.append("relationship_" + relationship_label)
+	if vitals != null:
+		var health_ratio: float = vitals.get_health_ratio()
+		if health_ratio <= 0.65:
+			context_tags.append("injured")
+		if health_ratio <= 0.3:
+			context_tags.append("critical_health")
 	if aware_of_grace and grace_threat:
 		enemy_count = 1
 		if target_distance <= 3.0:
@@ -168,7 +187,11 @@ func get_mob_decision_context() -> Dictionary:
 
 	return {
 		"target_distance": target_distance,
-		"self_health_ratio": 1.0,
+		"self_health_ratio": (
+			vitals.get_health_ratio()
+			if vitals != null
+			else 1.0
+		),
 		"target_health_ratio": 1.0,
 		"ally_count": _same_species_ally_count(),
 		"enemy_count": enemy_count,
@@ -220,6 +243,33 @@ func get_relationship_data() -> Dictionary:
 
 func get_perception_data() -> Dictionary:
 	return perception_snapshot.duplicate(true)
+
+
+func get_vitals_data() -> Dictionary:
+	return vitals.to_dictionary() if vitals != null else {}
+
+
+func receive_damage_payload(payload: Variant) -> Dictionary:
+	if vitals == null:
+		return {"ok": false, "error": "animal vitals unavailable"}
+	var result: Dictionary = vitals.receive_damage_payload(payload)
+	if float(result.get("damage_dealt", 0.0)) > 0.0:
+		_interrupt_current_action("damage_received", true)
+		if species_id in ["wolf", "gorgon"]:
+			set_drive("territorial_pressure", 1.0)
+		else:
+			set_drive("fear", 1.0)
+		decision_time_remaining = 0.0
+	return result
+
+
+func receive_mob_recovery(
+	effect: Dictionary,
+	request: Dictionary = {}
+) -> Dictionary:
+	if vitals == null:
+		return {"ok": false, "error": "animal vitals unavailable"}
+	return vitals.receive_mob_recovery(effect, request)
 
 
 func interact_with_grace(interaction_id: String) -> Dictionary:
@@ -298,6 +348,8 @@ func reset_actor() -> void:
 		brain.reset_drives()
 	if effect_executor != null:
 		effect_executor.reset_executor()
+	if vitals != null:
+		vitals.reset_to_full()
 	last_effect_result.clear()
 	_build_social_state()
 
@@ -315,6 +367,7 @@ func get_debug_data() -> Dictionary:
 		"relationship": get_relationship_data(),
 		"perception": get_perception_data(),
 		"brain": brain.get_debug_data() if brain != null else {},
+		"vitals": get_vitals_data(),
 		"effect_executor": (
 			effect_executor.get_debug_data()
 			if effect_executor != null
@@ -322,6 +375,13 @@ func get_debug_data() -> Dictionary:
 		),
 		"last_effect_result": last_effect_result.duplicate(true),
 	}
+
+
+func _build_vitals() -> void:
+	vitals = VitalsScript.new() as MobVitalsComponent
+	vitals.name = "MobVitalsComponent"
+	vitals.configure(species_id)
+	add_child(vitals)
 
 
 func _build_brain() -> void:
@@ -894,7 +954,10 @@ func _update_visual(delta: float) -> void:
 			+ " • " + current_action_id.replace("_", " ").capitalize()
 			+ "\n" + stimulus.replace("_", " ").capitalize()
 			+ "  Trust " + _signed_percent(relationship.trust if relationship != null else 0.0)
-			+ "\nH " + _percent(get_drive("hunger"))
+			+ "\nHP " + _percent(
+				vitals.get_health_ratio() if vitals != null else 1.0
+			)
+			+ "  H " + _percent(get_drive("hunger"))
 			+ "  F " + _percent(get_drive("fear"))
 			+ "  S " + _percent(get_drive("social_need"))
 		)

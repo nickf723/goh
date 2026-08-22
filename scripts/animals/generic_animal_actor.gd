@@ -10,6 +10,9 @@ const VitalsScript = preload(
 const ConditionScript = preload(
 	"res://scripts/combat/status_receiver.gd"
 )
+const LocomotionExecutorScript = preload(
+	"res://scripts/mobs/mob_locomotion_executor.gd"
+)
 
 signal action_changed(move_id: String, intention_id: String)
 signal selected_changed(selected: bool)
@@ -25,11 +28,13 @@ signal action_effect_resolved(move_id: String, result: Dictionary)
 @export var wander_radius: float = 2.5
 @export var gravity: float = 18.0
 @export var decision_interval: float = 0.65
+@export var initial_locomotion_mode: String = ""
 
 var brain: MobBrainComponent
 var effect_executor: MobMoveEffectExecutor
 var vitals: MobVitalsComponent
 var condition_state: Node
+var locomotion: MobLocomotionExecutor
 var perception: AnimalPerceptionMemory
 var relationship: AnimalRelationshipState
 var perception_snapshot: Dictionary = {}
@@ -56,6 +61,7 @@ var alert_broadcast_cooldown: float = 0.0
 var previous_relationship_label: String = ""
 var previous_stimulus_kind: String = ""
 var last_effect_result: Dictionary = {}
+var last_locomotion_solution: Dictionary = {}
 
 
 func _ready() -> void:
@@ -68,6 +74,7 @@ func _ready() -> void:
 	_build_visual()
 	_build_vitals()
 	_build_conditions()
+	_build_locomotion()
 	_build_brain()
 	_build_social_state()
 	decision_time_remaining = randf_range(0.1, decision_interval)
@@ -104,8 +111,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _halt_for_inactive_state(delta: float) -> void:
-	velocity.x = move_toward(velocity.x, 0.0, move_speed * 4.0 * delta)
-	velocity.z = move_toward(velocity.z, 0.0, move_speed * 4.0 * delta)
+	_resolve_locomotion_velocity(Vector3.ZERO, delta, 1.0)
 	_apply_gravity(delta)
 	move_and_slide()
 	_keep_inside_lab()
@@ -234,7 +240,7 @@ func get_mob_decision_context() -> Dictionary:
 		"ally_count": _same_species_ally_count(),
 		"enemy_count": enemy_count,
 		"context_tags": context_tags,
-		"self_tags": _get_condition_context_tags(),
+		"self_tags": _get_mob_self_tags(),
 		"scalar_values": {
 			"forage_distance": forage_distance,
 			"water_distance": water_distance,
@@ -375,6 +381,15 @@ func _get_condition_context_tags() -> Array[String]:
 	return fallback
 
 
+func _get_mob_self_tags() -> Array[String]:
+	var tags: Array[String] = _get_condition_context_tags()
+	if locomotion != null:
+		for locomotion_tag: String in locomotion.get_context_tags():
+			if not tags.has(locomotion_tag):
+				tags.append(locomotion_tag)
+	return tags
+
+
 func receive_mob_recovery(
 	effect: Dictionary,
 	request: Dictionary = {}
@@ -464,7 +479,10 @@ func reset_actor() -> void:
 		vitals.reset_to_full()
 	if condition_state != null:
 		condition_state.call("clear_all_statuses")
+	if locomotion != null:
+		locomotion.reset_executor()
 	last_effect_result.clear()
+	last_locomotion_solution.clear()
 	_build_social_state()
 
 
@@ -495,8 +513,31 @@ func get_debug_data() -> Dictionary:
 			if effect_executor != null
 			else {}
 		),
+		"locomotion": (
+			locomotion.get_debug_data()
+			if locomotion != null
+			else {}
+		),
 		"last_effect_result": last_effect_result.duplicate(true),
+		"last_locomotion_solution": last_locomotion_solution.duplicate(true),
 	}
+
+
+func _build_locomotion() -> void:
+	locomotion = LocomotionExecutorScript.new() as MobLocomotionExecutor
+	locomotion.name = "SwimmingController"
+	var configuration: Dictionary = locomotion.configure_species(
+		species_id,
+		initial_locomotion_mode
+	)
+	if not bool(configuration.get("ok", false)):
+		push_error(
+			"GenericAnimalActor could not configure locomotion for "
+			+ species_id
+			+ ": "
+			+ str(configuration.get("failures", []))
+		)
+	add_child(locomotion)
 
 
 func _build_vitals() -> void:
@@ -772,7 +813,9 @@ func _execute_current_action(delta: float) -> void:
 		"investigate":
 			direction = _investigate_direction()
 		"flee", "backstep":
-			direction = _flat_direction(global_position - _remembered_grace_position())
+			direction = _movement_direction(
+				global_position - _remembered_grace_position()
+			)
 		"bite", "headbutt", "pounce", "tail_sweep", "stone_gaze", "mire_spit":
 			direction = _direction_to(_remembered_grace_position())
 		"howl":
@@ -788,17 +831,19 @@ func _execute_current_action(delta: float) -> void:
 		speed_multiplier = 0.82
 	elif current_action_id in ["graze", "wade", "idle"]:
 		speed_multiplier = 0.72
-	var target_velocity: Vector3 = (
-		direction
-		* move_speed
-		* speed_multiplier
-		* get_status_movement_multiplier()
-	)
-	velocity.x = move_toward(velocity.x, target_velocity.x, move_speed * 4.0 * delta)
-	velocity.z = move_toward(velocity.z, target_velocity.z, move_speed * 4.0 * delta)
-	if direction.length_squared() > 0.001:
+	_resolve_locomotion_velocity(direction, delta, speed_multiplier)
+	if Vector2(direction.x, direction.z).length_squared() > 0.001:
 		var target_yaw: float = atan2(-direction.x, -direction.z)
-		rotation.y = lerp_angle(rotation.y, target_yaw, clampf(delta * turn_speed, 0.0, 1.0))
+		var locomotion_turn: float = (
+			locomotion.get_turn_multiplier()
+			if locomotion != null
+			else 1.0
+		)
+		rotation.y = lerp_angle(
+			rotation.y,
+			target_yaw,
+			clampf(delta * turn_speed * locomotion_turn, 0.0, 1.0)
+		)
 
 
 func _finish_current_action() -> void:
@@ -852,7 +897,13 @@ func _wander_direction() -> Vector3:
 
 
 func _direction_to(target_position: Vector3) -> Vector3:
-	return _flat_direction(target_position - global_position)
+	return _movement_direction(target_position - global_position)
+
+
+func _movement_direction(offset: Vector3) -> Vector3:
+	if locomotion != null:
+		return locomotion.project_direction(offset)
+	return _flat_direction(offset)
 
 
 func _flat_direction(offset: Vector3) -> Vector3:
@@ -861,6 +912,8 @@ func _flat_direction(offset: Vector3) -> Vector3:
 
 
 func _apply_gravity(delta: float) -> void:
+	if locomotion != null and not locomotion.should_use_gravity():
+		return
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	elif velocity.y < 0.0:
@@ -883,6 +936,62 @@ func _action_duration(move_id: String, effect: Dictionary) -> float:
 		"howl": return 1.4
 		"bite", "headbutt", "pounce", "tail_sweep": return 0.8
 		_: return 1.0
+
+
+func _resolve_locomotion_velocity(
+	direction: Vector3,
+	delta: float,
+	action_speed_multiplier: float
+) -> void:
+	if locomotion == null:
+		var target_velocity: Vector3 = (
+			direction
+			* move_speed
+			* action_speed_multiplier
+			* get_status_movement_multiplier()
+		)
+		velocity.x = move_toward(
+			velocity.x,
+			target_velocity.x,
+			move_speed * 4.0 * delta
+		)
+		velocity.z = move_toward(
+			velocity.z,
+			target_velocity.z,
+			move_speed * 4.0 * delta
+		)
+		return
+	last_locomotion_solution = locomotion.resolve_velocity(
+		direction,
+		velocity,
+		move_speed
+			* action_speed_multiplier
+			* get_status_movement_multiplier(),
+		move_speed * 4.0,
+		delta
+	)
+	var solved_velocity: Variant = last_locomotion_solution.get(
+		"velocity",
+		velocity
+	)
+	if solved_velocity is Vector3:
+		velocity = solved_velocity as Vector3
+
+
+func get_active_locomotion_mode() -> String:
+	return locomotion.active_mode if locomotion != null else "ground"
+
+
+func request_locomotion_mode(
+	mode_id: String,
+	context: Dictionary = {}
+) -> Dictionary:
+	if locomotion == null:
+		return {
+			"ok": false,
+			"error": "animal locomotion executor unavailable",
+		}
+	return locomotion.request_mode(mode_id, context)
 
 
 func _same_species_ally_count() -> int:

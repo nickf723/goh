@@ -11,7 +11,9 @@ var overlay_label: Label
 var mode_label: Label
 var posture_toggle: CheckButton
 var forage_positions: Dictionary = {}
-var water_position: Vector3 = Vector3(6.0, 0.15, -6.5)
+var water_position: Vector3 = Vector3(6.0, 0.72, -6.5)
+var pond_surface_y: float = 1.35
+var pond_volume: SwimmingWaterVolume
 var animal_start_positions: Dictionary = {}
 var noise_position: Vector3 = Vector3.ZERO
 var noise_strength: float = 0.0
@@ -118,7 +120,7 @@ func _build_environment() -> void:
 func _build_lab() -> void:
 	_add_box("Ground", Vector3(28.0, 0.6, 24.0), Vector3(0.0, -0.3, -2.0), Color(0.12, 0.22, 0.16))
 	_add_box("Pasture", Vector3(8.5, 0.08, 7.0), Vector3(-7.5, 0.04, -2.0), Color(0.27, 0.48, 0.18), false)
-	_add_box("Pond", Vector3(8.0, 0.12, 6.0), water_position, Color(0.06, 0.36, 0.58), false)
+	_build_water_habitat()
 	_add_box("WolfRidge", Vector3(8.0, 0.16, 5.5), Vector3(0.0, 0.08, -9.0), Color(0.2, 0.23, 0.27), false)
 	forage_positions["sheep"] = Vector3(-7.0, 0.1, -2.0)
 	forage_positions["capybara"] = Vector3(4.1, 0.1, -3.2)
@@ -126,7 +128,11 @@ func _build_lab() -> void:
 	_add_forage_patch(forage_positions["sheep"] as Vector3, Color(0.52, 0.76, 0.18))
 	_add_forage_patch(forage_positions["capybara"] as Vector3, Color(0.42, 0.66, 0.16))
 	_add_world_label("SHEEP PASTURE", Vector3(-7.5, 0.2, 2.0), Color(0.84, 0.95, 0.66))
-	_add_world_label("CAPYBARA POND", Vector3(6.0, 0.28, -3.0), Color(0.5, 0.86, 1.0))
+	_add_world_label(
+		"SHARED WATER HABITAT",
+		Vector3(6.0, 1.58, -3.0),
+		Color(0.5, 0.86, 1.0)
+	)
 	_add_world_label("WOLF RIDGE", Vector3(0.0, 0.3, -11.1), Color(0.72, 0.78, 0.88))
 	for x: float in [-13.5, 13.5]:
 		_add_box("Boundary", Vector3(0.35, 2.0, 24.0), Vector3(x, 1.0, -2.0), Color(0.12, 0.14, 0.18), true)
@@ -140,11 +146,29 @@ func _spawn_animals() -> void:
 		"Bramble": Vector3(4.3, 0.4, -3.0),
 		"Ash": Vector3(-1.2, 0.4, -8.7),
 		"Cinder": Vector3(1.2, 0.4, -8.7),
+		"Juniper": Vector3(8.0, 4.0, -8.0),
+		"Ripple": Vector3(6.0, 0.72, -6.5),
 	}
 	_spawn_animal("Mallow", "sheep", animal_start_positions["Mallow"] as Vector3, "cautious", 2.1)
 	_spawn_animal("Bramble", "capybara", animal_start_positions["Bramble"] as Vector3, "balanced", 2.0)
 	_spawn_animal("Ash", "wolf", animal_start_positions["Ash"] as Vector3, "balanced", 2.75)
 	_spawn_animal("Cinder", "wolf", animal_start_positions["Cinder"] as Vector3, "bold", 2.9)
+	_spawn_animal(
+		"Juniper",
+		"goose",
+		animal_start_positions["Juniper"] as Vector3,
+		"bold",
+		2.45,
+		"flight"
+	)
+	_spawn_animal(
+		"Ripple",
+		"trout",
+		animal_start_positions["Ripple"] as Vector3,
+		"cautious",
+		1.9,
+		"swimmer"
+	)
 
 
 func _spawn_animal(
@@ -152,13 +176,15 @@ func _spawn_animal(
 	species: String,
 	position_value: Vector3,
 	profile: String,
-	speed: float
+	speed: float,
+	initial_mode: String = ""
 ) -> void:
 	var animal := AnimalScript.new() as GenericAnimalActor
 	animal.animal_name = name_value
 	animal.species_id = species
 	animal.personality_profile_id = profile
 	animal.move_speed = speed
+	animal.initial_locomotion_mode = initial_mode
 	animal.position = position_value
 	add_child(animal)
 	animals.append(animal)
@@ -205,6 +231,33 @@ func _build_overlay() -> void:
 	box.add_child(selection_row)
 	_add_button(selection_row, "◀ Previous", Callable(self, "_select_relative").bind(-1))
 	_add_button(selection_row, "Next ▶", Callable(self, "_select_relative").bind(1))
+
+	var locomotion_label := Label.new()
+	locomotion_label.text = "Locomotion habitat"
+	locomotion_label.add_theme_color_override(
+		"font_color",
+		Color(0.58, 0.9, 1.0)
+	)
+	box.add_child(locomotion_label)
+	var locomotion_grid := GridContainer.new()
+	locomotion_grid.columns = 3
+	box.add_child(locomotion_grid)
+	_add_button(
+		locomotion_grid,
+		"Place in Pond",
+		Callable(self, "_place_selected_in_pond")
+	)
+	_add_button(
+		locomotion_grid,
+		"Launch / Land Goose",
+		Callable(self, "_toggle_goose_flight")
+	)
+	_add_button(
+		locomotion_grid,
+		"Return Selected",
+		Callable(self, "_return_selected_home")
+	)
+
 	posture_toggle = CheckButton.new()
 	posture_toggle.text = "Grace threatening posture"
 	posture_toggle.focus_mode = Control.FOCUS_ALL
@@ -280,6 +333,8 @@ func _update_overlay() -> void:
 		+ "   Memory " + str(snappedf(float(perception_data.get("memory_remaining", 0.0)), 0.1)) + "s"
 		+ "\nIntention: " + animal.current_intention_id.capitalize()
 		+ "   Action: " + animal.current_action_id.replace("_", " ").capitalize()
+		+ "\nMode: " + animal.get_active_locomotion_mode().capitalize()
+		+ "   Height " + str(snappedf(animal.global_position.y, 0.1))
 		+ "\nHunger " + _percent(animal.get_drive("hunger"))
 		+ "   Fatigue " + _percent(animal.get_drive("fatigue"))
 		+ "   Fear " + _percent(animal.get_drive("fear"))
@@ -310,6 +365,93 @@ func _selected_animal() -> GenericAnimalActor:
 	if animals.is_empty() or selected_index < 0 or selected_index >= animals.size():
 		return null
 	return animals[selected_index]
+
+
+func _place_selected_in_pond() -> void:
+	var animal: GenericAnimalActor = _selected_animal()
+	if animal == null or pond_volume == null:
+		return
+	if animal.locomotion == null or not animal.locomotion.supports_mode(
+		"swimmer"
+	):
+		_show_message(
+			animal.animal_name + " has no validated swimming mode."
+		)
+		return
+	animal.global_position = water_position + Vector3(
+		randf_range(-1.2, 1.2),
+		0.0,
+		randf_range(-1.0, 1.0)
+	)
+	animal.velocity = Vector3.ZERO
+	animal.locomotion.enter_water(pond_volume)
+	animal.decision_time_remaining = 0.0
+	_show_message(
+		animal.animal_name
+		+ " entered the pond in "
+		+ animal.get_active_locomotion_mode().capitalize()
+		+ " mode."
+	)
+
+
+func _toggle_goose_flight() -> void:
+	var goose: GenericAnimalActor = _find_species_animal("goose")
+	if goose == null or goose.locomotion == null:
+		_show_message("No generic Goose actor is available.")
+		return
+	var next_mode: String = (
+		"ground"
+		if goose.get_active_locomotion_mode() == "flight"
+		else "flight"
+	)
+	var medium_tags: Array[String] = (
+		["land"]
+		if next_mode == "ground"
+		else ["air"]
+	)
+	var result: Dictionary = goose.request_locomotion_mode(
+		next_mode,
+		{
+			"medium_tags": medium_tags,
+			"reason": "animal_lab_control",
+		}
+	)
+	if not bool(result.get("ok", false)):
+		_show_message(
+			"Goose locomotion rejected: "
+			+ str(result.get("error", "unknown transition"))
+		)
+		return
+	if next_mode == "flight":
+		goose.global_position.y = maxf(
+			goose.global_position.y,
+			pond_surface_y + 0.45
+		)
+		goose.wander_time_remaining = 0.0
+	goose.velocity = Vector3.ZERO
+	_select_animal(animals.find(goose))
+	_show_message(
+		goose.animal_name
+		+ (" launched into flight." if next_mode == "flight" else " is landing under gravity.")
+	)
+
+
+func _return_selected_home() -> void:
+	var animal: GenericAnimalActor = _selected_animal()
+	if animal == null:
+		return
+	animal.reset_actor()
+	_register_initial_water_medium(animal)
+	_show_message(animal.animal_name + " returned to its authored start.")
+
+
+func _find_species_animal(
+	requested_species_id: String
+) -> GenericAnimalActor:
+	for animal: GenericAnimalActor in animals:
+		if animal.species_id == requested_species_id:
+			return animal
+	return null
 
 
 func _on_posture_toggled(value: bool) -> void:
@@ -384,6 +526,7 @@ func _reset_lab() -> void:
 		posture_toggle.set_pressed_no_signal(false)
 	for animal: GenericAnimalActor in animals:
 		animal.reset_actor()
+		_register_initial_water_medium(animal)
 	if player != null:
 		player.global_position = Vector3(0.0, 1.1, 7.5)
 		if player is CharacterBody3D:
@@ -393,11 +536,93 @@ func _reset_lab() -> void:
 
 
 func _update_objective() -> void:
-	var objective: String = "Approach the animals peacefully, make noise, or use the lab panel to feed, soothe, startle, and inspect their memory and trust."
+	var objective: String = "Compare ground, swimming, and flight animals; use the habitat controls, then test moves, threat, trust, bonding, and reset."
 	GameState.set_objective(objective)
 	var game_ui: Node = get_tree().get_first_node_in_group("game_ui")
 	if game_ui != null and game_ui.has_method("set_objective"):
 		game_ui.call("set_objective", objective)
+
+
+func _build_water_habitat() -> void:
+	pond_volume = SwimmingWaterVolume.new()
+	pond_volume.name = "SharedAnimalPond"
+	pond_volume.position = Vector3(
+		water_position.x,
+		pond_surface_y * 0.5,
+		water_position.z
+	)
+	pond_volume.surface_height_offset = pond_surface_y * 0.5
+	pond_volume.current_velocity = Vector3(-0.18, 0.0, 0.06)
+	pond_volume.swirl_strength = 0.12
+	pond_volume.inward_strength = 0.08
+
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(8.0, pond_surface_y, 6.0)
+	collision.shape = shape
+	pond_volume.add_child(collision)
+
+	var water := MeshInstance3D.new()
+	var water_mesh := BoxMesh.new()
+	water_mesh.size = shape.size
+	water.mesh = water_mesh
+	var water_material := StandardMaterial3D.new()
+	water_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	water_material.albedo_color = Color(0.05, 0.42, 0.64, 0.48)
+	water_material.roughness = 0.22
+	water_material.metallic = 0.08
+	water_material.emission_enabled = true
+	water_material.emission = Color(0.02, 0.2, 0.34)
+	water_material.emission_energy_multiplier = 0.32
+	water.material_override = water_material
+	pond_volume.add_child(water)
+	add_child(pond_volume)
+
+	var bank_color := Color(0.18, 0.24, 0.2)
+	_add_box(
+		"PondBankLeft",
+		Vector3(0.35, 1.35, 6.4),
+		Vector3(1.85, 0.68, -6.5),
+		bank_color
+	)
+	_add_box(
+		"PondBankRight",
+		Vector3(0.35, 1.35, 6.4),
+		Vector3(10.15, 0.68, -6.5),
+		bank_color
+	)
+	_add_box(
+		"PondBankRear",
+		Vector3(8.65, 1.35, 0.35),
+		Vector3(6.0, 0.68, -9.65),
+		bank_color
+	)
+	for side: float in [-1.0, 1.0]:
+		_add_box(
+			"PondBankFront",
+			Vector3(2.1, 0.55, 0.35),
+			Vector3(6.0 + side * 3.0, 0.28, -3.35),
+			bank_color
+		)
+
+
+func _register_initial_water_medium(
+	animal: GenericAnimalActor
+) -> void:
+	if (
+		pond_volume == null
+		or animal == null
+		or animal.locomotion == null
+		or not animal.locomotion.supports_mode("swimmer")
+	):
+		return
+	if (
+		pond_volume.contains_horizontal_position(
+			animal.global_position
+		)
+		and animal.global_position.y <= pond_surface_y
+	):
+		animal.locomotion.enter_water(pond_volume)
 
 
 func _add_box(

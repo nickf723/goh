@@ -1197,9 +1197,9 @@
       "order": 52,
       "display_name": "Wilds Expedition",
       "category": "Exploration Prototype",
-      "version": "v1",
+      "version": "v1.1",
       "status": "experimental",
-      "description": "Five-segment outdoor expedition from cypress basin through wet woodland and longleaf ridge toward foothills and Blue Ridge forest, with authored early segments, route familiarity, optional discovery, checkpoints, and shared regional state.",
+      "description": "Five-segment outdoor expedition from cypress basin through wet woodland and longleaf ridge toward foothills and Blue Ridge forest, with authored early segments, route familiarity, optional discovery, checkpoints, shared regional state, and four live animals using reusable water, climbing, and burrowing habitats.",
       "scene": "res://scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn"
@@ -1210,7 +1210,8 @@
         "res://scenes/tests/authored_wilds_segments_smoke_test.tscn"
       ],
       "dependencies": [
-        "systems_integration_hub"
+        "systems_integration_hub",
+        "animal_behavior_lab"
       ],
       "controls": [
         "MOVE",
@@ -1228,12 +1229,13 @@
       "limitations": [
         "Only Cypress Basin, Wet Woodland, and Pine Ridge have authored layout passes.",
         "Rocky Foothill Camp and Blue Ridge forest remain prototype route segments.",
-        "Regional presentation and traversal assets remain replacement-ready."
+        "Regional presentation and traversal assets remain replacement-ready.",
+        "The four field animals prove authored Mob Engine integration; their procedural bodies, habitat placement, and ambient population are prototype presentation rather than final regional ecology."
       ],
       "launchable": true,
       "visible_in_launcher": true,
       "ci_validate": true,
-      "timeout_seconds": 10
+      "timeout_seconds": 14
     },
     {
       "id": "regional_expedition_map",

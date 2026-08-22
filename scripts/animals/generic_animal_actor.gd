@@ -1117,6 +1117,16 @@ func _build_collision() -> void:
 		shape.height = 0.92
 		collision.rotation_degrees.x = 90.0
 		collision.position.y = 0.52
+	elif species_id == "gecko":
+		shape.radius = 0.2
+		shape.height = 0.72
+		collision.rotation_degrees.x = 90.0
+		collision.position.y = 0.34
+	elif species_id == "mole":
+		shape.radius = 0.28
+		shape.height = 0.78
+		collision.rotation_degrees.x = 90.0
+		collision.position.y = 0.38
 	elif species_id == "goose":
 		shape.radius = 0.32
 		shape.height = 1.05
@@ -1159,6 +1169,14 @@ func _build_visual() -> void:
 			body_material.albedo_color = Color(0.28, 0.52, 0.58)
 			accent_material.albedo_color = Color(0.08, 0.22, 0.26)
 			_build_trout()
+		"gecko":
+			body_material.albedo_color = Color(0.38, 0.72, 0.3)
+			accent_material.albedo_color = Color(0.8, 0.9, 0.34)
+			_build_gecko()
+		"mole":
+			body_material.albedo_color = Color(0.2, 0.16, 0.14)
+			accent_material.albedo_color = Color(0.72, 0.46, 0.34)
+			_build_mole()
 		_:
 			body_material.albedo_color = Color(0.45, 0.48, 0.5)
 			accent_material.albedo_color = Color(0.12, 0.14, 0.16)
@@ -1182,7 +1200,7 @@ func _build_visual() -> void:
 	state_label = Label3D.new()
 	state_label.position = Vector3(
 		0.0,
-		1.55 if species_id == "trout" else 2.05,
+		1.45 if species_id in ["trout", "gecko", "mole"] else 2.05,
 		0.0
 	)
 	state_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -1258,6 +1276,129 @@ func _build_quadruped(
 		tail.rotation_degrees.x = -20.0
 		tail.material_override = body_material
 		visual_root.add_child(tail)
+
+
+func _build_gecko() -> void:
+	var body := MeshInstance3D.new()
+	var body_mesh := SphereMesh.new()
+	body_mesh.radius = 0.36
+	body_mesh.height = 0.72
+	body.mesh = body_mesh
+	body.scale = Vector3(0.62, 0.38, 1.25)
+	body.position = Vector3(0.0, 0.34, 0.02)
+	body.material_override = body_material
+	visual_root.add_child(body)
+
+	head_root = Node3D.new()
+	head_root.position = Vector3(0.0, 0.38, -0.48)
+	visual_root.add_child(head_root)
+	var head := MeshInstance3D.new()
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.25
+	head_mesh.height = 0.5
+	head.mesh = head_mesh
+	head.scale = Vector3(0.9, 0.65, 1.0)
+	head.material_override = body_material
+	head_root.add_child(head)
+	for side: float in [-1.0, 1.0]:
+		var eye := MeshInstance3D.new()
+		var eye_mesh := SphereMesh.new()
+		eye_mesh.radius = 0.055
+		eye_mesh.height = 0.11
+		eye.mesh = eye_mesh
+		eye.position = Vector3(side * 0.14, 0.1, -0.18)
+		eye.material_override = accent_material
+		head_root.add_child(eye)
+		for z: float in [-0.22, 0.25]:
+			var leg := MeshInstance3D.new()
+			var leg_mesh := CylinderMesh.new()
+			leg_mesh.top_radius = 0.035
+			leg_mesh.bottom_radius = 0.05
+			leg_mesh.height = 0.38
+			leg.mesh = leg_mesh
+			leg.position = Vector3(side * 0.34, 0.22, z)
+			leg.rotation_degrees.z = side * 68.0
+			leg.material_override = body_material
+			visual_root.add_child(leg)
+			var pad := MeshInstance3D.new()
+			var pad_mesh := SphereMesh.new()
+			pad_mesh.radius = 0.07
+			pad_mesh.height = 0.08
+			pad.mesh = pad_mesh
+			pad.scale = Vector3(1.3, 0.45, 0.8)
+			pad.position = Vector3(side * 0.52, 0.17, z)
+			pad.material_override = accent_material
+			visual_root.add_child(pad)
+
+	tail_root = Node3D.new()
+	tail_root.position = Vector3(0.0, 0.34, 0.5)
+	visual_root.add_child(tail_root)
+	var tail := MeshInstance3D.new()
+	var tail_mesh := CylinderMesh.new()
+	tail_mesh.top_radius = 0.045
+	tail_mesh.bottom_radius = 0.11
+	tail_mesh.height = 0.78
+	tail.mesh = tail_mesh
+	tail.position.z = 0.34
+	tail.rotation_degrees.x = 90.0
+	tail.material_override = body_material
+	tail_root.add_child(tail)
+
+
+func _build_mole() -> void:
+	var body := MeshInstance3D.new()
+	var body_mesh := SphereMesh.new()
+	body_mesh.radius = 0.38
+	body_mesh.height = 0.76
+	body.mesh = body_mesh
+	body.scale = Vector3(0.78, 0.62, 1.18)
+	body.position = Vector3(0.0, 0.38, 0.02)
+	body.material_override = body_material
+	visual_root.add_child(body)
+
+	head_root = Node3D.new()
+	head_root.position = Vector3(0.0, 0.4, -0.48)
+	visual_root.add_child(head_root)
+	var head := MeshInstance3D.new()
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.27
+	head_mesh.height = 0.54
+	head.mesh = head_mesh
+	head.scale = Vector3(0.9, 0.72, 1.12)
+	head.material_override = body_material
+	head_root.add_child(head)
+	var snout := MeshInstance3D.new()
+	var snout_mesh := SphereMesh.new()
+	snout_mesh.radius = 0.1
+	snout_mesh.height = 0.2
+	snout.mesh = snout_mesh
+	snout.scale = Vector3(0.75, 0.65, 1.25)
+	snout.position = Vector3(0.0, -0.02, -0.28)
+	snout.material_override = accent_material
+	head_root.add_child(snout)
+	for side: float in [-1.0, 1.0]:
+		var paw := MeshInstance3D.new()
+		var paw_mesh := PrismMesh.new()
+		paw_mesh.size = Vector3(0.2, 0.08, 0.28)
+		paw.mesh = paw_mesh
+		paw.position = Vector3(side * 0.28, 0.18, -0.28)
+		paw.rotation_degrees.y = side * -12.0
+		paw.material_override = accent_material
+		visual_root.add_child(paw)
+
+	tail_root = Node3D.new()
+	tail_root.position = Vector3(0.0, 0.38, 0.46)
+	visual_root.add_child(tail_root)
+	var tail := MeshInstance3D.new()
+	var tail_mesh := CylinderMesh.new()
+	tail_mesh.top_radius = 0.025
+	tail_mesh.bottom_radius = 0.045
+	tail_mesh.height = 0.38
+	tail.mesh = tail_mesh
+	tail.position.z = 0.18
+	tail.rotation_degrees.x = 90.0
+	tail.material_override = accent_material
+	tail_root.add_child(tail)
 
 
 func _build_goose() -> void:

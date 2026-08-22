@@ -1,6 +1,6 @@
 # Grace of Humanity Repository Audit
 
-Last consolidated: 2026-07-27
+Last consolidated: 2026-08-22
 
 This document is the planning-level inventory for the playable prototype. Read it before proposing a new mechanic, laboratory, quest framework, or integration milestone.
 
@@ -155,6 +155,22 @@ Canonical reusable pieces:
 - Persistent aftermath
 
 Do not propose a generic quest director, encounter sequencer, reward bundle, world-state variant system, or quest journal as new work.
+
+### Animals and Mob Engine
+
+Owner areas:
+
+```text
+scripts/mobs/
+scripts/animals/
+scripts/summons/bonded_familiar_roster.gd
+```
+
+Implemented capabilities include shared move definitions, species policies, body-plan eligibility, personality-shaped utility scoring, drives, committed intentions, startup/active/recovery timing, phase-aware interruption, perception and memory, same-species alerts, Grace relationships, persistent bonding, familiar loadouts, navigation-aware commands, rescue state, and stuck recovery.
+
+Seed moves cover ambient, forage, retreat, contact, gap-closing, support, projectile, habitat, control, and area-action families. Seed species are Wolf, Sheep, Capybara, Gorgon, and Gremlin. The reusable live animal actor currently presents Sheep, Capybara, and Wolf.
+
+Do not propose animal movesets, animal personality, bonding, familiar commands, or a generic animal AI foundation as new mechanics. The next extension is shared active-phase payload delivery followed by authored use across contrasting ground, swimming, flying, and burrowing body plans.
 
 ### Enemy AI
 

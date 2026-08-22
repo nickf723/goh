@@ -85,7 +85,7 @@ static func build_payload_data(
 ) -> Dictionary:
 	var effect: Dictionary = _dictionary(move_data.get("effect", {}))
 	var effect_kind: String = str(effect.get("kind", "")).to_lower().strip_edges()
-	if not effect_kind in ["damage", "area_damage", "projectile", "status", "buff"]:
+	if not ["damage", "area_damage", "projectile", "status", "buff"].has(effect_kind):
 		return {}
 	var statuses: Array[Dictionary] = _dictionary_array(effect.get("statuses", []))
 	var status_id: String = str(effect.get("status", ""))

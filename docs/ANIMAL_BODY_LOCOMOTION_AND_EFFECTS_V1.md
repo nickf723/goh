@@ -67,7 +67,9 @@ Delivery classes separate decision timing from physical execution:
 
 `MobVitalsComponent` gives any species a reusable health, stamina, recovery, and incapacitation state. Maximum health is derived from `MobSpeciesDefinition.base_stats`; callers may override health or stamina without changing the component. It accepts the shared `DamagePayload` grammar, accepts recovery effect dictionaries, reports exact applied amounts, supports stamina spending, and can revive an incapacitated actor when health rises above zero.
 
-`GenericAnimalActor` composes the vitals and effect-executor components. Its decision context now uses real health ratio and injury tags, hostile payloads interrupt the current action and raise a survival response, zero health stops decisions and horizontal action, Graze reaches the shared recovery receiver, and a lab reset restores vitals and exactly-once execution state.
+`MobConditionComponent` is the reusable `StatusReceiver` for animals. It retains timed buffs and harmful conditions, refreshes duration without weakening a stronger application, exposes condition IDs as policy-ready self tags, enforces a bounded condition count, and removes expired or reset state deterministically. Primary payload statuses such as Wet and Pack Focus are retained by the actor; additional augment riders such as Poison continue through the existing `StatusReceiver` seam.
+
+`GenericAnimalActor` composes the vitals, condition, and effect-executor components. Its decision context now uses real health ratio, injury tags, and active condition tags; hostile payloads interrupt the current action and raise a survival response; zero health stops decisions and horizontal action; Graze reaches the shared recovery receiver; and a lab reset restores vitals, conditions, and exactly-once execution state.
 
 ## Authoring examples
 
@@ -102,5 +104,6 @@ No new brain class is required for any of these. New locomotion physics plugs in
 - A request ID cannot apply its consequence twice, including after a failed target lookup.
 - Projectile payloads never teleport directly to a target.
 - Vitals derive from species data and incapacitation suppresses further action until recovery or reset.
+- Timed conditions are bounded, refresh deterministically, and enter move evaluation through self tags.
 - Existing payload receivers own reactions and consequences.
 - Unknown locomotion tags fail loudly; unknown effect kinds route through the custom executor seam.

@@ -32,6 +32,7 @@ signal action_effect_resolved(move_id: String, result: Dictionary)
 @export var gravity: float = 18.0
 @export var decision_interval: float = 0.65
 @export var initial_locomotion_mode: String = ""
+@export var show_state_label: bool = true
 
 var brain: MobBrainComponent
 var effect_executor: MobMoveEffectExecutor
@@ -1208,6 +1209,7 @@ func _build_visual() -> void:
 	state_label.pixel_size = 0.006
 	state_label.outline_size = 7
 	state_label.modulate = Color(0.96, 0.96, 0.9)
+	state_label.visible = show_state_label
 	add_child(state_label)
 
 

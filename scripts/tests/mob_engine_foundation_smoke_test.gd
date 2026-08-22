@@ -110,9 +110,30 @@ func _test_catalogs_and_shared_moves() -> void:
 	_expect(MoveCatalog.validate_catalog().is_empty(), "move catalog validates")
 	_expect(SpeciesCatalog.validate_catalog().is_empty(), "species catalog validates")
 	_expect(LocomotionCatalog.validate_catalog().is_empty(), "locomotion catalog validates")
-	_expect(SpeciesCatalog.get_species_ids().size() >= 5, "foundation seeds five contrasting species")
+	_expect(SpeciesCatalog.get_species_ids().size() >= 7, "foundation seeds seven contrasting species")
 	var bite: MobMoveDefinition = MoveCatalog.get_definition("bite")
 	_expect(bite != null, "shared Bite move resolves")
+	var peck: MobMoveDefinition = MoveCatalog.get_definition("peck")
+	_expect(peck != null, "shared Peck move resolves")
+	if peck != null:
+		_expect(peck.required_body_tags.has("beak"), "Peck is gated by reusable beak anatomy")
+	_expect(AbilityCatalog.get_move_definition("goose", "peck") != null, "Goose resolves shared Peck")
+	_expect(AbilityCatalog.get_move_definition("trout", "bite") != null, "Trout resolves shared Bite")
+	var goose_definition: MobSpeciesDefinition = SpeciesCatalog.get_definition("goose")
+	var trout_definition: MobSpeciesDefinition = SpeciesCatalog.get_definition("trout")
+	_expect(
+		goose_definition != null
+		and goose_definition.supports_locomotion("ground")
+		and goose_definition.supports_locomotion("swimmer")
+		and goose_definition.supports_locomotion("flight"),
+		"Goose composes ground, swimming, and flight from one species definition"
+	)
+	_expect(
+		trout_definition != null
+		and trout_definition.supports_locomotion("swimmer")
+		and not trout_definition.supports_locomotion("ground"),
+		"Trout remains a water-only animal without species runtime code"
+	)
 	for species_id: String in ["wolf", "sheep", "capybara", "gorgon", "gremlin"]:
 		var species_bite: MobMoveDefinition = AbilityCatalog.get_move_definition(species_id, "bite")
 		_expect(species_bite != null, species_id + " references shared Bite")
@@ -152,6 +173,16 @@ func _test_locomotion_profiles() -> void:
 	_expect(
 		(bird.get("modes", []) as Array).has("flight"),
 		"flight is exposed as a volumetric movement mode"
+	)
+	var waterfowl: Dictionary = LocomotionCatalog.resolve_profile(
+		["bird", "legs", "wings", "beak", "swimmer"],
+		["ground", "swimmer", "flight", "hover"]
+	)
+	_expect(
+		(waterfowl.get("failures", []) as Array).is_empty()
+		and (waterfowl.get("modes", []) as Array).has("swimmer")
+		and (waterfowl.get("modes", []) as Array).has("flight"),
+		"one reusable body profile validates a flying and swimming bird"
 	)
 	var fish: Dictionary = LocomotionCatalog.resolve_profile(
 		["fins", "gills", "mouth"],
@@ -288,6 +319,42 @@ func _test_locomotion_executor() -> void:
 	water.surface_height_offset = 2.0
 	water.current_velocity = Vector3(0.5, 0.0, 0.0)
 	add_child(water)
+	var waterfowl_actor := CharacterBody3D.new()
+	waterfowl_actor.name = "WaterfowlLocomotionProbe"
+	add_child(waterfowl_actor)
+	var waterfowl_executor := (
+		LocomotionExecutorScript.new() as MobLocomotionExecutor
+	)
+	waterfowl_executor.name = "SwimmingController"
+	waterfowl_actor.add_child(waterfowl_executor)
+	var waterfowl_configuration: Dictionary = waterfowl_executor.configure(
+		["bird", "legs", "wings", "beak", "swimmer"],
+		["ground", "swimmer", "flight", "hover"],
+		"flight"
+	)
+	_expect(bool(waterfowl_configuration.get("ok", false)), "waterfowl runtime begins with every authored mode validated")
+	var water_entry: Dictionary = waterfowl_executor.request_mode("swimmer", {
+		"medium_tags": ["water"],
+		"require_medium": true,
+		"water_volume": water,
+		"reason": "smoke_dive",
+	})
+	_expect(
+		bool(water_entry.get("ok", false))
+		and waterfowl_executor.active_mode == "swimmer",
+		"shared runtime transitions a waterfowl directly from flight to swimming"
+	)
+	var water_takeoff: Dictionary = waterfowl_executor.request_mode("flight", {
+		"medium_tags": ["air"],
+		"require_medium": true,
+		"reason": "smoke_takeoff",
+	})
+	_expect(
+		bool(water_takeoff.get("ok", false))
+		and waterfowl_executor.active_mode == "flight",
+		"shared runtime transitions the same waterfowl back into flight"
+	)
+
 	var swimmer := CharacterBody3D.new()
 	swimmer.name = "SwimmingLocomotionProbe"
 	swimmer.position = Vector3(0.0, -1.2, 0.0)
@@ -363,6 +430,7 @@ func _test_locomotion_executor() -> void:
 
 	capybara.queue_free()
 	swimmer.queue_free()
+	waterfowl_actor.queue_free()
 	flyer.queue_free()
 	water.queue_free()
 

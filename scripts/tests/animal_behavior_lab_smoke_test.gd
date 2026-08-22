@@ -63,9 +63,11 @@ func run_tests() -> void:
 		add_child(lab_instance)
 		await get_tree().process_frame
 		var buttons: Array[Node] = lab_instance.find_children("*", "Button", true, false)
-		_expect(buttons.size() >= 13, "playable lab builds locomotion, behavior, and bonding controls")
-		_expect(lab_instance.animals.size() == 6, "canonical lab spawns six contrasting shared-engine animals")
+		_expect(buttons.size() >= 15, "playable lab builds locomotion, behavior, and bonding controls")
+		_expect(lab_instance.animals.size() == 8, "canonical lab spawns eight contrasting shared-engine animals")
 		_expect(lab_instance.pond_volume != null, "canonical lab builds a real SwimmingWaterVolume habitat")
+		_expect(lab_instance.climb_habitat != null, "canonical lab builds a reusable climb medium")
+		_expect(lab_instance.burrow_habitat != null, "canonical lab builds a reusable burrow medium")
 		if lab_instance.pond_volume != null:
 			_expect(
 				is_equal_approx(
@@ -78,6 +80,24 @@ func run_tests() -> void:
 		var trout: GenericAnimalActor = lab_instance._find_species_animal("trout")
 		_expect(goose != null, "canonical lab includes the authored Goose")
 		_expect(trout != null, "canonical lab includes the authored Trout")
+		var gecko: GenericAnimalActor = lab_instance._find_species_animal("gecko")
+		var mole: GenericAnimalActor = lab_instance._find_species_animal("mole")
+		_expect(gecko != null, "canonical lab includes the authored Gecko")
+		_expect(mole != null, "canonical lab includes the authored Mole")
+		var gecko_start: Vector3 = (
+			gecko.global_position if gecko != null else Vector3.ZERO
+		)
+		var mole_start: Vector3 = (
+			mole.global_position if mole != null else Vector3.ZERO
+		)
+		if gecko != null:
+			_expect(gecko.get_active_locomotion_mode() == "climber", "Gecko begins attached to the shared climb medium")
+			_expect(gecko.locomotion.active_traversal_media.size() == 1, "Gecko registers one active traversal medium")
+			_expect(gecko.tail_root != null, "Gecko uses the reusable low reptile presentation")
+		if mole != null:
+			_expect(mole.get_active_locomotion_mode() == "burrower", "Mole begins inside the shared burrow route")
+			_expect(mole.locomotion.active_traversal_media.size() == 1, "Mole registers one active traversal medium")
+			_expect(mole.tail_root != null, "Mole uses the reusable digging mammal presentation")
 		if goose != null:
 			_expect(goose.get_active_locomotion_mode() == "flight", "Goose begins in live flight")
 			_expect(not goose.wing_roots.is_empty(), "Goose uses the reusable winged prototype presentation")
@@ -93,6 +113,17 @@ func run_tests() -> void:
 				await get_tree().physics_frame
 			_expect(goose.global_position.y < airborne_height - 1.0, "landed Goose physically descends under shared gravity")
 			_expect(goose.get_active_locomotion_mode() == "ground", "dry landing remains in Ground mode")
+		if gecko != null:
+			_expect(
+				gecko.global_position.distance_to(gecko_start) > 0.2
+				and gecko.global_position.y > gecko_start.y,
+				"Gecko physically advances upward along the authored wall route"
+			)
+		if mole != null:
+			_expect(
+				mole.global_position.distance_to(mole_start) > 0.2,
+				"Mole physically advances through the authored three-dimensional burrow route"
+			)
 			lab_instance._toggle_goose_flight()
 			_expect(goose.get_active_locomotion_mode() == "flight", "lab control relaunches the same Goose actor")
 			lab_instance._place_selected_in_pond()
@@ -118,11 +149,31 @@ func run_tests() -> void:
 			lab_instance._place_selected_in_pond()
 			_expect(sheep.get_active_locomotion_mode() == "ground", "pond control rejects an animal without swimming anatomy")
 			_expect(sheep.global_position.is_equal_approx(sheep_position), "rejected pond transfer does not teleport the Sheep")
+		if gecko != null:
+			var gecko_position: Vector3 = gecko.global_position
+			lab_instance._select_animal(lab_instance.animals.find(gecko))
+			lab_instance._place_selected_in_traversal("burrower")
+			_expect(gecko.get_active_locomotion_mode() == "climber", "burrow control rejects a Gecko without digging anatomy")
+			_expect(gecko.global_position.is_equal_approx(gecko_position), "rejected burrow transfer does not teleport the Gecko")
+			lab_instance._return_selected_home()
+			_expect(gecko.get_active_locomotion_mode() == "climber", "return control restores Gecko climbing")
+		if mole != null:
+			var mole_position: Vector3 = mole.global_position
+			lab_instance._select_animal(lab_instance.animals.find(mole))
+			lab_instance._place_selected_in_traversal("climber")
+			_expect(mole.get_active_locomotion_mode() == "burrower", "climb control rejects a Mole without climbing anatomy")
+			_expect(mole.global_position.is_equal_approx(mole_position), "rejected climb transfer does not teleport the Mole")
+			lab_instance._return_selected_home()
+			_expect(mole.get_active_locomotion_mode() == "burrower", "return control restores Mole burrowing")
 		lab_instance._reset_lab()
 		if goose != null:
 			_expect(goose.get_active_locomotion_mode() == "flight", "lab reset restores Goose flight")
 		if trout != null:
 			_expect(trout.get_active_locomotion_mode() == "swimmer", "lab reset restores Trout swimming")
+		if gecko != null:
+			_expect(gecko.get_active_locomotion_mode() == "climber", "lab reset restores Gecko climbing")
+		if mole != null:
+			_expect(mole.get_active_locomotion_mode() == "burrower", "lab reset restores Mole burrowing")
 		lab_instance.queue_free()
 	animal.queue_free()
 	await get_tree().process_frame

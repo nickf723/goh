@@ -65,7 +65,7 @@ Examples:
 
 The evaluator rejects a move when the species body plan lacks its required tags. Future body plans can include wings, hands, horns, shells, tentacles, burrowing limbs, multiple heads, incorporeal bodies, or machine components without changing the evaluator.
 
-Locomotion is now resolved as a second capability layer. Ground, swimming, flight, climbing, and burrowing are movement modes; runner, serpentine, hover, and jumper are modifiers or transitions. The shared catalog validates anatomy and dependencies, so species can combine modes without introducing species-specific brain code. See [`ANIMAL_BODY_LOCOMOTION_AND_EFFECTS_V1.md`](ANIMAL_BODY_LOCOMOTION_AND_EFFECTS_V1.md).
+Locomotion is resolved as a second capability layer. Ground, swimming, flight, climbing, and burrowing are movement modes; runner, serpentine, hover, and jumper are modifiers or transitions. The shared catalog validates anatomy and dependencies, so species can combine modes without introducing species-specific brain code. `MobLocomotionExecutor` consumes that profile at runtime for legal transitions, medium validation, planar/surface/volumetric steering, water currents, surface buoyancy, gravity policy, and explicitly activated modifiers. See [`ANIMAL_BODY_LOCOMOTION_AND_EFFECTS_V1.md`](ANIMAL_BODY_LOCOMOTION_AND_EFFECTS_V1.md).
 
 ## Active-phase effects
 
@@ -389,6 +389,10 @@ The regression verifies:
 - Body-plan validation
 - Ground, swimming, flight, climbing, and burrowing capability resolution
 - Anatomy rejection and locomotion alias normalization
+- Runtime ground/swimming/flight mode transitions and medium rejection
+- Planar and volumetric steering, current sampling, buoyancy, and gravity handoff
+- Opt-in modifier dependencies and transition cleanup
+- Generic-animal integration through the established water-volume hook
 - Exactly-once active-phase effect claims
 - Startup interruption without an effect
 - DamagePayload conversion and confirmed projectile delivery
@@ -423,14 +427,15 @@ A reusable watchdog guarantees the smoke test exits with a readable failure when
 
 The foundation provides shared data, policies, anatomy and locomotion capability profiles, evaluation, personality bridging, familiar progression, augmentation, committed move lifecycles, normalized effect requests, target resolution, physical effect dispatch, payload conversion, vitals, canonical timed statuses, debugging, and compatibility adapters.
 
-Runtime layers already build perception, relationships, bonding, navigation-aware following, rescue, and a reusable live ground actor on top of it. Their current limitations are tracked in [`MOB_ENGINE.md`](MOB_ENGINE.md).
+Runtime layers already build perception, relationships, bonding, navigation-aware following, rescue, and a reusable live animal actor on top of it. That actor now consumes shared ground, swimming, and flight steering, automatically participates in established water volumes, and reports active locomotion state to move policy. Current limitations are tracked in [`MOB_ENGINE.md`](MOB_ENGINE.md).
 
 The remaining foundation-to-content work is deliberately physical and authored:
 
 - Animation-owned contact volumes for actors that need greater precision than active-phase reach
-- Swimming, flight, climbing, and burrowing motion executors
+- A contrasting authored flying species and a true swim habitat in existing exploration content
+- Climbing surface adhesion and burrowing-route adapters when authored animals require them
 - Species-specific models, animation sets, habitats, and encounters
 - Provider-specific faction, predator/prey, herd, pack, and summon relation rules
 - Broader ecology such as nesting, migration, territory, aging, and life cycles
 
-Those systems consume the shared contracts; they should not replace the brain, moveset, locomotion catalog, or payload pipeline.
+Those systems consume the shared contracts; they should not replace the brain, moveset, locomotion catalog, locomotion executor, or payload pipeline.

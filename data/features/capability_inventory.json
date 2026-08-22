@@ -756,7 +756,12 @@
         "animal status conditions",
         "animal buffs",
         "animal debuffs",
-        "timed creature conditions"
+        "timed creature conditions",
+        "animal locomotion executor",
+        "animal swimming executor",
+        "animal flight executor",
+        "locomotion mode transitions",
+        "volumetric animal movement"
       ],
       "implemented": true,
       "do_not_resuggest": true,

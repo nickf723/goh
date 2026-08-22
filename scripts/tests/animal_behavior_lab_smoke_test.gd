@@ -111,6 +111,13 @@ func run_tests() -> void:
 			_expect(capybara.get_active_locomotion_mode() == "swimmer", "pond control moves an amphibious animal into live swimming")
 			lab_instance._return_selected_home()
 			_expect(capybara.get_active_locomotion_mode() == "ground", "return control restores the animal's authored start mode")
+		var sheep: GenericAnimalActor = lab_instance._find_species_animal("sheep")
+		if sheep != null:
+			var sheep_position: Vector3 = sheep.global_position
+			lab_instance._select_animal(lab_instance.animals.find(sheep))
+			lab_instance._place_selected_in_pond()
+			_expect(sheep.get_active_locomotion_mode() == "ground", "pond control rejects an animal without swimming anatomy")
+			_expect(sheep.global_position.is_equal_approx(sheep_position), "rejected pond transfer does not teleport the Sheep")
 		lab_instance._reset_lab()
 		if goose != null:
 			_expect(goose.get_active_locomotion_mode() == "flight", "lab reset restores Goose flight")

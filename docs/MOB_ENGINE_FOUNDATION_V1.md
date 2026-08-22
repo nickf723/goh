@@ -22,6 +22,7 @@ A `MobMoveDefinition` describes reusable action identity and mechanics:
 - Action kind and target mode
 - Semantic tags
 - Required body tags
+- Required locomotion capabilities
 - Minimum and maximum range
 - Cooldown
 - Base utility

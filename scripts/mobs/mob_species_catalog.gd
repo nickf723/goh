@@ -244,7 +244,6 @@ const DEFINITIONS: Dictionary = {
 				"move_id": "wade",
 				"base_weight": 1.35,
 				"any_context_tags": [
-					"safe",
 					"water_near",
 					"hot",
 				],

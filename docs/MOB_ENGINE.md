@@ -47,7 +47,7 @@ The first executor supports:
 - Pack howling
 - Contact, area, projectile, and recovery effect execution
 - Species-derived health, stamina, injury-aware decisions, and incapacitation
-- Timed buffs and harmful conditions available to move policies
+- Timed buffs, damage-over-time, control states, and movement modifiers available to move policies
 - Procedural sheep, capybara, and wolf silhouettes
 - Overhead intention, move, health, and drive readouts
 

@@ -50,14 +50,24 @@ flowchart TD
 
 Delivery classes separate decision timing from physical execution:
 
-- `contact_payload`: deliver after a contact or hit-volume confirmation
-- `area_payload`: the executor gathers unique in-range targets, then delivers once to each
-- `projectile_payload`: cannot deliver until a projectile confirms impact
-- `recovery`: routed to the actor's health, stamina, or drive recovery executor
-- `executor`: movement, habitat seeking, waiting, and presentation-owned behavior
-- `custom`: an extension seam for new effects without changing the brain
+- `contact_payload`: resolve the nearest eligible target within authored reach at active start; specialized actors may supply animation hit-volume results explicitly
+- `area_payload`: gather unique targets inside the authored radius, then deliver once to each
+- `projectile_payload`: spawn the existing physical `GenericProjectile`; payload delivery remains owned by collision impact
+- `recovery`: route health and stamina recovery through a compatible receiver
+- `executor`: expose movement, habitat seeking, waiting, and presentation-owned behavior without inventing another action decision
+- `custom`: expose an extension seam for new effects without changing the brain
+
+`MobEffectTargetResolver` accepts an actor-owned target provider, explicit targets, or generic group fallbacks. Actor providers are authoritative even when they return no targets, preventing a missing packmate from silently becoming a different-species ally. The resolver removes duplicates and source descendants, enforces range or radius, optionally checks line of sight, sorts by distance, and accepts an optional relation/faction filter.
+
+`MobMoveEffectExecutor` binds directly to `MobBrainComponent.move_effect_requested`. It remembers request IDs to prevent double application, handles contact and area delivery, spawns the existing `GenericProjectile` for projectile effects, routes recovery through `MobRecoveryBridge`, and exposes movement or custom effects to a specialized executor signal. Reset clears both request memory and diagnostic counts.
 
 `MobPayloadBridge` converts payload-capable requests to the existing `DamagePayload` contract. It preserves health damage, stance damage, element, hit type, force, statuses, critical identity, move tags, and species lineage. It sends through `PayloadReceiver`, `receive_damage_payload`, or `HitReceiver`, keeping elemental reactions and world consequences in the established receiver pipeline. Projectile requests explicitly require `impact_confirmed`.
+
+## Vitals and recovery contract
+
+`MobVitalsComponent` gives any species a reusable health, stamina, recovery, and incapacitation state. Maximum health is derived from `MobSpeciesDefinition.base_stats`; callers may override health or stamina without changing the component. It accepts the shared `DamagePayload` grammar, accepts recovery effect dictionaries, reports exact applied amounts, supports stamina spending, and can revive an incapacitated actor when health rises above zero.
+
+`GenericAnimalActor` composes the vitals and effect-executor components. Its decision context now uses real health ratio and injury tags, hostile payloads interrupt the current action and raise a survival response, zero health stops decisions and horizontal action, Graze reaches the shared recovery receiver, and a lab reset restores vitals and exactly-once execution state.
 
 ## Authoring examples
 
@@ -87,7 +97,10 @@ No new brain class is required for any of these. New locomotion physics plugs in
 - Anatomy, locomotion profiles, and move locomotion requirements are validated before runtime.
 - One execution claims an `active_start` effect at most once.
 - Interruption before the active phase produces no effect request.
-- Contact, area, and projectile delivery require physical target confirmation.
+- Contact and area delivery require an eligible in-range target; projectiles require a physical collision impact.
+- Actor-owned target providers are authoritative and relation filters remain injectable.
+- A request ID cannot apply its consequence twice, including after a failed target lookup.
 - Projectile payloads never teleport directly to a target.
+- Vitals derive from species data and incapacitation suppresses further action until recovery or reset.
 - Existing payload receivers own reactions and consequences.
 - Unknown locomotion tags fail loudly; unknown effect kinds route through the custom executor seam.

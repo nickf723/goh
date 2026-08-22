@@ -28,6 +28,7 @@ var active_medium_tags: Array[String] = []
 var active_modifiers: Array[String] = []
 var medium_available: bool = false
 var active_water_volumes: Array[Node] = []
+var active_traversal_media: Array[Node] = []
 var last_solution: Dictionary = {}
 var transition_count: int = 0
 var rejection_count: int = 0
@@ -57,6 +58,7 @@ func configure(
 ) -> Dictionary:
 	profile = LocomotionCatalog.resolve_profile(body_tags, locomotion_tags)
 	active_water_volumes.clear()
+	active_traversal_media.clear()
 	active_mode = ""
 	initial_mode = ""
 	active_medium_tags.clear()
@@ -216,6 +218,135 @@ func exit_water(volume: Node) -> void:
 	deactivate_current_medium("exited_water")
 
 
+func enter_traversal_medium(medium: Node) -> Dictionary:
+	if medium == null or not is_instance_valid(medium):
+		return {
+			"ok": false,
+			"error": "traversal medium is unavailable",
+		}
+	if (
+		not medium.has_method("get_locomotion_mode")
+		or not medium.has_method("get_medium_tags")
+	):
+		return {
+			"ok": false,
+			"error": "traversal medium contract is incomplete",
+		}
+	var requested_mode: String = LocomotionCatalog.normalize_id(
+		str(medium.call("get_locomotion_mode"))
+	)
+	if not supports_mode(requested_mode):
+		return _reject_mode(
+			requested_mode,
+			"mode is not supported by the configured locomotion profile"
+		)
+	var requested_tags: Array[String] = _string_array(
+		medium.call("get_medium_tags")
+	)
+	var result: Dictionary = request_mode(requested_mode, {
+		"medium_tags": requested_tags,
+		"require_medium": true,
+		"reason": "entered_traversal_medium",
+	})
+	if (
+		bool(result.get("ok", false))
+		and not active_traversal_media.has(medium)
+	):
+		active_traversal_media.append(medium)
+	return result
+
+
+func exit_traversal_medium(medium: Node) -> void:
+	var was_active: bool = active_traversal_media.has(medium)
+	active_traversal_media.erase(medium)
+	_prune_traversal_media()
+	if not was_active:
+		return
+	var exited_mode: String = (
+		LocomotionCatalog.normalize_id(
+			str(medium.call("get_locomotion_mode"))
+		)
+		if (
+			medium != null
+			and is_instance_valid(medium)
+			and medium.has_method("get_locomotion_mode")
+		)
+		else ""
+	)
+	for active_medium: Node in active_traversal_media:
+		if (
+			active_medium.has_method("get_locomotion_mode")
+			and LocomotionCatalog.normalize_id(
+				str(active_medium.call("get_locomotion_mode"))
+			) == active_mode
+		):
+			return
+	if active_mode != exited_mode:
+		return
+	if supports_mode("ground"):
+		request_mode("ground", {
+			"medium_tags": ["land"],
+			"require_medium": true,
+			"reason": "exited_traversal_medium",
+		})
+		return
+	deactivate_current_medium("exited_traversal_medium")
+
+
+func get_environment_context() -> Dictionary:
+	_prune_traversal_media()
+	var result: Dictionary = {}
+	var combined_external_velocity: Vector3 = Vector3.ZERO
+	for medium: Node in active_traversal_media:
+		if (
+			not medium.has_method("get_locomotion_mode")
+			or LocomotionCatalog.normalize_id(
+				str(medium.call("get_locomotion_mode"))
+			) != active_mode
+			or not medium.has_method("get_locomotion_context")
+		):
+			continue
+		var raw_context: Variant = medium.call(
+			"get_locomotion_context",
+			_actor_position()
+		)
+		if not raw_context is Dictionary:
+			continue
+		var medium_context: Dictionary = raw_context as Dictionary
+		for raw_key: Variant in medium_context.keys():
+			var key: String = str(raw_key)
+			var value: Variant = medium_context[raw_key]
+			if key == "external_velocity" and value is Vector3:
+				combined_external_velocity += value as Vector3
+			else:
+				result[key] = value
+	if not combined_external_velocity.is_zero_approx():
+		result["external_velocity"] = combined_external_velocity
+	return result
+
+
+func get_guidance_target() -> Dictionary:
+	_prune_traversal_media()
+	var actor: Node3D = get_parent() as Node3D
+	if actor == null:
+		return {"found": false}
+	for medium: Node in active_traversal_media:
+		if (
+			medium.has_method("get_locomotion_mode")
+			and LocomotionCatalog.normalize_id(
+				str(medium.call("get_locomotion_mode"))
+			) == active_mode
+			and medium.has_method("get_guidance_target")
+		):
+			var raw_target: Variant = medium.call(
+				"get_guidance_target",
+				actor
+			)
+			if raw_target is Dictionary:
+				return (raw_target as Dictionary).duplicate(true)
+	return {"found": false}
+
+
 func deactivate_current_medium(reason: String = "medium_unavailable") -> void:
 	if not medium_available:
 		return
@@ -254,7 +385,24 @@ func resolve_velocity(
 	var acceleration_multiplier: float = float(
 		multipliers.get("acceleration", 1.0)
 	)
-	var direction: Vector3 = project_direction(desired_direction, context)
+	var motion_context: Dictionary = get_environment_context()
+	for raw_key: Variant in context.keys():
+		var key: String = str(raw_key)
+		var value: Variant = context[raw_key]
+		if (
+			key == "external_velocity"
+			and value is Vector3
+			and motion_context.get(key, Vector3.ZERO) is Vector3
+		):
+			motion_context[key] = (
+				motion_context.get(key, Vector3.ZERO) as Vector3
+			) + (value as Vector3)
+		else:
+			motion_context[key] = value
+	var direction: Vector3 = project_direction(
+		desired_direction,
+		motion_context
+	)
 	var target_velocity: Vector3 = Vector3.ZERO
 	if medium_available:
 		target_velocity = direction * maxf(base_speed, 0.0) * speed_multiplier
@@ -277,7 +425,7 @@ func resolve_velocity(
 						-maximum_vertical,
 						maximum_vertical
 					)
-		var external_velocity: Variant = context.get(
+		var external_velocity: Variant = motion_context.get(
 			"external_velocity",
 			Vector3.ZERO
 		)
@@ -477,6 +625,7 @@ func sample_total_current() -> Vector3:
 
 func reset_executor() -> void:
 	active_water_volumes.clear()
+	active_traversal_media.clear()
 	last_solution.clear()
 	active_modifiers.clear()
 	transition_count = 0
@@ -512,6 +661,9 @@ func get_debug_data() -> Dictionary:
 		"active_modifiers": active_modifiers.duplicate(),
 		"transitions": _string_array(profile.get("transitions", [])),
 		"water_volume_count": active_water_volumes.size(),
+		"traversal_medium_count": active_traversal_media.size(),
+		"environment_context": get_environment_context(),
+		"guidance_target": get_guidance_target(),
 		"transition_count": transition_count,
 		"rejection_count": rejection_count,
 		"last_solution": last_solution.duplicate(true),
@@ -580,7 +732,17 @@ func _prune_water_volumes() -> void:
 	active_water_volumes = valid
 
 
+func _prune_traversal_media() -> void:
+	var valid: Array[Node] = []
+	for medium: Node in active_traversal_media:
+		if medium != null and is_instance_valid(medium):
+			valid.append(medium)
+	active_traversal_media = valid
+
+
 func _configuration_failure(reason: String) -> Dictionary:
+	active_water_volumes.clear()
+	active_traversal_media.clear()
 	active_mode = ""
 	initial_mode = ""
 	active_medium_tags.clear()

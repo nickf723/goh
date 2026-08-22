@@ -35,7 +35,7 @@ The lab controls live in two on-screen panels. They are mouse-clickable and cont
 5. With both wolves present, confirm pack-support behavior remains focused on wolves rather than sheep or capybara; an active Pack Focus condition appears in the overhead status line.
 6. Use **Reset Lab** and confirm the animals return to full HP, timed conditions clear, and no stale move effect fires after reset.
 
-The foundation smoke test owns the non-visual edge cases: species-scaled damage, health and stamina recovery, incapacitation and revival, duplicate request rejection, range filtering, authoritative empty target providers, area deduplication, and physical projectile spawning.
+The foundation smoke test owns the non-visual edge cases: species-scaled damage, health and stamina recovery, incapacitation and revival, duplicate request rejection, range filtering, authoritative empty target providers, area deduplication, physical projectile spawning, legal ground/swimming/flight transitions, medium rejection, three-dimensional steering, water-current sampling, surface buoyancy, gravity handoff, and opt-in gait modifiers. It also proves that the generic capybara actor is recognized by the established `SwimmingWaterVolume` hook. The lab pond remains a decorative shallow landmark; a true swimming habitat is deliberately deferred to authored exploration content.
 
 ## Bonding and persistence pass
 
@@ -60,7 +60,7 @@ The lab starts with at least six treats. **Add 6 Treats** replenishes the testin
 
 ## Reset behavior
 
-**Reset Lab** and the configured restart input reset positions, drives, vitals, effect-request memory, perception memory, selection, noise, and Grace's posture. Saved named-animal relationships remain intact.
+**Reset Lab** and the configured restart input reset positions, drives, vitals, effect-request memory, locomotion mode and modifiers, perception memory, selection, noise, and Grace's posture. Saved named-animal relationships remain intact.
 
 Use **Clear This Bond** to reset one animal's relationship deliberately.
 

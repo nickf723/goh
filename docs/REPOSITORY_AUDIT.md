@@ -166,11 +166,11 @@ scripts/animals/
 scripts/summons/bonded_familiar_roster.gd
 ```
 
-Implemented capabilities include shared move definitions, species policies, body-plan eligibility, personality-shaped utility scoring, drives, committed intentions, startup/active/recovery timing, phase-aware interruption, perception and memory, same-species alerts, Grace relationships, persistent bonding, familiar loadouts, navigation-aware commands, rescue state, and stuck recovery.
+Implemented capabilities include shared move definitions, species policies, body-plan eligibility, validated ground/swimming/flight/climbing/burrowing capability profiles, personality-shaped utility scoring, drives, committed intentions, startup/active/recovery timing, phase-aware interruption, exactly-once active-phase effect requests, shared DamagePayload conversion, perception and memory, same-species alerts, Grace relationships, persistent bonding, familiar loadouts, navigation-aware commands, rescue state, and stuck recovery.
 
-Seed moves cover ambient, forage, retreat, contact, gap-closing, support, projectile, habitat, control, and area-action families. Seed species are Wolf, Sheep, Capybara, Gorgon, and Gremlin. The reusable live animal actor currently presents Sheep, Capybara, and Wolf.
+Seed moves cover ambient, forage, retreat, contact, gap-closing, support, projectile, habitat, control, and area-action families. Seed species are Wolf, Sheep, Capybara, Gorgon, and Gremlin. The reusable live animal actor currently presents Sheep, Capybara, and Wolf. The locomotion catalog additionally proves synthetic winged, finned, climbing, and digging anatomy without requiring a new brain class.
 
-Do not propose animal movesets, animal personality, bonding, familiar commands, or a generic animal AI foundation as new mechanics. The next extension is shared active-phase payload delivery followed by authored use across contrasting ground, swimming, flying, and burrowing body plans.
+Do not propose animal movesets, animal personality, bonding, locomotion capability data, active-phase effect requests, familiar commands, or a generic animal AI foundation as new mechanics. The next extension is physical contact/area/projectile/recovery targeting plus authored swimming, flying, climbing, and burrowing executors.
 
 ### Enemy AI
 

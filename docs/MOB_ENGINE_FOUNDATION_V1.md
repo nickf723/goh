@@ -385,14 +385,16 @@ Expected output:
 
 The regression verifies:
 
-- Shared move identity across species
+- Shared move identity across species, including reusable Beak-gated Peck
+- Seven seed species including a multi-modal Goose and water-only Trout
 - Body-plan validation
 - Ground, swimming, flight, climbing, and burrowing capability resolution
 - Anatomy rejection and locomotion alias normalization
-- Runtime ground/swimming/flight mode transitions and medium rejection
+- Runtime ground/swimming/flight mode transitions, direct air-water transitions, and medium rejection
 - Planar and volumetric steering, current sampling, buoyancy, and gravity handoff
 - Opt-in modifier dependencies and transition cleanup
 - Generic-animal integration through the established water-volume hook
+- Authored Goose and Trout definitions without species-specific brain or locomotion classes
 - Exactly-once active-phase effect claims
 - Startup interruption without an effect
 - DamagePayload conversion and confirmed projectile delivery
@@ -432,8 +434,8 @@ Runtime layers already build perception, relationships, bonding, navigation-awar
 The remaining foundation-to-content work is deliberately physical and authored:
 
 - Animation-owned contact volumes for actors that need greater precision than active-phase reach
-- A contrasting authored flying species and a true swim habitat in existing exploration content
-- Climbing surface adhesion and burrowing-route adapters when authored animals require them
+- Climbing surface adhesion and burrowing-route adapters driven by the first authored climbing and burrowing animals
+- Finished exploration habitats and encounters that reuse the canonical Goose, Trout, and amphibious contracts
 - Species-specific models, animation sets, habitats, and encounters
 - Provider-specific faction, predator/prey, herd, pack, and summon relation rules
 - Broader ecology such as nesting, migration, territory, aging, and life cycles

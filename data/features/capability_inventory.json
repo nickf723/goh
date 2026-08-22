@@ -743,7 +743,14 @@
         "climbing animals",
         "burrowing animals",
         "animal move effects",
-        "animal payloads"
+        "animal payloads",
+        "animal target acquisition",
+        "animal effect executor",
+        "animal projectiles",
+        "animal vitals",
+        "animal health",
+        "animal recovery receivers",
+        "animal incapacitation"
       ],
       "implemented": true,
       "do_not_resuggest": true,
@@ -759,13 +766,17 @@
         "seed species: wolf, sheep, capybara, gorgon, and gremlin",
         "validated ground, swimming, flight, climbing, burrowing, and gait capabilities",
         "exactly-once active-phase effect requests",
+        "authoritative actor-owned target acquisition with range, radius, line-of-sight, deduplication, and relation-filter seams",
+        "contact, area, physical projectile, recovery, executor, and custom effect dispatch",
         "shared DamagePayload and PayloadReceiver bridge for confirmed animal effects",
+        "species-derived health, stamina, recovery, incapacitation, revival, and reset",
         "move eligibility gated independently by anatomy and locomotion capability"
       ],
-      "next_use": "Add physical contact, area, projectile, recovery, and traversal executors; then prove ground, swimming, flight, climbing, and burrowing profiles with contrasting animals in authored content.",
+      "next_use": "Implement live swimming and flight executors for contrasting animals, then prove their habitats, relationships, vitals, and physical moves together in authored exploration content.",
       "limitations": [
         "The generic animal actor still uses a planar ground executor; swimming, flight, climbing, and burrowing physics are catalogued but not yet rendered in authored gameplay.",
-        "Effect requests and shared payload conversion are implemented, but physical target acquisition and projectile spawning remain executor responsibilities."
+        "Generic contact effects use active-phase range confirmation; animation-owned hit volumes remain an optional precision layer for authored creatures.",
+        "Pack, herd, predator/prey, summon, and faction ownership remain actor-provider policy rather than a hard-coded universal faction table."
       ]
     }
   ]

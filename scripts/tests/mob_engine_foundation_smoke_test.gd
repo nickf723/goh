@@ -468,10 +468,17 @@ func _test_physical_effect_executor() -> void:
 	_expect(bool(projectile_result.get("ok", false)), "projectile executor spawns a physical projectile")
 	_expect(executor.projectile_count == 1, "projectile spawn is counted once")
 	_expect(spawned_projectiles.size() == 1, "projectile spawn signal exposes the physical action")
-	for projectile: Node in spawned_projectiles:
-		if is_instance_valid(projectile):
-			projectile.queue_free()
+	var projectile_probe: Node = (
+		spawned_projectiles[0]
+		if not spawned_projectiles.is_empty()
+		else null
+	)
 	executor.reset_executor()
+	_expect(
+		projectile_probe != null
+		and projectile_probe.is_queued_for_deletion(),
+		"executor reset retires physical projectiles still in flight"
+	)
 	var reset_debug: Dictionary = executor.get_debug_data()
 	_expect(
 		int(reset_debug.get("remembered_request_count", -1)) == 0,
@@ -479,8 +486,9 @@ func _test_physical_effect_executor() -> void:
 	)
 	_expect(
 		int(reset_debug.get("execution_count", -1)) == 0
-		and int(reset_debug.get("projectile_count", -1)) == 0,
-		"executor reset clears diagnostic counters"
+		and int(reset_debug.get("projectile_count", -1)) == 0
+		and int(reset_debug.get("live_projectile_count", -1)) == 0,
+		"executor reset clears diagnostic counters and projectile ownership"
 	)
 	source.queue_free()
 	near_target.queue_free()

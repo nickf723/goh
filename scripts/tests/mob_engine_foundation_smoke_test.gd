@@ -18,7 +18,7 @@ const VitalsScript = preload(
 	"res://scripts/mobs/mob_vitals_component.gd"
 )
 const ConditionScript = preload(
-	"res://scripts/mobs/mob_condition_component.gd"
+	"res://scripts/combat/status_receiver.gd"
 )
 const GenericAnimalScript = preload(
 	"res://scripts/animals/generic_animal_actor.gd"
@@ -226,25 +226,25 @@ func _test_mob_vitals() -> void:
 
 
 func _test_mob_conditions() -> void:
-	var conditions := ConditionScript.new() as MobConditionComponent
-	conditions.automatic_ticking = false
+	var conditions: Node = ConditionScript.new()
 	conditions.name = "StatusReceiver"
 	add_child(conditions)
-	var applied: Dictionary = conditions.apply_status(
-		"pack_focus",
-		1.0,
-		1.0,
-		"Howl"
-	)
-	_expect(bool(applied.get("ok", false)), "mob conditions accept support buffs")
-	conditions.sustain_status("pack_focus", 0.5, 2.0, "Howl")
+	conditions.call("apply_status", "pack_focus", 1.0, 1.0, "Howl")
 	_expect(
-		is_equal_approx(conditions.get_status_strength("pack_focus"), 2.0),
+		bool(conditions.call("has_status", "pack_focus")),
+		"canonical status receiver accepts support buffs"
+	)
+	conditions.call("sustain_status", "pack_focus", 0.5, 2.0, "Howl")
+	_expect(
+		is_equal_approx(
+			float(conditions.call("get_status_strength", "pack_focus")),
+			2.0
+		),
 		"condition refresh preserves the strongest authored application"
 	)
-	conditions.advance_conditions(1.1)
+	conditions.call("advance_statuses", 1.1)
 	_expect(
-		not conditions.has_status("pack_focus"),
+		not bool(conditions.call("has_status", "pack_focus")),
 		"timed mob conditions expire deterministically"
 	)
 
@@ -267,7 +267,7 @@ func _test_mob_conditions() -> void:
 	)
 	_expect(
 		bool(status_result.get("ok", false))
-		and conditions.has_status("poisoned"),
+		and bool(conditions.call("has_status", "poisoned")),
 		"additional payload statuses reach the shared StatusReceiver seam"
 	)
 	status_target.queue_free()
@@ -283,7 +283,7 @@ func _test_mob_conditions() -> void:
 	animal.receive_damage_payload(mire_payload)
 	_expect(
 		animal.condition_state != null
-		and animal.condition_state.has_status("wet"),
+		and bool(animal.condition_state.call("has_status", "wet")),
 		"generic animals retain a payload's primary status"
 	)
 	var animal_context: Dictionary = animal.get_mob_decision_context()

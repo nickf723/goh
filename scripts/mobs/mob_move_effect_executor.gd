@@ -41,6 +41,7 @@ var executed_request_ids: Dictionary = {}
 var request_order: Array[String] = []
 var last_request: Dictionary = {}
 var last_result: Dictionary = {}
+var spawned_projectiles: Array[Node] = []
 var execution_count: int = 0
 var projectile_count: int = 0
 
@@ -157,6 +158,10 @@ func clear_request_memory() -> void:
 
 func reset_executor() -> void:
 	clear_request_memory()
+	for projectile: Node in spawned_projectiles:
+		if is_instance_valid(projectile):
+			projectile.queue_free()
+	spawned_projectiles.clear()
 	execution_count = 0
 	projectile_count = 0
 
@@ -168,6 +173,7 @@ func get_debug_data() -> Dictionary:
 		"brain_bound": brain != null,
 		"execution_count": execution_count,
 		"projectile_count": projectile_count,
+		"live_projectile_count": _live_projectile_count(),
 		"remembered_request_count": request_order.size(),
 		"last_request": last_request.duplicate(true),
 		"last_result": last_result.duplicate(true),
@@ -276,6 +282,8 @@ func _spawn_projectile(
 	else:
 		projectile.queue_free()
 		return {"ok": false, "error": "projectile has no launch method"}
+	_prune_projectiles()
+	spawned_projectiles.append(projectile)
 	projectile_count += 1
 	projectile_spawned.emit(request, projectile)
 	return {
@@ -324,6 +332,21 @@ func _projectile_direction(
 	if raw_direction is Vector3 and (raw_direction as Vector3).length_squared() > 0.0001:
 		return (raw_direction as Vector3).normalized()
 	return -source_3d.global_basis.z.normalized()
+
+
+func _prune_projectiles() -> void:
+	for index: int in range(spawned_projectiles.size() - 1, -1, -1):
+		if not is_instance_valid(spawned_projectiles[index]):
+			spawned_projectiles.remove_at(index)
+
+
+func _live_projectile_count() -> int:
+	_prune_projectiles()
+	var count: int = 0
+	for projectile: Node in spawned_projectiles:
+		if is_instance_valid(projectile) and not projectile.is_queued_for_deletion():
+			count += 1
+	return count
 
 
 func _resolve_target_provider() -> Node:

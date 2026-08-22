@@ -57,13 +57,50 @@ func run_tests() -> void:
 	var distance_after: float = animal.global_position.distance_to(threat.global_position)
 	_expect(distance_after > distance_before + 0.2, "Flee execution physically increases threat distance")
 
-	var lab_instance: Node = LabScene.instantiate()
+	var lab_instance := LabScene.instantiate() as AnimalBehaviorLab
 	_expect(lab_instance != null, "playable Animal Behavior Lab scene instantiates")
 	if lab_instance != null:
 		add_child(lab_instance)
 		await get_tree().process_frame
 		var buttons: Array[Node] = lab_instance.find_children("*", "Button", true, false)
-		_expect(buttons.size() >= 10, "playable lab builds on-screen mouse and controller controls")
+		_expect(buttons.size() >= 13, "playable lab builds locomotion, behavior, and bonding controls")
+		_expect(lab_instance.animals.size() == 6, "canonical lab spawns six contrasting shared-engine animals")
+		_expect(lab_instance.pond_volume != null, "canonical lab builds a real SwimmingWaterVolume habitat")
+		if lab_instance.pond_volume != null:
+			_expect(
+				is_equal_approx(
+					lab_instance.pond_volume.get_surface_y(),
+					lab_instance.pond_surface_y
+				),
+				"pond presentation and locomotion volume share one authored surface"
+			)
+		var goose: GenericAnimalActor = lab_instance._find_species_animal("goose")
+		var trout: GenericAnimalActor = lab_instance._find_species_animal("trout")
+		_expect(goose != null, "canonical lab includes the authored Goose")
+		_expect(trout != null, "canonical lab includes the authored Trout")
+		if goose != null:
+			_expect(goose.get_active_locomotion_mode() == "flight", "Goose begins in live flight")
+			_expect(not goose.wing_roots.is_empty(), "Goose uses the reusable winged prototype presentation")
+			lab_instance._toggle_goose_flight()
+			_expect(goose.get_active_locomotion_mode() == "ground", "lab control lands the Goose through the shared executor")
+			lab_instance._toggle_goose_flight()
+			_expect(goose.get_active_locomotion_mode() == "flight", "lab control relaunches the same Goose actor")
+		if trout != null:
+			_expect(trout.get_active_locomotion_mode() == "swimmer", "Trout begins in live swimming mode")
+			_expect(trout.locomotion.medium_available, "Trout is registered inside the real pond medium")
+			_expect(trout.tail_root != null, "Trout uses the reusable tailed aquatic presentation")
+		var capybara: GenericAnimalActor = lab_instance._find_species_animal("capybara")
+		if capybara != null:
+			lab_instance._select_animal(lab_instance.animals.find(capybara))
+			lab_instance._place_selected_in_pond()
+			_expect(capybara.get_active_locomotion_mode() == "swimmer", "pond control moves an amphibious animal into live swimming")
+			lab_instance._return_selected_home()
+			_expect(capybara.get_active_locomotion_mode() == "ground", "return control restores the animal's authored start mode")
+		lab_instance._reset_lab()
+		if goose != null:
+			_expect(goose.get_active_locomotion_mode() == "flight", "lab reset restores Goose flight")
+		if trout != null:
+			_expect(trout.get_active_locomotion_mode() == "swimmer", "lab reset restores Trout swimming")
 		lab_instance.queue_free()
 	animal.queue_free()
 	await get_tree().process_frame

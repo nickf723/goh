@@ -736,7 +736,14 @@
         "familiars",
         "wildlife navigation",
         "move lifecycle",
-        "action interruption"
+        "action interruption",
+        "animal locomotion",
+        "flying animals",
+        "swimming animals",
+        "climbing animals",
+        "burrowing animals",
+        "animal move effects",
+        "animal payloads"
       ],
       "implemented": true,
       "do_not_resuggest": true,
@@ -749,9 +756,16 @@
         "perception, memory, same-species alerts, and Grace relationships",
         "persistent named-animal bonding and familiar roster integration",
         "navigation-aware following, commands, rescue, and stuck recovery",
-        "seed species: wolf, sheep, capybara, gorgon, and gremlin"
+        "seed species: wolf, sheep, capybara, gorgon, and gremlin",
+        "validated ground, swimming, flight, climbing, burrowing, and gait capabilities",
+        "exactly-once active-phase effect requests",
+        "shared DamagePayload and PayloadReceiver bridge for confirmed animal effects"
       ],
-      "next_use": "Dispatch shared payloads during active move phases and prove the executor across ground, swimming, flying, and burrowing body plans in authored content."
+      "next_use": "Add physical contact, area, projectile, recovery, and traversal executors; then prove ground, swimming, flight, climbing, and burrowing profiles with contrasting animals in authored content.",
+      "limitations": [
+        "The generic animal actor still uses a planar ground executor; swimming, flight, climbing, and burrowing physics are catalogued but not yet rendered in authored gameplay.",
+        "Effect requests and shared payload conversion are implemented, but physical target acquisition and projectile spawning remain executor responsibilities."
+      ]
     }
   ]
 }

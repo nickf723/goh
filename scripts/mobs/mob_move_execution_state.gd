@@ -28,6 +28,14 @@ static func create(
 	state.move_id = str(new_move_data.get("id", new_move_data.get("move_id", "")))
 	state.context = execution_context.duplicate(true)
 	state.timing = normalize_timing(new_move_data)
+	if execution_context.has("duration_override"):
+		var duration_override: float = maxf(
+			float(execution_context.get("duration_override", 0.0)),
+			0.0
+		)
+		state.timing["startup"] = 0.0
+		state.timing["active"] = duration_override
+		state.timing["recovery"] = 0.0
 	state.total_duration = (
 		float(state.timing.get("startup", 0.0))
 		+ float(state.timing.get("active", 0.0))

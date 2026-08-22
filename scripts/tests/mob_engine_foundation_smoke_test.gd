@@ -218,6 +218,24 @@ func _test_locomotion_executor() -> void:
 		not bool(flight_solution.get("uses_gravity", true)),
 		"active flight suppresses ground gravity"
 	)
+	_expect(
+		is_equal_approx(
+			float(flight_solution.get("speed_multiplier", 0.0)),
+			1.15
+		),
+		"supported locomotion modifiers remain opt in"
+	)
+	var hover_result: Dictionary = flight_executor.set_modifier_active(
+		"hover",
+		true
+	)
+	_expect(
+		bool(hover_result.get("ok", false))
+		and flight_executor.get_context_tags().has(
+			"locomotion_modifier:hover"
+		),
+		"an authored state can explicitly activate a compatible gait modifier"
+	)
 	var landing: Dictionary = flight_executor.request_mode("ground", {
 		"medium_tags": ["land"],
 		"require_medium": true,
@@ -227,6 +245,10 @@ func _test_locomotion_executor() -> void:
 		bool(landing.get("ok", false))
 		and flight_executor.active_mode == "ground",
 		"catalogued flight-to-ground transitions execute at runtime"
+	)
+	_expect(
+		flight_executor.active_modifiers.is_empty(),
+		"mode transitions retire modifiers that no longer satisfy dependencies"
 	)
 	var ground_solution: Dictionary = flight_executor.resolve_velocity(
 		Vector3(1.0, 1.0, 0.0),

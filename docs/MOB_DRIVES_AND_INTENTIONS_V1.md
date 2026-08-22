@@ -130,7 +130,7 @@ Examples:
 - Habitat exploration reduces curiosity pressure.
 - Defensive or offensive territorial action slightly releases territorial pressure.
 
-This is a lightweight feedback loop. A later executor may distinguish action start, successful completion, interruption, and failure if individual behaviors need more exact satisfaction rules.
+This remains a lightweight feedback loop: drive satisfaction is applied when a move commits. The shared move lifecycle now distinguishes startup, active, recovery, successful completion, and interruption, so future ecology tuning can defer particular drive rewards until a successful outcome without changing the evaluator.
 
 ## Behavioral intentions
 

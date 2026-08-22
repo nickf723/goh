@@ -1,9 +1,15 @@
 extends Node
 class_name MobBrainComponent
 
+const MoveExecutionState = preload("res://scripts/mobs/mob_move_execution_state.gd")
+
 signal move_selected(move_id: String, decision: Dictionary)
 signal evaluation_completed(rows: Array[Dictionary])
 signal move_committed(move_id: String, cooldown: float)
+signal move_started(move_id: String, execution: Dictionary)
+signal move_phase_changed(move_id: String, previous_phase: String, phase: String, execution: Dictionary)
+signal move_completed(move_id: String, outcome: Dictionary, execution: Dictionary)
+signal move_interrupted(move_id: String, reason: String, execution: Dictionary)
 signal intention_changed(intention_id: String)
 
 @export var species_id: String = "gremlin"
@@ -31,6 +37,7 @@ var drive_tick_accumulator: float = 0.0
 var drive_state: MobDriveState
 var current_intention_id: String = ""
 var intention_time_remaining: float = 0.0
+var active_execution: Variant = null
 
 
 func _ready() -> void:
@@ -58,6 +65,8 @@ func configure(
 	profile_id: String = "balanced",
 	overrides: Dictionary = {}
 ) -> void:
+	if has_active_move():
+		interrupt_active_move("reconfigured", true)
 	species_id = new_species_id
 	personality_profile_id = profile_id
 	personality_overrides = overrides.duplicate(true)
@@ -73,6 +82,16 @@ func set_context(context: Dictionary) -> void:
 
 
 func request_decision(context_override: Dictionary = {}) -> Dictionary:
+	if has_active_move():
+		last_decision = {
+			"species_id": species_id,
+			"move_id": "",
+			"eligible": false,
+			"score": 0.0,
+			"reasons": ["active move in progress"],
+			"blocked_by_active_move": get_active_execution(),
+		}
+		return last_decision.duplicate(true)
 	var context: Dictionary = _resolve_context()
 	context.merge(context_override, true)
 	var traits: Dictionary = _resolve_traits()
@@ -160,6 +179,95 @@ func commit_move(move_id: String, cooldown_override: float = -1.0) -> Dictionary
 	}
 
 
+func begin_move(move_id: String, execution_context: Dictionary = {}) -> Dictionary:
+	if has_active_move():
+		return {
+			"ok": false,
+			"error": "active move in progress",
+			"active_execution": get_active_execution(),
+		}
+	var move_data: Dictionary = get_resolved_move(move_id)
+	if move_data.is_empty():
+		return {"ok": false, "error": "unknown move", "move_id": move_id}
+	var committed: Dictionary = commit_move(move_id)
+	if not bool(committed.get("ok", false)):
+		return committed
+	active_execution = MoveExecutionState.create(move_data, execution_context)
+	var snapshot: Dictionary = get_active_execution()
+	move_started.emit(move_id, snapshot)
+	return {
+		"ok": true,
+		"move_id": move_id,
+		"execution": snapshot,
+		"commit": committed,
+	}
+
+
+func advance_active_move(delta: float) -> Dictionary:
+	if not has_active_move():
+		return {"ok": false, "error": "no active move"}
+	var snapshot: Dictionary = active_execution.advance(delta)
+	var move_id: String = str(snapshot.get("move_id", ""))
+	if bool(snapshot.get("phase_changed", false)):
+		move_phase_changed.emit(
+			move_id,
+			str(snapshot.get("previous_phase", "")),
+			str(snapshot.get("phase", "")),
+			snapshot
+		)
+	if bool(snapshot.get("completed", false)):
+		var outcome: Dictionary = snapshot.get("result", {}) as Dictionary
+		move_completed.emit(move_id, outcome, snapshot)
+		active_execution = null
+	return snapshot
+
+
+func complete_active_move(outcome: Dictionary = {}) -> Dictionary:
+	if not has_active_move():
+		return {"ok": false, "error": "no active move"}
+	var snapshot: Dictionary = active_execution.finish(outcome)
+	var move_id: String = str(snapshot.get("move_id", ""))
+	move_phase_changed.emit(
+		move_id,
+		str(snapshot.get("previous_phase", "")),
+		str(snapshot.get("phase", "")),
+		snapshot
+	)
+	move_completed.emit(move_id, snapshot.get("result", {}) as Dictionary, snapshot)
+	active_execution = null
+	return snapshot
+
+
+func interrupt_active_move(
+	reason: String,
+	force: bool = false,
+	outcome: Dictionary = {}
+) -> Dictionary:
+	if not has_active_move():
+		return {"ok": false, "error": "no active move"}
+	var snapshot: Dictionary = active_execution.interrupt(reason, force, outcome)
+	if not bool(snapshot.get("interrupted", false)):
+		return snapshot
+	var move_id: String = str(snapshot.get("move_id", ""))
+	move_phase_changed.emit(
+		move_id,
+		str(snapshot.get("previous_phase", "")),
+		str(snapshot.get("phase", "")),
+		snapshot
+	)
+	move_interrupted.emit(move_id, reason, snapshot)
+	active_execution = null
+	return snapshot
+
+
+func has_active_move() -> bool:
+	return active_execution != null and bool(active_execution.is_active())
+
+
+func get_active_execution() -> Dictionary:
+	return active_execution.to_dictionary() if active_execution != null else {}
+
+
 func clear_cooldowns() -> void:
 	cooldowns.clear()
 
@@ -229,6 +337,7 @@ func get_debug_data() -> Dictionary:
 		"drives": get_drive_snapshot(),
 		"current_intention_id": current_intention_id,
 		"intention_time_remaining": intention_time_remaining,
+		"active_execution": get_active_execution(),
 		"last_decision": last_decision.duplicate(true),
 		"ranked_moves": last_evaluation.duplicate(true),
 	}

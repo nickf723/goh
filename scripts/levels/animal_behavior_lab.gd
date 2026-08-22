@@ -2,6 +2,9 @@ extends Node3D
 class_name AnimalBehaviorLab
 
 const AnimalScript = preload("res://scripts/animals/generic_animal_actor.gd")
+const TraversalMediumScript = preload(
+	"res://scripts/mobs/mob_traversal_medium.gd"
+)
 
 var player: Node3D
 var animals: Array[GenericAnimalActor] = []
@@ -14,6 +17,8 @@ var forage_positions: Dictionary = {}
 var water_position: Vector3 = Vector3(6.0, 0.72, -6.5)
 var pond_surface_y: float = 1.35
 var pond_volume: SwimmingWaterVolume
+var climb_habitat: MobTraversalMedium
+var burrow_habitat: MobTraversalMedium
 var animal_start_positions: Dictionary = {}
 var noise_position: Vector3 = Vector3.ZERO
 var noise_strength: float = 0.0
@@ -121,6 +126,7 @@ func _build_lab() -> void:
 	_add_box("Ground", Vector3(28.0, 0.6, 24.0), Vector3(0.0, -0.3, -2.0), Color(0.12, 0.22, 0.16))
 	_add_box("Pasture", Vector3(8.5, 0.08, 7.0), Vector3(-7.5, 0.04, -2.0), Color(0.27, 0.48, 0.18), false)
 	_build_water_habitat()
+	_build_traversal_habitats()
 	_add_box("WolfRidge", Vector3(8.0, 0.16, 5.5), Vector3(0.0, 0.08, -9.0), Color(0.2, 0.23, 0.27), false)
 	forage_positions["sheep"] = Vector3(-7.0, 0.1, -2.0)
 	forage_positions["capybara"] = Vector3(4.1, 0.1, -3.2)
@@ -148,6 +154,16 @@ func _spawn_animals() -> void:
 		"Cinder": Vector3(1.2, 0.4, -8.7),
 		"Juniper": Vector3(10.5, 4.0, 6.5),
 		"Ripple": Vector3(6.0, 0.72, -6.5),
+		"Mica": (
+			climb_habitat.get_entry_position()
+			if climb_habitat != null
+			else Vector3(-11.25, 0.7, 2.8)
+		),
+		"Loam": (
+			burrow_habitat.get_entry_position()
+			if burrow_habitat != null
+			else Vector3(1.1, 0.45, 3.2)
+		),
 	}
 	_spawn_animal("Mallow", "sheep", animal_start_positions["Mallow"] as Vector3, "cautious", 2.1)
 	_spawn_animal("Bramble", "capybara", animal_start_positions["Bramble"] as Vector3, "balanced", 2.0)
@@ -169,8 +185,25 @@ func _spawn_animals() -> void:
 		1.9,
 		"swimmer"
 	)
+	_spawn_animal(
+		"Mica",
+		"gecko",
+		animal_start_positions["Mica"] as Vector3,
+		"curious",
+		2.2,
+		"climber"
+	)
+	_spawn_animal(
+		"Loam",
+		"mole",
+		animal_start_positions["Loam"] as Vector3,
+		"cautious",
+		1.75,
+		"burrower"
+	)
 	for animal: GenericAnimalActor in animals:
 		_register_initial_water_medium(animal)
+		_register_initial_traversal_medium(animal)
 
 
 func _spawn_animal(
@@ -253,6 +286,20 @@ func _build_overlay() -> void:
 		locomotion_grid,
 		"Launch / Land Goose",
 		Callable(self, "_toggle_goose_flight")
+	)
+	_add_button(
+		locomotion_grid,
+		"Place on Climb Wall",
+		Callable(self, "_place_selected_in_traversal").bind(
+			"climber"
+		)
+	)
+	_add_button(
+		locomotion_grid,
+		"Enter Burrow Route",
+		Callable(self, "_place_selected_in_traversal").bind(
+			"burrower"
+		)
 	)
 	_add_button(
 		locomotion_grid,
@@ -438,12 +485,56 @@ func _toggle_goose_flight() -> void:
 	)
 
 
+func _place_selected_in_traversal(
+	mode_id: String
+) -> void:
+	var animal: GenericAnimalActor = _selected_animal()
+	var habitat: MobTraversalMedium = (
+		climb_habitat
+		if mode_id == "climber"
+		else burrow_habitat
+	)
+	if animal == null or habitat == null:
+		return
+	if (
+		animal.locomotion == null
+		or not animal.locomotion.supports_mode(mode_id)
+	):
+		_show_message(
+			animal.animal_name
+			+ " has no validated "
+			+ mode_id.replace("_", " ")
+			+ " mode."
+		)
+		return
+	var result: Dictionary = habitat.place_actor(animal)
+	if not bool(result.get("ok", false)):
+		_show_message(
+			animal.animal_name
+			+ " could not enter "
+			+ habitat.habitat_label
+			+ ": "
+			+ str(result.get("error", "unknown transition"))
+		)
+		return
+	animal.decision_time_remaining = 0.0
+	_show_message(
+		animal.animal_name
+		+ " entered "
+		+ habitat.habitat_label
+		+ " in "
+		+ animal.get_active_locomotion_mode().capitalize()
+		+ " mode."
+	)
+
+
 func _return_selected_home() -> void:
 	var animal: GenericAnimalActor = _selected_animal()
 	if animal == null:
 		return
 	animal.reset_actor()
 	_register_initial_water_medium(animal)
+	_register_initial_traversal_medium(animal)
 	_show_message(animal.animal_name + " returned to its authored start.")
 
 
@@ -529,6 +620,7 @@ func _reset_lab() -> void:
 	for animal: GenericAnimalActor in animals:
 		animal.reset_actor()
 		_register_initial_water_medium(animal)
+		_register_initial_traversal_medium(animal)
 	if player != null:
 		player.global_position = Vector3(0.0, 1.1, 7.5)
 		if player is CharacterBody3D:
@@ -538,11 +630,151 @@ func _reset_lab() -> void:
 
 
 func _update_objective() -> void:
-	var objective: String = "Compare ground, swimming, and flight animals; use the habitat controls, then test moves, threat, trust, bonding, and reset."
+	var objective: String = "Compare ground, swimming, flight, climbing, and burrowing animals; use every habitat control, then test moves, threat, trust, bonding, and reset."
 	GameState.set_objective(objective)
 	var game_ui: Node = get_tree().get_first_node_in_group("game_ui")
 	if game_ui != null and game_ui.has_method("set_objective"):
 		game_ui.call("set_objective", objective)
+
+
+func _build_traversal_habitats() -> void:
+	var climb_points := PackedVector3Array([
+		Vector3(0.0, 0.7, -2.45),
+		Vector3(0.0, 3.9, -2.1),
+		Vector3(0.0, 3.25, 0.1),
+		Vector3(0.0, 1.15, 2.35),
+	])
+	_add_box(
+		"ClimbWall",
+		Vector3(0.6, 4.8, 6.8),
+		Vector3(-11.85, 2.4, 5.2),
+		Color(0.26, 0.31, 0.25)
+	)
+	climb_habitat = TraversalMediumScript.new() as MobTraversalMedium
+	climb_habitat.name = "SharedClimbHabitat"
+	climb_habitat.position = Vector3(-11.48, 0.0, 5.2)
+	climb_habitat.adhesion_strength = 1.65
+	climb_habitat.waypoint_radius = 0.38
+	climb_habitat.configure(
+		"climber",
+		["vertical_surface"],
+		Vector3.RIGHT,
+		climb_points,
+		"Climb Wall"
+	)
+	_add_traversal_collision(
+		climb_habitat,
+		Vector3(0.9, 4.55, 6.3),
+		Vector3(0.0, 2.25, 0.0)
+	)
+	add_child(climb_habitat)
+	_add_world_label(
+		"SHARED CLIMB SURFACE",
+		Vector3(-11.35, 4.95, 5.2),
+		Color(0.66, 1.0, 0.54)
+	)
+	for point: Vector3 in climb_points:
+		_add_traversal_marker(
+			climb_habitat.global_transform * point,
+			Color(0.54, 1.0, 0.42)
+		)
+
+	var burrow_points := PackedVector3Array([
+		Vector3(-2.4, 0.42, -1.35),
+		Vector3(-1.15, 1.08, -0.2),
+		Vector3(0.0, 0.55, 1.28),
+		Vector3(2.3, 1.02, 0.58),
+		Vector3(1.45, 0.42, -1.18),
+		Vector3(0.0, 0.76, -0.28),
+	])
+	burrow_habitat = TraversalMediumScript.new() as MobTraversalMedium
+	burrow_habitat.name = "SharedBurrowHabitat"
+	burrow_habitat.position = Vector3(3.5, 0.0, 4.6)
+	burrow_habitat.adhesion_strength = 0.0
+	burrow_habitat.waypoint_radius = 0.34
+	burrow_habitat.configure(
+		"burrower",
+		["soil"],
+		Vector3.ZERO,
+		burrow_points,
+		"Burrow Route"
+	)
+	_add_traversal_collision(
+		burrow_habitat,
+		Vector3(6.0, 1.6, 4.0),
+		Vector3(0.0, 0.78, 0.0)
+	)
+	_add_traversal_volume_visual(
+		burrow_habitat,
+		Vector3(6.0, 1.6, 4.0),
+		Vector3(0.0, 0.78, 0.0),
+		Color(0.42, 0.25, 0.12, 0.2)
+	)
+	add_child(burrow_habitat)
+	_add_world_label(
+		"SHARED BURROW ROUTE",
+		Vector3(3.5, 0.18, 6.85),
+		Color(0.94, 0.7, 0.38)
+	)
+	for point: Vector3 in burrow_points:
+		_add_traversal_marker(
+			burrow_habitat.global_transform * point,
+			Color(1.0, 0.58, 0.22)
+		)
+
+
+func _add_traversal_collision(
+	habitat: MobTraversalMedium,
+	size: Vector3,
+	position_value: Vector3
+) -> void:
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	collision.shape = shape
+	collision.position = position_value
+	habitat.add_child(collision)
+
+
+func _add_traversal_volume_visual(
+	habitat: MobTraversalMedium,
+	size: Vector3,
+	position_value: Vector3,
+	color: Color
+) -> void:
+	var visual := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	visual.mesh = mesh
+	visual.position = position_value
+	var material := StandardMaterial3D.new()
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.albedo_color = color
+	material.roughness = 0.92
+	material.emission_enabled = true
+	material.emission = Color(color.r, color.g, color.b)
+	material.emission_energy_multiplier = 0.12
+	visual.material_override = material
+	habitat.add_child(visual)
+
+
+func _add_traversal_marker(
+	position_value: Vector3,
+	color: Color
+) -> void:
+	var marker := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.1
+	mesh.height = 0.2
+	marker.mesh = mesh
+	marker.position = position_value
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.emission_enabled = true
+	material.emission = color
+	material.emission_energy_multiplier = 1.2
+	marker.material_override = material
+	add_child(marker)
 
 
 func _build_water_habitat() -> void:
@@ -625,6 +857,24 @@ func _register_initial_water_medium(
 		and animal.global_position.y <= pond_surface_y
 	):
 		animal.locomotion.enter_water(pond_volume)
+
+
+func _register_initial_traversal_medium(
+	animal: GenericAnimalActor
+) -> void:
+	if animal == null or animal.locomotion == null:
+		return
+	match animal.get_active_locomotion_mode():
+		"climber":
+			if climb_habitat != null:
+				animal.locomotion.enter_traversal_medium(
+					climb_habitat
+				)
+		"burrower":
+			if burrow_habitat != null:
+				animal.locomotion.enter_traversal_medium(
+					burrow_habitat
+				)
 
 
 func _add_box(

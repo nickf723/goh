@@ -26,7 +26,7 @@ Adds validated ground, swimming, flight, climbing, burrowing, runner, jumper, se
 
 `MobMoveEffectRequest` separates effect timing from physical targeting. `MobEffectTargetResolver` provides authoritative actor-owned targeting with optional generic fallbacks and relation filters. `MobMoveEffectExecutor` handles exactly-once contact, area, projectile, recovery, and custom/executor dispatch. Projectile actions reuse the physical `GenericProjectile`; `MobPayloadBridge` keeps consequences inside the existing `DamagePayload → PayloadReceiver` grammar.
 
-`MobVitalsComponent` derives health from species base stats and supplies shared health, stamina, recovery, reset, and incapacitation behavior. `MobConditionComponent` retains timed buffs and harmful statuses, exposes them to policy evaluation, and plugs into the established `StatusReceiver` seam.
+`MobVitalsComponent` derives health from species base stats and supplies shared health, stamina, recovery, reset, and incapacitation behavior. Generic animals compose the existing combat `StatusReceiver`; its active statuses now enter policy evaluation, and damage-over-time ticks can use the shared actor payload method when no `HitReceiver` child exists.
 
 ### Drives and intentions
 

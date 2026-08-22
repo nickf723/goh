@@ -42,6 +42,9 @@ const LifeGroveAbility: AbilityDefinition = preload(
 const IcePillarAbility: AbilityDefinition = preload(
 	"res://data/abilities/ice_pillar_ability.tres"
 )
+const SoulThreadAbility: AbilityDefinition = preload(
+	"res://data/abilities/soul_thread_ability.tres"
+)
 
 const EarthquakeScene: PackedScene = preload(
 	"res://scenes/actions/earthquake_field.tscn"
@@ -85,6 +88,12 @@ const LifeGroveScene: PackedScene = preload(
 const IcePillarScene: PackedScene = preload(
 	"res://scenes/actions/ice_pillar_cast.tscn"
 )
+const SoulThreadScene: PackedScene = preload(
+	"res://scenes/actions/soul_thread_projectile.tscn"
+)
+const SoulThreadLinkScene: PackedScene = preload(
+	"res://scenes/actions/soul_thread_link.tscn"
+)
 
 const CombatPlayerScene: PackedScene = preload(
 	"res://scenes/actors/player/player_combat_v2.tscn"
@@ -117,6 +126,7 @@ func _ready() -> void:
 	_validate_ability(StasisBubbleAbility, "stasis_bubble", "time", "spatial_status_field")
 	_validate_ability(LifeGroveAbility, "life_grove", "life", "spatial_restoration_field")
 	_validate_ability(IcePillarAbility, "ice_pillar", "ice", "conjured_vertical_structure")
+	_validate_ability(SoulThreadAbility, "soul_thread", "soul", "projectile_actor_link")
 
 	_validate_runtime_scene(EarthquakeScene, "seismic_response_contract", false)
 	_validate_runtime_scene(PolarizeScene, "object_connection_contract", false)
@@ -132,9 +142,11 @@ func _ready() -> void:
 	_validate_runtime_scene(StasisBubbleScene, "time_stasis_contract", false)
 	_validate_runtime_scene(LifeGroveScene, "restorative_growth_contract", false)
 	_validate_runtime_scene(IcePillarScene, "temporary_architecture_contract", false)
+	_validate_runtime_scene(SoulThreadScene, "persistent_actor_link", false)
 
 	_validate_stasis_policy()
 	_validate_specialized_contracts()
+	_validate_soul_thread_contract()
 	_validate_library_discovery()
 	_validate_live_player_wiring()
 	_finish()
@@ -248,6 +260,45 @@ func _validate_specialized_contracts() -> void:
 	pillar.free()
 
 
+func _validate_soul_thread_contract() -> void:
+	var source := Node3D.new()
+	source.name = "ThreadSource"
+	var target := Node3D.new()
+	target.name = "ThreadTarget"
+	var link: Node = SoulThreadLinkScene.instantiate()
+	add_child(source)
+	add_child(target)
+	add_child(link)
+	_expect(link.has_method("bind_to_actors"), "Soul Thread link exposes actor bind contract")
+	_expect(link.has_method("refresh_thread"), "Soul Thread link exposes refresh contract")
+	_expect(link.has_method("break_thread"), "Soul Thread link exposes clean break contract")
+	if link.has_method("bind_to_actors"):
+		_expect(
+			bool(link.call("bind_to_actors", source, target)),
+			"Soul Thread binds two actors"
+		)
+		_expect(bool(target.get_meta("soul_threaded", false)), "Soul Thread marks linked target")
+		_expect(
+			int(target.get_meta("soul_thread_source_id", 0)) == source.get_instance_id(),
+			"Soul Thread records authoritative source"
+		)
+		if link.has_method("refresh_thread"):
+			link.call("refresh_thread", 12.0)
+			var debug_data: Dictionary = link.call("get_debug_data") as Dictionary
+			_expect(
+				float(debug_data.get("remaining", 0.0)) >= 12.0,
+				"Soul Thread recast refreshes duration instead of stacking"
+			)
+		if link.has_method("break_thread"):
+			link.call("break_thread", "test")
+			_expect(
+				not bool(target.get_meta("soul_threaded", false)),
+				"Soul Thread break removes target marker"
+			)
+	source.queue_free()
+	target.queue_free()
+
+
 func _validate_library_discovery() -> void:
 	var loadout := AbilityLoadout.new()
 	_expect(
@@ -277,6 +328,7 @@ func _validate_library_discovery() -> void:
 		"stasis_bubble",
 		"life_grove",
 		"ice_pillar",
+		"soul_thread",
 	]:
 		_expect(ids.has(expected_id), "authored library discovers " + expected_id)
 		_expect(

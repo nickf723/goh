@@ -13,6 +13,9 @@ const ConditionScript = preload(
 const LocomotionExecutorScript = preload(
 	"res://scripts/mobs/mob_locomotion_executor.gd"
 )
+const SpeciesCatalogScript = preload(
+	"res://scripts/mobs/mob_species_catalog.gd"
+)
 
 signal action_changed(move_id: String, intention_id: String)
 signal selected_changed(selected: bool)
@@ -35,6 +38,7 @@ var effect_executor: MobMoveEffectExecutor
 var vitals: MobVitalsComponent
 var condition_state: Node
 var locomotion: MobLocomotionExecutor
+var species_definition: MobSpeciesDefinition
 var perception: AnimalPerceptionMemory
 var relationship: AnimalRelationshipState
 var perception_snapshot: Dictionary = {}
@@ -52,6 +56,8 @@ var selected: bool = false
 var initial_position: Vector3
 var visual_root: Node3D
 var head_root: Node3D
+var wing_roots: Array[Node3D] = []
+var tail_root: Node3D
 var state_label: Label3D
 var selection_marker: MeshInstance3D
 var body_material: StandardMaterial3D
@@ -65,6 +71,7 @@ var last_locomotion_solution: Dictionary = {}
 
 
 func _ready() -> void:
+	species_definition = SpeciesCatalogScript.get_definition(species_id)
 	initial_position = global_position
 	home_position = global_position
 	wander_target = home_position
@@ -215,18 +222,24 @@ func get_mob_decision_context() -> Dictionary:
 			context_tags.append("investigating_noise")
 
 	if not grace_threat:
-		if species_id == "sheep":
-			target_distance = forage_distance
-			if forage_distance <= 2.4:
-				context_tags.append("lush_forage")
-		elif species_id == "capybara":
-			target_distance = minf(forage_distance, water_distance)
-			context_tags.append("hot")
+		var has_habitat_target: bool = false
+		if locomotion != null and locomotion.supports_mode("swimmer"):
+			target_distance = water_distance
+			has_habitat_target = true
 			if water_distance <= 12.0:
 				context_tags.append("water_near")
+		if _species_has_ecology_tag("grazer"):
+			target_distance = (
+				minf(target_distance, forage_distance)
+				if has_habitat_target
+				else forage_distance
+			)
+			has_habitat_target = true
 			if forage_distance <= 2.4:
 				context_tags.append("lush_forage")
-		elif not aware_of_grace:
+		if species_id == "capybara":
+			context_tags.append("hot")
+		if not has_habitat_target and not aware_of_grace:
 			target_distance = 0.0
 
 	return {
@@ -383,11 +396,30 @@ func _get_condition_context_tags() -> Array[String]:
 
 func _get_mob_self_tags() -> Array[String]:
 	var tags: Array[String] = _get_condition_context_tags()
+	var species_tag: String = "species:" + species_id
+	if not tags.has(species_tag):
+		tags.append(species_tag)
+	if species_definition != null:
+		for taxonomy_tag: String in species_definition.taxonomy_tags:
+			tags.append("taxonomy:" + taxonomy_tag)
+		for body_tag: String in species_definition.body_tags:
+			tags.append("body:" + body_tag)
+		for ecology_tag: String in species_definition.ecology_tags:
+			tags.append("ecology:" + ecology_tag)
 	if locomotion != null:
 		for locomotion_tag: String in locomotion.get_context_tags():
 			if not tags.has(locomotion_tag):
 				tags.append(locomotion_tag)
 	return tags
+
+
+func _species_has_ecology_tag(tag: String) -> bool:
+	return (
+		species_definition != null
+		and species_definition.ecology_tags.has(
+			tag.to_lower().strip_edges()
+		)
+	)
 
 
 func receive_mob_recovery(
@@ -782,7 +814,13 @@ func _on_move_selected(move_id: String, decision: Dictionary) -> void:
 		current_intention_id = "investigate"
 	var execution: Dictionary = started.get("execution", {}) as Dictionary
 	action_time_remaining = float(execution.get("total_duration", 0.0))
-	if ["bite", "headbutt", "pounce", "tail_sweep"].has(current_action_id):
+	if [
+		"bite",
+		"peck",
+		"headbutt",
+		"pounce",
+		"tail_sweep",
+	].has(current_action_id):
 		flash_time_remaining = 0.22
 	action_changed.emit(current_action_id, current_intention_id)
 
@@ -816,7 +854,7 @@ func _execute_current_action(delta: float) -> void:
 			direction = _movement_direction(
 				global_position - _remembered_grace_position()
 			)
-		"bite", "headbutt", "pounce", "tail_sweep", "stone_gaze", "mire_spit":
+		"bite", "peck", "headbutt", "pounce", "tail_sweep", "stone_gaze", "mire_spit":
 			direction = _direction_to(_remembered_grace_position())
 		"howl":
 			direction = Vector3.ZERO
@@ -934,7 +972,7 @@ func _action_duration(move_id: String, effect: Dictionary) -> float:
 		"wade": return 2.2
 		"investigate": return 1.35
 		"howl": return 1.4
-		"bite", "headbutt", "pounce", "tail_sweep": return 0.8
+		"bite", "peck", "headbutt", "pounce", "tail_sweep": return 0.8
 		_: return 1.0
 
 
@@ -1049,14 +1087,26 @@ func _get_lab_float(method_name: String, fallback: float) -> float:
 func _build_collision() -> void:
 	var collision := CollisionShape3D.new()
 	var shape := CapsuleShape3D.new()
-	shape.radius = 0.42
-	shape.height = 1.15
+	if species_id == "trout":
+		shape.radius = 0.26
+		shape.height = 0.92
+		collision.rotation_degrees.x = 90.0
+		collision.position.y = 0.52
+	elif species_id == "goose":
+		shape.radius = 0.32
+		shape.height = 1.05
+		collision.position.y = 0.62
+	else:
+		shape.radius = 0.42
+		shape.height = 1.15
+		collision.position.y = 0.58
 	collision.shape = shape
-	collision.position.y = 0.58
 	add_child(collision)
 
 
 func _build_visual() -> void:
+	wing_roots.clear()
+	tail_root = null
 	visual_root = Node3D.new()
 	add_child(visual_root)
 	body_material = StandardMaterial3D.new()
@@ -1076,6 +1126,14 @@ func _build_visual() -> void:
 			body_material.albedo_color = Color(0.28, 0.34, 0.4)
 			accent_material.albedo_color = Color(0.08, 0.1, 0.13)
 			_build_quadruped(Vector3(0.54, 0.46, 0.86), 0.32, false, true)
+		"goose":
+			body_material.albedo_color = Color(0.78, 0.8, 0.74)
+			accent_material.albedo_color = Color(0.08, 0.1, 0.11)
+			_build_goose()
+		"trout":
+			body_material.albedo_color = Color(0.28, 0.52, 0.58)
+			accent_material.albedo_color = Color(0.08, 0.22, 0.26)
+			_build_trout()
 		_:
 			body_material.albedo_color = Color(0.45, 0.48, 0.5)
 			accent_material.albedo_color = Color(0.12, 0.14, 0.16)
@@ -1097,7 +1155,11 @@ func _build_visual() -> void:
 	selection_marker.visible = false
 	add_child(selection_marker)
 	state_label = Label3D.new()
-	state_label.position = Vector3(0.0, 2.05, 0.0)
+	state_label.position = Vector3(
+		0.0,
+		1.55 if species_id == "trout" else 2.05,
+		0.0
+	)
 	state_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	state_label.font_size = 18
 	state_label.pixel_size = 0.006
@@ -1173,14 +1235,173 @@ func _build_quadruped(
 		visual_root.add_child(tail)
 
 
+func _build_goose() -> void:
+	var body := MeshInstance3D.new()
+	var body_mesh := SphereMesh.new()
+	body_mesh.radius = 0.38
+	body_mesh.height = 0.76
+	body.mesh = body_mesh
+	body.scale = Vector3(0.9, 0.75, 1.35)
+	body.position = Vector3(0.0, 0.62, 0.08)
+	body.material_override = body_material
+	visual_root.add_child(body)
+
+	var neck := MeshInstance3D.new()
+	var neck_mesh := CylinderMesh.new()
+	neck_mesh.top_radius = 0.13
+	neck_mesh.bottom_radius = 0.18
+	neck_mesh.height = 0.72
+	neck.mesh = neck_mesh
+	neck.position = Vector3(0.0, 1.02, -0.28)
+	neck.rotation_degrees.x = -18.0
+	neck.material_override = accent_material
+	visual_root.add_child(neck)
+
+	head_root = Node3D.new()
+	head_root.position = Vector3(0.0, 1.42, -0.42)
+	visual_root.add_child(head_root)
+	var head := MeshInstance3D.new()
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.22
+	head_mesh.height = 0.44
+	head.mesh = head_mesh
+	head.material_override = accent_material
+	head_root.add_child(head)
+	var beak := MeshInstance3D.new()
+	var beak_mesh := PrismMesh.new()
+	beak_mesh.size = Vector3(0.18, 0.12, 0.35)
+	beak.mesh = beak_mesh
+	beak.position = Vector3(0.0, -0.02, -0.28)
+	beak.rotation_degrees.x = 90.0
+	var beak_material := StandardMaterial3D.new()
+	beak_material.albedo_color = Color(0.92, 0.48, 0.08)
+	beak_material.roughness = 0.68
+	beak.material_override = beak_material
+	head_root.add_child(beak)
+
+	for side: float in [-1.0, 1.0]:
+		var wing_root := Node3D.new()
+		wing_root.position = Vector3(side * 0.26, 0.72, 0.08)
+		visual_root.add_child(wing_root)
+		wing_roots.append(wing_root)
+		var wing := MeshInstance3D.new()
+		var wing_mesh := SphereMesh.new()
+		wing_mesh.radius = 0.28
+		wing_mesh.height = 0.56
+		wing.mesh = wing_mesh
+		wing.scale = Vector3(0.42, 0.32, 1.3)
+		wing.position = Vector3(side * 0.18, 0.0, 0.0)
+		wing.rotation_degrees.z = side * -18.0
+		wing.material_override = body_material
+		wing_root.add_child(wing)
+		var leg := MeshInstance3D.new()
+		var leg_mesh := CylinderMesh.new()
+		leg_mesh.top_radius = 0.04
+		leg_mesh.bottom_radius = 0.055
+		leg_mesh.height = 0.45
+		leg.mesh = leg_mesh
+		leg.position = Vector3(side * 0.15, 0.28, 0.12)
+		leg.material_override = beak_material
+		visual_root.add_child(leg)
+
+	tail_root = Node3D.new()
+	tail_root.position = Vector3(0.0, 0.68, 0.58)
+	visual_root.add_child(tail_root)
+	var tail := MeshInstance3D.new()
+	var tail_mesh := PrismMesh.new()
+	tail_mesh.size = Vector3(0.36, 0.12, 0.5)
+	tail.mesh = tail_mesh
+	tail.position.z = 0.18
+	tail.rotation_degrees.x = -10.0
+	tail.material_override = body_material
+	tail_root.add_child(tail)
+
+
+func _build_trout() -> void:
+	var body := MeshInstance3D.new()
+	var body_mesh := SphereMesh.new()
+	body_mesh.radius = 0.42
+	body_mesh.height = 0.84
+	body.mesh = body_mesh
+	body.scale = Vector3(0.62, 0.48, 1.35)
+	body.position = Vector3(0.0, 0.55, 0.0)
+	body.material_override = body_material
+	visual_root.add_child(body)
+
+	head_root = Node3D.new()
+	head_root.position = Vector3(0.0, 0.55, -0.56)
+	visual_root.add_child(head_root)
+	var head := MeshInstance3D.new()
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.28
+	head_mesh.height = 0.56
+	head.mesh = head_mesh
+	head.scale = Vector3(0.9, 0.8, 1.0)
+	head.material_override = body_material
+	head_root.add_child(head)
+
+	for side: float in [-1.0, 1.0]:
+		var fin := MeshInstance3D.new()
+		var fin_mesh := PrismMesh.new()
+		fin_mesh.size = Vector3(0.34, 0.06, 0.38)
+		fin.mesh = fin_mesh
+		fin.position = Vector3(side * 0.38, 0.5, 0.0)
+		fin.rotation_degrees = Vector3(
+			0.0,
+			side * 18.0,
+			side * -24.0
+		)
+		fin.material_override = accent_material
+		visual_root.add_child(fin)
+
+	tail_root = Node3D.new()
+	tail_root.position = Vector3(0.0, 0.55, 0.68)
+	visual_root.add_child(tail_root)
+	var tail := MeshInstance3D.new()
+	var tail_mesh := PrismMesh.new()
+	tail_mesh.size = Vector3(0.5, 0.5, 0.12)
+	tail.mesh = tail_mesh
+	tail.position.z = 0.18
+	tail.rotation_degrees.x = 90.0
+	tail.material_override = accent_material
+	tail_root.add_child(tail)
+
+
 func _update_visual(delta: float) -> void:
 	if visual_root != null:
-		var movement_amount: float = Vector2(velocity.x, velocity.z).length()
-		visual_root.position.y = absf(sin(elapsed * 8.0)) * movement_amount * 0.018
+		var movement_amount: float = (
+			velocity.length()
+			if get_active_locomotion_mode() in ["swimmer", "flight"]
+			else Vector2(velocity.x, velocity.z).length()
+		)
+		visual_root.position.y = (
+			absf(sin(elapsed * 8.0))
+			* movement_amount
+			* 0.018
+		)
+	for wing_index: int in range(wing_roots.size()):
+		var side: float = -1.0 if wing_index == 0 else 1.0
+		var flight_weight: float = (
+			1.0
+			if get_active_locomotion_mode() == "flight"
+			else 0.0
+		)
+		var flap: float = sin(elapsed * 11.0) * 38.0 * flight_weight
+		wing_roots[wing_index].rotation_degrees.z = (
+			side * (18.0 + flap)
+		)
+	if tail_root != null:
+		tail_root.rotation_degrees.y = (
+			sin(elapsed * 7.0)
+			* velocity.length()
+			* (5.0 if species_id == "trout" else 1.2)
+		)
 	if head_root != null:
 		var target_pitch: float = 0.0
 		if current_action_id == "graze":
 			target_pitch = 48.0 + sin(elapsed * 5.0) * 8.0
+		elif current_action_id == "peck":
+			target_pitch = 32.0 + sin(elapsed * 12.0) * 12.0
 		elif current_action_id == "howl":
 			target_pitch = -28.0
 		head_root.rotation_degrees.x = lerpf(head_root.rotation_degrees.x, target_pitch, clampf(delta * 6.0, 0.0, 1.0))
@@ -1201,6 +1422,7 @@ func _update_visual(delta: float) -> void:
 			+ "\n" + current_intention_id.capitalize()
 			+ " • " + current_action_id.replace("_", " ").capitalize()
 			+ "\n" + stimulus.replace("_", " ").capitalize()
+			+ "  • " + get_active_locomotion_mode().capitalize()
 			+ "  Trust " + _signed_percent(relationship.trust if relationship != null else 0.0)
 			+ "\nHP " + _percent(
 				vitals.get_health_ratio() if vitals != null else 1.0

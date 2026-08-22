@@ -1278,7 +1278,7 @@
       "category": "AI Laboratory",
       "version": "v1.3",
       "status": "development_tool",
-      "description": "Playable Mob Engine laboratory comparing species movesets, continuous personality, drives, committed intentions, action phases, physical effect execution, species-derived vitals, perception, relationships, bonding, persistence, and pack alerts across sheep, capybara, and wolves.",
+      "description": "Playable Mob Engine laboratory comparing species movesets, continuous personality, drives, committed intentions, action phases, physical effect execution, species-derived vitals, timed conditions, perception, relationships, bonding, persistence, and pack alerts across sheep, capybara, and wolves.",
       "scene": "res://scenes/levels/prototypes/animal_behavior_lab_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/animal_behavior_lab_v1.tscn"

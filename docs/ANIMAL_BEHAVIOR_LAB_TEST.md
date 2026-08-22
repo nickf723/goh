@@ -8,15 +8,18 @@ The lab controls live in two on-screen panels. They are mouse-clickable and cont
 
 ## Locomotion habitat pass
 
-1. Cycle to **Juniper the Goose**. Confirm she begins above the lab in **Flight** mode, steers in three dimensions, and visibly flaps her reusable wing rig.
+1. Cycle to **Juniper the Goose**. Confirm she begins above dry ground in **Flight** mode, steers in three dimensions, and visibly flaps her reusable wing rig.
 2. Press **Launch / Land Goose**. Confirm Juniper switches to **Ground**, falls under gravity, and can resume ground behavior. Press it again and confirm the same actor returns to **Flight**.
 3. Cycle to **Ripple the Trout**. Confirm Ripple begins inside the shared pond in **Swimmer** mode, remains buoyant near the authored surface, responds to the pond current, and animates its reusable tail rig.
-4. Select **Bramble the Capybara** and press **Place in Pond**. Confirm the shared actor changes from **Ground** to **Swimmer** without replacing its brain, moveset, drives, vitals, or relationship. Press **Return Selected** and confirm Ground is restored at Bramble's authored start.
+4. Select **Bramble the Capybara** and press **Place in Pond**. Confirm the shared actor changes from Ground to Swimmer without replacing its brain, moveset, drives, vitals, or relationship. Press **Return Selected** and confirm Ground is restored at Bramble's authored start.
 5. Select Juniper and press **Place in Pond**. Confirm the catalog-legal transition changes her directly from Flight to Swimmer. Press **Launch / Land Goose** to take off from the water.
-6. Select **Mallow the Sheep** and press **Place in Pond**. Confirm the lab rejects the request with a readable “no validated swimming mode” message.
-7. Press **Reset Lab**. Confirm Juniper returns to Flight, Ripple returns to Swimmer inside the pond, all ground animals return to Ground, and the selected-animal readout reports each mode and height.
+6. Cycle to **Mica the Gecko**. Confirm Mica begins in **Climber** mode, remains attached to the real collision wall, and follows the glowing route upward and across the surface while the shared brain commits **Climb**.
+7. Cycle to **Loam the Mole**. Confirm Loam begins in **Burrower** mode and follows the glowing three-dimensional route inside the translucent soil volume while the shared brain commits **Burrow**.
+8. Select Mallow and press **Place in Pond**, select Mica and press **Enter Burrow Route**, then select Loam and press **Place on Climb Wall**. Each incompatible request must produce a readable rejection without changing mode or position.
+9. Use **Return Selected** on Mica and Loam after they have progressed around their routes. Confirm each returns to its first waypoint, restores its authored mode, and begins the route again.
+10. Press **Reset Lab**. Confirm Juniper returns to Flight, Ripple to Swimmer, Mica to Climber, Loam to Burrower, all terrestrial animals to Ground, and the selected-animal readout reports each mode and height.
 
-Movement speeds, acceleration, buoyancy, current strength, and animation cadence are first-pass test values. Record what feels wrong during play; tuning remains a playtest decision rather than a structural test assertion.
+Movement speeds, acceleration, buoyancy, current strength, surface adhesion, waypoint spacing, and animation cadence are first-pass test values. Record what feels wrong during play; tuning remains a playtest decision rather than a structural test assertion.
 
 ## Perception and relationship pass
 
@@ -47,7 +50,7 @@ Movement speeds, acceleration, buoyancy, current strength, and animation cadence
 5. With both wolves present, confirm pack-support behavior remains focused on wolves rather than sheep or capybara; an active Pack Focus condition appears in the overhead status line.
 6. Use **Reset Lab** and confirm the animals return to full HP, timed conditions clear, and no stale move effect fires after reset.
 
-The foundation smoke test owns the non-visual edge cases: species-scaled damage, health and stamina recovery, incapacitation and revival, duplicate request rejection, range filtering, authoritative empty target providers, area deduplication, physical projectile spawning, legal ground/swimming/flight transitions, direct flight-to-swimming and swimming-to-flight transitions, medium rejection, three-dimensional steering, water-current sampling, surface buoyancy, gravity handoff, and opt-in gait modifiers. The scene smoke test additionally instantiates this canonical lab and verifies all six animals, the real `SwimmingWaterVolume`, Goose and Trout prototype rigs, habitat controls, and reset modes.
+The foundation smoke test owns the non-visual edge cases: species-scaled damage, recovery, incapacitation, duplicate-request rejection, target filtering, physical effects, legal mode transitions, medium rejection, planar/surface/volumetric steering, water currents, buoyancy, gravity handoff, surface adhesion, traversal guidance, and opt-in gait modifiers. The scene smoke test additionally instantiates this canonical lab and verifies all eight animals, the pond and traversal media, reusable Goose, Trout, Gecko, and Mole bodies, physical route progress, incompatible-habitat rejection, controls, and reset modes.
 
 ## Bonding and persistence pass
 

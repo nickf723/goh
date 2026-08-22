@@ -774,7 +774,7 @@
         "perception, memory, same-species alerts, and Grace relationships",
         "persistent named-animal bonding and familiar roster integration",
         "navigation-aware following, commands, rescue, and stuck recovery",
-        "seed species: wolf, sheep, capybara, gorgon, and gremlin",
+        "seed species: wolf, sheep, capybara, gorgon, gremlin, goose, and trout",
         "validated ground, swimming, flight, climbing, burrowing, and gait capabilities",
         "exactly-once active-phase effect requests",
         "authoritative actor-owned target acquisition with range, radius, line-of-sight, deduplication, and relation-filter seams",
@@ -783,11 +783,13 @@
         "species-derived health, stamina, recovery, incapacitation, revival, and reset",
         "canonical timed buffs, harmful conditions, control states, movement modifiers, damage-over-time, and policy-visible self tags",
         "move eligibility gated independently by anatomy and locomotion capability",
-        "runtime mode transitions, medium validation, planar, surface, and volumetric steering, water-current sampling, surface buoyancy, gravity policy, and opt-in gait modifiers"
+        "runtime mode transitions, medium validation, planar, surface, and volumetric steering, water-current sampling, surface buoyancy, gravity policy, and opt-in gait modifiers",
+        "reusable procedural quadruped, waterfowl, and fish prototype bodies driven by the same generic actor",
+        "canonical shared water habitat with a live water-only Trout, a ground/swimming/flying Goose, amphibious transfer controls, and reset coverage"
       ],
-      "next_use": "Author a contrasting flying animal and a true swim habitat inside existing exploration content, then add climbing adhesion and burrowing-route adapters when their first authored animals require them.",
+      "next_use": "Use the canonical habitat to playtest structural behavior, then author the first climbing and burrowing animals inside existing exploration content so adhesion and route adapters are driven by real species needs.",
       "limitations": [
-        "The shared runtime executes ground, swimming, and flight steering, but the canonical lab still presents ground quadrupeds; an authored flying animal and true swim habitat remain.",
+        "Goose and Trout now prove authored flight, swimming, direct air-water transitions, and a real pond; the focused habitat and procedural bodies are test presentation rather than finished ecology.",
         "Surface projection is available, while climbing adhesion/contact acquisition and burrowing route topology still require authored environment adapters.",
         "Generic contact effects use active-phase range confirmation; animation-owned hit volumes remain an optional precision layer for authored creatures.",
         "Pack, herd, predator/prey, summon, and faction ownership remain actor-provider policy rather than a hard-coded universal faction table."

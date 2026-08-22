@@ -108,6 +108,17 @@ Loam the Mole proves routed volumetric traversal:
 
 No new brain class is required for any of these. New species author data; new environments author compatible media and routes; new moves plug into the shared move/effect contract.
 
+The Wilds Expedition proves the same contracts outside the lab:
+
+- Cypress Basin instantiates a Goose and Trout inside a current-bearing water volume.
+- Wet Woodland instantiates a Gecko on a mossy snag with a `tree_bark` climbing medium.
+- Pine Ridge instantiates a Mole in a routed `root_tunnel` soil volume with visible openings.
+- `WildsAnimalHabitatEncounter` supplies route-local Grace perception, movement noise, habitat bounds, targets, alert sharing, reset, and debug data without changing animal decision code.
+- Neutral assembly, regional route slicing, F9 rebuilds, and new seeded layouts own and retire their wildlife populations with the generated route.
+- `GenericAnimalActor.show_state_label` keeps the lab readout available while allowing quiet field presentation.
+
+No separate field animal class, locomotion executor, species policy, or habitat framework is introduced.
+
 ## Invariants
 
 - Species policy chooses a move; executors do not re-roll behavior.
@@ -115,6 +126,8 @@ No new brain class is required for any of these. New species author data; new en
 - Runtime mode changes must be supported by the profile, legal from the current mode, and compatible with the supplied environmental medium.
 - Traversal placement validates the mode before teleporting; incompatible animals retain both position and active mode.
 - Traversal route state belongs to the medium and restarts with an authored animal reset.
+- Generated exploration routes own their field habitat hosts; rebuilding the route must retire stale animals and create exactly one replacement population.
+- Field presentation may hide diagnostics, but it must not replace the generic actor or its runtime components.
 - Supported modifiers are opt-in and cannot survive a mode that violates their dependencies.
 - One execution claims an `active_start` effect at most once.
 - Interruption before the active phase produces no effect request.

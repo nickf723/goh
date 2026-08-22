@@ -759,7 +759,8 @@
         "seed species: wolf, sheep, capybara, gorgon, and gremlin",
         "validated ground, swimming, flight, climbing, burrowing, and gait capabilities",
         "exactly-once active-phase effect requests",
-        "shared DamagePayload and PayloadReceiver bridge for confirmed animal effects"
+        "shared DamagePayload and PayloadReceiver bridge for confirmed animal effects",
+        "move eligibility gated independently by anatomy and locomotion capability"
       ],
       "next_use": "Add physical contact, area, projectile, recovery, and traversal executors; then prove ground, swimming, flight, climbing, and burrowing profiles with contrasting animals in authored content.",
       "limitations": [

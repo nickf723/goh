@@ -370,6 +370,7 @@ func _update_perception_and_relationship(delta: float) -> void:
 	)
 	relationship_label = relationship.get_relationship_label(get_drive("fear"))
 	_apply_perception_to_drives(delta, grace_distance)
+	_maybe_interrupt_ambient_action_for_threat(grace_distance)
 	_maybe_share_alert()
 	if relationship_label != previous_relationship_label:
 		previous_relationship_label = relationship_label
@@ -415,6 +416,24 @@ func _grace_is_current_threat(grace_distance: float) -> bool:
 		and grace_distance < relationship.get_personal_space()
 		and relationship.trust < 0.45
 	)
+
+
+func _maybe_interrupt_ambient_action_for_threat(grace_distance: float) -> void:
+	if brain == null or not brain.has_active_move() or not _grace_is_current_threat(grace_distance):
+		return
+	var execution: Dictionary = brain.get_active_execution()
+	var move_data: Dictionary = execution.get("move", {}) as Dictionary
+	var tags: Array = move_data.get("tags", []) as Array
+	var ambient_response: bool = false
+	for tag: String in ["ambient", "calm", "forage", "habitat"]:
+		if tags.has(tag):
+			ambient_response = true
+			break
+	if not ambient_response:
+		return
+	var interruption: Dictionary = _interrupt_current_action("new_threat")
+	if bool(interruption.get("interrupted", false)):
+		decision_time_remaining = 0.0
 
 
 func _maybe_share_alert() -> void:

@@ -49,7 +49,7 @@ The first executor supports:
 - Species-derived health, stamina, injury-aware decisions, and incapacitation
 - Timed buffs, damage-over-time, control states, and movement modifiers available to move policies
 - Reusable procedural quadruped, waterfowl, fish, low-reptile, and digging-mammal prototype bodies
-- Overhead intention, move, health, and drive readouts
+- Authorable overhead intention, move, health, and drive readouts that can be hidden for field presentation
 
 ### Perception, memory, and relationships
 
@@ -111,6 +111,22 @@ The selected animal is marked with a gold disc. Every animal displays its relati
 
 See [`ANIMAL_BEHAVIOR_LAB_TEST.md`](ANIMAL_BEHAVIOR_LAB_TEST.md) for a guided manual test pass.
 
+## Wilds Expedition field habitats
+
+Run:
+
+`res://scenes/levels/prototypes/prototype_wilds_expedition_v1.tscn`
+
+The Wilds route is the first exploration-space consumer of the lab-proven habitat contracts. The route-local `WildsAnimalHabitatEncounter` composes unchanged generic actors into three authored populations:
+
+- Cypress Goose and Trout in a current-bearing channel
+- Woodland Gecko on a mossy surface route
+- Ridge Mole in a three-dimensional root-mound route
+
+The field host supplies Grace targeting, movement noise, habitat bounds, forage and water targets, same-species alerts, medium restoration, debug summaries, and rebuild-safe population ownership. Both neutral expedition assembly and regional route slices attach only the habitats belonging to their assembled segments. Diagnostic animal labels are disabled in the field without replacing the actor or brain.
+
+See [`wilds_expedition_v1.md`](wilds_expedition_v1.md) for the route and wildlife playtest.
+
 ## Wildlife navigation and rescue laboratory
 
 Run:
@@ -137,9 +153,13 @@ Clear the debris, heal and feed Juniper, bond her, then lead her through the cou
 - `res://scenes/tests/animal_perception_relationship_smoke_test.tscn`
 - `res://scenes/tests/animal_bonding_persistence_smoke_test.tscn`
 - `res://scenes/tests/wildlife_navigation_rescue_lab_smoke_test.tscn`
+- `res://scenes/tests/wilds_expedition_smoke_test.tscn`
+- `res://scenes/tests/route_familiarity_smoke_test.tscn`
 
 The live regressions verify locomotion capability validation, runtime ground/swimming/flight/climbing/burrowing transitions including direct air-water transitions, medium rejection, planar/surface/volumetric steering, water-current sampling, surface buoyancy, surface adhesion, waypoint guidance, gravity handoff, opt-in modifier dependencies, generic water and traversal-medium integration, authored Goose, Trout, Gecko, and Mole bodies, canonical habitat controls, incompatible-mode rejection, physical route progress, and reset modes, species-derived vitals, damage and recovery, incapacitation, timed status refresh and expiry, policy-visible condition tags, exactly-once contact and area delivery, authoritative target ownership, physical projectile spawning and reset cleanup, physical Graze and Flee execution, visual and auditory perception, timed memory, trust-building interactions, wolf pack alert sharing, inventory-backed feeding, bonding, disk persistence, navigation-aware following, dynamic navmesh rebaking, rescue and healing consequences, real damage payloads, obstacle routing, and separation recovery.
 
 ## Next runtime milestone
 
-The shared runtime and generic actor now execute ground, swimming, flight, surface climbing, and routed burrowing without a species-specific brain. Juniper, Ripple, Mica, Loam, and Bramble make those contracts playable with the same moves, drives, vitals, relationships, bonding, and reset path. Next, reuse `MobTraversalMedium` in existing exploration content; let that authored application determine whether ceiling/corner orientation, hidden tunnel presentation, entrances/exits, or terrain deformation is needed before expanding broader habitat and ecology behavior.
+The shared runtime and generic actor execute ground, swimming, flight, surface climbing, and routed burrowing without a species-specific brain. The Animal Behavior Lab proves the isolated contracts, while the Wilds Expedition now proves water, surface, and volumetric habitats can survive authored route assembly, regional slicing, seeded rebuilds, player perception, and quiet field presentation.
+
+The next bounded milestone should make one field population matter to Grace through an authored observation, feeding, rescue, or ecological interaction. That content should determine whether the engine needs population persistence, predator/prey coordination, weather response, ceiling/corner orientation, terrain deformation, or a more finished burrow presentation.

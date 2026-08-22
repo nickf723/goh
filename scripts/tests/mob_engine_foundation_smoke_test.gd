@@ -9,6 +9,9 @@ const PersonalityAdapter = preload("res://scripts/mobs/mob_personality_adapter.g
 const BrainScript = preload("res://scripts/mobs/mob_brain_component.gd")
 const ExecutionState = preload("res://scripts/mobs/mob_move_execution_state.gd")
 const LocomotionCatalog = preload("res://scripts/mobs/mob_locomotion_catalog.gd")
+const LocomotionExecutorScript = preload(
+	"res://scripts/mobs/mob_locomotion_executor.gd"
+)
 const EffectRequest = preload("res://scripts/mobs/mob_move_effect_request.gd")
 const PayloadBridge = preload("res://scripts/mobs/mob_payload_bridge.gd")
 const EffectExecutorScript = preload(
@@ -87,6 +90,7 @@ func run_tests() -> void:
 	_capture_profiles()
 	_test_catalogs_and_shared_moves()
 	_test_locomotion_profiles()
+	_test_locomotion_executor()
 	_test_mob_vitals()
 	_test_mob_conditions()
 	_test_effect_request_payload_bridge()
@@ -173,6 +177,166 @@ func _test_locomotion_profiles() -> void:
 		not (invalid_flyer.get("failures", []) as Array).is_empty(),
 		"flight is rejected when the body has no flight anatomy"
 	)
+
+
+func _test_locomotion_executor() -> void:
+	var flyer := CharacterBody3D.new()
+	flyer.name = "FlightLocomotionProbe"
+	add_child(flyer)
+	var flight_executor := (
+		LocomotionExecutorScript.new() as MobLocomotionExecutor
+	)
+	flight_executor.name = "SwimmingController"
+	flyer.add_child(flight_executor)
+	var flight_configuration: Dictionary = flight_executor.configure(
+		["legs", "wings", "beak"],
+		["ground", "flight", "hover"],
+		"flight"
+	)
+	_expect(
+		bool(flight_configuration.get("ok", false))
+		and flight_executor.active_mode == "flight",
+		"runtime locomotion can initialize a winged animal in flight"
+	)
+	var flight_solution: Dictionary = flight_executor.resolve_velocity(
+		Vector3(1.0, 1.0, 0.0),
+		Vector3.ZERO,
+		4.0,
+		20.0,
+		0.25
+	)
+	var flight_velocity: Vector3 = flight_solution.get(
+		"velocity",
+		Vector3.ZERO
+	) as Vector3
+	_expect(
+		flight_velocity.y > 0.0
+		and str(flight_solution.get("dimension", "")) == "volumetric",
+		"flight executor preserves authored vertical steering"
+	)
+	_expect(
+		not bool(flight_solution.get("uses_gravity", true)),
+		"active flight suppresses ground gravity"
+	)
+	var landing: Dictionary = flight_executor.request_mode("ground", {
+		"medium_tags": ["land"],
+		"require_medium": true,
+		"reason": "smoke_landing",
+	})
+	_expect(
+		bool(landing.get("ok", false))
+		and flight_executor.active_mode == "ground",
+		"catalogued flight-to-ground transitions execute at runtime"
+	)
+	var ground_solution: Dictionary = flight_executor.resolve_velocity(
+		Vector3(1.0, 1.0, 0.0),
+		Vector3.ZERO,
+		4.0,
+		20.0,
+		0.25
+	)
+	var ground_velocity: Vector3 = ground_solution.get(
+		"velocity",
+		Vector3.ZERO
+	) as Vector3
+	_expect(
+		is_zero_approx(ground_velocity.y)
+		and bool(ground_solution.get("uses_gravity", false)),
+		"ground runtime projects movement to a plane and restores gravity"
+	)
+	var unsupported_swim: Dictionary = flight_executor.request_mode(
+		"swimmer",
+		{"medium_tags": ["water"]}
+	)
+	_expect(
+		not bool(unsupported_swim.get("ok", true))
+		and flight_executor.active_mode == "ground",
+		"runtime rejects modes absent from the animal's validated profile"
+	)
+
+	var water := SwimmingWaterVolume.new()
+	water.name = "AnimalWaterProbe"
+	water.position = Vector3(0.0, -2.0, 0.0)
+	water.surface_height_offset = 2.0
+	water.current_velocity = Vector3(0.5, 0.0, 0.0)
+	add_child(water)
+	var swimmer := CharacterBody3D.new()
+	swimmer.name = "SwimmingLocomotionProbe"
+	swimmer.position = Vector3(0.0, -1.2, 0.0)
+	add_child(swimmer)
+	var swim_executor := (
+		LocomotionExecutorScript.new() as MobLocomotionExecutor
+	)
+	swim_executor.name = "SwimmingController"
+	swimmer.add_child(swim_executor)
+	var swim_configuration: Dictionary = swim_executor.configure(
+		["fins", "gills", "mouth", "tail"],
+		["swimmer"],
+		"swimmer"
+	)
+	swim_executor.enter_water(water)
+	var swim_solution: Dictionary = swim_executor.resolve_velocity(
+		Vector3.RIGHT,
+		Vector3.ZERO,
+		3.0,
+		12.0,
+		0.25
+	)
+	var swim_velocity: Vector3 = swim_solution.get(
+		"velocity",
+		Vector3.ZERO
+	) as Vector3
+	_expect(
+		bool(swim_configuration.get("ok", false))
+		and swim_velocity.x > 0.0
+		and swim_velocity.y > 0.0,
+		"swimming runtime combines steering, current, and surface buoyancy"
+	)
+	swim_executor.exit_water(water)
+	_expect(
+		not swim_executor.medium_available
+		and swim_executor.should_use_gravity(),
+		"water-only animals lose buoyancy and regain gravity outside water"
+	)
+
+	var capybara := GenericAnimalScript.new() as GenericAnimalActor
+	capybara.species_id = "capybara"
+	capybara.animal_name = "Locomotion Capybara"
+	add_child(capybara)
+	_expect(
+		capybara.locomotion != null
+		and capybara.get_node_or_null("SwimmingController")
+			== capybara.locomotion
+		and capybara.get_active_locomotion_mode() == "ground",
+		"generic animals compose the shared runtime under the existing water-volume seam"
+	)
+	capybara.locomotion.enter_water(water)
+	_expect(
+		capybara.get_active_locomotion_mode() == "swimmer",
+		"an amphibious generic animal enters its validated swimming mode"
+	)
+	var capybara_context: Dictionary = capybara.get_mob_decision_context()
+	_expect(
+		(capybara_context.get("self_tags", []) as Array).has(
+			"locomotion_mode:swimmer"
+		),
+		"active locomotion mode is visible to Pokemon-like move policy gates"
+	)
+	capybara.locomotion.exit_water(water)
+	_expect(
+		capybara.get_active_locomotion_mode() == "ground",
+		"an amphibious generic animal returns to ground after leaving water"
+	)
+	capybara.reset_actor()
+	_expect(
+		capybara.get_active_locomotion_mode() == "ground",
+		"animal reset restores the authored initial locomotion mode"
+	)
+
+	capybara.queue_free()
+	swimmer.queue_free()
+	flyer.queue_free()
+	water.queue_free()
 
 
 func _test_mob_vitals() -> void:

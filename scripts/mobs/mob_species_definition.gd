@@ -84,6 +84,18 @@ func has_body_tag(tag: String) -> bool:
 	return body_tags.has(tag.to_lower().strip_edges())
 
 
+func get_locomotion_profile() -> Dictionary:
+	return MobLocomotionCatalog.resolve_profile(body_tags, locomotion_tags)
+
+
+func supports_locomotion(capability_id: String) -> bool:
+	return MobLocomotionCatalog.supports(
+		body_tags,
+		locomotion_tags,
+		capability_id
+	)
+
+
 func get_personality(overrides: Dictionary = {}) -> Dictionary:
 	var result: Dictionary = default_personality.duplicate(true)
 	for raw_key: Variant in overrides.keys():
@@ -99,6 +111,14 @@ func validate(move_catalog: Variant = null) -> Array[String]:
 		failures.append(species_id + " has no display name")
 	if body_tags.is_empty():
 		failures.append(species_id + " has no body tags")
+	if locomotion_tags.is_empty():
+		failures.append(species_id + " has no locomotion capabilities")
+	else:
+		var locomotion_profile: Dictionary = get_locomotion_profile()
+		for locomotion_failure: String in (
+			locomotion_profile.get("failures", []) as Array[String]
+		):
+			failures.append(species_id + ": " + locomotion_failure)
 	if move_policies.is_empty():
 		failures.append(species_id + " has no move policies")
 	var seen: Dictionary = {}

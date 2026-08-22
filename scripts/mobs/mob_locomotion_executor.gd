@@ -124,7 +124,7 @@ func request_mode(
 	var medium_tags: Array[String] = _string_array(
 		context.get("medium_tags", [])
 	)
-	var require_medium: bool = bool(context.get("require_medium", false))
+	var require_medium: bool = bool(context.get("require_medium", true))
 	if require_medium and medium_tags.is_empty():
 		return _reject_mode(
 			normalized_mode,

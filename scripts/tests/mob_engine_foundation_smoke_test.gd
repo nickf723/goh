@@ -65,6 +65,16 @@ func _test_catalogs_and_shared_moves() -> void:
 	_expect(AbilityCatalog.get_option("gremlin", "bite") != null, "legacy Gremlin Bite execution adapter remains available")
 	_expect(AbilityCatalog.get_action("gremlin", "pounce") != null, "legacy Gremlin Pounce action remains available")
 	_expect(not bite.timing.is_empty(), "shared moves expose data-driven execution timing")
+	var pounce: MobMoveDefinition = MoveCatalog.get_definition("pounce")
+	var wade: MobMoveDefinition = MoveCatalog.get_definition("wade")
+	_expect(
+		pounce.required_locomotion_tags.has("jumper"),
+		"Pounce requires a locomotion capability separately from legs"
+	)
+	_expect(
+		wade.required_locomotion_tags.has("swimmer"),
+		"Wade requires a validated swimming profile"
+	)
 	var bite_execution: Variant = ExecutionState.create(bite.to_dictionary())
 	_expect(str(bite_execution.phase) == "startup", "move execution begins in startup")
 	bite_execution.advance(0.17)

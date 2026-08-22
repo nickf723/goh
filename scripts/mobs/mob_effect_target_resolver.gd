@@ -9,9 +9,13 @@ static func resolve_targets(
 	options: Dictionary = {}
 ) -> Array[Node]:
 	var candidates: Array[Node] = []
-	_append_provider_targets(candidates, target_provider, request)
+	var provider_is_authoritative: bool = _append_provider_targets(
+		candidates,
+		target_provider,
+		request
+	)
 	_append_explicit_targets(candidates, options)
-	if candidates.is_empty():
+	if candidates.is_empty() and not provider_is_authoritative:
 		_append_group_targets(candidates, source_actor, request, options)
 	if str(request.get("target_mode", "")) == "self" and source_actor != null:
 		candidates.append(source_actor)
@@ -37,11 +41,12 @@ static func _append_provider_targets(
 	targets: Array[Node],
 	provider: Node,
 	request: Dictionary
-) -> void:
+) -> bool:
 	if provider == null or not provider.has_method("get_mob_effect_targets"):
-		return
+		return false
 	var raw_targets: Variant = provider.call("get_mob_effect_targets", request)
 	_append_nodes(targets, raw_targets)
+	return true
 
 
 static func _append_explicit_targets(
@@ -101,6 +106,8 @@ static func _filter_targets(
 		if not is_instance_valid(target):
 			continue
 		if target == source_actor and target_mode != "self":
+			continue
+		if not _passes_target_filter(source_actor, target, request, options):
 			continue
 		if source_actor != null and source_actor.is_ancestor_of(target):
 			continue
@@ -166,6 +173,21 @@ static func _is_payload_or_recovery_target(candidate: Node) -> bool:
 		if candidate.get_node_or_null(component_name) != null:
 			return true
 	return false
+
+
+static func _passes_target_filter(
+	source_actor: Node,
+	target: Node,
+	request: Dictionary,
+	options: Dictionary
+) -> bool:
+	var raw_filter: Variant = options.get("target_filter")
+	if not raw_filter is Callable:
+		return true
+	var target_filter: Callable = raw_filter as Callable
+	if not target_filter.is_valid():
+		return true
+	return bool(target_filter.call(source_actor, target, request))
 
 
 static func _has_line_of_sight(

@@ -24,7 +24,8 @@ func _spawn_animal(
 	species: String,
 	position_value: Vector3,
 	profile: String,
-	speed: float
+	speed: float,
+	initial_mode: String = ""
 ) -> void:
 	var animal := BondedAnimalType.new() as BondedAnimalType
 	animal.animal_name = name_value
@@ -32,6 +33,7 @@ func _spawn_animal(
 	animal.personality_profile_id = profile
 	animal.persistent_animal_id = "animal_behavior_lab:" + name_value.to_lower().replace(" ", "_")
 	animal.move_speed = speed
+	animal.initial_locomotion_mode = initial_mode
 	animal.position = position_value
 	add_child(animal)
 	animals.append(animal)
@@ -66,7 +68,7 @@ func _reset_lab() -> void:
 
 
 func _update_objective() -> void:
-	var objective: String = "Build trust with real Field Treats, bond a named animal, test follow behavior, then save and reload the relationship."
+	var objective: String = "Compare ground, swimming, and flight animals in the shared habitat; then build trust, test follow behavior, and save a named bond."
 	GameState.set_objective(objective)
 	var game_ui: Node = get_tree().get_first_node_in_group("game_ui")
 	if game_ui != null and game_ui.has_method("set_objective"):

@@ -8,6 +8,8 @@ const SetClearanceAuditor = preload("res://scripts/environment/authored_set_clea
 const ChapelPalette = preload("res://data/environment_palettes/drowned_chapel_palette.tres")
 const PlayableSpaceAuditorScript = preload("res://scripts/quality/playable_space_auditor.gd")
 const WATER_SHADER_PATH := "res://shaders/environment/modular_water.gdshader"
+const STYLIZED_SHADER_PATH := "res://shaders/environment/stylized_pbr_surface_v1.gdshader"
+const STYLIZED_MATERIAL_PATH := "res://art/materials/environment/modular/stylized_pbr_stone_study.tres"
 const OUTDOOR_PIECE_IDS: Array[String] = [
 	"weathered_village_road_4m",
 	"weathered_low_wall_4m",
@@ -43,6 +45,57 @@ func _ready() -> void:
 	check(shader_source.contains("depth_prepass_alpha"), "modular water shader uses the Godot 4 alpha depth prepass token")
 	var water_shader: Shader = load(WATER_SHADER_PATH) as Shader
 	check(water_shader != null, "modular water shader parses as a Shader resource")
+
+
+	current_step = "validate stylized PBR shader"
+	var stylized_shader_source: String = FileAccess.get_file_as_string(
+		STYLIZED_SHADER_PATH
+	)
+	check(not stylized_shader_source.is_empty(), "stylized PBR shader source loads")
+	check(
+		stylized_shader_source.contains("void light()"),
+		"stylized PBR shader owns a direct-light processor"
+	)
+	check(
+		stylized_shader_source.contains("painterly_diffuse_band"),
+		"stylized PBR shader exposes soft diffuse banding"
+	)
+	check(
+		stylized_shader_source.contains("DIFFUSE_LIGHT +="),
+		"stylized PBR shader writes painterly diffuse light"
+	)
+	check(
+		stylized_shader_source.contains("SPECULAR_LIGHT +="),
+		"stylized PBR shader preserves an independent specular lobe"
+	)
+	for uniform_name: String in [
+		"band_softness",
+		"rim_color",
+		"rim_intensity",
+		"saturation",
+		"roughness_value",
+		"metallic_value",
+		"normal_strength",
+	]:
+		check(
+			stylized_shader_source.contains("uniform") and stylized_shader_source.contains(uniform_name),
+			"stylized PBR shader exposes " + uniform_name
+		)
+	var stylized_shader: Shader = load(STYLIZED_SHADER_PATH) as Shader
+	check(stylized_shader != null, "stylized PBR shader parses as a Shader resource")
+	var stylized_material: ShaderMaterial = load(
+		STYLIZED_MATERIAL_PATH
+	) as ShaderMaterial
+	check(stylized_material != null, "stone study material loads")
+	if stylized_material != null:
+		check(
+			float(stylized_material.get_shader_parameter("saturation")) > 1.0,
+			"stone study material uses a restrained saturation lift"
+		)
+		check(
+			float(stylized_material.get_shader_parameter("rim_intensity")) > 0.0,
+			"stone study material enables its cool rim"
+		)
 
 	current_step = "validate catalog"
 	var catalog_errors: Array[String] = Catalog.validate_catalog()
@@ -182,8 +235,76 @@ func _ready() -> void:
 	check(showcase.get_node_or_null("World/WeatheredCloisterSet/ShowcaseGate") != null, "set demonstrates the operable gate")
 	check(showcase.get_node_or_null("World/WeatheredCloisterSet/HeroPedestal") != null, "set demonstrates prop staging")
 
+
+	var study: Node3D = showcase.get_node_or_null(
+		"World/WeatheredCloisterSet/StylizedSurfaceStudy"
+	) as Node3D
+	check(study != null, "showcase contains one contained stylized surface study")
+	if study != null:
+		check(
+			str(study.get_meta("rollout_scope", "")) == "single_calibration_prop",
+			"style study records its intentionally narrow rollout"
+		)
+		check(study.get_child_count() == 3, "style study composes one three-lobe rock")
+		var study_core: MeshInstance3D = study.get_node_or_null(
+			"Core"
+		) as MeshInstance3D
+		check(study_core != null, "style study exposes its core mesh")
+		if study_core != null:
+			var core_material: ShaderMaterial = (
+				study_core.material_override as ShaderMaterial
+			)
+			check(core_material != null, "style study uses a shader material")
+			if core_material != null:
+				check(
+					core_material.shader != null
+					and core_material.shader.resource_path == STYLIZED_SHADER_PATH,
+					"style study alone uses the provisional stylized PBR shader"
+				)
+
+	var environment_node: WorldEnvironment = showcase.get_node_or_null(
+		"WorldEnvironment"
+	) as WorldEnvironment
+	var environment: Environment = (
+		environment_node.environment if environment_node != null else null
+	)
+	check(environment != null, "showcase publishes its style-calibration environment")
+	if environment != null:
+		check(
+			environment.background_mode == Environment.BG_SKY
+			and environment.sky != null
+			and environment.sky.sky_material is ProceduralSkyMaterial,
+			"showcase uses a procedural warm-cool sky"
+		)
+		check(
+			environment.ambient_light_source == Environment.AMBIENT_SOURCE_SKY,
+			"cool sky supplies ambient light"
+		)
+		check(
+			environment.tonemap_mode == Environment.TONE_MAPPER_ACES,
+			"showcase uses ACES highlight rolloff"
+		)
+		check(
+			environment.adjustment_enabled
+			and environment.adjustment_saturation > 1.0
+			and environment.adjustment_contrast > 1.0,
+			"showcase applies restrained saturation and contrast grading"
+		)
+		check(environment.ssao_enabled, "showcase enables moderate ambient occlusion")
+	var key_light: DirectionalLight3D = showcase.get_node_or_null(
+		"DirectionalLight3D"
+	) as DirectionalLight3D
+	check(
+		key_light != null
+		and key_light.light_color.r > key_light.light_color.b
+		and key_light.shadow_enabled,
+		"showcase contrasts a warm shadow-casting key against the cool sky"
+	)
+
 	current_step = "inspect showcase composition"
 	var stats: Dictionary = showcase.call("get_showcase_stats")
+	check(bool(stats.get("stylized_surface_study", false)), "showcase reports the style study")
+	check(str(stats.get("environment_profile", "")) == "warm_key_cool_sky_v1", "showcase reports its lighting profile")
 	check(int(stats.get("placed_count", 0)) >= 35, "showcase composes a full set from repeated modules")
 	var categories: Array = stats.get("categories", [])
 	for required_category: String in ["architecture", "prop", "lighting", "water"]:

@@ -10,6 +10,7 @@ const TRIM_STONE_MATERIAL: Material = preload("res://art/materials/environment/m
 const WET_STONE_MATERIAL: Material = preload("res://art/materials/environment/modular/wet_stone.tres")
 const METAL_MATERIAL: Material = preload("res://art/materials/environment/modular/aged_metal.tres")
 const WARM_GLOW_MATERIAL: Material = preload("res://art/materials/environment/modular/warm_glow.tres")
+const STYLIZED_STONE_STUDY_MATERIAL: Material = preload("res://art/materials/environment/modular/stylized_pbr_stone_study.tres")
 
 var world: Node3D
 var set_root: Node3D
@@ -27,10 +28,11 @@ func _ready() -> void:
 	_build_playable_space()
 	_build_foundation()
 	_build_weathered_cloister()
+	_build_stylized_surface_study()
 	_build_gate_lever()
 	_build_signage()
 	_build_hud()
-	_show_status("Walk the cloister, inspect the joins, and operate the iron gate.")
+	_show_status("Compare the painterly rock on the hero pedestal, then inspect the cloister and gate.")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -42,11 +44,34 @@ func _unhandled_input(event: InputEvent) -> void:
 func _configure_environment() -> void:
 	var environment_node: WorldEnvironment = $WorldEnvironment
 	var environment := Environment.new()
-	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color(0.018, 0.032, 0.045)
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.22, 0.31, 0.42)
-	environment.ambient_light_energy = 0.72
+	var sky_material := ProceduralSkyMaterial.new()
+	sky_material.sky_top_color = Color(0.045, 0.09, 0.2)
+	sky_material.sky_horizon_color = Color(0.35, 0.47, 0.63)
+	sky_material.ground_horizon_color = Color(0.24, 0.27, 0.34)
+	sky_material.ground_bottom_color = Color(0.025, 0.028, 0.04)
+	sky_material.sky_curve = 0.22
+	sky_material.ground_curve = 0.16
+	sky_material.sky_energy_multiplier = 0.82
+	sky_material.ground_energy_multiplier = 0.6
+	var sky := Sky.new()
+	sky.sky_material = sky_material
+
+	environment.background_mode = Environment.BG_SKY
+	environment.sky = sky
+	environment.background_energy_multiplier = 0.82
+	environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	environment.ambient_light_energy = 0.84
+	environment.ambient_light_sky_contribution = 1.0
+	environment.tonemap_mode = Environment.TONE_MAPPER_ACES
+	environment.tonemap_exposure = 1.04
+	environment.adjustment_enabled = true
+	environment.adjustment_brightness = 1.03
+	environment.adjustment_contrast = 1.06
+	environment.adjustment_saturation = 1.16
+	environment.ssao_enabled = true
+	environment.ssao_radius = 1.5
+	environment.ssao_intensity = 1.45
+	environment.ssao_power = 1.2
 	environment_node.environment = environment
 
 
@@ -124,6 +149,39 @@ func _build_weathered_cloister() -> void:
 	_place_piece("weathered_stone_wall_4m", "GalleryBackWallRight", Vector3(2.05, 1.5, 17.55))
 
 
+func _build_stylized_surface_study() -> void:
+	var study := Node3D.new()
+	study.name = "StylizedSurfaceStudy"
+	study.position = Vector3(0.0, 3.54, 15.0)
+	study.set_meta("study_id", "stylized_pbr_stone_v1")
+	study.set_meta("rollout_scope", "single_calibration_prop")
+	set_root.add_child(study)
+	_add_stylized_rock_lobe(
+		study,
+		"Core",
+		0.72,
+		Vector3(0.0, 0.52, 0.0),
+		Vector3(1.05, 0.78, 0.92),
+		Vector3(0.08, -0.16, 0.04)
+	)
+	_add_stylized_rock_lobe(
+		study,
+		"LeftLobe",
+		0.52,
+		Vector3(-0.5, 0.38, 0.08),
+		Vector3(0.92, 0.72, 0.86),
+		Vector3(-0.08, 0.28, -0.12)
+	)
+	_add_stylized_rock_lobe(
+		study,
+		"RightLobe",
+		0.45,
+		Vector3(0.48, 0.34, -0.04),
+		Vector3(0.88, 0.7, 0.8),
+		Vector3(0.12, -0.32, 0.08)
+	)
+
+
 func _build_gate_lever() -> void:
 	gate_lever = Area3D.new()
 	gate_lever.name = "GateLever"
@@ -143,7 +201,7 @@ func _build_signage() -> void:
 	_add_label(set_root, "TitlePlaque", "WEATHERED CLOISTER", Vector3(0.0, 4.25, -8.05), Color(0.72, 0.88, 0.96), 25)
 	_add_label(set_root, "ArchitecturePlaque", "ARCHITECTURE", Vector3(-4.7, 2.7, -5.8), Color(0.66, 0.75, 0.78), 17)
 	_add_label(set_root, "WaterPlaque", "WATER + TRANSITIONS", Vector3(0.0, 1.2, 5.8), Color(0.42, 0.82, 0.96), 17)
-	_add_label(set_root, "PropPlaque", "PROPS", Vector3(0.0, 4.2, 16.85), Color(0.95, 0.72, 0.34), 17)
+	_add_label(set_root, "PropPlaque", "STYLIZED PBR STUDY", Vector3(0.0, 5.25, 16.85), Color(0.58, 0.78, 1.0), 17)
 
 
 func _build_hud() -> void:
@@ -164,7 +222,7 @@ func _build_hud() -> void:
 	var box := VBoxContainer.new()
 	margin.add_child(box)
 	var title := Label.new()
-	title.text = "WEATHERED CLOISTER  •  MODULAR ENVIRONMENT KIT v1"
+	title.text = "WEATHERED CLOISTER  •  STYLE CALIBRATION v1.1"
 	title.add_theme_font_size_override("font_size", 17)
 	box.add_child(title)
 	status_label = Label.new()
@@ -268,6 +326,30 @@ func _add_visual_sphere(
 	return visual
 
 
+func _add_stylized_rock_lobe(
+	parent: Node3D,
+	node_name: String,
+	radius: float,
+	position_value: Vector3,
+	scale_value: Vector3,
+	rotation_value: Vector3
+) -> MeshInstance3D:
+	var visual := MeshInstance3D.new()
+	visual.name = node_name
+	visual.position = position_value
+	visual.scale = scale_value
+	visual.rotation = rotation_value
+	var mesh := SphereMesh.new()
+	mesh.radius = radius
+	mesh.height = radius * 2.0
+	mesh.radial_segments = 10
+	mesh.rings = 6
+	visual.mesh = mesh
+	visual.material_override = STYLIZED_STONE_STUDY_MATERIAL
+	parent.add_child(visual)
+	return visual
+
+
 func _add_label(
 	parent: Node3D,
 	node_name: String,
@@ -302,6 +384,8 @@ func get_showcase_stats() -> Dictionary:
 		"categories": placed_categories.keys(),
 		"gate": gate != null,
 		"lever": gate_lever != null,
+		"stylized_surface_study": set_root.get_node_or_null("StylizedSurfaceStudy") != null,
+		"environment_profile": "warm_key_cool_sky_v1",
 	}
 
 

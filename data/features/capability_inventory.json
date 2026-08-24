@@ -639,11 +639,12 @@
       ],
       "implemented": true,
       "do_not_resuggest": true,
-      "next_use": "Manually approve the modular showcase v1.2 left/right material-family comparison under daylight and violet twilight, then choose one authored route for a bounded reversible material pass.",
+      "next_use": "Play the full Ruined Village Approach in clear weather and each concentration weather state, tune only route-specific surface values that fail readability, then choose whether a second authored route is ready for the same bounded rollout.",
       "story_reference": "The Drowned Bell",
       "limitations": [
         "The reusable kit remains a stylized primitive-based benchmark rather than final imported production art.",
-        "Stylized PBR v1.2 remains showcase-only: the stone direction is approved, while the full material family and second lighting dialect still require manual approval before any authored-route migration.",
+        "Stylized PBR v1.2 is approved and now story-integrated on the Ruined Village OutdoorRemasterV1 subtree; this first route still needs full gameplay and weather-state manual review before broader migration.",
+        "Plaster, moss, foliage, creatures, VFX, and Grace remain intentionally outside the first story-route material boundary.",
         "Only one weathered architecture family is represented so far."
       ]
     },

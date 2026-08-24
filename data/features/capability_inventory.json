@@ -608,6 +608,7 @@
         "scripts/environment/modular_environment_piece.gd",
         "scripts/environment/modular_environment_gate.gd",
         "scripts/environment/modular_environment_catalog.gd",
+        "scripts/environment/stylized_pbr_material_library.gd",
         "scripts/levels/drowned_bell_environment_pass.gd",
         "scenes/environment/modular/",
         "art/materials/environment/modular/",
@@ -638,11 +639,11 @@
       ],
       "implemented": true,
       "do_not_resuggest": true,
-      "next_use": "Manually tune the contained stylized-PBR stone study in the modular showcase; after approval, prove material presets under a second lighting dialect before any bounded authored-route rollout.",
+      "next_use": "Manually approve the modular showcase v1.2 left/right material-family comparison under daylight and violet twilight, then choose one authored route for a bounded reversible material pass.",
       "story_reference": "The Drowned Bell",
       "limitations": [
         "The reusable kit remains a stylized primitive-based benchmark rather than final imported production art.",
-        "Stylized PBR v1 is deliberately limited to one stone calibration prop until its ramp, rim, lighting, and grading receive manual art-direction approval.",
+        "Stylized PBR v1.2 remains showcase-only: the stone direction is approved, while the full material family and second lighting dialect still require manual approval before any authored-route migration.",
         "Only one weathered architecture family is represented so far."
       ]
     },

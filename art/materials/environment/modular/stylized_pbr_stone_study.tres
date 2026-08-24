@@ -1,0 +1,24 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://shaders/environment/stylized_pbr_surface_v1.gdshader" id="1_shader"]
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/base_color = Color(0.37, 0.43, 0.41, 1)
+shader_parameter/secondary_color = Color(0.12, 0.22, 0.25, 1)
+shader_parameter/uv_scale = Vector2(1, 1)
+shader_parameter/broad_variation_scale = 0.78
+shader_parameter/broad_variation_strength = 0.16
+shader_parameter/saturation = 1.18
+shader_parameter/roughness_value = 0.68
+shader_parameter/metallic_value = 0.0
+shader_parameter/dielectric_specular = 0.04
+shader_parameter/normal_strength = 1.0
+shader_parameter/band_midpoint = 0.27
+shader_parameter/band_highlight = 0.7
+shader_parameter/band_softness = 0.11
+shader_parameter/shadow_band_level = 0.3
+shader_parameter/middle_band_level = 0.7
+shader_parameter/rim_color = Color(0.22, 0.46, 0.82, 1)
+shader_parameter/rim_intensity = 0.26
+shader_parameter/rim_power = 3.4

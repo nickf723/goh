@@ -1184,7 +1184,7 @@ const DEFINITIONS: Dictionary = {
 			"voice",
 			"swimmer",
 		],
-		"anatomy_counts": {"heads": 3, "mouth": 3, "jaw": 3, "tail": 1, "voice": 3, "swimmer": 1},
+		"anatomy_counts": {"heads": 3, "mouth": 3, "jaw": 3, "tail": 1, "voice": 3},
 		"locomotion_tags": ["ground", "serpentine", "swimmer"],
 		"ecology_tags": ["solitary", "territorial", "wetland", "marsh", "ruins"],
 		"ecology_profile": {

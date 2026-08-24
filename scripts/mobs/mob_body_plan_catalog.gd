@@ -56,9 +56,9 @@ const DEFINITIONS: Dictionary = {
 		"id": "insectoid",
 		"display_name": "Insectoid",
 		"mobility_kind": "mobile",
-		"body_tags": ["insect", "head", "mouth", "mandibles", "legs", "exoskeleton"],
+		"body_tags": ["insect", "head", "mouth", "mouthparts", "legs", "exoskeleton"],
 		"default_locomotion_tags": ["ground"],
-		"anatomy_counts": {"head": 1, "mouth": 1, "mandibles": 2, "legs": 6},
+		"anatomy_counts": {"head": 1, "mouth": 1, "mouthparts": 1, "legs": 6},
 	},
 	"arachnid": {
 		"id": "arachnid",

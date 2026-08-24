@@ -2,8 +2,7 @@ extends Node3D
 class_name MeadowFieldSurface
 
 const GROUND_MATERIAL: ShaderMaterial = preload(
-	"res://art/materials/environment/natural/"
-	+ "stylized_pbr_meadow_ground_v1.tres"
+	"res://art/materials/environment/natural/stylized_pbr_meadow_ground_v1.tres"
 )
 const GRASS_MATERIAL: ShaderMaterial = preload(
 	"res://art/materials/environment/natural/meadow_grass_v1.tres"

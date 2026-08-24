@@ -1,0 +1,152 @@
+# Golden Meadow Benchmark v1 Manual Test
+
+## Purpose
+
+This scene is the first **single-biome hero-quality gate** for *Grace of Humanity*.
+
+It deliberately contains no enemies, puzzles, interactables, buildings, ruins, loot, route signage, or full gameplay HUD. The only subject is a quiet field:
+
+- one collision-matched rolling terrain surface;
+- dense wind-reactive grass;
+- restrained seed heads and clustered wildflowers;
+- three atmospheric horizon silhouettes;
+- a warm low sun, cool sky fill, height fog, and volumetric haze;
+- Grace as the human scale and readability reference.
+
+The field should feel like the beginning of a vibrant global adventure, not a systems laboratory or an asset-library collage.
+
+## Load the benchmark
+
+Run with F6:
+
+```text
+res://scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn
+```
+
+Controls:
+
+```text
+MOVE
+CAMERA
+JUMP
+DODGE
+RESET
+```
+
+RESET reloads the benchmark and restores the deterministic terrain and vegetation seed.
+
+## 1. First-frame composition
+
+Do not move for ten seconds.
+
+Confirm:
+
+- Grace begins near the southern edge looking across the long dimension of the field;
+- the foreground grass frames Grace without hiding her feet or silhouette;
+- the terrain rolls are broad enough to read as land rather than vertex noise;
+- near, middle, and far ridges hide the finite prototype boundary;
+- the low golden sun creates one dominant warm lighting idea;
+- cool sky fill keeps shaded grass readable without turning it cyan;
+- there are no floating labels, objective panels, props, enemies, or developer consoles competing with the landscape.
+
+The desired first impression is **quiet scale and invitation**.
+
+## 2. Wind and vegetation
+
+Stand still, then rotate the camera slowly through a full circle.
+
+Confirm:
+
+- gusts travel broadly across the meadow instead of making every blade wobble independently;
+- taller seed heads bend slightly farther than the main grass canopy;
+- per-instance height, orientation, phase, and color variation prevent obvious repetition;
+- wildflowers form restrained natural pockets rather than an even confetti distribution;
+- the cool rim separates grass silhouettes only at glancing angles;
+- warm tip light never becomes a permanent emissive glow;
+- grass remains opaque and grounded without alpha-sorting noise.
+
+Watch for synchronized rows, visible scatter grids, flickering triangles, excessive sparkle, or motion that resembles underwater seaweed.
+
+## 3. Ground and contact
+
+Walk north through the center, then make broad loops across both sides.
+
+Confirm:
+
+- Grace follows the visible terrain with no floating, sinking, or sudden collision steps;
+- the ground shader groups light into soft painterly values while retaining a grounded rough surface;
+- the grass roots meet the terrain rather than hovering above it;
+- rolling elevation changes remain gentle enough for ordinary movement, jumping, and dodging;
+- the flattened spawn pocket prevents an awkward opening stance without reading as an artificial platform;
+- the invisible safety boundary sits beyond the main composition and never becomes visually apparent.
+
+## 4. Readability at scale
+
+Check Grace from the default camera, during movement, against the sun, and inside cool shadow.
+
+Confirm:
+
+- Grace remains the darkest or clearest moving silhouette in the immediate field;
+- the warm/cool split describes depth without recoloring Grace;
+- tall grass does not swallow the lower body for long stretches;
+- distant ridges separate from one another through value and atmosphere;
+- the field still reads when the camera faces away from the sun;
+- pollen motes remain a subtle depth cue rather than screen noise.
+
+## 5. Performance pass
+
+Traverse from the spawn vista to every edge while rotating the camera.
+
+Record:
+
+- worst visible frame-rate drop;
+- whether shadow quality changes noticeably at distance;
+- any vegetation batch popping or incorrect culling;
+- any hitch on first load or after RESET;
+- whether the 17,500 grass clumps, 1,300 seed heads, 360 wildflowers, volumetric fog, and shadows are acceptable together on the target development machine.
+
+Do not reduce density preemptively. First identify whether grass geometry, shadows, fog, or particle presentation is actually responsible.
+
+## Approval gate
+
+Before this biome language moves into the Wilds Expedition, decide:
+
+1. Is the terrain silhouette natural enough?
+2. Is the grass density rich enough without hiding Grace?
+3. Do the gusts feel like wind crossing a field?
+4. Is the golden-hour palette genuinely beautiful rather than merely saturated?
+5. Does the horizon feel expansive without adding landmarks?
+6. Which single layer is weakest: ground, grass, atmosphere, horizon, or contact?
+
+Tune the weakest layer in this same benchmark before adding trees, rocks, animals, ruins, weather, or gameplay.
+
+## Automated validation
+
+Registered smoke scene:
+
+```text
+res://scenes/tests/golden_meadow_benchmark_smoke_test.tscn
+```
+
+It verifies:
+
+- deterministic surface construction and minimum topology;
+- collision-matched terrain;
+- grass, seed-head, and wildflower density;
+- three horizon layers;
+- approved Stylized PBR ground and meadow wind shaders;
+- per-instance grass variation and enabled wind;
+- procedural sky, ACES tonemapping, SSAO, height fog, and volumetric fog;
+- warm-key/cool-fill lighting;
+- playable-space recovery;
+- Grace scale reference;
+- absence of enemies, interactables, and the full gameplay HUD.
+
+## Known limitations
+
+- Geometry, colors, and scatter are procedural calibration assets rather than final authored texture/mesh imports.
+- The benchmark proves one temperate golden-hour meadow, not a universal grass solution.
+- Grass does not yet bend around Grace, attacks, animals, or weather forces.
+- No weather states or day/night cycle are included; those remain outside this single-look quality gate.
+- Final audio, insects, distant birds, and regional ecology are intentionally absent.
+- The horizon silhouettes are atmospheric backdrops rather than traversable terrain.

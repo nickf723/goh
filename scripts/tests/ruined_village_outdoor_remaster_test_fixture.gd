@@ -261,6 +261,9 @@ static func _validate_stylized_pbr_rollout(
 			+ "stylized_pbr_dry_earth_v1.tres",
 		"OutdoorRemasterV1/ArrivalRoad00/RoadStone_00_00":
 			"res://art/materials/environment/modular/"
+			+ "stylized_pbr_wet_stone_v1.tres",
+		"OutdoorRemasterV1/ArrivalRoad00/RoadStone_00_01":
+			"res://art/materials/environment/modular/"
 			+ "stylized_pbr_stone_study.tres",
 		"OutdoorRemasterV1/ArrivalFenceWest/FencePost00":
 			"res://art/materials/environment/modular/"

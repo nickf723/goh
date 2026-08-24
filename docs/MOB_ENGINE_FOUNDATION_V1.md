@@ -147,6 +147,21 @@ Social wetland grazer. Prefers grazing, wading, resting, and retreating toward w
 
 One shared Bear profile supplies quadruped anatomy, personality, moves, stats, and familiar progression. Brown Bear, Black Bear, Polar Bear, and Panda inherit it while overriding only their distinctive tags, habitat, statistics, and temperament. Polar Bear demonstrates additive swimming anatomy and locomotion.
 
+
+### Extreme structure cohort
+
+Seven entries from the design matrix deliberately stress different combinations without adding species-specific runtime classes:
+
+- Bullfrog: amphibious jumper and swimmer
+- Cobra: limbless serpentine predator
+- Octopus: eight-tentacled swimmer and surface climber
+- Butterfly: four-winged flyer and hoverer
+- Anemone: water-breathing sessile actor
+- Slime: non-respiring amorphous ground mover
+- Hydra: three-headed multipart swimmer
+
+They use the existing generic move vocabulary so the future action matrix can expand authoritatively without this foundation inventing bespoke attacks.
+
 ## Ecology and habitat compatibility
 
 `MobEcologyProfile` keeps habitat survival separate from movement capability. It records:
@@ -416,10 +431,10 @@ Expected output:
 The regression verifies:
 
 - Shared move identity across species, including reusable Beak-gated Peck
-- Fourteen catalog entries, including one shared Bear parent and four inherited matrix variants
+- Twenty-one catalog entries, including one shared Bear parent, four inherited variants, and seven extreme structure probes
 - Canonical body-plan validation across vertebrates, invertebrates, amorphous actors, sessile life, and mythic composites
 - Anatomy-count inheritance and species overrides
-- Frog, Octopus, Anemone, and membrane-glider structural probes
+- Bullfrog, Cobra, Octopus, Butterfly, Anemone, Slime, Hydra, and membrane-glider structural probes
 - Air- and water-breathing habitat compatibility
 - Climate and habitat rejection with actionable failure reasons
 - Individual, coordinated-group, swarm, colony, and multipart representation metadata

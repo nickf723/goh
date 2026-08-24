@@ -1,8 +1,7 @@
 extends Node
 
 const MeadowScene: PackedScene = preload(
-	"res://scenes/levels/prototypes/"
-	+ "prototype_golden_meadow_benchmark_v1.tscn"
+	"res://scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn"
 )
 const GROUND_SHADER_PATH := (
 	"res://shaders/environment/stylized_pbr_surface_v1.gdshader"

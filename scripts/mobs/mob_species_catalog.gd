@@ -1,6 +1,10 @@
 extends RefCounted
 class_name MobSpeciesCatalog
 
+const BodyPlanCatalog = preload(
+	"res://scripts/mobs/mob_body_plan_catalog.gd"
+)
+
 const DEFINITIONS: Dictionary = {
 	"wolf": {
 		"id": "wolf",
@@ -712,11 +716,18 @@ static func has_species(species_id: String) -> bool:
 	return DEFINITIONS.has(species_id)
 
 
+static func get_raw_definition(species_id: String) -> Dictionary:
+	return _resolve_raw_definition(
+		species_id.to_lower().strip_edges(),
+		[]
+	)
+
+
 static func get_definition(species_id: String) -> MobSpeciesDefinition:
-	var value: Variant = DEFINITIONS.get(species_id)
-	if not value is Dictionary:
+	var value: Dictionary = get_raw_definition(species_id)
+	if value.is_empty():
 		return null
-	return MobSpeciesDefinition.from_dictionary(value as Dictionary)
+	return MobSpeciesDefinition.from_dictionary(value)
 
 
 static func get_species_ids() -> Array[String]:
@@ -736,6 +747,21 @@ static func get_definitions() -> Array[MobSpeciesDefinition]:
 	return rows
 
 
+static func get_variant_ids(parent_species_id: String) -> Array[String]:
+	var variants: Array[String] = []
+	var normalized_parent: String = parent_species_id.to_lower().strip_edges()
+	for species_id: String in get_species_ids():
+		var value: Variant = DEFINITIONS.get(species_id)
+		if (
+			value is Dictionary
+			and str(
+				(value as Dictionary).get("parent_species_id", "")
+			).to_lower().strip_edges() == normalized_parent
+		):
+			variants.append(species_id)
+	return variants
+
+
 static func get_move_policy(species_id: String, move_id: String) -> MobMovePolicy:
 	var definition: MobSpeciesDefinition = get_definition(species_id)
 	return definition.get_move_policy(move_id) if definition != null else null
@@ -749,9 +775,84 @@ static func get_move_ids(species_id: String) -> Array[String]:
 static func validate_catalog() -> Array[String]:
 	var failures: Array[String] = MobMoveCatalog.validate_catalog()
 	failures.append_array(MobLocomotionCatalog.validate_catalog())
-	for definition: MobSpeciesDefinition in get_definitions():
+	failures.append_array(BodyPlanCatalog.validate_catalog())
+	for species_id: String in get_species_ids():
+		failures.append_array(_validate_inheritance(species_id))
+		var definition: MobSpeciesDefinition = get_definition(species_id)
+		if definition == null:
+			failures.append("could not resolve species " + species_id)
+			continue
 		for failure: String in definition.validate(MobMoveCatalog):
 			failures.append(failure)
+	return failures
+
+
+static func _resolve_raw_definition(
+	species_id: String,
+	lineage: Array[String]
+) -> Dictionary:
+	if species_id == "" or lineage.has(species_id):
+		return {}
+	var value: Variant = DEFINITIONS.get(species_id)
+	if not value is Dictionary:
+		return {}
+	var own: Dictionary = (value as Dictionary).duplicate(true)
+	var parent_species_id: String = str(
+		own.get("parent_species_id", "")
+	).to_lower().strip_edges()
+	if parent_species_id == "":
+		return own
+	var next_lineage: Array[String] = lineage.duplicate()
+	next_lineage.append(species_id)
+	var inherited: Dictionary = _resolve_raw_definition(
+		parent_species_id,
+		next_lineage
+	)
+	if inherited.is_empty():
+		return {}
+	return _merge_definition_dictionaries(inherited, own)
+
+
+static func _merge_definition_dictionaries(
+	inherited: Dictionary,
+	own: Dictionary
+) -> Dictionary:
+	var result: Dictionary = inherited.duplicate(true)
+	for raw_key: Variant in own.keys():
+		var key: String = str(raw_key)
+		var own_value: Variant = own[raw_key]
+		var inherited_value: Variant = result.get(key)
+		if own_value is Dictionary and inherited_value is Dictionary:
+			result[key] = _merge_definition_dictionaries(
+				inherited_value as Dictionary,
+				own_value as Dictionary
+			)
+		else:
+			result[key] = own_value
+	return result
+
+
+static func _validate_inheritance(species_id: String) -> Array[String]:
+	var failures: Array[String] = []
+	var lineage: Array[String] = []
+	var current_id: String = species_id
+	while current_id != "":
+		if lineage.has(current_id):
+			lineage.append(current_id)
+			failures.append(
+				species_id + " has inheritance cycle " + " -> ".join(lineage)
+			)
+			break
+		lineage.append(current_id)
+		var value: Variant = DEFINITIONS.get(current_id)
+		if not value is Dictionary:
+			failures.append(
+				species_id + " references missing parent species " + current_id
+			)
+			break
+		current_id = str(
+			(value as Dictionary).get("parent_species_id", "")
+		).to_lower().strip_edges()
 	return failures
 
 
@@ -759,9 +860,21 @@ static func get_debug_data() -> Dictionary:
 	var rows: Array[Dictionary] = []
 	for definition: MobSpeciesDefinition in get_definitions():
 		rows.append(definition.to_dictionary())
+	var variant_count: int = 0
+	for species_id: String in get_species_ids():
+		var value: Variant = DEFINITIONS.get(species_id)
+		if (
+			value is Dictionary
+			and str(
+				(value as Dictionary).get("parent_species_id", "")
+			).strip_edges() != ""
+		):
+			variant_count += 1
 	return {
 		"species_count": rows.size(),
+		"variant_count": variant_count,
 		"species": rows,
+		"body_plan_count": BodyPlanCatalog.get_body_plan_ids().size(),
 		"locomotion_capability_count": MobLocomotionCatalog.get_capability_ids().size(),
 		"failures": validate_catalog(),
 	}

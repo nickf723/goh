@@ -308,6 +308,39 @@ func get_vitals_data() -> Dictionary:
 	return vitals.to_dictionary() if vitals != null else {}
 
 
+func get_ecology_data() -> Dictionary:
+	return (
+		species_definition.ecology_profile.to_dictionary()
+		if (
+			species_definition != null
+			and species_definition.ecology_profile != null
+		)
+		else {}
+	)
+
+
+func get_habitat_evaluation() -> Dictionary:
+	if species_definition == null:
+		return {}
+	var provider: Node = get_parent()
+	if (
+		provider == null
+		or not provider.has_method("get_animal_habitat_context")
+	):
+		return {}
+	var context_value: Variant = provider.call(
+		"get_animal_habitat_context",
+		self
+	)
+	if not context_value is Dictionary:
+		return {}
+	var result: Dictionary = species_definition.evaluate_habitat(
+		context_value as Dictionary
+	)
+	result["context_known"] = true
+	return result
+
+
 func receive_damage_payload(payload: Variant) -> Dictionary:
 	if vitals == null:
 		return {"ok": false, "error": "animal vitals unavailable"}
@@ -407,6 +440,9 @@ func _get_mob_self_tags() -> Array[String]:
 			tags.append("body:" + body_tag)
 		for ecology_tag: String in species_definition.ecology_tags:
 			tags.append("ecology:" + ecology_tag)
+		for profile_tag: String in species_definition.get_ecology_context_tags():
+			if not tags.has(profile_tag):
+				tags.append(profile_tag)
 	if locomotion != null:
 		for locomotion_tag: String in locomotion.get_context_tags():
 			if not tags.has(locomotion_tag):
@@ -533,6 +569,8 @@ func get_debug_data() -> Dictionary:
 		"perception": get_perception_data(),
 		"brain": brain.get_debug_data() if brain != null else {},
 		"vitals": get_vitals_data(),
+		"ecology": get_ecology_data(),
+		"habitat_evaluation": get_habitat_evaluation(),
 		"conditions": (
 			condition_state.call("get_debug_data")
 			if (

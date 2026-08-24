@@ -65,6 +65,10 @@ Examples:
 
 The evaluator rejects a move when the species body plan lacks its required tags. Future body plans can include wings, hands, horns, shells, tentacles, burrowing limbs, multiple heads, incorporeal bodies, or machine components without changing the evaluator.
 
+`MobBodyPlanCatalog` now supplies canonical quadruped, avian, fish, serpentine, amphibian, insectoid, arachnid, crustacean, cephalopod, humanoid, amorphous, sessile, and mythic-composite structures. A body plan contributes core anatomy, part counts, a mobility kind, and default locomotion. Species add their distinctive organs and can override counts, so an Octopus inherits eight tentacles while a future Squid can override the same plan without a parallel actor class. Sessile creatures intentionally validate without fake walking data.
+
+Species inheritance is separate from body-plan reuse. A child species inherits its parent's statistics, personality, anatomy, tags, moveset policies, and familiar profile; nested dictionaries merge, tag collections can add or remove entries, and explicit child values remain authoritative. This supports lightweight regional variants without copy-pasting an entire creature.
+
 Locomotion is resolved as a second capability layer. Ground, swimming, flight, climbing, and burrowing are movement modes; runner, serpentine, hover, and jumper are modifiers or transitions. The shared catalog validates anatomy and dependencies, so species can combine modes without introducing species-specific brain code. `MobLocomotionExecutor` consumes that profile at runtime for legal transitions, medium validation, planar/surface/volumetric steering, water currents, surface buoyancy, gravity policy, and explicitly activated modifiers. See [`ANIMAL_BODY_LOCOMOTION_AND_EFFECTS_V1.md`](ANIMAL_BODY_LOCOMOTION_AND_EFFECTS_V1.md).
 
 ## Active-phase effects
@@ -112,8 +116,10 @@ A Gremlin treats Bite as ordinary melee pressure and can use its existing enemy-
 
 A `MobSpeciesDefinition` contains:
 
+- Optional parent species for variant inheritance
+- Canonical body-plan ID
 - Taxonomy tags
-- Body tags
+- Body tags and anatomy counts
 - Locomotion tags
 - Ecology tags
 - Base stats and senses
@@ -135,6 +141,10 @@ Social grazing prey animal. Grazes while safe, flees from predators, and uses He
 ### Capybara
 
 Social wetland grazer. Prefers grazing, wading, resting, and retreating toward water. Bite is defensive rather than routine.
+
+### Bear family
+
+One shared Bear profile supplies quadruped anatomy, personality, moves, stats, and familiar progression. Brown Bear, Black Bear, Polar Bear, and Panda inherit it while overriding only their distinctive tags, habitat, statistics, and temperament. Polar Bear demonstrates additive swimming anatomy and locomotion.
 
 ### Gorgon
 
@@ -386,9 +396,11 @@ Expected output:
 The regression verifies:
 
 - Shared move identity across species, including reusable Beak-gated Peck
-- Nine seed species including a multi-modal Goose, water-only Trout, climbing Gecko, and burrowing Mole
-- Body-plan validation
-- Ground, swimming, flight, climbing, and burrowing capability resolution
+- Fourteen catalog entries, including one shared Bear parent and four inherited matrix variants
+- Canonical body-plan validation across vertebrates, invertebrates, amorphous actors, sessile life, and mythic composites
+- Anatomy-count inheritance and species overrides
+- Frog, Octopus, Anemone, and membrane-glider structural probes
+- Ground, swimming, flight, glide, climbing, and burrowing capability resolution
 - Anatomy rejection and locomotion alias normalization
 - Runtime ground/swimming/flight/climbing/burrowing mode transitions, direct air-water transitions, and medium rejection
 - Planar, surface, and volumetric steering; current sampling; buoyancy; adhesion; waypoint guidance; and gravity handoff

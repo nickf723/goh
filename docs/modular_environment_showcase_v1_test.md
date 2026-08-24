@@ -1,4 +1,4 @@
-# Weathered Cloister Modular Environment Showcase v1.1 Manual Test
+# Weathered Cloister Modular Environment Showcase v1.2 Manual Test
 
 Scene:
 
@@ -8,30 +8,34 @@ scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn
 
 ## Purpose
 
-Evaluate the reusable environment and prop kit as one coherent walkable set, and compare the first contained stylized-PBR stone specimen against the legacy modular materials. This is a visual, lighting, collision, scale, and camera benchmark. It adds no quest, combat, progression, or traversal mechanic.
+Evaluate the reusable environment and prop kit as one coherent walkable set, compare the legacy left wing against the stylized-PBR right wing, and verify the material family under both approved daylight and contrasting violet-twilight lighting. This is a visual, lighting, collision, scale, and camera benchmark. It adds no quest, combat, progression, or traversal mechanic.
 
 ## Route
 
 1. Walk through the weathered entrance arch without jumping.
 2. Follow either side of the central water channel.
-3. Cross between both cloister walks and inspect floor-to-channel transitions.
+3. Cross between both cloister walks and compare matching floor, wall, pillar, wet-stone, and sconce forms: the left wing is the legacy baseline and the right wing uses stylized PBR.
 4. Circle the stone pillars and timber frames with the camera close behind Grace.
 5. Walk continuously up the broad stair run without jumping or stopping at each riser.
 6. Interact with the glowing gate lever.
-7. Wait for the gate to open fully, then walk through the doorway without colliding with an invisible panel.
-8. Approach the hero pedestal and inspect the three-lobe stylized rock from the front, both sides, and a close orbit.
-9. Compare the study rock directly against the pedestal, rear wall, crate, and barrel, which remain on the legacy material family.
-10. Return to the entrance using the opposite side of the cloister.
+7. Use **E** on the matching console to the right of the gate. Compare the full cloister under violet twilight, then use it again to restore warm daylight.
+8. Wait for the gate to open fully, then walk through the doorway without colliding with an invisible panel.
+9. Approach the hero pedestal and inspect the three-lobe stylized rock from the front, both sides, and a close orbit.
+10. Compare the study rock and styled right-side barrel directly against the legacy left-side crate, pedestal, and left rear wall.
+11. Return to the entrance using the opposite side of the cloister.
 
 ## Visual checks
 
 ### Stylized-PBR calibration
 
+- Matching left/right architectural forms should make the shader change readable without geometry differences.
+- Stone, wet stone, aged wood, and aged metal should remain distinct through roughness, metallic response, color, and highlight shape.
 - The study rock should group its direct diffuse light into three soft value regions without hard cartoon outlines.
 - Camera-facing edges should receive a restrained cool-blue Fresnel rim; broad front-facing regions should not glow blue.
 - The specular highlight should remain smooth, mobile, and unquantized as the camera moves.
 - Broad teal-gray variation should support the lobes without introducing fine procedural noise.
 - The warm key and cool sky should create readable color separation without turning neutral stone orange or blue.
+- Violet twilight should preserve material identity, Grace readability, soft banding, and smooth highlights while warm sconces become the focal contrast.
 - ACES and the grading pass should keep bright sconces and rock highlights from clipping.
 - Contact around the pedestal and clustered lobes should read more clearly through moderate SSAO.
 - Grace should remain the cleanest silhouette in the frame.
@@ -76,4 +80,4 @@ Technical contract:
 docs/STYLIZED_PBR_SURFACE_V1.md
 ```
 
-Do not migrate the shader beyond the single calibration rock until this visual review is approved.
+The first rock direction is approved. Do not migrate this material family beyond the showcase until the left/right comparison and both lighting dialects are approved.

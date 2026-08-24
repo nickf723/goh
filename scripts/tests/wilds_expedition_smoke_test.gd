@@ -92,6 +92,16 @@ func assert_wildlife_habitats(
 			"wilds_animal_habitat",
 			false
 		)))
+		assert(bool((debug_value as Dictionary).get(
+			"all_species_viable",
+			false
+		)))
+		assert(not (
+			(debug_value as Dictionary).get(
+				"habitat_context",
+				{}
+			) as Dictionary
+		).is_empty())
 		var animals_value: Variant = habitat.call("get_animals")
 		assert(animals_value is Array)
 		for animal_value: Variant in animals_value as Array:
@@ -101,6 +111,11 @@ func assert_wildlife_habitats(
 			)
 			assert(animal.state_label != null)
 			assert(not animal.state_label.visible)
+			var habitat_evaluation: Dictionary = (
+				animal.get_habitat_evaluation()
+			)
+			assert(bool(habitat_evaluation.get("viable", false)))
+			assert(bool(habitat_evaluation.get("context_known", false)))
 			assert(
 				habitat.call(
 					"get_animal_grace_target",

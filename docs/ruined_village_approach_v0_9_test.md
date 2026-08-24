@@ -1,8 +1,8 @@
-# Ruined Village Approach — First Production Adventure Slice v1 Manual Test
+# Ruined Village Approach — Production Slice v1 / Stylized PBR v0.10 Manual Test
 
 ## Purpose
 
-The Ruined Village Approach is now the **first production-adventure-slice entry point** for *Grace of Humanity*.
+The Ruined Village Approach is the **first production-adventure-slice entry point** for *Grace of Humanity* and now carries the first story-integrated Stylized PBR environment rollout.
 
 The goal is no longer to showcase as many systems as possible. The level should play as one coherent 10–15 minute miniature of the game:
 
@@ -40,6 +40,34 @@ The old spell-showcase launch behavior is intentionally suppressed here:
 - large floating laboratory/solution labels are hidden from the canonical slice.
 
 The separate Field Progression derivative remains a development showcase and does not activate this production Adventure Chunk graph.
+
+## Stylized PBR rollout baseline
+
+The rollout is bounded to the composed presentation subtree:
+
+```text
+OutdoorRemasterV1
+```
+
+On the ordinary run, confirm:
+
+- road earth, road stones, ruin trim, rubble, fences, timbers, and iron ties use the approved painterly/PBR treatment;
+- wet road stones retain a darker, sharper highlight than dry masonry;
+- diffuse values group into soft painterly bands while specular highlights move continuously;
+- the existing late-afternoon warm key and cool fill still define the village mood;
+- plaster, moss, and olive leaves keep their legacy surface treatment;
+- Grace, Goblins, Gremlins, clues, weather VFX, spell VFX, and UI do not inherit the environment shader;
+- visible remaster meshes change, but traversal ramps, support foundations, blockers, and puzzle collision do not.
+
+For a direct legacy comparison, select `OutdoorRemasterPass` in the scene, disable `use_stylized_pbr_surface`, and reload the scene. Re-enable it after comparison; the switch is intentionally reload-based so no runtime material mutation can leak between states.
+
+Repeat the readability pass in clear weather and after activating Rain, Snowfall, and Thunderstorm:
+
+- Grace must remain readable against roads, walls, olive clusters, and the church approach;
+- rain may deepen atmosphere but must not make every stone read as wet;
+- snow and storm lighting must not turn the soft bands into hard cel stripes;
+- spell and lightning highlights must stay distinct from the cool material rim;
+- no weather state may hide clue markers, route gates, enemies, or the church threshold.
 
 ---
 
@@ -288,7 +316,11 @@ It now also verifies:
 - Sound memory stays optional;
 - church threshold depends on the ravine;
 - clues, debris, ice bridge, and memory expose lifecycle signals for sequencing;
-- the production slice no longer auto-selects/unlocks Flight.
+- the production slice no longer auto-selects/unlocks Flight;
+- the stylized material library validates before the route pass runs;
+- all five approved material families appear inside `OutdoorRemasterV1`;
+- plaster, moss, olive leaves, and Grace remain outside the material boundary;
+- authored collision and preserved support shells retain their prior behavior.
 
 Existing regression coverage still verifies the environment, encounter definition, Fire route, Ice + Heavy route, Water + Ice bridge, Sound reveal, save-state restoration, checkpoint, and Church Trial transition path.
 
@@ -313,7 +345,8 @@ The result of this playtest should choose the next development target. Do not as
 
 # Known limitations
 
-- Terrain, ruins, vegetation, props, church architecture, enemies, animation, and audio remain prototype/replacement-ready.
+- Terrain, ruins, vegetation, props, church architecture, enemies, animation, and audio remain prototype/replacement-ready even where the approved material treatment is active.
+- Stylized PBR v1.2 currently covers modular stone, wet stone, dry earth, aged wood, and aged metal only; plaster, moss, foliage, creatures, VFX, and Grace remain intentionally outside this first route pass.
 - The playable footprint is compressed while implying a broader village region.
 - Goblin and Gremlin actors still stand in for future location-specific opponents.
 - The Water/Ice bridge remains latched until reset for dependable testing.

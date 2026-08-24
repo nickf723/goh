@@ -18,7 +18,7 @@ This pass follows the Global Art Bible:
 res://scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn
 ```
 
-The approved hero-pedestal rock remains the shape reference. In v1.2, the left cloister wing stays on `modular_surface.gdshader` while matching forms on the right wing receive the stylized-PBR material family. Production routes remain unchanged.
+The approved hero-pedestal rock remains the shape reference. In v1.2, the left cloister wing stays on `modular_surface.gdshader` while matching forms on the right wing receive the stylized-PBR material family. That comparison is approved; the Ruined Village Approach now owns the first bounded story-route rollout on its `OutdoorRemasterV1` presentation subtree.
 
 ## Shader
 
@@ -98,17 +98,24 @@ These are calibration values, not a final global environment resource. The in-wo
 6. Check that broad variation supports the form instead of creating procedural speckle.
 7. Judge Grace against both the warm key and cool sky.
 
-## Rollout gate
+## Production rollout state
 
-The first stone preset is manually approved. V1.2 now proves the broad material family in one A/B showcase and exposes a second strongly different lighting dialect.
+The v1.2 left/right material-family comparison and violet-twilight stress test were approved by Nick. The first production migration is now active in:
 
-Before production migration:
+```text
+res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn
+```
 
-1. approve the left/right family comparison in both daylight and violet twilight;
-2. verify Grace readability without applying the material to Grace;
-3. choose one authored route for a bounded, reversible material pass;
-4. keep foliage, creatures, VFX, and Grace outside that route pass;
-5. retain per-material control over ramp, roughness, metallic response, and rim strength.
+The boundary is deliberately narrow:
+
+1. only descendants of `OutdoorRemasterV1` are candidates;
+2. legacy stone, wet stone, dry earth, aged wood, and aged metal overrides map to the approved presets;
+3. plaster, moss, and olive leaves remain on their existing materials;
+4. Grace, creatures, interactions, VFX, weather systems, and the legacy collision/support shell are not traversed;
+5. `OutdoorRemasterPass.use_stylized_pbr_surface` disables the route rollout on reload for direct regression comparison;
+6. the village keeps its existing warm-sun/cool-fill lighting dialect rather than importing the showcase calibration rig.
+
+Broader migration remains gated on a full village playthrough in clear weather plus Rain, Snowfall, and Thunderstorm concentration states.
 
 ## Validation
 
@@ -122,4 +129,5 @@ The regression verifies shader resource loading, required uniforms, five materia
 ## Approval history
 
 - v1.1 stone calibration: approved by Nick on 2026-08-23.
-- v1.2 material-family and second-lighting-dialect comparison: awaiting manual review.
+- v1.2 material-family and second-lighting-dialect comparison: approved by Nick on 2026-08-24.
+- v1.2 first story-route rollout: integrated on the Ruined Village Approach on 2026-08-24; full route and weather-state review pending.

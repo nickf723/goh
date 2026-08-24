@@ -9,6 +9,7 @@ const TraversalMediumScript = preload(
 )
 
 var habitat_id: String = ""
+var habitat_context: Dictionary = {}
 var animals: Array[GenericAnimalActor] = []
 var water_volume: SwimmingWaterVolume
 var traversal_medium: MobTraversalMedium
@@ -59,6 +60,12 @@ func get_animal_grace_target(
 	_animal: GenericAnimalActor
 ) -> Node3D:
 	return _resolve_grace_target()
+
+
+func get_animal_habitat_context(
+	_animal: GenericAnimalActor
+) -> Dictionary:
+	return habitat_context.duplicate(true)
 
 
 func get_animal_threat_target(
@@ -158,15 +165,27 @@ func reset_habitat() -> void:
 
 func get_debug_data() -> Dictionary:
 	var modes: Dictionary = {}
+	var habitat_evaluations: Dictionary = {}
+	var all_species_viable: bool = true
 	for animal: GenericAnimalActor in animals:
 		if animal != null and is_instance_valid(animal):
 			modes[animal.species_id] = animal.get_active_locomotion_mode()
+			var evaluation: Dictionary = animal.get_habitat_evaluation()
+			habitat_evaluations[animal.name] = evaluation
+			if (
+				not evaluation.is_empty()
+				and not bool(evaluation.get("viable", false))
+			):
+				all_species_viable = false
 	return {
 		"wilds_animal_habitat": true,
 		"habitat_id": habitat_id,
 		"animal_count": animals.size(),
 		"species": get_species_ids(),
 		"active_modes": modes,
+		"habitat_context": habitat_context.duplicate(true),
+		"habitat_evaluations": habitat_evaluations,
+		"all_species_viable": all_species_viable,
 		"has_water": water_volume != null,
 		"traversal_mode": (
 			traversal_medium.get_locomotion_mode()
@@ -177,6 +196,19 @@ func get_debug_data() -> Dictionary:
 
 
 func _build_cypress_basin_habitat() -> void:
+	habitat_context = {
+		"habitat_tags": [
+			"wetland",
+			"river",
+			"freshwater",
+			"water",
+			"riverbank",
+			"land",
+			"temperate",
+		],
+		"available_media": ["air", "water"],
+		"temperature": 18.0,
+	}
 	habitat_bounds_min = Vector3(2.35, -0.95, 9.8)
 	habitat_bounds_max = Vector3(7.0, 0.8, 18.2)
 	water_target_local = Vector3(4.7, -0.45, 14.0)
@@ -220,6 +252,19 @@ func _build_cypress_basin_habitat() -> void:
 
 
 func _build_wet_woodland_habitat() -> void:
+	habitat_context = {
+		"habitat_tags": [
+			"woodland",
+			"forest",
+			"vertical_surface",
+			"tree_bark",
+			"land",
+			"air",
+			"temperate",
+		],
+		"available_media": ["air"],
+		"temperature": 22.0,
+	}
 	habitat_bounds_min = Vector3(-5.5, 0.1, 14.3)
 	habitat_bounds_max = Vector3(-3.25, 3.35, 16.8)
 	forage_target_local = Vector3(-4.25, 0.15, 16.2)
@@ -275,6 +320,19 @@ func _build_wet_woodland_habitat() -> void:
 
 
 func _build_pine_ridge_habitat() -> void:
+	habitat_context = {
+		"habitat_tags": [
+			"pine_forest",
+			"soil",
+			"tunnel",
+			"root_tunnel",
+			"land",
+			"air",
+			"temperate",
+		],
+		"available_media": ["air"],
+		"temperature": 14.0,
+	}
 	habitat_bounds_min = Vector3(-6.3, 1.25, 12.6)
 	habitat_bounds_max = Vector3(-2.9, 2.25, 15.7)
 	forage_target_local = Vector3(-5.8, 1.7, 15.0)

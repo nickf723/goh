@@ -983,12 +983,15 @@ static func _merge_definition_dictionaries(
 	for array_key: String in ADDITIVE_VARIANT_ARRAY_KEYS:
 		var remove_key: String = "remove_" + array_key
 		var removals: Variant = own.get(remove_key, [])
-		if not removals is Array or not result.get(array_key) is Array:
+		var inherited_array: Variant = result.get(array_key, [])
+		if not removals is Array or not inherited_array is Array:
 			continue
-		var merged_values: Array = result[array_key] as Array
+		var filtered_values: Array = (
+			inherited_array as Array
+		).duplicate(true)
 		for raw_item: Variant in removals as Array:
-			merged_values.erase(raw_item)
-		result[array_key] = merged_values
+			filtered_values.erase(raw_item)
+		result[array_key] = filtered_values
 	return result
 
 

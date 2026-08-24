@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-08-22",
+  "updated": "2026-08-23",
   "purpose": "Canonical capability memory for planning. Search this before proposing new mechanics.",
   "lifecycle_values": [
     "canonical",
@@ -628,14 +628,21 @@
         "prop kit",
         "dungeon set pieces",
         "environment showcase",
-        "weathered cloister"
+        "weathered cloister",
+        "stylized PBR",
+        "painterly surface shader",
+        "banded diffuse",
+        "rim lighting",
+        "warm cool lighting",
+        "environment color grading"
       ],
       "implemented": true,
       "do_not_resuggest": true,
-      "next_use": "Apply the reusable scenes and authored-space standards to the Ruined Village Approach; add kit pieces only when that second application proves repeated need.",
+      "next_use": "Manually tune the contained stylized-PBR stone study in the modular showcase; after approval, prove material presets under a second lighting dialect before any bounded authored-route rollout.",
       "story_reference": "The Drowned Bell",
       "limitations": [
-        "The v1 reusable kit is a stylized primitive-based benchmark rather than final imported production art.",
+        "The reusable kit remains a stylized primitive-based benchmark rather than final imported production art.",
+        "Stylized PBR v1 is deliberately limited to one stone calibration prop until its ramp, rim, lighting, and grading receive manual art-direction approval.",
         "Only one weathered architecture family is represented so far."
       ]
     },

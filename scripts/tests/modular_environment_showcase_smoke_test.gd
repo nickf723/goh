@@ -2,6 +2,7 @@ extends Node
 
 const SceneUnderTest: PackedScene = preload("res://scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn")
 const Catalog = preload("res://scripts/environment/modular_environment_catalog.gd")
+const StylizedMaterialLibrary = preload("res://scripts/environment/stylized_pbr_material_library.gd")
 const BuilderScript = preload("res://scripts/environment/authored_environment_builder.gd")
 const ComposerScript = preload("res://scripts/environment/authored_set_composer.gd")
 const SetClearanceAuditor = preload("res://scripts/environment/authored_set_clearance_auditor.gd")
@@ -96,6 +97,58 @@ func _ready() -> void:
 			float(stylized_material.get_shader_parameter("rim_intensity")) > 0.0,
 			"stone study material enables its cool rim"
 		)
+
+
+	current_step = "validate stylized PBR material family"
+	for error: String in StylizedMaterialLibrary.validate_library():
+		failures.append("stylized material library: " + error)
+	var material_family_ids: Array[String] = (
+		StylizedMaterialLibrary.get_family_ids()
+	)
+	check(
+		material_family_ids == [
+			"stone",
+			"wet_stone",
+			"dry_earth",
+			"aged_wood",
+			"aged_metal",
+		],
+		"stylized PBR library exposes the five approved broad material families"
+	)
+	var wet_stone_material: ShaderMaterial = (
+		StylizedMaterialLibrary.get_material("wet_stone")
+	)
+	var aged_wood_material: ShaderMaterial = (
+		StylizedMaterialLibrary.get_material("aged_wood")
+	)
+	var aged_metal_material: ShaderMaterial = (
+		StylizedMaterialLibrary.get_material("aged_metal")
+	)
+	check(
+		wet_stone_material != null
+		and float(
+			wet_stone_material.get_shader_parameter("roughness_value")
+		) < float(
+			stylized_material.get_shader_parameter("roughness_value")
+		),
+		"wet stone keeps a sharper physical highlight than dry stone"
+	)
+	check(
+		aged_wood_material != null
+		and float(
+			aged_wood_material.get_shader_parameter(
+				"broad_variation_strength"
+			)
+		) > 0.0,
+		"aged wood retains broad painted material breakup"
+	)
+	check(
+		aged_metal_material != null
+		and float(
+			aged_metal_material.get_shader_parameter("metallic_value")
+		) > 0.7,
+		"aged metal preserves a genuinely metallic PBR response"
+	)
 
 	current_step = "validate catalog"
 	var catalog_errors: Array[String] = Catalog.validate_catalog()
@@ -242,8 +295,8 @@ func _ready() -> void:
 	check(study != null, "showcase contains one contained stylized surface study")
 	if study != null:
 		check(
-			str(study.get_meta("rollout_scope", "")) == "single_calibration_prop",
-			"style study records its intentionally narrow rollout"
+			str(study.get_meta("rollout_scope", "")) == "showcase_material_family",
+			"style study records its showcase-only material-family rollout"
 		)
 		check(study.get_child_count() == 3, "style study composes one three-lobe rock")
 		var study_core: MeshInstance3D = study.get_node_or_null(
@@ -259,7 +312,7 @@ func _ready() -> void:
 				check(
 					core_material.shader != null
 					and core_material.shader.resource_path == STYLIZED_SHADER_PATH,
-					"style study alone uses the provisional stylized PBR shader"
+					"style study uses the shared provisional stylized PBR shader"
 				)
 
 	var environment_node: WorldEnvironment = showcase.get_node_or_null(
@@ -301,10 +354,129 @@ func _ready() -> void:
 		"showcase contrasts a warm shadow-casting key against the cool sky"
 	)
 
+
+	current_step = "inspect stylized material comparison"
+	var comparison: Dictionary = showcase.call(
+		"get_stylized_comparison_stats"
+	)
+	check(
+		int(comparison.get("total", 0)) >= 20,
+		"right wing receives a meaningful bounded material-family rollout"
+	)
+	var comparison_families: Dictionary = comparison.get("families", {})
+	for represented_family: String in [
+		"stone",
+		"wet_stone",
+		"aged_wood",
+		"aged_metal",
+	]:
+		check(
+			int(comparison_families.get(represented_family, 0)) > 0,
+			"showcase comparison represents " + represented_family
+		)
+	var comparison_roots: Array = comparison.get("roots", [])
+	check(
+		comparison_roots.has("StorageBarrel"),
+		"right-side prop proves styled wood and metal"
+	)
+	check(
+		not comparison_roots.has("SupplyCrate"),
+		"left-side prop remains a legacy material baseline"
+	)
+	var left_floor: Node = showcase.get_node_or_null(
+		"World/WeatheredCloisterSet/FloorLeft_-4_0"
+	)
+	var right_floor: Node = showcase.get_node_or_null(
+		"World/WeatheredCloisterSet/FloorRight_-4_0"
+	)
+	check(left_floor != null and right_floor != null, "A/B floor roots resolve")
+	if left_floor != null and right_floor != null:
+		var left_stylized_count: int = 0
+		for candidate: Node in left_floor.find_children(
+			"*",
+			"MeshInstance3D",
+			true,
+			false
+		):
+			var mesh_instance: MeshInstance3D = candidate as MeshInstance3D
+			var material: ShaderMaterial = (
+				mesh_instance.material_override as ShaderMaterial
+			)
+			if (
+				material != null
+				and material.shader != null
+				and material.shader.resource_path == STYLIZED_SHADER_PATH
+			):
+				left_stylized_count += 1
+		var right_stylized_count: int = 0
+		for candidate: Node in right_floor.find_children(
+			"*",
+			"MeshInstance3D",
+			true,
+			false
+		):
+			var mesh_instance: MeshInstance3D = candidate as MeshInstance3D
+			var material: ShaderMaterial = (
+				mesh_instance.material_override as ShaderMaterial
+			)
+			if (
+				material != null
+				and material.shader != null
+				and material.shader.resource_path == STYLIZED_SHADER_PATH
+			):
+				right_stylized_count += 1
+		check(
+			left_stylized_count == 0,
+			"left floor keeps the legacy shader for direct comparison"
+		)
+		check(
+			right_stylized_count > 0,
+			"right floor uses the stylized PBR material family"
+		)
+
+	current_step = "switch lighting dialect"
+	var lighting_console: Area3D = showcase.get_node_or_null(
+		"World/WeatheredCloisterSet/StyleLightingConsole"
+	) as Area3D
+	check(lighting_console != null, "showcase exposes an in-world lighting console")
+	if lighting_console != null:
+		lighting_console.interact()
+		await get_tree().process_frame
+		var twilight_stats: Dictionary = showcase.call(
+			"get_showcase_stats"
+		)
+		check(
+			str(twilight_stats.get("environment_profile", ""))
+			== "violet_twilight_v1",
+			"lighting console activates the contrasting violet dialect"
+		)
+		check(
+			key_light != null
+			and key_light.light_color.b > key_light.light_color.r,
+			"violet twilight replaces the warm key with a cool key"
+		)
+		check(
+			environment != null
+			and environment.adjustment_saturation > 1.0,
+			"twilight retains restrained stylized color grading"
+		)
+		lighting_console.interact()
+		await get_tree().process_frame
+		var restored_stats: Dictionary = showcase.call(
+			"get_showcase_stats"
+		)
+		check(
+			str(restored_stats.get("environment_profile", ""))
+			== "warm_key_cool_sky_v1",
+			"lighting console restores the approved daylight dialect"
+		)
+
 	current_step = "inspect showcase composition"
 	var stats: Dictionary = showcase.call("get_showcase_stats")
 	check(bool(stats.get("stylized_surface_study", false)), "showcase reports the style study")
-	check(str(stats.get("environment_profile", "")) == "warm_key_cool_sky_v1", "showcase reports its lighting profile")
+	check(bool(stats.get("style_lighting_console", false)), "showcase reports the lighting console")
+	check(str(stats.get("environment_profile", "")) == "warm_key_cool_sky_v1", "showcase reports its restored lighting profile")
+	check(int((stats.get("stylized_comparison", {}) as Dictionary).get("total", 0)) >= 20, "showcase reports the bounded material comparison")
 	check(int(stats.get("placed_count", 0)) >= 35, "showcase composes a full set from repeated modules")
 	var categories: Array = stats.get("categories", [])
 	for required_category: String in ["architecture", "prop", "lighting", "water"]:

@@ -96,6 +96,7 @@ func run_tests() -> void:
 	_test_catalogs_and_shared_moves()
 	_test_body_plans_and_variants()
 	_test_ecology_and_habitat_profiles()
+	_test_extreme_creature_cohort()
 	_test_locomotion_profiles()
 	_test_locomotion_executor()
 	_test_mob_vitals()
@@ -120,7 +121,7 @@ func _test_catalogs_and_shared_moves() -> void:
 	_expect(SpeciesCatalog.validate_catalog().is_empty(), "species catalog validates")
 	_expect(LocomotionCatalog.validate_catalog().is_empty(), "locomotion catalog validates")
 	_expect(BodyPlanCatalog.validate_catalog().is_empty(), "body-plan catalog validates")
-	_expect(SpeciesCatalog.get_species_ids().size() >= 14, "foundation seeds species and inherited variants")
+	_expect(SpeciesCatalog.get_species_ids().size() >= 21, "foundation seeds 21 species and inherited variants")
 	var bite: MobMoveDefinition = MoveCatalog.get_definition("bite")
 	_expect(bite != null, "shared Bite move resolves")
 	var peck: MobMoveDefinition = MoveCatalog.get_definition("peck")
@@ -362,6 +363,79 @@ func _test_ecology_and_habitat_profiles() -> void:
 		swarm.validate().is_empty()
 		and swarm.get_context_tags().has("aggregation:swarm"),
 		"one actor can explicitly represent a swarm instead of one organism"
+	)
+
+
+func _test_extreme_creature_cohort() -> void:
+	var bullfrog: MobSpeciesDefinition = SpeciesCatalog.get_definition(
+		"bullfrog"
+	)
+	_expect(
+		bullfrog != null
+		and bullfrog.has_anatomy("legs", 4)
+		and bullfrog.supports_locomotion("swimmer")
+		and bullfrog.supports_locomotion("jumper"),
+		"catalog Bullfrog composes amphibious movement and counted legs"
+	)
+
+	var cobra: MobSpeciesDefinition = SpeciesCatalog.get_definition("cobra")
+	_expect(
+		cobra != null
+		and not cobra.has_body_tag("legs")
+		and cobra.supports_locomotion("ground")
+		and cobra.supports_locomotion("serpentine"),
+		"catalog Cobra moves without invented limbs"
+	)
+
+	var octopus: MobSpeciesDefinition = SpeciesCatalog.get_definition(
+		"octopus"
+	)
+	_expect(
+		octopus != null
+		and octopus.has_anatomy("tentacles", 8)
+		and octopus.supports_locomotion("swimmer")
+		and octopus.supports_locomotion("climber"),
+		"catalog Octopus preserves eight tentacles and mixed traversal"
+	)
+
+	var butterfly: MobSpeciesDefinition = SpeciesCatalog.get_definition(
+		"butterfly"
+	)
+	_expect(
+		butterfly != null
+		and butterfly.has_anatomy("wings", 4)
+		and butterfly.supports_locomotion("flight")
+		and butterfly.supports_locomotion("hover"),
+		"catalog Butterfly supports counted wings, flight, and hovering"
+	)
+
+	var anemone: MobSpeciesDefinition = SpeciesCatalog.get_definition(
+		"anemone"
+	)
+	_expect(
+		anemone != null
+		and anemone.is_sessile()
+		and anemone.locomotion_tags.is_empty()
+		and anemone.ecology_profile.breathing_media.has("water"),
+		"catalog Anemone is a valid water-breathing sessile creature"
+	)
+
+	var slime: MobSpeciesDefinition = SpeciesCatalog.get_definition("slime")
+	_expect(
+		slime != null
+		and slime.has_body_tag("amorphous_body")
+		and slime.supports_locomotion("ground")
+		and slime.ecology_profile.breathing_media.has("none"),
+		"catalog Slime supports amorphous locomotion without respiration"
+	)
+
+	var hydra: MobSpeciesDefinition = SpeciesCatalog.get_definition("hydra")
+	_expect(
+		hydra != null
+		and hydra.has_anatomy("heads", 3)
+		and hydra.supports_locomotion("swimmer")
+		and hydra.ecology_profile.aggregation_mode == "multipart",
+		"catalog Hydra represents a counted multipart creature"
 	)
 
 

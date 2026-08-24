@@ -10,6 +10,7 @@ const BrainScript = preload("res://scripts/mobs/mob_brain_component.gd")
 const ExecutionState = preload("res://scripts/mobs/mob_move_execution_state.gd")
 const LocomotionCatalog = preload("res://scripts/mobs/mob_locomotion_catalog.gd")
 const BodyPlanCatalog = preload("res://scripts/mobs/mob_body_plan_catalog.gd")
+const EcologyProfileScript = preload("res://scripts/mobs/mob_ecology_profile.gd")
 const LocomotionExecutorScript = preload(
 	"res://scripts/mobs/mob_locomotion_executor.gd"
 )
@@ -94,6 +95,7 @@ func run_tests() -> void:
 	_capture_profiles()
 	_test_catalogs_and_shared_moves()
 	_test_body_plans_and_variants()
+	_test_ecology_and_habitat_profiles()
 	_test_locomotion_profiles()
 	_test_locomotion_executor()
 	_test_mob_vitals()
@@ -231,6 +233,13 @@ func _test_body_plans_and_variants() -> void:
 		"id": "smoke_anemone",
 		"display_name": "Smoke Anemone",
 		"body_plan_id": "sessile",
+		"ecology_profile": {
+			"scale_band": "small",
+			"breathing_media": ["water"],
+			"social_structure": "solitary",
+			"aggregation_mode": "individual",
+			"required_habitat_tags": ["ocean", "substrate"],
+		},
 		"move_policies": [{"move_id": "idle"}],
 	})
 	_expect(
@@ -275,6 +284,84 @@ func _test_body_plans_and_variants() -> void:
 		(glider.get("failures", []) as Array).is_empty()
 		and (glider.get("transitions", []) as Array).has("glider"),
 		"Glide is modeled as an aerial transition rather than a combat move"
+	)
+
+
+func _test_ecology_and_habitat_profiles() -> void:
+	var trout: MobSpeciesDefinition = SpeciesCatalog.get_definition("trout")
+	var freshwater: Dictionary = {
+		"habitat_tags": [
+			"water",
+			"freshwater",
+			"river",
+			"cold_water",
+		],
+		"available_media": ["water"],
+		"temperature": 12.0,
+	}
+	var dry_land: Dictionary = {
+		"habitat_tags": ["land", "air", "grassland"],
+		"available_media": ["air"],
+		"temperature": 22.0,
+	}
+	_expect(
+		trout != null
+		and trout.can_inhabit(freshwater)
+		and not trout.can_inhabit(dry_land),
+		"Trout distinguishes swimming capability from water-breathing habitat"
+	)
+	if trout != null:
+		var dry_result: Dictionary = trout.evaluate_habitat(dry_land)
+		_expect(
+			not (dry_result.get("failures", []) as Array).is_empty(),
+			"invalid habitats report actionable compatibility failures"
+		)
+
+	var capybara: MobSpeciesDefinition = SpeciesCatalog.get_definition(
+		"capybara"
+	)
+	_expect(
+		capybara != null
+		and capybara.can_inhabit({
+			"habitat_tags": ["land", "air", "wetland", "water"],
+			"available_media": ["air", "water"],
+			"temperature": 28.0,
+		})
+		and not capybara.can_inhabit(dry_land),
+		"amphibious movement does not erase an animal's ecological needs"
+	)
+
+	var polar_bear: MobSpeciesDefinition = SpeciesCatalog.get_definition(
+		"polar_bear"
+	)
+	_expect(
+		polar_bear != null
+		and polar_bear.can_inhabit({
+			"habitat_tags": ["air", "water", "arctic", "sea_ice"],
+			"available_media": ["air", "water"],
+			"temperature": -24.0,
+		})
+		and not polar_bear.can_inhabit({
+			"habitat_tags": ["air", "forest", "tropical"],
+			"available_media": ["air"],
+			"temperature": 32.0,
+		}),
+		"inherited variants override their parent's climate and habitat range"
+	)
+
+	var swarm: MobEcologyProfile = EcologyProfileScript.from_dictionary({
+		"scale_band": "micro",
+		"breathing_media": ["air"],
+		"diet_tags": ["omnivore"],
+		"activity_cycle_tags": ["diurnal"],
+		"social_structure": "swarm",
+		"aggregation_mode": "swarm",
+		"any_habitat_tags": ["forest"],
+	})
+	_expect(
+		swarm.validate().is_empty()
+		and swarm.get_context_tags().has("aggregation:swarm"),
+		"one actor can explicitly represent a swarm instead of one organism"
 	)
 
 

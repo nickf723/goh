@@ -4,6 +4,9 @@ class_name MobSpeciesDefinition
 const BodyPlanCatalog = preload(
 	"res://scripts/mobs/mob_body_plan_catalog.gd"
 )
+const EcologyProfileScript = preload(
+	"res://scripts/mobs/mob_ecology_profile.gd"
+)
 
 @export var species_id: String = ""
 @export var display_name: String = ""
@@ -15,6 +18,7 @@ const BodyPlanCatalog = preload(
 @export var anatomy_counts: Dictionary = {}
 @export var locomotion_tags: Array[String] = []
 @export var ecology_tags: Array[String] = []
+@export var ecology_profile: MobEcologyProfile
 @export var base_stats: Dictionary = {}
 @export var default_personality: Dictionary = {}
 @export var move_policies: Array[MobMovePolicy] = []
@@ -52,6 +56,12 @@ static func from_dictionary(data: Dictionary) -> MobSpeciesDefinition:
 			definition.body_plan_id
 		)
 	definition.ecology_tags = _string_array(data.get("ecology_tags", []))
+	var raw_ecology_profile: Variant = data.get("ecology_profile", {})
+	definition.ecology_profile = EcologyProfileScript.from_dictionary(
+		raw_ecology_profile as Dictionary
+		if raw_ecology_profile is Dictionary
+		else {}
+	)
 	definition.base_stats = _number_dictionary(data.get("base_stats", {}))
 	definition.default_personality = _number_dictionary(data.get("default_personality", {}))
 	definition.familiar_eligible = bool(data.get("familiar_eligible", false))
@@ -85,6 +95,11 @@ func to_dictionary() -> Dictionary:
 		"anatomy_counts": anatomy_counts.duplicate(true),
 		"locomotion_tags": locomotion_tags.duplicate(),
 		"ecology_tags": ecology_tags.duplicate(),
+		"ecology_profile": (
+			ecology_profile.to_dictionary()
+			if ecology_profile != null
+			else {}
+		),
 		"base_stats": base_stats.duplicate(true),
 		"default_personality": default_personality.duplicate(true),
 		"move_policies": policies,
@@ -145,6 +160,28 @@ func supports_locomotion(capability_id: String) -> bool:
 	)
 
 
+func evaluate_habitat(context: Dictionary) -> Dictionary:
+	if ecology_profile == null:
+		return {
+			"viable": false,
+			"preference_score": 0.0,
+			"failures": ["species has no ecology profile"],
+		}
+	return ecology_profile.evaluate_habitat(context)
+
+
+func can_inhabit(context: Dictionary) -> bool:
+	return bool(evaluate_habitat(context).get("viable", false))
+
+
+func get_ecology_context_tags() -> Array[String]:
+	return (
+		ecology_profile.get_context_tags()
+		if ecology_profile != null
+		else []
+	)
+
+
 func get_personality(overrides: Dictionary = {}) -> Dictionary:
 	var result: Dictionary = default_personality.duplicate(true)
 	for raw_key: Variant in overrides.keys():
@@ -179,6 +216,11 @@ func validate(move_catalog: Variant = null) -> Array[String]:
 			locomotion_profile.get("failures", []) as Array[String]
 		):
 			failures.append(species_id + ": " + locomotion_failure)
+	if ecology_profile == null:
+		failures.append(species_id + " has no ecology profile")
+	else:
+		for ecology_failure: String in ecology_profile.validate():
+			failures.append(species_id + ": " + ecology_failure)
 	if move_policies.is_empty():
 		failures.append(species_id + " has no move policies")
 	var seen: Dictionary = {}

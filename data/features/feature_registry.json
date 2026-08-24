@@ -259,6 +259,45 @@
       "timeout_seconds": 7
     },
     {
+      "id": "golden_meadow_benchmark",
+      "order": 21,
+      "display_name": "Golden Meadow: Empty-Field Art Benchmark",
+      "category": "Environment Art Benchmark",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Single-biome hero-quality gate concentrating sculpted terrain, dense wind-reactive grass, seed heads, clustered wildflowers, layered horizon silhouettes, golden-hour lighting, atmosphere, and Grace readability into one deliberately gameplay-empty field.",
+      "scene": "res://scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/golden_meadow_benchmark_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "modular_environment_showcase"
+      ],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "JUMP",
+        "DODGE",
+        "RESET"
+      ],
+      "manual_test": "docs/golden_meadow_benchmark_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Terrain and vegetation are deterministic procedural calibration assets rather than final authored texture and mesh imports.",
+        "Only one temperate golden-hour meadow is represented; weather, day/night, regional ecology, and additional biomes remain outside this quality gate.",
+        "Grass does not yet react physically to Grace, attacks, animals, or weather forces.",
+        "Horizon silhouettes are atmospheric backdrops rather than traversable terrain, and final environmental audio is absent."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 12
+    },
+    {
       "id": "physical_interaction_lab",
       "order": 25,
       "display_name": "Physical Interaction Laboratory",

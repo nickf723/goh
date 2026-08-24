@@ -2,6 +2,7 @@ extends Node3D
 class_name PrototypeModularEnvironmentShowcaseV1
 
 const Catalog = preload("res://scripts/environment/modular_environment_catalog.gd")
+const StylizedMaterialLibrary = preload("res://scripts/environment/stylized_pbr_material_library.gd")
 const StoryInteractableScript = preload("res://scripts/interaction/story_interactable.gd")
 const PlayableSpaceScript = preload("res://scripts/quality/playable_space_3d.gd")
 const RecoveryVolumeScript = preload("res://scripts/quality/playable_recovery_volume_3d.gd")
@@ -16,6 +17,12 @@ var world: Node3D
 var set_root: Node3D
 var gate: Node3D
 var gate_lever: Area3D
+var style_lighting_console: Area3D
+var style_environment: Environment
+var style_sky_material: ProceduralSkyMaterial
+var key_light: DirectionalLight3D
+var lighting_dialect_id: String = "warm_key_cool_sky_v1"
+var stylized_comparison_stats: Dictionary = {}
 var status_label: Label
 var placed_piece_ids: Array[String] = []
 var placed_categories: Dictionary = {}
@@ -30,9 +37,11 @@ func _ready() -> void:
 	_build_weathered_cloister()
 	_build_stylized_surface_study()
 	_build_gate_lever()
+	_build_style_lighting_console()
 	_build_signage()
 	_build_hud()
-	_show_status("Compare the painterly rock on the hero pedestal, then inspect the cloister and gate.")
+	call_deferred("_apply_stylized_material_comparison")
+	_show_status("Compare legacy materials on the left with stylized PBR on the right.")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -43,36 +52,69 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _configure_environment() -> void:
 	var environment_node: WorldEnvironment = $WorldEnvironment
-	var environment := Environment.new()
-	var sky_material := ProceduralSkyMaterial.new()
-	sky_material.sky_top_color = Color(0.045, 0.09, 0.2)
-	sky_material.sky_horizon_color = Color(0.35, 0.47, 0.63)
-	sky_material.ground_horizon_color = Color(0.24, 0.27, 0.34)
-	sky_material.ground_bottom_color = Color(0.025, 0.028, 0.04)
-	sky_material.sky_curve = 0.22
-	sky_material.ground_curve = 0.16
-	sky_material.sky_energy_multiplier = 0.82
-	sky_material.ground_energy_multiplier = 0.6
+	style_environment = Environment.new()
+	style_sky_material = ProceduralSkyMaterial.new()
 	var sky := Sky.new()
-	sky.sky_material = sky_material
+	sky.sky_material = style_sky_material
 
-	environment.background_mode = Environment.BG_SKY
-	environment.sky = sky
-	environment.background_energy_multiplier = 0.82
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	environment.ambient_light_energy = 0.84
-	environment.ambient_light_sky_contribution = 1.0
-	environment.tonemap_mode = Environment.TONE_MAPPER_ACES
-	environment.tonemap_exposure = 1.04
-	environment.adjustment_enabled = true
-	environment.adjustment_brightness = 1.03
-	environment.adjustment_contrast = 1.06
-	environment.adjustment_saturation = 1.16
-	environment.ssao_enabled = true
-	environment.ssao_radius = 1.5
-	environment.ssao_intensity = 1.45
-	environment.ssao_power = 1.2
-	environment_node.environment = environment
+	style_environment.background_mode = Environment.BG_SKY
+	style_environment.sky = sky
+	style_environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	style_environment.ambient_light_sky_contribution = 1.0
+	style_environment.tonemap_mode = Environment.TONE_MAPPER_ACES
+	style_environment.adjustment_enabled = true
+	style_environment.ssao_enabled = true
+	style_environment.ssao_radius = 1.5
+	style_environment.ssao_intensity = 1.45
+	style_environment.ssao_power = 1.2
+	environment_node.environment = style_environment
+	key_light = $DirectionalLight3D as DirectionalLight3D
+	_apply_lighting_dialect("warm_key_cool_sky_v1")
+
+
+func _apply_lighting_dialect(dialect_id: String) -> void:
+	if style_environment == null or style_sky_material == null:
+		return
+	lighting_dialect_id = dialect_id
+	match dialect_id:
+		"violet_twilight_v1":
+			style_sky_material.sky_top_color = Color(0.018, 0.014, 0.085)
+			style_sky_material.sky_horizon_color = Color(0.22, 0.17, 0.38)
+			style_sky_material.ground_horizon_color = Color(0.12, 0.09, 0.18)
+			style_sky_material.ground_bottom_color = Color(0.01, 0.008, 0.025)
+			style_sky_material.sky_curve = 0.28
+			style_sky_material.ground_curve = 0.18
+			style_sky_material.sky_energy_multiplier = 0.66
+			style_sky_material.ground_energy_multiplier = 0.42
+			style_environment.background_energy_multiplier = 0.62
+			style_environment.ambient_light_energy = 0.72
+			style_environment.tonemap_exposure = 1.08
+			style_environment.adjustment_brightness = 1.02
+			style_environment.adjustment_contrast = 1.07
+			style_environment.adjustment_saturation = 1.13
+			if key_light != null:
+				key_light.light_color = Color(0.69, 0.74, 1.0)
+				key_light.light_energy = 0.9
+		_:
+			lighting_dialect_id = "warm_key_cool_sky_v1"
+			style_sky_material.sky_top_color = Color(0.045, 0.09, 0.2)
+			style_sky_material.sky_horizon_color = Color(0.35, 0.47, 0.63)
+			style_sky_material.ground_horizon_color = Color(0.24, 0.27, 0.34)
+			style_sky_material.ground_bottom_color = Color(0.025, 0.028, 0.04)
+			style_sky_material.sky_curve = 0.22
+			style_sky_material.ground_curve = 0.16
+			style_sky_material.sky_energy_multiplier = 0.82
+			style_sky_material.ground_energy_multiplier = 0.6
+			style_environment.background_energy_multiplier = 0.82
+			style_environment.ambient_light_energy = 0.84
+			style_environment.tonemap_exposure = 1.04
+			style_environment.adjustment_brightness = 1.03
+			style_environment.adjustment_contrast = 1.06
+			style_environment.adjustment_saturation = 1.16
+			if key_light != null:
+				key_light.light_color = Color(1.0, 0.79, 0.62)
+				key_light.light_energy = 1.28
+	_update_style_lighting_prompt()
 
 
 func _build_playable_space() -> void:
@@ -154,7 +196,7 @@ func _build_stylized_surface_study() -> void:
 	study.name = "StylizedSurfaceStudy"
 	study.position = Vector3(0.0, 3.54, 15.0)
 	study.set_meta("study_id", "stylized_pbr_stone_v1")
-	study.set_meta("rollout_scope", "single_calibration_prop")
+	study.set_meta("rollout_scope", "showcase_material_family")
 	set_root.add_child(study)
 	_add_stylized_rock_lobe(
 		study,
@@ -197,11 +239,135 @@ func _build_gate_lever() -> void:
 	_add_visual_sphere(gate_lever, "LeverGrip", 0.13, Vector3(-0.16, 1.2, -0.38), WARM_GLOW_MATERIAL)
 
 
+func _build_style_lighting_console() -> void:
+	style_lighting_console = Area3D.new()
+	style_lighting_console.name = "StyleLightingConsole"
+	style_lighting_console.position = Vector3(2.55, 1.5, 10.6)
+	style_lighting_console.set_script(StoryInteractableScript)
+	style_lighting_console.set("prompt_text", "Switch to violet twilight")
+	style_lighting_console.set("one_shot", false)
+	style_lighting_console.connect(
+		"activated",
+		_on_style_lighting_console_activated
+	)
+	set_root.add_child(style_lighting_console)
+	var collision := CollisionShape3D.new()
+	collision.name = "InteractionShape"
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(0.9, 1.4, 0.8)
+	collision.position = Vector3(0.0, 0.7, 0.0)
+	collision.shape = shape
+	style_lighting_console.add_child(collision)
+	_add_visual_box(
+		style_lighting_console,
+		"ConsoleBase",
+		Vector3(0.7, 0.85, 0.55),
+		Vector3(0.0, 0.42, 0.0),
+		STYLIZED_STONE_STUDY_MATERIAL
+	)
+	_add_visual_box(
+		style_lighting_console,
+		"ConsolePlate",
+		Vector3(0.48, 0.52, 0.08),
+		Vector3(0.0, 0.54, -0.32),
+		StylizedMaterialLibrary.get_material("aged_metal")
+	)
+	_add_visual_sphere(
+		style_lighting_console,
+		"DialectLight",
+		0.13,
+		Vector3(0.0, 0.96, -0.38),
+		WARM_GLOW_MATERIAL
+	)
+	_update_style_lighting_prompt()
+
+
+func _on_style_lighting_console_activated(
+	_interactable: Node
+) -> void:
+	var next_dialect := (
+		"violet_twilight_v1"
+		if lighting_dialect_id == "warm_key_cool_sky_v1"
+		else "warm_key_cool_sky_v1"
+	)
+	_apply_lighting_dialect(next_dialect)
+	var label := (
+		"VIOLET TWILIGHT"
+		if lighting_dialect_id == "violet_twilight_v1"
+		else "WARM DAYLIGHT"
+	)
+	_show_status(
+		label
+		+ "  •  Compare the legacy left side with stylized PBR on the right."
+	)
+
+
+func _update_style_lighting_prompt() -> void:
+	if style_lighting_console == null:
+		return
+	style_lighting_console.set(
+		"prompt_text",
+		(
+			"Switch to warm daylight"
+			if lighting_dialect_id == "violet_twilight_v1"
+			else "Switch to violet twilight"
+		)
+	)
+
+
+func _apply_stylized_material_comparison() -> void:
+	var family_counts: Dictionary = {}
+	for family_id: String in StylizedMaterialLibrary.get_family_ids():
+		family_counts[family_id] = 0
+	stylized_comparison_stats = {
+		"total": 0,
+		"families": family_counts,
+		"roots": [],
+	}
+	for candidate: Node in set_root.get_children():
+		var candidate_name: String = candidate.name
+		var is_right_comparison := (
+			candidate_name.begins_with("FloorRight_")
+			or candidate_name.begins_with("WallRight_")
+			or candidate_name.begins_with("PillarRight_")
+			or candidate_name.begins_with("SconceRight_")
+			or candidate_name == "RaisedFloorRight"
+			or candidate_name == "GalleryBackWallRight"
+			or candidate_name == "StorageBarrel"
+		)
+		if not is_right_comparison:
+			continue
+		var result: Dictionary = (
+			StylizedMaterialLibrary.apply_to_subtree(candidate)
+		)
+		var replacement_count: int = int(result.get("total", 0))
+		if replacement_count <= 0:
+			continue
+		stylized_comparison_stats["total"] = int(
+			stylized_comparison_stats.get("total", 0)
+		) + replacement_count
+		var roots: Array = stylized_comparison_stats.get("roots", [])
+		roots.append(candidate_name)
+		stylized_comparison_stats["roots"] = roots
+		var result_families: Dictionary = result.get("families", {})
+		for family_id: String in StylizedMaterialLibrary.get_family_ids():
+			family_counts[family_id] = int(
+				family_counts.get(family_id, 0)
+			) + int(result_families.get(family_id, 0))
+	stylized_comparison_stats["families"] = family_counts
+	set_root.set_meta(
+		"stylized_comparison_stats",
+		stylized_comparison_stats.duplicate(true)
+	)
+
+
 func _build_signage() -> void:
 	_add_label(set_root, "TitlePlaque", "WEATHERED CLOISTER", Vector3(0.0, 4.25, -8.05), Color(0.72, 0.88, 0.96), 25)
-	_add_label(set_root, "ArchitecturePlaque", "ARCHITECTURE", Vector3(-4.7, 2.7, -5.8), Color(0.66, 0.75, 0.78), 17)
+	_add_label(set_root, "ArchitecturePlaque", "LEGACY MATERIALS", Vector3(-4.7, 2.7, -5.8), Color(0.66, 0.75, 0.78), 17)
+	_add_label(set_root, "StylizedWingPlaque", "STYLIZED PBR", Vector3(4.7, 2.7, -5.8), Color(0.58, 0.78, 1.0), 17)
 	_add_label(set_root, "WaterPlaque", "WATER + TRANSITIONS", Vector3(0.0, 1.2, 5.8), Color(0.42, 0.82, 0.96), 17)
-	_add_label(set_root, "PropPlaque", "STYLIZED PBR STUDY", Vector3(0.0, 5.25, 16.85), Color(0.58, 0.78, 1.0), 17)
+	_add_label(set_root, "PropPlaque", "MATERIAL FAMILY + LIGHTING", Vector3(0.0, 5.25, 16.85), Color(0.58, 0.78, 1.0), 17)
+	_add_label(set_root, "LightingPlaque", "LIGHTING DIALECT", Vector3(3.3, 3.1, 10.7), Color(0.82, 0.68, 1.0), 15)
 
 
 func _build_hud() -> void:
@@ -222,7 +388,7 @@ func _build_hud() -> void:
 	var box := VBoxContainer.new()
 	margin.add_child(box)
 	var title := Label.new()
-	title.text = "WEATHERED CLOISTER  •  STYLE CALIBRATION v1.1"
+	title.text = "WEATHERED CLOISTER  •  STYLE CALIBRATION v1.2"
 	title.add_theme_font_size_override("font_size", 17)
 	box.add_child(title)
 	status_label = Label.new()
@@ -385,8 +551,14 @@ func get_showcase_stats() -> Dictionary:
 		"gate": gate != null,
 		"lever": gate_lever != null,
 		"stylized_surface_study": set_root.get_node_or_null("StylizedSurfaceStudy") != null,
-		"environment_profile": "warm_key_cool_sky_v1",
+		"style_lighting_console": style_lighting_console != null,
+		"environment_profile": lighting_dialect_id,
+		"stylized_comparison": stylized_comparison_stats.duplicate(true),
 	}
+
+
+func get_stylized_comparison_stats() -> Dictionary:
+	return stylized_comparison_stats.duplicate(true)
 
 
 func get_placed_piece_ids() -> Array[String]:

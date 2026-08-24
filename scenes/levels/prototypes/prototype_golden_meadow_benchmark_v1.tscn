@@ -1,0 +1,28 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_golden_meadow_benchmark_v1.gd" id="1_level"]
+[ext_resource type="Script" path="res://scripts/environment/meadow_field_surface.gd" id="2_meadow"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="3_player"]
+
+[node name="PrototypeGoldenMeadowBenchmarkV1" type="Node3D"]
+script = ExtResource("1_level")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+
+[node name="GoldenSun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-18, -38, 0)
+light_color = Color(1, 0.72, 0.43, 1)
+light_energy = 1.36
+shadow_enabled = true
+directional_shadow_max_distance = 145.0
+
+[node name="CoolSkyFill" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(42, 137, 0)
+light_color = Color(0.34, 0.53, 0.82, 1)
+light_energy = 0.28
+
+[node name="GoldenMeadowSurface" type="Node3D" parent="."]
+script = ExtResource("2_meadow")
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("3_player")]
+position = Vector3(0, 2, 62)

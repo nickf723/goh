@@ -5,6 +5,13 @@ const BodyPlanCatalog = preload(
 	"res://scripts/mobs/mob_body_plan_catalog.gd"
 )
 
+const ADDITIVE_VARIANT_ARRAY_KEYS: Array[String] = [
+	"taxonomy_tags",
+	"body_tags",
+	"locomotion_tags",
+	"ecology_tags",
+]
+
 const DEFINITIONS: Dictionary = {
 	"wolf": {
 		"id": "wolf",
@@ -827,8 +834,27 @@ static func _merge_definition_dictionaries(
 				inherited_value as Dictionary,
 				own_value as Dictionary
 			)
+		elif (
+			own_value is Array
+			and inherited_value is Array
+			and ADDITIVE_VARIANT_ARRAY_KEYS.has(key)
+		):
+			var merged_values: Array = (inherited_value as Array).duplicate(true)
+			for raw_item: Variant in own_value as Array:
+				if not merged_values.has(raw_item):
+					merged_values.append(raw_item)
+			result[key] = merged_values
 		else:
 			result[key] = own_value
+	for array_key: String in ADDITIVE_VARIANT_ARRAY_KEYS:
+		var remove_key: String = "remove_" + array_key
+		var removals: Variant = own.get(remove_key, [])
+		if not removals is Array or not result.get(array_key) is Array:
+			continue
+		var merged_values: Array = result[array_key] as Array
+		for raw_item: Variant in removals as Array:
+			merged_values.erase(raw_item)
+		result[array_key] = merged_values
 	return result
 
 

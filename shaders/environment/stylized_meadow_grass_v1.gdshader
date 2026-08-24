@@ -67,6 +67,9 @@ void vertex() {
 }
 
 void fragment() {
+	if (!FRONT_FACING) {
+		NORMAL = -NORMAL;
+	}
 	float gradient = smoothstep(0.0, 1.0, blade_height);
 	vec3 surface_color = mix(base_color.rgb, tip_color.rgb, gradient);
 	surface_color *= mix(0.78, 1.18, color_variation);
@@ -74,6 +77,7 @@ void fragment() {
 	ROUGHNESS = roughness_value;
 	METALLIC = 0.0;
 	SPECULAR = 0.24;
+	BACKLIGHT = sun_kiss_color.rgb * mix(0.055, 0.13, gradient);
 
 	float rim_fresnel = pow(
 		clamp(

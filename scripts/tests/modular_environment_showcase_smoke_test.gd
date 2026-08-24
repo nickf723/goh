@@ -383,46 +383,58 @@ func _ready() -> void:
 		not comparison_roots.has("SupplyCrate"),
 		"left-side prop remains a legacy material baseline"
 	)
-	var left_floor: Node = showcase.get_node_or_null(
-		"World/WeatheredCloisterSet/FloorLeft_-4_0"
+	var comparison_set: Node = showcase.get_node_or_null(
+		"World/WeatheredCloisterSet"
 	)
-	var right_floor: Node = showcase.get_node_or_null(
-		"World/WeatheredCloisterSet/FloorRight_-4_0"
-	)
+	var left_floor: Node
+	var right_floor: Node
+	if comparison_set != null:
+		for comparison_root: Node in comparison_set.get_children():
+			var comparison_name: String = str(comparison_root.name)
+			if comparison_name.begins_with("FloorLeft_"):
+				left_floor = comparison_root
+			elif comparison_name.begins_with("FloorRight_"):
+				right_floor = comparison_root
 	check(left_floor != null and right_floor != null, "A/B floor roots resolve")
 	if left_floor != null and right_floor != null:
 		var left_stylized_count: int = 0
-		for candidate: Node in left_floor.find_children(
+		for left_candidate: Node in left_floor.find_children(
 			"*",
 			"MeshInstance3D",
 			true,
 			false
 		):
-			var mesh_instance: MeshInstance3D = candidate as MeshInstance3D
-			var material: ShaderMaterial = (
-				mesh_instance.material_override as ShaderMaterial
+			var left_mesh: MeshInstance3D = (
+				left_candidate as MeshInstance3D
+			)
+			var left_material: ShaderMaterial = (
+				left_mesh.material_override as ShaderMaterial
 			)
 			if (
-				material != null
-				and material.shader != null
-				and material.shader.resource_path == STYLIZED_SHADER_PATH
+				left_material != null
+				and left_material.shader != null
+				and left_material.shader.resource_path
+				== STYLIZED_SHADER_PATH
 			):
 				left_stylized_count += 1
 		var right_stylized_count: int = 0
-		for candidate: Node in right_floor.find_children(
+		for right_candidate: Node in right_floor.find_children(
 			"*",
 			"MeshInstance3D",
 			true,
 			false
 		):
-			var mesh_instance: MeshInstance3D = candidate as MeshInstance3D
-			var material: ShaderMaterial = (
-				mesh_instance.material_override as ShaderMaterial
+			var right_mesh: MeshInstance3D = (
+				right_candidate as MeshInstance3D
+			)
+			var right_material: ShaderMaterial = (
+				right_mesh.material_override as ShaderMaterial
 			)
 			if (
-				material != null
-				and material.shader != null
-				and material.shader.resource_path == STYLIZED_SHADER_PATH
+				right_material != null
+				and right_material.shader != null
+				and right_material.shader.resource_path
+				== STYLIZED_SHADER_PATH
 			):
 				right_stylized_count += 1
 		check(

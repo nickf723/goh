@@ -325,7 +325,7 @@ func _apply_stylized_material_comparison() -> void:
 		"roots": [],
 	}
 	for candidate: Node in set_root.get_children():
-		var candidate_name: String = candidate.name
+		var candidate_name: String = str(candidate.name)
 		var is_right_comparison := (
 			candidate_name.begins_with("FloorRight_")
 			or candidate_name.begins_with("WallRight_")

@@ -183,9 +183,9 @@
       "order": 19,
       "display_name": "Weathered Cloister: Modular Environment Showcase",
       "category": "Environment Showcase",
-      "version": "v1",
+      "version": "v1.1",
       "status": "prototype_verified",
-      "description": "Dedicated walkable benchmark for the reusable Weathered Cloister environment and prop kit, including layered architecture, shared weathered materials, water transitions, localized lighting, stairs, props, an operable iron gate, and global playability coverage.",
+      "description": "Dedicated walkable benchmark for the reusable Weathered Cloister environment and prop kit, now including a contained stylized-PBR stone study, warm-key/cool-sky lighting calibration, layered architecture, shared weathered materials, water transitions, stairs, props, an operable iron gate, and global playability coverage.",
       "scene": "res://scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn"
@@ -206,6 +206,7 @@
       "temporary_state": "runtime_only",
       "story_integrated": false,
       "limitations": [
+        "The stylized-PBR treatment is provisional and intentionally limited to one calibration rock pending manual art-direction approval.",
         "The first kit uses stylized primitive-based scene assemblies rather than imported production meshes or authored UV texture sets.",
         "Only the Weathered Cloister material family and a compact architecture/prop vocabulary are represented in v1.",
         "The water channel is a shallow decorative transition and does not replace the shared swimming-volume system.",

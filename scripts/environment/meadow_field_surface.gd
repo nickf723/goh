@@ -15,7 +15,9 @@ const GRASS_MATERIAL: ShaderMaterial = preload(
 @export_range(1000, 30000, 100) var grass_instance_count: int = 23000
 @export_range(0, 4000, 50) var seed_head_count: int = 1550
 @export_range(0, 2000, 20) var wildflower_count: int = 440
-@export_range(0.05, 0.8, 0.01) var spawn_clearance: float = 0.28
+@export_range(8, 64, 1) var dirt_patch_count: int = 34
+@export_range(0, 1000, 10) var ground_pebble_count: int = 420
+@export_range(0.05, 0.8, 0.01) var spawn_clearance: float = 0.38
 @export_range(0.5, 1.5, 0.01) var spawn_actor_half_height: float = 0.96
 @export var scatter_seed: int = 18890417
 @export var build_on_ready: bool = true
@@ -23,6 +25,10 @@ const GRASS_MATERIAL: ShaderMaterial = preload(
 var built: bool = false
 var terrain_mesh: ArrayMesh
 var terrain_body: StaticBody3D
+var terrain_collision_shape: HeightMapShape3D
+var dirt_patch_visual: MeshInstance3D
+var ground_pebbles: MultiMeshInstance3D
+var dirt_patch_layout: Array[Dictionary] = []
 var grass_canopy: MultiMeshInstance3D
 var seed_heads: MultiMeshInstance3D
 var wildflowers: MultiMeshInstance3D
@@ -49,6 +55,7 @@ func build_field() -> void:
 	set_meta("gameplay_clutter_free", true)
 
 	_build_terrain()
+	_build_ground_details()
 	_build_vegetation()
 	_build_horizon()
 	set_meta("meadow_metrics", get_debug_data())
@@ -124,9 +131,275 @@ func _build_terrain() -> void:
 
 	var collision := CollisionShape3D.new()
 	collision.name = "TerrainCollision"
-	var terrain_shape: Shape3D = terrain_mesh.create_trimesh_shape()
-	collision.shape = terrain_shape
+	terrain_collision_shape = _create_heightmap_collision_shape()
+	collision.shape = terrain_collision_shape
 	terrain_body.add_child(collision)
+
+
+func _create_heightmap_collision_shape() -> HeightMapShape3D:
+	var width_points: int = maxi(int(round(field_width)) + 1, 3)
+	var depth_points: int = maxi(int(round(field_depth)) + 1, 3)
+	var height_data := PackedFloat32Array()
+	height_data.resize(width_points * depth_points)
+	var half_width: float = float(width_points - 1) * 0.5
+	var half_depth: float = float(depth_points - 1) * 0.5
+	for row: int in range(depth_points):
+		var z_value: float = float(row) - half_depth
+		for column: int in range(width_points):
+			var x_value: float = float(column) - half_width
+			height_data[row * width_points + column] = get_height(
+				x_value,
+				z_value
+			)
+	var result := HeightMapShape3D.new()
+	result.map_width = width_points
+	result.map_depth = depth_points
+	result.map_data = height_data
+	return result
+
+
+func _build_ground_details() -> void:
+	_build_dirt_patch_layout()
+
+	dirt_patch_visual = MeshInstance3D.new()
+	dirt_patch_visual.name = "OrganicDirtPatches"
+	dirt_patch_visual.mesh = _create_dirt_patch_mesh()
+	dirt_patch_visual.material_override = _create_dirt_patch_material()
+	dirt_patch_visual.cast_shadow = (
+		GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	)
+	dirt_patch_visual.add_to_group("procedural_ground_detail")
+	add_child(dirt_patch_visual)
+
+	ground_pebbles = MultiMeshInstance3D.new()
+	ground_pebbles.name = "GroundPebbleScatter"
+	ground_pebbles.multimesh = _create_ground_pebble_multimesh()
+	ground_pebbles.cast_shadow = (
+		GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	)
+	ground_pebbles.add_to_group("procedural_ground_detail")
+	add_child(ground_pebbles)
+
+
+func _build_dirt_patch_layout() -> void:
+	dirt_patch_layout.clear()
+	var detail_rng := RandomNumberGenerator.new()
+	detail_rng.seed = scatter_seed + 1193
+	var spawn_z: float = field_depth * 0.38
+	var featured_centers: Array[Vector2] = [
+		Vector2(-4.5, spawn_z - 7.5),
+		Vector2(7.0, spawn_z - 15.0),
+		Vector2(-10.0, spawn_z - 25.0),
+		Vector2(4.0, spawn_z - 36.0),
+	]
+	for patch_index: int in range(dirt_patch_count):
+		var center: Vector2
+		if patch_index < featured_centers.size():
+			center = featured_centers[patch_index]
+		else:
+			center = Vector2(
+				detail_rng.randf_range(
+					-field_width * 0.44,
+					field_width * 0.44
+				),
+				detail_rng.randf_range(
+					-field_depth * 0.44,
+					field_depth * 0.44
+				)
+			)
+			for _attempt: int in range(5):
+				if center.distance_to(Vector2(0.0, spawn_z)) >= 4.5:
+					break
+				center = Vector2(
+					detail_rng.randf_range(
+						-field_width * 0.44,
+						field_width * 0.44
+					),
+					detail_rng.randf_range(
+						-field_depth * 0.44,
+						field_depth * 0.44
+					)
+				)
+		dirt_patch_layout.append({
+			"center": center,
+			"radius": Vector2(
+				detail_rng.randf_range(2.8, 6.4),
+				detail_rng.randf_range(1.8, 4.7)
+			),
+			"rotation": detail_rng.randf_range(0.0, TAU),
+			"edge_seed": detail_rng.randi(),
+		})
+
+
+func _create_dirt_patch_mesh() -> ArrayMesh:
+	var vertices := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var colors := PackedColorArray()
+	var uvs := PackedVector2Array()
+	var indices := PackedInt32Array()
+	var segments: int = 18
+	for patch_index: int in range(dirt_patch_layout.size()):
+		var patch: Dictionary = dirt_patch_layout[patch_index]
+		var center: Vector2 = patch.get("center", Vector2.ZERO)
+		var radius: Vector2 = patch.get(
+			"radius",
+			Vector2(3.0, 2.0)
+		)
+		var patch_rotation: float = float(patch.get("rotation", 0.0))
+		var edge_rng := RandomNumberGenerator.new()
+		edge_rng.seed = int(patch.get("edge_seed", patch_index))
+		var base_index: int = vertices.size()
+		vertices.append(Vector3(
+			center.x,
+			get_height(center.x, center.y) + 0.018,
+			center.y
+		))
+		normals.append(_terrain_normal(center.x, center.y))
+		colors.append(_soil_vertex_color(edge_rng.randf(), 1.0))
+		uvs.append(Vector2(0.5, 0.5))
+
+		var outer_points: Array[Vector2] = []
+		for segment: int in range(segments):
+			var angle: float = float(segment) * TAU / float(segments)
+			var edge_shape: float = edge_rng.randf_range(0.76, 1.18)
+			var local_point := Vector2(
+				cos(angle) * radius.x * edge_shape,
+				sin(angle) * radius.y * edge_shape
+			).rotated(patch_rotation)
+			outer_points.append(center + local_point)
+
+		for ring_index: int in range(2):
+			var ring_ratio: float = 0.68 if ring_index == 0 else 1.0
+			var edge_weight: float = 0.0 if ring_index == 0 else 1.0
+			for segment: int in range(segments):
+				var outer_point: Vector2 = outer_points[segment]
+				var point: Vector2 = center.lerp(
+					outer_point,
+					ring_ratio
+				)
+				vertices.append(Vector3(
+					point.x,
+					get_height(point.x, point.y) + 0.018,
+					point.y
+				))
+				normals.append(_terrain_normal(point.x, point.y))
+				colors.append(_soil_vertex_color(
+					edge_rng.randf(),
+					1.0 - edge_weight * 0.74
+				))
+				uvs.append(
+					Vector2(0.5, 0.5)
+					+ (point - center)
+					/ maxf(radius.x + radius.y, 0.01)
+				)
+
+		var inner_start: int = base_index + 1
+		var outer_start: int = inner_start + segments
+		for segment: int in range(segments):
+			var next_segment: int = (segment + 1) % segments
+			var inner_current: int = inner_start + segment
+			var inner_next: int = inner_start + next_segment
+			var outer_current: int = outer_start + segment
+			var outer_next: int = outer_start + next_segment
+			indices.append_array(PackedInt32Array([
+				base_index,
+				inner_next,
+				inner_current,
+				inner_current,
+				inner_next,
+				outer_current,
+				inner_next,
+				outer_next,
+				outer_current,
+			]))
+
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var result := ArrayMesh.new()
+	result.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return result
+
+
+func _soil_vertex_color(
+	variation: float,
+	soil_weight: float
+) -> Color:
+	var soil_dark := Color(0.085, 0.035, 0.012, 1.0)
+	var soil_light := Color(0.42, 0.19, 0.055, 1.0)
+	var edge_turf := Color(0.13, 0.225, 0.055, 1.0)
+	var soil_color: Color = soil_dark.lerp(
+		soil_light,
+		clampf(variation, 0.0, 1.0)
+	)
+	return edge_turf.lerp(
+		soil_color,
+		clampf(soil_weight, 0.0, 1.0)
+	)
+
+
+func _create_dirt_patch_material() -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color.WHITE
+	material.vertex_color_use_as_albedo = true
+	material.roughness = 0.96
+	material.metallic = 0.0
+	return material
+
+
+func _create_ground_pebble_multimesh() -> MultiMesh:
+	var pebble_mesh := SphereMesh.new()
+	pebble_mesh.radius = 0.065
+	pebble_mesh.height = 0.055
+	pebble_mesh.radial_segments = 8
+	pebble_mesh.rings = 4
+	var pebble_material := StandardMaterial3D.new()
+	pebble_material.albedo_color = Color(0.31, 0.285, 0.235, 1.0)
+	pebble_material.roughness = 0.82
+	pebble_mesh.material = pebble_material
+
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.mesh = pebble_mesh
+	multimesh.instance_count = ground_pebble_count
+	var pebble_rng := RandomNumberGenerator.new()
+	pebble_rng.seed = scatter_seed + 7919
+	for pebble_index: int in range(ground_pebble_count):
+		var patch: Dictionary = dirt_patch_layout[
+			pebble_rng.randi_range(0, dirt_patch_layout.size() - 1)
+		]
+		var center: Vector2 = patch.get("center", Vector2.ZERO)
+		var radius: Vector2 = patch.get("radius", Vector2.ONE)
+		var angle: float = pebble_rng.randf_range(0.0, TAU)
+		var distance_weight: float = sqrt(pebble_rng.randf()) * 0.76
+		var local_point := Vector2(
+			cos(angle) * radius.x * distance_weight,
+			sin(angle) * radius.y * distance_weight
+		).rotated(float(patch.get("rotation", 0.0)))
+		var point: Vector2 = center + local_point
+		var scale_value: float = pebble_rng.randf_range(0.55, 1.45)
+		var transform := Transform3D(
+			Basis.from_euler(Vector3(
+				0.0,
+				pebble_rng.randf_range(0.0, TAU),
+				0.0
+			)).scaled(Vector3(
+				scale_value,
+				pebble_rng.randf_range(0.45, 0.9),
+				scale_value
+			)),
+			Vector3(
+				point.x,
+				get_height(point.x, point.y) + 0.046,
+				point.y
+			)
+		)
+		multimesh.set_instance_transform(pebble_index, transform)
+	return multimesh
 
 
 func _create_terrain_mesh() -> ArrayMesh:
@@ -388,7 +661,7 @@ func _scatter_position(
 	if layer_kind != "flower":
 		var candidate := Vector2.ZERO
 		var spawn_center := Vector2(0.0, field_depth * 0.38)
-		for _attempt: int in range(6):
+		for _attempt: int in range(14):
 			candidate = Vector2(
 				rng.randf_range(
 					-field_width * 0.5 + margin,
@@ -399,7 +672,10 @@ func _scatter_position(
 					field_depth * 0.5 - margin
 				)
 			)
-			if candidate.distance_to(spawn_center) >= 1.8:
+			if (
+				candidate.distance_to(spawn_center) >= 1.8
+				and not _is_inside_dirt_patch(candidate, 0.88)
+			):
 				return candidate
 		return candidate
 
@@ -432,6 +708,26 @@ func _scatter_position(
 			field_depth * 0.5 - margin
 		)
 	)
+
+
+func _is_inside_dirt_patch(
+	point: Vector2,
+	coverage: float = 1.0
+) -> bool:
+	for patch: Dictionary in dirt_patch_layout:
+		var center: Vector2 = patch.get("center", Vector2.ZERO)
+		var radius: Vector2 = patch.get("radius", Vector2.ONE)
+		var relative: Vector2 = (
+			point - center
+		).rotated(-float(patch.get("rotation", 0.0)))
+		var safe_radius := Vector2(
+			maxf(radius.x * coverage, 0.01),
+			maxf(radius.y * coverage, 0.01)
+		)
+		var normalized: Vector2 = relative / safe_radius
+		if normalized.length_squared() <= 1.0:
+			return true
+	return false
 
 
 func _create_blade_clump_mesh() -> ArrayMesh:
@@ -673,6 +969,24 @@ func get_debug_data() -> Dictionary:
 			* (maxi(terrain_rows, 2) - 1)
 			* 2
 		),
+		"collision_shape": (
+			"HeightMapShape3D"
+			if terrain_collision_shape != null
+			else "missing"
+		),
+		"collision_points": (
+			terrain_collision_shape.map_data.size()
+			if terrain_collision_shape != null
+			else 0
+		),
+		"dirt_patches": dirt_patch_layout.size(),
+		"grass_excludes_dirt": true,
+		"ground_pebbles": (
+			ground_pebbles.multimesh.instance_count
+			if ground_pebbles != null
+			and ground_pebbles.multimesh != null
+			else 0
+		),
 		"height_range": maximum_height - minimum_height,
 		"grass_instances": (
 			grass_canopy.multimesh.instance_count
@@ -703,7 +1017,7 @@ func get_debug_data() -> Dictionary:
 		"spawn_readability_radius": 1.8,
 		"spawn_clearance": spawn_clearance,
 		"spawn_actor_half_height": spawn_actor_half_height,
-		"ground_surface_detail": "organic_location_ground_v1",
+		"ground_surface_detail": "organic_location_ground_v2",
 		"ground_material": GROUND_MATERIAL.resource_path,
 		"grass_material": GRASS_MATERIAL.resource_path,
 		"gameplay_clutter_free": true,

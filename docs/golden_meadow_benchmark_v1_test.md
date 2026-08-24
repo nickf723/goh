@@ -6,7 +6,7 @@ This scene is the first **single-biome hero-quality gate** for *Grace of Humanit
 
 It deliberately contains no enemies, puzzles, interactables, buildings, ruins, loot, route signage, or full gameplay HUD. The only subject is a quiet field:
 
-- one collision-matched rolling terrain surface using the reusable location-ground material;
+- one rolling terrain surface with a dedicated heightmap collider, reusable location-ground material, and geometry-backed earth details;
 - a short, dense wind-reactive grass canopy;
 - restrained seed heads and clustered wildflowers;
 - three atmospheric horizon silhouettes;
@@ -73,10 +73,11 @@ Walk north through the center, then make broad loops across both sides.
 
 Confirm:
 
-- Grace's live capsule resolves onto the generated collision surface without beginning underground, floating, or locking movement;
+- Grace's live `player_controller_free_aim_status.gd` path starts in benchmark free-roam mode, resolves onto the heightmap collision surface, and accepts movement immediately;
 - Grace follows the visible terrain with no sinking or sudden collision steps;
-- irregular domain-warped turf breaks into clearly visible dirt patches instead of a uniform color wash;
-- soil carries lighter packed-earth variation and restrained pebble speckle at close range;
+- irregular domain-warped turf breaks into clearly visible dirt instead of a uniform color wash;
+- at least four large geometry-backed dirt patches are obvious in the opening view, with additional deterministic patches distributed across the field and grass excluded from their cores;
+- soil carries lighter packed-earth variation and real low-poly pebble scatter at close range;
 - procedural relief catches light without changing the collision-matched silhouette;
 - the same shader can be retuned by palette, location offset, patch density, slope exposure, pebbles, and optional path controls for later authored sets;
 - the grass roots meet the terrain rather than hovering above it;
@@ -107,7 +108,7 @@ Record:
 - whether shadow quality changes noticeably at distance;
 - any vegetation batch popping or incorrect culling;
 - any hitch on first load or after RESET;
-- whether the 23,000 five-blade grass clumps, 1,550 seed heads, 440 wildflowers, volumetric fog, and shadows are acceptable together on the target development machine.
+- whether the 23,000 five-blade grass clumps, 1,550 seed heads, 440 wildflowers, 34 dirt patches, 420 pebbles, volumetric fog, and shadows are acceptable together on the target development machine.
 
 Do not reduce density preemptively. First identify whether grass geometry, shadows, fog, or particle presentation is actually responsible.
 
@@ -135,22 +136,22 @@ res://scenes/tests/golden_meadow_benchmark_smoke_test.tscn
 It verifies:
 
 - deterministic surface construction and minimum topology;
-- collision-matched terrain;
+- a terrain-specialized heightmap collider with sufficient sampling resolution;
+- Grace's actual free-aim status controller, benchmark free-roam state, penetration recovery, and real movement;
 - grass, seed-head, and wildflower density;
 - three horizon layers;
-- the reusable organic location-ground shader, meadow preset, tangent basis, and meadow wind shader;
+- the reusable organic location-ground shader, assertive meadow preset, tangent basis, geometry-backed dirt patches, pebble scatter, and meadow wind shader;
 - per-instance grass variation and enabled wind;
 - procedural sky, ACES tonemapping, SSAO, height fog, and volumetric fog;
 - warm-key/cool-fill lighting;
 - playable-space recovery;
-- Grace capsule-to-ground clearance, scale reference, and real movement under canonical input;
 - automatic recovery from a paused launcher/menu session;
 - scene-local suppression of Grace's gameplay HUD layers;
 - absence of enemies, interactables, and the full gameplay HUD.
 
 ## Known limitations
 
-- Geometry, colors, and scatter remain procedural calibration assets; the location-ground shader is a reusable prototype material family rather than a final authored texture set.
+- Geometry, colors, and scatter remain procedural calibration assets; the location-ground shader and meadow detail overlay are reusable prototypes rather than a final authored texture set.
 - The benchmark proves one temperate golden-hour meadow, not a universal grass solution.
 - Grass does not yet bend around Grace, attacks, animals, or weather forces.
 - No weather states or day/night cycle are included; those remain outside this single-look quality gate.

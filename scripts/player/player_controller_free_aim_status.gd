@@ -400,10 +400,16 @@ func _ensure_flash_aim_controller() -> void:
 
 
 func _get_requested_ground_velocity() -> Vector3:
-	if bool(get_meta("shared_placement_active", false)):
+	var benchmark_free_roam: bool = bool(
+		get_meta("benchmark_free_roam", false)
+	)
+	if (
+		not benchmark_free_roam
+		and bool(get_meta("shared_placement_active", false))
+	):
 		return Vector3.ZERO
 	var requested: Vector3 = super._get_requested_ground_velocity()
-	if player_status_receiver == null:
+	if benchmark_free_roam or player_status_receiver == null:
 		return requested
 	return requested * clampf(
 		player_status_receiver.get_movement_multiplier(),
@@ -413,9 +419,29 @@ func _get_requested_ground_velocity() -> Vector3:
 
 
 func _item_allows_jump() -> bool:
-	if bool(get_meta("shared_placement_active", false)):
+	if (
+		not bool(get_meta("benchmark_free_roam", false))
+		and bool(get_meta("shared_placement_active", false))
+	):
 		return false
 	return super._item_allows_jump()
+
+
+func get_status_locomotion_debug_data() -> Dictionary:
+	return {
+		"active_controller": get_script().resource_path,
+		"benchmark_free_roam": bool(
+			get_meta("benchmark_free_roam", false)
+		),
+		"shared_placement_active": bool(
+			get_meta("shared_placement_active", false)
+		),
+		"status_multiplier": (
+			player_status_receiver.get_movement_multiplier()
+			if player_status_receiver != null
+			else 1.0
+		),
+	}
 
 
 func _try_step_up(horizontal_velocity: Vector3, delta: float) -> bool:

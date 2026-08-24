@@ -7,7 +7,9 @@ const PlayableSpaceScript = preload(
 const RecoveryVolumeScript = preload(
 	"res://scripts/quality/playable_recovery_volume_3d.gd"
 )
-const GRACE_GROUND_CLEARANCE: float = 0.08
+const GRACE_GROUND_CLEARANCE: float = 0.12
+const GRACE_PENETRATION_TOLERANCE: float = 0.035
+const GRACE_RECOVERY_CLEARANCE: float = 0.08
 const GRACE_GROUND_RAY_RISE: float = 5.0
 const GRACE_GROUND_RAY_DROP: float = 4.0
 const BENCHMARK_HUD_NODE_NAMES: Array[StringName] = [
@@ -29,6 +31,7 @@ var benchmark_hud_hidden: bool = false
 var grace_ground_snap_complete: bool = false
 var grace_spawn_surface_y: float = 0.0
 var grace_spawn_clearance: float = 0.0
+var grace_ground_recovery_count: int = 0
 
 
 func _ready() -> void:
@@ -55,6 +58,10 @@ func _process(_delta: float) -> void:
 		return
 	hud_suppression_frames_remaining -= 1
 	_hide_benchmark_hud()
+
+
+func _physics_process(_delta: float) -> void:
+	_recover_grace_from_terrain_penetration()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -236,21 +243,50 @@ func _stabilize_grace_spawn() -> void:
 		)
 
 
+func _recover_grace_from_terrain_penetration() -> void:
+	if not grace_ground_snap_complete or field_surface == null:
+		return
+	var player: CharacterBody3D = $Player as CharacterBody3D
+	if player == null:
+		return
+	var local_player: Vector3 = field_surface.to_local(
+		player.global_position
+	)
+	var ground_y: float = field_surface.get_height(
+		local_player.x,
+		local_player.z
+	)
+	var half_height: float = _get_player_collision_half_height(player)
+	var foot_y: float = local_player.y - half_height
+	if foot_y >= ground_y - GRACE_PENETRATION_TOLERANCE:
+		return
+	local_player.y += (
+		ground_y
+		- foot_y
+		+ GRACE_RECOVERY_CLEARANCE
+	)
+	player.global_position = field_surface.to_global(local_player)
+	player.velocity.y = 0.0
+	player.set_meta("benchmark_free_roam", true)
+	grace_ground_recovery_count += 1
+
+
 func _prepare_benchmark_grace() -> void:
 	var player: CharacterBody3D = $Player as CharacterBody3D
 	if player == null:
 		return
 	player.set_meta("benchmark_presentation_mode", true)
+	player.set_meta("benchmark_free_roam", true)
 	player.process_mode = Node.PROCESS_MODE_INHERIT
 	player.set_physics_process(true)
 	player.set("is_defeated", false)
 	player.remove_meta("shared_placement_active")
 	var action_state: Node = player.get_node_or_null("PlayerActionState")
-	if (
-		action_state != null
-		and action_state.has_method("clear_action_locks")
-	):
-		action_state.call("clear_action_locks")
+	if action_state != null:
+		if action_state.has_method("set_defeated"):
+			action_state.call("set_defeated", false)
+		if action_state.has_method("clear_action_locks"):
+			action_state.call("clear_action_locks")
 	hud_suppression_frames_remaining = 12
 	_hide_benchmark_hud()
 
@@ -422,6 +458,19 @@ func get_debug_data() -> Dictionary:
 		"grace_ground_snap_complete": grace_ground_snap_complete,
 		"grace_spawn_surface_y": grace_spawn_surface_y,
 		"grace_spawn_clearance": grace_spawn_clearance,
+		"grace_ground_recovery_count": grace_ground_recovery_count,
+		"grace_controller": (
+			$Player.get_script().resource_path
+			if $Player.get_script() != null
+			else ""
+		),
+		"grace_status_locomotion": (
+			$Player.call("get_status_locomotion_debug_data")
+			if $Player.has_method(
+				"get_status_locomotion_debug_data"
+			)
+			else {}
+		),
 		"pollen_motes": (
 			pollen_motes.amount
 			if pollen_motes != null

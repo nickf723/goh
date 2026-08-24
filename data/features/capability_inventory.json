@@ -652,16 +652,19 @@
         "procedural location ground",
         "organic terrain material",
         "dirt patch shader",
-        "reusable ground material"
+        "reusable ground material",
+        "heightmap terrain collision",
+        "geometry dirt patches",
+        "procedural pebble scatter"
       ],
       "implemented": true,
       "do_not_resuggest": true,
-      "next_use": "Manually review Golden Meadow contact and the reusable organic location-ground shader; tune dirt coverage, relief, and close-range repetition before migrating one approved ground preset into the next authored set or the Wilds Expedition.",
+      "next_use": "Manually review Golden Meadow free movement, heightmap contact, visible dirt-patch composition, and close-range pebble density before migrating the approved ground preset into the next authored set or the Wilds Expedition.",
       "story_reference": "The Drowned Bell",
       "limitations": [
-        "The reusable modular kit and Golden Meadow remain stylized procedural benchmarks rather than final imported production art; the organic location-ground shader now provides palette, dirt-patch, pebble, relief, location-offset, and optional path controls for authored set presets.",
+        "The reusable modular kit and Golden Meadow remain stylized procedural benchmarks rather than final imported production art; the location-ground stack now combines palette, shader dirt, geometry-backed earth patches, pebble scatter, tangent relief, location offset, and optional path controls.",
         "Stylized PBR v1.2 is approved and story-integrated on the Ruined Village OutdoorRemasterV1 subtree; its full gameplay and weather-state manual review remains pending.",
-        "Golden Meadow v1 adds the first dense natural-biome benchmark with collision-matched rolling terrain and GPU-instanced wind-reactive vegetation, but it awaits manual visual and performance approval.",
+        "Golden Meadow v1 now uses terrain-specialized heightmap collision, benchmark free-roam safeguards, deterministic dirt geometry, and GPU-instanced vegetation, but it awaits Nick's manual visual and performance approval.",
         "The meadow covers one temperate golden-hour dialect; grass interaction, weather coupling, final audio, and regional ecology remain outside the first quality gate.",
         "Plaster, moss, foliage outside the meadow, creatures, VFX, and Grace remain intentionally outside the Ruined Village material boundary.",
         "Only one weathered architecture family is represented so far."

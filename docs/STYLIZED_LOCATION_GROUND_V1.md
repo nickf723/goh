@@ -4,7 +4,7 @@
 
 ## First preset
 
-Golden Meadow owns the first material preset at `art/materials/environment/natural/stylized_pbr_meadow_ground_v1.tres`. The preset favors short green turf broken by broad earth patches, dry growth, small stone flecks, and shallow procedural relief. The optional path mask is disabled there so the benchmark remains an empty field.
+Golden Meadow owns the first material preset at `art/materials/environment/natural/stylized_pbr_meadow_ground_v1.tres`. The preset favors short green turf broken by broad earth patches, dry growth, small stone flecks, and shallow procedural relief. Its surface script also demonstrates deterministic geometry-backed earth patches and pebble scatter, ensuring the authored breakup remains legible when dense vegetation or strong lighting obscures shader-only variation. The optional path mask is disabled so the benchmark remains an empty field.
 
 ## Location controls
 
@@ -21,7 +21,7 @@ The shader uses world-space XZ coordinates. Adjacent meshes that share a preset 
 
 ## Geometry contract
 
-Procedural relief uses tangent-space normal mapping. Generated terrain meshes must provide a complete tangent array in addition to vertices, normals, UVs, and indices. The surface script records tangent coverage in its debug metrics, and the Golden Meadow smoke test rejects incomplete tangent data.
+Procedural relief uses tangent-space normal mapping. Generated terrain meshes must provide a complete tangent array in addition to vertices, normals, UVs, and indices. Terrain collision should use a terrain-specialized heightmap whenever the surface has no overhangs; Golden Meadow samples the same height function for rendering, collision, spawn placement, patch overlays, and pebble placement. The smoke test rejects incomplete tangents, mismatched collision ownership, hidden dirt coverage, or missing detail geometry.
 
 ## Scope
 

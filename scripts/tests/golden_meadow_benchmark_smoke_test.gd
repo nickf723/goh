@@ -93,6 +93,16 @@ func _validate_benchmark() -> void:
 		failures.append("benchmark HUD suppression is not active")
 	if not bool(debug_data.get("grace_ground_snap_complete", false)):
 		failures.append("Grace ground snap did not complete")
+	if str(debug_data.get("grace_controller", "")) != (
+		"res://scripts/player/player_controller_free_aim_status.gd"
+	):
+		failures.append("benchmark is not exercising Grace's live controller")
+	var status_locomotion: Dictionary = debug_data.get(
+		"grace_status_locomotion",
+		{}
+	) as Dictionary
+	if not bool(status_locomotion.get("benchmark_free_roam", false)):
+		failures.append("Grace benchmark free-roam bypass is not active")
 	var configured_clearance: float = float(
 		debug_data.get("grace_spawn_clearance", 0.0)
 	)
@@ -143,7 +153,7 @@ func _validate_surface() -> void:
 	if float(metrics.get("maximum_canopy_height", 99.0)) > 0.72:
 		failures.append("main grass canopy is taller than the readability target")
 	if str(metrics.get("ground_surface_detail", "")) != (
-		"organic_location_ground_v1"
+		"organic_location_ground_v2"
 	):
 		failures.append("ground surface detail contract is missing")
 	if int(metrics.get("horizon_layers", 0)) != 3:
@@ -160,6 +170,12 @@ func _validate_surface() -> void:
 		or terrain_collision.disabled
 	):
 		failures.append("sculpted terrain is not collision matched")
+	elif not terrain_collision.shape is HeightMapShape3D:
+		failures.append("meadow terrain must use a stable heightmap collider")
+	if str(metrics.get("collision_shape", "")) != "HeightMapShape3D":
+		failures.append("heightmap collision metric is missing")
+	if int(metrics.get("collision_points", 0)) < 17000:
+		failures.append("heightmap collision resolution is below target")
 	var terrain_arrays: Array = surface.terrain_mesh.surface_get_arrays(0)
 	var tangent_value: Variant = terrain_arrays[Mesh.ARRAY_TANGENT]
 	if (
@@ -168,6 +184,35 @@ func _validate_surface() -> void:
 		< surface.terrain_columns * surface.terrain_rows * 4
 	):
 		failures.append("terrain tangent data is missing or incomplete")
+
+	if int(metrics.get("dirt_patches", 0)) < 30:
+		failures.append("visible dirt-patch coverage is below target")
+	if not bool(metrics.get("grass_excludes_dirt", false)):
+		failures.append("grass still obscures the dirt-patch silhouettes")
+	if int(metrics.get("ground_pebbles", 0)) < 400:
+		failures.append("ground pebble breakup is below target")
+	var dirt_patches: MeshInstance3D = surface.get_node_or_null(
+		"OrganicDirtPatches"
+	) as MeshInstance3D
+	if dirt_patches == null or dirt_patches.mesh == null:
+		failures.append("geometry-backed dirt patches are missing")
+	else:
+		var dirt_arrays: Array = dirt_patches.mesh.surface_get_arrays(0)
+		var dirt_colors: Variant = dirt_arrays[Mesh.ARRAY_COLOR]
+		if (
+			not dirt_colors is PackedColorArray
+			or (dirt_colors as PackedColorArray).size() < 1000
+		):
+			failures.append("dirt patches lack organic vertex-color breakup")
+	var pebble_scatter: MultiMeshInstance3D = surface.get_node_or_null(
+		"GroundPebbleScatter"
+	) as MultiMeshInstance3D
+	if (
+		pebble_scatter == null
+		or pebble_scatter.multimesh == null
+		or pebble_scatter.multimesh.instance_count < 400
+	):
+		failures.append("visible ground pebble scatter is missing")
 
 	var playable_space: Node = benchmark.get_node_or_null(
 		"PlayableSpace"
@@ -250,6 +295,14 @@ func _validate_materials() -> void:
 				"organic ground parameter is disabled: "
 				+ organic_parameter
 			)
+	if float(location_material.get_shader_parameter(
+		"soil_amount"
+	)) < 1.0:
+		failures.append("meadow dirt coverage is not visually assertive")
+	if float(location_material.get_shader_parameter(
+		"soil_threshold"
+	)) > 0.5:
+		failures.append("meadow dirt threshold hides too much soil")
 
 
 func _validate_empty_field_contract() -> void:

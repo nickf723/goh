@@ -1,21 +1,21 @@
 shader_type spatial;
 render_mode cull_disabled, depth_draw_opaque, diffuse_burley, specular_schlick_ggx;
 
-uniform vec4 base_color : source_color = vec4(0.075, 0.22, 0.055, 1.0);
-uniform vec4 tip_color : source_color = vec4(0.36, 0.56, 0.13, 1.0);
+uniform vec4 base_color : source_color = vec4(0.095, 0.245, 0.065, 1.0);
+uniform vec4 tip_color : source_color = vec4(0.40, 0.57, 0.14, 1.0);
 uniform vec4 rim_color : source_color = vec4(0.38, 0.58, 0.82, 1.0);
 uniform vec4 sun_kiss_color : source_color = vec4(1.0, 0.62, 0.2, 1.0);
 
 uniform vec2 wind_direction = vec2(0.84, 0.34);
-uniform float wind_strength : hint_range(0.0, 0.8, 0.01) = 0.22;
+uniform float wind_strength : hint_range(0.0, 0.8, 0.01) = 0.14;
 uniform float wind_speed : hint_range(0.0, 4.0, 0.05) = 1.15;
 uniform float wind_scale : hint_range(0.01, 1.0, 0.01) = 0.13;
 uniform float gust_scale : hint_range(0.01, 1.0, 0.01) = 0.045;
-uniform float gust_strength : hint_range(0.0, 1.0, 0.01) = 0.34;
+uniform float gust_strength : hint_range(0.0, 1.0, 0.01) = 0.28;
 
-uniform float saturation : hint_range(0.0, 2.0, 0.01) = 1.18;
+uniform float saturation : hint_range(0.0, 2.0, 0.01) = 1.08;
 uniform float roughness_value : hint_range(0.04, 1.0, 0.01) = 0.86;
-uniform float rim_intensity : hint_range(0.0, 1.0, 0.01) = 0.13;
+uniform float rim_intensity : hint_range(0.0, 1.0, 0.01) = 0.085;
 uniform float sun_kiss_intensity : hint_range(0.0, 0.5, 0.01) = 0.05;
 
 varying float blade_height;
@@ -72,7 +72,7 @@ void fragment() {
 	}
 	float gradient = smoothstep(0.0, 1.0, blade_height);
 	vec3 surface_color = mix(base_color.rgb, tip_color.rgb, gradient);
-	surface_color *= mix(0.78, 1.18, color_variation);
+	surface_color *= mix(0.88, 1.12, color_variation);
 	ALBEDO = max(apply_saturation(surface_color, saturation), vec3(0.0));
 	ROUGHNESS = roughness_value;
 	METALLIC = 0.0;

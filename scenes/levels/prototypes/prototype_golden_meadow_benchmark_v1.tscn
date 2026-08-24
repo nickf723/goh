@@ -11,15 +11,15 @@ script = ExtResource("1_level")
 
 [node name="GoldenSun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-18, -38, 0)
-light_color = Color(1, 0.72, 0.43, 1)
-light_energy = 1.36
+light_color = Color(1, 0.83, 0.62, 1)
+light_energy = 1.18
 shadow_enabled = true
 directional_shadow_max_distance = 145.0
 
 [node name="CoolSkyFill" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(42, 137, 0)
-light_color = Color(0.34, 0.53, 0.82, 1)
-light_energy = 0.28
+light_color = Color(0.42, 0.58, 0.83, 1)
+light_energy = 0.34
 
 [node name="GoldenMeadowSurface" type="Node3D" parent="."]
 script = ExtResource("2_meadow")

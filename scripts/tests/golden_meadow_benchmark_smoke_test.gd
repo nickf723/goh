@@ -4,7 +4,7 @@ const MeadowScene: PackedScene = preload(
 	"res://scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn"
 )
 const GROUND_SHADER_PATH := (
-	"res://shaders/environment/stylized_pbr_surface_v1.gdshader"
+	"res://shaders/environment/stylized_meadow_ground_v1.gdshader"
 )
 const GRASS_SHADER_PATH := (
 	"res://shaders/environment/stylized_meadow_grass_v1.gdshader"
@@ -30,6 +30,8 @@ func _ready() -> void:
 	_validate_surface()
 	_validate_materials()
 	_validate_empty_field_contract()
+	_validate_benchmark_hud()
+	await _validate_player_movement()
 
 	if benchmark != null and is_instance_valid(benchmark):
 		benchmark.queue_free()
@@ -81,6 +83,12 @@ func _validate_benchmark() -> void:
 			)
 	if not bool(debug_data.get("playable_space", false)):
 		failures.append("playable-space safety is missing")
+	if not bool(debug_data.get("session_unpaused", false)):
+		failures.append("benchmark did not restore an unpaused session")
+	if not bool(debug_data.get("grace_input_ready", false)):
+		failures.append("Grace input is not physics-ready")
+	if not bool(debug_data.get("benchmark_hud_hidden", false)):
+		failures.append("benchmark HUD suppression is not active")
 	if int(debug_data.get("pollen_motes", 0)) < 100:
 		failures.append("atmospheric pollen layer is too sparse")
 	if benchmark.get_node_or_null("Player") == null:
@@ -113,12 +121,20 @@ func _validate_surface() -> void:
 		failures.append("terrain topology is below the benchmark target")
 	if float(metrics.get("height_range", 0.0)) < 1.5:
 		failures.append("terrain silhouette is too flat")
-	if int(metrics.get("grass_instances", 0)) < 17000:
+	if int(metrics.get("grass_instances", 0)) < 22000:
 		failures.append("grass canopy density fell below the art target")
-	if int(metrics.get("seed_heads", 0)) < 1200:
+	if int(metrics.get("seed_heads", 0)) < 1500:
 		failures.append("seed-head layer density fell below target")
-	if int(metrics.get("wildflowers", 0)) < 300:
+	if int(metrics.get("wildflowers", 0)) < 400:
 		failures.append("wildflower punctuation fell below target")
+	if int(metrics.get("grass_blades_per_clump", 0)) != 5:
+		failures.append("grass clumps lost their five-blade silhouette")
+	if float(metrics.get("maximum_canopy_height", 99.0)) > 0.72:
+		failures.append("main grass canopy is taller than the readability target")
+	if str(metrics.get("ground_surface_detail", "")) != (
+		"multi_scale_procedural_meadow"
+	):
+		failures.append("ground surface detail contract is missing")
 	if int(metrics.get("horizon_layers", 0)) != 3:
 		failures.append("layered horizon must contain three ridges")
 	if not bool(metrics.get("gameplay_clutter_free", false)):
@@ -225,3 +241,50 @@ func _validate_empty_field_contract() -> void:
 			failures.append(
 				"Grace no longer starts at the intended vista"
 			)
+
+
+func _validate_benchmark_hud() -> void:
+	if benchmark == null:
+		return
+	var player: Node = benchmark.get_node_or_null("Player")
+	if player == null:
+		return
+	for hud_name: String in [
+		"DivineSpecialHUD",
+		"PlayerHUDV2",
+		"QuickItemBeltUI",
+		"GameplayEffectStatusHUD",
+		"WeaponMasteryHUD",
+		"QuickSpellBeltPresentation",
+	]:
+		var hud: Node = player.get_node_or_null(NodePath(hud_name))
+		if hud is CanvasLayer and (hud as CanvasLayer).visible:
+			failures.append("benchmark HUD remains visible: " + hud_name)
+		elif hud is CanvasItem and (hud as CanvasItem).visible:
+			failures.append("benchmark HUD remains visible: " + hud_name)
+
+
+func _validate_player_movement() -> void:
+	if benchmark == null:
+		return
+	var player: CharacterBody3D = benchmark.get_node_or_null(
+		"Player"
+	) as CharacterBody3D
+	if player == null:
+		return
+	if get_tree().paused:
+		failures.append("scene tree is paused before locomotion test")
+		return
+	var start_position: Vector3 = player.global_position
+	Input.action_press("move_forward", 1.0)
+	for _frame: int in range(18):
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	var horizontal_distance: float = Vector2(
+		player.global_position.x - start_position.x,
+		player.global_position.z - start_position.z
+	).length()
+	if horizontal_distance < 0.25:
+		failures.append(
+			"Grace did not traverse the meadow under movement input"
+		)

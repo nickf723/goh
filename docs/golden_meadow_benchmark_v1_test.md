@@ -7,7 +7,7 @@ This scene is the first **single-biome hero-quality gate** for *Grace of Humanit
 It deliberately contains no enemies, puzzles, interactables, buildings, ruins, loot, route signage, or full gameplay HUD. The only subject is a quiet field:
 
 - one collision-matched rolling terrain surface;
-- dense wind-reactive grass;
+- a short, dense wind-reactive grass canopy;
 - restrained seed heads and clustered wildflowers;
 - three atmospheric horizon silhouettes;
 - a warm low sun, cool sky fill, height fog, and volumetric haze;
@@ -26,11 +26,11 @@ res://scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn
 Controls:
 
 ```text
-MOVE
-CAMERA
-JUMP
-DODGE
-RESET
+WASD / LEFT STICK     MOVE
+MOUSE / RIGHT STICK   CAMERA
+SPACE / SOUTH BUTTON  JUMP
+C / EAST BUTTON       DODGE
+R                     RESET
 ```
 
 RESET reloads the benchmark and restores the deterministic terrain and vegetation seed.
@@ -42,7 +42,7 @@ Do not move for ten seconds.
 Confirm:
 
 - Grace begins near the southern edge looking across the long dimension of the field;
-- the foreground grass frames Grace without hiding her feet or silhouette;
+- the ankle-to-calf foreground canopy frames Grace without hiding her feet or silhouette;
 - the terrain rolls are broad enough to read as land rather than vertex noise;
 - near, middle, and far ridges hide the finite prototype boundary;
 - the low golden sun creates one dominant warm lighting idea;
@@ -74,7 +74,8 @@ Walk north through the center, then make broad loops across both sides.
 Confirm:
 
 - Grace follows the visible terrain with no floating, sinking, or sudden collision steps;
-- the ground shader groups light into soft painterly values while retaining a grounded rough surface;
+- the ground visibly mixes green turf, dry straw, and small soil notes across broad, medium, and fine procedural scales;
+- the ground keeps a rough physical response and a restrained cool edge instead of reading as flat orange;
 - the grass roots meet the terrain rather than hovering above it;
 - rolling elevation changes remain gentle enough for ordinary movement, jumping, and dodging;
 - the flattened spawn pocket prevents an awkward opening stance without reading as an artificial platform;
@@ -103,7 +104,7 @@ Record:
 - whether shadow quality changes noticeably at distance;
 - any vegetation batch popping or incorrect culling;
 - any hitch on first load or after RESET;
-- whether the 17,500 grass clumps, 1,300 seed heads, 360 wildflowers, volumetric fog, and shadows are acceptable together on the target development machine.
+- whether the 23,000 five-blade grass clumps, 1,550 seed heads, 440 wildflowers, volumetric fog, and shadows are acceptable together on the target development machine.
 
 Do not reduce density preemptively. First identify whether grass geometry, shadows, fog, or particle presentation is actually responsible.
 
@@ -134,12 +135,14 @@ It verifies:
 - collision-matched terrain;
 - grass, seed-head, and wildflower density;
 - three horizon layers;
-- approved Stylized PBR ground and meadow wind shaders;
+- the dedicated multi-scale meadow-ground shader and meadow wind shader;
 - per-instance grass variation and enabled wind;
 - procedural sky, ACES tonemapping, SSAO, height fog, and volumetric fog;
 - warm-key/cool-fill lighting;
 - playable-space recovery;
-- Grace scale reference;
+- Grace scale reference and real movement under canonical input;
+- automatic recovery from a paused launcher/menu session;
+- scene-local suppression of Grace's gameplay HUD layers;
 - absence of enemies, interactables, and the full gameplay HUD.
 
 ## Known limitations

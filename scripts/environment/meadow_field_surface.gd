@@ -12,9 +12,9 @@ const GRASS_MATERIAL: ShaderMaterial = preload(
 @export var field_depth: float = 164.0
 @export_range(24, 160, 1) var terrain_columns: int = 73
 @export_range(24, 192, 1) var terrain_rows: int = 105
-@export_range(1000, 30000, 100) var grass_instance_count: int = 17500
-@export_range(0, 4000, 50) var seed_head_count: int = 1300
-@export_range(0, 2000, 20) var wildflower_count: int = 360
+@export_range(1000, 30000, 100) var grass_instance_count: int = 23000
+@export_range(0, 4000, 50) var seed_head_count: int = 1550
+@export_range(0, 2000, 20) var wildflower_count: int = 440
 @export var scatter_seed: int = 18890417
 @export var build_on_ready: bool = true
 
@@ -206,29 +206,29 @@ func _build_vegetation() -> void:
 		blade_mesh,
 		GRASS_MATERIAL,
 		grass_instance_count,
-		Vector2(0.72, 1.28),
-		Vector2(0.72, 1.42),
+		Vector2(0.76, 1.16),
+		Vector2(0.42, 0.68),
 		"grass"
 	)
 
 	var seed_material := GRASS_MATERIAL.duplicate(true) as ShaderMaterial
 	seed_material.set_shader_parameter(
 		"base_color",
-		Color(0.09, 0.20, 0.055, 1.0)
+		Color(0.075, 0.19, 0.045, 1.0)
 	)
 	seed_material.set_shader_parameter(
 		"tip_color",
-		Color(0.62, 0.52, 0.18, 1.0)
+		Color(0.57, 0.49, 0.16, 1.0)
 	)
-	seed_material.set_shader_parameter("wind_strength", 0.26)
+	seed_material.set_shader_parameter("wind_strength", 0.17)
 	seed_material.set_shader_parameter("sun_kiss_intensity", 0.09)
 	seed_heads = _build_scatter_layer(
 		"SeedHeads",
 		blade_mesh,
 		seed_material,
 		seed_head_count,
-		Vector2(0.68, 1.05),
-		Vector2(1.2, 1.75),
+		Vector2(0.72, 1.1),
+		Vector2(0.74, 1.12),
 		"seed"
 	)
 
@@ -252,8 +252,8 @@ func _build_vegetation() -> void:
 		_create_wildflower_mesh(),
 		flower_material,
 		wildflower_count,
-		Vector2(0.82, 1.18),
-		Vector2(0.82, 1.18),
+		Vector2(0.78, 1.12),
+		Vector2(0.78, 1.08),
 		"flower"
 	)
 
@@ -343,16 +343,22 @@ func _scatter_position(
 ) -> Vector2:
 	var margin: float = 1.8
 	if layer_kind != "flower":
-		return Vector2(
-			rng.randf_range(
-				-field_width * 0.5 + margin,
-				field_width * 0.5 - margin
-			),
-			rng.randf_range(
-				-field_depth * 0.5 + margin,
-				field_depth * 0.5 - margin
+		var candidate := Vector2.ZERO
+		var spawn_center := Vector2(0.0, field_depth * 0.38)
+		for _attempt: int in range(6):
+			candidate = Vector2(
+				rng.randf_range(
+					-field_width * 0.5 + margin,
+					field_width * 0.5 - margin
+				),
+				rng.randf_range(
+					-field_depth * 0.5 + margin,
+					field_depth * 0.5 - margin
+				)
 			)
-		)
+			if candidate.distance_to(spawn_center) >= 1.8:
+				return candidate
+		return candidate
 
 	var flower_patches: Array[Vector2] = [
 		Vector2(-24.0, -38.0),
@@ -390,27 +396,34 @@ func _create_blade_clump_mesh() -> ArrayMesh:
 	var normals := PackedVector3Array()
 	var uvs := PackedVector2Array()
 	var indices := PackedInt32Array()
-	for blade_index: int in range(3):
-		var angle: float = float(blade_index) * PI / 3.0
+	for blade_index: int in range(5):
+		var angle: float = float(blade_index) * PI / 5.0
 		var right := Vector3(cos(angle), 0.0, sin(angle))
 		var normal := Vector3(-sin(angle), 0.0, cos(angle))
 		var center := Vector3(
-			cos(angle * 2.3) * 0.045,
+			cos(angle * 2.3) * 0.052,
 			0.0,
-			sin(angle * 2.3) * 0.045
+			sin(angle * 2.3) * 0.052
+		)
+		var bend := Vector3(
+			sin(angle * 1.7) * 0.052,
+			0.0,
+			cos(angle * 1.7) * 0.052
+		)
+		var half_width: float = 0.036 + float(blade_index % 2) * 0.005
+		var mid_center: Vector3 = center + bend * 0.32 + Vector3.UP * 0.48
+		var tip_center: Vector3 = center + bend + Vector3.UP * (
+			0.88 + float(blade_index % 3) * 0.055
 		)
 		var base_index: int = vertices.size()
-		vertices.append(center - right * 0.085)
-		vertices.append(center + right * 0.085)
-		vertices.append(
-			center
-			+ Vector3(
-				sin(angle * 1.7) * 0.055,
-				1.0,
-				cos(angle * 1.7) * 0.055
-			)
-		)
+		vertices.append(center - right * half_width)
+		vertices.append(center + right * half_width)
+		vertices.append(mid_center - right * half_width * 0.48)
+		vertices.append(mid_center + right * half_width * 0.48)
+		vertices.append(tip_center)
 		normals.append_array(PackedVector3Array([
+			normal,
+			normal,
 			normal,
 			normal,
 			normal,
@@ -418,12 +431,20 @@ func _create_blade_clump_mesh() -> ArrayMesh:
 		uvs.append_array(PackedVector2Array([
 			Vector2(0.0, 1.0),
 			Vector2(1.0, 1.0),
+			Vector2(0.26, 0.52),
+			Vector2(0.74, 0.52),
 			Vector2(0.5, 0.0),
 		]))
 		indices.append_array(PackedInt32Array([
 			base_index,
 			base_index + 1,
 			base_index + 2,
+			base_index + 1,
+			base_index + 3,
+			base_index + 2,
+			base_index + 2,
+			base_index + 3,
+			base_index + 4,
 		]))
 	return _mesh_from_arrays(vertices, normals, uvs, indices)
 
@@ -629,6 +650,10 @@ func get_debug_data() -> Dictionary:
 			else 0
 		),
 		"scatter_seed": scatter_seed,
+		"grass_blades_per_clump": 5,
+		"maximum_canopy_height": 0.68,
+		"spawn_readability_radius": 1.8,
+		"ground_surface_detail": "multi_scale_procedural_meadow",
 		"ground_material": GROUND_MATERIAL.resource_path,
 		"grass_material": GRASS_MATERIAL.resource_path,
 		"gameplay_clutter_free": true,

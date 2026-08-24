@@ -265,7 +265,7 @@
       "category": "Environment Art Benchmark",
       "version": "v1",
       "status": "experimental",
-      "description": "Single-biome hero-quality gate concentrating sculpted terrain, dense wind-reactive grass, seed heads, clustered wildflowers, layered horizon silhouettes, golden-hour lighting, atmosphere, and Grace readability into one deliberately gameplay-empty field.",
+      "description": "Single-biome hero-quality gate concentrating sculpted textured terrain, a short dense wind-reactive canopy, seed heads, clustered wildflowers, layered horizon silhouettes, golden-hour lighting, atmosphere, and Grace readability into one deliberately gameplay-empty field.",
       "scene": "res://scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn"
@@ -277,11 +277,11 @@
         "modular_environment_showcase"
       ],
       "controls": [
-        "MOVE",
-        "CAMERA",
-        "JUMP",
-        "DODGE",
-        "RESET"
+        "WASD / LEFT STICK — MOVE",
+        "MOUSE / RIGHT STICK — CAMERA",
+        "SPACE / SOUTH BUTTON — JUMP",
+        "C / EAST BUTTON — DODGE",
+        "R — RESET"
       ],
       "manual_test": "docs/golden_meadow_benchmark_v1_test.md",
       "temporary_state": "runtime_only",

@@ -7,16 +7,28 @@ const PlayableSpaceScript = preload(
 const RecoveryVolumeScript = preload(
 	"res://scripts/quality/playable_recovery_volume_3d.gd"
 )
+const BENCHMARK_HUD_NODE_NAMES: Array[StringName] = [
+	&"DivineSpecialHUD",
+	&"PlayerHUDV2",
+	&"QuickItemBeltUI",
+	&"GameplayEffectStatusHUD",
+	&"WeaponMasteryHUD",
+	&"QuickSpellBeltPresentation",
+]
 
 var field_surface: MeadowFieldSurface
 var style_environment: Environment
 var style_sky_material: ProceduralSkyMaterial
 var playable_space: PlayableSpace3D
 var pollen_motes: GPUParticles3D
+var hud_suppression_frames_remaining: int = 12
+var benchmark_hud_hidden: bool = false
 
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	get_tree().paused = false
+	GameState.reset_run()
 	add_to_group("golden_meadow_benchmark")
 	add_to_group("debuggable")
 	set_meta("benchmark_id", "golden_meadow_v1")
@@ -26,8 +38,16 @@ func _ready() -> void:
 	field_surface = $GoldenMeadowSurface as MeadowFieldSurface
 	_configure_environment()
 	_place_grace()
+	_prepare_benchmark_grace()
 	_build_playable_space()
 	_build_pollen_motes()
+
+
+func _process(_delta: float) -> void:
+	if hud_suppression_frames_remaining <= 0:
+		return
+	hud_suppression_frames_remaining -= 1
+	_hide_benchmark_hud()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -41,33 +61,33 @@ func _configure_environment() -> void:
 	style_environment = Environment.new()
 	style_sky_material = ProceduralSkyMaterial.new()
 	style_sky_material.sky_top_color = Color(
-		0.055,
-		0.16,
-		0.34,
+		0.075,
+		0.19,
+		0.39,
 		1.0
 	)
 	style_sky_material.sky_horizon_color = Color(
-		0.78,
-		0.53,
-		0.33,
+		0.58,
+		0.49,
+		0.38,
 		1.0
 	)
 	style_sky_material.ground_horizon_color = Color(
-		0.42,
-		0.39,
-		0.29,
+		0.22,
+		0.31,
+		0.22,
 		1.0
 	)
 	style_sky_material.ground_bottom_color = Color(
-		0.055,
+		0.045,
 		0.075,
-		0.08,
+		0.05,
 		1.0
 	)
 	style_sky_material.sky_curve = 0.19
 	style_sky_material.ground_curve = 0.16
-	style_sky_material.sky_energy_multiplier = 0.92
-	style_sky_material.ground_energy_multiplier = 0.58
+	style_sky_material.sky_energy_multiplier = 0.9
+	style_sky_material.ground_energy_multiplier = 0.7
 	style_sky_material.sun_angle_max = 7.5
 	style_sky_material.sun_curve = 0.08
 
@@ -75,33 +95,33 @@ func _configure_environment() -> void:
 	sky.sky_material = style_sky_material
 	style_environment.background_mode = Environment.BG_SKY
 	style_environment.sky = sky
-	style_environment.background_energy_multiplier = 0.88
+	style_environment.background_energy_multiplier = 0.9
 	style_environment.ambient_light_source = (
 		Environment.AMBIENT_SOURCE_SKY
 	)
 	style_environment.ambient_light_sky_contribution = 1.0
-	style_environment.ambient_light_energy = 0.78
+	style_environment.ambient_light_energy = 0.88
 	style_environment.reflected_light_source = (
 		Environment.REFLECTION_SOURCE_SKY
 	)
 	style_environment.tonemap_mode = Environment.TONE_MAPPER_ACES
-	style_environment.tonemap_exposure = 1.08
+	style_environment.tonemap_exposure = 1.04
 	style_environment.adjustment_enabled = true
 	style_environment.adjustment_brightness = 1.025
 	style_environment.adjustment_contrast = 1.055
-	style_environment.adjustment_saturation = 1.18
+	style_environment.adjustment_saturation = 1.11
 	style_environment.ssao_enabled = true
 	style_environment.ssao_radius = 1.65
 	style_environment.ssao_intensity = 1.18
 	style_environment.ssao_power = 1.12
 	style_environment.fog_enabled = true
 	style_environment.fog_light_color = Color(
-		0.68,
-		0.57,
-		0.49,
+		0.61,
+		0.65,
+		0.61,
 		1.0
 	)
-	style_environment.fog_light_energy = 0.76
+	style_environment.fog_light_energy = 0.68
 	style_environment.fog_density = 0.0038
 	style_environment.fog_height = 4.0
 	style_environment.fog_height_density = 0.045
@@ -110,9 +130,9 @@ func _configure_environment() -> void:
 	style_environment.volumetric_fog_density = 0.012
 	style_environment.volumetric_fog_length = 132.0
 	style_environment.volumetric_fog_albedo = Color(
-		0.86,
-		0.76,
-		0.62,
+		0.68,
+		0.70,
+		0.59,
 		1.0
 	)
 	style_environment.volumetric_fog_emission = Color(
@@ -126,16 +146,16 @@ func _configure_environment() -> void:
 	environment_node.environment = style_environment
 
 	var sun: DirectionalLight3D = $GoldenSun
-	sun.light_color = Color(1.0, 0.72, 0.43, 1.0)
-	sun.light_energy = 1.36
+	sun.light_color = Color(1.0, 0.83, 0.62, 1.0)
+	sun.light_energy = 1.18
 	sun.shadow_enabled = true
 	sun.directional_shadow_max_distance = 145.0
 	sun.directional_shadow_fade_start = 0.82
 	sun.light_volumetric_fog_energy = 1.15
 
 	var fill: DirectionalLight3D = $CoolSkyFill
-	fill.light_color = Color(0.34, 0.53, 0.82, 1.0)
-	fill.light_energy = 0.28
+	fill.light_color = Color(0.42, 0.58, 0.83, 1.0)
+	fill.light_energy = 0.34
 	fill.shadow_enabled = false
 	fill.light_volumetric_fog_energy = 0.18
 
@@ -147,6 +167,37 @@ func _place_grace() -> void:
 	player.position = field_surface.get_spawn_position()
 	player.rotation_degrees = Vector3.ZERO
 	player.velocity = Vector3.ZERO
+
+
+func _prepare_benchmark_grace() -> void:
+	var player: CharacterBody3D = $Player as CharacterBody3D
+	if player == null:
+		return
+	player.set_meta("benchmark_presentation_mode", true)
+	hud_suppression_frames_remaining = 12
+	_hide_benchmark_hud()
+
+
+func _hide_benchmark_hud() -> void:
+	var player: Node = get_node_or_null("Player")
+	if player == null:
+		benchmark_hud_hidden = false
+		return
+	benchmark_hud_hidden = true
+	for hud_name: StringName in BENCHMARK_HUD_NODE_NAMES:
+		var hud: Node = player.get_node_or_null(NodePath(str(hud_name)))
+		if hud == null:
+			continue
+		if hud is CanvasLayer:
+			(hud as CanvasLayer).visible = false
+		elif hud is CanvasItem:
+			(hud as CanvasItem).visible = false
+		hud.process_mode = Node.PROCESS_MODE_DISABLED
+		if (
+			(hud is CanvasLayer and (hud as CanvasLayer).visible)
+			or (hud is CanvasItem and (hud as CanvasItem).visible)
+		):
+			benchmark_hud_hidden = false
 
 
 func _build_playable_space() -> void:
@@ -282,6 +333,15 @@ func get_debug_data() -> Dictionary:
 			),
 		},
 		"playable_space": playable_space != null,
+		"session_unpaused": not get_tree().paused,
+		"grace_input_ready": (
+			$Player.is_physics_processing()
+			and InputMap.has_action("move_forward")
+			and InputMap.has_action("move_back")
+			and InputMap.has_action("move_left")
+			and InputMap.has_action("move_right")
+		),
+		"benchmark_hud_hidden": benchmark_hud_hidden,
 		"pollen_motes": (
 			pollen_motes.amount
 			if pollen_motes != null

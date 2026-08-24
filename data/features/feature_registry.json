@@ -6,9 +6,9 @@
       "order": 5,
       "display_name": "Ruined Village Approach",
       "category": "Integrated Story Level",
-      "version": "v0.9",
+      "version": "v0.10",
       "status": "vertical_slice",
-      "description": "Outdoor Italy approach combining exploration, environmental storytelling, weapon combat, elemental route solving, optional Sound discovery, checkpointing, and direct entry into the Church Trial.",
+      "description": "Outdoor Italy approach combining exploration, environmental storytelling, weapon combat, elemental route solving, optional Sound discovery, checkpointing, direct entry into the Church Trial, and the first story-integrated Stylized PBR environment rollout.",
       "scene": "res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn"
@@ -37,6 +37,7 @@
       "story_integrated": true,
       "limitations": [
         "Procedural terrain, ruins, vegetation, props, and church architecture remain replacement-ready.",
+        "Stylized PBR v1.2 is bounded to the OutdoorRemasterV1 stone, wet-stone, dry-earth, aged-wood, and aged-metal surfaces; plaster, moss, foliage, creatures, VFX, and Grace remain intentionally outside this first route rollout.",
         "The playable footprint is compressed while implying a broader village region.",
         "Current Goblin and Gremlin archetypes stand in for future location-specific enemies."
       ],

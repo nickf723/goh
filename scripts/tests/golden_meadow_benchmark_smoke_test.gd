@@ -4,7 +4,7 @@ const MeadowScene: PackedScene = preload(
 	"res://scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn"
 )
 const GROUND_SHADER_PATH := (
-	"res://shaders/environment/stylized_meadow_ground_v1.gdshader"
+	"res://shaders/environment/stylized_location_ground_v1.gdshader"
 )
 const GRASS_SHADER_PATH := (
 	"res://shaders/environment/stylized_meadow_grass_v1.gdshader"
@@ -24,13 +24,15 @@ func _ready() -> void:
 
 	for _frame: int in range(6):
 		await get_tree().process_frame
-	await get_tree().physics_frame
+	for _frame: int in range(4):
+		await get_tree().physics_frame
 
 	_validate_benchmark()
 	_validate_surface()
 	_validate_materials()
 	_validate_empty_field_contract()
 	_validate_benchmark_hud()
+	_validate_player_ground_contact()
 	await _validate_player_movement()
 
 	if benchmark != null and is_instance_valid(benchmark):
@@ -89,6 +91,13 @@ func _validate_benchmark() -> void:
 		failures.append("Grace input is not physics-ready")
 	if not bool(debug_data.get("benchmark_hud_hidden", false)):
 		failures.append("benchmark HUD suppression is not active")
+	if not bool(debug_data.get("grace_ground_snap_complete", false)):
+		failures.append("Grace ground snap did not complete")
+	var configured_clearance: float = float(
+		debug_data.get("grace_spawn_clearance", 0.0)
+	)
+	if configured_clearance < 0.04 or configured_clearance > 0.16:
+		failures.append("Grace ground clearance is outside the safe range")
 	if int(debug_data.get("pollen_motes", 0)) < 100:
 		failures.append("atmospheric pollen layer is too sparse")
 	if benchmark.get_node_or_null("Player") == null:
@@ -119,6 +128,8 @@ func _validate_surface() -> void:
 		failures.append("terrain mesh is below the sculpting target")
 	if int(metrics.get("terrain_triangles", 0)) < 14000:
 		failures.append("terrain topology is below the benchmark target")
+	if int(metrics.get("terrain_tangent_values", 0)) < 28000:
+		failures.append("terrain lacks the tangent basis for procedural relief")
 	if float(metrics.get("height_range", 0.0)) < 1.5:
 		failures.append("terrain silhouette is too flat")
 	if int(metrics.get("grass_instances", 0)) < 22000:
@@ -132,7 +143,7 @@ func _validate_surface() -> void:
 	if float(metrics.get("maximum_canopy_height", 99.0)) > 0.72:
 		failures.append("main grass canopy is taller than the readability target")
 	if str(metrics.get("ground_surface_detail", "")) != (
-		"multi_scale_procedural_meadow"
+		"organic_location_ground_v1"
 	):
 		failures.append("ground surface detail contract is missing")
 	if int(metrics.get("horizon_layers", 0)) != 3:
@@ -149,6 +160,15 @@ func _validate_surface() -> void:
 		or terrain_collision.disabled
 	):
 		failures.append("sculpted terrain is not collision matched")
+	var terrain_arrays: Array = surface.terrain_mesh.surface_get_arrays(0)
+	var tangent_value: Variant = terrain_arrays[Mesh.ARRAY_TANGENT]
+	if (
+		not tangent_value is PackedFloat32Array
+		or (tangent_value as PackedFloat32Array).size()
+		< surface.terrain_columns * surface.terrain_rows * 4
+	):
+		failures.append("terrain tangent data is missing or incomplete")
+
 	var playable_space: Node = benchmark.get_node_or_null(
 		"PlayableSpace"
 	)
@@ -207,6 +227,30 @@ func _validate_materials() -> void:
 	)) <= 0.0:
 		failures.append("grass wind speed is disabled")
 
+	var location_visual: MeshInstance3D = benchmark.get_node_or_null(
+		"GoldenMeadowSurface/MeadowTerrain/TerrainVisual"
+	) as MeshInstance3D
+	var location_material: ShaderMaterial = (
+		location_visual.material_override as ShaderMaterial
+		if location_visual != null
+		else null
+	)
+	if location_material == null:
+		return
+	for organic_parameter: String in [
+		"domain_warp_strength",
+		"soil_amount",
+		"pebble_amount",
+		"normal_strength",
+	]:
+		if float(location_material.get_shader_parameter(
+			organic_parameter
+		)) <= 0.0:
+			failures.append(
+				"organic ground parameter is disabled: "
+				+ organic_parameter
+			)
+
 
 func _validate_empty_field_contract() -> void:
 	if benchmark == null:
@@ -262,6 +306,44 @@ func _validate_benchmark_hud() -> void:
 			failures.append("benchmark HUD remains visible: " + hud_name)
 		elif hud is CanvasItem and (hud as CanvasItem).visible:
 			failures.append("benchmark HUD remains visible: " + hud_name)
+
+
+func _validate_player_ground_contact() -> void:
+	if benchmark == null:
+		return
+	var surface: MeadowFieldSurface = benchmark.get_node_or_null(
+		"GoldenMeadowSurface"
+	) as MeadowFieldSurface
+	var player: CharacterBody3D = benchmark.get_node_or_null(
+		"Player"
+	) as CharacterBody3D
+	if surface == null or player == null:
+		return
+	var collision: CollisionShape3D = player.get_node_or_null(
+		"CollisionShape3D"
+	) as CollisionShape3D
+	if collision == null or not collision.shape is CapsuleShape3D:
+		failures.append("Grace capsule is unavailable for contact validation")
+		return
+	var capsule: CapsuleShape3D = collision.shape as CapsuleShape3D
+	var local_player: Vector3 = surface.to_local(player.global_position)
+	var expected_ground_y: float = surface.get_height(
+		local_player.x,
+		local_player.z
+	)
+	var foot_clearance: float = (
+		local_player.y
+		- capsule.height * 0.5
+		- expected_ground_y
+	)
+	if foot_clearance < -0.025:
+		failures.append(
+			"Grace capsule begins inside the meadow terrain"
+		)
+	if foot_clearance > 0.16:
+		failures.append(
+			"Grace remains visibly suspended above the meadow terrain"
+		)
 
 
 func _validate_player_movement() -> void:

@@ -6,7 +6,7 @@ This scene is the first **single-biome hero-quality gate** for *Grace of Humanit
 
 It deliberately contains no enemies, puzzles, interactables, buildings, ruins, loot, route signage, or full gameplay HUD. The only subject is a quiet field:
 
-- one collision-matched rolling terrain surface;
+- one collision-matched rolling terrain surface using the reusable location-ground material;
 - a short, dense wind-reactive grass canopy;
 - restrained seed heads and clustered wildflowers;
 - three atmospheric horizon silhouettes;
@@ -73,9 +73,12 @@ Walk north through the center, then make broad loops across both sides.
 
 Confirm:
 
-- Grace follows the visible terrain with no floating, sinking, or sudden collision steps;
-- the ground visibly mixes green turf, dry straw, and small soil notes across broad, medium, and fine procedural scales;
-- the ground keeps a rough physical response and a restrained cool edge instead of reading as flat orange;
+- Grace's live capsule resolves onto the generated collision surface without beginning underground, floating, or locking movement;
+- Grace follows the visible terrain with no sinking or sudden collision steps;
+- irregular domain-warped turf breaks into clearly visible dirt patches instead of a uniform color wash;
+- soil carries lighter packed-earth variation and restrained pebble speckle at close range;
+- procedural relief catches light without changing the collision-matched silhouette;
+- the same shader can be retuned by palette, location offset, patch density, slope exposure, pebbles, and optional path controls for later authored sets;
 - the grass roots meet the terrain rather than hovering above it;
 - rolling elevation changes remain gentle enough for ordinary movement, jumping, and dodging;
 - the flattened spawn pocket prevents an awkward opening stance without reading as an artificial platform;
@@ -135,19 +138,19 @@ It verifies:
 - collision-matched terrain;
 - grass, seed-head, and wildflower density;
 - three horizon layers;
-- the dedicated multi-scale meadow-ground shader and meadow wind shader;
+- the reusable organic location-ground shader, meadow preset, tangent basis, and meadow wind shader;
 - per-instance grass variation and enabled wind;
 - procedural sky, ACES tonemapping, SSAO, height fog, and volumetric fog;
 - warm-key/cool-fill lighting;
 - playable-space recovery;
-- Grace scale reference and real movement under canonical input;
+- Grace capsule-to-ground clearance, scale reference, and real movement under canonical input;
 - automatic recovery from a paused launcher/menu session;
 - scene-local suppression of Grace's gameplay HUD layers;
 - absence of enemies, interactables, and the full gameplay HUD.
 
 ## Known limitations
 
-- Geometry, colors, and scatter are procedural calibration assets rather than final authored texture/mesh imports.
+- Geometry, colors, and scatter remain procedural calibration assets; the location-ground shader is a reusable prototype material family rather than a final authored texture set.
 - The benchmark proves one temperate golden-hour meadow, not a universal grass solution.
 - Grass does not yet bend around Grace, attacks, animals, or weather forces.
 - No weather states or day/night cycle are included; those remain outside this single-look quality gate.

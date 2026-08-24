@@ -15,6 +15,8 @@ const GRASS_MATERIAL: ShaderMaterial = preload(
 @export_range(1000, 30000, 100) var grass_instance_count: int = 23000
 @export_range(0, 4000, 50) var seed_head_count: int = 1550
 @export_range(0, 2000, 20) var wildflower_count: int = 440
+@export_range(0.05, 0.8, 0.01) var spawn_clearance: float = 0.28
+@export_range(0.5, 1.5, 0.01) var spawn_actor_half_height: float = 0.96
 @export var scatter_seed: int = 18890417
 @export var build_on_ready: bool = true
 
@@ -64,9 +66,19 @@ func get_height(x_value: float, z_value: float) -> float:
 	return lerpf(spawn_height, raw_height, flatten_weight)
 
 
-func get_spawn_position() -> Vector3:
+func get_spawn_ground_position() -> Vector3:
 	var spawn_z: float = field_depth * 0.38
-	return Vector3(0.0, get_height(0.0, spawn_z) + 1.05, spawn_z)
+	return Vector3(0.0, get_height(0.0, spawn_z), spawn_z)
+
+
+func get_spawn_position() -> Vector3:
+	return (
+		get_spawn_ground_position()
+		+ Vector3.UP * (
+			maxf(spawn_actor_half_height, 0.05)
+			+ maxf(spawn_clearance, 0.02)
+		)
+	)
 
 
 func _raw_height(x_value: float, z_value: float) -> float:
@@ -122,10 +134,12 @@ func _create_terrain_mesh() -> ArrayMesh:
 	var rows: int = maxi(terrain_rows, 2)
 	var vertices := PackedVector3Array()
 	var normals := PackedVector3Array()
+	var tangents := PackedFloat32Array()
 	var uvs := PackedVector2Array()
 	var indices := PackedInt32Array()
 	vertices.resize(columns * rows)
 	normals.resize(columns * rows)
+	tangents.resize(columns * rows * 4)
 	uvs.resize(columns * rows)
 	minimum_height = INF
 	maximum_height = -INF
@@ -147,7 +161,16 @@ func _create_terrain_mesh() -> ArrayMesh:
 			var vertex_index: int = row * columns + column
 			var y_value: float = get_height(x_value, z_value)
 			vertices[vertex_index] = Vector3(x_value, y_value, z_value)
-			normals[vertex_index] = _terrain_normal(x_value, z_value)
+			var terrain_normal: Vector3 = _terrain_normal(
+				x_value,
+				z_value
+			)
+			normals[vertex_index] = terrain_normal
+			_write_terrain_tangent(
+				tangents,
+				vertex_index,
+				terrain_normal
+			)
 			uvs[vertex_index] = Vector2(x_ratio, z_ratio)
 			minimum_height = minf(minimum_height, y_value)
 			maximum_height = maxf(maximum_height, y_value)
@@ -167,11 +190,31 @@ func _create_terrain_mesh() -> ArrayMesh:
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = vertices
 	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_TANGENT] = tangents
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	arrays[Mesh.ARRAY_INDEX] = indices
 	var result := ArrayMesh.new()
 	result.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return result
+
+
+func _write_terrain_tangent(
+	tangents: PackedFloat32Array,
+	vertex_index: int,
+	normal_value: Vector3
+) -> void:
+	var tangent: Vector3 = (
+		Vector3.RIGHT
+		- normal_value * normal_value.dot(Vector3.RIGHT)
+	)
+	if tangent.length_squared() <= 0.0001:
+		tangent = Vector3.FORWARD
+	tangent = tangent.normalized()
+	var tangent_index: int = vertex_index * 4
+	tangents[tangent_index] = tangent.x
+	tangents[tangent_index + 1] = tangent.y
+	tangents[tangent_index + 2] = tangent.z
+	tangents[tangent_index + 3] = 1.0
 
 
 func _terrain_normal(x_value: float, z_value: float) -> Vector3:
@@ -620,6 +663,11 @@ func get_debug_data() -> Dictionary:
 			maxi(terrain_columns, 2)
 			* maxi(terrain_rows, 2)
 		),
+		"terrain_tangent_values": (
+			maxi(terrain_columns, 2)
+			* maxi(terrain_rows, 2)
+			* 4
+		),
 		"terrain_triangles": (
 			(maxi(terrain_columns, 2) - 1)
 			* (maxi(terrain_rows, 2) - 1)
@@ -653,7 +701,9 @@ func get_debug_data() -> Dictionary:
 		"grass_blades_per_clump": 5,
 		"maximum_canopy_height": 0.68,
 		"spawn_readability_radius": 1.8,
-		"ground_surface_detail": "multi_scale_procedural_meadow",
+		"spawn_clearance": spawn_clearance,
+		"spawn_actor_half_height": spawn_actor_half_height,
+		"ground_surface_detail": "organic_location_ground_v1",
 		"ground_material": GROUND_MATERIAL.resource_path,
 		"grass_material": GRASS_MATERIAL.resource_path,
 		"gameplay_clutter_free": true,

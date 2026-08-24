@@ -265,7 +265,7 @@
       "category": "Environment Art Benchmark",
       "version": "v1",
       "status": "experimental",
-      "description": "Single-biome hero-quality gate concentrating sculpted textured terrain, a short dense wind-reactive canopy, seed heads, clustered wildflowers, layered horizon silhouettes, golden-hour lighting, atmosphere, and Grace readability into one deliberately gameplay-empty field.",
+      "description": "Single-biome hero-quality gate concentrating collision-safe sculpted terrain, a reusable organic location-ground material with dirt patches and procedural relief, a short dense wind-reactive canopy, clustered flora, layered horizons, golden-hour atmosphere, and Grace readability into one deliberately gameplay-empty field.",
       "scene": "res://scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn",
       "validation_scenes": [
         "res://scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn"
@@ -287,7 +287,7 @@
       "temporary_state": "runtime_only",
       "story_integrated": false,
       "limitations": [
-        "Terrain and vegetation are deterministic procedural calibration assets rather than final authored texture and mesh imports.",
+        "Terrain and vegetation are deterministic procedural calibration assets; the reusable location-ground material remains a prototype shader family rather than a final authored texture set.",
         "Only one temperate golden-hour meadow is represented; weather, day/night, regional ecology, and additional biomes remain outside this quality gate.",
         "Grass does not yet react physically to Grace, attacks, animals, or weather forces.",
         "Horizon silhouettes are atmospheric backdrops rather than traversable terrain, and final environmental audio is absent."

@@ -615,7 +615,9 @@
         "shaders/environment/",
         "scripts/environment/meadow_field_surface.gd",
         "art/materials/environment/natural/",
-        "scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn"
+        "scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn",
+        "shaders/environment/stylized_location_ground_v1.gdshader",
+        "docs/STYLIZED_LOCATION_GROUND_V1.md"
       ],
       "canonical_scene": "scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn",
       "aliases": [
@@ -646,14 +648,18 @@
         "golden meadow",
         "wind-reactive grass",
         "natural environment benchmark",
-        "single-biome art target"
+        "single-biome art target",
+        "procedural location ground",
+        "organic terrain material",
+        "dirt patch shader",
+        "reusable ground material"
       ],
       "implemented": true,
       "do_not_resuggest": true,
-      "next_use": "Manually review the Golden Meadow v1 as a single-biome quality gate; tune whichever one layer is weakest—ground, grass, atmosphere, horizon, or contact—before migrating a small approved meadow patch into the Wilds Expedition or adding trees, rocks, animals, weather, or gameplay.",
+      "next_use": "Manually review Golden Meadow contact and the reusable organic location-ground shader; tune dirt coverage, relief, and close-range repetition before migrating one approved ground preset into the next authored set or the Wilds Expedition.",
       "story_reference": "The Drowned Bell",
       "limitations": [
-        "The reusable modular kit and Golden Meadow remain stylized procedural benchmarks rather than final imported production art and authored texture sets.",
+        "The reusable modular kit and Golden Meadow remain stylized procedural benchmarks rather than final imported production art; the organic location-ground shader now provides palette, dirt-patch, pebble, relief, location-offset, and optional path controls for authored set presets.",
         "Stylized PBR v1.2 is approved and story-integrated on the Ruined Village OutdoorRemasterV1 subtree; its full gameplay and weather-state manual review remains pending.",
         "Golden Meadow v1 adds the first dense natural-biome benchmark with collision-matched rolling terrain and GPU-instanced wind-reactive vegetation, but it awaits manual visual and performance approval.",
         "The meadow covers one temperate golden-hour dialect; grass interaction, weather coupling, final audio, and regional ecology remain outside the first quality gate.",

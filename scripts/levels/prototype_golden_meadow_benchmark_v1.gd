@@ -7,6 +7,9 @@ const PlayableSpaceScript = preload(
 const RecoveryVolumeScript = preload(
 	"res://scripts/quality/playable_recovery_volume_3d.gd"
 )
+const GRACE_GROUND_CLEARANCE: float = 0.08
+const GRACE_GROUND_RAY_RISE: float = 5.0
+const GRACE_GROUND_RAY_DROP: float = 4.0
 const BENCHMARK_HUD_NODE_NAMES: Array[StringName] = [
 	&"DivineSpecialHUD",
 	&"PlayerHUDV2",
@@ -23,6 +26,9 @@ var playable_space: PlayableSpace3D
 var pollen_motes: GPUParticles3D
 var hud_suppression_frames_remaining: int = 12
 var benchmark_hud_hidden: bool = false
+var grace_ground_snap_complete: bool = false
+var grace_spawn_surface_y: float = 0.0
+var grace_spawn_clearance: float = 0.0
 
 
 func _ready() -> void:
@@ -41,6 +47,7 @@ func _ready() -> void:
 	_prepare_benchmark_grace()
 	_build_playable_space()
 	_build_pollen_motes()
+	call_deferred("_stabilize_grace_spawn")
 
 
 func _process(_delta: float) -> void:
@@ -169,11 +176,81 @@ func _place_grace() -> void:
 	player.velocity = Vector3.ZERO
 
 
+func _get_player_collision_half_height(
+	player: CharacterBody3D
+) -> float:
+	if player == null:
+		return 0.96
+	var collision: CollisionShape3D = player.get_node_or_null(
+		"CollisionShape3D"
+	) as CollisionShape3D
+	if collision != null and collision.shape is CapsuleShape3D:
+		return (collision.shape as CapsuleShape3D).height * 0.5
+	return maxf(
+		float(player.get_meta("player_collision_height", 1.92)) * 0.5,
+		0.46
+	)
+
+
+func _stabilize_grace_spawn() -> void:
+	await get_tree().physics_frame
+	var player: CharacterBody3D = $Player as CharacterBody3D
+	if player == null or field_surface == null:
+		return
+	var ground_local: Vector3 = (
+		field_surface.get_spawn_ground_position()
+	)
+	var ground_world: Vector3 = field_surface.to_global(ground_local)
+	var query := PhysicsRayQueryParameters3D.new()
+	query.from = ground_world + Vector3.UP * GRACE_GROUND_RAY_RISE
+	query.to = ground_world + Vector3.DOWN * GRACE_GROUND_RAY_DROP
+	query.collision_mask = player.collision_mask
+	query.collide_with_areas = false
+	var exclusions: Array[RID] = [player.get_rid()]
+	query.exclude = exclusions
+	var hit: Dictionary = (
+		get_world_3d().direct_space_state.intersect_ray(query)
+	)
+	var surface_position: Vector3 = ground_world
+	var hit_position: Variant = hit.get("position", null)
+	if hit_position is Vector3:
+		surface_position = hit_position as Vector3
+	var half_height: float = _get_player_collision_half_height(player)
+	player.global_position = (
+		surface_position
+		+ Vector3.UP * (half_height + GRACE_GROUND_CLEARANCE)
+	)
+	player.velocity = Vector3.ZERO
+	grace_spawn_surface_y = surface_position.y
+	grace_spawn_clearance = GRACE_GROUND_CLEARANCE
+	grace_ground_snap_complete = true
+
+	var recovery: Node = player.get_node_or_null("RecoveryController")
+	if (
+		recovery != null
+		and recovery.has_method("set_manual_recovery_transform")
+	):
+		recovery.call(
+			"set_manual_recovery_transform",
+			player.global_transform
+		)
+
+
 func _prepare_benchmark_grace() -> void:
 	var player: CharacterBody3D = $Player as CharacterBody3D
 	if player == null:
 		return
 	player.set_meta("benchmark_presentation_mode", true)
+	player.process_mode = Node.PROCESS_MODE_INHERIT
+	player.set_physics_process(true)
+	player.set("is_defeated", false)
+	player.remove_meta("shared_placement_active")
+	var action_state: Node = player.get_node_or_null("PlayerActionState")
+	if (
+		action_state != null
+		and action_state.has_method("clear_action_locks")
+	):
+		action_state.call("clear_action_locks")
 	hud_suppression_frames_remaining = 12
 	_hide_benchmark_hud()
 
@@ -342,6 +419,9 @@ func get_debug_data() -> Dictionary:
 			and InputMap.has_action("move_right")
 		),
 		"benchmark_hud_hidden": benchmark_hud_hidden,
+		"grace_ground_snap_complete": grace_ground_snap_complete,
+		"grace_spawn_surface_y": grace_spawn_surface_y,
+		"grace_spawn_clearance": grace_spawn_clearance,
 		"pollen_motes": (
 			pollen_motes.amount
 			if pollen_motes != null

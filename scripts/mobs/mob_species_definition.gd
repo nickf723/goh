@@ -1,11 +1,18 @@
 extends Resource
 class_name MobSpeciesDefinition
 
+const BodyPlanCatalog = preload(
+	"res://scripts/mobs/mob_body_plan_catalog.gd"
+)
+
 @export var species_id: String = ""
 @export var display_name: String = ""
+@export var parent_species_id: String = ""
+@export var body_plan_id: String = ""
 @export var category: String = "creature"
 @export var taxonomy_tags: Array[String] = []
 @export var body_tags: Array[String] = []
+@export var anatomy_counts: Dictionary = {}
 @export var locomotion_tags: Array[String] = []
 @export var ecology_tags: Array[String] = []
 @export var base_stats: Dictionary = {}
@@ -22,10 +29,28 @@ static func from_dictionary(data: Dictionary) -> MobSpeciesDefinition:
 		"display_name",
 		definition.species_id.replace("_", " ").capitalize()
 	))
+	definition.parent_species_id = str(
+		data.get("parent_species_id", "")
+	).to_lower().strip_edges()
+	definition.body_plan_id = str(
+		data.get("body_plan_id", "")
+	).to_lower().strip_edges()
 	definition.category = str(data.get("category", "creature")).to_lower().strip_edges()
 	definition.taxonomy_tags = _string_array(data.get("taxonomy_tags", []))
-	definition.body_tags = _string_array(data.get("body_tags", []))
-	definition.locomotion_tags = _string_array(data.get("locomotion_tags", []))
+	definition.body_tags = BodyPlanCatalog.resolve_body_tags(
+		definition.body_plan_id,
+		_string_array(data.get("body_tags", []))
+	)
+	definition.anatomy_counts = BodyPlanCatalog.resolve_anatomy_counts(
+		definition.body_plan_id,
+		_int_dictionary(data.get("anatomy_counts", {}))
+	)
+	if data.has("locomotion_tags"):
+		definition.locomotion_tags = _string_array(data.get("locomotion_tags", []))
+	else:
+		definition.locomotion_tags = BodyPlanCatalog.get_default_locomotion_tags(
+			definition.body_plan_id
+		)
 	definition.ecology_tags = _string_array(data.get("ecology_tags", []))
 	definition.base_stats = _number_dictionary(data.get("base_stats", {}))
 	definition.default_personality = _number_dictionary(data.get("default_personality", {}))
@@ -52,9 +77,12 @@ func to_dictionary() -> Dictionary:
 	return {
 		"id": species_id,
 		"display_name": display_name,
+		"parent_species_id": parent_species_id,
+		"body_plan_id": body_plan_id,
 		"category": category,
 		"taxonomy_tags": taxonomy_tags.duplicate(),
 		"body_tags": body_tags.duplicate(),
+		"anatomy_counts": anatomy_counts.duplicate(true),
 		"locomotion_tags": locomotion_tags.duplicate(),
 		"ecology_tags": ecology_tags.duplicate(),
 		"base_stats": base_stats.duplicate(true),
@@ -84,6 +112,27 @@ func has_body_tag(tag: String) -> bool:
 	return body_tags.has(tag.to_lower().strip_edges())
 
 
+func get_anatomy_count(part_id: String) -> int:
+	var normalized: String = part_id.to_lower().strip_edges()
+	if anatomy_counts.has(normalized):
+		return maxi(0, int(anatomy_counts[normalized]))
+	return 1 if has_body_tag(normalized) else 0
+
+
+func has_anatomy(part_id: String, minimum_count: int = 1) -> bool:
+	return get_anatomy_count(part_id) >= maxi(1, minimum_count)
+
+
+func get_mobility_kind() -> String:
+	if body_plan_id == "":
+		return "mobile"
+	return BodyPlanCatalog.get_mobility_kind(body_plan_id)
+
+
+func is_sessile() -> bool:
+	return get_mobility_kind() == "sessile"
+
+
 func get_locomotion_profile() -> Dictionary:
 	return MobLocomotionCatalog.resolve_profile(body_tags, locomotion_tags)
 
@@ -109,10 +158,21 @@ func validate(move_catalog: Variant = null) -> Array[String]:
 		failures.append("species id is empty")
 	if display_name == "":
 		failures.append(species_id + " has no display name")
+	if body_plan_id != "" and not BodyPlanCatalog.has_body_plan(body_plan_id):
+		failures.append(species_id + " references missing body plan " + body_plan_id)
+	if parent_species_id == species_id and species_id != "":
+		failures.append(species_id + " cannot inherit from itself")
 	if body_tags.is_empty():
 		failures.append(species_id + " has no body tags")
+	for raw_part: Variant in anatomy_counts.keys():
+		var part_id: String = str(raw_part).to_lower().strip_edges()
+		if part_id == "" or int(anatomy_counts[raw_part]) <= 0:
+			failures.append(species_id + " has invalid anatomy count for " + part_id)
+		elif not has_body_tag(part_id):
+			failures.append(species_id + " counts missing body tag " + part_id)
 	if locomotion_tags.is_empty():
-		failures.append(species_id + " has no locomotion capabilities")
+		if not is_sessile():
+			failures.append(species_id + " has no locomotion capabilities")
 	else:
 		var locomotion_profile: Dictionary = get_locomotion_profile()
 		for locomotion_failure: String in (
@@ -159,6 +219,16 @@ static func _string_array(value: Variant) -> Array[String]:
 			var text: String = str(raw).to_lower().strip_edges()
 			if text != "" and not result.has(text):
 				result.append(text)
+	return result
+
+
+static func _int_dictionary(value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	if value is Dictionary:
+		for raw_key: Variant in (value as Dictionary).keys():
+			result[str(raw_key).to_lower().strip_edges()] = int(
+				(value as Dictionary)[raw_key]
+			)
 	return result
 
 

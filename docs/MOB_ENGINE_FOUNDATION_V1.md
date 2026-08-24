@@ -122,6 +122,7 @@ A `MobSpeciesDefinition` contains:
 - Body tags and anatomy counts
 - Locomotion tags
 - Ecology tags
+- Structured ecology profile
 - Base stats and senses
 - Default continuous personality traits
 - Move policies
@@ -145,6 +146,25 @@ Social wetland grazer. Prefers grazing, wading, resting, and retreating toward w
 ### Bear family
 
 One shared Bear profile supplies quadruped anatomy, personality, moves, stats, and familiar progression. Brown Bear, Black Bear, Polar Bear, and Panda inherit it while overriding only their distinctive tags, habitat, statistics, and temperament. Polar Bear demonstrates additive swimming anatomy and locomotion.
+
+## Ecology and habitat compatibility
+
+`MobEcologyProfile` keeps habitat survival separate from movement capability. It records:
+
+- Scale band
+- Air, water, or no breathing requirement
+- Diet and activity-cycle tags
+- Social structure
+- Whether one actor represents an individual, group, swarm, colony, or multipart creature
+- Required, alternative, preferred, and forbidden habitat tags
+- Temperature limits
+- Typical home range
+
+A creature may therefore swim without breathing water, as a Goose or Polar Bear does, while Trout requires water as both its locomotion medium and breathing medium. Sessile actors can require aquatic substrate without receiving artificial walking data.
+
+Species can evaluate a dictionary-shaped habitat context and return viability, preference, breathing match, preferred-tag matches, and actionable failures. The live Wilds habitats now publish their media, terrain, climate, and temperature. Cypress Goose and Trout, Woodland Gecko, and Ridge Mole prove that authored populations are ecologically valid as well as physically traversable.
+
+The same profile vocabulary already supports future schools, swarms, colonies, and multipart monsters without pretending every visible group is one ordinary animal.
 
 ### Gorgon
 
@@ -400,6 +420,10 @@ The regression verifies:
 - Canonical body-plan validation across vertebrates, invertebrates, amorphous actors, sessile life, and mythic composites
 - Anatomy-count inheritance and species overrides
 - Frog, Octopus, Anemone, and membrane-glider structural probes
+- Air- and water-breathing habitat compatibility
+- Climate and habitat rejection with actionable failure reasons
+- Individual, coordinated-group, swarm, colony, and multipart representation metadata
+- Wilds population viability across water, surface, and burrow habitats
 - Ground, swimming, flight, glide, climbing, and burrowing capability resolution
 - Anatomy rejection and locomotion alias normalization
 - Runtime ground/swimming/flight/climbing/burrowing mode transitions, direct air-water transitions, and medium rejection

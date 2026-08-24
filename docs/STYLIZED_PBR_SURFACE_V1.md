@@ -18,7 +18,7 @@ This pass follows the Global Art Bible:
 res://scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn
 ```
 
-The hero pedestal contains one three-lobe low-poly rock named `StylizedSurfaceStudy`. The surrounding Weathered Cloister continues using `modular_surface.gdshader`, producing a direct in-scene comparison rather than silently changing every environment material.
+The approved hero-pedestal rock remains the shape reference. In v1.2, the left cloister wing stays on `modular_surface.gdshader` while matching forms on the right wing receive the stylized-PBR material family. Production routes remain unchanged.
 
 ## Shader
 
@@ -44,7 +44,19 @@ The diffuse and specular paths remain separate. Tuning the painterly ramp must n
 res://art/materials/environment/modular/stylized_pbr_stone_study.tres
 ```
 
-The first preset is intentionally a stone study, not a claimed universal material. It uses broad teal-gray variation, high roughness, zero metallic response, a cool blue rim, and a restrained saturation lift.
+The approved stone preset uses broad teal-gray variation, high roughness, zero metallic response, a cool blue rim, and a restrained saturation lift.
+
+The v1.2 showcase family adds:
+
+| Family | Resource | Physical read |
+| --- | --- | --- |
+| Stone | `stylized_pbr_stone_study.tres` | Rough teal-gray masonry and rock |
+| Wet stone | `stylized_pbr_wet_stone_v1.tres` | Sharper, darker moisture response |
+| Dry earth | `stylized_pbr_dry_earth_v1.tres` | Very rough warm terrain mass |
+| Aged wood | `stylized_pbr_aged_wood_v1.tres` | Broad warm grain-like breakup without fine noise |
+| Aged metal | `stylized_pbr_aged_metal_v1.tres` | Metallic GGX response with restrained color and rim |
+
+`scripts/environment/stylized_pbr_material_library.gd` owns preset lookup, validation, and bounded legacy-material remapping.
 
 ## Primary tuning controls
 
@@ -74,7 +86,7 @@ The showcase uses:
 - 116 percent saturation and light contrast/brightness adjustments;
 - moderate SSAO for contact and form grounding.
 
-These are calibration values, not a final global environment resource. Local art dialects will still own their palette and dominant lighting idea.
+These are calibration values, not a final global environment resource. The in-world console beside the gate switches to `violet_twilight_v1`, replacing the warm key with cool violet light while retaining warm sconces as local focal contrast. Local art dialects still own their palette and dominant lighting idea.
 
 ## Review order
 
@@ -88,15 +100,15 @@ These are calibration values, not a final global environment resource. Local art
 
 ## Rollout gate
 
-Do not migrate terrain, architecture, props, foliage, creatures, or Grace until the first stone preset is manually approved.
+The first stone preset is manually approved. V1.2 now proves the broad material family in one A/B showcase and exposes a second strongly different lighting dialect.
 
-After approval:
+Before production migration:
 
-1. tune stone under at least two strongly different lighting dialects;
-2. author separate presets for terrain, dry wood, wet stone, and aged metal;
-3. test Grace readability without applying the material to Grace;
-4. migrate one authored route in bounded batches;
-5. retain easy per-material control over ramp and rim strength.
+1. approve the left/right family comparison in both daylight and violet twilight;
+2. verify Grace readability without applying the material to Grace;
+3. choose one authored route for a bounded, reversible material pass;
+4. keep foliage, creatures, VFX, and Grace outside that route pass;
+5. retain per-material control over ramp, roughness, metallic response, and rim strength.
 
 ## Validation
 
@@ -104,4 +116,10 @@ After approval:
 res://scenes/tests/modular_environment_showcase_smoke_test.tscn
 ```
 
-The regression verifies shader resource loading, required uniforms, independent diffuse and specular paths, the single-prop rollout boundary, the study material, procedural sky, warm key, ACES grading, and SSAO.
+The regression verifies shader resource loading, required uniforms, five material presets, independent diffuse and specular paths, the left/right rollout boundary, legacy preservation, daylight/twilight switching, procedural sky, ACES grading, and SSAO.
+
+
+## Approval history
+
+- v1.1 stone calibration: approved by Nick on 2026-08-23.
+- v1.2 material-family and second-lighting-dialect comparison: awaiting manual review.

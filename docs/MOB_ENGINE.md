@@ -8,7 +8,7 @@ The Mob Engine is the shared behavioral foundation for animals, monsters, enemie
 
 [`MOB_ENGINE_FOUNDATION_V1.md`](MOB_ENGINE_FOUNDATION_V1.md)
 
-Defines shared moves, canonical body plans, counted anatomy, inherited species variants, move policies, continuous personality traits, utility evaluation, familiar progression, move ranks, augments, execution adapters, and the attachable brain component. The first inheritance family maps the design matrix's Bear into Brown Bear, Black Bear, Polar Bear, and Panda without duplicating its complete definition.
+Defines shared moves, canonical body plans, counted anatomy, inherited species variants, structured ecology and habitat compatibility, move policies, continuous personality traits, utility evaluation, familiar progression, move ranks, augments, execution adapters, and the attachable brain component. The first inheritance family maps the design matrix's Bear into Brown Bear, Black Bear, Polar Bear, and Panda without duplicating its complete definition.
 
 ### Action lifecycle
 
@@ -123,7 +123,7 @@ The Wilds route is the first exploration-space consumer of the lab-proven habita
 - Woodland Gecko on a mossy surface route
 - Ridge Mole in a three-dimensional root-mound route
 
-The field host supplies Grace targeting, movement noise, habitat bounds, forage and water targets, same-species alerts, medium restoration, debug summaries, and rebuild-safe population ownership. Both neutral expedition assembly and regional route slices attach only the habitats belonging to their assembled segments. Diagnostic animal labels are disabled in the field without replacing the actor or brain.
+The field host supplies Grace targeting, movement noise, habitat bounds, forage and water targets, same-species alerts, medium restoration, debug summaries, and rebuild-safe population ownership. Each habitat also publishes terrain, available breathing media, and temperature; its resident species must pass the shared ecology evaluator. Both neutral expedition assembly and regional route slices attach only the habitats belonging to their assembled segments. Diagnostic animal labels are disabled in the field without replacing the actor or brain.
 
 See [`wilds_expedition_v1.md`](wilds_expedition_v1.md) for the route and wildlife playtest.
 
@@ -156,7 +156,7 @@ Clear the debris, heal and feed Juniper, bond her, then lead her through the cou
 - `res://scenes/tests/wilds_expedition_smoke_test.tscn`
 - `res://scenes/tests/route_familiarity_smoke_test.tscn`
 
-The live regressions verify canonical body-plan composition, anatomy counts, species inheritance, sessile actors, locomotion capability validation, runtime ground/swimming/flight/climbing/burrowing transitions including direct air-water transitions, medium rejection, planar/surface/volumetric steering, water-current sampling, surface buoyancy, surface adhesion, waypoint guidance, gravity handoff, opt-in modifier dependencies, generic water and traversal-medium integration, authored Goose, Trout, Gecko, and Mole bodies, canonical habitat controls, incompatible-mode rejection, physical route progress, and reset modes, species-derived vitals, damage and recovery, incapacitation, timed status refresh and expiry, policy-visible condition tags, exactly-once contact and area delivery, authoritative target ownership, physical projectile spawning and reset cleanup, physical Graze and Flee execution, visual and auditory perception, timed memory, trust-building interactions, wolf pack alert sharing, inventory-backed feeding, bonding, disk persistence, navigation-aware following, dynamic navmesh rebaking, rescue and healing consequences, real damage payloads, obstacle routing, and separation recovery.
+The live regressions verify canonical body-plan composition, anatomy counts, species inheritance, sessile actors, air/water breathing, climate and habitat compatibility, group/swarm representation, field-population viability, locomotion capability validation, runtime ground/swimming/flight/climbing/burrowing transitions including direct air-water transitions, medium rejection, planar/surface/volumetric steering, water-current sampling, surface buoyancy, surface adhesion, waypoint guidance, gravity handoff, opt-in modifier dependencies, generic water and traversal-medium integration, authored Goose, Trout, Gecko, and Mole bodies, canonical habitat controls, incompatible-mode rejection, physical route progress, and reset modes, species-derived vitals, damage and recovery, incapacitation, timed status refresh and expiry, policy-visible condition tags, exactly-once contact and area delivery, authoritative target ownership, physical projectile spawning and reset cleanup, physical Graze and Flee execution, visual and auditory perception, timed memory, trust-building interactions, wolf pack alert sharing, inventory-backed feeding, bonding, disk persistence, navigation-aware following, dynamic navmesh rebaking, rescue and healing consequences, real damage payloads, obstacle routing, and separation recovery.
 
 ## Next runtime milestone
 

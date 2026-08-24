@@ -612,7 +612,10 @@
         "scripts/levels/drowned_bell_environment_pass.gd",
         "scenes/environment/modular/",
         "art/materials/environment/modular/",
-        "shaders/environment/"
+        "shaders/environment/",
+        "scripts/environment/meadow_field_surface.gd",
+        "art/materials/environment/natural/",
+        "scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn"
       ],
       "canonical_scene": "scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn",
       "aliases": [
@@ -635,16 +638,26 @@
         "banded diffuse",
         "rim lighting",
         "warm cool lighting",
-        "environment color grading"
+        "environment color grading",
+        "meadow",
+        "empty field",
+        "gorgeous field",
+        "grass field",
+        "golden meadow",
+        "wind-reactive grass",
+        "natural environment benchmark",
+        "single-biome art target"
       ],
       "implemented": true,
       "do_not_resuggest": true,
-      "next_use": "Play the full Ruined Village Approach in clear weather and each concentration weather state, tune only route-specific surface values that fail readability, then choose whether a second authored route is ready for the same bounded rollout.",
+      "next_use": "Manually review the Golden Meadow v1 as a single-biome quality gate; tune whichever one layer is weakest—ground, grass, atmosphere, horizon, or contact—before migrating a small approved meadow patch into the Wilds Expedition or adding trees, rocks, animals, weather, or gameplay.",
       "story_reference": "The Drowned Bell",
       "limitations": [
-        "The reusable kit remains a stylized primitive-based benchmark rather than final imported production art.",
-        "Stylized PBR v1.2 is approved and now story-integrated on the Ruined Village OutdoorRemasterV1 subtree; this first route still needs full gameplay and weather-state manual review before broader migration.",
-        "Plaster, moss, foliage, creatures, VFX, and Grace remain intentionally outside the first story-route material boundary.",
+        "The reusable modular kit and Golden Meadow remain stylized procedural benchmarks rather than final imported production art and authored texture sets.",
+        "Stylized PBR v1.2 is approved and story-integrated on the Ruined Village OutdoorRemasterV1 subtree; its full gameplay and weather-state manual review remains pending.",
+        "Golden Meadow v1 adds the first dense natural-biome benchmark with collision-matched rolling terrain and GPU-instanced wind-reactive vegetation, but it awaits manual visual and performance approval.",
+        "The meadow covers one temperate golden-hour dialect; grass interaction, weather coupling, final audio, and regional ecology remain outside the first quality gate.",
+        "Plaster, moss, foliage outside the meadow, creatures, VFX, and Grace remain intentionally outside the Ruined Village material boundary.",
         "Only one weathered architecture family is represented so far."
       ]
     },

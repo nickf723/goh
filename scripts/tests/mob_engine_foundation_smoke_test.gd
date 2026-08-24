@@ -9,6 +9,7 @@ const PersonalityAdapter = preload("res://scripts/mobs/mob_personality_adapter.g
 const BrainScript = preload("res://scripts/mobs/mob_brain_component.gd")
 const ExecutionState = preload("res://scripts/mobs/mob_move_execution_state.gd")
 const LocomotionCatalog = preload("res://scripts/mobs/mob_locomotion_catalog.gd")
+const BodyPlanCatalog = preload("res://scripts/mobs/mob_body_plan_catalog.gd")
 const LocomotionExecutorScript = preload(
 	"res://scripts/mobs/mob_locomotion_executor.gd"
 )
@@ -92,6 +93,7 @@ func _ready() -> void:
 func run_tests() -> void:
 	_capture_profiles()
 	_test_catalogs_and_shared_moves()
+	_test_body_plans_and_variants()
 	_test_locomotion_profiles()
 	_test_locomotion_executor()
 	_test_mob_vitals()
@@ -115,7 +117,8 @@ func _test_catalogs_and_shared_moves() -> void:
 	_expect(MoveCatalog.validate_catalog().is_empty(), "move catalog validates")
 	_expect(SpeciesCatalog.validate_catalog().is_empty(), "species catalog validates")
 	_expect(LocomotionCatalog.validate_catalog().is_empty(), "locomotion catalog validates")
-	_expect(SpeciesCatalog.get_species_ids().size() >= 9, "foundation seeds nine contrasting species")
+	_expect(BodyPlanCatalog.validate_catalog().is_empty(), "body-plan catalog validates")
+	_expect(SpeciesCatalog.get_species_ids().size() >= 14, "foundation seeds species and inherited variants")
 	var bite: MobMoveDefinition = MoveCatalog.get_definition("bite")
 	_expect(bite != null, "shared Bite move resolves")
 	var peck: MobMoveDefinition = MoveCatalog.get_definition("peck")
@@ -190,6 +193,89 @@ func _test_catalogs_and_shared_moves() -> void:
 	_expect(not bite_execution.can_interrupt(), "authored Bite impact window resists ordinary interruption")
 	_expect(Augments.is_compatible(bite, "ferocious"), "Bite accepts attack augments")
 	_expect(not Augments.is_compatible(bite, "wetting"), "Bite rejects projectile-only Wetting augment")
+
+
+func _test_body_plans_and_variants() -> void:
+	var frog: MobSpeciesDefinition = MobSpeciesDefinition.from_dictionary({
+		"id": "smoke_frog",
+		"display_name": "Smoke Frog",
+		"body_plan_id": "amphibian",
+		"move_policies": [{"move_id": "idle"}],
+	})
+	_expect(
+		frog.has_anatomy("legs", 4)
+		and frog.supports_locomotion("ground")
+		and frog.supports_locomotion("swimmer")
+		and frog.supports_locomotion("jumper"),
+		"amphibian body plan supplies reusable anatomy and locomotion"
+	)
+	_expect(
+		frog.validate(MoveCatalog).is_empty(),
+		"body-plan-only species definitions validate without repeated anatomy"
+	)
+
+	var octopus: MobSpeciesDefinition = MobSpeciesDefinition.from_dictionary({
+		"id": "smoke_octopus",
+		"display_name": "Smoke Octopus",
+		"body_plan_id": "cephalopod",
+		"move_policies": [{"move_id": "idle"}],
+	})
+	_expect(
+		octopus.has_anatomy("tentacles", 8)
+		and octopus.supports_locomotion("swimmer")
+		and octopus.supports_locomotion("climber"),
+		"cephalopod body plan supports tentacle counts and surface traversal"
+	)
+
+	var anemone: MobSpeciesDefinition = MobSpeciesDefinition.from_dictionary({
+		"id": "smoke_anemone",
+		"display_name": "Smoke Anemone",
+		"body_plan_id": "sessile",
+		"move_policies": [{"move_id": "idle"}],
+	})
+	_expect(
+		anemone.is_sessile()
+		and anemone.locomotion_tags.is_empty()
+		and anemone.validate(MoveCatalog).is_empty(),
+		"sessile creatures are valid actors without invented walking movement"
+	)
+
+	var brown_bear: MobSpeciesDefinition = SpeciesCatalog.get_definition(
+		"brown_bear"
+	)
+	var polar_bear: MobSpeciesDefinition = SpeciesCatalog.get_definition(
+		"polar_bear"
+	)
+	_expect(
+		SpeciesCatalog.get_variant_ids("bear").size() == 4,
+		"one bear definition owns four lightweight matrix variants"
+	)
+	_expect(
+		brown_bear != null
+		and brown_bear.body_plan_id == "quadruped"
+		and brown_bear.get_move_ids().has("bite")
+		and is_equal_approx(
+			float(brown_bear.base_stats.get("health", 0.0)),
+			40.0
+		),
+		"Brown Bear inherits anatomy and moves while overriding stats"
+	)
+	_expect(
+		polar_bear != null
+		and polar_bear.has_body_tag("swimmer")
+		and polar_bear.supports_locomotion("swimmer"),
+		"Polar Bear adds aquatic anatomy and locomotion to its parent"
+	)
+
+	var glider: Dictionary = LocomotionCatalog.resolve_profile(
+		["legs", "gliding_membrane"],
+		["ground", "glide"]
+	)
+	_expect(
+		(glider.get("failures", []) as Array).is_empty()
+		and (glider.get("transitions", []) as Array).has("glider"),
+		"Glide is modeled as an aerial transition rather than a combat move"
+	)
 
 
 func _test_locomotion_profiles() -> void:

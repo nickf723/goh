@@ -84,6 +84,54 @@
       "timeout_seconds": 5
     },
     {
+      "id": "sunken_cistern",
+      "order": 22,
+      "display_name": "The Sunken Cistern",
+      "category": "Integrated Puzzle Prototype",
+      "version": "v1",
+      "status": "experimental",
+      "description": "Standalone six-space elemental dungeon beneath a city: a frozen-sluice crossing, a lightning ward over a Storm-drain Gremlin fight, an optional fire-thawed cache, a Large Construct reservoir with a paired ice + lightning ward, and a Stoneback Salamander capstone. Reuses the element-lock, ice-bridge, gate, enemy, save, and reward systems; adds no new mechanics.",
+      "scene": "res://scenes/levels/prototypes/sunken_cistern_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/sunken_cistern_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/sunken_cistern_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "weapon_combat_arena",
+        "elemental_reaction_lab"
+      ],
+      "controls": [
+        "MOVE",
+        "CAMERA",
+        "JUMP",
+        "INTERACT",
+        "LIGHT",
+        "HEAVY",
+        "FOCUS",
+        "CAST",
+        "DODGE",
+        "LOCK-ON",
+        "RESET"
+      ],
+      "manual_test": "docs/sunken_cistern_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "Prototype primitives and procedural materials only; no final art, audio, animation, or balance.",
+        "No literal swim traversal; the flooded look is shallow water sheets plus the freeze-crossing, pending the Drowned Bell swim-clearance work.",
+        "The Stoneback Salamander capstone is present but not a hard gate on the exit.",
+        "restart_scene re-applies the loadout and resets the ice bridge but does not re-close opened gates; reload the scene for a full reset.",
+        "Enemy encounters are placed, not gated on kills or sequenced.",
+        "The reward altar grants a placeholder key-item id."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 12
+    },
+    {
       "id": "broken_waystation",
       "order": 15,
       "display_name": "Broken Waystation / Relay Response",

@@ -1,0 +1,35 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/sunken_cistern.gd" id="1_dir"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://scripts/systems/focus_time.gd" id="4_focus"]
+[ext_resource type="Script" path="res://scripts/systems/death_retry_from_save.gd" id="5_retry"]
+[ext_resource type="Script" path="res://scripts/systems/lab_resource_regenerator.gd" id="6_regen"]
+
+[node name="SunkenCistern" type="Node3D" groups=["lab_resource_regeneration"]]
+script = ExtResource("1_dir")
+
+[node name="GameUI" parent="." instance=ExtResource("3_ui")]
+
+[node name="FocusTime" type="Node" parent="."]
+script = ExtResource("4_focus")
+
+[node name="DeathRetryFromSave" type="Node" parent="."]
+script = ExtResource("5_retry")
+
+[node name="LabResourceRegenerator" type="Node" parent="."]
+script = ExtResource("6_regen")
+mana_per_second = 3.0
+stamina_per_second = 0.0
+focus_per_second = 0.0
+refill_on_ready = false
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, 28, 0)
+light_color = Color(0.62, 0.73, 0.86, 1)
+light_energy = 1.5
+shadow_enabled = true
+
+[node name="Player" parent="." groups=["player"] instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 35)

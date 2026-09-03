@@ -36,10 +36,15 @@ const STATUS_ELEMENTS: Dictionary = {
 # These are state-level incompatibilities, not reactions. Reactions are resolved
 # before a new direct status is applied, so these rules only keep the resulting
 # state set coherent after the chemistry transaction has finished.
+#
+# Fire and ice states (burning <-> frozen) are deliberately NOT listed as mutual
+# conflicts: their interaction is owned by the reaction rules (wet_freeze,
+# frozen_shatter, and the fire_x_frozen Steam Burst), which need a target to hold
+# both frozen and burning for one transaction so Steam Burst can consume each.
 const STATUS_CONFLICTS: Dictionary = {
 	"wet": ["oily", "burning"],
-	"burning": ["chill", "frozen", "wet", "steamed"],
-	"frozen": ["burning", "chill", "steamed"],
+	"burning": ["chill", "wet", "steamed"],
+	"frozen": ["chill", "steamed"],
 	"steamed": ["frozen", "burning", "chill", "wet"],
 	"revealed": ["obscured"],
 }

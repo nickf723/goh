@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-08-23",
+  "updated": "2026-09-03",
   "purpose": "Canonical capability memory for planning. Search this before proposing new mechanics.",
   "lifecycle_values": [
     "canonical",
@@ -614,10 +614,14 @@
         "art/materials/environment/modular/",
         "shaders/environment/",
         "scripts/environment/meadow_field_surface.gd",
+        "scripts/environment/organic_surface_recipe.gd",
         "art/materials/environment/natural/",
+        "data/environment_surfaces/meadow_ground_seed_recipe_v1.tres",
         "scenes/levels/prototypes/prototype_golden_meadow_benchmark_v1.tscn",
+        "scenes/levels/prototypes/prototype_organic_surface_lab_v1.tscn",
         "shaders/environment/stylized_location_ground_v1.gdshader",
-        "docs/STYLIZED_LOCATION_GROUND_V1.md"
+        "docs/STYLIZED_LOCATION_GROUND_V1.md",
+        "docs/organic_surface_lab_v1_test.md"
       ],
       "canonical_scene": "scenes/levels/prototypes/prototype_modular_environment_showcase_v1.tscn",
       "aliases": [
@@ -655,16 +659,22 @@
         "reusable ground material",
         "heightmap terrain collision",
         "geometry dirt patches",
-        "procedural pebble scatter"
+        "procedural pebble scatter",
+        "seeded surface recipe",
+        "deterministic material variation",
+        "organic surface laboratory",
+        "same-seed material recreation",
+        "procedural texture seed"
       ],
       "implemented": true,
       "do_not_resuggest": true,
-      "next_use": "Manually review Golden Meadow free movement, heightmap contact, visible dirt-patch composition, and close-range pebble density before migrating the approved ground preset into the next authored set or the Wilds Expedition.",
+      "next_use": "Use the Seeded Organic Surface Laboratory to approve one Golden Meadow recipe seed and variation range, then retain its versioned recipe beside the next authored environment that adopts the surface.",
       "story_reference": "The Drowned Bell",
       "limitations": [
         "The reusable modular kit and Golden Meadow remain stylized procedural benchmarks rather than final imported production art; the location-ground stack now combines palette, shader dirt, geometry-backed earth patches, pebble scatter, tangent relief, location offset, and optional path controls.",
         "Stylized PBR v1.2 is approved and story-integrated on the Ruined Village OutdoorRemasterV1 subtree; its full gameplay and weather-state manual review remains pending.",
         "Golden Meadow v1 now uses terrain-specialized heightmap collision, benchmark free-roam safeguards, deterministic dirt geometry, and GPU-instanced vegetation, but it awaits Nick's manual visual and performance approval.",
+        "Seeded Organic Surface Laboratory v1 proves versioned recipes, same-seed local-space recreation, controlled seed banks, and stable signatures for the Golden Meadow ground family; it does not yet bake textures or export asset packages.",
         "The meadow covers one temperate golden-hour dialect; grass interaction, weather coupling, final audio, and regional ecology remain outside the first quality gate.",
         "Plaster, moss, foliage outside the meadow, creatures, VFX, and Grace remain intentionally outside the Ruined Village material boundary.",
         "Only one weathered architecture family is represented so far."

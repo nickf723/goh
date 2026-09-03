@@ -1,0 +1,81 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/prototype_organic_surface_lab_v1.gd" id="1_lab"]
+
+[sub_resource type="StyleBoxFlat" id="StylePanel"]
+bg_color = Color(0.018, 0.025, 0.031, 0.91)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.43, 0.51, 0.52, 0.72)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="PrototypeOrganicSurfaceLabV1" type="Node3D"]
+script = ExtResource("1_lab")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+
+[node name="WarmKey" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-42, -34, 0)
+shadow_enabled = true
+
+[node name="CoolFill" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(48, 142, 0)
+
+[node name="SurfacePreviews" type="Node3D" parent="."]
+
+[node name="InspectionCamera" type="Camera3D" parent="."]
+current = true
+fov = 52.0
+near = 0.1
+far = 160.0
+
+[node name="LaboratoryUI" type="CanvasLayer" parent="."]
+
+[node name="ReadoutMargin" type="MarginContainer" parent="LaboratoryUI"]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 636.0
+offset_bottom = 266.0
+
+[node name="ReadoutPanel" type="PanelContainer" parent="LaboratoryUI/ReadoutMargin"]
+theme_override_styles/panel = SubResource("StylePanel")
+
+[node name="ReadoutPadding" type="MarginContainer" parent="LaboratoryUI/ReadoutMargin/ReadoutPanel"]
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
+
+[node name="Readout" type="VBoxContainer" parent="LaboratoryUI/ReadoutMargin/ReadoutPanel/ReadoutPadding"]
+theme_override_constants/separation = 7
+
+[node name="Title" type="Label" parent="LaboratoryUI/ReadoutMargin/ReadoutPanel/ReadoutPadding/Readout"]
+theme_override_colors/font_color = Color(1, 0.72, 0.34, 1)
+theme_override_font_sizes/font_size = 25
+text = "SEEDED ORGANIC SURFACE LAB"
+
+[node name="Subtitle" type="Label" parent="LaboratoryUI/ReadoutMargin/ReadoutPanel/ReadoutPadding/Readout"]
+theme_override_colors/font_color = Color(0.69, 0.75, 0.75, 1)
+theme_override_font_sizes/font_size = 15
+text = "One recipe • reproducible variants • identical-seed twins"
+
+[node name="StatusLabel" type="Label" parent="LaboratoryUI/ReadoutMargin/ReadoutPanel/ReadoutPadding/Readout"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.92, 0.92, 0.86, 1)
+theme_override_font_sizes/font_size = 16
+text = "Loading recipe..."
+
+[node name="VerificationLabel" type="Label" parent="LaboratoryUI/ReadoutMargin/ReadoutPanel/ReadoutPadding/Readout"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 15
+text = "Verifying twins..."
+
+[node name="Controls" type="Label" parent="LaboratoryUI/ReadoutMargin/ReadoutPanel/ReadoutPadding/Readout"]
+theme_override_colors/font_color = Color(0.59, 0.66, 0.66, 1)
+theme_override_font_sizes/font_size = 14
+text = "← → select    N new bank    SPACE rebuild    C copy signature\nQ E orbit      W S / wheel zoom      R reset"

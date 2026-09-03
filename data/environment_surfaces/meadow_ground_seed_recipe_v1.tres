@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="OrganicSurfaceRecipe" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/organic_surface_recipe.gd" id="1_recipe"]
+[ext_resource type="ShaderMaterial" path="res://art/materials/environment/natural/stylized_pbr_meadow_ground_v1.tres" id="2_material"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "meadow_ground_seed_recipe_v1"
+display_name = "Golden Meadow Ground"
+generator_version = 1
+seed = 18890417
+material_template = ExtResource("2_material")
+offset_span = 384.0
+domain_warp_variation = 0.1
+turf_scale_variation = 0.08
+soil_scale_variation = 0.12
+micro_scale_variation = 0.08
+dryness_variation = 0.075
+soil_amount_variation = 0.12
+soil_threshold_variation = 0.05
+pebble_amount_variation = 0.22
+normal_strength_variation = 0.1

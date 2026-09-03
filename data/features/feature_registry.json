@@ -346,6 +346,47 @@
       "timeout_seconds": 15
     },
     {
+      "id": "organic_surface_lab",
+      "order": 23,
+      "display_name": "Seeded Organic Surface Laboratory",
+      "category": "Environment Material Laboratory",
+      "version": "v1",
+      "status": "development_tool",
+      "description": "Permanent eight-plot material laboratory for versioned organic-ground recipes, deterministic seed variation, same-seed twin comparison, exact material rebuilding, recipe signatures, and neutral warm-key/cool-fill inspection.",
+      "scene": "res://scenes/levels/prototypes/prototype_organic_surface_lab_v1.tscn",
+      "validation_scenes": [
+        "res://scenes/levels/prototypes/prototype_organic_surface_lab_v1.tscn"
+      ],
+      "automated_tests": [
+        "res://scenes/tests/organic_surface_lab_smoke_test.tscn"
+      ],
+      "dependencies": [
+        "golden_meadow_benchmark"
+      ],
+      "controls": [
+        "LEFT / RIGHT — SELECT PLOT",
+        "N — NEXT SEED BANK",
+        "SPACE — REBUILD SELECTED",
+        "C — COPY RECIPE SIGNATURE",
+        "Q / E — ORBIT CAMERA",
+        "W / S OR WHEEL — ZOOM",
+        "R — RESET CANONICAL BANK"
+      ],
+      "manual_test": "docs/organic_surface_lab_v1_test.md",
+      "temporary_state": "runtime_only",
+      "story_integrated": false,
+      "limitations": [
+        "V1 proves one Golden Meadow ground recipe rather than a broad biome or material catalog.",
+        "The laboratory varies live shader materials but does not bake texture files or export production assets.",
+        "Generator math changes require a new generator version before prior recipe signatures can be considered reproducible.",
+        "Visual quality and preferred production seeds remain manual art-direction decisions."
+      ],
+      "launchable": true,
+      "visible_in_launcher": true,
+      "ci_validate": true,
+      "timeout_seconds": 8
+    },
+    {
       "id": "physical_interaction_lab",
       "order": 25,
       "display_name": "Physical Interaction Laboratory",

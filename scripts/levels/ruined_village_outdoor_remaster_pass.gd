@@ -86,6 +86,10 @@ func _apply_stylized_pbr_surface() -> void:
 		bool(stylized_pbr_result.get("enabled", false))
 	)
 	stylized_pbr_applied = true
+	# This authored quality treatment belongs to the production village, not its labs.
+	if level.get_script() == load("res://scripts/levels/prototype_ruined_village_production_slice.gd"):
+		var quality_pass = preload("res://scripts/levels/ruined_village_quality_pass.gd").new()
+		quality_pass.install(level)
 
 
 func get_debug_data() -> Dictionary:

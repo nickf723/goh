@@ -72,6 +72,10 @@ func _configure_player_for_slice() -> void:
 	var player: Node = scope_root.get_node_or_null("Player")
 	if player == null:
 		return
+	var hud: Node = player.get_node_or_null("PlayerHUDV2")
+	if hud != null:
+		hud.set("compact_adventure_layout", true)
+		hud.set("last_layout_width", -1.0)
 
 	# The older village launch was a spell showcase that deliberately selected
 	# Flight and unlocked aerial traversal. The production slice returns to the

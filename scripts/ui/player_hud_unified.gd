@@ -7,6 +7,8 @@ signal hud_mode_changed(mode_id: String)
 signal activity_published(source_id: String, kind: String)
 signal context_changed(source_id: String)
 
+@export var compact_adventure_layout: bool = false
+
 const MAX_ACTIVITY_TOASTS: int = 3
 const MAX_ACTIVE_ABILITIES: int = 3
 const DEFAULT_ACTIVITY_DURATION: float = 3.0
@@ -843,6 +845,26 @@ func _update_layout_for_viewport() -> void:
 	if activity_rail != null:
 		activity_rail.scale = Vector2.ONE * scale_value
 		activity_rail.pivot_offset = Vector2(activity_rail.size.x, 0.0)
+	if compact_adventure_layout:
+		# Keep the route and aiming area visible; objectives wrap instead of truncating.
+		stats_panel.scale = Vector2.ONE * 0.78
+		stats_panel.pivot_offset = Vector2.ZERO
+		mode_panel.anchor_left = 0.0
+		mode_panel.anchor_right = 0.0
+		mode_panel.offset_left = 18.0
+		mode_panel.offset_top = 176.0
+		mode_panel.offset_right = 328.0
+		mode_panel.offset_bottom = 254.0
+		mode_panel.scale = Vector2.ONE
+		mode_panel.pivot_offset = Vector2.ZERO
+		mode_title_label.custom_minimum_size.x = 280.0
+		mode_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		mode_title_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+		mode_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		mode_title_label.add_theme_font_size_override("font_size", 14)
+		mode_eyebrow_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		support_panel.pivot_offset = support_panel.size
+		support_panel.scale = Vector2.ONE * 0.65
 
 
 func _focus_library_open() -> bool:

@@ -6,7 +6,7 @@
       "order": 5,
       "display_name": "Ruined Village Approach",
       "category": "Integrated Story Level",
-      "version": "v0.10",
+      "version": "v0.11",
       "status": "vertical_slice",
       "description": "Outdoor Italy approach combining exploration, environmental storytelling, weapon combat, elemental route solving, optional Sound discovery, checkpointing, direct entry into the Church Trial, and the first story-integrated Stylized PBR environment rollout.",
       "scene": "res://scenes/levels/prototypes/prototype_ruined_village_approach_v1.tscn",

@@ -1,4 +1,19 @@
-# Ruined Village Approach — Production Slice v1 / Stylized PBR v0.10 Manual Test
+# Ruined Village Approach — Production Slice v1 / Arrival Polish v0.11 Manual Test
+
+## Arrival polish playtest (September 2026)
+
+This iteration uses the starting-region environment reference in the [Grace of Humanity Art Bible](https://docs.google.com/presentation/d/1KZPl4iMRbNz8IBQAsrhC4lilMmRXISkkeSkJNU9eXlY/edit) (Mediterranean countryside, warm sunlight, weathered stone, vegetation). It remains a prototype interpretation; the procedural architecture, character models, and distant silhouettes are not final assets.
+
+1. Launch the canonical scene below with a fresh run. Walk straight from the crater into the outer village without jumping. The earthen trail should remain continuous through the slope, with no invisible vertical lip.
+2. Investigate all three clues. Check that vegetation does not cover the crater clue, displaced foundation, or hearth. The optional weapon racks are now on the east side of the arrival hollow.
+3. At 1280×720 and 1920×1080, read the complete opening objective in the left column. Confirm that health and resources remain legible and that the central view is clear while aiming.
+4. Fight the existing square encounter. The well is now at the western edge; verify that the central combat space and exits are readable. Check attack, dodge, damage feedback, and the encounter barrier.
+5. Exercise Fire and Ice-plus-force on the debris gate, then Water-plus-Ice on the alternate route. Continue to the checkpoint and Church Trial. Follow the full checks below for persistence and optional discovery.
+6. Activate rain, snowfall, and thunderstorm, then return to clear weather. Confirm that the warm starting-region lighting returns and that objectives and elemental targets remain visible.
+
+The automated village smoke test now drives actual forward input from the crater to the village, in addition to its existing progression and interaction tests. Engine captures verify layout; they do not replace a human assessment of combat feel or art quality.
+
+Implementation is scoped to the canonical production village. Its arrival support ground is split around the extended ramp; the redundant stairs are disabled. Existing derivative labs retain their support geometry. The compact HUD is opt-in for this adventure.
 
 ## Purpose
 
@@ -54,12 +69,12 @@ On the ordinary run, confirm:
 - road earth, road stones, ruin trim, rubble, fences, timbers, and iron ties use the approved painterly/PBR treatment;
 - wet road stones retain a darker, sharper highlight than dry masonry;
 - diffuse values group into soft painterly bands while specular highlights move continuously;
-- the existing late-afternoon warm key and cool fill still define the village mood;
+- the canonical village uses the starting-region daylight treatment with warm sun and cool ambient fill;
 - plaster, moss, and olive leaves keep their legacy surface treatment;
 - Grace, Goblins, Gremlins, clues, weather VFX, spell VFX, and UI do not inherit the environment shader;
-- visible remaster meshes change, but traversal ramps, support foundations, blockers, and puzzle collision do not.
+- puzzle collision retains its existing behavior; the arrival ramp and adjacent support ground use the v0.11 traversal correction described above.
 
-For a direct legacy comparison, select `OutdoorRemasterPass` in the scene, disable `use_stylized_pbr_surface`, and reload the scene. Re-enable it after comparison; the switch is intentionally reload-based so no runtime material mutation can leak between states.
+For a material comparison, select `OutdoorRemasterPass` in the scene, disable `use_stylized_pbr_surface`, and reload the scene. This switches the modular material treatment only; the arrival quality pass still runs. Re-enable it after comparison.
 
 Repeat the readability pass in clear weather and after activating Rain, Snowfall, and Thunderstorm:
 

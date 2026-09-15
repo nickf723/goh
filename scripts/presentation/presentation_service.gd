@@ -24,7 +24,7 @@ static func get_or_create(tree: SceneTree) -> GamePresentationDirector:
 		existing.name = DIRECTOR_NODE_NAME + "Retired"
 		existing.queue_free()
 
-	var pending_value: Variant = root.get_meta(PENDING_DIRECTOR_META, null)
+	var pending_value: Variant = root.get_meta(PENDING_DIRECTOR_META) if root.has_meta(PENDING_DIRECTOR_META) else null
 	if (
 		pending_value is GamePresentationDirector
 		and is_instance_valid(pending_value)
@@ -40,7 +40,7 @@ static func get_or_create(tree: SceneTree) -> GamePresentationDirector:
 	var clear_pending := func() -> void:
 		if not is_instance_valid(root):
 			return
-		if root.get_meta(PENDING_DIRECTOR_META, null) == director:
+		if root.has_meta(PENDING_DIRECTOR_META) and root.get_meta(PENDING_DIRECTOR_META) == director:
 			root.remove_meta(PENDING_DIRECTOR_META)
 	director.tree_entered.connect(clear_pending, CONNECT_ONE_SHOT)
 	# PlayerMotionFeedback requests this service from _ready(). At that moment the
@@ -58,7 +58,7 @@ static func get_existing(tree: SceneTree) -> GamePresentationDirector:
 	var existing: Node = root.get_node_or_null(DIRECTOR_NODE_NAME)
 	if existing is GamePresentationDirector:
 		return existing as GamePresentationDirector
-	var pending_value: Variant = root.get_meta(PENDING_DIRECTOR_META, null)
+	var pending_value: Variant = root.get_meta(PENDING_DIRECTOR_META) if root.has_meta(PENDING_DIRECTOR_META) else null
 	return (
 		pending_value as GamePresentationDirector
 		if (

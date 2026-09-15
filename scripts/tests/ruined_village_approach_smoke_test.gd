@@ -18,6 +18,7 @@ func _ready() -> void:
 	await get_tree().physics_frame
 
 	validate_level_structure()
+	await validate_arrival_walk()
 	validate_adventure_slice_graph()
 	await validate_adventure_slice_progression()
 	validate_outdoor_remaster()
@@ -40,6 +41,22 @@ func _ready() -> void:
 	for failure: String in failures:
 		push_error("RUINED_VILLAGE_APPROACH_SMOKE_TEST: " + failure)
 	get_tree().quit(1)
+
+
+func validate_arrival_walk() -> void:
+	var player := village.get_node("Player") as CharacterBody3D
+	var start := player.global_position
+	Input.action_press("move_forward")
+	for frame: int in range(900):
+		await get_tree().physics_frame
+		if player.global_position.z <= 24.0:
+			break
+	Input.action_release("move_forward")
+	if player.global_position.z > 24.0 or player.global_position.y < 2.5:
+		failures.append("arrival walking route blocked before village: %s" % player.global_position)
+	player.global_position = start
+	player.velocity = Vector3.ZERO
+	await get_tree().physics_frame
 
 
 func validate_level_structure() -> void:
